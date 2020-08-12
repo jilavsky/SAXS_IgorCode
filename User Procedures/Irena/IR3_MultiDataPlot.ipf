@@ -672,6 +672,8 @@ Function IR3L_DoubleClickAction(FoldernameStr)
 			//Create new graph and append data to graph
 			IR3L_CreateNewGraph()		
 			CreatedNewGraph = 1
+		else
+			DoWindow/F $(LocalGraphName)
 		endif		
 		IR3L_AppendData(FoldernameStr)
 		if(CreatedNewGraph)

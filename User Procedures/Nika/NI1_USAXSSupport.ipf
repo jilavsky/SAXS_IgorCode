@@ -1,6 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-//#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.51
+#pragma version=1.52
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2020, Argonne National Laboratory
@@ -8,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.52 Added mask which can mask off low sensitivity pixels between tiles. 
 //1.51 added passing through NXMetadata, NXSample, NXInstrument, NXUser
 //1.50 Added Batch processing
 //1.49 add support for calibration factor in USAXS/SAXS/WAXS instrument
@@ -82,6 +82,7 @@ Function NI1_9IDCConfigureNika()
 	string ListOfVariables="USAXSSlitLength;SAXSGenSmearedPinData;SAXSDeleteTempPinData;USAXSForceTransmissionDialog;"
 	ListOfVariables +="USAXSSAXSselector;USAXSWAXSselector;USAXSBigSAXSselector;USAXSCheckForRIghtEmpty;USAXSCheckForRIghtDark;USAXSForceTransRecalculation;"
 	ListOfVariables +="USAXSLoadListedEmpDark;USAXSForceUSAXSTransmission;ReadParametersFromEachFile;WAXSSubtractBlank;"
+	ListOfVariables +="UsePixSensitiveMask;"
 	string ListOfStrings="USAXSSampleName;"
 
 	variable i
@@ -152,8 +153,6 @@ Function NI1_9IDCConfigPanelFunction() : Panel
 	Checkbox SAXSSelection, title ="SAXS", help={"Use to configure Nika for SAXS"}
 	Checkbox USAXSWAXSselector,pos={150,90},size={100,20}, variable=root:Packages:Convert2Dto1D:USAXSWAXSselector, proc=NI1_9IDCCheckProc
 	Checkbox USAXSWAXSselector, title ="WAXS", help={"Use to configure Nika for WAXS"}
-//	Checkbox BigSAXSSelection,pos={290,90},size={100,20}, variable=root:Packages:Convert2Dto1D:USAXSBigSAXSselector, proc=NI1_9IDCCheckProc
-//	Checkbox BigSAXSSelection, title ="15ID SAXS", help={"Use to configure Nika for SAXS"}
 
 	Button Open9IDCManual,pos={430,5},size={100,20},proc=NI1_9IDCButtonProc,title="Open manual"
 	Button Open9IDCManual,help={"Open manual"}
@@ -163,11 +162,15 @@ Function NI1_9IDCConfigPanelFunction() : Panel
 	NVAR ReadParametersFromEachFile = root:Packages:Convert2Dto1D:ReadParametersFromEachFile
 	Checkbox ReadParametersFromEachFile,pos={229,115},size={100,20}, variable=root:Packages:Convert2Dto1D:ReadParametersFromEachFile, proc=NI1_9IDCCheckProc
 	Checkbox ReadParametersFromEachFile, title ="Read Parameters from data files", help={"In this case we will read geometry values from each data file"}
+
+	Checkbox UsePixSensitiveMask,pos={229,140},size={100,20}, variable=root:Packages:Convert2Dto1D:UsePixSensitiveMask, proc=NI1_9IDCCheckProc
+	Checkbox UsePixSensitiveMask, title ="Mask less sesitive pixels", help={"Creates complicated mask which covers less sensitive pixles"}
+
 	Button ConfigureDefaultMethods,pos={29,115},size={150,20},proc=NI1_9IDCButtonProc,title="Set default settings"
 	Button ConfigureDefaultMethods,help={"Sets default methods for the data reduction at 9IDC (or 15IDD)"}
 	
 	Button CalibrateDistance,pos={29,138},size={150,20},proc=NI1_9IDCButtonProc,title="Calibrate geometry"
-	Button CalibrateDistance,help={"COnfigures for geometry calibration"}
+	Button CalibrateDistance,help={"Configures for geometry calibration"}
 	
 	Button ConfigureWaveNoteParameters,pos={229,138},size={200,20},proc=NI1_9IDCButtonProc,title="Read geometry from wave note", disable=ReadParametersFromEachFile
 	Button ConfigureWaveNoteParameters,help={"Sets default geometry values based on image currently loaded in the Nika package"}
@@ -176,7 +179,7 @@ Function NI1_9IDCConfigPanelFunction() : Panel
 	Button SetUSAXSSlitLength,pos={229,170},size={200,20},proc=NI1_9IDCButtonProc,title="Set Slit Legnth"
 	Button SetUSAXSSlitLength,help={"Locate USAXS data from which to get the Slit length"}
 	Checkbox WAXSUseBlank,pos={229,167},size={100,20}, variable=root:Packages:Convert2Dto1D:WAXSSubtractBlank, proc=NI1_9IDCCheckProc
-	Checkbox WAXSUseBlank, title ="WAXS use Blank", help={"COntrols if WAXS will subtacrt Empty/Blank image"}
+	Checkbox WAXSUseBlank, title ="WAXS use Blank", help={"Controls if WAXS will subtacrt Empty/Blank image"}
 
 //	Button WAXSUseBlank,pos={229,160},size={200,20},proc=NI1_9IDCButtonProc,title="WAXS Do NOT use Blank"
 //	Button WAXSUseBlank,help={"Push NOT to use blank with 200kw WAXS"}, fColor=(30583,30583,30583)
@@ -632,11 +635,30 @@ Function NI1_9IDCCreateSAXSPixMask()
 
 	string OldDF=GetDataFolder(1)
 	SetDataFolder root:Packages:Convert2Dto1D
+	NVAR/Z UsePixSensitiveMask = root:Packages:Convert2Dto1D:UsePixSensitiveMask
+	if(!NVAR_Exists(UsePixSensitiveMask))
+		variable/g UsePixSensitiveMask=0
+	endif
 	Make/O/B/U/N=(195,487) M_ROIMask
 	M_ROIMask =1
 	M_ROIMask[][0,7]=0
 	M_ROIMask[86][17] = 0
 	M_ROIMask[58][112] = 0
+	if(UsePixSensitiveMask)
+		M_ROIMask[][0,2]=0
+		M_ROIMask[][59,61] = 0
+		M_ROIMask[][120,122] = 0
+		M_ROIMask[][181,183] = 0
+		M_ROIMask[][240,244] = 0
+		M_ROIMask[][303,306] = 0
+		M_ROIMask[][364,366] = 0
+		M_ROIMask[][425,427] = 0
+		M_ROIMask[95,99][] = 0
+		M_ROIMask[0,2][] = 0
+		M_ROIMask[192,194][] = 0
+		M_ROIMask[][485,486] = 0
+
+	endif
 	
 	string notestr="MaskOffLowIntPoints:0;LowIntToMaskOff:0>// ;ITEMNO:0;\r"
 	notestr+="	SetDrawEnv xcoord= top,ycoord= left\r"
@@ -658,6 +680,24 @@ Function NI1_9IDCCreateSAXSPixMask()
 	notestr+="	DrawRect 85.5,16.5,86.5,17.5\r"
 	notestr+="// ;ITEMNO:9;\r"
 	notestr+="	DrawRect 57.5,111.5,58.5,112.5\r"
+	notestr+="// ;ITEMNO:10;\r"
+	notestr+="	DrawRect 57.5,0,61.5,486.5\r"
+	notestr+="// ;ITEMNO:11;\r"
+	notestr+="	DrawRect 118.5,0,122.5,486.5\r"
+	notestr+="// ;ITEMNO:12;\r"
+	notestr+="	DrawRect 240.5,0,244.5,486.5\r"
+	notestr+="// ;ITEMNO:13;\r"
+	notestr+="	DrawRect 301.5,0,305.5,486.5\r"
+	notestr+="// ;ITEMNO:14;\r"
+	notestr+="	DrawRect 362.5,0,366.5,486.5\r"
+	notestr+="// ;ITEMNO:14;\r"
+	notestr+="	DrawRect 423.5,0,427.5,486.5\r"
+	notestr+="// ;ITEMNO:15;\r"
+	notestr+="	DrawRect 0,94.5,486.9,99.5\r"
+	notestr+="// ;ITEMNO:16;\r"
+	notestr+="	DrawRect 0,0,486.5,2\r"
+	notestr+="// ;ITEMNO:17;\r"
+	notestr+="	DrawRect 0,192,486.5,194.5\r"
 
 	note M_ROIMask, notestr
 	
@@ -679,14 +719,43 @@ Function NI1_9IDCCreateWAXSPixMask()
 	endif
 	Duplicate/O OriginalCCD, M_ROIMask
 	Redimension /B/U M_ROIMask 
-	//Make/O/B/U/N=(195,487) M_ROIMask
+	NVAR/Z UsePixSensitiveMask = root:Packages:Convert2Dto1D:UsePixSensitiveMask
+	if(!NVAR_Exists(UsePixSensitiveMask))
+		variable/g UsePixSensitiveMask=0
+	endif
 	M_ROIMask =1
 	if(DimSize(M_ROIMask, 1)>500)	//Pilatus 200kW
 		M_ROIMask[0,194][486,494]=0
-		M_ROIMask[0,1][0,980]=0
+		M_ROIMask[0,3][0,980]=0
 		M_ROIMask[193,194][0,980]=0
 		M_ROIMask[0,194][0,1]=0
 		M_ROIMask[0,194][979,980]=0
+		if(UsePixSensitiveMask)
+			M_ROIMask[][0,2]=0
+			M_ROIMask[][59,61] = 0
+			M_ROIMask[][120,122] = 0
+			M_ROIMask[][181,183] = 0
+			M_ROIMask[][242,244] = 0
+			M_ROIMask[][303,305] = 0
+			M_ROIMask[][364,366] = 0
+			M_ROIMask[][425,427] = 0
+			
+			M_ROIMask[][553,555] = 0
+			M_ROIMask[][614,616] = 0
+			M_ROIMask[][675,677] = 0
+			M_ROIMask[][736,738] = 0
+			M_ROIMask[][797,799] = 0
+			M_ROIMask[][858,860] = 0
+			M_ROIMask[][919,921] = 0
+
+			M_ROIMask[0,194][485,495]=0
+
+			M_ROIMask[96,98][] = 0
+			M_ROIMask[0,2][] = 0
+			M_ROIMask[192,194][] = 0
+			M_ROIMask[][485,486] = 0
+	
+		endif
 	
 		string notestr="MaskOffLowIntPoints:0;LowIntToMaskOff:0>// ;ITEMNO:0;\r"
 		notestr+="	SetDrawEnv xcoord= top,ycoord= left\r"

@@ -1769,15 +1769,21 @@ Function NI1A_LineProf_CreateLP()
 		Wave W_ImageLineProfile = root:Packages:Convert2Dto1D:W_ImageLineProfile
 		Wave W_LineProfileStdv=root:Packages:Convert2Dto1D:W_LineProfileStdv
 		NVAR UseBatchProcessing=root:Packages:Convert2Dto1D:UseBatchProcessing
-		if(LineProf_Width<2)
-			Print "NOTE: Width used for line profile is less than 2 points. Intensity error in this case is calculated as square root of intensity, which may be WRONG."
+		wavestats W_LineProfileStdv
+		if(V_numNaNs>(V_npnts/5))		//more than 20% of NaNs , this will nto work righ, repalce with stdDev
+			Print "NOTE: Too many NaNs in error calculations. Intensity error in this case is calculated as square root of intensity, which may be WRONG."
 			W_LineProfileStdv=sqrt(W_ImageLineProfile)
-		else
-			if(ErrorCalculationsUseSEM)
-				W_LineProfileStdv/=sqrt(LineProf_Width)
-			endif
-			if(!UseBatchProcessing)
-				Print "NOTE: Width used for line profile is 2 points or more, used standard deviation to estimate intensity error."
+		else	
+			if(LineProf_Width<2)
+				Print "NOTE: Width used for line profile is less than 2 points. Intensity error in this case is calculated as square root of intensity, which may be WRONG."
+				W_LineProfileStdv=sqrt(W_ImageLineProfile)
+			else
+				if(ErrorCalculationsUseSEM)
+					W_LineProfileStdv/=sqrt(LineProf_Width)
+				endif
+				if(!UseBatchProcessing)
+					Print "NOTE: Width used for line profile is 2 points or more, used standard deviation to estimate intensity error."
+				endif
 			endif
 		endif
 		//Now calculate the angle wave for ellipse but calculate for everything...
