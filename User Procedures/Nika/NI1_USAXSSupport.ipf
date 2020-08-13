@@ -306,6 +306,9 @@ Function NI1_9IDCCheckProc(cba) : CheckBoxControl
 				NI1_9IDCDisplayAndHideControls()
 			endif
 			
+			if(stringmatch(cba.ctrlName,"UsePixSensitiveMask"))
+				NI1_Cleanup2Dto1DFolder()
+			endif
 			if(stringmatch(cba.ctrlName,"BigSAXSSelection"))
 				if(checked)
 					//USAXSBigSAXSselector =0
@@ -427,6 +430,7 @@ Function NI1_9IDCButtonProc(ba) : ButtonControl
 				KillDataFolder/Z root:Packages:NexusImportTMP:
 				//now we should be able to read this in without challenges? 
 				NI1A_Convert2Dto1DMainPanel()
+				NI1_Cleanup2Dto1DFolder()			//make sure old grabrage is cleaned up. 
 				SVAR SampleNameMatchStr = root:Packages:Convert2Dto1D:SampleNameMatchStr
 				SampleNameMatchStr =""
 				string selectedFile
