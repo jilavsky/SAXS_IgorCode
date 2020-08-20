@@ -185,18 +185,11 @@ Function IRB1_ConcSerPanelFnct()
 //	///*** end of tabs... 
 	Display /W=(560,10,1180,650) /HOST=# /N=LogLogDataDisplay
 	SetActiveSubwindow ##
-//	Display /W=(560,500,1180,750) /HOST=# /N=ResultsDisplay
-//	SetActiveSubwindow ##
-
-//	Checkbox OverwriteExistingData, pos={320,670},size={76,14},title="Overwrite Ouput?", noproc, variable=root:Packages:Irena:BioSAXSDataMan:OverwriteExistingData
-//	Checkbox DisplayErrorBars, pos={320,695},size={76,14},title="Display Error Bars", proc=IRB1_CheckProc, variable=root:Packages:Irena:BioSAXSDataMan:DisplayErrorBars
-//	Button AutoScaleGraph,pos={280,720},size={190,20}, proc=IRB1_DataManButtonProc,title="Autoscale Graph", help={"Autoscale the graph axes"}
-//
 	TitleBox Instructions1 title="\Zr100Right click to add data",size={330,15},pos={4,680},frame=0,fColor=(0,0,65535),labelBack=0
 	TitleBox Instructions2 title="\Zr100Select material, buffer(s), set concentrations",size={330,15},pos={4,695},frame=0,fColor=(0,0,65535),labelBack=0
-	TitleBox Instructions3 title="\Zr100Plot data -> Calculate Input -> select Q range",size={330,15},pos={4,710},frame=0,fColor=(0,0,65535),labelBack=0
-	TitleBox Instructions4 title="\Zr100Optimize & Extrapolate, try few times, check Penaly ",size={330,15},pos={4,725},frame=0,fColor=(0,0,65535),labelBack=0
-	TitleBox Instructions5 title="\Zr100Change name if needed, Save",size={330,15},pos={4,740},frame=0,fColor=(0,0,65535),labelBack=0
+	TitleBox Instructions3 title="\Zr100Plot data -> SUbtract & plot -> select Q range",size={330,15},pos={4,710},frame=0,fColor=(0,0,65535),labelBack=0
+	TitleBox Instructions4 title="\Zr100Optimize & Extrapolate, try few times, check Fit error",size={330,15},pos={4,725},frame=0,fColor=(0,0,65535),labelBack=0
+	TitleBox Instructions5 title="\Zr100Change Output name if needed, Save",size={330,15},pos={4,740},frame=0,fColor=(0,0,65535),labelBack=0
 //	TitleBox Instructions6 title="\Zr100Optimize & Extrapolate, Save",size={330,15},pos={4,755},frame=0,fColor=(0,0,65535),labelBack=0
 
 	IRB1_ConcSerFixPanelControls()

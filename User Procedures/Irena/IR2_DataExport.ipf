@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=1.14
-Constant IR2EversionNumber = 1.10
+Constant IR2EversionNumber = 1.15
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2020, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IR2EversionNumber = 1.10
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.15 add option to reduce output to single precision output (requested) 
 //1.14 fix missign wwavelength if dsata are imported as ASII from Irena and exported again. 
 //1.13 fix naming bug for Nexus which caused the names not being changed as needed, when Nexus was used. 
 //1.12 fix extensions mess, force extesions, cannot make the old one to be remebered correctly... Too many options. 
@@ -96,25 +97,30 @@ Function IR2E_UnivDataExportPanel()
 	Button LoadAndGraphData, pos={100,280},size={180,20}, proc=IR2E_InputPanelButtonProc,title="Load data", help={"Load data into the tool, generate graph and display notes if checkboxes are checked."}
 
 	//Nexus or ASCII?
-	CheckBox ExportASCII,pos={15,340},size={190,14},proc=IR2E_UnivExportCheckProc,title="Export ASCII?", mode=1
+	CheckBox ExportASCII,pos={10,340},size={190,14},proc=IR2E_UnivExportCheckProc,title="Export ASCII?", mode=1
 	CheckBox ExportASCII,variable= root:Packages:IR2_UniversalDataExport:ExportASCII, help={"When checked ASCII files will be created"}
 	CheckBox ExportGSASxye,pos={130,340},size={190,14},proc=IR2E_UnivExportCheckProc,title="Export GSAS-II xye?", mode=1
 	CheckBox ExportGSASxye,variable= root:Packages:IR2_UniversalDataExport:ExportGSASxye, help={"When checked ASCII files for GSAS-II will be created"}
-	CheckBox ExportCanSASNexus,pos={250,340},size={190,14},proc=IR2E_UnivExportCheckProc,title="Export NEXUS?", mode=1
+	CheckBox ExportCanSASNexus,pos={260,340},size={190,14},proc=IR2E_UnivExportCheckProc,title="Export NEXUS?", mode=1
 	CheckBox ExportCanSASNexus,variable= root:Packages:IR2_UniversalDataExport:ExportCanSASNexus, help={"When checked Nexus (canSAS for data) files will be created"}
 	
 	CheckBox ExportSingleCanSASFile,pos={15,360},size={190,14},proc=IR2E_UnivExportCheckProc,title="Export Single canSAS NEXUS (with multiple data)?"
 	CheckBox ExportSingleCanSASFile,variable= root:Packages:IR2_UniversalDataExport:ExportSingleCanSASFile, help={"When checked Nexus (canSAS for data) files will be created"}
 	
-	CheckBox AttachWaveNote,pos={15,375},size={190,14},noproc,title="Attach notes about data?"
+	CheckBox AttachWaveNote,pos={10,375},size={190,14},noproc,title="Attach notes about data?"
 	CheckBox AttachWaveNote,variable= root:Packages:IR2_UniversalDataExport:AttachWaveNote, help={"When checked block of text with notes about data history will be attached before the data itself"}
-	CheckBox UseFolderNameForOutput,pos={15,395},size={190,14},proc=IR2E_UnivExportCheckProc,title="Use Sample/Folder Name for output?"
-	CheckBox UseFolderNameForOutput,variable= root:Packages:IR2_UniversalDataExport:UseFolderNameForOutput, help={"Create output name from folder name"}
-	CheckBox UseYWaveNameForOutput,pos={215,395},size={190,14},proc=IR2E_UnivExportCheckProc,title="Use Y wave name for output?"
-	CheckBox UseYWaveNameForOutput,variable= root:Packages:IR2_UniversalDataExport:UseYWaveNameForOutput, help={"Use Y wave name to create output file name"}
+	CheckBox reduceOutputPrecision,pos={220,375},size={190,14},noproc,title="Reduce precision?"
+	CheckBox reduceOutputPrecision,variable= root:Packages:IR2_UniversalDataExport:reduceOutputPrecision, help={"When checked, data are converted to single precision (default is double precision)"}
+
+
+	CheckBox UseFolderNameForOutput,pos={10,395},size={190,14},proc=IR2E_UnivExportCheckProc,title="Use Sample/Fldr name for output?"
+	CheckBox UseFolderNameForOutput,variable= root:Packages:IR2_UniversalDataExport:UseFolderNameForOutput, help={"Use Folder name for output file name"}
+	CheckBox UseYWaveNameForOutput,pos={220,395},size={190,14},proc=IR2E_UnivExportCheckProc,title="Use Ywv name for output?"
+	CheckBox UseYWaveNameForOutput,variable= root:Packages:IR2_UniversalDataExport:UseYWaveNameForOutput, help={"Use Y wave name for output file name"}
+
 
 	SetVariable CurrentlyLoadedDataName,limits={0,Inf,0},value= root:Packages:IR2_UniversalDataExport:CurrentlyLoadedDataName, noedit=1,noProc,frame=0
-	SetVariable CurrentlyLoadedDataName,pos={3,420},size={370,25},title="Loaded data:", help={"This is data set currently loaded in the tool. These data will be saved."},fstyle=1,labelBack=(65280,21760,0)
+	SetVariable CurrentlyLoadedDataName,pos={3,420},size={385,25},title="Loaded data:", help={"This is data set currently loaded in the tool. These data will be saved."},fstyle=1,labelBack=(65280,21760,0)
 
 	SetVariable CurrentlySetOutputPath,limits={0,Inf,0},value= root:Packages:IR2_UniversalDataExport:CurrentlySetOutputPath, noedit=1,noProc,frame=0
 	SetVariable CurrentlySetOutputPath,pos={3,455},size={370,25},title="Export Folder:", help={"This is data folder outside Igor  where the data will be saved."},fstyle=0
@@ -149,6 +155,7 @@ Function IR2E_FixMainGUI()
 		CheckBox UseYWaveNameForOutput, win=UnivDataExportPanel, disable=(ExportCanSASNexus&&ExportSingleCanSASFile)
 		CheckBox UseFolderNameForOutput, win=UnivDataExportPanel, disable=(ExportCanSASNexus&&ExportSingleCanSASFile)
 		CheckBox ExportSingleCanSASFile, win=UnivDataExportPanel, disable=(ExportASCII || ExportGSASxye)
+		CheckBox reduceOutputPrecision, win=UnivDataExportPanel, disable=(ExportCanSASNexus || ExportGSASxye)
 	endif
 end
 
@@ -575,6 +582,7 @@ Function IR2E_ExportTheData()
 	NVAR DisplayWaveNote
 	NVAR UseFolderNameForOutput
 	NVAR UseYWaveNameForOutput
+	NVAR reduceOutputPrecision
 
 	SVAR DataFolderName
 	SVAR IntensityWaveName
@@ -636,9 +644,6 @@ Function IR2E_ExportTheData()
 	if(ExportASCII)			//this is old ASCII method...
 		//Check for existing file and manage on our own...
 		FinalOutputName=NewFileOutputName
-//		if(stringmatch(IgorInfo(2),"Macintosh") && strlen(FinalOutputName)>25)
-//			FinalOutputName = FinalOutputName[0,25]
-//		endif
 		if(strlen(OutputNameExtension)>0)
 			FinalOutputName+="."+OutputNameExtension
 		endif
@@ -664,12 +669,45 @@ Function IR2E_ExportTheData()
 			IN2G_PasteWnoteToWave("NoteTempY", WaveNoteWave,HeaderSeparator)
 			Save/G/M="\r\n"/P=IR2E_ExportPath WaveNoteWave as FinalOutputName
 		endif
-		if(HaveErrors)
-			Save/A=2/G/W/M="\r\n"/P=IR2E_ExportPath TempX,TempY,TempE as FinalOutputName			///P=Datapath
-		else
-			Save/A=2/G/W/M="\r\n"/P=IR2E_ExportPath TempX,TempY as FinalOutputName			///P=Datapath
+		if( UseIndra2Data || UseQRSdata)	//scattering data
+			//lower precision if needed
+			Duplicate/O TempX,Qvector_A
+			Duplicate/O TempY,Intensity
+			if(HaveErrors)
+				Duplicate/O TempE, Uncertainty
+			endif
+			if(reduceOutputPrecision)
+				Redimension/S Qvector_A,Intensity
+				if(HaveErrors)
+					Redimension/S Uncertainty
+				endif
+			endif
+			if(HaveErrors)
+				Save/A=2/G/W/M="\r\n"/P=IR2E_ExportPath Qvector_A,Intensity,Uncertainty as FinalOutputName			
+			else
+				Save/A=2/G/W/M="\r\n"/P=IR2E_ExportPath Qvector_A,Intensity as FinalOutputName		
+			endif
+			KillWaves/Z WaveNoteWave, NoteTempY, Qvector_A,Intensity,Uncertainty
+		else		//results or other, no idea what x, y, e is... 
+			//lower precision if needed
+			Duplicate/O TempX,Xdata
+			Duplicate/O TempY,Ydata
+			if(HaveErrors)
+				Duplicate/O TempE, Uncertainty
+			endif
+			if(reduceOutputPrecision)
+				Redimension/S Xdata,Ydata
+				if(HaveErrors)
+					Redimension/S Uncertainty
+				endif
+			endif
+			if(HaveErrors)
+				Save/A=2/G/W/M="\r\n"/P=IR2E_ExportPath Xdata,Ydata,Uncertainty as FinalOutputName	
+			else
+				Save/A=2/G/W/M="\r\n"/P=IR2E_ExportPath Xdata,Ydata as FinalOutputName		
+			endif
+			KillWaves/Z WaveNoteWave, NoteTempY, Xdata,Ydata,Uncertainty	
 		endif
-		KillWaves/Z WaveNoteWave, NoteTempY
 	endif
 
 	if(ExportGSASxye)			//this is GSAS-II xye file...
@@ -728,9 +766,9 @@ Function IR2E_ExportTheData()
 			Save/G/M="\r\n"/P=IR2E_ExportPath WaveNoteWave as FinalOutputName
 		endif
 		if(HaveErrors)
-			Save/A=2/G/M="\r\n"/P=IR2E_ExportPath TempXCOnverted,TempY,TempE as FinalOutputName			///P=Datapath
+			Save/A=2/G/M="\r\n"/P=IR2E_ExportPath TempXCOnverted,TempY,TempE as FinalOutputName		
 		else
-			Save/A=2/G/M="\r\n"/P=IR2E_ExportPath TempXCOnverted,TempY as FinalOutputName			///P=Datapath
+			Save/A=2/G/M="\r\n"/P=IR2E_ExportPath TempXCOnverted,TempY as FinalOutputName		
 		endif
 		KillWaves/Z WaveNoteWave, NoteTempY
 	endif
@@ -894,7 +932,7 @@ Function IR2E_InitUnivDataExport()
 	ListOfVariables+="AttachWaveNote;GraphData;DisplayWaveNote;UseFolderNameForOutput;UseYWaveNameForOutput;"
 	ListOfVariables+="ExportMultipleDataSets;"
 	ListOfVariables+="ExportCanSASNexus;ExportASCII;ExportGSASxye;"
-	ListOfVariables+="ExportMultipleCanSASFiles;ExportSingleCanSASFile;"
+	ListOfVariables+="ExportMultipleCanSASFiles;ExportSingleCanSASFile;reduceOutputPrecision;"
 
 	ListOfStrings="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;"
 	ListOfStrings+="CurrentlyLoadedDataName;CurrentlySetOutputPath;NewFileOutputName;"

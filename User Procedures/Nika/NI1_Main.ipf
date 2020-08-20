@@ -227,6 +227,7 @@ end
 //*****************************************************************************************************************
 
 Function NI1_RemoveNika1Mac()
+		NI1_Cleanup2Dto1DFolder()
 		Execute/P "NI1_KillGraphsAndPanels()"
 		Execute/P "DELETEINCLUDE \"NI1_Loader\""
 		SVAR strChagne=root:Packages:Nika12DSASItem1Str

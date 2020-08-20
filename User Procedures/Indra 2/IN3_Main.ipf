@@ -1052,7 +1052,7 @@ Function IN3_Initialize()
 		RemoveDropoutsTime=0.25
 	endif
 	if(RemoveDropoutsFraction<0.01)
-		RemoveDropoutsFraction=0.5
+		RemoveDropoutsFraction=0.7
 	endif
 	NVAR RemoveDropoutsAvePnts
 	if(RemoveDropoutsAvePnts<10)
@@ -1060,7 +1060,7 @@ Function IN3_Initialize()
 	endif
 	SVAR DsmBackgroundFunction
 	if(strlen(DsmBackgroundFunction)<3)
-		DsmBackgroundFunction = "flat"
+		DsmBackgroundFunction = "PowerLaw w flat"
 	endif
 	NVAR DesmearBckgStart
 	if(DesmearBckgStart<0.01)

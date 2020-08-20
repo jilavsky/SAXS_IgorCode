@@ -894,10 +894,6 @@ Function IR3L_ButtonProc(ba) : ButtonControl
 		case 2: // mouse up
 			SVAR GraphUserTitle=root:Packages:Irena:MultiSamplePlot:GraphUserTitle
 			SVAR GraphWindowName=root:Packages:Irena:MultiSamplePlot:GraphWindowName
-		  	//abort if GraphWindowName is not right
-		  	if(strlen(GraphWindowName)<1)	//name has any length	
-		  		return 0
-			endif		  	
 			//  	DoWindow $(GraphWindowName)	//widnow does not exist
 			//  	if(V_Flag==0)
 			//  		return 0
@@ -921,6 +917,17 @@ Function IR3L_ButtonProc(ba) : ButtonControl
 				DoUpdate 
 				IR3L_ApplyPresetFormating(GraphWindowName)
 			endif
+			if(stringmatch(ba.ctrlName,"SelectAll"))
+				Wave/Z SelectionOfAvailableData = root:Packages:Irena:MultiSamplePlot:SelectionOfAvailableData
+				if(WaveExists(SelectionOfAvailableData))
+					SelectionOfAvailableData=1
+				endif
+			endif
+			//*****************
+		  	//rest here needs sensible graph... abort if GraphWindowName is not right
+		  	if(strlen(GraphWindowName)<1)	//name has any length	
+		  		return 0
+			endif		  	
 			if(stringmatch(ba.ctrlname,"AppendPlotData"))
 				//append data to graph
 				DoWIndow $(GraphWindowName)
@@ -971,13 +978,6 @@ Function IR3L_ButtonProc(ba) : ButtonControl
 					SaveGraphCopy /I /W=$(GraphWindowName)  						//	saves current graph as Igor packed experiment
 					//Igor 9: use flag /T=1 and ".h5xp" as the file name extension to save to hdf file
 					DoWIndow/F IR3L_MultiSamplePlotPanel
-				endif
-			endif
-
-			if(stringmatch(ba.ctrlName,"SelectAll"))
-				Wave/Z SelectionOfAvailableData = root:Packages:Irena:MultiSamplePlot:SelectionOfAvailableData
-				if(WaveExists(SelectionOfAvailableData))
-					SelectionOfAvailableData=1
 				endif
 			endif
 

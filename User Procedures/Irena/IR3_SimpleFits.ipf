@@ -1112,10 +1112,10 @@ static Function IR3J_FitGuinier(which)
 	sprintf AchiCHiStr, "%2.2f",(AchievedChiSquare)
 	strswitch(which)		// string switch
 		case "Sphere":		// execute if case matches expression
-			TagText = "Fited Guinier : I(Q) = I(0)*exp(-q\\S2\\M*Rg\\S2\\M/3)\rI(0) = "+num2str(W_coef[0])+"\t\tRg = "+num2str(W_coef[1])
+			TagText = "Fited Guinier : I(Q) = I(0)*exp(-q\\S2\\M*Rg\\S2\\M/3)\rI(0) = "+num2str(W_coef[0])+"\tRg = "+num2str(W_coef[1])
 			TagText+="\rQ\Bmin\MRg = "+QminRg+"\tQ\Bmax\MRg = "+QmaxRg
 			TagText+="\rχ\\S2\\M  = "+AchiCHiStr
-			TagTextLin = "I(0) = "+num2str(W_coef[0])+"\t\tRg = "+num2str(W_coef[1])
+			TagTextLin = "I(0) = "+num2str(W_coef[0])+"\tRg = "+num2str(W_coef[1])
 			TagTextLin+="\rQ\Bmin\MRg = "+QminRg+"\tQ\Bmax\MRg = "+QmaxRg
 			TagTextLin +="\rχ\\S2\\M  = "+AchiCHiStr
 			break					// exit from switch
@@ -1133,11 +1133,11 @@ static Function IR3J_FitGuinier(which)
 //			TagText = "Fitted Guinier  "+"Int*Q^2 = G*exp(-q^2*Rg^2))"+" \r G = "+num2str(W_coef[0])+"\r Rg = "+num2str(W_coef[1])
 //			TagText+="\r Thickness = "+num2str(W_coef[1]*sqrt(12))
 //			TagText+="\r chi-square = "+num2str(V_chisq)
-			TagText = "Fited Guinier : I(Q)*Q\S2\M = I(0)*exp(-q\\S2\\M*Rg\\S2\\M)\rI(0) = "+num2str(W_coef[0])+"\t\tRg = "+num2str(W_coef[1])
+			TagText = "Fited Guinier : I(Q)*Q\S2\M = I(0)*exp(-q\\S2\\M*Rg\\S2\\M)\rI(0) = "+num2str(W_coef[0])+"\tRg = "+num2str(W_coef[1])
 			TagText+="\rThickness = "+num2str(W_coef[1]*sqrt(12))
 			TagText+="\rQ\Bmin\MRg = "+QminRg+"\tQ\Bmax\MRg = "+QmaxRg
 			TagText+="\rχ\\S2\\M  = "+AchiCHiStr
-			TagTextLin = "I(0) = "+num2str(W_coef[0])+"\t\tRg = "+num2str(W_coef[1])
+			TagTextLin = "I(0) = "+num2str(W_coef[0])+"\tRg = "+num2str(W_coef[1])
 			TagTextLin+="\rThickness = "+num2str(W_coef[1]*sqrt(12))
 			TagTextLin+="\rQ\Bmin\MRg = "+QminRg+"\tQ\Bmax\MRg = "+QmaxRg
 			TagTextLin +="\rχ\\S2\\M  = "+AchiCHiStr

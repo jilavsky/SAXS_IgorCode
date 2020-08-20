@@ -4155,7 +4155,23 @@ Function IN2G_AddWaveStatistics()
 	Print S_graphName, S_traceName
 	String topGraph = S_graphName
 	Wave Wv=TraceNameToWaveRef(S_graphName, S_traceName)
-	WaveStats/Q Wv
+	variable Aset=strlen(CsrInfo(A, S_graphName)) > 0
+	variable Bset=strlen(CsrInfo(B, S_graphName)) > 0
+	variable StartPnt, EndPnt, tmpStart, tmpEnd
+	if(Aset)
+		tmpStart = pcsr(A, S_graphName)
+	else
+		tmpStart = 0
+	endif
+	if(Bset)
+		tmpEnd = pcsr(B, S_graphName)
+	else
+		tmpEnd = numpnts(Wv)-1
+	endif
+	StartPnt= min(tmpStart, tmpEnd)
+	EndPnt= max(tmpStart, tmpEnd)
+		
+	WaveStats/Q/R=[StartPnt,EndPnt] Wv
 				//V_sdev = 	IN2G_roundSignificant(V_sdev,2)
 	string TagText="Statistics on "+S_traceName+"\n"
 	TagText+="Average = "+num2str(IN2G_roundSignificant(V_avg,3))+" +/- "+num2str(IN2G_roundSignificant(V_sdev,2))+"\n"
@@ -4165,7 +4181,7 @@ Function IN2G_AddWaveStatistics()
 				//TagText+="Average = "+ IN2G_roundToUncertainity(V_avg, V_sdev,2)+"\n" //"Average = "+num2str(IN2G_roundSignificant(V_avg,2))+" ; "+"sdev = "+num2str(V_sdev)+"\n"
 				//TagText+="Min = "+num2str(IN2G_roundSignificant(V_min,4))+" ; "+"Max = "+num2str(IN2G_roundSignificant(V_max,4))
 	TextBox/C/W=$(S_graphName)/N=AutoWaveStatsRes/F=0/A=MC TagText
-	Duplicate/O Wv, $(S_traceName+"_avg"), $(S_traceName+"_min"), $(S_traceName+"_max")
+	Duplicate/O/R=[StartPnt,EndPnt] Wv, $(S_traceName+"_avg"), $(S_traceName+"_min"), $(S_traceName+"_max")
 	Wave MeanWv=$(S_traceName+"_avg")
 	MeanWv = V_avg
 	Wave MinWv=$(S_traceName+"_min")
@@ -4176,9 +4192,11 @@ Function IN2G_AddWaveStatistics()
 	if(V_Flag==0)
 		Wave/Z WvX = XWaveRefFromTrace(S_graphName, S_traceName)
 		if(WaveExists(WvX))
-			AppendToGraph /W=$(S_graphName) MeanWv, MinWv,MaxWv vs WvX
+			Duplicate/O/R=[StartPnt,EndPnt] WvX, $(S_traceName+"_X")
+			Wave WvX2 = $(S_traceName+"_X")
+			AppendToGraph /W=$(S_graphName) MeanWv, MinWv, MaxWv vs WvX2
 		else
-			AppendToGraph /W=$(S_graphName) MeanWv, MinWv,MaxWv //[vs xwaveName ]
+			AppendToGraph /W=$(S_graphName) MeanWv, MinWv, MaxWv 
 		endif
 		ModifyGraph /W=$(S_graphName) lstyle($(NameOfWave(MeanWv)))=11,lsize($(NameOfWave(MeanWv)))=2,rgb($(NameOfWave(MeanWv)))=(0,0,65535)
 		ModifyGraph /W=$(S_graphName) lstyle($(NameOfWave(MinWv)))=17,rgb($(NameOfWave(MinWv)))=(0,0,0),lstyle($(NameOfWave(MaxWv)))=17,rgb($(NameOfWave(MaxWv)))=(0,0,0)

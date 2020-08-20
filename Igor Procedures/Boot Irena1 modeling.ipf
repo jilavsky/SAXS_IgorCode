@@ -58,25 +58,6 @@ end
 
 Function LoadIrenaSASMacros()
 	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))>=7.05)
-		//check for old version of Irena
-		pathInfo Igor
-		NewPath/Q/O/Z UserProcPath , S_path+"User procedures"
-		GetFileFolderInfo/Q/Z/P=UserProcPath "Irena 1"
-		string MessageStr="Original Irena folder found in User Procedures! \nFrom the version 2.04 Irena should be installed in \"Irena\" folder."
-		MessageStr +=" Delete old version in folder \"Irena 1\" and the folder itself and install new version in \"Irena\" folder"
-		if(V_Flag==0)
-			Abort MessageStr
-		endif
-		GetFileFolderInfo/Q/Z/P=UserProcPath "Irena1_Saved_styles"
-		variable StylesExist=V_Flag
-		GetFileFolderInfo/Q/Z/P=UserProcPath "Irena1_CalcSavedCompounds"
-		variable CompoundsExist=V_Flag
-		if(StylesExist==0 || CompoundsExist==0)
-			MessageStr ="Old folders for Styles and Compounds found! \nRename folders \"Irena1_Saved_styles\" into \"Irena_Saved_styles\""
-			MessageStr +=" and \"Irena1_CalcSavedCompounds\" into \"Irena_CalcSavedCompounds\" if these exist in User procedures"
-			Abort MessageStr		
-		endif
-	
 		Execute/P "INSERTINCLUDE \"IR1_Loader\""
 		Execute/P "COMPILEPROCEDURES "
 		NewDataFolder/O root:Packages			//create the folder for string variable

@@ -148,7 +148,7 @@ Function NI1_9IDCConfigPanelFunction() : Panel
 	
 	DrawText 10, 43, "SAXS : Pilatus 100k camera in USAXS (use with USAXS)"
 	DrawText 10, 60, "WAXS    : Pilatus 100k or 200kw WAXS used in USAXS/SAXS/WAXS configuration"
-	DrawText 10, 77, "SAXS     : large SAXS camera in the 15ID-D (only SAXS, no USAXS)"
+	///DrawText 10, 77, "SAXS     : large SAXS camera in the 15ID-D (only SAXS, no USAXS)"
 	Checkbox SAXSSelection,pos={10,90},size={100,20}, variable=root:Packages:Convert2Dto1D:USAXSSAXSselector, proc=NI1_9IDCCheckProc
 	Checkbox SAXSSelection, title ="SAXS", help={"Use to configure Nika for SAXS"}
 	Checkbox USAXSWAXSselector,pos={150,90},size={100,20}, variable=root:Packages:Convert2Dto1D:USAXSWAXSselector, proc=NI1_9IDCCheckProc
@@ -164,7 +164,7 @@ Function NI1_9IDCConfigPanelFunction() : Panel
 	Checkbox ReadParametersFromEachFile, title ="Read Parameters from data files", help={"In this case we will read geometry values from each data file"}
 
 	Checkbox UsePixSensitiveMask,pos={229,140},size={100,20}, variable=root:Packages:Convert2Dto1D:UsePixSensitiveMask, proc=NI1_9IDCCheckProc
-	Checkbox UsePixSensitiveMask, title ="Mask less sesitive pixels", help={"Creates complicated mask which covers less sensitive pixles"}
+	Checkbox UsePixSensitiveMask, title ="Mask less sensitive pixels", help={"Creates complicated mask which covers less sensitive pixles"}
 
 	Button ConfigureDefaultMethods,pos={29,115},size={150,20},proc=NI1_9IDCButtonProc,title="Set default settings"
 	Button ConfigureDefaultMethods,help={"Sets default methods for the data reduction at 9IDC (or 15IDD)"}

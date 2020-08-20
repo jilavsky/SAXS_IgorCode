@@ -2589,14 +2589,7 @@ Function IN3_ExtendData(Int_wave, Q_vct, Err_wave, slitLength, Qstart, SelectedF
 	variable/g V_FitError=0					//this is way to avoid bombing due to numerical problems
 	variable/g V_FitOptions=4				//this should suppress the window showing progress (4) & force robust fitting (6)
 										//using robust fitting caused problems, do not use...
-//	variable/g V_FitTol=0.00001				//and this should force better fit
 	variable/g V_FitMaxIters=50
-//	variable/g V_FitNumIters
-	
-//	DoWindow CheckTheBackgroundExtns
-//	if (V_flag)
-//		RemoveFromGraph /W=CheckTheBackgroundExtns /Z Fit_ExtrapIntwave
-//	endif
 	//***********here start different ways to extend the data
 
 	if (cmpstr(SelectedFunction,"flat")==0)				//flat background, for some reason only way this works is 
@@ -2675,8 +2668,6 @@ Function IN3_ExtendData(Int_wave, Q_vct, Err_wave, slitLength, Qstart, SelectedF
 		if (exists("W_coef")!=1)
 			make/N=3 W_coef
 		endif
-	//	variable estimate1_w0=Int_wave[(DataLengths-1)]
-	//	variable estimate1_w1=Q_vct[(FitFrom)]^4*Int_wave[(FitFrom)]
 		K0=Int_wave[(DataLengths-1)]
 		K1=(Int_wave[(FitFrom)] - K0) * (Q_vct[(FitFrom)]^3)
 		K2=-3
@@ -2695,8 +2686,8 @@ Function IN3_ExtendData(Int_wave, Q_vct, Err_wave, slitLength, Qstart, SelectedF
 				Int_wave[DataLengths+i]= W_coef[0]+W_coef[1]*(Q_vct[DataLengths+i]^W_coef[2])
 			endfor
 			fit_ExtrapIntwave=W_coef[0]+W_coef[1]*(x^W_coef[2])
-			endif
 		endif
+	endif
 
 //		wavestats/Q/R=[DataLengths+1,] Int_wave
 //	//	print DataLengths
@@ -2716,7 +2707,17 @@ Function IN3_ExtendData(Int_wave, Q_vct, Err_wave, slitLength, Qstart, SelectedF
 	endif
 	if (strlen(ErrorMessages)!=0)
 		ExtensionFailed=1
-		DoAlert /T="Desmearing failed" 0, ErrorMessages 
+		//DoAlert /T="Desmearing failed" 0, ErrorMessages 
+		SVAR userFriendlySampleDFName = root:Packages:Indra3:userFriendlySampleDFName
+		print "For "+userFriendlySampleDFName+" sample "+ErrorMessages 
+		print "Extending data by average intensity (aka:flat)"
+		variable AveInt = sum(Int_wave, FitFrom, DataLengths-1 )/(DataLengths-1-FitFrom)
+		For(i=1;i<=NumNewPoints;i+=1)									
+			Q_vct[DataLengths+i]=Q_vct[DataLengths]+(ExtendByQ)*(i/NumNewPoints)     	//extend Q
+			Int_wave[DataLengths+i]= AveInt
+		endfor
+		fit_ExtrapIntwave=AveInt		
+		ExtensionFailed=0
 	endif
 	setDataFolder OldDf
 	return ExtensionFailed
