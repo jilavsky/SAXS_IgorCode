@@ -4179,7 +4179,8 @@ Function/S NI1_ReadNexusCanSAS(PathName, FileNameToLoad)
 	For (i=0;i<ItemsInList(ListOfGroups);i+=1)
 		AttribList = NI1_HdfReadAllAttributes(fileID, stringfromlist(i,ListOfGroups),0)
 		GroupName = stringfromlist(i,ListOfGroups)
-		if(stringMatch(StringByKey("NX_class", AttribList),"NXdata") && stringMatch(StringByKey("canSAS_class", AttribList),"SASdata"))					// skip version check and hope for best. && stringMatch(StringByKey("canSAS_version", AttribList),"0.1"))
+		if(stringMatch(StringByKey("NX_class", AttribList),"NXdata") && stringMatch(StringByKey("canSAS_class", AttribList),"SASdata"))	
+			// skip version check and hope for best. && stringMatch(StringByKey("canSAS_version", AttribList),"0.1"))
 			PathToData = stringfromlist(i,ListOfGroups)
 			//print "Found location of data : " + PathToData
 			//print AttribList

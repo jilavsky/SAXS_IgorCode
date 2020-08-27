@@ -1869,31 +1869,11 @@ static Function NEXUS_WriteNx2DCanSASData(SampleName, Iwv, [dIwv, Qwv, Mask, Qx,
 		
 		//Writes Nexus/CanSAS data based on proposed format:
 		// to this structure (NX_class attribute MUST name a NeXus base class)
-		//
-		///sasentry01							<-- HDF5 group
-		//  @NX_class = "NXentry"			<-- NeXus requires this
-		//  @canSAS_class = "SASentry"		<-- this is between you and me, for now. Perhaps optional?
-		//
-		//  /sasdata01						<-- HDF5 group
-		//    @NX_class = "NXdata"			<-- NeXus requires this
-		//    @canSAS_class = "SASdata"		<-- this is between you and me, for now.
-		//    @canSAS_version = "0.1"		<-- this is between you and me, for now.
-		//	 	@I_axes = "Q,Q"				<-- canSAS 2012 agreed model
-		//	 	@Q_indices = "0,1"			<-- canSAS 2012 agreed model
-		//	 	@Mask_indices = "0,1"			<-- canSAS 2012 agreed model
-		//
-		//	 I: float[M,N]					<-- HDF5 dataset, the intensity array
-		//	    @uncertainty="Idev"		<-- canSAS 2012 agreed model
-		//	    @signal=1					<-- NeXus requires this
-		//		   @axes="Q"					<-- NeXus suggests this is identified
-		//	 Idev: float[M,N]				<-- HDF5 dataset, the intensity array <<<<optional
-		//	 Q: float[M,N]					<-- HDF5 dataset, |Q| at each pixel  <<<<optional
-		//or
-		//	 	@I_axes = "Qx,Qy"				<-- canSAS 2012 agreed model
-		//	Qx: float[M,N]   <-- Qx at each pixel
-		//	Qy: float[M,N]   <-- Qy at each pixel
-		//	Qz: float[M,N]   <-- Qz at each pixel (might be all zero)
-
+		//	write the 2D SAXS data
+		//     see: https://manual.nexusformat.org/classes/applications/NXcanSAS.html
+		//     NXcanSAS describes more (optional) content.
+     	//		Here we write the minimum required.
+     	//		checked attributes based on Pete's Python writer code 8/26/2020 
 	variable GroupID
 	Variable fileID, result
 	string Hdf5FileName=NEXUS_NikaCreateOrLocNexusFile(2)
@@ -1913,7 +1893,7 @@ static Function NEXUS_WriteNx2DCanSASData(SampleName, Iwv, [dIwv, Qwv, Mask, Qx,
 		endif
 	endif
 	string RootGroupName=Nexus_FixNxGroupName(SampleName)
-	string ViewName=Nexus_FixNxGroupName("2DCalibrated")
+	string ViewName=Nexus_FixNxGroupName("SAXS_2D")
 	string NewGroupName
 	NEXUS_HdfSaveAttrib("creator","Nika","/", fileID)
 	NEXUS_HdfSaveAttrib("url","https://usaxs.xray.aps.anl.gov/software/nika","/", fileID)
@@ -3253,6 +3233,9 @@ FUnction/S NEXUS_Read_Metadata(RawFolderWithData)
 	if(DataFolderExists(RawFolderWithData+"entry:metadata:"))
 		setDataFolder $(RawFolderWithData+"entry:metadata:")
 		StringWithData = NEXUS_Read_CreateLocalList()
+	elseif(DataFolderExists(RawFolderWithData+":entry:instrument:bluesky:metadata:"))
+		setDataFolder $(RawFolderWithData+"entry:instrument:bluesky:metadata:")
+		StringWithData = NEXUS_Read_CreateLocalList()
 	endif
 	setDataFolder OldDf
 	return StringWIthData	
@@ -3288,6 +3271,9 @@ FUnction/S NEXUS_Read_User(RawFolderWithData)
 	if(DataFolderExists(RawFolderWithData+"entry:user:"))
 		setDataFolder $(RawFolderWithData+"entry:user:")	
 		StringWithData = NEXUS_Read_CreateLocalList()
+	elseif(DataFolderExists(RawFolderWithData+"entry:contact:"))
+		setDataFolder $(RawFolderWithData+"entry:contact:")	
+		StringWithData = NEXUS_Read_CreateLocalList()
 	endif
 	setDataFolder OldDf
 	return StringWIthData	
@@ -3311,11 +3297,11 @@ FUnction/S NEXUS_Read_Instrument(RawFolderWithData)
 	endif
 	if(DataFolderExists(RawFolderWithData+"entry:instrument:monochromator:"))
 		setDataFolder $(RawFolderWithData+"entry:instrument:monochromator:")
-		StringWithData = NEXUS_Read_CreateLocalList()
+		StringWithData += NEXUS_Read_CreateLocalList()
 	endif
 	if(DataFolderExists(RawFolderWithData+"entry:instrument:source:"))
 		setDataFolder $(RawFolderWithData+"entry:instrument:source:")
-		StringWithData = NEXUS_Read_CreateLocalList()
+		StringWithData += NEXUS_Read_CreateLocalList()
 	endif
 	setDataFolder OldDf
 	return StringWIthData	

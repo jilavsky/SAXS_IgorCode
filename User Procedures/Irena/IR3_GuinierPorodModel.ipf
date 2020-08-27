@@ -1025,37 +1025,37 @@ Function IR3GP_AppendModelToGraph(DoNotRaise)
 		Wave OriginalQvector = root:Packages:Irena:GuinierPorod:OriginalQvector
 		Wave ModelCurrentLevel = root:Packages:Irena:GuinierPorod:ModelCurrentLevel
 		NVAR DisplayLocalFits = root:Packages:Irena:GuinierPorod:DisplayLocalFits
-		CheckDisplayed ModelIntensity
+		CheckDisplayed/W=GuinierPorod_LogLogPlot ModelIntensity
 		if(!V_Flag)
-			AppendToGraph ModelIntensity vs OriginalQvector
+			AppendToGraph/W=GuinierPorod_LogLogPlot ModelIntensity vs OriginalQvector
 		endif
-		CheckDisplayed ModelCurrentLevel
+		CheckDisplayed/W=GuinierPorod_LogLogPlot ModelCurrentLevel
 		if(!V_Flag && DisplayLocalFits)
-			AppendToGraph ModelCurrentLevel vs OriginalQvector
+			AppendToGraph/W=GuinierPorod_LogLogPlot ModelCurrentLevel vs OriginalQvector
 		endif
 		if(V_Flag && !DisplayLocalFits)
-			RemoveFromGraph ModelCurrentLevel 
+			RemoveFromGraph/W=GuinierPorod_LogLogPlot ModelCurrentLevel 
 		endif
 		
-		ModifyGraph lsize(ModelIntensity)=2,rgb(ModelIntensity)=(0,0,0)
+		ModifyGraph /W=GuinierPorod_LogLogPlot lsize(ModelIntensity)=2,rgb(ModelIntensity)=(0,0,0)
 		NVAR ActiveLevel=root:Packages:Irena:GuinierPorod:ActiveLevel
 		CheckDisplayed/W=GuinierPorod_LogLogPlot ModelCurrentLevel
 		if(V_Flag)
 			switch (ActiveLevel)
 				case 1 :
-					ModifyGraph lsize(ModelCurrentLevel)=2,rgb(ModelCurrentLevel)=(64000,0,0)
+					ModifyGraph /W=GuinierPorod_LogLogPlot lsize(ModelCurrentLevel)=2,rgb(ModelCurrentLevel)=(64000,0,0)
 					break
 				case 2 :
-					ModifyGraph lsize(ModelCurrentLevel)=2,rgb(ModelCurrentLevel)=(0,64000,0)
+					ModifyGraph /W=GuinierPorod_LogLogPlot lsize(ModelCurrentLevel)=2,rgb(ModelCurrentLevel)=(0,64000,0)
 					break
 				case 3 :
-					ModifyGraph lsize(ModelCurrentLevel)=2,rgb(ModelCurrentLevel)=(30000,30000,64000)
+					ModifyGraph /W=GuinierPorod_LogLogPlot lsize(ModelCurrentLevel)=2,rgb(ModelCurrentLevel)=(30000,30000,64000)
 					break
 				case 4 :
-					ModifyGraph lsize(ModelCurrentLevel)=2,rgb(ModelCurrentLevel)=(52000,52000,0)
+					ModifyGraph /W=GuinierPorod_LogLogPlot lsize(ModelCurrentLevel)=2,rgb(ModelCurrentLevel)=(52000,52000,0)
 					break
 				case 5 :
-					ModifyGraph lsize(ModelCurrentLevel)=2,rgb(ModelCurrentLevel)=(0,50000,50000)
+					ModifyGraph /W=GuinierPorod_LogLogPlot lsize(ModelCurrentLevel)=2,rgb(ModelCurrentLevel)=(0,50000,50000)
 					break
 			endswitch
 		endif

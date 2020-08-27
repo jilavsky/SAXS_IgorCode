@@ -1,6 +1,6 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
 #pragma version=1
-constant IR3LversionNumber = 1.01			//MultiDataPloting tool version number. 
+constant IR3LversionNumber = 1.02			//MultiDataPloting tool version number. 
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2020, Argonne National Laboratory
@@ -9,6 +9,7 @@ constant IR3LversionNumber = 1.01			//MultiDataPloting tool version number.
 //*************************************************************************/
 
 
+//1.02 added Two more versionf of Porod plot - IQ4 vs Q and IQ3 vs Q. 
 //1.01		Changed working folder name.  
 //1.0 		New ploting tool to make plotting various data easy for multiple data sets.  
 
@@ -231,6 +232,12 @@ static Function IR3L_FixPanelControls()
 		case "Porod (Q^4-IQ^4)":					// execute if case matches expression
 			TitleBox SelectedDataPlotInstructions win=IR3L_MultiSamplePlotPanel, title="\Zr100Porod data will be created"
 			break
+		case "Porod 2 (Q-IQ^4)":					// execute if case matches expression
+			TitleBox SelectedDataPlotInstructions win=IR3L_MultiSamplePlotPanel, title="\Zr100Porod data will be created"
+			break
+		case "Porod 3 (Q-IQ^3)":					// execute if case matches expression
+			TitleBox SelectedDataPlotInstructions win=IR3L_MultiSamplePlotPanel, title="\Zr100Porod data will be created"
+			break
 		default:										// optional default expression executed, this is basically X-Y case again
 														// when no case matches
 	endswitch
@@ -337,7 +344,7 @@ static Function IR3L_InitMultiSamplePlot()
 	SVAR ListOfDefinedStyles
 	ListOfDefinedStyles = "Log-Log;Lin-Lin;Lin-Log;VolumeSizeDistribution;NumberSizeDistribution;"
 	SVAR ListOfDefinedDataPlots
-	ListOfDefinedDataPlots = "X-Y (q-Int, etc.);Guinier (Q^2-ln(I));Kratky (Q-IQ^2);Porod (Q^4-IQ^4);Guinier Rod (Q^2-ln(I*Q));Guinier Sheet (Q^2-ln(I*Q^2));DimLess Kratky (Q-I*(Q*Rg)^2/I0);"
+	ListOfDefinedDataPlots = "X-Y (q-Int, etc.);Guinier (Q^2-ln(I));Kratky (Q-IQ^2);Porod (Q^4-IQ^4);Guinier Rod (Q^2-ln(I*Q));Guinier Sheet (Q^2-ln(I*Q^2));DimLess Kratky (Q-I*(Q*Rg)^2/I0);Porod 2 (Q-IQ^4);Porod 3 (Q-IQ^3);"
 	SVAR SelectedStyle
 	if(strlen(SelectedStyle)<2)
 		SelectedStyle="Log-Log"
@@ -839,6 +846,34 @@ static Function IR3L_AppendData(FolderNameStr)
 					Duplicate/O SourceErrorWv, $(DataFolderName+"Porod_"+ErrorWaveName)
 					Wave SourceErrorWv=$(DataFolderName+"Porod_"+ErrorWaveName)
 					SourceErrorWv = SourceErrorWv * SourceQWv
+				endif
+				break
+			case "Porod 2 (Q-IQ^4)":					// execute if case matches expression
+				//create and save Porod data
+				Duplicate/O SourceIntWv, $(DataFolderName+"Porod2_"+IntensityWaveName)
+				Duplicate/O SourceQWv, $(DataFolderName+"Porod2_"+QWavename)
+				Wave SourceIntWv=$(DataFolderName+"Porod2_"+IntensityWaveName)
+				Wave SourceQWv=$(DataFolderName+"Porod2_"+QWavename)
+				//SourceQWv = SourceQWv
+				SourceIntWv = SourceIntWv * SourceQWv^4
+				if(WaveExists(SourceErrorWv))
+					Duplicate/O SourceErrorWv, $(DataFolderName+"Porod2_"+ErrorWaveName)
+					Wave SourceErrorWv=$(DataFolderName+"Porod2_"+ErrorWaveName)
+					SourceErrorWv = SourceErrorWv * SourceQWv^4
+				endif
+				break
+			case "Porod 3 (Q-IQ^3)":					// execute if case matches expression
+				//create and save Porod data
+				Duplicate/O SourceIntWv, $(DataFolderName+"Porod3_"+IntensityWaveName)
+				Duplicate/O SourceQWv, $(DataFolderName+"Porod3_"+QWavename)
+				Wave SourceIntWv=$(DataFolderName+"Porod3_"+IntensityWaveName)
+				Wave SourceQWv=$(DataFolderName+"Porod3_"+QWavename)
+				SourceQWv = SourceQWv
+				SourceIntWv = SourceIntWv * SourceQWv^3
+				if(WaveExists(SourceErrorWv))
+					Duplicate/O SourceErrorWv, $(DataFolderName+"Porod3_"+ErrorWaveName)
+					Wave SourceErrorWv=$(DataFolderName+"Porod3_"+ErrorWaveName)
+					SourceErrorWv = SourceErrorWv * SourceQWv^3
 				endif
 				break
 			default:										// optional default expression executed, this is basically X-Y case again
@@ -1416,6 +1451,18 @@ static Function IR3L_SetPlotLegends()				//this function will set axis legends a
 				GraphUserTitle = "Porod Plot for data"
 				XAxisLegend = "Q\S4\M [A\S-4\M]"
 				YAxislegend = "Intensity*Q\S4\M"
+				break
+			case "Porod 2 (Q-IQ^4)":					// execute if case matches expression
+				//create and save Porod data
+				GraphUserTitle = "Modified Porod Plot for data"
+				XAxisLegend = "Q [A\S-1\M]"
+				YAxislegend = "Intensity*Q\S4\M"
+				break
+			case "Porod 3 (Q-IQ^3)":					// execute if case matches expression
+				//create and save Porod data
+				GraphUserTitle = "Modified Porod Plot for data"
+				XAxisLegend = "Q [A\S-1\M]"
+				YAxislegend = "Intensity*Q\S3\M"
 				break
 			default:										// optional default expression executed, this is basically X-Y case again
 															// when no case matches

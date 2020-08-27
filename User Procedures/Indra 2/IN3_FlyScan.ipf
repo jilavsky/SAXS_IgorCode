@@ -628,7 +628,7 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData, origFileName)
 	string/g UserSampleName=	UserSampleNameWv[0]			 //stringFromList(0,origFileName,".")
 	//reading Time failed?
 	if(WaveType(TimeWv ,1)!=1)
-		Abort "Struk data read failure found in the file fro sample :"+UserSampleName+", these data are unusable, aborting" 
+		Abort "Struk data read failure found in the file for sample :"+UserSampleName+", these data are unusable, aborting" 
 	endif
 	Duplicate/O TimeWv, MeasTime
 	Duplicate/O I0Wv, Monitor
@@ -815,7 +815,6 @@ Function/T IN3_StepScanConvertToUSAXS(RawFolderWithData, origFileName)
 	string RawFolderWithData, origFileName
 
 print "Function IN3_StepScanConvertToUSAXS is not finished yet!"
-print "Can be finished, when finilized step scanning Nexus file is available."
 
 	string OldDf=GetDataFolder(1)
 	setDataFolder RawFolderWithData
@@ -825,7 +824,7 @@ print "Can be finished, when finilized step scanning Nexus file is available."
 	//Wave/T SpecFileNameWv=:entry:metadata:SPEC_data_file
 	//SpecFileName=SpecFileNameWv[0]
 	//SpecFileName=stringFromList(0,SpecFileName,".")
-	Wave/T SpecSourceFilenameW=:entry:metadata:SPEC_data_file			//TODO: this needs to be added to metadata
+	Wave/T SpecSourceFilenameW=:entry:SPEC_data_file			//TODO: this needs to be added to metadata
 
 	NVAR HdfWriterVersion = HdfWriterVersion
 	Wave/T UserSampleNameWv = :entry:title
@@ -841,45 +840,48 @@ print "Can be finished, when finilized step scanning Nexus file is available."
 	Wave DYWv 		= :entry:data:d_stage_y
 	Wave MRWv 		= :entry:data:m_stage_r
 	Wave SYWv 		= :entry:data:s_stage_y
-
-	Wave/Z UPDsize=:entry:metadata:UPDsize						//TODO: this needs to be added to metadata
+	//TimeWv in BS is in frequency counts. 1e7 counts/second
+	TimeWv/=1e7
+	//this should fix it to seconds. 
+	
+	Wave/Z UPDsize=:entry:instrument:bluesky:streams:baseline:terms_USAXS_diode_upd_size:value					
 	if(!WaveExists(UPDsize))
 		make/O/N=1 :entry:metadata:UPDsize
 		Wave UPDsize=:entry:metadata:UPDsize	
 		UPDsize[0] = 5.5
 	endif
 	Wave/T SampleNameW=:entry:title
-	Wave/Z SampleThicknessW = :entry:sample:thickness			//TODO: this needs to be added to metadata
+	Wave/Z SampleThicknessW = :entry:instrument:bluesky:metadata:sample_thickness_mm
 	if(!WaveExists(SampleThicknessW))
 		make/O/N=1 :entry:sample:thickness
 		Wave SampleThicknessW=:entry:sample:thickness	
 		SampleThicknessW[0] = 1
 	endif
 	//diode stufff
-	Wave updG1=:entry:metadata:upd_gain0
-	Wave updG2=:entry:metadata:upd_gain1
-	Wave updG3=:entry:metadata:upd_gain2
-	Wave updG4=:entry:metadata:upd_gain3
-	Wave updG5=:entry:metadata:upd_gain4	
-	Wave updBkg1=:entry:metadata:upd_bkg0
-	Wave updBkg2=:entry:metadata:upd_bkg1
-	Wave updBkg3=:entry:metadata:upd_bkg2
-	Wave updBkg4=:entry:metadata:upd_bkg3
-	Wave updBkg5=:entry:metadata:upd_bkg4	
-	Wave updBkgErr1=:entry:metadata:upd_bkg_err0
-	Wave updBkgErr2=:entry:metadata:upd_bkgErr1
-	Wave updBkgErr3=:entry:metadata:upd_bkgErr2
-	Wave updBkgErr4=:entry:metadata:upd_bkgErr3
-	Wave updBkgErr5=:entry:metadata:upd_bkgErr4	
+	Wave updG1=:entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain0_gain:value
+	Wave updG2=:entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain1_gain:value
+	Wave updG3=:entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain2_gain:value
+	Wave updG4=:entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain3_gain:value
+	Wave updG5=:entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain4_gain:value	
+	Wave updBkg1=:entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain0_background:value
+	Wave updBkg2=:entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain1_background:value
+	Wave updBkg3=:entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain2_background:value
+	Wave updBkg4=:entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain3_background:value
+	Wave updBkg5=:entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain4_background:value
+	Wave updBkgErr1=:entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain0_background_error:value
+	Wave updBkgErr2=:entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain1_background_error:value
+	Wave updBkgErr3=:entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain2_background_error:value
+	Wave updBkgErr4=:entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain3_background_error:value
+	Wave updBkgErr5=:entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain4_background_error:value
 	
 	Wave/T TimeW=:entry:start_time
-	//these transmission values are missing for now
-	Wave/Z USAXSPinT_I0Counts=:entry:metadata:trans_I0_counts
-	Wave/Z USAXSPinT_I0Gain=:entry:metadata:trans_I0_gain
-	Wave/Z USAXSPinT_AyPosition=:entry:metadata:trans_pin_aypos
-	Wave/Z USAXSPinT_pinCounts=:entry:metadata:trans_pin_counts
-	Wave/Z USAXSPinT_pinGain=:entry:metadata:trans_pin_gain
-	Wave/Z USAXSPinT_Time= :entry:metadata:trans_pin_time
+	//these transmission values 
+	Wave/Z USAXSPinT_I0Counts=:entry:instrument:bluesky:streams:baseline:terms_USAXS_transmission_I0_counts:value
+	Wave/Z USAXSPinT_I0Gain=:entry:instrument:bluesky:streams:baseline:terms_USAXS_transmission_I0_gain:value
+	Wave/Z USAXSPinT_AyPosition=:entry:instrument:bluesky:streams:baseline:terms_USAXS_transmission_ay:value
+	Wave/Z USAXSPinT_pinCounts=:entry:instrument:bluesky:streams:baseline:terms_USAXS_transmission_diode_counts:value
+	Wave/Z USAXSPinT_pinGain=:entry:instrument:bluesky:streams:baseline:terms_USAXS_transmission_diode_gain:value
+	Wave/Z USAXSPinT_Time= :entry:instrument:bluesky:streams:baseline:terms_USAXS_transmission_count_time:value
 	//end of transmission values
 
 
@@ -918,7 +920,9 @@ print "Can be finished, when finilized step scanning Nexus file is available."
 				return ""
 			endif	
 	endif
- 	newDataFolder/O/S $(FileName)
+ 	//newDataFolder/O/S $(FileName)
+ 	newDataFolder/O/S $(UserSampleNameWv[0])
+ 	
 	string/g UserSampleName=	UserSampleNameWv[0]			 //stringFromList(0,origFileName,".")
 	string/g SpecCommand
 	if(is2DScan)
@@ -937,6 +941,14 @@ print "Can be finished, when finilized step scanning Nexus file is available."
 	redimension/D MeasTime, Monitor, USAXS_PD
 	redimension/S PD_range, I0gain
 	//need to append the wave notes...
+	//PD range is 1 based in old code but 0 based here,
+	PD_range+=1
+	//this should fix it again. 
+	//need to fix range changes. We seem to have recordered requests and not real gains. Need to shift them by 1 point... 
+	Duplicate/Free PD_range, PD_rangeTemp
+	PD_range[1,numpnts(PD_range)-1] = PD_rangeTemp[p-1]
+	//PD_range[numpnts(PD_range)-1] = PD_range[numpnts(PD_range)-2]
+
 	string WaveNote
 	if(is2DScan)
 		WaveNote="DATAFILE="+"not available"+";DATE="+TimeW[0]+";COMMENT="+SampleNameW[0]+";SpecCommand="+SpecCommand

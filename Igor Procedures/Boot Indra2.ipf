@@ -118,11 +118,11 @@ End
 
 
 Proc LoadUSAXSAndIrena()
-	LoadUSAXSMacros()
+	Execute/P("LoadUSAXSMacros()")
 	Execute/P("LoadIrenaSASMacros()")
 end
 Proc LoadUSAXSIrenaandNika()
-	LoadUSAXSMacros()
+	Execute/P("LoadUSAXSMacros()")
 	Execute/P("LoadIrenaSASMacros()")
 	Execute/P("LoadNika2DSASMacros()")
 end
@@ -137,7 +137,7 @@ Function LoadUSAXSMacros()
 		string/g root:Packages:USAXSItem1Str
 		SVAR USAXSItem1Str = root:Packages:USAXSItem1Str
 		USAXSItem1Str= "---"
-		BuildMenu "USAXS"
+		//Execute/P "BuildMenu \"USAXS\""
 		//IN2L_GenerateReadMe()
 	else
 		DoAlert 0, "Your version of Igor is lower than 7.05, these macros need version 7.05 or higher"  
