@@ -4051,7 +4051,7 @@ Function NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)
 				endswitch
 				if(!UsedAzimAngle)
 					MatrixOP/O AnglesWave = atan(Qy2D/Qx2D)
-					AnglesWave += pi/2
+					//AnglesWave += pi/2		//this does not seem to work with current test image, not sure why. 
 					AnglesWave = Qx2D > 0 ? AnglesWave : AnglesWave+pi
 				endif
 				//create Q waves

@@ -6669,7 +6669,7 @@ Function NI1G_AppendQCircle(Qvalue)
 		
 		Xattach = wvx[PntNumber]
 		Yattach = wvy[PntNumber]
-		print Xattach, Yattach
+		//print Xattach, Yattach
 		//setDrawLayer/W=CCDImageToConvertFig ProgFront
 		SetDrawEnv/W=CCDImageToConvertFig linefgc=(65535, 65535,65535)
 		SetDrawEnv/W=CCDImageToConvertFig linethick=2, linefgc= (65535,0,0)
