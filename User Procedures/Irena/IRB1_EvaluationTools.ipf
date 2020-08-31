@@ -76,9 +76,9 @@ Function IRB1_ConcSerPanelFnct()
 	Button GetHelp,pos={430,20},size={80,15},fColor=(65535,32768,32768), proc=IRB1_ConcSeriesButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 
 
-	SetVariable DataQEnd,pos={350,50},size={190,15}, title="Q max for fitting    " //proc=IR3J_SetVarProc,
+	SetVariable DataQEnd,pos={350,50},size={190,15}, title="Q max for fitting    " , proc=IRB1_ConcSerSetVarProc
 	Setvariable DataQEnd, variable=root:Packages:Irena:ConcSerExtrap:DataQEnd, limits={0,2,0}, help={"Q value for high-q end of data for processing"}
-	SetVariable DataQstart,pos={350,75},size={190,15},title="Q min for fitting     "//, proc=IR3J_SetVarProc
+	SetVariable DataQstart,pos={350,75},size={190,15},title="Q min for fitting     ", proc=IRB1_ConcSerSetVarProc
 	Setvariable DataQstart, variable=root:Packages:Irena:ConcSerExtrap:DataQstart, limits={0,2,0}, help={"Q value for low-q end of data for processing"}
 	
 //	NumberOfConcentrations
@@ -94,11 +94,11 @@ Function IRB1_ConcSerPanelFnct()
 	Setvariable Buffer1Name, variable=root:Packages:Irena:ConcSerExtrap:Buffer1Name, help={"Name of buffer 1"}
 	SetVariable InputSample1Conc,pos={255,220},size={150,15}, proc=IRB1_ConcSerSetVarProc ,title="Sam1 Conc Inp = ", frame=1, bodywidth=50, help={"Estimated Sample 1 concentration"}
 	Setvariable InputSample1Conc, variable=root:Packages:Irena:ConcSerExtrap:InputSample1Conc, limits={0,100,0}, format="%4.2f"
-	SetVariable Sample1Conc,pos={460,220},size={85,15}, noproc,title="fit: ", frame=0, bodywidth=45, format="%4.2f", help={"Copied or fitted sample 1 concetration. Result"}
+	SetVariable Sample1Conc,pos={440,220},size={105,15}, noproc,title="fit: ", frame=0, bodywidth=55, format="%6.5f", help={"Copied or fitted sample 1 concetration. Result"}
 	Setvariable Sample1Conc, variable=root:Packages:Irena:ConcSerExtrap:Sample1Conc, limits={0,100,0}, noedit=1, help={"Estimated Buffer 1 scaling"}
 	SetVariable InputBuffer1Scale,pos={255,240},size={150,15}, noproc,title="Buf 1 Conc Inp = ", frame=1, bodywidth=50
 	Setvariable InputBuffer1Scale, variable=root:Packages:Irena:ConcSerExtrap:InputBuffer1Scale, limits={0,2,0}, format="%4.3f", help={"Optimized buffer 1 scaling"}
-	SetVariable Buffer1Scale,pos={460,240},size={85,15}, noproc,title="fit: ", frame=0, bodywidth=45, format="%4.3f"
+	SetVariable Buffer1Scale,pos={450,240},size={95,15}, noproc,title="fit: ", frame=0, bodywidth=55, format="%6.5f"
 	Setvariable Buffer1Scale, variable=root:Packages:Irena:ConcSerExtrap:Buffer1Scale, limits={0,2,0}, noedit=1
 	Checkbox FitSample1Conc, pos={420,220},size={76,14},title="Fit?", proc=IRB1_ConcSeriesCheckProc, variable=root:Packages:Irena:ConcSerExtrap:FitSample1Conc
 	Checkbox FitBuffer1Scale, pos={420,240},size={76,14},title="Fit?", proc=IRB1_ConcSeriesCheckProc, variable=root:Packages:Irena:ConcSerExtrap:FitBuffer1Scale
@@ -109,11 +109,11 @@ Function IRB1_ConcSerPanelFnct()
 	Setvariable Buffer2Name, variable=root:Packages:Irena:ConcSerExtrap:Buffer2Name
 	SetVariable InputSample2Conc,pos={255,320},size={150,15}, proc=IRB1_ConcSerSetVarProc,title="Sam2 Conc Inp = ", frame=1, bodywidth=50
 	Setvariable InputSample2Conc, variable=root:Packages:Irena:ConcSerExtrap:InputSample2Conc, limits={0,100,0}, format="%4.2f", help={"Estimated concentration fo sample 2"}
-	SetVariable Sample2Conc,pos={460,320},size={85,15}, noproc,title="fit: ", frame=0, bodywidth=45, format="%4.2f", help={"Optimized concentration of sample 2."}
+	SetVariable Sample2Conc,pos={450,320},size={95,15}, noproc,title="fit: ", frame=0, bodywidth=55, format="%6.5f", help={"Optimized concentration of sample 2."}
 	Setvariable Sample2Conc, variable=root:Packages:Irena:ConcSerExtrap:Sample2Conc, limits={0,100,0}, noedit=1
 	SetVariable InputBuffer2Scale,pos={255,340},size={150,15}, noproc,title="Buf 2 Conc Inp = ", frame=1, bodywidth=50, help={"Estimated buffer 2 scaling."}
 	Setvariable InputBuffer2Scale, variable=root:Packages:Irena:ConcSerExtrap:InputBuffer2Scale, limits={0,1000,0}, format="%4.3f"
-	SetVariable Buffer2Scale,pos={460,340},size={85,15}, noproc,title="fit: ", frame=0, bodywidth=45, format="%4.3f", help={"Optimized buffer 2 scaling. "}
+	SetVariable Buffer2Scale,pos={450,340},size={95,15}, noproc,title="fit: ", frame=0, bodywidth=55, format="%6.5f", help={"Optimized buffer 2 scaling. "}
 	Setvariable Buffer2Scale, variable=root:Packages:Irena:ConcSerExtrap:Buffer2Scale, limits={0,1000,0}, noedit=1
 	Checkbox FitSample2Conc, pos={420,320},size={76,14},title="Fit?", proc=IRB1_ConcSeriesCheckProc, variable=root:Packages:Irena:ConcSerExtrap:FitSample2Conc
 	Checkbox FitBuffer2Scale, pos={420,340},size={76,14},title="Fit?", proc=IRB1_ConcSeriesCheckProc, variable=root:Packages:Irena:ConcSerExtrap:FitBuffer2Scale
@@ -125,11 +125,11 @@ Function IRB1_ConcSerPanelFnct()
 	Setvariable Buffer3Name, variable=root:Packages:Irena:ConcSerExtrap:Buffer3Name
 	SetVariable InputSample3Conc,pos={255,420},size={150,15}, proc=IRB1_ConcSerSetVarProc,title="Sam3 Conc Inp = ", frame=1, bodywidth=50
 	Setvariable InputSample3Conc, variable=root:Packages:Irena:ConcSerExtrap:InputSample3Conc, limits={0,100,0}, format="%4.2f", help={"Estimated sample 3 concentration. "}
-	SetVariable Sample3Conc,pos={460,420},size={85,15}, noproc,title="fit: ", frame=0, bodywidth=45, format="%4.2f"
+	SetVariable Sample3Conc,pos={450,420},size={95,15}, noproc,title="fit: ", frame=0, bodywidth=55, format="%6.5f"
 	Setvariable Sample3Conc, variable=root:Packages:Irena:ConcSerExtrap:Sample3Conc, limits={0,100,0}, noedit=1, help={"Optimized sample 3 concentration. "}
 	SetVariable InputBuffer3Scale,pos={255,440},size={150,15}, noproc,title="Buf 3 Conc Inp = ", frame=1, bodywidth=50
 	Setvariable InputBuffer3Scale, variable=root:Packages:Irena:ConcSerExtrap:InputBuffer3Scale, limits={0,2,0}, format="%4.3f", help={"Estimated buffer 3 scaling"}
-	SetVariable Buffer3Scale,pos={460,440},size={85,15}, noproc,title="fit: ", frame=0, bodywidth=45, format="%4.3f"
+	SetVariable Buffer3Scale,pos={450,440},size={95,15}, noproc,title="fit: ", frame=0, bodywidth=55, format="%6.5f"
 	Setvariable Buffer3Scale, variable=root:Packages:Irena:ConcSerExtrap:Buffer3Scale, limits={0,2,0}, noedit=1, help={"Optimized buffer 3 scaling. "}
 	Checkbox FitSample3Conc, pos={420,420},size={76,14},title="Fit?", proc=IRB1_ConcSeriesCheckProc, variable=root:Packages:Irena:ConcSerExtrap:FitSample3Conc
 	Checkbox FitBuffer3Scale, pos={420,440},size={76,14},title="Fit?", proc=IRB1_ConcSeriesCheckProc, variable=root:Packages:Irena:ConcSerExtrap:FitBuffer3Scale
@@ -141,11 +141,11 @@ Function IRB1_ConcSerPanelFnct()
 	Setvariable Buffer4Name, variable=root:Packages:Irena:ConcSerExtrap:Buffer4Name
 	SetVariable InputSample4Conc,pos={255,520},size={150,15}, proc=IRB1_ConcSerSetVarProc,title="Sam4 Conc Inp = ", frame=1, bodywidth=50
 	Setvariable InputSample4Conc, variable=root:Packages:Irena:ConcSerExtrap:InputSample4Conc, limits={0,100,0}, format="%4.2f", help={"Estimated sample 4 concentration. "}
-	SetVariable Sample4Conc,pos={460,520},size={85,15}, noproc,title="fit: ", frame=0, bodywidth=45, format="%4.2f"
+	SetVariable Sample4Conc,pos={450,520},size={95,15}, noproc,title="fit: ", frame=0, bodywidth=55, format="%6.5f"
 	Setvariable Sample4Conc, variable=root:Packages:Irena:ConcSerExtrap:Sample4Conc, limits={0,100,0}, noedit=1
 	SetVariable InputBuffer4Scale,pos={255,540},size={150,15}, noproc,title="Buf 4 Conc Inp = ", frame=1, bodywidth=50, help={"Estimated buffer 4 scaling"}
 	Setvariable InputBuffer4Scale, variable=root:Packages:Irena:ConcSerExtrap:InputBuffer4Scale, limits={0,2,0}, format="%4.3f"
-	SetVariable Buffer4Scale,pos={460,540},size={85,15}, noproc,title="fit: ", frame=0, bodywidth=45, format="%4.3f"
+	SetVariable Buffer4Scale,pos={450,540},size={95,15}, noproc,title="fit: ", frame=0, bodywidth=55, format="%6.5f"
 	Setvariable Buffer4Scale, variable=root:Packages:Irena:ConcSerExtrap:Buffer4Scale, limits={0,2,0}, noedit=1, help={"Optimized buffer 4 scaling. "}
 	Checkbox FitSample4Conc, pos={420,520},size={76,14},title="Fit?", proc=IRB1_ConcSeriesCheckProc, variable=root:Packages:Irena:ConcSerExtrap:FitSample4Conc
 	Checkbox FitBuffer4Scale, pos={420,540},size={76,14},title="Fit?", proc=IRB1_ConcSeriesCheckProc, variable=root:Packages:Irena:ConcSerExtrap:FitBuffer4Scale
@@ -157,11 +157,11 @@ Function IRB1_ConcSerPanelFnct()
 	Setvariable Buffer5Name, variable=root:Packages:Irena:ConcSerExtrap:Buffer5Name
 	SetVariable InputSample5Conc,pos={255,620},size={150,15}, proc=IRB1_ConcSerSetVarProc,title="Sam5 Conc Inp = ", frame=1, bodywidth=50
 	Setvariable InputSample5Conc, variable=root:Packages:Irena:ConcSerExtrap:InputSample5Conc, limits={0,100,0}, format="%4.2f", help={"Estimated sample 5 concentration. "}
-	SetVariable Sample5Conc,pos={460,620},size={85,15}, noproc,title="fit: ", frame=0, bodywidth=45, format="%4.2f"
+	SetVariable Sample5Conc,pos={450,620},size={95,15}, noproc,title="fit: ", frame=0, bodywidth=55, format="%6.5f"
 	Setvariable Sample5Conc, variable=root:Packages:Irena:ConcSerExtrap:Sample5Conc, limits={0,100,0}, noedit=1, help={"Optimized sample 5 concentration. "}
 	SetVariable InputBuffer5Scale,pos={255,640},size={150,15}, noproc,title="Buf 5 Conc Inp = ", frame=1, bodywidth=50
 	Setvariable InputBuffer5Scale, variable=root:Packages:Irena:ConcSerExtrap:InputBuffer5Scale, limits={0,2,0}, format="%4.3f", help={"Estimated buffer 5 scaling"}
-	SetVariable Buffer5Scale,pos={460,640},size={85,15}, noproc,title="fit: ", frame=0, bodywidth=45, format="%4.3f"
+	SetVariable Buffer5Scale,pos={450,640},size={95,15}, noproc,title="fit: ", frame=0, bodywidth=55, format="%6.5f"
 	Setvariable Buffer5Scale, variable=root:Packages:Irena:ConcSerExtrap:Buffer5Scale, limits={0,2,0}, noedit=1, help={"Optimized buffer 5 scaling. "}
 	Checkbox FitSample5Conc, pos={420,620},size={76,14},title="Fit?", proc=IRB1_ConcSeriesCheckProc, variable=root:Packages:Irena:ConcSerExtrap:FitSample5Conc
 	Checkbox FitBuffer5Scale, pos={420,640},size={76,14},title="Fit?", proc=IRB1_ConcSeriesCheckProc, variable=root:Packages:Irena:ConcSerExtrap:FitBuffer5Scale
@@ -179,7 +179,8 @@ Function IRB1_ConcSerPanelFnct()
 
 	SetVariable CalculatedOutputFldrName,pos={560,700},size={400,15}, noproc,title="Output Sample Name", frame=1, help={"Name for output data"}
 	Setvariable CalculatedOutputFldrName, variable=root:Packages:Irena:ConcSerExtrap:CalculatedOutputFldrName
-	Button SaveDataButton,pos={700,730},size={190,20}, proc=IRB1_ConcSerButtonProc,title="Save Data", help={"Save extraaapolated data"}
+	Button NotebookOutput,pos={560,730},size={190,20}, proc=IRB1_ConcSerButtonProc,title="Record to Notebook", help={"Create record of results in notebook"}
+	Button SaveDataButton,pos={760,730},size={190,20}, proc=IRB1_ConcSerButtonProc,title="Save Data", help={"Save extrapolated data"}
 
 //
 //	///*** end of tabs... 
@@ -581,7 +582,7 @@ Function IRB1_ConcSerButtonProc(ba) : ButtonControl
 				IRB1_ConcSerAddDataToPlot(1)
 			endif
 			if(stringMatch(ba.ctrlName,"CalculateInputData"))
-				IRB1_ConcSerRecalculateData(1,0)
+				IRB1_ConcSerRecalculateData(1,0,1)
 				//add the data to plot
 				IRB1_ConcSerAddDataToPlot(2)
 				NVAR OptimizedPenalty 	= root:Packages:Irena:ConcSerExtrap:OptimizedPenalty
@@ -597,6 +598,11 @@ Function IRB1_ConcSerButtonProc(ba) : ButtonControl
 			if(stringMatch(ba.ctrlName,"SaveDataButton"))
 				IR1B_ConcSerSaveOutputData()
 			endif
+			if(stringMatch(ba.ctrlName,"NotebookOutput"))
+				IRB1_NotebookRecord()
+			endif
+			
+			
 			break
 		case -1: // control being killed
 			break
@@ -726,10 +732,14 @@ Function IRB1_ConcSerAddDataToPlot(WhichData)
 			Wave ExtrapolatedIntensity=root:Packages:Irena:ConcSerExtrap:ExtrapolatedIntensity
 			Wave ExtrapolatedQ=root:Packages:Irena:ConcSerExtrap:ExtrapolatedQ
 			Wave ExtrapolatedE=root:Packages:Irena:ConcSerExtrap:ExtrapolatedE
+			Wave FittingRangeMarker=root:Packages:Irena:ConcSerExtrap:FittingRangeMarker
+			Wave ExtensionRangeColor=root:Packages:Irena:ConcSerExtrap:ExtensionRangeColor
 			CheckDisplayed /W=IRB1_ConcSeriesPanel#LogLogDataDisplay $(NameOfWave(ExtrapolatedIntensity))
 			if(V_Flag==0)
 				AppendToGraph /W=IRB1_ConcSeriesPanel#LogLogDataDisplay /R ExtrapolatedIntensity vs ExtrapolatedQ
 			endif	
+			ModifyGraph /W=IRB1_ConcSeriesPanel#LogLogDataDisplay mode(ExtrapolatedIntensity)=4,zmrkNum(ExtrapolatedIntensity)={FittingRangeMarker}
+			ModifyGraph /W=IRB1_ConcSeriesPanel#LogLogDataDisplay msize(ExtrapolatedIntensity)=3, zColor(ExtrapolatedIntensity)={ExtensionRangeColor,0,1,PlanetEarth,0}
 		endif
 		if(WhichData>0)	
 			DoUpdate /W=IRB1_ConcSeriesPanel#LogLogDataDisplay
@@ -943,9 +953,10 @@ end
 ///**************************************************************************************************
 ///**************************************************************************************************
 
-Function IRB1_ConcSerRecalculateData(resetConcentrations,fittingData)
-	variable resetConcentrations, fittingData
+Function IRB1_ConcSerRecalculateData(resetConcentrations,fittingData, FullRange)
+	variable resetConcentrations, fittingData, FullRange
 	//this will recalculate original data into background and scale corrected data 
+	//FullRange = 1 means full Q range (to Q=0 mainly)
 	DFref oldDf= GetDataFolderDFR()
 	setDataFolder root:Packages:Irena:ConcSerExtrap
 	NVAR NumberOfConcentrations = root:Packages:Irena:ConcSerExtrap:NumberOfConcentrations
@@ -964,8 +975,13 @@ Function IRB1_ConcSerRecalculateData(resetConcentrations,fittingData)
 	variable MaxConc=max(Val1, Val2, Val3, Val4, Val5 )
 	variable i, startPoint, endPoint
 	Wave TempQ1=$("root:Packages:Irena:ConcSerExtrap:OrigSamQ"+num2str(1))
-	startPoint = BinarySearch(TempQ1, DataQstart )
-	endPoint = BinarySearch(TempQ1, DataQEnd)
+	if(FullRange)		//this calculates extended data to full Q range of the data.
+		startPoint = 0
+		endPoint = numpnts(TempQ1)-1
+	else
+		startPoint = BinarySearch(TempQ1, DataQstart )
+		endPoint = BinarySearch(TempQ1, DataQEnd)
+	endif
 	//CorrIntensity = Conc/ConcMax *(Iconc - BuffConc*Ibuff) 
 	For(i=1;i<=NumberOfConcentrations;i+=1)
 		Wave OrigInt=$("root:Packages:Irena:ConcSerExtrap:OrigSamIntensity"+num2str(i))
@@ -982,11 +998,11 @@ Function IRB1_ConcSerRecalculateData(resetConcentrations,fittingData)
 		endif
 		NVAR BufScale= $("root:Packages:Irena:ConcSerExtrap:Buffer"+num2str(i)+"Scale")
 		NVAR SampleConc= $("root:Packages:Irena:ConcSerExtrap:Sample"+num2str(i)+"Conc")
-		if(!fittingData)
-			Duplicate/O/R=[startPoint,endPoint] OrigInt, $("CorrectedIntensity"+num2str(i))
-			Duplicate/O/R=[startPoint,endPoint] OrigQ, $("CorrectedQ"+num2str(i))
-			Duplicate/O/R=[startPoint,endPoint] OrigE, $("CorrectedErr"+num2str(i))
-		endif
+		//if(!fittingData)this was causing point errors as sizes got out of sync somehow... 
+		Duplicate/O/R=[startPoint,endPoint] OrigInt, $("CorrectedIntensity"+num2str(i))
+		Duplicate/O/R=[startPoint,endPoint] OrigQ, $("CorrectedQ"+num2str(i))
+		Duplicate/O/R=[startPoint,endPoint] OrigE, $("CorrectedErr"+num2str(i))
+		//endif
 		Duplicate/Free/R=[startPoint,endPoint] OrigInt, IntCopy
 		Duplicate/Free/R=[startPoint,endPoint] OrigQ, QCopy
 		Duplicate/Free/R=[startPoint,endPoint] OrigE, ErrCopy
@@ -1011,13 +1027,13 @@ Function IRB1_ConcSerExtrapolate()
 	DFref oldDf= GetDataFolderDFR()
 	setDataFolder root:Packages:Irena:ConcSerExtrap
 	NVAR NConc = root:Packages:Irena:ConcSerExtrap:NumberOfConcentrations
-	IRB1_ConcSerRecalculateData(0,0)
+	IRB1_ConcSerRecalculateData(0,0,1)
 	
 	Wave Int1=$("root:Packages:Irena:ConcSerExtrap:CorrectedIntensity"+num2str(1))
 	Wave Q1=$("root:Packages:Irena:ConcSerExtrap:CorrectedQ"+num2str(1))
 	Wave E1=$("root:Packages:Irena:ConcSerExtrap:CorrectedErr"+num2str(1))
 
-	Duplicate/O Int1, ExtrapolatedIntensity
+	Duplicate/O Int1, ExtrapolatedIntensity, FittingRangeMarker, ExtensionRangeColor
 	Duplicate/O Q1, ExtrapolatedQ
 	Duplicate/O E1, ExtrapolatedE
 
@@ -1043,9 +1059,21 @@ Function IRB1_ConcSerExtrapolate()
 		ExtrapolatedIntensity[j] = W_coef[0]
 		ExtrapolatedE[j] = W_sigma[0]
 	endfor
-	//splice together low-q from this calculationand high-q from max concentration... 
+	//splice together low-q from this calculation and high-q from max concentration... 
 	Wave IntMaxC=$("root:Packages:Irena:ConcSerExtrap:CorrectedIntensity"+num2str(MaxConcIndx))
 	ExtrapolatedIntensity[RollOverPoint, ] = IntMaxC[p]
+	//need to create marker for fitting range
+	//these are for markers to show where we did fit the data. 
+	NVAR DataQEnd = root:Packages:Irena:ConcSerExtrap:DataQEnd
+	NVAR DataQstart = root:Packages:Irena:ConcSerExtrap:DataQstart
+	variable MarkerstartPoint, MarkerendPoint
+	MarkerstartPoint = BinarySearch(Q1, DataQstart )
+	MarkerendPoint = BinarySearch(Q1, DataQEnd)
+	FittingRangeMarker=NaN
+	ExtensionRangeColor = 0
+	FittingRangeMarker[MarkerstartPoint,MarkerendPoint]=8
+	FittingRangeMarker[MarkerstartPoint,MarkerendPoint]=8
+	ExtensionRangeColor[RollOverPoint, ] = 1
 	setDataFolder oldDf
 end
 
@@ -1143,7 +1171,7 @@ Function IRB1_ConcSerOptimizeParams()
 	else
 		print "No optimization requested using Input data only"
 	endif	
-	IRB1_ConcSerRecalculateData(0,0)
+	IRB1_ConcSerRecalculateData(0,0,1)
 	setDataFolder oldDf
 end
 
@@ -1173,7 +1201,7 @@ Function IRB1_ConcSerOptimizeMe(w,xw)
 		endif	
 	endfor
 	//calculate new data
-	IRB1_ConcSerRecalculateData(0,1)
+	IRB1_ConcSerRecalculateData(0,1,0)
 	//calculate & return penalty
 	variable penalty = IRB1_ConcSerCalcMatchQuality()
 	//print xw
@@ -1402,6 +1430,33 @@ Function IRB1_ConcSerSetVarProc(sva) : SetVariableControl
 					InputBuffer5Scale = 1
 				endif
 			endif
+			string csrWavname
+			if(StringMatch(sva.ctrlName, "DataQEnd" ))
+				Wave/Z Int1 = root:Packages:Irena:ConcSerExtrap:OrigSamIntensity1
+				Wave/Z QWv1 = root:Packages:Irena:ConcSerExtrap:OrigSamQ1
+				CheckDisplayed /W=IRB1_ConcSeriesPanel#LogLogDataDisplay Int1
+				if(V_Flag)
+					csrWavname = CsrWave(B , "IRB1_ConcSeriesPanel#LogLogDataDisplay" , 1)
+					if(strlen(csrWavname)>0)
+						Cursor /W=IRB1_ConcSeriesPanel#LogLogDataDisplay B  $(csrWavname)  BinarySearch(QWv1, dval) 
+					else
+						Cursor /W=IRB1_ConcSeriesPanel#LogLogDataDisplay B  OrigSamIntensity1  BinarySearch(QWv1, dval) 
+					endif
+				endif
+			endif
+			if(StringMatch(sva.ctrlName, "DataQstart" ))
+				Wave/Z Int1 = root:Packages:Irena:ConcSerExtrap:OrigSamIntensity1
+				Wave/Z QWv1 = root:Packages:Irena:ConcSerExtrap:OrigSamQ1
+				CheckDisplayed /W=IRB1_ConcSeriesPanel#LogLogDataDisplay Int1
+				if(V_Flag)
+					csrWavname = CsrWave(A , "IRB1_ConcSeriesPanel#LogLogDataDisplay" , 1)
+					if(strlen(csrWavname)>0)
+						Cursor /W=IRB1_ConcSeriesPanel#LogLogDataDisplay A  $(csrWavname)  BinarySearch(QWv1, dval) 
+					else
+						Cursor /W=IRB1_ConcSeriesPanel#LogLogDataDisplay A  OrigSamIntensity1  BinarySearch(QWv1, dval) 
+					endif
+				endif
+			endif
 			
 			break
 		case -1: // control being killed
@@ -1516,6 +1571,80 @@ Function IRB1_ConcSeriesAppendOneDataSet(FolderNameStr)
 end
 //**********************************************************************************************************
 
+static Function IRB1_NotebookRecord()
+
+	IR1_CreateResultsNbk()
+	SVAR nbl=root:Packages:Irena:ResultsNotebookName
+	DoWindow/F $nbl
+
+	
+	//DFref oldDf= GetDataFolderDFR()
+	IR1_AppendAnyText("\r Results of Concentration Series Extrapolation\r",1)	
+	IR1_AppendAnyText("Date & time: \t"+Date()+"   "+time(),0)	
+	IR1_AppendAnyText("  ",0)
+
+	variable i
+	string TempStr
+	NVAR NumberOfConcentrations = root:Packages:Irena:ConcSerExtrap:NumberOfConcentrations
+	NVAR UseSameBufferForAll = root:Packages:Irena:ConcSerExtrap:UseSameBufferForAll
+	For(i=1;i<=NumberOfConcentrations;i+=1)
+		SVAR SampleName = $("root:Packages:Irena:ConcSerExtrap:Sample"+num2str(i)+"NameFull")
+		if(UseSameBufferForAll)
+			SVAR BufferName = $("root:Packages:Irena:ConcSerExtrap:Buffer"+num2str(1)+"NameFull")
+		else
+			SVAR BufferName = $("root:Packages:Irena:ConcSerExtrap:Buffer"+num2str(i)+"NameFull")
+		endif
+		NVAR InputBufferScale = $("root:Packages:Irena:ConcSerExtrap:InputBuffer"+num2str(i)+"Scale")
+		NVAR FittedBufferScale = $("root:Packages:Irena:ConcSerExtrap:Buffer"+num2str(i)+"Scale")
+		NVAR InputSampleConc = $("root:Packages:Irena:ConcSerExtrap:InputSample"+num2str(i)+"Conc")
+		NVAR FittedSampleConc = $("root:Packages:Irena:ConcSerExtrap:Sample"+num2str(i)+"Conc")
+		NVAR FittingSampleConc = $("root:Packages:Irena:ConcSerExtrap:FitSample"+num2str(i)+"Conc")
+		NVAR FittingBufferScale = $("root:Packages:Irena:ConcSerExtrap:FitBuffer"+num2str(i)+"Scale")
+		//record to notebook
+		IR1_AppendAnyText("Sample / Buffer "+num2str(i),0)
+		IR1_AppendAnyText("Sample name   \t\t:  \t"+SampleName,0)
+		IR1_AppendAnyText("Buffer name    \t\t\t:  \t"+BufferName,0)
+		IR1_AppendAnyText("Input sample conc.  \t\t= "+num2str(InputSampleConc),0)
+		IR1_AppendAnyText("Input buffer scale  \t\t= "+num2str(InputBufferScale),0)
+		if(FittingSampleConc)
+			TempStr =  "Yes" 
+		else
+		 	TempStr =  "No"
+		endif
+		IR1_AppendAnyText("Fitting sample conc.  \t:\t"+TempStr,0)
+		if(FittingBufferScale)
+			TempStr =  "Yes" 
+		else
+		 	TempStr =  "No"
+		endif
+		IR1_AppendAnyText("Fitting buffer scale   \t\t:\t"+TempStr,0)
+		IR1_AppendAnyText("Final sample conc.   \t\t= "+num2str(FittedSampleConc),0)
+		IR1_AppendAnyText("Final buffer scale   \t\t= "+num2str(FittedBufferScale),0)
+		IR1_AppendAnyText("  ",0)
+	endfor	
+	SVAR CalculatedOutputFldrName = root:Packages:Irena:ConcSerExtrap:CalculatedOutputFldrName
+	IR1_AppendAnyText("Save data folder set to  \t:  \t"+CalculatedOutputFldrName,0)
+	IR1_AppendAnyText("  ",0)
+	IN2G_DuplGraphInPanelSubwndw("IRB1_ConcSeriesPanel#LogLogDataDisplay")	//duplicates the graph
+	DoWIndow LogLogDataDisplay
+	if(V_Flag)
+		//succesful, need to scale it 
+		MoveWindow /W=LogLogDataDisplay 20, 20, 620, 620
+		string bucket11="LogLogDataDisplay"
+		Notebook $nbl selection={endOfFile, endOfFile}
+		Notebook $nbl scaling={50,50}, frame=1, picture={$bucket11,1,1}
+		IR1_AppendAnyText("  ",0)
+		IR1_AppendAnyText("Results of Concentration series extrapolation",0)
+		IR1_AppendAnyText("Dotted line - extrapolated data to 0 concentration",0)
+		IR1_AppendAnyText("Circles - points used for optimization/fitting",0)
+		IR1_AppendAnyText("Black - points calculated from extrapolation",0)
+		IR1_AppendAnyText("Blue  - points from highest conc. scaled as needed",0)
+		IR1_AppendAnyText("**********************************************************",0)
+		IR1_AppendAnyText("  ",0)
+		KillWindow/Z LogLogDataDisplay
+	endif
+	
+end
 //**********************************************************************************************************
 //**********************************************************************************************************
 

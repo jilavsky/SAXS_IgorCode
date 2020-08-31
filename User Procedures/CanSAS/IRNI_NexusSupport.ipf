@@ -775,7 +775,7 @@ static Function NEXUS_ReadNXparameters(PathToNewData)
 end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-static Function/T NEXUS_ImportAFile(FilePathName,Filename)		//imports any Nexus (HDF5) file and returns path to it. 
+Function/T NEXUS_ImportAFile(FilePathName,Filename)		//imports any Nexus (HDF5) file and returns path to it. 
 		string FilePathName,Filename
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
@@ -1934,7 +1934,8 @@ static Function NEXUS_WriteNx2DCanSASData(SampleName, Iwv, [dIwv, Qwv, Mask, Qx,
 	endif
 	// Save wave as dataset
 	string Inote=note(Iwv)
-	HDF5SaveData /O /Z /GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1} Iwv, fileID, NewGroupName+"/I"
+	HDF5SaveData /O /TRAN=1 /Z /GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1} Iwv, fileID, NewGroupName+"/I"
+	//  /TRAN=1 needeed so the orientation of images is same as when saved from Python and as seen in HDFview
 	NEXUS_HdfSaveAttrib("units","1/cm",NewGroupName+"/I", fileID)
 	//store out note in the same place as I is?
 	NEXUS_WriteWaveNote(fileID,NewGroupName,Inote)
@@ -1945,15 +1946,15 @@ static Function NEXUS_WriteNx2DCanSASData(SampleName, Iwv, [dIwv, Qwv, Mask, Qx,
 	//Now deal with Q axes...
 	if(useQwv)
 		NEXUS_HdfSaveAttrib("axes","Q",NewGroupName+"/I", fileID)
-		HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   Qwv , fileID, NewGroupName+"/Q"
+		HDF5SaveData /O  /TRAN=1 /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   Qwv , fileID, NewGroupName+"/Q"
 		NEXUS_HdfSaveAttrib("units","1/angstrom",NewGroupName+"/Q", fileID)
 	else		//UIse Qx, Qy, Qz
 		NEXUS_HdfSaveAttrib("axes","Qx,Qy",NewGroupName+"/I", fileID)
-		HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   Qx , fileID, NewGroupName+"/Qx"
-		HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   Qy , fileID, NewGroupName+"/Qy"
+		HDF5SaveData /O  /TRAN=1 /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   Qx , fileID, NewGroupName+"/Qx"
+		HDF5SaveData /O /TRAN=1 /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   Qy , fileID, NewGroupName+"/Qy"
 		Duplicate/Free Qx, Qz
 		Qz=0
-		HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   Qz , fileID, NewGroupName+"/Qz"
+		HDF5SaveData /O /TRAN=1 /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   Qz , fileID, NewGroupName+"/Qz"
 		NEXUS_HdfSaveAttrib("units","1/angstrom",NewGroupName+"/Qx", fileID)
 		NEXUS_HdfSaveAttrib("units","1/angstrom",NewGroupName+"/Qy", fileID)
 		NEXUS_HdfSaveAttrib("units","1/angstrom",NewGroupName+"/Qz", fileID)
@@ -1975,12 +1976,12 @@ static Function NEXUS_WriteNx2DCanSASData(SampleName, Iwv, [dIwv, Qwv, Mask, Qx,
 	//Now deal with mask. 
 	if(useMask)
 		//note, mask is 1 when the point is removed, 0 when is used. 
-		HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   Mask, fileID, NewGroupName+"/Mask"
+		HDF5SaveData /O /TRAN=1 /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   Mask, fileID, NewGroupName+"/Mask"
 	endif
 	//deal with unibnnedQxy for rebinned data
 	if(useUnbinnedQxy)
-		HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   UnbinnedQx, fileID, NewGroupName+"/UnbinnedQx"
-		HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   UnbinnedQy, fileID, NewGroupName+"/UnbinnedQy"
+		HDF5SaveData /O /TRAN=1 /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   UnbinnedQx, fileID, NewGroupName+"/UnbinnedQx"
+		HDF5SaveData /O /TRAN=1 /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   UnbinnedQy, fileID, NewGroupName+"/UnbinnedQy"
 	endif
 	//add instruemnt data...
 	string InstrumentPathStr=RootGroupName+"/"+"instrument"
@@ -2824,12 +2825,7 @@ static Function/T NEXUS_ReadOne1DcanSASDataset(PathToDataSet, DataTitleStr, sour
 	string IName, QName, QdevName, IdevName, tmpStr, tmpFldrName
 
 	NewDataFolder/O/S root:ImportedData
-//	//need to create location using File name, if the file contains more than one data set...
-//	if(FoundSasEntries>1)
-//		tmpStr=IN2G_CreateUserName((RemoveEnding(RemoveListItem(ItemsInList(sourceFileName,".")-1,sourceFileName,"."),".")),28,0,11)
-//		NewDataFolder/O/S $("root:ImportedData:"+PossiblyQUoteName(CleanupName(tmpStr,1)))			//use file name as input
-//	endif
-//	//create place for data
+	//create place for data
 	string tmopFlrdName=IN2G_CreateUserName(IN2G_RemoveExtraQuote(DataTitleStr,1,1),28, 0, 11)
 	NewDataFolder/O/S $(tmopFlrdName)
 	//need to add one more layer and in this case, it is the last item in the path
@@ -3255,6 +3251,10 @@ FUnction/S NEXUS_Read_Sample(RawFolderWithData)
 		setDataFolder $(RawFolderWithData+"entry:sample:")	
 		StringWithData = NEXUS_Read_CreateLocalList()
 	endif
+	if(DataFolderExists(RawFolderWithData+"sample:"))
+		setDataFolder $(RawFolderWithData+"sample:")	
+		StringWithData = NEXUS_Read_CreateLocalList()
+	endif
 	setDataFolder OldDf
 	return StringWIthData	
 end
@@ -3273,6 +3273,9 @@ FUnction/S NEXUS_Read_User(RawFolderWithData)
 		StringWithData = NEXUS_Read_CreateLocalList()
 	elseif(DataFolderExists(RawFolderWithData+"entry:contact:"))
 		setDataFolder $(RawFolderWithData+"entry:contact:")	
+		StringWithData = NEXUS_Read_CreateLocalList()
+	elseif(DataFolderExists(RawFolderWithData+"user:"))
+		setDataFolder $(RawFolderWithData+"user:")	
 		StringWithData = NEXUS_Read_CreateLocalList()
 	endif
 	setDataFolder OldDf
@@ -3295,12 +3298,32 @@ FUnction/S NEXUS_Read_Instrument(RawFolderWithData)
 		setDataFolder $(RawFolderWithData+"entry:instrument:")
 		StringWithData = NEXUS_Read_CreateLocalList()
 	endif
+	if(DataFolderExists(RawFolderWithData+"instrument:"))
+		setDataFolder $(RawFolderWithData+"instrument:")
+		StringWithData = NEXUS_Read_CreateLocalList()
+	endif
 	if(DataFolderExists(RawFolderWithData+"entry:instrument:monochromator:"))
 		setDataFolder $(RawFolderWithData+"entry:instrument:monochromator:")
 		StringWithData += NEXUS_Read_CreateLocalList()
 	endif
+	if(DataFolderExists(RawFolderWithData+"instrument:monochromator:"))
+		setDataFolder $(RawFolderWithData+"instrument:monochromator:")
+		StringWithData += NEXUS_Read_CreateLocalList()
+	endif
 	if(DataFolderExists(RawFolderWithData+"entry:instrument:source:"))
 		setDataFolder $(RawFolderWithData+"entry:instrument:source:")
+		StringWithData += NEXUS_Read_CreateLocalList()
+	endif
+	if(DataFolderExists(RawFolderWithData+"instrument:source:"))
+		setDataFolder $(RawFolderWithData+"instrument:source:")
+		StringWithData += NEXUS_Read_CreateLocalList()
+	endif
+	if(DataFolderExists(RawFolderWithData+"entry:instrument:detector:"))
+		setDataFolder $(RawFolderWithData+"entry:instrument:detector:")
+		StringWithData += NEXUS_Read_CreateLocalList()
+	endif
+	if(DataFolderExists(RawFolderWithData+"instrument:detector:"))
+		setDataFolder $(RawFolderWithData+"instrument:detector:")
 		StringWithData += NEXUS_Read_CreateLocalList()
 	endif
 	setDataFolder OldDf

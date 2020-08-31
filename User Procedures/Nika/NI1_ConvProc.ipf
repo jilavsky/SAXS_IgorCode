@@ -3724,7 +3724,7 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	SetVariable SampleNameMatchStr,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:SampleNameMatchStr, help={"Gegula expression used to select some of the fle name above."}
 	TitleBox Info2 title="\Zr100Sample name [controls are on Save tab] :",pos={10,240},frame=0,fstyle=2, fixedSize=1,size={350,20}, fColor=(1,12815,52428)
 	SetVariable UserSampleName,pos={10,253},size={410,18},proc=NI1A_PanelSetVarProc,title=" ", noedit=1,frame=0
-	SetVariable UserSampleName,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:UserSampleName, help={"Sampe name build based on controls in \"Save\" tab"}
+	SetVariable UserSampleName,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:UserSampleName, help={"Sample name build based on controls in \"Save\" tab"}
 	SetVariable UserSampleName styledText=1,fstyle=1,valueColor=(65535,0,0)
 	
 //tab controls here
@@ -4894,7 +4894,8 @@ Function NI1A_TabProc(ctrlName,tabNum)
 	CheckBox Use2DdataName,disable= !((tabNum==7)||(tabNum==7&&ExpCalib2DData&&!AppendToNexusFile)), win=NI1A_Convert2Dto1DPanel
 	variable disableFnct, disableStr
 	disableFnct = !UseSampleNameFnct || !((tabNum==7)||(tabNum==7&&ExpCalib2DData&&!AppendToNexusFile))
-	disableStr = Use2DdataName || UseSampleNameFnct || !((tabNum==4&&UseSectors)||(tabNum==7))
+	//disableStr = Use2DdataName || UseSampleNameFnct || !((tabNum==4&&UseSectors)||(tabNum==7))
+	disableStr = Use2DdataName || UseSampleNameFnct || !(tabNum==7)
 	SetVariable OutputFileName,disable=(disableStr), win=NI1A_Convert2Dto1DPanel
 	SetVariable SampleNameFnct,disable=(disableFnct), win=NI1A_Convert2Dto1DPanel
 

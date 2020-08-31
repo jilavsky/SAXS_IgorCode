@@ -481,6 +481,8 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		make/d/o/n=(128,128) $(NewWaveName)
 		wave tempp=$(NewWaveName)
 		tempp=Loadedwave0
+		NewNote+="DataFileName="+FileNameToLoad+";"
+		NewNote+="DataFileType="+"ascii128x128"+";"
 		KillWaves Loadedwave0
 	elseif(cmpstr(FileType,"FITS")==0)
 		FileNameToLoad= FileName
@@ -911,6 +913,8 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		//import CanSAS file format and convert to proper calibrated data.
 		FileNameToLoad = FileName
 		NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)		
+		NewNote+="DataFileName="+FileNameToLoad+";"
+		NewNote+="DataFileType="+"canSAS/Nexus"+";"
 	elseif(cmpstr(FileType,"Nexus")==0)
 		FileNameToLoad = FileName
 		NEXUS_NexusNXsasDataReader(PathName, FileNameToLoad)
@@ -1300,7 +1304,11 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
        Execute("ImportedImageHookFunction("+NewWaveName+")")
    endif
 	wave loadedwv=$(NewWaveName)
-	NewNote+=";"+"DataFilePath="+S_path+";"+note(loadedwv)+";"
+	NewNote+= "DataFilePath="+S_path+";"
+	string TempTimeStr
+	sprintf TempTimeStr, "%d", datetime
+	NewNote+= "DateTimeComp="+TempTimeStr+";"
+	NewNote+=  note(loadedwv)+";"
 	if(cmpstr(FileType,"Nexus")==0)
 		NVAR NX_Index0Value = root:Packages:Irena_Nexus:NX_Index0Value
 		NVAR NX_Index0Max = root:Packages:Irena_Nexus:NX_Index0Max
@@ -3915,33 +3923,40 @@ End
 Function NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)
 	string PathName, FileNameToLoad, NewWaveName
 	
+	//this part of the code reads content by grabbing it from the file directly. 
 	string FileContent=NI1_ReadNexusCanSAS(PathName, FileNameToLoad)
 	variable fileID, UsedQXY, UsedAzimAngle, UnbinnedQx, UnbinnedQy, HaveMask, HaveErrors, i
-	string TempStr, TempStr1
+	string TempStr, TempStr1, TempQWaveList
+	TempQWaveList = ""
 	UsedQXY = 0
 	UsedAzimAngle = 0
 	string QUnits = "1/Angstrom"
-	//Abort "Need finishing NI1_ReadCalibCanSASNexusFile"
+	print "Need finishing NI1_ReadCalibCanSASNexusFile"
+	print "We need to add check on if data are produced by Nika or python, Nika images are not transpozed..."
 	if (stringmatch(NewWaveName,"CCDImageToConvert"))
 			//DataIdentification = "DataWv:"+TempDataPath+";"+"QWv:"+TempQPath+";"+"IdevWv:"+TempIdevPath+";"+"MaskWv:"+TempMaskPath+";"
 			//  DataWv:/sasentry01/sasdata01/I;QWv:/sasentry01/sasdata01/Q;IdevWv:;MaskWv:;
 			HDF5OpenFile/P=$(PathName)/R fileID as FileNameToLoad
 			//load data - Intensity
 			TempStr = StringByKey("DataWv", FileContent, ":", ",")
-			HDF5LoadData /N=CCDImageToConvert  /O  fileID , TempStr 
-			//load data - Qvector
+			HDF5LoadData /N=CCDImageToConvert /TRAN=1  /O  fileID , TempStr 			//  /TRAN=1 makes orientation same as in HDVView, true for all but Nika 2D data. Or export Nika transposed? 
+			Wave CCDImageToConvert
+ 			//load data - Qvector
 			TempStr = StringByKey("QWv", FileContent, ":", ",")
 			if(ItemsInList(TempStr)<2)	//only Q wave
-				HDF5LoadData /N=Q2Dwave  /O  fileID , TempStr 
+				HDF5LoadData /N=Q2Dwave /TRAN=1  /O  fileID , TempStr 
 			else		//assume Qx, Qy, optionally Qz
 				For(i=0;i<ItemsInList(TempStr);i+=1)
 					TempStr1=stringfromList(i,TempStr)
 					if(stringmatch(TempStr1,"*Qx"))
 						HDF5LoadData /N=Qx2D  /O  fileID , TempStr1 
+						TempQWaveList+="Qx"
 					elseif(stringmatch(TempStr1,"*Qy"))
 						HDF5LoadData /N=Qy2D  /O  fileID , TempStr1 
+						TempQWaveList+="Qy"
 					elseif(stringmatch(TempStr1,"*Qz"))
 						HDF5LoadData /N=Qz2D  /O  fileID , TempStr1 
+						TempQWaveList+="Qz"
 					endif
 				endfor
 				UsedQXY=1	
@@ -3949,29 +3964,29 @@ Function NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)
 			QUnits =  StringByKey("QUnits", FileContent, ":", ",")
 			TempStr = StringByKey("IdevWv", FileContent, ":", ",")
 			if(strlen(TempStr)>2)	//only Q wave
-				HDF5LoadData /N=CCDImageToConvert_Errs  /O  fileID , TempStr 
+				HDF5LoadData /N=CCDImageToConvert_Errs  /TRAN=1 /O  fileID , TempStr 
 				HaveErrors=1
 			endif
 			TempStr = StringByKey("MaskWv", FileContent, ":", ",")
 			if(strlen(TempStr)>2)	//only Q wave
-				HDF5LoadData /N=M_ROIMask  /O  fileID , TempStr 
+				HDF5LoadData /N=M_ROIMask  /TRAN=1 /O  fileID , TempStr 
 				Wave M_ROIMask
 				M_ROIMask = !M_ROIMask		//again, opposite logic for Nexus and Igor. 
 				HaveMask=1
 			endif
 			TempStr = StringByKey("AzimAngles", FileContent, ":", ",")
 			if(strlen(TempStr)>2)	//Azimuthal wave exists
-				HDF5LoadData /N=AnglesWave  /O  fileID , TempStr 
+				HDF5LoadData /N=AnglesWave  /TRAN=1 /O  fileID , TempStr 
 				UsedAzimAngle=1
 			endif
 			TempStr = StringByKey("UnbinnedQx", FileContent, ":", ",")
 			if(strlen(TempStr)>2)	//Original Qx vector exists
-				HDF5LoadData /N=UnbinnedQxW  /O  fileID , TempStr 
+				HDF5LoadData /N=UnbinnedQxW  /TRAN=1 /O  fileID , TempStr 
 				UnbinnedQx=1
 			endif
 			TempStr = StringByKey("UnbinnedQy", FileContent, ":", ",")
 			if(strlen(TempStr)>2)	//Original Qy vector exists
-				HDF5LoadData /N=UnbinnedQyW  /O  fileID , TempStr 
+				HDF5LoadData /N=UnbinnedQyW  /TRAN=1 /O  fileID , TempStr 
 				UnbinnedQy=1
 			endif
 			HDF5CloseFile fileID  
@@ -3982,6 +3997,10 @@ Function NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)
 			NVAR ReverseBinnedData=root:Packages:Convert2Dto1D:ReverseBinnedData
 			NVAR BeamCenterX = root:Packages:Convert2Dto1D:BeamCenterX
 			NVAR BeamCenterY = root:Packages:Convert2Dto1D:BeamCenterY
+			variable QxIndex, QyIndex
+			//add this if exists: Qx_indices:0;Qy_indices:1;
+			QxIndex =  NumberByKey("Qx_indices", FileContent, ":", ",")
+			QyIndex =  NumberByKey("Qy_indices", FileContent, ":", ",")
 			if(UsedQXY)
 				Wave Qx2D
 				Wave Qy2D
@@ -3990,6 +4009,30 @@ Function NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)
 					Duplicate/Free Qy2D, Qz2D
 					Qz2D = 0
 				endif
+				//now, these Qx, Qy loaded here as Qx2D and Qy2D should really be vectors per definition. They could also be 2D images with Qx, Qy, and Qz...
+				if(WaveDims(Qx2D)<2)	//assume the others follow or this makes no sense...
+					reverse Qx2D /D=rQx2D		//I think this is related to transpising the above images to make them same orientation as in Python. 
+					reverse Qy2D /D=rQy2D
+					Wave CCDImageToConvert
+					Duplicate/Free CCDImageToConvert, tempQx2D, tempQy2D, tempQz2D
+					//if(stringMatch(TempQWaveList,"QyQx"))
+					if(QxIndex==0 && QyIndex==1)
+						tempQx2D[][] = rQx2D[q]
+						tempQy2D[][] = rQy2D[p]
+						tempQz2D[][] = 0
+					elseif(QxIndex==1 && QyIndex==0)
+						tempQx2D[][] = rQx2D[p]
+						tempQy2D[][] = rQy2D[q]
+						tempQz2D[][] = 0
+					else
+						Abort "Cannot assign Qx and Qy properly in NI1_ReadCalibCanSASNexusFile"
+					endif
+					Duplicate/O tempQx2D, Qx2D
+					Duplicate/O tempQy2D, Qy2D
+					Duplicate/O tempQz2D, Qz2D
+				endif
+				
+				
 				//convert Q in appropriate units...
 				strswitch(QUnits)	
 					case "1/Angstrom":	
@@ -4019,6 +4062,29 @@ Function NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)
 				Wavestats/Q Q2DWave
 				BeamCenterX = V_minRowLoc
 		 		BeamCenterY = V_minColLoc
+		 		//now we need to deal with metadata. This is stupid, but lets use 1D system where data are loaded in Igor and pouched from Igor
+ 				string NewFileDataLocation = NEXUS_ImportAFile(PathName, FileNameToLoad)			//import file as HFD5 in Igor 
+				if(strlen(NewFileDataLocation)<1)
+					Abort "Import of the data failed"
+				else
+					NewFileDataLocation+=":"						//needs ending ":" and it is not there...
+				endif
+				TempStr = StringByKey("sasentryGroup", FileContent, ":", ",")				//sasdata group name /sasentry/sasdata/
+				//TempStr = ReplaceString("/",(TempStr[1,strlen(TempStr)-1]),",")			//sasentry/sasdata
+				TempStr = (TempStr[1,strlen(TempStr)-1])											//sasentry/sasdata
+				TempStr = StringFromList(0,TempStr,"/")											//sasdata group name
+				string OldDf=GetDataFolder(1)
+				string IPPathToMetadata = NewFileDataLocation+TempStr+":"
+				//setDataFolder IPPathToMetadata
+				string StringWithInstrumentData 	= NEXUS_Read_Instrument(IPPathToMetadata)	
+				string StringWithUserData 			= NEXUS_Read_User(IPPathToMetadata)	
+				string StringWithSampleData 		= NEXUS_Read_Sample(IPPathToMetadata)	
+				String Metadata = "DataName="+UserSampleName+";"
+				Metadata += StringWithSampleData+StringWithUserData+StringWithInstrumentData
+				if(strlen(Metadata)>1)
+					note/NOCR CCDImageToConvert, "NEXUS_MetadataStartHere;"+Metadata+"NEXUS_MetadataEndHere"
+				endif
+				KillDataFolder IPPathToMetadata
 			else		//used just Q, need to create AzimuthalWave
 				Wave Q2Dwave
 				//Wave Qvector
@@ -4080,7 +4146,7 @@ Function NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)
 			HDF5OpenFile/P=$(PathName)/R fileID as FileNameToLoad
 			//load data - Intensity
 			TempStr = StringByKey("DataWv", FileContent, ":", ",")
-			HDF5LoadData /N=OriginalCCD  /O  fileID , TempStr 
+			HDF5LoadData /N=OriginalCCD /TRAN=1  /O  fileID , TempStr 
 			HDF5CloseFile fileID  
 	else
 		Abort "this should not really happen, these are calibrated data and no other image is appropriate"
@@ -4175,23 +4241,27 @@ Function/S NI1_ReadNexusCanSAS(PathName, FileNameToLoad)
 	endif
 	HDF5ListGroup /F /R /TYPE=1  /Z fileID , "/"
 	ListOfGroups = S_HDF5ListGroup
-	string GroupName, SignalNameAtrr, QNamesAtrr, tempGroupName
+	string GroupName, SignalNameAtrr, QNamesAtrr, tempGroupName, sasentryGroup
 	For (i=0;i<ItemsInList(ListOfGroups);i+=1)
-		AttribList = NI1_HdfReadAllAttributes(fileID, stringfromlist(i,ListOfGroups),0)
 		GroupName = stringfromlist(i,ListOfGroups)
-		if(stringMatch(StringByKey("NX_class", AttribList),"NXdata") && stringMatch(StringByKey("canSAS_class", AttribList),"SASdata"))	
-			// skip version check and hope for best. && stringMatch(StringByKey("canSAS_version", AttribList),"0.1"))
-			PathToData = stringfromlist(i,ListOfGroups)
-			//print "Found location of data : " + PathToData
-			//print AttribList
-			//   Found location of data : /GC_SRM3600_0125/_2DCalibrated
-			//  NX_class:NXdata;canSAS_class:SASdata;canSAS_version:1.0;signal:I;canSAS_name:GC_SRM3600_0125;Q_indices:0,1;I_axes:Q,Q;
-			HDF5ListGroup /F /TYPE=2  /Z fileID , PathToData
-			ListOfDataSets = S_HDF5ListGroup
-			TitleOfData=stringByKey("title",AttribList)
-			if(strlen(TitleOfData)<1)	//no title in the file...
+		AttribList = NI1_HdfReadAllAttributes(fileID, GroupName,0)
+		if(stringMatch(StringByKey("NX_class", AttribList),"NXentry") && stringMatch(StringByKey("canSAS_class", AttribList),"SASentry"))
+			//this is sasentry here... need to get title from here as that is location where it should be... 
+			sasentryGroup = GroupName
+			HDF5LoadData/Z/O/Q/N=TempWvName fileID , GroupName+"/title"
+			Wave/T/Z TempWvName
+			if(WaveExists(TempWvName))
+				TitleOfData = TempWvName[0]
+			//elseif
+				//TitleOfData=stringByKey("title",AttribList)
+			elseif(strlen(TitleOfData)<1)	//no title in the file...
 				TitleOfData = stringFromList(0,FileNameToLoad,".")
 			endif
+		elseif(stringMatch(StringByKey("NX_class", AttribList),"NXdata") && stringMatch(StringByKey("canSAS_class", AttribList),"SASdata"))	
+			//this is sasData with some data in it... 
+			PathToData = stringfromlist(i,ListOfGroups)
+			HDF5ListGroup /F /TYPE=2  /Z fileID , PathToData
+			ListOfDataSets = S_HDF5ListGroup
 			SignalNameAtrr=stringByKey("signal",AttribList)
 			QNamesAtrr=stringByKey("I_axes",AttribList)
 			TempDataPath = RemoveEnding(GrepList(ListOfDataSets, "I$",0,";"), ";") 
@@ -4210,7 +4280,7 @@ Function/S NI1_ReadNexusCanSAS(PathName, FileNameToLoad)
 					tempStrUnits = NI1_HdfReadAllAttributes(fileID, tempStr65,1)			
 					QUnits = StringByKey("units", tempStrUnits, ":", ";")
 				endif
-			elseif(StringMatch(QNamesAtrr, "Qx,Qy" ))
+			elseif(StringMatch(QNamesAtrr, "Qx,Qy" )||StringMatch(QNamesAtrr, "Qy,Qx" ))
 					tempStr65 = RemoveEnding(GrepList(ListOfDataSets, "Qx$",0,";"), ";")
 					TempQPath = tempStr65+";"
 					TempQPath += RemoveEnding(GrepList(ListOfDataSets, "Qy$",0,";"), ";")+";"
@@ -4222,9 +4292,13 @@ Function/S NI1_ReadNexusCanSAS(PathName, FileNameToLoad)
 			TempMaskPath =   RemoveEnding(GrepList(ListOfDataSets, "Mask",0,";"), ";") 
 			TempIdevPath =   RemoveEnding(GrepList(ListOfDataSets, "Idev",0,";"), ";") 
 
-			DataIdentification = "DataWv:"+TempDataPath+","+"QWv:"+TempQPath+","+"IdevWv:"+TempIdevPath+","
-			DataIdentification += "MaskWv:"+TempMaskPath+","+"AzimAngles:"+TempAzAPath+","+"QUnits:"+QUnits+","
+			DataIdentification = "sasentryGroup:"+sasentryGroup+","
 			DataIdentification += "TitleOfData:"+TitleOfData+"," 
+			DataIdentification += "DataWv:"+TempDataPath+","+"QWv:"+TempQPath+","+"IdevWv:"+TempIdevPath+","
+			DataIdentification += "MaskWv:"+TempMaskPath+","+"AzimAngles:"+TempAzAPath+","+"QUnits:"+QUnits+","
+			//add this if exists: Qx_indices:0;Qy_indices:1;
+			DataIdentification += "Qx_indices:"+StringByKey("Qx_indices", AttribList, ":", ";")+"," 
+			DataIdentification += "Qy_indices:"+StringByKey("Qy_indices", AttribList, ":", ";")+"," 
 			//DataIdentification += "UnbinnedQx:"+OrigQxPath+","+"UnbinnedQy:"+OrigQyPath+","
 			break
 									//			For(j=0;j<ItemsInList(ListOfDataSets);j+=1)
@@ -4299,7 +4373,17 @@ static Function/S NI1_HdfReadAllAttributes(fileID, Location, isDataSet)
 		Wave  attribValue
 		if(WaveType(attribValue ,1)==2)
 			Wave/T  attribValueT=attribValue
-			KeyWordAttribsList+=stringfromlist(i,ListofAttributesNames)+":"+attribValueT[0]+";"
+			string TempKey=""
+			if(numpnts(attribValueT)>1)
+				variable j
+				For(j=0;j<numpnts(attribValueT);j+=1)
+					TempKey += attribValueT[j]+","
+				endfor 
+				TempKey=RemoveEnding(TempKey, ",")
+			else
+				TempKey = attribValueT[0]
+			endif
+			KeyWordAttribsList+=stringfromlist(i,ListofAttributesNames)+":"+TempKey+";"
 		else
 			KeyWordAttribsList+=stringfromlist(i,ListofAttributesNames)+":"+num2str(attribValue[0])+";"
 		endif

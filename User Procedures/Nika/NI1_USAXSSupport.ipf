@@ -1973,7 +1973,7 @@ Function NI1_9IDCNXTransmission()
 
 	Trans = ((SamplePinPD / SampleIPinPdGain)/ (SampleI0 / SampleI0gain)) / ((EmptypinPD / EmptyPinPDGain)/(EmptyI0/ EmptyI0gain))
 	if(numtype(Trans)!=0)
-		Print "Transmission value was impossible to calculate from NX values from Sampe and Empty, setting to 0"
+		Print "Transmission value was impossible to calculate from NX values from Sample and Empty, setting to 0"
 		Trans=0
 	endif
 	return Trans

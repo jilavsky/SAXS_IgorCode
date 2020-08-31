@@ -39,7 +39,7 @@ strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan
 //2.23 add IN2G_AddButtonsToBrowser(), which calls IN2G_ExtractInfoFromFldrname(). Use: adds button (via hooks functions) tgo DataBrowser and that will extract info from SampleName strings we are using. 
 //2.22 minor fix to IN2G_ColorTopGrphRainbow
 		//added 	IN2G_RemoveDataFromGraph(topGraphStr = "IRB1_ATSASInterfacePanel#DataDisplay")
-		//fix IN2G_ResetSizesForAllPanels so it dqes not busticate panels which cannot be scaled (Bio tools) and do not have scaling information
+		//fix IN2G_ResetSizesForAllPanels so it does not busticate panels which cannot be scaled (Bio tools) and do not have scaling information
 		//		improved all panel scaling support, so it now scales embedded graphs.  
 		//add IN2G_DuplGraphInPanelSubwndw(String gname)		which recreates graph from panel as separate graph. Return this: DupWindwFromPanel
 		//added IN2G_ForceDeleteFolder(fullPathToFolder)	- this is dangerous function which deletes a folder with no questions asked on user computer. Provided by AC from WM. 
