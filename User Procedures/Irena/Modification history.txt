@@ -1,16 +1,15 @@
-
 ******    I r e n a    ******* 
 
 Jan Ilavsky, ilavsky@aps.anl.gov
 
 ************************************
 This set of macros is developed for analysis data of USAXS, SAXS, and WAXS data from various instruments. 
-It runs on Wavemetrics Igor Pro version 7.05 and higher.
+It runs on Wavemetrics Igor Pro version 8.03 and higher.
 
 
 Modification history:
 ********************************************
-2.262 (beta)
+2.70
 Require Igor 8.03 or higher. 
 DataBrowser - Igor 8 - added Buttons to display w1 vs w2 and extract info from USAXS Folder name strings. Same tools are in Igor 9 right click. 
 Added for every graph right click option to export as jpg and pxp. Also to duplicate graph (which Igor does on ctrl/cmd-D) but with duplicate of all data in the graph. 1D graphs only.   
@@ -19,10 +18,11 @@ WAXS - added "Distance correction" for sticks. Tweaks calculated 2Theta angle us
 Fractals - added optional use of Unified Fit Sphere form factor. This removes high-q Bessel function oscillations which are nto reasonable for most cases. 
 Added Multi Data Plot tool, new tool to plot quickly many data sets. New ipf file... 
 Added Metadata Browser tool, enables relatively easy extraction of values from metadata in wave notes. 
-Added Basic fits tool, new tool and new capabilities. Guinier, Porod, Sphere and Spheroid, more to coem as needed
+Added Basic fits + Simple Analysis tool, new tool and new capabilities. Guinier, Porod, Sphere and Spheroid, more to coem as needed
 Added group of bioSAS tools - specialized simple import, data averaging and buffer subtraction, etc. Linked to menu also some existing tools for other functions bioSAS needs. 
 tools: Import ASCII, Average/Subtract/Scale tool, and PDDF + Molecular weight calculator. Uses ATSAS to get PDDF. 
-
+Added Concentration series extrapolation tool, it is BioSAXs tool. 
+Many smaller fixes. 
 
 2.69 2/9/2020
 3D models - added new set of tools : 3DAggregate, 2PhaseSolid and support for import of data from SAXSMorph (POV) and ATSAS (PDB) for visualization

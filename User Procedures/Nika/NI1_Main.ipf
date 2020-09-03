@@ -1,11 +1,11 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.826
+#pragma version=1.83
 #pragma IgorVersion=8.03
 
 //DO NOT renumber Main files every time, these are main release numbers...
 
-constant CurrentNikaVersionNumber = 1.826
+constant CurrentNikaVersionNumber = 1.83
 constant FixBackgroundOversubScale=1.05			//this is used to fix oversubtracted background. Adds FixBackgroundOversubScale*abs(V_min) to all intensity value. 
 constant NikaNumberOfQCirclesDisp=15
 //*************************************************************************\
@@ -14,19 +14,20 @@ constant NikaNumberOfQCirclesDisp=15
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//			require Igor 8.03 now. Not testing Igor 7 anymore. 
+//1.83		require Igor 8.03 now. Not testing Igor 7 anymore. 
+//			Improve NXcanSAS 2D calibrated data import for NSLS-SMI beamline. 
 //1.826 	Beta version after February2020 release
 //1.82 	rtGlobal=3 forced for all
 //			Added support for 12ID-C data. 
 //			Add print in history which version has compiled, Useful info later when debugging.
 //1.81   December 2018 release. Updated 64bit xops, mainly for OSX. 
 //			Added 12ID-C support, first release. 
-//1.80	Official Igor 8 release, Fixed NEXUS exporter to save data which are easily compatible with sasView. sasView has serious limitations on what it can accept as input NXcanSAS nexus data. 
+//1.80		Official Igor 8 release, Fixed NEXUS exporter to save data which are easily compatible with sasView. sasView has serious limitations on what it can accept as input NXcanSAS nexus data. 
 //			Removed range selection controls and moved Save data options to its own tab "Save"
 //			Added ImageStatistics and control for user for delay between series of images. 
 //			Added font type and size control from configuration to be used for CCD image label. 
 //			Added ability to fix negative intensities oversubtraction. Checkbox on Empty tab and if checked, ~1.5*abs(V_min) is added to ALL points intensities. 
-//1.79	Converted all procedure files to UTF8 to prevent text encoding issues. 
+//1.79		Converted all procedure files to UTF8 to prevent text encoding issues. 
 //			Modified main interface to have radio buttons and only one button for action. This makes cleaner interface as some controls can be hidden. Unluckily, panel is now higher by 20 points. 
 //			Added support for ALS SRoXS soft energy beamline. 
 //			Improved 9IDC USAXS support. 
@@ -134,6 +135,8 @@ Menu "SAS 2D"
 	help={"Closes all Panels and windows from Nika. "}	
 	"Check Igor display size", IN2G_CheckForGraphicsSetting(1)
 	help={"Check if current display area is suitable for the code"}
+	"Open Readme", NI1_OpenReadme()
+	help={"Open notes about recent changes in the code. "}
 	"About", NI1_AboutPanel()
 	help={"Get Panel with info about this release of Nika macros"}
 //	"---"
@@ -256,6 +259,16 @@ Function NI1_KillGraphsAndPanels()
 end
 
 ////*****************************************************************************************************************
+Function NI1_OpenReadme()
+	DoWIndow NikaReadme
+	if(V_Flag)
+		DoWIndow/F NikaReadme
+	else
+		string PathToReadMe= RemoveListItem(ItemsInList(FunctionPath("NI1_OpenReadme"),":")-1, FunctionPath("NI1_OpenReadme"), ":")
+		PathToReadMe = PathToReadMe+"Modification history.txt"
+		OpenNotebook /K=1 /R /N=NikaReadme /ENCG=3 /W=(20,20,720,600) /Z PathToReadMe
+	endif
+end
 ////*****************************************************************************************************************
 ////*****************************************************************************************************************
 //*****************************************************************************************************************

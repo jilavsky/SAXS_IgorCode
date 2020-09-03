@@ -1,4 +1,3 @@
-
 ****  I n d r a  *****
 
 USAXS - data reduction macros.
@@ -7,18 +6,18 @@ Jan Ilavsky, ilavsky@aps.anl.gov
 
 ************************************
 This set of macros is developed for data reduction of USAXS data obtained on APS USAXS instrument beamline instrument. 
-It runs on Wavemetrics Igor Pro version 7.05 and higher.
+It runs on Wavemetrics Igor Pro version 8.03 and higher.
 
 
 Modification history:
 _____________________________________________________________________________________
-1.975 beta 
+1.98 9/3/2020
 Require Igor 8.03 or higher. 
 Added "Smart select Blank" for selection of Blank measured BEFORE the sample measurements. 
-DataBrowser - Igor 8 - dded Buttons to display w1 vs w2 and extract info from USAXS Folder name strings. Same tools are in Igor 9 right click. 
+DataBrowser - Igor 8 - added Buttons to display w1 vs w2 and extract info from USAXS Folder name strings. Same tools are in Igor 9 right click. 
 Added for every graph right click option to export as jpg and pxp. Also to duplicate graph (which Igor does on ctrl/cmd-D) but with duplicate of all data in the graph. 1D graphs only.  
 Added new samplePlate tool for users to prepare command files.  
-
+Working on step scan data reduction from BlueSky, it is not tested yet. Needs another round of development of both data collection and code development. 
 
 
 1.97 2/9/2020

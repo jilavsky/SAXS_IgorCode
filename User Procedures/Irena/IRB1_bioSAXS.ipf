@@ -1,6 +1,6 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=0.5
+#pragma version=1.0
 #pragma IgorVersion = 8.03
 
 
@@ -16,6 +16,7 @@ constant IRB1_PDDFInterfaceVersion = 0.1					//IRB1_PDDFInterfaceFunction versio
 //functions for bioSAXS community
 //
 //version summary 
+//1.0 September2020 release
 //0.5 July 2020 version
 //0.2 Beta version June 2020
 //0.1 early beta version
@@ -2596,9 +2597,9 @@ Function IRB1_PDDFRunGNOM()
 		Abort "Cannot find properly datgnom executable, something is worng here. Report as bug to author, please"  
 	endif	
 	//now export the data file.
-	Wave/Z SourceIntWv=$(DataFolderName+IntensityWaveName)
-	Wave/Z SourceQWv=$(DataFolderName+QWavename)
-	Wave/Z SourceErrorWv=$(DataFolderName+ErrorWaveName)
+	Wave/Z SourceIntWv=$(DataFolderName+possiblyQuoteName(IntensityWaveName))
+	Wave/Z SourceQWv=$(DataFolderName+possiblyQuoteName(QWavename))
+	Wave/Z SourceErrorWv=$(DataFolderName+possiblyQuoteName(ErrorWaveName))
 	if(!WaveExists(SourceIntWv)||!WaveExists(SourceQWv)||!WaveExists(SourceErrorWv))
 		Abort "Cannot find QRS data to export" 
 	endif
@@ -2978,10 +2979,10 @@ Function IRB1_PDDFAppendOneDataSet(FolderNameStr)
 	IRB1_PDDFResetValsToPrevStale	()
 	//get the names of waves, assume this tool actually works. May not under some conditions. In that case this tool will not work. 
 	IR3C_SelectWaveNamesData("Irena:PDDFInterface", FolderNameStr)			//this routine will preset names in strings as needed,	DataFolderName = DataStartFolder+FolderNameStr
-	Wave/Z SourceIntWv=$(DataFolderName+IntensityWaveName)
-	Wave/Z SourceQWv=$(DataFolderName+QWavename)
-	Wave/Z SourceErrorWv=$(DataFolderName+ErrorWaveName)
-	Wave/Z SourcedQWv=$(DataFolderName+dQWavename)
+	Wave/Z SourceIntWv=$(DataFolderName+possiblyQuoteName(IntensityWaveName))
+	Wave/Z SourceQWv=$(DataFolderName+possiblyQuoteName(QWavename))
+	Wave/Z SourceErrorWv=$(DataFolderName+possiblyQuoteName(ErrorWaveName))
+	Wave/Z SourcedQWv=$(DataFolderName+possiblyQuoteName(dQWavename))
 	if(!WaveExists(SourceIntWv)||	!WaveExists(SourceQWv)||!WaveExists(SourceErrorWv))
 		Abort "Data selection failed for Data"
 	endif

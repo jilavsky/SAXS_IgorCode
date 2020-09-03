@@ -1,6 +1,6 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=0.5
+#pragma version=1.0
 #pragma IgorVersion = 8.03
 
 
@@ -12,6 +12,7 @@
 //functions for bioSAXS community
 //
 //version summary 
+//1.0	September2020 release
 //0.5 Jully 2020 version, first working version.  
 //0.1  early version, June 2020
 

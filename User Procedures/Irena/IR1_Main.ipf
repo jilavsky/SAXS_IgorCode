@@ -1,11 +1,11 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
-#pragma version=2.696
+#pragma version=2.70
 #pragma IgorVersion=8.03
 
 //DO NOT renumber Main files every time, these are main release numbers...
 //define manual date and release verison 
-constant CurrentIrenaVersionNumber = 2.696
+constant CurrentIrenaVersionNumber = 2.70
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2020, Argonne National Laboratory
@@ -13,7 +13,7 @@ constant CurrentIrenaVersionNumber = 2.696
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//			Require Igor 8.03 and higher. No testing for Igor 7. 
+//2.70		Require Igor 8.03 and higher. No testing for Igor 7 anymore. 
 //2.696	Beta version after February2020 release
 //			New bioSAXS tools
 //			New Metadata Browser tool
@@ -234,6 +234,8 @@ Menu "SAS"
 		Submenu "Help, About, Manuals, Remove Irena"
 			"About", IR1_AboutPanel()
 			help={"Get Panel with info about this release of Irena macros"}
+			"Open Readme", IR1_OpenReadme()
+			help={"Open notes about recent changes in the code. "}
 			"Check for updates", IR2C_CheckIrenaUpdate(1)
 			help={"Run Check for update and present citations to use in publications"}	
 			"Check Igor display size", IN2G_CheckForGraphicsSetting(1)
@@ -381,7 +383,16 @@ end
 // further variables and strings can be added, but need to be added to control panel too...
 //	see example in : IR1_LogLogPlotU()  in this procedure file... 
 
-
+Function IR1_OpenReadme()
+	DoWIndow IrenaReadme
+	if(V_Flag)
+		DoWIndow/F IrenaReadme
+	else
+		string PathToReadMe= RemoveListItem(ItemsInList(FunctionPath("IR1_OpenReadme"),":")-1, FunctionPath("IR1_OpenReadme"), ":")
+		PathToReadMe = PathToReadMe+"Modification history.txt"
+		OpenNotebook /K=1 /R /N=IrenaReadme /ENCG=3 /W=(20,20,720,600) /Z PathToReadMe
+	endif
+end
 //***********************************************************
 //***********************************************************
 //*********************************************************** 

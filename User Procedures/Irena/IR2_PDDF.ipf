@@ -861,19 +861,19 @@ Function IR2Pr_SelectAndCopyData()		//this function selects data to be used and 
 
 
 	
-	Duplicate/O $(DataFolderName+Intname), root:Packages:Irena_PDDF:IntensityOriginal			//here goes original Intensity
+	Duplicate/O $(DataFolderName+possiblyQuoteName(Intname)), root:Packages:Irena_PDDF:IntensityOriginal			//here goes original Intensity
 	Redimension/D root:Packages:Irena_PDDF:IntensityOriginal
-	Duplicate/O $(DataFolderName+Intname), root:Packages:Irena_PDDF:Intensity					//and its second copy, for fixing
+	Duplicate/O $(DataFolderName+possiblyQuoteName(Intname)), root:Packages:Irena_PDDF:Intensity					//and its second copy, for fixing
 	Redimension/D root:Packages:Irena_PDDF:Intensity
-	Duplicate/O $(DataFolderName+Qname), root:Packages:Irena_PDDF:Q_vec					//Q vector 
+	Duplicate/O $(DataFolderName+possiblyQuoteName(Qname)), root:Packages:Irena_PDDF:Q_vec					//Q vector 
 	Redimension/D root:Packages:Irena_PDDF:Q_vec
-	Duplicate/O $(DataFolderName+Qname), root:Packages:Irena_PDDF:Q_vecOriginal				//second copy of the Q vector
+	Duplicate/O $(DataFolderName+possiblyQuoteName(Qname)), root:Packages:Irena_PDDF:Q_vecOriginal				//second copy of the Q vector
 	Redimension/D root:Packages:Irena_PDDF:Q_vecOriginal
-	Wave/Z ErrorOrg=$(DataFolderName+Ename)
+	Wave/Z ErrorOrg=$(DataFolderName+possiblyQuoteName(Ename))
 	if(WaveExists(ErrorOrg))
-		Duplicate/O $(DataFolderName+Ename), root:Packages:Irena_PDDF:Errors						//errors
+		Duplicate/O $(DataFolderName+possiblyQuoteName(Ename)), root:Packages:Irena_PDDF:Errors						//errors
 		Redimension/D root:Packages:Irena_PDDF:Errors
-		Duplicate/O $(DataFolderName+Ename), root:Packages:Irena_PDDF:ErrorsOriginal
+		Duplicate/O $(DataFolderName+possiblyQuoteName(Ename)), root:Packages:Irena_PDDF:ErrorsOriginal
 		Redimension/D root:Packages:Irena_PDDF:ErrorsOriginal
 //		UseNoErrors = 0
 		UseUserErrors=1

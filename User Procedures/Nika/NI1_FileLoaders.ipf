@@ -3924,7 +3924,7 @@ Function NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)
 	string PathName, FileNameToLoad, NewWaveName
 	
 	//this part of the code reads content by grabbing it from the file directly. 
-	string FileContent=NI1_ReadNexusCanSAS(PathName, FileNameToLoad)
+	string FileContent=NI1_ListNexusCanSASContent(PathName, FileNameToLoad)
 	variable fileID, UsedQXY, UsedAzimAngle, UnbinnedQx, UnbinnedQy, HaveMask, HaveErrors, i
 	string TempStr, TempStr1, TempQWaveList
 	TempQWaveList = ""
@@ -4011,9 +4011,14 @@ Function NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)
 				endif
 				//now, these Qx, Qy loaded here as Qx2D and Qy2D should really be vectors per definition. They could also be 2D images with Qx, Qy, and Qz...
 				if(WaveDims(Qx2D)<2)	//assume the others follow or this makes no sense...
-					reverse Qx2D /D=rQx2D		//I think this is related to transpising the above images to make them same orientation as in Python. 
+					//I think this is related to transposing the above images to make them same orientation as in Python. 
+ wavestats Qx2D
+ wavestats Qy2D
+					reverse Qx2D /D=rQx2D
 					reverse Qy2D /D=rQy2D
-					Wave CCDImageToConvert
+					//MatrixOp/O rQx2D = Qx2D
+					//MatrixOp/O rQy2D = Qy2D
+					Wave CCDImageToConvert				
 					Duplicate/Free CCDImageToConvert, tempQx2D, tempQy2D, tempQz2D
 					//if(stringMatch(TempQWaveList,"QyQx"))
 					if(QxIndex==0 && QyIndex==1)
@@ -4062,6 +4067,12 @@ Function NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)
 				Wavestats/Q Q2DWave
 				BeamCenterX = V_minRowLoc
 		 		BeamCenterY = V_minColLoc
+		 		//need to make sure az wave has 0 to the rigth side... 
+				if(AnglesWave [V_minRowLoc][DimSize(AnglesWave, 1 )-3] >0.2)		//this should be pretty much 0, this is left from beam ceneter, 0 direction in NIka's terminology
+					AnglesWave -= pi/2		
+					AnglesWave = Qx2D > 0 ? AnglesWave : AnglesWave+pi
+		 		endif
+		 		
 		 		//now we need to deal with metadata. This is stupid, but lets use 1D system where data are loaded in Igor and pouched from Igor
  				string NewFileDataLocation = NEXUS_ImportAFile(PathName, FileNameToLoad)			//import file as HFD5 in Igor 
 				if(strlen(NewFileDataLocation)<1)
@@ -4213,7 +4224,7 @@ end
 //*************************************************************************************************
 //*************************************************************************************************
 
-Function/S NI1_ReadNexusCanSAS(PathName, FileNameToLoad)
+static Function/S NI1_ListNexusCanSASContent(PathName, FileNameToLoad)
 	string PathName, FileNameToLoad
 	
 	variable GroupID
@@ -4340,7 +4351,7 @@ Function/S NI1_ReadNexusCanSAS(PathName, FileNameToLoad)
 	endfor
 	HDF5CloseFile fileID  
 	if(strlen(DataIdentification)<5)
-		abort "Do not understand canSAS version/data in NI1_ReadNexusCanSAS"
+		abort "Do not understand canSAS version/data in NI1_ListNexusCanSASContent"
 	endif
 	return DataIdentification
 end

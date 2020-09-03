@@ -1,7 +1,6 @@
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
-//#pragma rtGlobals=2		// Use modern global access method.
-#pragma IgorVersion=7.05 	//requires Igor version 7.00 or higher
-#pragma version=2.24
+#pragma IgorVersion=8.03 	//requires Igor version 8.03 or higher
+#pragma version=2.25
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2020, Argonne National Laboratory
@@ -9,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.25 September2020 release
 //2.24 added IRB1_bioSAXS, removed absolute paths to these included files. 
 //2.23 February 2020 release
 //2.22 added 3DSupportFunctions, February 2019
@@ -47,26 +47,26 @@
 //this function loads the modeling of Distribution modeling macros...
 
 //these should be all in /User Procedures/Irena folder
-#include "IR1_CromerLiberman", version>=2.05						//cannot be rtG=1, runtime error in Cromer_Get_fp
-#include "IR1_DataManipulation", version>=2.68
+#include "IR1_CromerLiberman", version>=2.05		//cannot be rtG=1, runtime error in Cromer_Get_fp
+#include "IR1_DataManipulation", version>=2.70
 #include "IR1_Desmearing", version>=2.13
 #include "IR1_EvaluationGraph", version>=2.11
 #include "IR1_FormFactors", version>=2.29
-#include "IR1_Fractals", version>=2.10
+#include "IR1_Fractals", version>=2.11
 #include "IR1_ImportData", version>=2.40
-#include "IR1_Main", version>=2.69
+#include "IR1_Main", version>=2.70
 #include "IR1_PlotingToolI", version >=2.34
 #include "IR1_PlotingToolI2", version >=2.24
 #include "IR1_ScattContrast", version>=2.27
 #include "IR1_Sizes", version>=2.31
-#include "IR1_UnifiedFitFncts", version>=2.33
-#include "IR1_UnifiedFitPanel", version>=2.26
+#include "IR1_UnifiedFitFncts", version>=2.34
+#include "IR1_UnifiedFitPanel", version>=2.27
 #include "IR2_AnalyticalModels", version>=4.16
-#include "IR2_DataExport", version>=1.13
-#include "IR2_DataMiner", version >=1.13
-#include "IR2_ModelingMain", version>=1.31
+#include "IR2_DataExport", version>=1.14
+#include "IR2_DataMiner", version >=1.14
+#include "IR2_ModelingMain", version>=1.32
 #include "IR2_ModelingSupport", version>=1.51
-#include "IR2_PanelCntrlProcs", version>=1.53
+#include "IR2_PanelCntrlProcs", version>=1.61
 #include "IR2_PlotingToolII", version>=1.1
 #include "IR2_Reflectivity", version >=1.21
 #include "IR2_ScriptingTool", version>=1.30
@@ -78,19 +78,19 @@
 #include "IR3_3DTwoPhaseSolid", version>=1.02
 #include "IR3_Anisotropy", version>=1.00
 #include "IR3_GuinierPorodModel", version>=1.11
-#include "IR3_MergingData", version>=1.19
+#include "IR3_MergingData", version>=1.20
 #include "IR3_MultiDataPlot", version>=1
-#include "IR3_SimpleFits", version>=1.10
-#include "IR3_WAXSDiffraction", version>=1.14
+#include "IR3_SimpleFits", version>=1.11
+#include "IR3_WAXSDiffraction", version>=1.16
 
-#include "IRB1_bioSAXS", version>=0.1
-#include "IRB1_EvaluationTools", version>=0.5
+#include "IRB1_bioSAXS", version>=1
+#include "IRB1_EvaluationTools", version>=1.0
 
 //these are in different folders... 
 #include "cansasXML_GUI", version>=1.04
 #include "cansasXML", version>=1.12
 
-#include "IN2_GeneralProcedures", version>=2.20
+#include "IN2_GeneralProcedures", version>=2.25
 
 #include "IRNI_NexusSupport", version>=1.14
 

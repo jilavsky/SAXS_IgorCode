@@ -1,7 +1,7 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version = 0.61
+#pragma version = 1.0
 #pragma IgorVersion=8.03
 
 
@@ -13,6 +13,7 @@
 
 //this is tool to setup Sample Plates for USAXS, survey sample positions, and generate Command files. 
 
+//1.0 September2020, first release. 
 //0.6 many fixes
 //0.4 developement, with beamline survey code... 
 

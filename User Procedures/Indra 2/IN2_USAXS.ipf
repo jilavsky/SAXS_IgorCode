@@ -1,20 +1,21 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
 #pragma IgorVersion=8.03   //requires Igor version 8.03 or higher
-#pragma version = 1.976
+#pragma version = 1.98
 
-constant CurrentIndraVersionNumber = 1.976
+constant CurrentIndraVersionNumber = 1.98
 //*************************************************************************\
 //* Copyright (c) 2005 - 2019, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//			require Igor 8.03, no testing for Igor 7 anymore. 
+//1.98		require Igor 8.03, no testing for Igor 7 anymore. 
+//			step scanning from BS still not fully supported, needs more developement. 
 //1.976 	Beta version after February2020 release
 //1.97 	Add print in history which version has compiled, Useful info later when debugging.
 //			attempt to set automatically Qmin for the data. Increase default number of points to 500
-//1.96   December 2018 release. Updtaes 64 bit OSX xops.
+//1.96   December 2018 release. Updates 64 bit OSX xops.
 //1.95 	Igor 8 release, ongoing fixes for USAXS software changes. Modified behavior of Automatic blank selection in GUI. 
 //1.94	Converted all procedure files to UTF8 to prevent text encoding issues. 
 //			Fixed Case spelling of USAXS Error data to SMR_Error and DSM_Error.
@@ -156,6 +157,8 @@ Menu "USAXS"
 	help={"Removes USAXS macros from current experiment"}
 
 
+	"Open Readme", IN2_OpenReadme()
+	help={"Open notes about recent changes in the code. "}
 	"About", IN2_AboutPanel()
 	help={"Information about the version"}
 end
@@ -261,6 +264,19 @@ Function IN3_UpdatePanelVersionNumber(panelName, CurentProcVersion)
 end
 //***********************************************************
 ////***********************************************************
+
+Function IN2_OpenReadme()
+	DoWIndow IndraReadme
+	if(V_Flag)
+		DoWIndow/F IndraReadme
+	else
+		string PathToReadMe= RemoveListItem(ItemsInList(FunctionPath("IN2_OpenReadme"),":")-1, FunctionPath("IN2_OpenReadme"), ":")
+		PathToReadMe = PathToReadMe+"Readme.txt"
+		OpenNotebook /K=1 /R /N=IndraReadme /ENCG=3 /W=(20,20,720,600) /Z PathToReadMe
+	endif
+end
+
+
 //Function IN3_PanelAppendSizeRecordNote(panelName)
 //	string panelName
 //	string PanelRecord=""

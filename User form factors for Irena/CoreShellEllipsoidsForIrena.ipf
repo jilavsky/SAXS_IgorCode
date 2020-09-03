@@ -20,13 +20,13 @@
 //*************************************************************************************************
 //USE in Irena :
 //In Modeling II select User form factor 
-//In panel put in "Name of ForFactor function this string:    IR1T_EllipsoidalCoreShell
+//In panel put in "Name of FormFactor function this string:    IR1T_EllipsoidalCoreShell
 //In Panel put in Name of volume FF function this string:     IR1T_EllipsoidalVolume
 //
 // Par1 is the aspect ratio which for ellipsoids are defiend as rotational objects with dimensions R x R x AR*R, note, AR=1 may fail. 
-// par 2 is shell thickness in A, and it is the same thickness everywhere on teh ellipsoid. 
+// par2 is shell thickness in A, and it is the same thickness everywhere on the ellipsoid. 
 // par3, 4 and 5 are contrasts as this is core shell system and contrasts are part of the form factor. 
-// par3, 4 and 5 are implicitelyu multipled by 10^10cm^-2, so insert only a number. These are rhos not, delta-rho-square
+// par3, 4 and 5 are implicitely multiplied by 10^10cm^-2, so insert only a number. These are rhos not, delta-rho-square
 // In main panel set contrast = 1 !!!!!
 //*************************************************************************************************
 //*************************************************************************************************
@@ -75,7 +75,7 @@ Function IR1T_EllipsoidalCoreShell(Qval,radius, par1,par2,par3,par4,par5)
    // 	IR1T_EllispodalVolume(radius, par1, par2,par3,par4,par5)/1e8
    //   oblatevol = IR1T_OblateVolume(trmaj, AspectRatio)
    //   answer /= oblatevol			-- this is needs to be taken out, Irena does its own volumehandling here...  
-   //	also creect for their conversion to [A-1] to [cm-1]
+   //	also correct for their conversion to [A-1] to [cm-1]
    //   answer *= 1.0e8  
    //	not needed, set to 1 scale
    //  answer *= scale
@@ -172,22 +172,15 @@ static Function IR1T_fOblateForm(w,x) : FitFunc
         if(nfn ==1) //then 		// "f1" required for beta factor
           if(npro ==1) //then	// prolate
           	 zi = ( z76[ii]*(vb-va) + vb + va )/2.0	
-//            yyy = w76[ii]*gfn1(zi,crmaj,crmin,trmaj,trmin,delpc,delps,qq)
           Endif
-//
           if(npro ==0) //then	// oblate  
           	 zi = ( z76[ii]*(vb-va) + vb + va )/2.0
-//            yyy = w76[ii]*gfn3(zi,crmaj,crmin,trmaj,trmin,delpc,delps,qq)
           Endif
         Endif		//nfn = 1
-        //
-        if(nfn !=1) //then		//calculate"f2" = <f^2> = averaged form factor
+         if(nfn !=1) //then		//calculate"f2" = <f^2> = averaged form factor
           if(npro ==1) //then	//prolate
              zi = ( z76[ii]*(vb-va) + vb + va )/2.0
-//            yyy = w76[ii]*gfn2(zi,crmaj,crmin,trmaj,trmin,delpc,delps,qq)
-          //printf "yyy = %g\r",yyy
           Endif
-//
           if(npro ==0) //then	//oblate
           	 zi = ( z76[ii]*(vb-va) + vb + va )/2.0
           	yyy = w76[ii]*IR1T_gfn4(zi,crmaj,crmin,trmaj,trmin,delpc,delps,qq)
@@ -197,8 +190,7 @@ static Function IR1T_fOblateForm(w,x) : FitFunc
         summ = yyy + summ		// get running total of integral
         ii+=1
 	while (ii<nord)				// end of loop over quadrature points
-//   
-// calculate value of integral to return
+	// calculate value of integral to return
 
       answer = (vb-va)/2.0*summ
       
