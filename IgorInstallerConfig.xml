@@ -22,23 +22,23 @@
 	</VersionCheck>
 
 	<InstallerConfig>
-		<release name="July2020Beta" beta="true">
-			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/July2020Beta.zip</SourceFileAddress>
+		<release name="September2020">
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/September2020.zip</SourceFileAddress>
 			<Package>
 				<name>Irena</name>
-				<version>2.696</version>
+				<version>2.70</version>
 				<PackageList>IrenaPckg.xml</PackageList>
 				<VersionCheckFile>Boot Irena1 modeling.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>Nika</name>
-				<version>1.826</version>
+				<version>1.83</version>
 				<PackageList>NikaPckg.xml</PackageList>
 				<VersionCheckFile>Boot Nika.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>Indra</name>
-				<version>1.976</version>
+				<version>1.98</version>
 				<PackageList>IndraPckg.xml</PackageList>
 				<VersionCheckFile>Boot Indra2.ipf</VersionCheckFile>
 			</Package>
@@ -54,7 +54,7 @@
 				<PackageList>xopPckg64.xml</PackageList>
 				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
 			</Package>
-			<VersionComment>Beta release July 2020. Requires Igor 8.03 or higher. Version x.xx6 included.</VersionComment>
+			<VersionComment>September 2020. Requires Igor 8.03 or higher.</VersionComment>
 		</release>
 		<release name="February2020">
 			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/February2020.zip</SourceFileAddress>
@@ -259,6 +259,40 @@
 				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
 			</Package>
 			<VersionComment>Versions of Irena 2.64, Nika 1.77 and Indra 1.92 from 5/1/2017.</VersionComment>
+		</release>
+		<release name="July2020Beta" beta="true">
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/July2020Beta.zip</SourceFileAddress>
+			<Package>
+				<name>Irena</name>
+				<version>2.696</version>
+				<PackageList>IrenaPckg.xml</PackageList>
+				<VersionCheckFile>Boot Irena1 modeling.ipf</VersionCheckFile>
+			</Package>
+			<Package>
+				<name>Nika</name>
+				<version>1.826</version>
+				<PackageList>NikaPckg.xml</PackageList>
+				<VersionCheckFile>Boot Nika.ipf</VersionCheckFile>
+			</Package>
+			<Package>
+				<name>Indra</name>
+				<version>1.976</version>
+				<PackageList>IndraPckg.xml</PackageList>
+				<VersionCheckFile>Boot Indra2.ipf</VersionCheckFile>
+			</Package>
+			<Package>
+				<name>xop32bit</name>
+				<version>1</version>
+				<PackageList>xopPckg32.xml</PackageList>
+				<VersionCheckFile>IrenaNikaXop32Ver.ipf</VersionCheckFile>
+			</Package>
+			<Package>
+				<name>xop64bit</name>
+				<version>2</version>
+				<PackageList>xopPckg64.xml</PackageList>
+				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
+			</Package>
+			<VersionComment>Beta release July 2020 - install September2020 instead. Requires Igor 8.03 or higher.</VersionComment>
 		</release>
 	</InstallerConfig>
 </IgorInstaller>
