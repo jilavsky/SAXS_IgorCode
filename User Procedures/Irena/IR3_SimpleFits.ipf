@@ -455,10 +455,10 @@ Function IR3J_CopyAndAppendData(FolderNameStr)
 		UseModelData = 0
 		//get the names of waves, assume this tool actually works. May not under some conditions. In that case this tool will not work. 
 		IR3C_SelectWaveNamesData("Irena:SimpleFits", FolderNameStr)			//this routine will preset names in strings as needed,		
-		Wave/Z SourceIntWv=$(DataFolderName+IntensityWaveName)
-		Wave/Z SourceQWv=$(DataFolderName+QWavename)
-		Wave/Z SourceErrorWv=$(DataFolderName+ErrorWaveName)
-		Wave/Z SourcedQWv=$(DataFolderName+dQWavename)
+		Wave/Z SourceIntWv=$(DataFolderName+possiblyQUoteName(IntensityWaveName))
+		Wave/Z SourceQWv=$(DataFolderName+possiblyQUoteName(QWavename))
+		Wave/Z SourceErrorWv=$(DataFolderName+possiblyQUoteName(ErrorWaveName))
+		Wave/Z SourcedQWv=$(DataFolderName+possiblyQUoteName(dQWavename))
 		if(!WaveExists(SourceIntWv)||	!WaveExists(SourceQWv))//||!WaveExists(SourceErrorWv))
 			Abort "Data selection failed for Data in Simple/basic fits routine IR3J_CopyAndAppendData"
 		endif

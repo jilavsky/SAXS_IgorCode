@@ -1693,6 +1693,7 @@ Function NI1A_DisplayLineoutAfterProc(int,Qvec,Err,NumOfWavesToKeep,typeGraph)
 			CheckDisplayed /W=LineuotDisplayPlot_Q  $(NameOfWave(Int))
 			if(!V_Flag) 
 				appendToGraph Int vs Qvec 
+				Doupdate
 			endif
 		else
 			//Display/K=1 /W=(348,368,828,587.75) Int vs Qvec as "LineuotDisplayPlot_Q"	

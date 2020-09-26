@@ -1179,8 +1179,8 @@ Function IR1G_AddDataToGraph()
 		Abort
 	endif
 	
-	Wave/Z Ywv=$(DataFoldername+YWaveNameStr)
-	Wave/Z Xwv=$(DataFoldername+XWaveNameStr)
+	Wave/Z Ywv=$(DataFoldername+possiblyQUoteName(YWaveNameStr))
+	Wave/Z Xwv=$(DataFoldername+possiblyQUoteName(XWaveNameStr))
 
 	if(!WaveExists(Ywv) || !WaveExists(Xwv))
 		DoAlert 1, "Bug, the selected data do not exist. Report as bug - send this experiment to ilavsky@aps.anl.gov"

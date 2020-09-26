@@ -188,8 +188,9 @@ Function IR3L_MultiSamplePlotPanelFnct()
 	TitleBox Instructions6 title="\Zr100Regex for case independent:  (?i)string",size={330,15},pos={4,755},frame=0,fColor=(0,0,65535),labelBack=0
 
 	SVAR SelectedStyle = root:Packages:Irena:MultiSamplePlot:SelectedStyle
+	SVAR allStyles=root:Packages:Irena:MultiSamplePlot:ListOfDefinedStyles
 	PopupMenu ApplyStyle,pos={280,660},size={400,20},proc=IR3L_PopMenuProc, title="Apply style:",help={"Set tool setting to defined conditions and apply to graph"}
-	PopupMenu ApplyStyle,value=#"root:Packages:Irena:MultiSamplePlot:ListOfDefinedStyles",popvalue=SelectedStyle
+	PopupMenu ApplyStyle,value=#"root:Packages:Irena:MultiSamplePlot:ListOfDefinedStyles",mode=WhichListItem(SelectedStyle, allStyles)+1  
 	Button ApplyPresetFormating,pos={260,710},size={160,20}, proc=IR3L_ButtonProc,title="Apply All Formating", help={"Apply Preset Formating to update graph based on these choices"}
 	Checkbox ApplyFormatingEveryTime, pos={250,735},size={76,14},title="Apply Formating automatically?", proc=IR3L_CheckProc, variable=root:Packages:Irena:MultiSamplePlot:ApplyFormatingEveryTime, help={"Should all formatting be applied after every data additon?"}
 
@@ -395,6 +396,13 @@ static Function IR3L_InitMultiSamplePlot()
 	NVAR AddLegend
 	NVAR UseOnlyFoldersInLegend
 	NVAR LegendSize
+	NVAR LogXAxis
+	NVAR LogYAxis
+	if(StringMatch(SelectedStyle, "Log-Log"))
+		LogXAxis = 1
+		LogYAxis = 1
+	endif
+	
 	if(UseSymbols+UseLines < 1)			//seems to start new tool
 		UseLines = 1
 		Colorize = 1
@@ -404,11 +412,9 @@ static Function IR3L_InitMultiSamplePlot()
 		UseOnlyFoldersInLegend = 1
 		LegendSize = 12
 	endif
-	
 	Make/O/T/N=(0) ListOfAvailableData
 	Make/O/N=(0) SelectionOfAvailableData
 	SetDataFolder oldDf
-
 end
 //**************************************************************************************
 //**************************************************************************************
@@ -724,10 +730,10 @@ static Function IR3L_AppendData(FolderNameStr)
 		SVAR ListOfDefinedDataPlots=root:Packages:Irena:MultiSamplePlot:ListOfDefinedDataPlots
 
 		IR3C_SelectWaveNamesData("Irena:MultiSamplePlot", FolderNameStr)			//thsi routine will presetn names in strings as needed
-		Wave/Z SourceIntWv=$(DataFolderName+IntensityWaveName)
-		Wave/Z SourceQWv=$(DataFolderName+QWavename)
-		Wave/Z SourceErrorWv=$(DataFolderName+ErrorWaveName)
-		Wave/Z SourcedQWv=$(DataFolderName+dQWavename)
+		Wave/Z SourceIntWv=$(DataFolderName+possiblyQUoteName(IntensityWaveName))
+		Wave/Z SourceQWv=$(DataFolderName+possiblyQUoteName(QWavename))
+		Wave/Z SourceErrorWv=$(DataFolderName+possiblyQUoteName(ErrorWaveName))
+		Wave/Z SourcedQWv=$(DataFolderName+possiblyQUoteName(dQWavename))
 		if(!WaveExists(SourceIntWv)||	!WaveExists(SourceQWv))
 			print "Data selection failed for "+DataFolderName
 			return 0
@@ -756,56 +762,56 @@ static Function IR3L_AppendData(FolderNameStr)
 				break										// exit from switch
 			case "Guinier (Q^2-ln(I))":				// execute if case matches expression
 				//create and save Guinier data
-				Duplicate/O SourceIntWv, $(DataFolderName+"Guinier_"+IntensityWaveName)
-				Duplicate/O SourceQWv, $(DataFolderName+"Guinier_"+QWavename)
-				Wave SourceIntWv=$(DataFolderName+"Guinier_"+IntensityWaveName)
-				Wave SourceQWv=$(DataFolderName+"Guinier_"+QWavename)
+				Duplicate/O SourceIntWv, $(DataFolderName+possiblyQUoteName("Guinier_"+IntensityWaveName))
+				Duplicate/O SourceQWv, $(DataFolderName+possiblyQUoteName("Guinier_"+QWavename))
+				Wave SourceIntWv=$(DataFolderName+possiblyQUoteName("Guinier_"+IntensityWaveName))
+				Wave SourceQWv=$(DataFolderName+possiblyQUoteName("Guinier_"+QWavename))
 				SourceQWv = SourceQWv^2
 				SourceIntWv = ln(SourceIntWv)						//error propagation, see: https://terpconnect.umd.edu/~toh/models/ErrorPropagation.pdf
 				if(WaveExists(SourceErrorWv))
-					Duplicate/O SourceErrorWv, $(DataFolderName+"Guinier_"+ErrorWaveName)
-						Wave SourceErrorWv=$(DataFolderName+"Guinier_"+ErrorWaveName)
+					Duplicate/O SourceErrorWv, $(DataFolderName+possiblyQUoteName("Guinier_"+ErrorWaveName))
+						Wave SourceErrorWv=$(DataFolderName+possiblyQUoteName("Guinier_"+ErrorWaveName))
 					SourceErrorWv = SourceErrorWvOrig/SourceIntWvOrig
 				endif
 				break
 			case "Guinier Rod (Q^2-ln(I*Q))":				// execute if case matches expression
 				//create and save Guinier data
-				Duplicate/O SourceIntWv, $(DataFolderName+"GuinierR_"+IntensityWaveName)
-				Duplicate/O SourceQWv, $(DataFolderName+"GuinierR_"+QWavename)
-				Wave SourceIntWv=$(DataFolderName+"GuinierR_"+IntensityWaveName)
-				Wave SourceQWv=$(DataFolderName+"GuinierR_"+QWavename)
+				Duplicate/O SourceIntWv, $(DataFolderName+possiblyQUoteName("GuinierR_"+IntensityWaveName))
+				Duplicate/O SourceQWv, $(DataFolderName+possiblyQUoteName("GuinierR_"+QWavename))
+				Wave SourceIntWv=$(DataFolderName+possiblyQUoteName("GuinierR_"+IntensityWaveName))
+				Wave SourceQWv=$(DataFolderName+possiblyQUoteName("GuinierR_"+QWavename))
 				SourceQWv = SourceQWv^2
 				SourceIntWv = ln(SourceIntWv*SourceQWvOrig)						//error propagation, see: https://terpconnect.umd.edu/~toh/models/ErrorPropagation.pdf
 				if(WaveExists(SourceErrorWv))
-					Duplicate/O SourceErrorWv, $(DataFolderName+"GuinierR_"+ErrorWaveName)
-						Wave SourceErrorWv=$(DataFolderName+"GuinierR_"+ErrorWaveName)
+					Duplicate/O SourceErrorWv, $(DataFolderName+possiblyQUoteName("GuinierR_"+ErrorWaveName))
+						Wave SourceErrorWv=$(DataFolderName+possiblyQUoteName("GuinierR_"+ErrorWaveName))
 					SourceErrorWv = (SourceErrorWvOrig)/(SourceIntWvOrig)
 				endif
 				break
 			case "Guinier Sheet (Q^2-ln(I*Q^2))":				// execute if case matches expression
 				//create and save Guinier data
-				Duplicate/O SourceIntWv, $(DataFolderName+"GuinierS_"+IntensityWaveName)
-				Duplicate/O SourceQWv, $(DataFolderName+"GuinierS_"+QWavename)
-				Wave SourceIntWv=$(DataFolderName+"GuinierS_"+IntensityWaveName)
-				Wave SourceQWv=$(DataFolderName+"GuinierS_"+QWavename)
+				Duplicate/O SourceIntWv, $(DataFolderName+possiblyQUoteName("GuinierS_"+IntensityWaveName))
+				Duplicate/O SourceQWv, $(DataFolderName+possiblyQUoteName("GuinierS_"+QWavename))
+				Wave SourceIntWv=$(DataFolderName+possiblyQUoteName("GuinierS_"+IntensityWaveName))
+				Wave SourceQWv=$(DataFolderName+possiblyQUoteName("GuinierS_"+QWavename))
 				SourceQWv = SourceQWv^2
 				SourceIntWv = ln(SourceIntWv*SourceQWvOrig^2)						//error propagation, see: https://terpconnect.umd.edu/~toh/models/ErrorPropagation.pdf
 				if(WaveExists(SourceErrorWv))
-					Duplicate/O SourceErrorWv, $(DataFolderName+"GuinierS_"+ErrorWaveName)
-						Wave SourceErrorWv=$(DataFolderName+"GuinierS_"+ErrorWaveName)
+					Duplicate/O SourceErrorWv, $(DataFolderName+possiblyQUoteName("GuinierS_"+ErrorWaveName))
+						Wave SourceErrorWv=$(DataFolderName+possiblyQUoteName("GuinierS_"+ErrorWaveName))
 					SourceErrorWv = (SourceErrorWvOrig)/(SourceIntWvOrig)
 				endif
 				break
 			case "Kratky (Q-IQ^2)":					// execute if case matches expression
 				//create and save Kratky data
-				Duplicate/O SourceIntWv, $(DataFolderName+"Kratky_"+IntensityWaveName)
-				Duplicate/O SourceQWv, $(DataFolderName+"Kratky_"+QWavename)
-				Wave SourceIntWv=$(DataFolderName+"Kratky_"+IntensityWaveName)
-				Wave SourceQWv=$(DataFolderName+"Kratky_"+QWavename)
+				Duplicate/O SourceIntWv, $(DataFolderName+possiblyQUoteName("Kratky_"+IntensityWaveName))
+				Duplicate/O SourceQWv, $(DataFolderName+possiblyQUoteName("Kratky_"+QWavename))
+				Wave SourceIntWv=$(DataFolderName+possiblyQUoteName("Kratky_"+IntensityWaveName))
+				Wave SourceQWv=$(DataFolderName+possiblyQUoteName("Kratky_"+QWavename))
 				SourceIntWv = SourceIntWv * SourceQWv^2
 				if(WaveExists(SourceErrorWv))
-					Duplicate/O SourceErrorWv, $(DataFolderName+"Kratky_"+ErrorWaveName)
-					Wave SourceErrorWv=$(DataFolderName+"Kratky_"+ErrorWaveName)
+					Duplicate/O SourceErrorWv, $(DataFolderName+possiblyQUoteName("Kratky_"+ErrorWaveName))
+					Wave SourceErrorWv=$(DataFolderName+possiblyQUoteName("Kratky_"+ErrorWaveName))
 					SourceErrorWv = SourceErrorWv * SourceQWv^2
 				endif
 				break
@@ -823,56 +829,56 @@ static Function IR3L_AppendData(FolderNameStr)
 				if(numtype(I0) || numtype(Rg))
 					Abort "Could not find Guinier results for "+DataFolderName+" in the Guinier fit results from Simple fit."
 				endif
-				Duplicate/O SourceIntWv, $(DataFolderName+"DLKratky_"+IntensityWaveName)
-				Duplicate/O SourceQWv, $(DataFolderName+"DLKratky_"+QWavename)
-				Wave SourceIntWv=$(DataFolderName+"DLKratky_"+IntensityWaveName)
-				Wave SourceQWv=$(DataFolderName+"DLKratky_"+QWavename)
+				Duplicate/O SourceIntWv, $(DataFolderName+possiblyQUoteName("DLKratky_"+IntensityWaveName))
+				Duplicate/O SourceQWv, $(DataFolderName+possiblyQUoteName("DLKratky_"+QWavename))
+				Wave SourceIntWv=$(DataFolderName+possiblyQUoteName("DLKratky_"+IntensityWaveName))
+				Wave SourceQWv=$(DataFolderName+possiblyQUoteName("DLKratky_"+QWavename))
 				SourceIntWv = SourceIntWv * ((Rg*SourceQWv)^2)/I0
 				if(WaveExists(SourceErrorWv))
-					Duplicate/O SourceErrorWv, $(DataFolderName+"DLKratky_"+ErrorWaveName)
-					Wave SourceErrorWv=$(DataFolderName+"DLKratky_"+ErrorWaveName)
+					Duplicate/O SourceErrorWv, $(DataFolderName+possiblyQUoteName("DLKratky_"+ErrorWaveName))
+					Wave SourceErrorWv=$(DataFolderName+possiblyQUoteName("DLKratky_"+ErrorWaveName))
 					SourceErrorWv = SourceErrorWv * ((Rg*SourceQWv)^2)/I0
 				endif
 				break
 			case "Porod (Q^4-IQ^4)":					// execute if case matches expression
 				//create and save Porod data
-				Duplicate/O SourceIntWv, $(DataFolderName+"Porod_"+IntensityWaveName)
-				Duplicate/O SourceQWv, $(DataFolderName+"Porod_"+QWavename)
-				Wave SourceIntWv=$(DataFolderName+"Porod_"+IntensityWaveName)
-				Wave SourceQWv=$(DataFolderName+"Porod_"+QWavename)
+				Duplicate/O SourceIntWv, $(DataFolderName+possiblyQUoteName("Porod_"+IntensityWaveName))
+				Duplicate/O SourceQWv, $(DataFolderName+possiblyQUoteName("Porod_"+QWavename))
+				Wave SourceIntWv=$(DataFolderName+possiblyQUoteName("Porod_"+IntensityWaveName))
+				Wave SourceQWv=$(DataFolderName+possiblyQUoteName("Porod_"+QWavename))
 				SourceQWv = SourceQWv^4
 				SourceIntWv = SourceIntWv * SourceQWv
 				if(WaveExists(SourceErrorWv))
-					Duplicate/O SourceErrorWv, $(DataFolderName+"Porod_"+ErrorWaveName)
-					Wave SourceErrorWv=$(DataFolderName+"Porod_"+ErrorWaveName)
+					Duplicate/O SourceErrorWv, $(DataFolderName+possiblyQUoteName("Porod_"+ErrorWaveName))
+					Wave SourceErrorWv=$(DataFolderName+possiblyQUoteName("Porod_"+ErrorWaveName))
 					SourceErrorWv = SourceErrorWv * SourceQWv
 				endif
 				break
 			case "Porod 2 (Q-IQ^4)":					// execute if case matches expression
 				//create and save Porod data
-				Duplicate/O SourceIntWv, $(DataFolderName+"Porod2_"+IntensityWaveName)
-				Duplicate/O SourceQWv, $(DataFolderName+"Porod2_"+QWavename)
-				Wave SourceIntWv=$(DataFolderName+"Porod2_"+IntensityWaveName)
-				Wave SourceQWv=$(DataFolderName+"Porod2_"+QWavename)
+				Duplicate/O SourceIntWv, $(DataFolderName+possiblyQUoteName("Porod2_"+IntensityWaveName))
+				Duplicate/O SourceQWv, $(DataFolderName+possiblyQUoteName("Porod2_"+QWavename))
+				Wave SourceIntWv=$(DataFolderName+possiblyQUoteName("Porod2_"+IntensityWaveName))
+				Wave SourceQWv=$(DataFolderName+possiblyQUoteName("Porod2_"+QWavename))
 				//SourceQWv = SourceQWv
 				SourceIntWv = SourceIntWv * SourceQWv^4
 				if(WaveExists(SourceErrorWv))
-					Duplicate/O SourceErrorWv, $(DataFolderName+"Porod2_"+ErrorWaveName)
-					Wave SourceErrorWv=$(DataFolderName+"Porod2_"+ErrorWaveName)
+					Duplicate/O SourceErrorWv, $(DataFolderName+possiblyQUoteName("Porod2_"+ErrorWaveName))
+					Wave SourceErrorWv=$(DataFolderName+possiblyQUoteName("Porod2_"+ErrorWaveName))
 					SourceErrorWv = SourceErrorWv * SourceQWv^4
 				endif
 				break
 			case "Porod 3 (Q-IQ^3)":					// execute if case matches expression
 				//create and save Porod data
-				Duplicate/O SourceIntWv, $(DataFolderName+"Porod3_"+IntensityWaveName)
-				Duplicate/O SourceQWv, $(DataFolderName+"Porod3_"+QWavename)
-				Wave SourceIntWv=$(DataFolderName+"Porod3_"+IntensityWaveName)
-				Wave SourceQWv=$(DataFolderName+"Porod3_"+QWavename)
+				Duplicate/O SourceIntWv, $(DataFolderName+possiblyQUoteName("Porod3_"+IntensityWaveName))
+				Duplicate/O SourceQWv, $(DataFolderName+possiblyQUoteName("Porod3_"+QWavename))
+				Wave SourceIntWv=$(DataFolderName+possiblyQUoteName("Porod3_"+IntensityWaveName))
+				Wave SourceQWv=$(DataFolderName+possiblyQUoteName("Porod3_"+QWavename))
 				SourceQWv = SourceQWv
 				SourceIntWv = SourceIntWv * SourceQWv^3
 				if(WaveExists(SourceErrorWv))
-					Duplicate/O SourceErrorWv, $(DataFolderName+"Porod3_"+ErrorWaveName)
-					Wave SourceErrorWv=$(DataFolderName+"Porod3_"+ErrorWaveName)
+					Duplicate/O SourceErrorWv, $(DataFolderName+possiblyQUoteName("Porod3_"+ErrorWaveName))
+					Wave SourceErrorWv=$(DataFolderName+possiblyQUoteName("Porod3_"+ErrorWaveName))
 					SourceErrorWv = SourceErrorWv * SourceQWv^3
 				endif
 				break
@@ -1250,7 +1256,7 @@ static Function IR3L_SetPlotLegends()				//this function will set axis legends a
 		//now, what can we do about naming this for users....
 		if(UseIndra2Data)
 			IntensityWaveName = DataSubType
-			Wave/Z SourceIntWv=$(DataFolderName+IntensityWaveName)
+			Wave/Z SourceIntWv=$(DataFolderName+possiblyQUoteName(IntensityWaveName))
 			if(WaveExists(SourceIntWv))
 				yAxisUnits= StringByKey("Units", note(SourceIntWv),"=",";")
 				//format the units...

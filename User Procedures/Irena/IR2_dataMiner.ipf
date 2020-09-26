@@ -618,7 +618,7 @@ static Function/T IR3B_FindSpecificMetadata(FolderNameStr, KeyString)
 	if(strlen(FolderNameStr)>0)						//if strlen(FolderNameStr)=0, this is called from other other and all is set here... 
 		IR3C_SelectWaveNamesData("Irena:MetadataBrowser", FolderNameStr)			//this routine will preset names in strings as needed
 	endif
-	Wave/Z SourceIntWv=$(DataFolderName+IntensityWaveName)
+	Wave/Z SourceIntWv=$(DataFolderName+possiblyQUoteName(IntensityWaveName))
 	if(!WaveExists(SourceIntWv))
 		DoAlert /T="Incorrectly defined data type" 0, "Please, check definition of data type, it seems incorrectly defined yet"
 		SetDataFolder oldDf
@@ -664,7 +664,7 @@ static Function IR3B_ExtrMtdtFromOneFolder(FolderNameStr)
 	if(strlen(FolderNameStr)>0)		//if strlen(FolderNameStr)=0, this is called from other otherols and all is set here... 
 		IR3C_SelectWaveNamesData("Irena:MetadataBrowser", FolderNameStr)			//this routine will preset names in strings as needed
 	endif
-	Wave/Z SourceIntWv=$(DataFolderName+IntensityWaveName)
+	Wave/Z SourceIntWv=$(DataFolderName+possiblyQUoteName(IntensityWaveName))
 	if(!WaveExists(SourceIntWv))
 		DoAlert /T="Incorrectly defined data type" 0, "Please, check definition of data type, it seems incorrectly defined yet"
 		SetDataFolder oldDf
@@ -801,7 +801,7 @@ static Function IR3B_DisplayWaveNote(FolderNameStr)
 		if(strlen(FolderNameStr)>0)		//if strlen(FolderNameStr)=0, this is called from other otherols and all is set here... 
 			IR3C_SelectWaveNamesData("Irena:MetadataBrowser", FolderNameStr)			//this routine will preset names in strings as needed
 		endif
-		Wave/Z SourceIntWv=$(DataFolderName+IntensityWaveName)
+		Wave/Z SourceIntWv=$(DataFolderName+possiblyQUoteName(IntensityWaveName))
 		if(!WaveExists(SourceIntWv))
 			DoAlert /T="Incorrectly defined data type" 0, "Please, check definition of data type, it seems incorrectly defined yet"
 			SetDataFolder oldDf

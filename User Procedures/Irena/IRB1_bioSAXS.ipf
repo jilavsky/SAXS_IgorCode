@@ -981,10 +981,10 @@ Function IRB1_DataManAppendOneDataSet(FolderNameStr)
 	endif
 	AverageOutputFolderString = RemoveListItem(ItemsInList(tempStr,"_")-1, tempStr, "_") +"avg"
 	IR3C_SelectWaveNamesData("Irena:BioSAXSDataMan", FolderNameStr)			//this routine will preset names in strings as needed,
-	Wave/Z SourceIntWv=$(DataFolderName+IntensityWaveName)
-	Wave/Z SourceQWv=$(DataFolderName+QWavename)
-	Wave/Z SourceErrorWv=$(DataFolderName+ErrorWaveName)
-	Wave/Z SourcedQWv=$(DataFolderName+dQWavename)
+	Wave/Z SourceIntWv=$(DataFolderName+possiblyQUoteName(IntensityWaveName))
+	Wave/Z SourceQWv=$(DataFolderName+possiblyQUoteName(QWavename))
+	Wave/Z SourceErrorWv=$(DataFolderName+possiblyQUoteName(ErrorWaveName))
+	Wave/Z SourcedQWv=$(DataFolderName+possiblyQUoteName(dQWavename))
 	if(!WaveExists(SourceIntWv)||	!WaveExists(SourceQWv)||!WaveExists(SourceErrorWv))
 		Abort "Data selection failed for Data"
 	endif

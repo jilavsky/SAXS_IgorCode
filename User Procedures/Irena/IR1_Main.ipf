@@ -1,11 +1,11 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
-#pragma version=2.70
+#pragma version=2.701
 #pragma IgorVersion=8.03
 
 //DO NOT renumber Main files every time, these are main release numbers...
 //define manual date and release verison 
-constant CurrentIrenaVersionNumber = 2.70
+constant CurrentIrenaVersionNumber = 2.701
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2020, Argonne National Laboratory
@@ -13,6 +13,8 @@ constant CurrentIrenaVersionNumber = 2.70
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.701	Beta version after September 2020 release. 
+//			Fix Multi-dat aGUi tools to handle Liberal names
 //2.70		Require Igor 8.03 and higher. No testing for Igor 7 anymore. 
 //2.696	Beta version after February2020 release
 //			New bioSAXS tools

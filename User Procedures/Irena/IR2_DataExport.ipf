@@ -406,7 +406,7 @@ Function IR2E_UnivExportToolSetVarProc(ctrlName,varNum,varStr,varName) : SetVari
 		SVAR HeaderSeparator
 		
 		
-		Wave/Z tempY=$(DataFolderName+IntensityWaveName)
+		Wave/Z tempY=$(DataFolderName+possiblyQUoteName(IntensityWaveName))
 		if(!WaveExists(tempY))
 			setDataFolder OldDf
 			abort

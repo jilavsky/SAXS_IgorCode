@@ -9,16 +9,20 @@ It runs on Wavemetrics Igor Pro version 8.03 and higher.
 
 Modification history:
 ********************************************
+2.701 - TBA
+Fix All tools using the new Multi-GUI (MultiPlot, Simple Fits, bioSAXS...) to handle data with liberal names, apparently that was forgotten.  
+
+
 2.70
 Require Igor 8.03 or higher. 
 DataBrowser - Igor 8 - added Buttons to display w1 vs w2 and extract info from USAXS Folder name strings. Same tools are in Igor 9 right click. 
 Added for every graph right click option to export as jpg and pxp. Also to duplicate graph (which Igor does on ctrl/cmd-D) but with duplicate of all data in the graph. 1D graphs only.   
 WAXS - changed how JCPDS cards are named (using chemical name or formula+PDF number) + enabled long name support for Igor 8 and when user chooses. 
 WAXS - added "Distance correction" for sticks. Tweaks calculated 2Theta angle using distance ratio correction.  
-Fractals - added optional use of Unified Fit Sphere form factor. This removes high-q Bessel function oscillations which are nto reasonable for most cases. 
+Fractals - added optional use of Unified Fit Sphere form factor. This removes high-q Bessel function oscillations which are not reasonable for most cases. 
 Added Multi Data Plot tool, new tool to plot quickly many data sets. New ipf file... 
 Added Metadata Browser tool, enables relatively easy extraction of values from metadata in wave notes. 
-Added Basic fits + Simple Analysis tool, new tool and new capabilities. Guinier, Porod, Sphere and Spheroid, more to coem as needed
+Added Basic fits + Simple Analysis tool, new tool and new capabilities. Guinier, Porod, Sphere and Spheroid, more to come as needed
 Added group of bioSAS tools - specialized simple import, data averaging and buffer subtraction, etc. Linked to menu also some existing tools for other functions bioSAS needs. 
 tools: Import ASCII, Average/Subtract/Scale tool, and PDDF + Molecular weight calculator. Uses ATSAS to get PDDF. 
 Added Concentration series extrapolation tool, it is BioSAXs tool. 

@@ -1119,15 +1119,19 @@ Function NI1BC_BmCntrBtnProc(ctrlName) : ButtonControl
 
 
 	if(cmpstr(ctrlName,"ReadCursors")==0)
-
-		NVAR BeamCenterX = root:Packages:Convert2Dto1D:BeamCenterX
-		NVAR BeamCenterY = root:Packages:Convert2Dto1D:BeamCenterY
-		STRING strC = CsrInfo(A  , "CCDImageForBmCntr" )
-		if(strlen(strC)>0)
-			BeamCenterX = NumberByKey("Point", strC)
-			BeamCenterY = NumberByKey("Ypoint", strC)
+		DoWindow CCDImageForBmCntr
+		if(V_Flag)
+			NVAR BeamCenterX = root:Packages:Convert2Dto1D:BeamCenterX
+			NVAR BeamCenterY = root:Packages:Convert2Dto1D:BeamCenterY
+			STRING strC = CsrInfo(A  , "CCDImageForBmCntr" )
+			if(strlen(strC)>0)
+				BeamCenterX = NumberByKey("Point", strC)
+				BeamCenterY = NumberByKey("Ypoint", strC)
+			endif
+			NI1BC_DisplayHelpCircle()
+		else
+			Abort "Proper image for Beam center and Calibration to work with does not exist" 
 		endif
-		NI1BC_DisplayHelpCircle()
 	endif
 
 	SetDataFolder OldDf
