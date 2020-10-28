@@ -4012,8 +4012,8 @@ Function NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)
 				//now, these Qx, Qy loaded here as Qx2D and Qy2D should really be vectors per definition. They could also be 2D images with Qx, Qy, and Qz...
 				if(WaveDims(Qx2D)<2)	//assume the others follow or this makes no sense...
 					//I think this is related to transposing the above images to make them same orientation as in Python. 
- wavestats Qx2D
- wavestats Qy2D
+					// wavestats Qx2D
+ 					// wavestats Qy2D
 					reverse Qx2D /D=rQx2D
 					reverse Qy2D /D=rQy2D
 					//MatrixOp/O rQx2D = Qx2D

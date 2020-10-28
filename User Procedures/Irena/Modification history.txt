@@ -11,9 +11,14 @@ Modification history:
 ********************************************
 2.701 - TBA
 Fix All tools using the new Multi-GUI (MultiPlot, Simple Fits, bioSAXS...) to handle data with liberal names, apparently that was forgotten.  
+Fixed all fixed length wave names (hopefully). Now should use long names if user chooses so in Configuration for all waves and folders. 
+Merge data tool - fix use of long folder names. It was not following user choice on use of long names. Add merging parameters into the wave note. 
+Merge data tool - Added Optimization method: "Optimize Overlap, trim Data1" when data122 are trimmed at the very start of overlap, removing noise at overlap. 
+Unified fit - fixed fitting problem when "Link B to G/Rg/P?" was selected, code was not refreshing calculated B during fitting. Caused misfits.  
 
 
-2.70
+
+2.70  9/3/2020
 Require Igor 8.03 or higher. 
 DataBrowser - Igor 8 - added Buttons to display w1 vs w2 and extract info from USAXS Folder name strings. Same tools are in Igor 9 right click. 
 Added for every graph right click option to export as jpg and pxp. Also to duplicate graph (which Igor does on ctrl/cmd-D) but with duplicate of all data in the graph. 1D graphs only.   
@@ -100,7 +105,7 @@ Size distribution - fixed bug introduced in MaximumEntropy
 Fixed more slow debugging calls, few more packages see improvement in speed now. 
 Completely removed Modeling I - about 2k lines of code. Moved code where needed and removed about 3 ipf files from loading. 
 
-2/63, 5/1/2071
+2/63, 5/1/2017
 version 2.62 updated with on line manuals, for Igor 6 only. 
 
 2.62a 3/3/2017

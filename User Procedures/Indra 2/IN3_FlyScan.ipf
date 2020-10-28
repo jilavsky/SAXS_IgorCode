@@ -920,8 +920,7 @@ print "Function IN3_StepScanConvertToUSAXS is not finished yet!"
 				return ""
 			endif	
 	endif
- 	//newDataFolder/O/S $(FileName)
- 	newDataFolder/O/S $(UserSampleNameWv[0])
+ 	newDataFolder/O/S $(FileName)
  	
 	string/g UserSampleName=	UserSampleNameWv[0]			 //stringFromList(0,origFileName,".")
 	string/g SpecCommand
@@ -1686,7 +1685,7 @@ Function IN3_FlyScanButtonProc(ctrlName) : ButtonControl
 	endif
 	if(cmpstr(ctrlName,"ImportData")==0)
 		print "Loading XPCS data is disabled for now, if needed, we need to make changes to the code"
-		IN3_FlyScanLoadHdf5File2(1)
+		IN3_USAXSScanLoadHdf5File2(1)
 	endif
 	if(cmpstr(ctrlName,"ConfigureBehavior")==0)
 		IN3_FlyScanConfigureFnct()
@@ -1733,7 +1732,7 @@ Function IN3_FlyScanImportListBoxProc(lba) : ListBoxControl
 			break
 		case 3: // double click
 			if(DoubleClickImports)
-				IN3_FlyScanLoadHdf5File2(0)
+				IN3_USAXSScanLoadHdf5File2(0)
 			else
 				IN3_FlyScanOpenHdf5File()
 			endif

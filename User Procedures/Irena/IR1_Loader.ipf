@@ -1,6 +1,6 @@
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
 #pragma IgorVersion=8.03 	//requires Igor version 8.03 or higher
-#pragma version=2.25
+#pragma version=2.251
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2020, Argonne National Laboratory
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.251 added DataManipulation3
 //2.25 September2020 release
 //2.24 added IRB1_bioSAXS, removed absolute paths to these included files. 
 //2.23 February 2020 release
@@ -93,6 +94,8 @@
 #include "IN2_GeneralProcedures", version>=2.25
 
 #include "IRNI_NexusSupport", version>=1.14
+
+#include "IR3_DataManipulationIII", version>=1
 
 
 //removed December 2018, need to delete them from distributions 

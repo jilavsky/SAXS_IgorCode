@@ -655,10 +655,16 @@ end
 
 Function IN2G_SaveTopGraphJpg()
 		string topWindow=WinName(0,1)
+		if(strlen(topWindow)<2)
+			Abort "This function does not work for subwindows in panels"
+		endif
 		SavePICT/E=-6/B=288	as (topWindow)				//this is jpg
 end
 Function IN2G_SaveTopGraphPXP()
 		string topWindow=WinName(0,1)
+		if(strlen(topWindow)<2)
+			Abort "This function does not work for subwindows in panels"
+		endif
 #if(IgorVersion()>8.99)
 		SaveGraphCopy /I/T=1 /W=$(topWindow)	  			//this is h5xp
 #else
@@ -3487,8 +3493,8 @@ Function IN2G_RebinLogData(Wx,Wy,NumberOfPoints,MinStep,[Wsdev,Wxsdev, Wxwidth,W
 		CalcW5 = ParamIsDefault(W5) ?  0 : 1
 		
 		variable OldNumPnts=numpnts(Wx)
-		if(3*NumberOfPoints>OldNumPnts)
-			print "User requested rebinning of data, but old number of points is less than 3*requested number of points, no rebinning done"
+		if(2*NumberOfPoints>OldNumPnts)
+			print "User requested rebinning of data, but old number of points is less than 2*requested number of points, no rebinning done"
 			return 0
 		endif
 		variable StartX, EndX, iii, isGrowing, CorrectStart, logStartX, logEndX

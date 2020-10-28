@@ -489,7 +489,7 @@ Function IN3_FailedLoadMessage(Filename) : Panel
 EndMacro
 //************************************************************************************************************
 //************************************************************************************************************
-Function/T IN3_FlyScanLoadHdf5File2(LoadManyDataSets)
+Function/T IN3_USAXSScanLoadHdf5File2(LoadManyDataSets)
 	variable LoadManyDataSets
 	
 	string ListOfLoadedDataSets=""
@@ -538,7 +538,12 @@ Function/T IN3_FlyScanLoadHdf5File2(LoadManyDataSets)
 				return ""
 			else
 				// Open OK?
+				//Variable timerRefNum
+				//timerRefNum = startMSTimer
 				HDF5LoadGroup /O /R /T /IMAG=1 :, locFileID, "/"			
+				//Variable microSeconds
+				//microSeconds = StopMSTimer(timerRefNum)
+				//print microSeconds
 				if(strlen(S_dataFolderPaths)<5)
 					Abort "HDF5 import failed in "+GetDataFolder(1) 
 				endif

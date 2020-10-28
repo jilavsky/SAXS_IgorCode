@@ -108,7 +108,7 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 		else
 			howMany=1
 		endif
-		string LoadedDataList = IN3_FlyScanLoadHdf5File2(howMany)		//0 is for load 1, 1 is for load all selected. 
+		string LoadedDataList = IN3_USAXSScanLoadHdf5File2(howMany)		//0 is for load 1, 1 is for load all selected. 
 		variable Items, i
 		if(cmpstr(ctrlName,"ProcessData2")==0)
 			Items=1

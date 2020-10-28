@@ -2086,15 +2086,18 @@ static Function IR1D_PresetOutputStrings()
 		//using qrs data structure, rename the waves names
 		//intensity
 		NewIntensityWaveName = IN2G_RemoveExtraQuote(NewIntensityWaveName,1,1)
-		NewIntensityWaveName = NewIntensityWaveName[0,26]
+		//NewIntensityWaveName = NewIntensityWaveName[0,26]
+		NewIntensityWaveName = IN2G_CreateUserName(NewIntensityWaveName, 26, 0, 1)
 		NewIntensityWaveName = NewIntensityWaveName+"_mod"
 		//Q vector
 		NewQWavename = IN2G_RemoveExtraQuote(NewQWavename,1,1)
-		NewQWavename = NewQWavename[0,26]
+		//NewQWavename = NewQWavename[0,26]
+		NewQWavename = IN2G_CreateUserName(NewQWavename, 26, 0, 1)
 		NewQWavename = NewQWavename+"_mod"
 		//error
 		NewErrorWaveName = IN2G_RemoveExtraQuote(NewErrorWaveName,1,1)
-		NewErrorWaveName = NewErrorWaveName[0,26]
+		//NewErrorWaveName = NewErrorWaveName[0,26]
+		NewErrorWaveName = IN2G_CreateUserName(NewErrorWaveName, 26, 0, 1)
 		NewErrorWaveName = NewErrorWaveName+"_mod"
 		if(Data1ConvertToD)
 			NewQWavename = "d"+NewQWavename[1,inf]
@@ -3826,7 +3829,8 @@ Function IR3M_PresetOutputWvsNms()
 	NVAR UseIndra2Data=root:Packages:DataManipulationII:UseIndra2Data
 	string StartPath=RemoveFromList(StringFromList(ItemsInList(DataFolderName,":")-1,DataFolderName,":"), DataFolderName  , ":")
 	string endpath = IN2G_RemoveExtraQuote(StringFromList(ItemsInList(DataFolderName,":")-1,DataFolderName,":"),1,1)
-	ResultsDataFolderName =StartPath+ possiblyQuoteName( endpath[0,25]+NameModifier)
+	//ResultsDataFolderName =StartPath+ possiblyQuoteName( endpath[0,25]+NameModifier)
+	ResultsDataFolderName =StartPath+ possiblyQuoteName(IN2G_CreateUserName(endpath, 25, 0, 11)+ NameModifier)
 	if(UseIndra2Data)
 		ResultsIntWaveName  = IntensityWaveName
 		ResultsQvecWaveName = QWavename

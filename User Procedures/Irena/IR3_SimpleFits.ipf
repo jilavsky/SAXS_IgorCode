@@ -22,7 +22,7 @@ constant SimpleFitsLinPlotMinScale = 0.8
 //			add to: ListOfSimpleModels list as new data type ("Guinier")
 //			add any new parameters, which will need to be fit. Keep in mind, all will be fit. 
 //IR3J_SimpleFitsPanelFnct()
-//			set controsl for the new parameters.
+//			set controls for the new parameters.
 //IR3J_PopMenuProc()
 //			make sure controls show as needed only
 //IR3J_CreateLinearizedData()
@@ -2610,3 +2610,4 @@ end
 //*****************************************************************************************************************
 //		SetWindow IR3J_LogLogDataDisplay, hook(SimpleFitsLogCursorMoved) = IR3J_GraphWindowHook
 //		SetWindow IR3J_LinDataDisplay, hook(SimpleFitsLinCursorMoved) = IR3J_GraphWindowHook
+//IR3J_FitSequenceOfData

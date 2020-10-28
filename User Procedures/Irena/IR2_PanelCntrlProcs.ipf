@@ -3305,7 +3305,7 @@ Function IR3C_MultiAppendControls(ToolPackageFolder,PanelName, DoubleClickFunNm,
 end
 //**************************************************************************************
 //**************************************************************************************
-//					this follwoing is very importnat function, 
+//					this follwoing is very important function, 
 //			it sets the names of selected X, Y, and E data for user
 //					this may require bit more of debugging... 
 //**************************************************************************************
@@ -3560,7 +3560,7 @@ Function IR3C_MultiListBoxProc(lba) : ListBoxControl
 			else
 				SVAR ControlMouseDownFunction = root:Packages:IrenaControlProcs:ControlMouseDownFunction
 				ControlMouseDownFunctionName=StringByKey(WinNameStr, ControlMouseDownFunction,":",";" )
-				if(numpnts(listWave)<(row+1))
+				if(numpnts(listWave)<(row+1)||row<0)
 					return 0
 				endif		
 				FoldernameStr=listWave[row]

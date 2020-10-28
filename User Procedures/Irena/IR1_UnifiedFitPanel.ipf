@@ -2815,18 +2815,6 @@ Function IR1A_GraphMeasuredData(Package)
 	if(NVAR_Exists(SubtractBackground) && (cmpstr(Package,"Unified")==0))
 		OriginalIntensity =OriginalIntensity - SubtractBackground
 	endif
-//	NVAR/Z UseSlitSmearedData=root:Packages:Irena_UnifFit:UseSlitSmearedData
-//	if(NVAR_Exists(UseSlitSmearedData) && (cmpstr(Package,"LSQF")==0))
-//		if(UseSlitSmearedData)
-//			NVAR SlitLength=root:Packages:Irena_UnifFit:SlitLength
-//			variable tempSL=NumberByKey("SlitLength", note(OriginalIntensity) , "=" , ";")
-//			if(numtype(tempSL)==0)
-//				SlitLength=tempSL
-//			endif
-//		endif
-//	endif
-//	 change September 2007
-//	current universal package which loads data in does nto care about local setting for useSMRData, but we need to set it acording to wave passed...
 	NVAR/Z UseSMRData=root:Packages:Irena_UnifFit:UseSMRData
 	if(stringmatch(IntensityWaveName, "*SMR_Int*" ))		// slit smeared data
 		UseSMRData=1
@@ -2854,9 +2842,9 @@ Function IR1A_GraphMeasuredData(Package)
  		Execute ("IR1_LogLogPlotU()")
 	endif
 	
-	Duplicate/O $(DataFolderName+IntensityWaveName), OriginalIntQ4
-	Duplicate/O $(DataFolderName+QWavename), OriginalQ4
-	Duplicate/O $(DataFolderName+ErrorWaveName), OriginalErrQ4
+	Duplicate/O OriginalIntensity, OriginalIntQ4
+	Duplicate/O OriginalQvector, OriginalQ4
+	Duplicate/O OriginalError, OriginalErrQ4
 	Redimension/D OriginalIntQ4, OriginalQ4, OriginalErrQ4
 	wavestats /Q OriginalQ4
 	if(V_min<0)

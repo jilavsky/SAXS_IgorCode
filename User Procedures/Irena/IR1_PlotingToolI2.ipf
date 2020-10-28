@@ -221,7 +221,7 @@ Function IR1P_CreateDataToPlot()
 			ListOfDataWaveNames=replaceStringByKey("IntWave"+num2str(i),ListOfDataWaveNames, tempFullName,"=")
 		elseif(cmpstr(DataY,"Y^2")==0)		//Want to plot I^2, create data and name...
 			tempShortName=IN2G_RemoveExtraQuote(tempShortName,1,1)
-			tempShortName=tempShortName[0,26]	+ "_2"			//Igor names are limited to 30 characters
+			tempShortName=IN2G_CreateUserName(tempShortName, 26, 0, 1)	+ "_2"			//Igor names are limited to 30 characters
 			tempShortName = possiblyQuoteName(tempShortName)
 			tempFullName=tempPath+tempShortName
 			Duplicate/o IntOrg, $tempFullName
@@ -230,7 +230,7 @@ Function IR1P_CreateDataToPlot()
 			ListOfDataWaveNames=replaceStringByKey("IntWave"+num2str(i),ListOfDataWaveNames, tempFullName,"=")		
 		elseif(cmpstr(DataY,"Y^3")==0)		//Want to plot I^2, create data and name...
 			tempShortName=IN2G_RemoveExtraQuote(tempShortName,1,1)
-			tempShortName=tempShortName[0,26]	+ "_3"			//Igor names are limited to 30 characters
+			tempShortName=IN2G_CreateUserName(tempShortName, 26, 0, 1)	+ "_3"			//Igor names are limited to 30 characters
 			tempShortName = possiblyQuoteName(tempShortName)
 			tempFullName=tempPath+tempShortName
 			Duplicate/o IntOrg, $tempFullName
@@ -239,7 +239,7 @@ Function IR1P_CreateDataToPlot()
 			ListOfDataWaveNames=replaceStringByKey("IntWave"+num2str(i),ListOfDataWaveNames, tempFullName,"=")		
 		elseif(cmpstr(DataY,"Y^4")==0)		//Want to plot I^2, create data and name...
 			tempShortName=IN2G_RemoveExtraQuote(tempShortName,1,1)
-			tempShortName=tempShortName[0,26]	+ "_4"			//Igor names are limited to 30 characters
+			tempShortName=IN2G_CreateUserName(tempShortName, 26, 0, 1)	+ "_4"			//Igor names are limited to 30 characters
 			tempShortName = possiblyQuoteName(tempShortName)
 			tempFullName=tempPath+tempShortName
 			Duplicate/o IntOrg, $tempFullName
@@ -248,7 +248,7 @@ Function IR1P_CreateDataToPlot()
 			ListOfDataWaveNames=replaceStringByKey("IntWave"+num2str(i),ListOfDataWaveNames, tempFullName,"=")		
 		elseif(cmpstr(DataY,"1/Y")==0)		//Want to plot I^2, create data and name...
 			tempShortName=IN2G_RemoveExtraQuote(tempShortName,1,1)
-			tempShortName=tempShortName[0,26]	+ "_r1"			//Igor names are limited to 30 characters
+			tempShortName=IN2G_CreateUserName(tempShortName, 26, 0, 1)	+ "_r1"			//Igor names are limited to 30 characters
 			tempShortName = possiblyQuoteName(tempShortName)
 			tempFullName=tempPath+tempShortName
 			Duplicate/o IntOrg, $tempFullName
@@ -257,7 +257,7 @@ Function IR1P_CreateDataToPlot()
 			ListOfDataWaveNames=replaceStringByKey("IntWave"+num2str(i),ListOfDataWaveNames, tempFullName,"=")		
 		elseif(cmpstr(DataY,"ln(Y)")==0)		//Want to plot ln(I), create data and name...
 			tempShortName=IN2G_RemoveExtraQuote(tempShortName,1,1)
-			tempShortName=tempShortName[0,26]	+ "_lny"			//Igor names are limited to 30 characters
+			tempShortName=IN2G_CreateUserName(tempShortName, 26, 0, 1)	+ "_lny"			//Igor names are limited to 30 characters
 			tempShortName = possiblyQuoteName(tempShortName)
 			tempFullName=tempPath+tempShortName
 			Duplicate/o IntOrg, $tempFullName
@@ -266,7 +266,7 @@ Function IR1P_CreateDataToPlot()
 			ListOfDataWaveNames=replaceStringByKey("IntWave"+num2str(i),ListOfDataWaveNames, tempFullName,"=")		
 		elseif(cmpstr(DataY,"sqrt(Y)")==0)		//Want to plot I^2, create data and name...
 			tempShortName=IN2G_RemoveExtraQuote(tempShortName,1,1)
-			tempShortName=tempShortName[0,26]	+ "_sqy"			//Igor names are limited to 30 characters
+			tempShortName=IN2G_CreateUserName(tempShortName, 26, 0, 1)	+ "_sqy"			//Igor names are limited to 30 characters
 			tempShortName = possiblyQuoteName(tempShortName)
 			tempFullName=tempPath+tempShortName
 			Duplicate/o IntOrg, $tempFullName
@@ -275,7 +275,7 @@ Function IR1P_CreateDataToPlot()
 			ListOfDataWaveNames=replaceStringByKey("IntWave"+num2str(i),ListOfDataWaveNames, tempFullName,"=")		
 		elseif(cmpstr(DataY,"sqrt(1/Y)")==0)		//Want to plot I^2, create data and name...
 			tempShortName=IN2G_RemoveExtraQuote(tempShortName,1,1)
-			tempShortName=tempShortName[0,26]	+ "_sr1"			//Igor names are limited to 30 characters
+			tempShortName=IN2G_CreateUserName(tempShortName, 26, 0, 1)	+ "_sr1"			//Igor names are limited to 30 characters
 			tempShortName = possiblyQuoteName(tempShortName)
 			tempFullName=tempPath+tempShortName
 			Duplicate/o IntOrg, $tempFullName
@@ -284,7 +284,7 @@ Function IR1P_CreateDataToPlot()
 			ListOfDataWaveNames=replaceStringByKey("IntWave"+num2str(i),ListOfDataWaveNames, tempFullName,"=")		
 		elseif(cmpstr(DataY,"ln(Y*X^2)")==0)		//Want to plot I^2, create data and name...
 			tempShortName=IN2G_RemoveExtraQuote(tempShortName,1,1)
-			tempShortName=tempShortName[0,26]	+ "_Gu"			//Igor names are limited to 30 characters
+			tempShortName=IN2G_CreateUserName(tempShortName, 26, 0, 1)	+ "_Gu"			//Igor names are limited to 30 characters
 			tempShortName = possiblyQuoteName(tempShortName)
 			tempFullName=tempPath+tempShortName
 			Duplicate/o IntOrg, $tempFullName
@@ -294,7 +294,7 @@ Function IR1P_CreateDataToPlot()
 			ListOfDataWaveNames=replaceStringByKey("IntWave"+num2str(i),ListOfDataWaveNames, tempFullName,"=")		
 		elseif(cmpstr(DataY,"ln(Y*X)")==0)		//Want to plot I^2, create data and name...
 			tempShortName=IN2G_RemoveExtraQuote(tempShortName,1,1)
-			tempShortName=tempShortName[0,26]	+ "_LIQ"			//Igor names are limited to 30 characters
+			tempShortName=IN2G_CreateUserName(tempShortName, 26, 0, 1)	+ "_LIQ"			//Igor names are limited to 30 characters
 			tempShortName = possiblyQuoteName(tempShortName)
 			tempFullName=tempPath+tempShortName
 			Duplicate/o IntOrg, $tempFullName
@@ -304,7 +304,7 @@ Function IR1P_CreateDataToPlot()
 			ListOfDataWaveNames=replaceStringByKey("IntWave"+num2str(i),ListOfDataWaveNames, tempFullName,"=")		
 		elseif(cmpstr(DataY,"Y*X^2")==0)		//Want to plot I^2, create data and name...
 			tempShortName=IN2G_RemoveExtraQuote(tempShortName,1,1)
-			tempShortName=tempShortName[0,26]	+ "_IQ2"			//Igor names are limited to 30 characters
+			tempShortName=IN2G_CreateUserName(tempShortName, 26, 0, 1)	+ "_IQ2"			//Igor names are limited to 30 characters
 			tempShortName = possiblyQuoteName(tempShortName)
 			tempFullName=tempPath+tempShortName
 			Duplicate/o IntOrg, $tempFullName
@@ -314,7 +314,7 @@ Function IR1P_CreateDataToPlot()
 			ListOfDataWaveNames=replaceStringByKey("IntWave"+num2str(i),ListOfDataWaveNames, tempFullName,"=")		
 		elseif(cmpstr(DataY,"Y*X^3")==0)		//Want to plot I^2, create data and name...
 			tempShortName=IN2G_RemoveExtraQuote(tempShortName,1,1)
-			tempShortName=tempShortName[0,26]	+ "_IQ3"			//Igor names are limited to 30 characters
+			tempShortName=IN2G_CreateUserName(tempShortName, 26, 0, 1)	+ "_IQ3"			//Igor names are limited to 30 characters
 			tempShortName = possiblyQuoteName(tempShortName)
 			tempFullName=tempPath+tempShortName
 			Duplicate/o IntOrg, $tempFullName
@@ -324,7 +324,7 @@ Function IR1P_CreateDataToPlot()
 			ListOfDataWaveNames=replaceStringByKey("IntWave"+num2str(i),ListOfDataWaveNames, tempFullName,"=")		
 		elseif(cmpstr(DataY,"Y*X^4")==0)		//Want to plot I^2, create data and name...
 				tempShortName=IN2G_RemoveExtraQuote(tempShortName,1,1)
-			tempShortName=tempShortName[0,26]	+ "_IQ4"			//Igor names are limited to 30 characters
+			tempShortName=IN2G_CreateUserName(tempShortName, 26, 0, 1)	+ "_IQ4"			//Igor names are limited to 30 characters
 			tempShortName = possiblyQuoteName(tempShortName)
 			tempFullName=tempPath+tempShortName
 			Duplicate/o IntOrg, $tempFullName
@@ -345,7 +345,7 @@ Function IR1P_CreateDataToPlot()
 			ListOfDataWaveNames=replaceStringByKey("QWave"+num2str(i),ListOfDataWaveNames, tempFullName,"=")
 		elseif(cmpstr(DataX,"X^2")==0)		//Want to plot I^2, create data and name...
 			tempShortName=IN2G_RemoveExtraQuote(tempShortName,1,1)
-			tempShortName=tempShortName[0,26]	+ "_2"			//Igor names are limited to 30 characters
+			tempShortName=IN2G_CreateUserName(tempShortName, 26, 0, 1)	+ "_2"			//Igor names are limited to 30 characters
 			tempShortName = possiblyQuoteName(tempShortName)
 			tempFullName=tempPath+tempShortName
 			Duplicate/o QOrg, $tempFullName
@@ -354,7 +354,7 @@ Function IR1P_CreateDataToPlot()
 			ListOfDataWaveNames=replaceStringByKey("QWave"+num2str(i),ListOfDataWaveNames, tempFullName,"=")		
 		elseif(cmpstr(DataX,"X^3")==0)		//Want to plot I^3, create data and name...
 			tempShortName=IN2G_RemoveExtraQuote(tempShortName,1,1)
-			tempShortName=tempShortName[0,26]	+ "_3"			//Igor names are limited to 30 characters
+			tempShortName=IN2G_CreateUserName(tempShortName, 26, 0, 1)	+ "_3"			//Igor names are limited to 30 characters
 			tempShortName = possiblyQuoteName(tempShortName)
 			tempFullName=tempPath+tempShortName
 			Duplicate/o QOrg, $tempFullName
@@ -363,7 +363,7 @@ Function IR1P_CreateDataToPlot()
 			ListOfDataWaveNames=replaceStringByKey("QWave"+num2str(i),ListOfDataWaveNames, tempFullName,"=")		
 		elseif(cmpstr(DataX,"X^4")==0)		//Want to plot I^4, create data and name...
 			tempShortName=IN2G_RemoveExtraQuote(tempShortName,1,1)
-			tempShortName=tempShortName[0,26]	+ "_4"			//Igor names are limited to 30 characters
+			tempShortName=IN2G_CreateUserName(tempShortName, 26, 0, 1)	+ "_4"			//Igor names are limited to 30 characters
 			tempShortName = possiblyQuoteName(tempShortName)
 			tempFullName=tempPath+tempShortName
 			Duplicate/o QOrg, $tempFullName
@@ -386,7 +386,7 @@ Function IR1P_CreateDataToPlot()
 				ListOfDataWaveNames=replaceStringByKey("EWave"+num2str(i),ListOfDataWaveNames, tempFullName,"=")
 			elseif(cmpstr(DataE,"Y^2")==0)		//Want to plot I^2, create data and name...
 				tempShortName=IN2G_RemoveExtraQuote(tempShortName,1,1)
-				tempShortName=tempShortName[0,26]	+ "_2"			//Igor names are limited to 30 characters
+				tempShortName=IN2G_CreateUserName(tempShortName, 26, 0, 1)	+ "_2"			//Igor names are limited to 30 characters
 				tempShortName = possiblyQuoteName(tempShortName)
 				tempFullName=tempPath+tempShortName
 				Duplicate/o EOrg, $tempFullName
@@ -395,7 +395,7 @@ Function IR1P_CreateDataToPlot()
 				ListOfDataWaveNames=replaceStringByKey("EWave"+num2str(i),ListOfDataWaveNames, tempFullName,"=")		
 			elseif(cmpstr(DataE,"Y^3")==0)		//Want to plot I^2, create data and name...
 				tempShortName=IN2G_RemoveExtraQuote(tempShortName,1,1)
-				tempShortName=tempShortName[0,26]	+ "_3"			//Igor names are limited to 30 characters
+				tempShortName=IN2G_CreateUserName(tempShortName, 26, 0, 1)	+ "_3"			//Igor names are limited to 30 characters
 				tempShortName = possiblyQuoteName(tempShortName)
 				tempFullName=tempPath+tempShortName
 				Duplicate/o EOrg, $tempFullName
@@ -404,7 +404,7 @@ Function IR1P_CreateDataToPlot()
 				ListOfDataWaveNames=replaceStringByKey("EWave"+num2str(i),ListOfDataWaveNames, tempFullName,"=")		
 			elseif(cmpstr(DataE,"Y^4")==0)		//Want to plot I^2, create data and name...
 				tempShortName=IN2G_RemoveExtraQuote(tempShortName,1,1)
-				tempShortName=tempShortName[0,26]	+ "_4"			//Igor names are limited to 30 characters
+				tempShortName=IN2G_CreateUserName(tempShortName, 26, 0, 1)	+ "_4"			//Igor names are limited to 30 characters
 				tempShortName = possiblyQuoteName(tempShortName)
 				tempFullName=tempPath+tempShortName
 				Duplicate/o EOrg, $tempFullName
@@ -413,7 +413,7 @@ Function IR1P_CreateDataToPlot()
 				ListOfDataWaveNames=replaceStringByKey("EWave"+num2str(i),ListOfDataWaveNames, tempFullName,"=")		
 			elseif(cmpstr(DataE,"1/Y")==0)		//Want to plot I^2, create data and name...
 				tempShortName=IN2G_RemoveExtraQuote(tempShortName,1,1)
-				tempShortName=tempShortName[0,26]	+ "_r1"			//Igor names are limited to 30 characters
+				tempShortName=IN2G_CreateUserName(tempShortName, 26, 0, 1)	+ "_r1"			//Igor names are limited to 30 characters
 				tempShortName = possiblyQuoteName(tempShortName)
 				tempFullName=tempPath+tempShortName
 				Duplicate/o EOrg, $tempFullName
@@ -422,7 +422,7 @@ Function IR1P_CreateDataToPlot()
 				ListOfDataWaveNames=replaceStringByKey("EWave"+num2str(i),ListOfDataWaveNames, tempFullName,"=")		
 			elseif(cmpstr(DataE,"ln(Y)")==0)		//Want to plot I^2, create data and name...
 				tempShortName=IN2G_RemoveExtraQuote(tempShortName,1,1)
-				tempShortName=tempShortName[0,26]	+ "_lny"			//Igor names are limited to 30 characters
+				tempShortName=IN2G_CreateUserName(tempShortName, 26, 0, 1)	+ "_lny"			//Igor names are limited to 30 characters
 				tempShortName = possiblyQuoteName(tempShortName)
 				tempFullName=tempPath+tempShortName
 				Duplicate/o EOrg, $tempFullName
@@ -431,7 +431,7 @@ Function IR1P_CreateDataToPlot()
 				ListOfDataWaveNames=replaceStringByKey("EWave"+num2str(i),ListOfDataWaveNames, tempFullName,"=")		
 			elseif(cmpstr(DataE,"sqrt(1/Y)")==0)		//Want to plot I^2, create data and name...
 				tempShortName=IN2G_RemoveExtraQuote(tempShortName,1,1)
-				tempShortName=tempShortName[0,26]	+ "_sr1"			//Igor names are limited to 30 characters
+				tempShortName=IN2G_CreateUserName(tempShortName, 26, 0, 1)	+ "_sr1"			//Igor names are limited to 30 characters
 				tempShortName = possiblyQuoteName(tempShortName)
 				tempFullName=tempPath+tempShortName
 				Duplicate/o EOrg, $tempFullName
@@ -441,7 +441,7 @@ Function IR1P_CreateDataToPlot()
 				ListOfDataWaveNames=replaceStringByKey("EWave"+num2str(i),ListOfDataWaveNames, tempFullName,"=")		
 			elseif(cmpstr(DataE,"sqrt(Y)")==0)		//Want to plot I^2, create data and name...
 				tempShortName=IN2G_RemoveExtraQuote(tempShortName,1,1)
-				tempShortName=tempShortName[0,26]	+ "_sqy"			//Igor names are limited to 30 characters
+				tempShortName=IN2G_CreateUserName(tempShortName, 26, 0, 1)	+ "_sqy"			//Igor names are limited to 30 characters
 				tempShortName = possiblyQuoteName(tempShortName)
 				tempFullName=tempPath+tempShortName
 				Duplicate/o EOrg, $tempFullName
@@ -451,7 +451,7 @@ Function IR1P_CreateDataToPlot()
 				ListOfDataWaveNames=replaceStringByKey("EWave"+num2str(i),ListOfDataWaveNames, tempFullName,"=")		
  			elseif(cmpstr(DataE,"ln(Y*X^2)")==0)		//Want to plot I^2, create data and name...
 				tempShortName=IN2G_RemoveExtraQuote(tempShortName,1,1)
-				tempShortName=tempShortName[0,26]	+ "_Gu"			//Igor names are limited to 30 characters
+				tempShortName=IN2G_CreateUserName(tempShortName, 26, 0, 1)	+ "_Gu"			//Igor names are limited to 30 characters
 				tempShortName = possiblyQuoteName(tempShortName)
 				tempFullName=tempPath+tempShortName
 				Duplicate/o EOrg, $tempFullName
@@ -462,7 +462,7 @@ Function IR1P_CreateDataToPlot()
 				ListOfDataWaveNames=replaceStringByKey("EWave"+num2str(i),ListOfDataWaveNames, tempFullName,"=")		
  			elseif(cmpstr(DataE,"ln(Y*X)")==0)		//Want to plot I^2, create data and name...
 				tempShortName=IN2G_RemoveExtraQuote(tempShortName,1,1)
-				tempShortName=tempShortName[0,26]	+ "_LIQ"			//Igor names are limited to 30 characters
+				tempShortName=IN2G_CreateUserName(tempShortName, 26, 0, 1)	+ "_LIQ"			//Igor names are limited to 30 characters
 				tempShortName = possiblyQuoteName(tempShortName)
 				tempFullName=tempPath+tempShortName
 				Duplicate/o EOrg, $tempFullName
@@ -473,7 +473,7 @@ Function IR1P_CreateDataToPlot()
 				ListOfDataWaveNames=replaceStringByKey("EWave"+num2str(i),ListOfDataWaveNames, tempFullName,"=")		
 			elseif(cmpstr(DataE,"Y*X^2")==0)		//Want to plot I^2, create data and name...
 				tempShortName=IN2G_RemoveExtraQuote(tempShortName,1,1)
-				tempShortName=tempShortName[0,26]	+ "_IQ2"			//Igor names are limited to 30 characters
+				tempShortName=IN2G_CreateUserName(tempShortName, 26, 0, 1)	+ "_IQ2"			//Igor names are limited to 30 characters
 				tempShortName = possiblyQuoteName(tempShortName)
 				tempFullName=tempPath+tempShortName
 				Duplicate/o EOrg, $tempFullName
@@ -483,7 +483,7 @@ Function IR1P_CreateDataToPlot()
 				ListOfDataWaveNames=replaceStringByKey("EWave"+num2str(i),ListOfDataWaveNames, tempFullName,"=")		
 			elseif(cmpstr(DataE,"Y*X^4")==0)		//Want to plot I*Q^4, create data and name...
 				tempShortName=IN2G_RemoveExtraQuote(tempShortName,1,1)
-				tempShortName=tempShortName[0,26]	+ "_IQ4"			//Igor names are limited to 30 characters
+				tempShortName=IN2G_CreateUserName(tempShortName, 26, 0, 1)	+ "_IQ4"			//Igor names are limited to 30 characters
 				tempShortName = possiblyQuoteName(tempShortName)
 				tempFullName=tempPath+tempShortName
 				Duplicate/o EOrg, $tempFullName

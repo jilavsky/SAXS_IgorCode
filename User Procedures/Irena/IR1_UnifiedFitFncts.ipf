@@ -1,7 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals = 3// Use strict wave reference mode and runtime bounds checking
-//#pragma rtGlobals=1	// Use modern global access method.
-#pragma version=2.34
+#pragma version=2.35
 
 
 constant IR2UversionNumber=2.23 			//Evaluation panel version number. 
@@ -11,6 +10,7 @@ constant IR2UversionNumber=2.23 			//Evaluation panel version number.
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.35 removed IR1A_UnifiedFitCalcIntOne which had bug anyway when LinkB was selected. Not needed, using IR1A_UnifiedCalcIntOne instead also for fitting. 
 //2.34 fixed cursor calls to target graph "IR1_LogLogPlotU"
 //2.34 Added Level0 Local level which conatins flat background and fixed minor issues with loacl fits export. Fixed control procs to handle them correctly.  
 //2.33 fixes to how messages for CheckFitting parameters are defined. 
@@ -229,7 +229,8 @@ Function IR1A_UnifiedCalculateIntensity()
 	variable i
 	
 	for(i=1;i<=NumberOfLevels;i+=1)	// initialize variables;continue test
-		IR1A_UnifiedCalcIntOne(i, UnifiedFitIntensity, UnifiedFitQvector)
+		//IR1A_UnifiedCalcIntOne(i, UnifiedFitIntensity, UnifiedFitQvector)
+		IR1A_UnifiedCalcIntOne(i,UnifiedFitQvector)
 		Wave TempUnifiedIntensity
 		UnifiedFitIntensity+=TempUnifiedIntensity
 	endfor								
@@ -255,14 +256,14 @@ end
 //****************************************************************************************************************
 //****************************************************************************************************************
 
-Function IR1A_UnifiedCalcIntOne(level, OriginalIntensity, OriginalQvector)
+Function IR1A_UnifiedCalcIntOne(level, OriginalQvector)
 	variable level
-	Wave OriginalIntensity
+	//Wave OriginalIntensity
 	Wave OriginalQvector
 	
 	setDataFolder root:Packages:Irena_UnifFit
 	
-	Duplicate/O OriginalIntensity, TempUnifiedIntensity
+	Duplicate/O OriginalQvector, TempUnifiedIntensity
 	Duplicate /O OriginalQvector, QstarVector
 	Redimension/D TempUnifiedIntensity, QstarVector
 	
@@ -811,7 +812,8 @@ Function IR1A_UpdateUnifiedLevels(level, overwride)
 		string FitIntName="Level"+num2str(Level)+"Unified"
 		Wave FitIntIQ4=$("Level"+num2str(Level)+"UnifiedIQ4")
 		string FitIntNameIQ4="Level"+num2str(Level)+"UnifiedIQ4"
-		IR1A_UnifiedCalcIntOne(level, OriginalIntensity, OriginalQvector)
+		//IR1A_UnifiedCalcIntOne(level, OriginalIntensity, OriginalQvector)
+		IR1A_UnifiedCalcIntOne(level, OriginalQvector)
 		Wave TempUnifiedIntensity=root:Packages:Irena_UnifFit:TempUnifiedIntensity
 		NVAR UseSMRData=root:Packages:Irena_UnifFit:UseSMRData
 		NVAR SlitLengthUnif=root:Packages:Irena_UnifFit:SlitLengthUnif
@@ -7349,7 +7351,8 @@ Function IR1A_UnifiedFitCalculateInt(QvectorWave)
 	variable i
 	
 	for(i=1;i<=NumberOfLevels;i+=1)	// initialize variables;continue test
-		IR1A_UnifiedFitCalcIntOne(QvectorWave,i)
+		//IR1A_UnifiedFitCalcIntOne(QvectorWave,i)
+		IR1A_UnifiedCalcIntOne(i, QvectorWave)
 		Wave TempUnifiedIntensity
 		UnifiedFitIntensity+=TempUnifiedIntensity
 	endfor								
@@ -7376,43 +7379,44 @@ end
 ///*********************************************************************************************************************
 ///*********************************************************************************************************************
 
-
-Function IR1A_UnifiedFitCalcIntOne(QvectorWave,level)
-	variable level
-	Wave QvectorWave
-	
-	setDataFolder root:Packages:Irena_UnifFit
-	Wave OriginalIntensity
-	
-	Duplicate/O QvectorWave, TempUnifiedIntensity
-	Duplicate /O QvectorWave, QstarVector
-	
-	NVAR Rg=$("root:Packages:Irena_UnifFit:Level"+num2str(level)+"Rg")
-	NVAR G=$("root:Packages:Irena_UnifFit:Level"+num2str(level)+"G")
-	NVAR P=$("root:Packages:Irena_UnifFit:Level"+num2str(level)+"P")
-	NVAR B=$("root:Packages:Irena_UnifFit:Level"+num2str(level)+"B")
-	NVAR ETA=$("root:Packages:Irena_UnifFit:Level"+num2str(level)+"ETA")
-	NVAR PACK=$("root:Packages:Irena_UnifFit:Level"+num2str(level)+"PACK")
-	NVAR RgCO=$("root:Packages:Irena_UnifFit:Level"+num2str(level)+"RgCO")
-	NVAR K=$("root:Packages:Irena_UnifFit:Level"+num2str(level)+"K")
-	NVAR Corelations=$("root:Packages:Irena_UnifFit:Level"+num2str(level)+"Corelations")
-	NVAR MassFractal=$("root:Packages:Irena_UnifFit:Level"+num2str(level)+"MassFractal")
-	NVAR LinkRGCO=$("root:Packages:Irena_UnifFit:Level"+num2str(level)+"LinkRGCO")
-	if (LinkRGCO==1 && level>=2)
-		NVAR RgLowerLevel=$("root:Packages:Irena_UnifFit:Level"+num2str(level-1)+"Rg")	
-		RGCO=RgLowerLevel
-	endif
-	QstarVector=QvectorWave/(erf(K*QvectorWave*Rg/sqrt(6)))^3
-	if (MassFractal)
-		B=(G*P/Rg^P)*exp(gammln(P/2))
-	endif
-	
-	TempUnifiedIntensity=G*exp(-QvectorWave^2*Rg^2/3)+(B/QstarVector^P) * exp(-RGCO^2 * QvectorWave^2/3)
-	
-	if (Corelations)
-		TempUnifiedIntensity/=(1+pack*IR1A_SphereAmplitude(QvectorWave,ETA))
-	endif
-end
+//this one has error since it cannot do LinkB and if B is linked, it does tno fit correctly. 
+//10/28/2020 removed, not needed anymore. 
+//Function IR1A_UnifiedFitCalcIntOne(QvectorWave,level)
+//	variable level
+//	Wave QvectorWave
+//	
+//	setDataFolder root:Packages:Irena_UnifFit
+//	Wave OriginalIntensity
+//	
+//	Duplicate/O QvectorWave, TempUnifiedIntensity
+//	Duplicate /O QvectorWave, QstarVector
+//	
+//	NVAR Rg=$("root:Packages:Irena_UnifFit:Level"+num2str(level)+"Rg")
+//	NVAR G=$("root:Packages:Irena_UnifFit:Level"+num2str(level)+"G")
+//	NVAR P=$("root:Packages:Irena_UnifFit:Level"+num2str(level)+"P")
+//	NVAR B=$("root:Packages:Irena_UnifFit:Level"+num2str(level)+"B")
+//	NVAR ETA=$("root:Packages:Irena_UnifFit:Level"+num2str(level)+"ETA")
+//	NVAR PACK=$("root:Packages:Irena_UnifFit:Level"+num2str(level)+"PACK")
+//	NVAR RgCO=$("root:Packages:Irena_UnifFit:Level"+num2str(level)+"RgCO")
+//	NVAR K=$("root:Packages:Irena_UnifFit:Level"+num2str(level)+"K")
+//	NVAR Corelations=$("root:Packages:Irena_UnifFit:Level"+num2str(level)+"Corelations")
+//	NVAR MassFractal=$("root:Packages:Irena_UnifFit:Level"+num2str(level)+"MassFractal")
+//	NVAR LinkRGCO=$("root:Packages:Irena_UnifFit:Level"+num2str(level)+"LinkRGCO")
+//	if (LinkRGCO==1 && level>=2)
+//		NVAR RgLowerLevel=$("root:Packages:Irena_UnifFit:Level"+num2str(level-1)+"Rg")	
+//		RGCO=RgLowerLevel
+//	endif
+//	QstarVector=QvectorWave/(erf(K*QvectorWave*Rg/sqrt(6)))^3
+//	if (MassFractal)
+//		B=(G*P/Rg^P)*exp(gammln(P/2))
+//	endif
+//	
+//	TempUnifiedIntensity=G*exp(-QvectorWave^2*Rg^2/3)+(B/QstarVector^P) * exp(-RGCO^2 * QvectorWave^2/3)
+//	
+//	if (Corelations)
+//		TempUnifiedIntensity/=(1+pack*IR1A_SphereAmplitude(QvectorWave,ETA))
+//	endif
+//end
 
 
 ///*********************************************************************************************************************

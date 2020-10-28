@@ -487,6 +487,7 @@ Function NI1A_CorrectDataPerUserReq(orientation)
 			MatrixOP/O/NTHR=0 tempDataWv = tempDataWv - SubtractFixedOffset
 		endif
 		if(UseSampleTransmission)
+			//this is normal correcting by one transmission. 
 			MatrixOP/O/NTHR=0 tempDataWv=tempDataWv/SampleTransmission
 			if(CorrectSelfAbsorption && SampleTransmission<1)
 				variable MuCalc=-1*ln(SampleTransmission)/SampleThickness
@@ -495,7 +496,7 @@ Function NI1A_CorrectDataPerUserReq(orientation)
 				if(DimSize(Theta2DWave, 0 )!=DimSize(tempDataWv, 0) || DimSize(Theta2DWave, 1)!=DimSize(tempDataWv, 1) )
 					NI1A_Create2DQWave(tempDataWv)				//creates 2-D Q wave does not need to be run always...
 					NI1A_Create2DAngleWave(tempDataWv)			//creates 2-D Azimuth Angle wave does not need to be run always...
-				endif 
+				endif 	
 				MatrixOP/free/NTHR=0 SelfAbsorption2D=tempDataWv
 				//next is formula 29, chapter 3.4.7 Brain Pauw paper
 				MatrixOp/Free/NTHR=0 MuDdivCos2TH=MuD*rec(cos(2*Theta2DWave))
@@ -507,8 +508,14 @@ Function NI1A_CorrectDataPerUserReq(orientation)
 				MatrixOP/O/NTHR=0 SelfAbsorption2D=replaceNaNs(SelfAbsorption2D,1)
 				//and now correct... 
 				MatrixOP/O/NTHR=0 tempDataWv=tempDataWv / SelfAbsorption2D
+				if(IrenaDebugLevel>1)
+					variable MaxCorrection
+					wavestats SelfAbsorption2D
+					MaxCorrection = 1/wavemin(SelfAbsorption2D)
+					print "Sample self absorption correction max is : "+num2str(MaxCorrection) 
+				endif
 			else
-				print "Could not do corection for self absorption, wrong parameters" 
+				//print "Could not do corection for self absorption, wrong parameters" 
 			endif
 		endif
 		tempEmptyField=0
@@ -3159,7 +3166,8 @@ Function NI1A_ExportDisplayedImage()
 		Abort "Something is wrong here"
 	endif
 	SVAR FileNameToLoad=root:Packages:Convert2Dto1D:FileNameToLoad
-	string  SaveFileName=FileNameToLoad[0,25]+"_mod.tif"
+	//string  SaveFileName=FileNameToLoad[0,25]+"_mod.tif"
+	string  SaveFileName=FileNameToLoad+"_mod.tif"
 	Prompt SaveFileName, "Input file name for file to save"
 	DoPrompt "Correct file name to use for saving this file", SaveFileName
 	if(V_Flag)

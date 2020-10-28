@@ -1435,10 +1435,15 @@ Function IR1B_CopyDataLocally()
 		endif
 	else
 		ExportDataFolderName = DataFolderName
-		ExportIntensityWaveName = IntensityWaveName[0,25]+"_dsm"
-		ExportQWavename = QwaveName+"_dsm"
-		ExportErrorWaveName = ErrorWaveName+"_dsm"
-		ExportdQWaveName = dQname+"_dsm"
+		
+		ExportIntensityWaveName = IN2G_CreateUserName(IN2G_RemoveExtraQuote(IntensityWaveName,1,1), 26, 0, 1)+"_dsm"
+		ExportQWavename = IN2G_CreateUserName(IN2G_RemoveExtraQuote(QwaveName,1,1), 26, 0, 1)+"_dsm"
+		ExportErrorWaveName = IN2G_CreateUserName(IN2G_RemoveExtraQuote(ErrorWaveName,1,1), 26, 0, 1)+"_dsm"
+		ExportdQWaveName = IN2G_CreateUserName(IN2G_RemoveExtraQuote(dQname,1,1), 26, 0, 1)+"_dsm"
+		//ExportIntensityWaveName = IntensityWaveName[0,25]+"_dsm"
+		//ExportQWavename = QwaveName+"_dsm"
+		//ExportErrorWaveName = ErrorWaveName+"_dsm"
+		//ExportdQWaveName = dQname+"_dsm"
 	endif
 	
 	setDataFolder oldDf

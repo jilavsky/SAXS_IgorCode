@@ -1,6 +1,6 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.20
-constant IR3DversionNumber = 1.159	//Data merging panel version number
+#pragma version=1.21
+constant IR3DversionNumber = 1.21			//Data merging panel version number
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2020, Argonne National Laboratory
@@ -8,6 +8,8 @@ constant IR3DversionNumber = 1.159	//Data merging panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.21 Fixed IR3D_PresetOutputStrings to use long names setting in IP8 and higher, was limited to 26 characters + _mrg. 
+//		 Added Optimization method: "Optimize Overlap, trim Data1" when data1 are trimmed at the very start of overlap region, removing data 1 from the overlap region. 
 //1.20 fix problems with dQ waves which could become stale and bomb on users under specific conditions. 
 //1.19 modified panel and added ability to optimize data 1 q shift also. Completely re-wrote internal fitting routine... Fixed name formation for d and tth data. 
 //1.18 added manual controls to variables to enable easier changes manuyally. Also, fixed case when input negative intensities caused issues in merging result. 
@@ -321,7 +323,7 @@ Function IR3D_InitDataMerging()
 		MergeMethodSelected="Optimize Overlap"
 	endif
 	SVAR MergeMethodsAvailable
-	MergeMethodsAvailable = "Optimize Overlap;Extrap. Data1 and Optimize;"
+	MergeMethodsAvailable = "Optimize Overlap;Optimize Overlap, trim Data1;Extrap. Data1 and Optimize;"
 	SVAR SelectedExtrapolationFunction
 	if(strlen(SelectedExtrapolationFunction)<5)
 		SelectedExtrapolationFunction="Porod"
@@ -821,7 +823,7 @@ Function IR3D_SetGUIControls()
 
 			SVAR MergeMethodSelected = root:Packages:Irena:SASDataMerging:MergeMethodSelected
 			variable HideExtrap=0
-			if(stringmatch(MergeMethodSelected, "Optimize Overlap"))
+			if(stringmatch(MergeMethodSelected, "Optimize Overlap")|| stringmatch(MergeMethodSelected, "Optimize Overlap, trim Data1") )
 				HideExtrap = 1
 			endif
 			PopupMenu SelectedExtrapolationFunction,win=IR3D_DataMergePanel, disable=HideExtrap
@@ -1640,7 +1642,7 @@ Function IR3D_PresetOutputStrings()
 	if (stringmatch(IntensityWaveName1,"*DSM_Int*") && stringmatch(QWavename1,"*DSM_Qvec*") && stringmatch(ErrorWaveName1,"*DSM_Error*"))
 		//using Indra naming convention on input Data 1, change NewDataFolderName
 		LastPartOfPath = IN2G_RemoveExtraQuote(LastPartOfPath,1,1)	//remove ' from liberal names
-		LastPartOfPath = LastPartOfPath[0,26]
+		LastPartOfPath = IN2G_CreateUserName(LastPartOfPath,26, 0, 11) //LastPartOfPath[0,26]
 		LastPartOfPath += NewExtLoc 
 		LastPartOfPath = PossiblyQuoteName(LastPartOfPath)
 		NewDataFolderName = MostOfThePath+LastPartOfPath+":"
@@ -1648,7 +1650,7 @@ Function IR3D_PresetOutputStrings()
 	if (stringmatch(IntensityWaveName1,"*SMR_Int*") && stringmatch(QWavename1,"*SMR_Qvec*") && stringmatch(ErrorWaveName1,"*SMR_Error*"))
 		//using Indra naming convention on input Data 1, change NewDataFolderName
 		LastPartOfPath = IN2G_RemoveExtraQuote(LastPartOfPath,1,1)	//remove ' from liberal names
-		LastPartOfPath = LastPartOfPath[0,26]
+		LastPartOfPath = IN2G_CreateUserName(LastPartOfPath,26, 0, 11) //LastPartOfPath[0,26]
 		LastPartOfPath += NewExtLoc 
 		LastPartOfPath = PossiblyQuoteName(LastPartOfPath)
 		NewDataFolderName = MostOfThePath+LastPartOfPath+":"
@@ -1663,26 +1665,26 @@ Function IR3D_PresetOutputStrings()
 	if (stringMatch(tempNIN,"r*") && (stringMatch(tempNQN,"q*")||stringMatch(tempNQN,"d*")||stringMatch(tempNQN,"t*")) && stringMatch(tempNEN,"s*"))
 		//here is alternative, create new folder for the waves... 
 		LastPartOfPath = IN2G_RemoveExtraQuote(LastPartOfPath,1,1)	//remove ' from liberal names
-		LastPartOfPath = LastPartOfPath[0,26]
+		LastPartOfPath = IN2G_CreateUserName(LastPartOfPath,26, 0, 11) // LastPartOfPath[0,26]
 		LastPartOfPath += NewExtLoc 
 		LastPartOfPath = PossiblyQuoteName(LastPartOfPath)
 		NewDataFolderName = MostOfThePath+LastPartOfPath+":"		
 		//using qrs data structure, rename the waves names
 		//intensity
 		NewIntensityWaveName = IN2G_RemoveExtraQuote(NewIntensityWaveName,1,1)
-		NewIntensityWaveName = NewIntensityWaveName[0,26]
+		NewIntensityWaveName = IN2G_CreateUserName(NewIntensityWaveName,26, 0, 11) //NewIntensityWaveName[0,26]
 		NewIntensityWaveName = NewIntensityWaveName+NewExtLoc
 		//Q vector
 		NewQWavename = IN2G_RemoveExtraQuote(NewQWavename,1,1)
-		NewQWavename = NewQWavename[0,26]
+		NewQWavename = IN2G_CreateUserName(NewErrorWaveName,26, 0, 11) // NewQWavename[0,26]
 		NewQWavename = NewQWavename+"_"+NewDataExtension
 		//error
 		NewErrorWaveName = IN2G_RemoveExtraQuote(NewErrorWaveName,1,1)
-		NewErrorWaveName = NewErrorWaveName[0,26]
+		NewErrorWaveName = IN2G_CreateUserName(NewIntensityWaveName,26, 0, 11) //NewErrorWaveName[0,26]
 		NewErrorWaveName = NewErrorWaveName+NewExtLoc
 		//DQ
 		NewdQWavename = IN2G_RemoveExtraQuote(NewdQWavename,1,1)
-		NewdQWavename = NewdQWavename[0,26]
+		NewdQWavename = IN2G_CreateUserName(NewdQWavename,26, 0, 11) //NewdQWavename[0,26]
 		NewdQWavename = NewdQWavename+NewExtLoc
 		if(!OverwriteExistingData)		//check for uniquness
 			DoAlert /T="Save data warning" 1, "If Data 1 type is qrs, the Overwrite existing data must be checked"
@@ -1909,6 +1911,7 @@ Function IR3D_ProcessDataAsAppropriate()
 	endif
 	if(ProcessSequentially)			//here we will need to loop through the samples and process and save them. 
 		IR3D_ProcessSequenceOfDataSets()
+		print "*** DONE: sequence of seletcted data sets was processed. DONE! ***"
 	endif
 	
 	setDataFolder OldDf
@@ -2009,16 +2012,28 @@ Function IR3D_AutoScale(autoscale)
 	endif
 
 	StartQp = BinarySearch(TempQ2, startQ )
-
-	Duplicate/Free/R=[0,EndQp] TempInt1, ResultIntensity1	
-	Duplicate/Free/R=[0,EndQp] TempQ1, ResultQ1	
-	Duplicate/Free/R=[0,EndQp] TempE1, ResultErr1	
-	Duplicate/Free/R=[0,EndQp] TempdQ1, ResultdQ1	
-	Duplicate/Free/R=[StartQp,numpnts(TempInt2)-1] TempInt2, ResultIntensity2
-	Duplicate/Free/R=[StartQp,numpnts(TempInt2)-1] TempQ2, ResultQ2	
-	Duplicate/Free/R=[StartQp,numpnts(TempInt2)-1] TempE2, ResultErr2	
-	Duplicate/Free/R=[StartQp,numpnts(TempInt2)-1] TempdQ2, ResultdQ2	
-
+	SVAR MergeMethodSelected= root:Packages:Irena:SASDataMerging:MergeMethodSelected
+	if(StringMatch(MergeMethodSelected, "Optimize Overlap, trim Data1" ))
+		variable StartQp1
+		StartQp1 = BinarySearch(TempQ1, startQ)+1
+		Duplicate/Free/R=[0,StartQp1] TempInt1, ResultIntensity1	
+		Duplicate/Free/R=[0,StartQp1] TempQ1, ResultQ1	
+		Duplicate/Free/R=[0,StartQp1] TempE1, ResultErr1	
+		Duplicate/Free/R=[0,StartQp1] TempdQ1, ResultdQ1	
+		Duplicate/Free/R=[StartQp,numpnts(TempInt2)-1] TempInt2, ResultIntensity2
+		Duplicate/Free/R=[StartQp,numpnts(TempInt2)-1] TempQ2, ResultQ2	
+		Duplicate/Free/R=[StartQp,numpnts(TempInt2)-1] TempE2, ResultErr2	
+		Duplicate/Free/R=[StartQp,numpnts(TempInt2)-1] TempdQ2, ResultdQ2	
+	else
+		Duplicate/Free/R=[0,EndQp] TempInt1, ResultIntensity1	
+		Duplicate/Free/R=[0,EndQp] TempQ1, ResultQ1	
+		Duplicate/Free/R=[0,EndQp] TempE1, ResultErr1	
+		Duplicate/Free/R=[0,EndQp] TempdQ1, ResultdQ1	
+		Duplicate/Free/R=[StartQp,numpnts(TempInt2)-1] TempInt2, ResultIntensity2
+		Duplicate/Free/R=[StartQp,numpnts(TempInt2)-1] TempQ2, ResultQ2	
+		Duplicate/Free/R=[StartQp,numpnts(TempInt2)-1] TempE2, ResultErr2	
+		Duplicate/Free/R=[StartQp,numpnts(TempInt2)-1] TempdQ2, ResultdQ2	
+	endif
 	ResultIntensity2*=Data2IntMultiplier
 	ResultErr2 *=Data2IntMultiplier
 	ResultIntensity1-=Data1Background
@@ -2098,7 +2113,7 @@ Function IR3D_MergeData()  //call this and from here go to different routines
 	endif
 	
 	//and now merge...
-	if(StringMatch(MergeMethodSelected, "Optimize Overlap" ) || StringMatch(MergeMethodSelected, "Extrap. Data1 and Optimize" ))		
+	if(StringMatch(MergeMethodSelected, "Optimize Overlap" ) || StringMatch(MergeMethodSelected, "Optimize Overlap, trim Data1" ) || StringMatch(MergeMethodSelected, "Extrap. Data1 and Optimize" ))		
 		if(Optim_Data2IntMultiplier && !Optim_Data1Background && !Optim_Data2Qshift && !Optim_Data1Qshift)
 			//IR3D_AutoScale(1)
 			IR3D_MergeDataOverlap()	
@@ -2529,16 +2544,30 @@ Function IR3D_MergeDataOverlap()
 		endif
 
 	StartQp = BinarySearch(Qvector2, startQ )
+	//we need to select merge points based on MergeMethod
+	SVAR MergeMethodSelected= root:Packages:Irena:SASDataMerging:MergeMethodSelected
 
-	Duplicate/Free/R=[0,EndQp] TempInt1, ResultIntensity1	
-	Duplicate/Free/R=[0,EndQp] TempQ1, ResultQ1	
-	Duplicate/Free/R=[0,EndQp] TempErr1, ResultErr1	
-	Duplicate/Free/R=[0,EndQp] TempdQ1, ResultdQ1	
-	Duplicate/Free/R=[StartQp,numpnts(TempInt2)-1] TempInt2, ResultIntensity2
-	Duplicate/Free/R=[StartQp,numpnts(TempInt2)-1] TempQ2, ResultQ2	
-	Duplicate/Free/R=[StartQp,numpnts(TempInt2)-1] TempErr2, ResultErr2	
-	Duplicate/Free/R=[StartQp,numpnts(TempInt2)-1] TempdQ2, ResultdQ2	
-
+	if(StringMatch(MergeMethodSelected, "Optimize Overlap, trim Data1" ))
+		variable StartQp1
+		StartQp1 = BinarySearch(TempQ1, startQ)+1
+		Duplicate/Free/R=[0,StartQp1] TempInt1, ResultIntensity1	
+		Duplicate/Free/R=[0,StartQp1] TempQ1, ResultQ1	
+		Duplicate/Free/R=[0,StartQp1] TempErr1, ResultErr1	
+		Duplicate/Free/R=[0,StartQp1] TempdQ1, ResultdQ1	
+		Duplicate/Free/R=[StartQp,numpnts(TempInt2)-1] TempInt2, ResultIntensity2
+		Duplicate/Free/R=[StartQp,numpnts(TempInt2)-1] TempQ2, ResultQ2	
+		Duplicate/Free/R=[StartQp,numpnts(TempInt2)-1] TempErr2, ResultErr2	
+		Duplicate/Free/R=[StartQp,numpnts(TempInt2)-1] TempdQ2, ResultdQ2	
+	else
+		Duplicate/Free/R=[0,EndQp] TempInt1, ResultIntensity1	
+		Duplicate/Free/R=[0,EndQp] TempQ1, ResultQ1	
+		Duplicate/Free/R=[0,EndQp] TempErr1, ResultErr1	
+		Duplicate/Free/R=[0,EndQp] TempdQ1, ResultdQ1	
+		Duplicate/Free/R=[StartQp,numpnts(TempInt2)-1] TempInt2, ResultIntensity2
+		Duplicate/Free/R=[StartQp,numpnts(TempInt2)-1] TempQ2, ResultQ2	
+		Duplicate/Free/R=[StartQp,numpnts(TempInt2)-1] TempErr2, ResultErr2	
+		Duplicate/Free/R=[StartQp,numpnts(TempInt2)-1] TempdQ2, ResultdQ2	
+	endif
 	ResultIntensity2*=Data2IntMultiplier
 	ResultErr2 *=Data2IntMultiplier
 	ResultIntensity1-=Data1Background
@@ -2815,6 +2844,11 @@ Function  IR3D_SaveData()
 	Wave/Z ResultsE = root:Packages:Irena:SASDataMerging:ResultError
 	Wave/Z ResultdQ = root:Packages:Irena:SASDataMerging:ResultdQ
 	NVAR OverwriteExistingData=root:Packages:Irena:SASDataMerging:OverwriteExistingData
+
+	NVAR Data1Background=root:Packages:Irena:SASDataMerging:Data1Background
+	NVAR Data2IntMultiplier=root:Packages:Irena:SASDataMerging:Data2IntMultiplier
+	NVAR Data2Qshift = root:Packages:Irena:SASDataMerging:Data2Qshift
+	NVAR Data1Qshift = root:Packages:Irena:SASDataMerging:Data1Qshift
 	
 	if(DataFolderExists(NewDataFolderName)&&!OverwriteExistingData)
 		Abort "Data folder exists and Overwrite existing data is not selected."
@@ -2856,20 +2890,12 @@ Function  IR3D_SaveData()
 			if (cmpstr(StringFromList(i, NewDataFolderName , ":"),"root")!=0)
 				DataFldrNameStr = StringFromList(i, NewDataFolderName , ":")
 				DataFldrNameStr = IN2G_RemoveExtraQuote(DataFldrNameStr, 1,1)
-				//NewDataFolder/O/S $(possiblyquotename(DataFldrNameStr))
-				NewDataFolder/O/S $((DataFldrNameStr[0,30]))
+				DataFldrNameStr = IN2G_CreateUserName(DataFldrNameStr,30, 0, 11)
+				NewDataFolder/O/S $(DataFldrNameStr)
 			endif
 		endfor	
 	endif
 	if(WaveExists(ResultsInt)&&WaveExists(ResultsQ))
-//		Wave/Z testOutputInt=$NewIntensityWaveName
-//		Wave/Z testOutputQ=$NewQWaveName
-//		if (WaveExists(testOutputInt) || WaveExists(testOutputQ))
-//			DoAlert 1, "Intensity and/or Q data with this name already exist, overwrite?"
-//			if (V_Flag!=1)
-//				abort 
-//			endif
-//		endif 
 		Duplicate/O ResultsInt, $NewIntensityWaveName
 		Duplicate/O ResultsQ, $NewQWaveName
 		Wave TmpIntNote=$NewIntensityWaveName
@@ -2878,6 +2904,13 @@ Function  IR3D_SaveData()
 		SVAR DataFolderName1 = root:Packages:Irena:SASDataMerging:DataFolderName1
 		SVAR DataFolderName2 = root:Packages:Irena:SASDataMerging:DataFolderName2
 		OldNOte=note(TmpIntNote)
+		//add merging parameters, so we can use them later
+		OldNOte=ReplaceNumberByKey("MergeData1Background", OldNOte, Data1Background  , "=" ,";")
+		OldNOte=ReplaceNumberByKey("MergeData2IntMultiplier", OldNOte, Data2IntMultiplier  , "=" ,";")
+		OldNOte=ReplaceNumberByKey("MergeData2Qshift", OldNOte, Data2Qshift  , "=" ,";")
+		OldNOte=ReplaceNumberByKey("MergeData1Qshift", OldNOte, Data1Qshift  , "=" ,";")
+		OldNOte=ReplaceStringByKey("MergeDateTime", OldNOte, Date()+", "+time()  , "=" ,";")
+		//end of merge parameters 
 		PriormergeInfo = StringByKey("Data from merged", OldNOte, "=",";")
 		if(strlen(PriormergeInfo)>0)
 			PriormergeInfo+=","
@@ -2892,6 +2925,13 @@ Function  IR3D_SaveData()
 		OldNOte=ReplaceStringByKey("Data merged with", OldNOte, PriormergeInfo  , "=" ,";")
 		note/K TmpIntNote, OldNOte
 		OldNOte=note(TmpQnote)
+		//add merging parameters, so we can use them later
+		OldNOte=ReplaceNumberByKey("MergeData1Background", OldNOte, Data1Background  , "=" ,";")
+		OldNOte=ReplaceNumberByKey("MergeData2IntMultiplier", OldNOte, Data2IntMultiplier  , "=" ,";")
+		OldNOte=ReplaceNumberByKey("MergeData2Qshift", OldNOte, Data2Qshift  , "=" ,";")
+		OldNOte=ReplaceNumberByKey("MergeData1Qshift", OldNOte, Data1Qshift  , "=" ,";")
+		OldNOte=ReplaceStringByKey("MergeDateTime", OldNOte, Date()+", "+time()  , "=" ,";")
+		//end of merge parameters 
 		PriormergeInfo = StringByKey("Data from merged", OldNOte, "=",";")
 		if(strlen(PriormergeInfo)>0)
 			PriormergeInfo+=","
@@ -3008,7 +3048,7 @@ Function IR3D_PanelHookFunction(H_Struct)
 				SVAR/Z MergeMethodSelected = root:Packages:Irena:SASDataMerging:MergeMethodSelected
 				variable tmpP, MethodCD
 				if(SVAR_Exists(MergeMethodSelected))
-					if(stringMatch(MergeMethodSelected,"Optimize Overlap"))
+					if(stringMatch(MergeMethodSelected,"Optimize Overlap")||stringMatch(MergeMethodSelected,"Optimize Overlap, trim Data1"))
 						MethodCD = 0
 					else
 						MethodCD = 1

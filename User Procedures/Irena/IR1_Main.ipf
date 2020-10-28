@@ -15,6 +15,7 @@ constant CurrentIrenaVersionNumber = 2.701
 
 //2.701	Beta version after September 2020 release. 
 //			Fix Multi-dat aGUi tools to handle Liberal names
+//			Data Manipulation 3
 //2.70		Require Igor 8.03 and higher. No testing for Igor 7 anymore. 
 //2.696	Beta version after February2020 release
 //			New bioSAXS tools
@@ -153,6 +154,9 @@ Menu "SAS"
 		help={"Merge data sets, rebin for same Q, etc..."}
 		"Data manipulation II [many data sets]", IR3M_DataManipulationII()
 		help={"Manipulate - for now only average - many data sets"}
+		"Data manipulation III [NEW many data sets]", IR3DM_DataManipulationIII()
+		help={"Manipulate - for now only average - many data sets"}
+		"---"		
 		"Merge two data sets", IR3D_DataMerging()
 		help={"Merge two data sets - two segments at different q ranges"}
 		"Data mining [extract information]", IR2M_GetDataMiner()
@@ -176,8 +180,8 @@ Menu "SAS"
 		"--"
 		"Fit Line With Cursors", IR2P_FitLineWithCursors()
 		"Fit Power Law with Cursors", IR2P_FitPowerLawWithCursors()
-		"--"
-	       "Clone top window with data", IN2G_CloneWindow()
+		"---"
+	   "Clone top window with data", IN2G_CloneWindow()
 		End
 	"---"
 	"Basic Fits+Simple Analysis", IR3J_SimpleFits()

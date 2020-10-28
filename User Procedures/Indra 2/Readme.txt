@@ -11,6 +11,11 @@ It runs on Wavemetrics Igor Pro version 8.03 and higher.
 
 Modification history:
 _____________________________________________________________________________________
+1.981
+Fixed all fixed length wave names (hopefully). Now should use long names if user chooses so in Configuration for all waves and folders. 
+
+
+
 1.98 9/3/2020
 Require Igor 8.03 or higher. 
 Added "Smart select Blank" for selection of Blank measured BEFORE the sample measurements. 
