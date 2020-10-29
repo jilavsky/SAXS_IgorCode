@@ -1,7 +1,7 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version = 1.0
+#pragma version = 1.01
 #pragma IgorVersion=8.03
 
 
@@ -13,6 +13,7 @@
 
 //this is tool to setup Sample Plates for USAXS, survey sample positions, and generate Command files. 
 
+//1.01 Added NMRAcrylicPlate
 //1.0 September2020, first release. 
 //0.6 many fixes
 //0.4 developement, with beamline survey code... 
@@ -150,7 +151,7 @@ Function IN3S_MainPanel()
 		SVAR SelectedPlateName=root:Packages:SamplePlateSetup:SelectedPlateName
 		PopupMenu NewPlateTemplate,pos={300,55},size={330,21},proc=IN3S_PopMenuProc,title="Template :", help={"Pick Plate template"}
 		PopupMenu NewPlateTemplate,mode=1,popvalue=SelectedPlateName, fColor=(1,16019,65535)
-		PopupMenu NewPlateTemplate,value="9x9 Acrylic/magnetic plate;Old Style Al Plate;NMR Tubes holder;NMR tubes heater;Generic Grid holder;Image;AgBehenateLaB6;"
+		PopupMenu NewPlateTemplate,value="9x9 Acrylic/magnetic plate;NMR Acrylic plate;Old Style Al Plate;NMR Tubes holder;NMR tubes heater;Generic Grid holder;Image;AgBehenateLaB6;"
 		Button PopulateTable,pos={300,85},size={120,17}, proc=IN3S_ButtonProc,title="Populate Table", help={"Creates new set of positions"}
 		Button CreateImage,pos={440,85},size={120,17}, proc=IN3S_ButtonProc,title="Create image", help={"Creates new set of positions"}
 		Button BeamlineSurvey,pos={440,105},size={120,17}, proc=IN3S_ButtonProc,title="Beamline Survey", help={"This opens GUI for survey at the beamline"}
@@ -706,7 +707,7 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 				Wave/T LBCommandWv = root:Packages:SamplePlateSetup:LBCommandWv
 				ControlInfo/W=SamplePlateSetup CommandsList
 				if(V_Flag>=0 && V_Flag<dimsize(LBCommandWv,0))
-					IN3S_AddTagToImage(V_Flag)	
+					IN3S_AddTagToImage(V_Value)	
 				else
 					IN3S_AddTagToImage(-4)	//remove all drawings, if needed	
 				endif
@@ -727,6 +728,24 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 							LBCommandWv[][0]=""
 							LBCommandWv[0][0]="Empty for LaB6AgBehehnate"
 							LBCommandWv[1][0]="AirBlank"
+							SVAR NewPlateName = root:Packages:SamplePlateSetup:UserNameForSampleSet
+							NewPlateName = "AcrylicPlateSet"+num2str(abs(round(gnoise(100))))
+							//select first row
+							ListBox CommandsList win=SamplePlateSetup, selRow=1					
+							SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+							WarningForUser = "Created a new set of positions for "+ SelectedPlateName
+							IN3S_EstimateRunTime()
+							break		// exit from switch
+						case "NMR Acrylic plate":	 
+							Wave Centers = root:Packages:SamplePlatesAvailable:AcrylicNMRPlateCenters
+			 				//create enough space:
+							IN3S_CreateTablesForPlates(DimSize(Centers, 0 ), 0)
+							Wave/T LBCommandWv = root:Packages:SamplePlateSetup:LBCommandWv
+							LBCommandWv[][1]=num2str(Centers[p][0])
+							LBCommandWv[][2]=num2str(Centers[p][1])
+							LBCommandWv[][0]=""
+							LBCommandWv[0][0]="Empty for LaB6AgBehehnate"
+							LBCommandWv[1][0]="NMRTubeBlank"
 							SVAR NewPlateName = root:Packages:SamplePlateSetup:UserNameForSampleSet
 							NewPlateName = "AcrylicPlateSet"+num2str(abs(round(gnoise(100))))
 							//select first row
@@ -1520,7 +1539,7 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 
-static Function IN3S_CreateDefaultPlates()
+Function IN3S_CreateDefaultPlates()
 
 	DFrEF OldDf=GetDataFolderDFR()
 	setdatafolder root:
@@ -1531,6 +1550,7 @@ static Function IN3S_CreateDefaultPlates()
 	//OldStyleAlPlate = Old Style Al Plate
 	//NMRTubesHolder = NMR Tubes holder 300mm x 75mm, sample center sy=25mm 
 	make/O/N=(81,2) Acrylic9x9PlateCenters
+	make/O/N=(100,2) AcrylicNMRPlateCenters
 	make/O/N=(60,2) OldStyleAlPlateCenters
 	make/O/N=(20,2) NMRTubesHolderCenters 
 	make/O/N=(0,2) GenericGridHolderCenters 
@@ -1540,7 +1560,7 @@ static Function IN3S_CreateDefaultPlates()
 	variable i, j
 	
 	ListOfVariables="OldStyleAlPlateRadius;OldStyleAlPlateScale;"
-	ListOfVariables+="Acrylic9x9PlateRadius;Acrylic9x9PlateScale;"
+	ListOfVariables+="Acrylic9x9PlateRadius;Acrylic9x9PlateScale;AcrylicNMRPlateScale;"
 	ListOfVariables+="NMRTubesHolderRadius;NMRTubesHolderScale;"
 
 	ListOfStrings=""
@@ -1557,9 +1577,16 @@ static Function IN3S_CreateDefaultPlates()
 	NVAR Acrylic9x9PlateScale
 	Acrylic9x9PlateRadius = 4		//radius of sample hole in mm
 	Acrylic9x9PlateScale = 0.25		//pixels per mm
+	NVAR AcrylicNMRPlateScale
+	AcrylicNMRPlateScale = 0.25		//pixels per mm
 	Wave Acrylic9x9PlateCenters
-	Acrylic9x9PlateCenters[][0] = 20*ceil(0.01+p/9) 
+	Acrylic9x9PlateCenters[][0] = 20*ceil(0.01+p/9)  
 	Acrylic9x9PlateCenters[][1] = 20+20*(p - 9*trunc(p/9)) 
+	//NMT Acrylic plate
+	Wave AcrylicNMRPlateCenters
+	AcrylicNMRPlateCenters[][0] = 10+10*(p - 20*trunc(p/20))				///10*ceil(0.01+p/19)		
+	AcrylicNMRPlateCenters[][1] = 24.181 + 40*(ceil(0.01+p/20)-1)			///24.181+40*(p - 20*trunc(p/20)) 		
+	
 	//Al plate here
 	NVAR OldStyleAlPlateRadius
 	OldStyleAlPlateRadius=4
@@ -1767,6 +1794,21 @@ static Function IN3S_DrawImageOfPlate(WhichOne)
 		Duplicate/Free Centers, CentersForDrawing
 		//create circles, set image to 128, that is medium grey in our color system in solid and 0 in opening for samples. 
 		IN3S_CreateCircles(PlateImage, CentersForDrawing, Radius, Scaling)
+	elseif(stringMatch(whichOne,"NMR Acrylic plate"))
+		Wave Centers = root:Packages:SamplePlatesAvailable:AcrylicNMRPlateCenters
+		//NVAR Radius = root:Packages:SamplePlatesAvailable:Acrylic9x9PlateRadius
+		NVAR Scaling = root:Packages:SamplePlatesAvailable:AcrylicNMRPlateScale
+		//plate is 330.2mm wide x 200mm high, use 1200x800 wave, 0.25mm pixel scaling. 
+		HorSize = 330/Scaling
+		VertSize = 200/Scaling
+		Make/O/N=(HorSize,VertSize)/B/U PlateImage
+		wave PlateImage
+		//PlateImage = 128				//set image to 128, that is medium grey in our color system. 
+		SetScale/P x 0,Scaling,"mm", PlateImage
+		SetScale/P y 0,Scaling,"mm", PlateImage	
+		Duplicate/Free Centers, CentersForDrawing
+		//create NMR tubes, set image to 128, that is medium grey in our color system in solid and 0 in opening for samples. 
+		IN3S_CreateNMRTubes(PlateImage, CentersForDrawing, Scaling)
 	elseif(stringMatch(whichOne,"Old Style Al Plate"))
 		Wave Centers = root:Packages:SamplePlatesAvailable:OldStyleAlPlateCenters
 		NVAR Radius = root:Packages:SamplePlatesAvailable:OldStyleAlPlateRadius
@@ -2146,6 +2188,54 @@ static Function IN3S_CreateCircles(PlateImage, Centers, Radius,Scaling)
 	wave M_ImageThresh
 	//now we need to shrink it back to size and remove first PadSphere rows and columns
 	Duplicate/Free/R=[PadSphere, ][PadSphere, ] M_ImageThresh, ShrunkImageThresh
+	//and return back to the code. 
+	PlateImage = 128 - (ShrunkImageThresh/2)
+end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+static Function IN3S_CreateNMRTubes(PlateImage, Centers, Scaling)
+	wave PlateImage, Centers
+	variable Scaling
+	
+	variable i
+	variable NMRTubeRadius, NMRTubeHeight, CenterP, CenterQ
+	NMRTubeRadius = 2/Scaling
+	NMRTubeHeight = 10/Scaling
+	CenterP = NMRTubeHeight - NMRTubeRadius
+	CenterQ = NMRTubeHeight - NMRTubeRadius
+	//this needs to be done by FFT, this is crazy slow... 
+	//For(i=0;i<DimSize(Centers, 0);i+=1)
+	//	PlateImage = sqrt((x - Centers[i][0])^2+( y - Centers[i][1])^2)<Radius ? 0 : PlateImage(x)(y)
+	//endfor
+	//now FFT... Much faster, but bit cumbersome... 
+	//this method - in convolutions - shifts the centers by : 
+	variable PadSphereP=NMRTubeRadius/Scaling
+	variable PadSphereQ=0//NMRTubeHeight/Scaling
+	//make work space... 
+	Make/Free/S/N=(dimsize(PlateImage,0)+PadSphereP, dimsize(PlateImage,1)+PadSphereP) WaveToWorkOn, NMRTube
+	//SET TO 1 where will be centers of holes
+	For(i=0;i<DimSize(Centers, 0);i+=1)
+		WaveToWorkOn [Centers[i][0]/Scaling][Centers[i][1]/Scaling] = 1
+	endfor
+	//create image of hole
+	NMRTube[0,ceil(2*NMRTubeHeight+2)][0,ceil(2*NMRTubeHeight+2)] = ((abs(p-CenterP)<NMRTubeRadius)&& (abs(q-CenterQ)<NMRTubeHeight)) ? 1 : 0
+	//now use fft. MatrixOp should be bit faster. 
+	//fft/DEST=CircleFFT/Free Circle
+	MatrixOp/FREE/NTHR=0 NMRTubeFFT=fft(NMRTube,0)
+	//fft/DEST=Wave2DInFFT/Free WaveToWorkOn
+	MatrixOp/FREE/NTHR=0 Wave2DInFFT=fft(WaveToWorkOn,0)
+	//convolute together
+	MatrixOp/FREE/NTHR=0 MultipliedFFT = Wave2DInFFT * NMRTubeFFT
+	//IFFT, force real result
+	//IFFT/Dest=Wave2DOutIFFT/Free MultipliedFFT
+	MatrixOp/FREE/NTHR=0 Wave2DOutIFFT=ifft(MultipliedFFT,1)
+	//this depends on what is used for convolution. If sharp sphere, this is what you need... thresholds are  much smaller for gauss... 
+	imageThreshold/T=(0.5)  Wave2DOutIFFT
+	wave M_ImageThresh
+	//now we need to shrink it back to size and remove first PadSphere rows and columns
+	Duplicate/Free/R=[PadSphereP, ][PadSphereP, ] M_ImageThresh, ShrunkImageThresh
 	//and return back to the code. 
 	PlateImage = 128 - (ShrunkImageThresh/2)
 end
