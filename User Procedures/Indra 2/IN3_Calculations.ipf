@@ -1023,7 +1023,7 @@ static Function IN3_RcurvePlot()
 	//Display/K=1 /W=(300,36.5,900,500) R_Int vs R_Qvec as "USAXS data reduction plot"
 	Display/K=1 /W=(0,0,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height")) R_Int vs R_Qvec as "USAXS data reduction plot"
 	DoWindow/C RcurvePlotGraph
-	AutoPositionWindow/M=1/R=USAXSDataReduction  RcurvePlotGraph
+	AutoPositionWindow/M=0/R=USAXSDataReduction  RcurvePlotGraph
 //	AppendToGraph fit_PD_Intensity vs fitX_PD_Intensity
 	//modify the displayed waves
 	ModifyGraph mode(R_Int)=4

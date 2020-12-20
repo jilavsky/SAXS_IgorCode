@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.25
+#pragma version = 2.26
 #pragma IgorVersion = 8.03
 
 //control constants
@@ -27,6 +27,9 @@ strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan
 //  IN2G_ReturnUserSampleName(FolderPathToData) returns name, either folder name or content of UserName string
 //  IN2G_CreateUserName(NameIn,MaxShortLength, MakeUnique, FolderWaveStrNum) returns name for specific element
 //  On Igor 7 always less than 31 characters. On Igor 8 optionally more, based on constats above.  
+//
+//Igor 9 handling:
+// disabled IN2G_CheckScreenSize, not needed since IP9 can scale panels down. 
 //  
 //*************************************************************************\
 //* Copyright (c) 2005 - 2020, Argonne National Laboratory
@@ -34,6 +37,7 @@ strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
+//2.26 disabled IN2G_CheckScreenSize for IP9
 //2.25 added IN2G_AddWaveStatistics() to right click TopTrace menu. Adds wave stats results and lines with average, ave+sdev, ave-Sdev
 //2.24 new version of IN2G_DuplicateGraphAndData which can copy data with same names. Igor 9 fixes and improvements. 
 //2.23 add IN2G_AddButtonsToBrowser(), which calls IN2G_ExtractInfoFromFldrname(). Use: adds button (via hooks functions) tgo DataBrowser and that will extract info from SampleName strings we are using. 
@@ -7416,6 +7420,10 @@ Function IN2G_CheckScreenSize(which,MinVal)
 	//MinVal is in pixles
 	
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+#if(IgorVersion()>8.1)
+	return 1
+#endif
+
 	if (cmpstr(which,"width")!=0 && cmpstr(which,"height")!=0)
 		Abort "Error in IN2G_CheckScreenSize procedure. Major bug. Contact me: ilavsky@aps.anl.gov, please)"
 	endif

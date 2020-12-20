@@ -13,7 +13,7 @@ Modification history:
 _____________________________________________________________________________________
 1.981
 Fixed all fixed length wave names (hopefully). Now should use long names if user chooses so in Configuration for all waves and folders. 
-
+Sample Survey tool -  multiple row selection enabled, Clipboard now handles multiple rows. Manual updated. 
 
 
 1.98 9/3/2020

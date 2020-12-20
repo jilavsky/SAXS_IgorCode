@@ -5,13 +5,13 @@
 
 //DO NOT renumber Main files every time, these are main release numbers...
 //define manual date and release verison 
-constant CurrentIrenaVersionNumber = 2.701
+constant CurrentIrenaVersionNumber = 2.701		//change version of Boot Irena1 modeling.ipf to get proper check version. 
 
-//*************************************************************************\
+//*************************************************************************
 //* Copyright (c) 2005 - 2020, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
-//*************************************************************************/
+//*************************************************************************
 
 //2.701	Beta version after September 2020 release. 
 //			Fix Multi-dat aGUi tools to handle Liberal names

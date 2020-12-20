@@ -1,7 +1,8 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.83
+#pragma version = 1.831
 #pragma IgorVersion=8.03
 
+//1.831	current beta release. 
 //1.83 	September2020 release
 //1.82		February 2020 release. Maintenance, many small changes. 
 //1.81   December 2018. New OSX 64-bit xop version.  

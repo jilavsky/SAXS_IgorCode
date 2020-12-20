@@ -82,7 +82,7 @@ Function NI1_9IDCConfigureNika()
 	string ListOfVariables="USAXSSlitLength;SAXSGenSmearedPinData;SAXSDeleteTempPinData;USAXSForceTransmissionDialog;"
 	ListOfVariables +="USAXSSAXSselector;USAXSWAXSselector;USAXSBigSAXSselector;USAXSCheckForRIghtEmpty;USAXSCheckForRIghtDark;USAXSForceTransRecalculation;"
 	ListOfVariables +="USAXSLoadListedEmpDark;USAXSForceUSAXSTransmission;ReadParametersFromEachFile;WAXSSubtractBlank;"
-	ListOfVariables +="UsePixSensitiveMask;"
+	ListOfVariables +="UsePixSensitiveMask;DisplayJPGFile;"
 	string ListOfStrings="USAXSSampleName;"
 
 	variable i
@@ -153,6 +153,11 @@ Function NI1_9IDCConfigPanelFunction() : Panel
 	Checkbox SAXSSelection, title ="SAXS", help={"Use to configure Nika for SAXS"}
 	Checkbox USAXSWAXSselector,pos={150,90},size={100,20}, variable=root:Packages:Convert2Dto1D:USAXSWAXSselector, proc=NI1_9IDCCheckProc
 	Checkbox USAXSWAXSselector, title ="WAXS", help={"Use to configure Nika for WAXS"}
+
+	Checkbox DisplayJPGFile,pos={370,90},size={100,20}, variable=root:Packages:Convert2Dto1D:DisplayJPGFile, noproc
+	Checkbox DisplayJPGFile, title ="Display JPG File", help={"Display jpg file if it was collected... "}
+
+
 
 	Button Open9IDCManual,pos={430,5},size={100,20},proc=NI1_9IDCButtonProc,title="Open manual"
 	Button Open9IDCManual,help={"Open manual"}

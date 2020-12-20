@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.70
+#pragma version=2.71
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -10,6 +10,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.71 Added NI1A_ImportThisJPGFile which adds functionality ONLY for 9IDC USAXS/SAXS/WAXS instrument. Should never run else. 
 //2.70 fixed NI1A_FindeOrderNumber to utilize for sorting in "_001" option the last number, ignores any string, even if at the end of name. 
 //			can sort nases as "name_With_Order_0001344_waxs.tif" based on teh 0001344 
 //2.69 fixed NI1A_GenerAngleLine for angles between 135 - 360 deg. Allow negative angles, If Angle<0, Angle = 180+Angle
@@ -2041,7 +2042,6 @@ Function NI1A_ImportThisOneFile(SelectedFileToLoad)
 	string/g ImageBeingLoaded
 	ImageBeingLoaded = "sample"
 	//awful workaround end
-	
 	variable loadedOK=NI1A_UniversalLoader("Convert2Dto1DDataPath",SelectedFileToLoad,DataFileExtension,"CCDImageToConvert")
 	if(LoadedOK==0)
 		return 0
@@ -2064,11 +2064,33 @@ Function NI1A_ImportThisOneFile(SelectedFileToLoad)
 	MatrixOp/O/NTHR=0   CCDImageToConvert_dis=CCDImageToConvert
 	Note CCDImageToConvert_dis, NewNote
 	setDataFolder OldDf
+	//import jpg file (9IDC USAXS stuff)
+	NI1A_ImportThisJPGFile(SelectedFileToLoad)
 	return LoadedOK
 end
 
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
+// this function adds functionality to 9IDC SAXs/WAXS instrument and should never be called else. 
+static Function NI1A_ImportThisJPGFile(SelectedFileToLoad)
+		string SelectedFileToLoad
+		//"Convert2Dto1DDataPath"
+		NVAR/Z DisplayJPGFile = root:Packages:Convert2Dto1D:DisplayJPGFile
+		KillWindow/Z SampleImageDuringMeasurementImg
+		if(NVAR_Exists(DisplayJPGFile))
+			if(DisplayJPGFile)
+				string JPGFileName = StringFromList(0,SelectedFileToLoad,".")+".jpg"
+					setDataFOlder root:Packages:Convert2Dto1D:
+					ImageLoad/P=Convert2Dto1DDataPath/T=jpeg/Q/O/Z/N=SampleImageDuringMeasurement JPGFileName
+					if(V_flag)	//success...
+						Wave Img = root:Packages:Convert2Dto1D:SampleImageDuringMeasurement
+						NewImage/K=1/N=SampleImageDuringMeasurementImg Img
+						MoveWindow /W=SampleImageDuringMeasurementImg 40,45,910,664
+						AutoPositionWindow/R=NI1A_Convert2Dto1DPanel/M=1 SampleImageDuringMeasurementImg
+					endif
+			endif
+		endif	
+end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -2174,6 +2196,7 @@ Function NI1A_DisplayOneDataSet()
 			if(!loadedOK)
 				return 0
 			endif
+			NI1A_ImportThisJPGFile(SelectedFileToLoad)
 			NI1A_DezingerDataSetIfAskedFor(DataWaveName)
 			Wave/Z tempWave=root:Packages:Convert2Dto1D:CCDImageToConvertTemp
 			Wave CCDImageToConvert=root:Packages:Convert2Dto1D:CCDImageToConvert
@@ -2199,13 +2222,16 @@ Function NI1A_DisplayOneDataSet()
 	note/K CCDImageToConvert
 	note CCDImageToConvert, OldNote
 		NI1A_DisplayLoadedFile()
-		NI1A_DisplayStatsLoadedFile("CCDImageToConvert")
-		NI1A_TopCCDImageUpdateColors(1)
-		NI1A_DoDrawingsInto2DGraph()
-		NI1A_CallImageHookFunction()
-		DoWIndow Sample_Information
-		if(V_FLag)
-			AutopositionWindow/M=0/R=CCDImageToConvertFig Sample_Information
+		DoWIndow CCDImageToConvertFig
+		if(V_Flag)	//if Batch processing is checked, not woindow is opened.
+			NI1A_DisplayStatsLoadedFile("CCDImageToConvert")
+			NI1A_TopCCDImageUpdateColors(1)
+			NI1A_DoDrawingsInto2DGraph()
+			NI1A_CallImageHookFunction()
+			DoWIndow Sample_Information
+			if(V_FLag)
+				AutopositionWindow/M=0/R=CCDImageToConvertFig Sample_Information
+			endif
 		endif
 	setDataFolder OldDf	
 end

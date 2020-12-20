@@ -1,15 +1,16 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
 #pragma IgorVersion=8.03   //requires Igor version 8.03 or higher
-#pragma version = 1.98
+#pragma version = 1.981
 
-constant CurrentIndraVersionNumber = 1.98
+constant CurrentIndraVersionNumber = 1.981
 //*************************************************************************\
 //* Copyright (c) 2005 - 2019, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.981   beta 
 //1.98		require Igor 8.03, no testing for Igor 7 anymore. 
 //			step scanning from BS still not fully supported, needs more developement. 
 //1.976 	Beta version after February2020 release

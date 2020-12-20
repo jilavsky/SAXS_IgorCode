@@ -1,7 +1,7 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version = 1.01
+#pragma version = 1.02
 #pragma IgorVersion=8.03
 
 
@@ -13,6 +13,7 @@
 
 //this is tool to setup Sample Plates for USAXS, survey sample positions, and generate Command files. 
 
+//1.02 Added checking if existing sate is saved to reduce number of dialogs user needs to deal with. 
 //1.01 Added NMRAcrylicPlate
 //1.0 September2020, first release. 
 //0.6 many fixes
@@ -78,29 +79,26 @@ Function IN3S_SampleSetupMain()
 end
 
 //************************************************************************************************************
-//****************************************************************************************
-Function IN3S_ExportHookFunction(Command, SampleName,SX, SY, Thickness, MD)
-	string Command, SampleName,SX, SY, Thickness, MD 
-	//this hook function will modify output of the command file for given line. This needs to be cutomized for specific need. 
-	SVAR nbl=root:Packages:SamplePlateSetup:NotebookName
-
-	//in this case it will write each command in notebook multiple times, in original position and then +/- 1mm in sx and sy
-	//center	
-	Notebook $nbl text="      "+Command+"        "+SX+"      "+SY+"      "+Thickness+"      \""+SampleName+"\"  \r"
-	//and now the variations, only if Sample Name is NOT Blank or Empty
-	if(!StringMatch(SampleName, "*Blank*")&&!StringMatch(SampleName, "*Empty*"))
-		string TempStr
-		TempStr = num2str(str2num(SX)-1)
-		Notebook $nbl text="      "+Command+"        "+TempStr+"      "+SY+"      "+Thickness+"      \""+SampleName+"_R"+"\"  \r"
-		TempStr = num2str(str2num(SX)+1)
-		Notebook $nbl text="      "+Command+"        "+TempStr+"      "+SY+"      "+Thickness+"      \""+SampleName+"_L"+"\"  \r"
-		TempStr = num2str(str2num(SY)-1)
-		Notebook $nbl text="      "+Command+"        "+SX+"      "+TempStr+"      "+Thickness+"      \""+SampleName+"_B"+"\"  \r"
-		TempStr = num2str(str2num(SY)+1)
-		Notebook $nbl text="      "+Command+"        "+SX+"      "+TempStr+"      "+Thickness+"      \""+SampleName+"_T"+"\"  \r"
-	endif	
+//************************************************************************************************************
+Function IN3S_ExportHookFunction(listWaveG, LBSelectionWvG)
+	wave listWaveG, LBSelectionWvG
+	//  Modify this function as needed, for example comment out lines etc. 
+	//  These are parameters: 
+	//		IN3S_WriteListOfCommands(listWaveG, LBSelectionWvG, sxOffset, syOffset, TitleModifier)
+	//	1. Keep the wave names listWaveG, LBSelectionWvG as they are. These contain info for all samples.  
+	//	2. Change the sxOffset and syOffset [mm] (these values are added to the sx and sy in the table). 
+	//	3. Change the TitleModifier, this is appended to the sample name. 
+	//	4. make sure you have "Run Export Hook function" checkbox checked and compiled procedures. 
+	//************************************************************************************************S
+	//this measures right of center position 
+	IN3S_WriteListOfCommands(listWaveG, LBSelectionWvG, -1, 0, "_R")
+	//this measures top of center position 
+	IN3S_WriteListOfCommands(listWaveG, LBSelectionWvG, 0, -1, "_T")
+	//this measures left of center position 
+	IN3S_WriteListOfCommands(listWaveG, LBSelectionWvG, 1, 0, "_L")
+	//this measures bottom of center position 
+	IN3S_WriteListOfCommands(listWaveG, LBSelectionWvG, 0, 1, "_B")
 end
- 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //************************************************************************************************************
@@ -133,7 +131,7 @@ Function IN3S_MainPanel()
 		DoWindow/F SamplePlateSetup
 	else
 		PauseUpdate    		// building window...
-		NewPanel /K=1 /W=(2.25,43.25,590,710)/N=SamplePlateSetup as "Sample Plate setup"
+		NewPanel /K=1 /W=(2.25,43.25,590,715)/N=SamplePlateSetup as "Sample Plate setup"
 		TitleBox Title title="\Zr210Sample Plate setup",pos={120,3},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428), anchor=MC
 		Button GetHelp,pos={490,25},size={80,15},fColor=(65535,32768,32768), proc=IN3S_ButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 		//left size
@@ -142,7 +140,7 @@ Function IN3S_MainPanel()
 		Button AddMoreLines,pos={10,75},size={150,17}, proc=IN3S_ButtonProc,title="Add Sample Positions", help={"Adds more sample positions"}
 		SetVariable NumberOfSamplesToCreate,pos={170,62},size={100,20}, limits={1, 500, 10}, proc=IN3S_SetVarProc,title="Lines = "
 		Setvariable NumberOfSamplesToCreate,fStyle=2, variable=root:Packages:SamplePlateSetup:NumberOfSamplesToCreate, help={"How many sample positions to create"}
-		TitleBox Info2 title="\Zr120Saved Sets : ",pos={10,90},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0
+		TitleBox Info2 title="\Zr120Saved Sets : ",pos={10,95},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0
 		PopupMenu SelectSavedSet,pos={10,110},size={330,21},noproc,title="Select Saved set : ", help={"Select folder with saved set of data"}
 		PopupMenu SelectSavedSet,mode=1,value= #"\"---;\"+IN3S_GenStringOfSets()"
 		Button LoadSavedSet,pos={10,135},size={180,17}, proc=IN3S_ButtonProc,title="Load saved Positions Set", help={"Loads postions set saved before"}
@@ -156,20 +154,23 @@ Function IN3S_MainPanel()
 		Button CreateImage,pos={440,85},size={120,17}, proc=IN3S_ButtonProc,title="Create image", help={"Creates new set of positions"}
 		Button BeamlineSurvey,pos={440,105},size={120,17}, proc=IN3S_ButtonProc,title="Beamline Survey", help={"This opens GUI for survey at the beamline"}
 
-		TitleBox Info4 title="\Zr120Current set name : ",pos={300,115},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0
-		SetVariable UserNameForSampleSet,pos={300,135},size={270,20}, proc=IN3S_SetVarProc,title="Set Name: "
+		TitleBox Info4 title="\Zr120Current set name : ",pos={300,110},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0
+		SetVariable UserNameForSampleSet,pos={300,130},size={270,20}, proc=IN3S_SetVarProc,title="Set Name: "
 		Setvariable UserNameForSampleSet,fStyle=2, variable=root:Packages:SamplePlateSetup:UserNameForSampleSet, help={"Name for these samples"}
-	
-   		TabControl TableTabs  pos={0,160},size={590,420},tabLabel(0)="Sample Table", value= 0, proc=IN3S_TableTabsTabProc
+		Button SavePositionSet,pos={400,150},size={160,19}, proc=IN3S_ButtonProc,title="Save Position Set", help={"Saves set of positions with user name"}
+		
+   		TabControl TableTabs  pos={0,160},size={590,430},tabLabel(0)="Sample Table", value= 0, proc=IN3S_TableTabsTabProc
 	    TabControl TableTabs  tabLabel(1)="Option Controls"
+		TitleBox Info20 title="\Zr080Use shift to select range of lines, ctrl/cmd select disjoint multiple lines",pos={5,590},size={400,10},frame=0,fColor=(0,0,65535),labelBack=0
 		//Tab 0
-			ListBox CommandsList,pos={8,180},size={573,385}, mode=1 //, special={0,0,1 }		//this will scale the width of column, users may need to slide right using slider at the bottom. 
+			ListBox CommandsList,pos={8,180},size={573,400} //, special={0,0,1 }		//this will scale the width of column, users may need to slide right using slider at the bottom. 
 			ListBox CommandsList,listWave=root:Packages:SamplePlateSetup:LBCommandWv
 			ListBox CommandsList,selWave=root:Packages:SamplePlateSetup:LBSelectionWv
 			ListBox CommandsList,proc=IN3S_ListBoxMenuProc, selRow= 0, editStyle= 0
 			ListBox CommandsList userColumnResize=1,help={"Fill here list of samples, their positions, thickness etc. "}
 			ListBox CommandsList titleWave=root:Packages:SamplePlateSetup:LBTtitleWv, frame= 2
 			ListBox CommandsList widths={220,50,50,60,40,40,40,0}
+			ListBox CommandsList  mode=9 		// mode=1 for single row selection, 4 multiple disjoint rows (shift only), mode=9 for shift conigous+ctrl disjoint.  
 		//Tab 1
 			TitleBox Info10 title="\Zr120Data Collection Controls ",size={250,15},pos={20,190},frame=0,fColor=(0,0,65535),labelBack=0
 			CheckBox USAXSAll pos={30,220},size={70,20},title="USAXS All?", help={"Run USAXS for All"}
@@ -183,6 +184,8 @@ Function IN3S_MainPanel()
 
 			CheckBox RunExportHookFunction pos={30,350},size={90,20},title="Run Export hook function? ", help={"Run export hook function"}
 			CheckBox RunExportHookFunction variable=root:Packages:SamplePlateSetup:RunExportHookFunction,  noproc
+
+			Button DisplayHookFunction,pos={300,350},size={240,20}, proc=IN3S_ButtonProc,title="Display Hook Function", help={"Displays hook function for user"}
 
 			SetVariable USAXSScanTime,pos={30,380},size={250,20},limits={30,360,15}, proc=IN3S_SetVarProc,title="USAXS time = "
 			Setvariable USAXSScanTime,fStyle=2, variable=root:Packages:SamplePlateSetup:USAXSScanTime, help={"USAXS time from epics, used to calculate run time."}
@@ -202,23 +205,38 @@ Function IN3S_MainPanel()
 			CheckBox DisplayAllSamplesInImage pos={340,250},size={90,20},title="Display all samples in image? ", help={"Add to image all defined sample positiosn"}
 			CheckBox DisplayAllSamplesInImage variable=root:Packages:SamplePlateSetup:DisplayAllSamplesInImage,  proc=IN3S_CheckProc
 
-
 		//controls under the table
-		Button SavePositionSet,pos={15,585},size={140,20}, proc=IN3S_ButtonProc,title="Save Position Set", help={"Saves set of positions with user name"}
 		//save export
-		Button CreateCommandFile,pos={415,580},size={160,20}, proc=IN3S_ButtonProc,title="Preview cmd file", help={"Creates and displays command file with current set of positions"}
+		Button CreateCommandFile,pos={230,607},size={160,17}, proc=IN3S_ButtonProc,title="Preview cmd file", help={"Creates and displays command file with current set of positions"}
 		Button ExportCommandFile,pos={415,605},size={160,20}, proc=IN3S_ButtonProc,title="Export cmd file", help={"Exports usaxs.mac or defaultname.mac cmd file with current set of positions"}
 		Button ExportCommandFile2,pos={415,630},size={160,20}, proc=IN3S_ButtonProc,title="Dialog Export cmd file", help={"Dialog - Exports cmd file with current set of positions"}
 
-		Setvariable CalculatedOverAllTime title="\Zr120Estimated run time [min]: ",pos={10,625},size={350,15},frame=0,fstyle=3,fColor=(0,0,65535),valueColor=(0,0,0), labelBack=0, noedit=1
+		Setvariable CalculatedOverAllTime title="\Zr120Estimated run time [min]: ",pos={10,628},size={350,15},frame=0,fstyle=3,fColor=(0,0,65535),valueColor=(0,0,0), labelBack=0, noedit=1
 		Setvariable CalculatedOverAllTime,variable=root:Packages:SamplePlateSetup:CalculatedOverAllTime, help={"Estimated run time for all"}, limits={0,inf,0}
 
-		Setvariable Warnings title="\Zr120Last Info/Warning: ",pos={10,645},size={550,15},frame=0,fstyle=3,fColor=(0,0,65535),valueColor=(65535,0,0), labelBack=0, noedit=1
+		Setvariable Warnings title="\Zr120Last Info/Warning: ",pos={10,652},size={550,15},frame=0,fstyle=3,fColor=(0,0,65535),valueColor=(65535,0,0), labelBack=0, noedit=1
 		Setvariable Warnings,variable=root:Packages:SamplePlateSetup:WarningForUser, help={"Last warning which code issued"}
 
 	endif
 	IN3S_FixTabControl()
 
+end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+FUnction IN3S_FixSaveButton()
+
+	NVAR TableIsSaved = root:Packages:SamplePlateSetup:TableIsSaved
+	string TitleStr
+	if(TableIsSaved>0.5)
+		TitleStr = "Positions saved"
+		Button SavePositionSet,win=SamplePlateSetup, fColor=(32792,65535,1)
+		Button SavePositionSet,win=SamplePlateSetup,title=TitleStr, disable=2*TableIsSaved
+	else
+		TitleStr = "Save Position Set" 
+		Button SavePositionSet,win=SamplePlateSetup, fColor=(65535,32768,32768)
+		Button SavePositionSet,win=SamplePlateSetup,title=TitleStr, disable=2*TableIsSaved
+	endif
 end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -304,6 +322,7 @@ Function IN3S_TableTabsTabProc(tca) : TabControl
 			SetVariable USAXSScanTime,  win=SamplePlateSetup, disable=(tab!=1)
 			SetVariable SAXSScanTime,  win=SamplePlateSetup, disable=(tab!=1)
 			SetVariable WAXSScanTime,  win=SamplePlateSetup, disable=(tab!=1)
+			Button DisplayHookFunction,  win=SamplePlateSetup, disable=(tab!=1)
 			IN3S_EstimateRunTime()
 			break
 		case -1: // control being killed
@@ -315,6 +334,19 @@ End
 ///******************************************************************************************
 ///******************************************************************************************
 ///******************************************************************************************
+//************************************************************************************************************
+Function/S IN3S_CreateListOfRows(wave selWave)
+	//create list of selected rows (from end) 
+	string ListOfSelRows=""
+	variable i
+	For(i=DimSize(selWave,0)-1;i>=0;i-=1)
+		if(selWave[i][0]==3||selWave[i][0]==10)
+			ListOfSelRows+=num2str(i)+";"
+		endif
+	endfor
+	return ListOfSelRows
+end
+//************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
 Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
@@ -329,94 +361,156 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 	string WinNameStr=lba.win
 	string items
 	variable i
-
-
+	NVAR TableIsSaved = root:Packages:SamplePlateSetup:TableIsSaved
+	string ListOfSelRows
+	variable tempRow, j, firstSelectedRow, NoSelectedRows
+	SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+	
+	
+	
 	switch( lba.eventCode )
 		case -1: // control being killed
 			break
 		case 1: // mouse down
-  
+  			ListOfSelRows=IN3S_CreateListOfRows(selWave)
+  			firstSelectedRow = str2num(StringFromList(ItemsInList(ListOfSelRows)-1, ListOfSelRows))
+  			NoSelectedRows = ItemsInList(ListOfSelRows)
+  			
 			if (lba.eventMod & 0x10)	// rightclick
-				items = "Insert new line;Delete selected lines;Duplicate selected Line;Set line as Blank;Set as Dist. Std. AgBehLaB6;Write same Name;"
-				items += "Write same Thickness;Same Sx to all empty;Same Sy to all empty;Increment Sx from seleted row;Increment Sy from seleted row;"
-				items += "Copy row Values to Table Clipboard;Paste Table Clipboard to row;Insert New row with Table Clipboard;"
+				items = "Insert new lines;Delete selected lines;Duplicate selected Lines;Set lines as Blank;Set as Dist. Std. AgBehLaB6;Write same Name;"
+				items += "Write same Thickness;Same Sx to all empty;Same Sy to all empty;Increment Sx from selected row;Increment Sy from selected row;"
+				items += "Copy sel. rows to Clipboard;Paste Clipboard to sel. rows;Insert new rows with Clipboard vals.;"
 				PopupContextualMenu items
 				// V_flag is index of user selected item    
 				switch (V_flag)
 					case 1:	// "Insert new line"
-						IN3S_InsertDeleteLines(1, row,1)
+						For(j=0;j<ItemsInList(ListOfSelRows);j+=1)
+							tempRow = str2num(StringFromList(j, ListOfSelRows))
+							IN3S_InsertDeleteLines(1, tempRow,1)
+						endfor
+						WarningForUser = "Inserted rows after numbers "+ ListOfSelRows
+						IN3S_EstimateRunTime()
+						TableIsSaved = 0
 						break
 					case 2:	// "Delete selected lines"
-						IN3S_InsertDeleteLines(2, row,1)
+						For(j=0;j<ItemsInList(ListOfSelRows);j+=1)
+							tempRow = str2num(StringFromList(j, ListOfSelRows))
+							IN3S_InsertDeleteLines(2, tempRow,1)
+						endfor
+						WarningForUser = "Deleted rows numbers "+ ListOfSelRows
 						IN3S_EstimateRunTime()
+						TableIsSaved = 0
 						break
 					case 3:	// "Duplicate selected Line"
-						IN3S_InsertDeleteLines(3, row,1)
+						For(j=0;j<ItemsInList(ListOfSelRows);j+=1)
+							tempRow = str2num(StringFromList(j, ListOfSelRows))
+							IN3S_InsertDeleteLines(3, tempRow,1)
+						endfor
+						WarningForUser = "Duplicated rows numbers "+ ListOfSelRows
 						IN3S_EstimateRunTime()
+						TableIsSaved = 0
 						break
 					case 4:	// "Set line as Blank"
-						listWave[row][0]="Blank"
-						listWave[row][3]="0"
-						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
-						WarningForUser = "Set row "+num2str(row)+" as Blank" 
+						For(j=0;j<ItemsInList(ListOfSelRows);j+=1)
+							tempRow = str2num(StringFromList(j, ListOfSelRows))
+							listWave[tempRow][0]="Blank"
+							listWave[tempRow][3]="0"
+						endfor
+						WarningForUser = "Set rows "+ListOfSelRows+" as Blank" 
 						IN3S_EstimateRunTime()
+						TableIsSaved = 0
 						break
 					case 5:	// "Set Line as Distance Standard"
-						listWave[row][0]="AgBehenateLaB6"
-						listWave[row][3]="1"
-						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
-						WarningForUser = "Set row "+num2str(row)+" as AgBehenateLaB6" 
+						For(j=0;j<ItemsInList(ListOfSelRows);j+=1)
+							tempRow = str2num(StringFromList(j, ListOfSelRows))
+							listWave[tempRow][0]="AgBehenateLaB6"
+							listWave[tempRow][3]="1"
+						endfor
+						WarningForUser = "Set rows "+ListOfSelRows+" as AgBehenateLaB6" 
 						NVAR USAXSAll=root:Packages:SamplePlateSetup:USAXSAll
 						USAXSAll=0
 						IN3S_EstimateRunTime()
+						TableIsSaved = 0
 						break
 					case 6:	// "Write same name"
 						string NewSampleName="SampleName"
-						string FromWhere = "Empty only"
+						string FromWhere = "Selected Rows"
+						string AddOrderNumber = "No"
 						Prompt NewSampleName, "Write same string in names"
-						Prompt FromWhere, "Where to write?", popup "Empty only;From selected row;All;"
-						DoPrompt /Help="Write same string name" "Default name for all positions", NewSampleName, FromWhere
+						Prompt FromWhere, "Where to write?", popup "Selected Rows;Empty only;From first selected row;All;"
+						Prompt AddOrderNumber, "Add Order numbers (0,1,2,3...)?", popup "No;Yes;"
+						DoPrompt /Help="Write same string name" "Default name for all positions", NewSampleName, FromWhere, AddOrderNumber
 						if(V_Flag)
 							abort
 						endif
+						string NameStrtemp2=""
+						string OrderNumStr=""
+						variable OrderNumber=0
 						For(i=0;i<DimSize(listWave,0);i+=1)
 							if(StringMatch(FromWhere, "Empty only"))
 								if(strlen(listWave[i][0])==0)
+									if(StringMatch(AddOrderNumber, "Yes"))
+										OrderNumStr=num2str(OrderNumber)
+										OrderNumber+=1
+									endif
 									if(strlen(NewSampleName)>0)	
-										listWave[i][0] = CleanupName(NewSampleName, 0 , 40)
+										listWave[i][0] = CleanupName(NewSampleName, 0 , 40)+OrderNumStr
 									else
-										listWave[i][0] = ""
+										listWave[i][0] = ""+OrderNumStr
 									endif
 								endif
-							elseif(StringMatch(FromWhere, "From selected row"))
-								if(i>=row)
+							elseif(StringMatch(FromWhere, "From first selected row"))
+								if(i>=firstSelectedRow)
+									if(StringMatch(AddOrderNumber, "Yes"))
+										OrderNumStr=num2str(OrderNumber)
+										OrderNumber+=1
+									endif
 									if(strlen(NewSampleName)>0)	
-										listWave[i][0] = CleanupName(NewSampleName, 0 , 40)
+										listWave[i][0] = CleanupName(NewSampleName, 0 , 40)+OrderNumStr
 									else
-										listWave[i][0] = ""
+										listWave[i][0] = ""+OrderNumStr
 									endif
 								endif
 							elseif(StringMatch(FromWhere, "All"))
-									if(strlen(NewSampleName)>0)	
-										listWave[i][0] = CleanupName(NewSampleName, 0 , 40)
-									else
-										listWave[i][0] = ""
+									if(StringMatch(AddOrderNumber, "Yes"))
+										OrderNumStr=num2str(OrderNumber)
+										OrderNumber+=1
 									endif
+									if(strlen(NewSampleName)>0)	
+										listWave[i][0] = CleanupName(NewSampleName, 0 , 40)+OrderNumStr
+									else
+										listWave[i][0] = ""+OrderNumStr
+									endif
+							elseif(StringMatch(FromWhere, "Selected Rows"))
+									For(j=0;j<ItemsInList(ListOfSelRows);j+=1)
+										if(StringMatch(AddOrderNumber, "Yes"))
+											OrderNumStr=num2str(ItemsInList(ListOfSelRows)-j-1)
+											//OrderNumber+=1
+										endif
+										if(strlen(NewSampleName)>0)	
+											NameStrtemp2 = CleanupName(NewSampleName, 0 , 40)+OrderNumStr
+										else
+											NameStrtemp2 = ""+OrderNumStr
+										endif
+										tempRow = str2num(StringFromList(j, ListOfSelRows))
+										listWave[tempRow][0]=NameStrtemp2
+									endfor
 							else
 								//nothing here... 
 							endif
 						endfor
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
-						WarningForUser = "Wrote "+CleanupName(NewSampleName, 0 , 40)+" for all samples without name" 
+						WarningForUser = "Wrote "+CleanupName(NewSampleName, 0 , 40)+" names as requested" 
 						IN3S_EstimateRunTime()
+						TableIsSaved = 0
 						break;
 					case 7:	// "Write Same Thickness"
 						variable newThickness
 						NVAR DefSaTh = root:Packages:SamplePlateSetup:DefaultSampleThickness
 						newThickness = DefSaTh
 						Prompt newThickness, "New Thickness [mm] or NaN for empty"
-						string FromWhere2 = "Empty only"
-						Prompt FromWhere2, "Where to write?", popup "Empty only;From selected row;All;"
+						string FromWhere2 = "Selected Rows"
+						Prompt FromWhere2, "Where to write?", popup "Selected Rows;Empty only;From first selected row;All;"
 						DoPrompt /Help="Write new thickness?" "New thickness and where selection", newThickness, FromWhere2
 						if(V_Flag)
 							abort
@@ -430,8 +524,8 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 										listWave[i][3] = ""
 									endif
 								endif
-							elseif(StringMatch(FromWhere2, "From selected row"))
-								if(i>=row)
+							elseif(StringMatch(FromWhere2, "From first selected row"))
+								if(i>=firstSelectedRow)
 									if(numtype(newThickness)==0)
 										listWave[i][3] = num2str(newThickness)
 									else
@@ -444,10 +538,20 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 									else
 										listWave[i][3] = ""
 									endif
+							elseif(StringMatch(FromWhere2, "Selected Rows"))
+									For(j=0;j<ItemsInList(ListOfSelRows);j+=1)
+										tempRow = str2num(StringFromList(j, ListOfSelRows))
+										if(numtype(newThickness)==0)
+											listWave[tempRow][3] = num2str(newThickness)
+										else
+											listWave[tempRow][3] = ""
+										endif
+									endfor
 							else
 								//nothing here... 
 							endif
 						endfor
+						TableIsSaved = 0
 						break;						
 					case 8:	// "same sx to all empty"
 						variable  NewSxForAll=10
@@ -464,6 +568,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 						WarningForUser = "Wrote "+num2str(NewSxForAll)+" for all samples without SX" 
 						IN3S_EstimateRunTime()
+						TableIsSaved = 0
 						break;
 					case 9:	// "same sy to all empty"
 						variable  NewSyForAll=10
@@ -480,26 +585,28 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 						WarningForUser = "Wrote "+num2str(NewSyForAll)+" for all samples without SX" 
 						IN3S_EstimateRunTime()
+						TableIsSaved = 0
 						break;
 					case 10:	// "Increment Sx from selected row"
 						variable  NewSxStep=10
 						variable sxstart
-						Prompt NewSxStep, "Increment SX from selected row higher?"
+						Prompt NewSxStep, "Increment SX from first selected row higher?"
 						DoPrompt /Help="Increment SX position for all higher rows?" "Input sx step", NewSxStep
 						if(V_Flag)
 							abort
 						endif
-						if(numtype(str2num(listWave[row][1]))==0)
-							sxstart = str2num(listWave[row][1])
+						if(numtype(str2num(listWave[firstSelectedRow][1]))==0)
+							sxstart = str2num(listWave[firstSelectedRow][1])
 						else
 							sxstart = 0
 						endif
-						For(i=row;i<DimSize(listWave,0);i+=1)
-							listWave[i][1] = num2str(sxstart+i*NewSxStep)
+						For(i=firstSelectedRow;i<DimSize(listWave,0);i+=1)
+							listWave[i][1] = num2str(sxstart+(i-firstSelectedRow)*NewSxStep)
 						endfor
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 						WarningForUser = "Calculated new sx for rown higher than : " +num2str(row) 
 						IN3S_EstimateRunTime()
+						TableIsSaved = 0
 						break;
 					case 11:	// "Increment Sy from selected row"
 						variable  NewSyStep=10
@@ -509,58 +616,92 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 						if(V_Flag)
 							abort
 						endif
-						if(numtype(str2num(listWave[row][2]))==0)
-							systart = str2num(listWave[row][2])
+						if(numtype(str2num(listWave[firstSelectedRow][2]))==0)
+							systart = str2num(listWave[firstSelectedRow][2])
 						else
 							systart = 0
 						endif
-						For(i=row;i<DimSize(listWave,0);i+=1)
-							listWave[i][2] = num2str(systart+i*NewSyStep)
+						For(i=firstSelectedRow;i<DimSize(listWave,0);i+=1)
+							listWave[i][2] = num2str(systart+(i-firstSelectedRow)*NewSyStep)
 						endfor
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 						WarningForUser = "Calculated new sy for all samples" 
 						IN3S_EstimateRunTime()
+						TableIsSaved = 0
 						break;
 					case 12:	// "Copy in Table Clipboard"
+						make/O/T/N=(NoSelectedRows) root:Packages:SamplePlateSetup:TableClipboardWv
+						Wave/T TableClipboardWv = root:Packages:SamplePlateSetup:TableClipboardWv
 						SVAR TableClipboard = root:Packages:SamplePlateSetup:TableClipboard
-						TableClipboard = "SampleName="+listWave[row][0]+";"
-						TableClipboard += "SX="+listWave[row][1]+";"
-						TableClipboard += "SY="+listWave[row][2]+";"
-						TableClipboard += "TH="+listWave[row][3]+";"
-						TableClipboard += "MD="+listWave[row][4]+";"
+						For(j=0;j<NoSelectedRows;j+=1)
+							tempRow = str2num(StringFromList(j, ListOfSelRows))
+							TableClipboard = "SampleName="+listWave[tempRow][0]+";"
+							TableClipboard += "SX="+listWave[tempRow][1]+";"
+							TableClipboard += "SY="+listWave[tempRow][2]+";"
+							TableClipboard += "TH="+listWave[tempRow][3]+";"
+							TableClipboard += "MD="+listWave[tempRow][4]+";"
+							TableClipboardWv[j] = TableClipboard
+						endfor
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
-						WarningForUser = "Copied row  "+num2str(row)+ "  values in Table Clipboard" 
+						WarningForUser = "Copied rows "+ListOfSelRows+ " in Clipboard" 
 						break;
 					case 13:	// "Paste Table Clipboard in a row"
+						Wave/T/Z TableClipboardWv = root:Packages:SamplePlateSetup:TableClipboardWv
+						//check we have clipboard...
+						if(!WaveExists(TableClipboardWv)||numpnts(TableClipboardWv)<1)
+							Abort "Nothing is stored in Clipboard"
+						endif
+						//check we have same number of lines selected. 
+						if(numpnts(TableClipboardWv)>1 && NoSelectedRows!=numpnts(TableClipboardWv))
+							Abort "Number of lines in Clipboard ("+num2str(numpnts(TableClipboardWv))+") does not match number of selected lines in table ("+num2str(NoSelectedRows)+")"
+						endif
+						//OK, now we should be able to do this... 
 						SVAR TableClipboard = root:Packages:SamplePlateSetup:TableClipboard
-						listWave[row][0] = StringByKey("SampleName", TableClipboard, "=" , ";")
-						listWave[row][1] = StringByKey("SX", TableClipboard, "=" , ";")
-						listWave[row][2] = StringByKey("SY", TableClipboard, "=" , ";")
-						listWave[row][3] = StringByKey("TH", TableClipboard, "=" , ";")
-						listWave[row][4] = StringByKey("USAXS", TableClipboard, "=" , ";")
-						listWave[row][5] = StringByKey("SAXS", TableClipboard, "=" , ";")
-						listWave[row][6] = StringByKey("WAXS", TableClipboard, "=" , ";")
-						listWave[row][7] = StringByKey("MD", TableClipboard, "=" , ";")
+						For(j=0;j<NoSelectedRows;j+=1)
+							if(numpnts(TableClipboardWv)>1)
+								TableClipboard = TableClipboardWv[j]
+							else
+								TableClipboard = TableClipboardWv[0]
+							endif
+							tempRow = str2num(StringFromList(j, ListOfSelRows))
+							listWave[tempRow][0] = StringByKey("SampleName", TableClipboard, "=" , ";")
+							listWave[tempRow][1] = StringByKey("SX", TableClipboard, "=" , ";")
+							listWave[tempRow][2] = StringByKey("SY", TableClipboard, "=" , ";")
+							listWave[tempRow][3] = StringByKey("TH", TableClipboard, "=" , ";")
+							listWave[tempRow][4] = StringByKey("USAXS", TableClipboard, "=" , ";")
+							listWave[tempRow][5] = StringByKey("SAXS", TableClipboard, "=" , ";")
+							listWave[tempRow][6] = StringByKey("WAXS", TableClipboard, "=" , ";")
+							listWave[tempRow][7] = StringByKey("MD", TableClipboard, "=" , ";")
+						endfor
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
-						WarningForUser = "Pasted values in Table Clipboard into the row  "+num2str(row)
+						WarningForUser = "Pasted Clipboard vals. from org. rows "+ListOfSelRows
 						IN3S_EstimateRunTime()
+						TableIsSaved = 0
 						break;
-					case 14:	// "Insert New row with Table Clipboard"
-						IN3S_InsertDeleteLines(1, row,1)
-						//SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
-						//WarningForUser = "Inserted new line "+num2str(row) 
+					case 14:	// "Insert New rows with Table Clipboard"
+						Wave/T/Z TableClipboardWv = root:Packages:SamplePlateSetup:TableClipboardWv
+						//check we have clipboard...
+						if(!WaveExists(TableClipboardWv)||numpnts(TableClipboardWv)<1)
+							Abort "Nothing is stored in Clipboard"
+						endif
 						SVAR TableClipboard = root:Packages:SamplePlateSetup:TableClipboard
-						listWave[row][0] = StringByKey("SampleName", TableClipboard, "=" , ";")
-						listWave[row][1] = StringByKey("SX", TableClipboard, "=" , ";")
-						listWave[row][2] = StringByKey("SY", TableClipboard, "=" , ";")
-						listWave[row][3] = StringByKey("TH", TableClipboard, "=" , ";")
-						listWave[row][4] = StringByKey("USAXS", TableClipboard, "=" , ";")
-						listWave[row][5] = StringByKey("SAXS", TableClipboard, "=" , ";")
-						listWave[row][6] = StringByKey("WAXS", TableClipboard, "=" , ";")
-						listWave[row][7] = StringByKey("MD", TableClipboard, "=" , ";")
+						For(j=0;j<numpnts(TableClipboardWv);j+=1)
+							TableClipboard = TableClipboardWv[j]
+							tempRow = firstSelectedRow+1
+							IN3S_InsertDeleteLines(1, tempRow,1)
+							listWave[tempRow][0] = StringByKey("SampleName", TableClipboard, "=" , ";")
+							listWave[tempRow][1] = StringByKey("SX", TableClipboard, "=" , ";")
+							listWave[tempRow][2] = StringByKey("SY", TableClipboard, "=" , ";")
+							listWave[tempRow][3] = StringByKey("TH", TableClipboard, "=" , ";")
+							listWave[tempRow][4] = StringByKey("USAXS", TableClipboard, "=" , ";")
+							listWave[tempRow][5] = StringByKey("SAXS", TableClipboard, "=" , ";")
+							listWave[tempRow][6] = StringByKey("WAXS", TableClipboard, "=" , ";")
+							listWave[tempRow][7] = StringByKey("MD", TableClipboard, "=" , ";")
+						endfor
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
-						WarningForUser = "Inserted new row: "+num2str(row)+"with values from Table Clipboard "
+						WarningForUser = "Inserted "+num2str(numpnts(TableClipboardWv))+" rows with Clipboard (org. rows: "+ListOfSelRows+") "
 						IN3S_EstimateRunTime()
+						TableIsSaved = 0
 						break;
 					default :	// "Sort"
 						//DataSelSortString = StringFromList(V_flag-1, items)
@@ -571,6 +712,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 			else	//left click, do something here... 
 
 			endif
+			IN3S_FixSaveButton()
 			break
 		case 3: // double click
 
@@ -649,6 +791,8 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 			//add tag
 			IN3S_AddTagToImage(row)
 			IN3S_EstimateRunTime()
+			TableIsSaved = 0
+			IN3S_FixSaveButton()
 			break
 		case 13: // checkbox clicked (Igor 6.2 or later)
 			break
@@ -686,6 +830,8 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 
 	switch( ba.eventCode )
 		case 2: // mouse up
+			NVAR TableIsSaved = root:Packages:SamplePlateSetup:TableIsSaved
+
 			if(StringMatch(ba.ctrlName, "CreateNewSet" ))
 				DoAlert/T="This will delete your existing data" 1,  "New Sample positions will be created and existing one deleted, Do you want to continue?"
 				if(V_Flag==1)	//yes...
@@ -698,6 +844,7 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 					SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 					WarningForUser = "Created a new set of positions" 
 					IN3S_EstimateRunTime()
+					TableIsSaved = 0
 				endif
 			endif
 			if(StringMatch(ba.ctrlName, "CreateImage" ))
@@ -712,6 +859,12 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 					IN3S_AddTagToImage(-4)	//remove all drawings, if needed	
 				endif
 			endif
+			if(StringMatch(ba.ctrlName, "DisplayHookFunction" ))
+				//DisplayProcedure "IN3S_ExportHookFunction"
+				IN3_InsertHookIntoMainProc()
+			endif
+
+
 			if(StringMatch(ba.ctrlName, "PopulateTable" ))
 				//populate table with positions
 				DoAlert/T="This will delete your existing data" 1,  "New Sample positions will be created and existing one deleted, Do you want to continue?"
@@ -827,10 +980,14 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 						case "AgBehenateLaB6":	 
 							IN3S_CreateTablesForPlates(1, 1)
 							Wave/T LBCommandWv = root:Packages:SamplePlateSetup:LBCommandWv
+							Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
 							LBCommandWv[][0]="AgBehenateLaB6"
 							LBCommandWv[][1]="20"
 							LBCommandWv[][2]="20"
 							LBCommandWv[][3]="1"
+							LBSelectionWv[][4]=32
+							LBSelectionWv[][5]=48
+							LBSelectionWv[][6]=48
 							SVAR NewPlateName = root:Packages:SamplePlateSetup:UserNameForSampleSet
 							NewPlateName = "Standard"
 							NVAR USAXSAll=root:Packages:SamplePlateSetup:USAXSAll
@@ -850,6 +1007,7 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 						//	<code>]		// when no case matches
 					endswitch
 					IN3S_AddTagToImage(-4)	//remove all drawings, if needed	
+					TableIsSaved = 0
 				endif			
 			endif
 
@@ -859,11 +1017,13 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 				WarningForUser = "Added "+num2str(NewLines)+" new lines"
 				IN3S_EstimateRunTime()
+				TableIsSaved = 0
 			endif
 			if(StringMatch(ba.ctrlName, "SavePositionSet" ))
 				IN3S_SaveCurrentSampleSet()				
 				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 				WarningForUser = "Saved set of positions"
+				TableIsSaved = 1
 			endif
 			if(StringMatch(ba.ctrlName, "LoadSavedSet" ))
 				ControlInfo /W=SamplePlateSetup  SelectSavedSet
@@ -871,14 +1031,19 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 				if(StringMatch(SelectedFolder, "---" ))
 					return 0
 				endif
-				DoAlert/T="This will delete your existing data" 1,  "New Sample positions will be created and existing one deleted, Do you want to continue?"
-				if(V_Flag==1)	//yes...
-					//KillWIndow/Z SamplePlateImageDrawing
-					IN3S_LoadSavedSampleSet()
+				if(TableIsSaved<0.5)
+					DoAlert/T="This will overwrite your existing set of positions !!! " 1,  "Existing set is not saved! New set of Sample positions will be created and existing one deleted. Do you want to continue?"
+					if(V_Flag==1)	//yes...
+						//KillWIndow/Z SamplePlateImageDrawing
+						IN3S_LoadSavedSampleSet()
+					endif
+				else
+					IN3S_LoadSavedSampleSet()		
 				endif
 				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 				WarningForUser = "Loaded set of positions for "+SelectedFolder
 				IN3S_EstimateRunTime()
+				TableIsSaved = 1
 			endif
 			if(StringMatch(ba.ctrlName, "CreateCommandFile" ))
 				IN3S_CheckForSensibility()
@@ -893,6 +1058,7 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 				newName = IN3S_ExportMacroFile(0)
 				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 				WarningForUser = "Exported usaxs.mac on your desktop"
+				IN3_FTPUSAXSMacFile()
 			endif
 			if(StringMatch(ba.ctrlName, "ExportCommandFile2" ))
 				//IN3S_WriteCommandFile(1)
@@ -915,16 +1081,63 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 			//Open www manual with the right page
 			IN2G_OpenWebManual("Indra/SamplePlateSurvey.html")
 			endif
+
+			IN3S_FixSaveButton()
 			
 			break
 		case -1: // control being killed
 			break
 	endswitch
-
 	return 0
 End
 //************************************************************************************************************
+static Function IN3_InsertHookIntoMainProc()
+	//figure out if we have the hook function in main package or already in main Proc window
+	string FuncInfo = FunctionInfo("IN3S_ExportHookFunction")
+	//PROCWIN:IN3_SamplePlate.ipf
+	if(StringMatch(StringByKey("PROCWIN", FuncInfo), "IN3_SamplePlate.ipf" ))
+		//original location, need to create override function. Or   
+	    String currScrap = GetScrapText()      	// copy current scrap text
+	    DisplayProcedure/W=Procedure			
+	    DoIgorMenu "Edit" "Select All"
+	    DoIgorMenu "Edit" "Copy"
+	    string existingProCode=GetScrapText()	// modify procedure code
+  		String newCode = existingProCode + "\r\roverride "+ProcedureText("IN3S_ExportHookFunction") // modify procedure code
+	    PutScrapText newCode				 	// new code in clipboard... 
+	    DoIgorMenu "Edit" "Paste"			 	//put in main proc window. 
+	    PutScrapText currScrap               	// put previous scrap text back
+	    Execute/P/Q/Z "COMPILEPROCEDURES "   	// recompile all
+	    HideProcedures                       	// hide all procedure windows
+	endif
+    DisplayProcedure/W=Procedure
+    //DisplayProcedure "IN3S_ExportHookFunction"
+End
 //************************************************************************************************************
+
+Function IN3_FTPUSAXSMacFile()
+	//look for ftp batch file and if available and instrument is not running, upload usaxs.mac from desktop. 
+
+	GetfileFolderInfo/Q/Z "C:Users:usaxs:Documents:WinSCP:putUSAXSMacFile.bat"
+	if(V_Flag!=0)
+		return 0
+	else
+		GetfileFolderInfo/Q/Z "C:Users:usaxs:Desktop:usaxs.mac"
+		if(V_Flag!=0)
+			DoAlert /T="sftp error" 0, "usaxs.mac was not found on the desktop" 
+		else
+			IN3S_BeramlineSurveyAbortIfNeeded("Cannot sftp usaxs.mac")				//this will abort if instrument is running. 
+			DoAlert /T="Sftp usaxs.mac to usaxscontrol?" 1, "Do you want to sftp new usaxs.mac to usaxscontrol? Existing one will be overwritten!"
+			if(V_Flag==1)
+				ExecuteScriptText /W=1 "\"C:\\Users\\usaxs\\Documents\\WinSCP\\putUSAXSMacFile.bat\""
+			endif
+		endif
+	
+	endif
+
+end
+//************************************************************************************************************
+//************************************************************************************************************
+
 
 Function IN3S_CheckProc(cba) : CheckBoxControl
 	STRUCT WMCheckboxAction &cba
@@ -1244,17 +1457,135 @@ static Function IN3S_WriteCommandFile(show)
 	Notebook $nbl text="		#SAXS measurements \r"
    //and now we will write the commands... 
    //SAXS is first. 
+   
+   IN3S_WriteListOfCommands(listWaveG, LBSelectionWvG, 0, 0, "")
+   if(RunExportHookFunction)
+   		IN3S_ExportHookFunction(listWaveG, LBSelectionWvG)
+   endif
+   
+//   For(i=0;i<dimsize(listWaveG,0);i+=1)
+//   		if(SAXSAllG || LBSelectionWvG[i][5]==48)
+//			if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
+//	   			haveAnySWAXS=1
+//	   			thickness = str2num(listWaveG[i][3])
+//	   			thickness = thickness>0 ? thickness : DefaultSampleThickness
+//	   			if(RunExportHookFunction)
+//	   				IN3S_ExportHookFunction("saxsExp",listWaveG[i][0], listWaveG[i][1],listWaveG[i][2],num2str(thickness), "" )
+//	   			else
+//					Notebook $nbl text="      saxsExp        "+listWaveG[i][1]+"      "+listWaveG[i][2]+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+"\"  \r"
+//				endif
+//			endif
+//		endif   
+//   endfor
+//   //WAXS is next. 
+//	Notebook $nbl text="\r"
+//	Notebook $nbl text="		#WAXS measurements \r"
+//   For(i=0;i<dimsize(listWaveG,0);i+=1)
+//   		if(WAXSAllG || LBSelectionWvG[i][6]==48)
+//			if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
+//	   			haveAnySWAXS=1
+//	   			thickness = str2num(listWaveG[i][3])
+//	   			thickness = thickness>0 ? thickness : DefaultSampleThickness
+//	   			if(RunExportHookFunction)
+//	   				IN3S_ExportHookFunction("waxsExp",listWaveG[i][0], listWaveG[i][1],listWaveG[i][2],num2str(thickness), "" )
+//	   			else
+//					Notebook $nbl text="      waxsExp        "+listWaveG[i][1]+"      "+listWaveG[i][2]+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+"\"  \r"
+//				endif
+//			endif
+//		endif   
+//   endfor
+//   //and USAXS . 
+//   //do we have any USAXS scans?
+//   Duplicate/Free/R=[][4] LBSelectionWvG, TempUSAXSChoice
+//   WaveStats/Q TempUSAXSChoice
+//   variable HaveUSAXS = V_max>40 ? 1 : 0
+//   
+//   if(haveAnySWAXS && (USAXSAllG||HaveUSAXS))
+//		Notebook $nbl text="\r"
+//		Notebook $nbl text="		preUSAXStune \r"   
+//   endif
+//	Notebook $nbl text="\r"
+//	Notebook $nbl text="		#USAXS measurements \r"
+//   For(i=0;i<dimsize(listWaveG,0);i+=1)
+//   		if(USAXSAllG || LBSelectionWvG[i][4]==48)
+//			if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
+//	   			thickness = str2num(listWaveG[i][3])
+//	   			thickness = thickness>0 ? thickness : DefaultSampleThickness
+//	   			if(RunExportHookFunction)
+//	   				IN3S_ExportHookFunction("USAXSscan",listWaveG[i][0], listWaveG[i][1],listWaveG[i][2],num2str(thickness), "" )
+//	   			else
+//					Notebook $nbl text="      USAXSscan      "+listWaveG[i][1]+"      "+listWaveG[i][2]+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+"\"  \r"
+//				endif
+//			endif
+//		endif   
+//   endfor
+
+	if (show)		///Logbook want to show it...
+		DoWindow/F $nbl
+	else
+		DoWindow/HIDE=1 $nbl
+	endif
+	SetDataFolder OldDf
+end
+
+//Function IN3S_ExportHookFunction(Command, SampleName,SX, SY, Thickness, MD)
+//	string Command, SampleName,SX, SY, Thickness, MD 
+//	//this hook function will modify output of the command file for given line. This needs to be cutomized for specific need. 
+//	SVAR nbl=root:Packages:SamplePlateSetup:NotebookName
+//
+//	//in this case it will write each command in notebook multiple times, in original position and then +/- 1mm in sx and sy
+//	//center	
+//	Notebook $nbl text="      "+Command+"        "+SX+"      "+SY+"      "+Thickness+"      \""+SampleName+"\"  \r"
+//	//and now the variations, only if Sample Name is NOT Blank or Empty
+//	if(!StringMatch(SampleName, "*Blank*")&&!StringMatch(SampleName, "*Empty*"))
+//		string TempStr
+//		TempStr = num2str(str2num(SX)-1)
+//		Notebook $nbl text="      "+Command+"        "+TempStr+"      "+SY+"      "+Thickness+"      \""+SampleName+"_R"+"\"  \r"
+//		TempStr = num2str(str2num(SX)+1)
+//		Notebook $nbl text="      "+Command+"        "+TempStr+"      "+SY+"      "+Thickness+"      \""+SampleName+"_L"+"\"  \r"
+//		TempStr = num2str(str2num(SY)-1)
+//		Notebook $nbl text="      "+Command+"        "+SX+"      "+TempStr+"      "+Thickness+"      \""+SampleName+"_B"+"\"  \r"
+//		TempStr = num2str(str2num(SY)+1)
+//		Notebook $nbl text="      "+Command+"        "+SX+"      "+TempStr+"      "+Thickness+"      \""+SampleName+"_T"+"\"  \r"
+//	endif	
+//end
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+Function IN3S_WriteListOfCommands(listWaveG, LBSelectionWvG, sxOffset, syOffset, TitleModifier)
+	wave/T listWaveG
+	wave LBSelectionWvG
+	variable sxOffset, syOffset
+	string  TitleModifier
+	
+	NVAR DefaultSampleThickness=root:Packages:SamplePlateSetup:DefaultSampleThickness
+	NVAR USAXSAllG = root:Packages:SamplePlateSetup:USAXSAll
+	NVAR SAXSAllG = root:Packages:SamplePlateSetup:SAXSAll
+	NVAR WAXSAllG = root:Packages:SamplePlateSetup:WAXSAll
+
+	variable i, haveAnySWAXS, thickness, sxMod, syMod, numSAXSWAXS
+	haveAnySWAXS = 0
+	numSAXSWAXS = 0
+
+	string Command, SampleName
+	variable SX, SY 
+	//this  function will write (potentially modified) output of the command file for given line. This needs to be cutomized for specific need. 
+	SVAR nbl=root:Packages:SamplePlateSetup:NotebookName
+
+	//in this case it will write each command in notebook multiple times, in original position and then +/- 1mm in sx and sy
+	//center	
+	//Notebook $nbl text="      "+Command+"        "+SX+"      "+SY+"      "+Thickness+"      \""+SampleName+"\"  \r"
    For(i=0;i<dimsize(listWaveG,0);i+=1)
    		if(SAXSAllG || LBSelectionWvG[i][5]==48)
 			if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
 	   			haveAnySWAXS=1
+	   			numSAXSWAXS+=1
 	   			thickness = str2num(listWaveG[i][3])
 	   			thickness = thickness>0 ? thickness : DefaultSampleThickness
-	   			if(RunExportHookFunction)
-	   				IN3S_ExportHookFunction("saxsExp",listWaveG[i][0], listWaveG[i][1],listWaveG[i][2],num2str(thickness), "" )
-	   			else
-					Notebook $nbl text="      saxsExp        "+listWaveG[i][1]+"      "+listWaveG[i][2]+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+"\"  \r"
-				endif
+	   			SX=str2num(listWaveG[i][1])+sxOffset
+	   			SY=str2num(listWaveG[i][2])+syOffset
+				Notebook $nbl text="      saxsExp        "+num2str(SX)+"      "+num2str(SY)+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+TitleModifier+"\"  \r"
 			endif
 		endif   
    endfor
@@ -1265,13 +1596,12 @@ static Function IN3S_WriteCommandFile(show)
    		if(WAXSAllG || LBSelectionWvG[i][6]==48)
 			if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
 	   			haveAnySWAXS=1
+	   			numSAXSWAXS+=1
 	   			thickness = str2num(listWaveG[i][3])
 	   			thickness = thickness>0 ? thickness : DefaultSampleThickness
-	   			if(RunExportHookFunction)
-	   				IN3S_ExportHookFunction("waxsExp",listWaveG[i][0], listWaveG[i][1],listWaveG[i][2],num2str(thickness), "" )
-	   			else
-					Notebook $nbl text="      waxsExp        "+listWaveG[i][1]+"      "+listWaveG[i][2]+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+"\"  \r"
-				endif
+	   			SX=str2num(listWaveG[i][1])+sxOffset
+	   			SY=str2num(listWaveG[i][2])+syOffset
+				Notebook $nbl text="      waxsExp        "+num2str(SX)+"      "+num2str(SY)+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+TitleModifier+"\"  \r"
 			endif
 		endif   
    endfor
@@ -1279,11 +1609,17 @@ static Function IN3S_WriteCommandFile(show)
    //do we have any USAXS scans?
    Duplicate/Free/R=[][4] LBSelectionWvG, TempUSAXSChoice
    WaveStats/Q TempUSAXSChoice
-   variable HaveUSAXS = V_max>40 ? 1 : 0
+   variable HaveUSAXS = (V_max>40) ? 1 : 0
    
-   if(haveAnySWAXS && (USAXSAllG||HaveUSAXS))
+   if(haveAnySWAXS && USAXSAllG && HaveUSAXS)
 		Notebook $nbl text="\r"
 		Notebook $nbl text="		preUSAXStune \r"   
+		if(numSAXSWAXS>15)
+			Notebook $nbl text="		preUSAXStune \r"   
+		endif
+		if(numSAXSWAXS>30)
+			Notebook $nbl text="		preUSAXStune \r"   	
+		endif
    endif
 	Notebook $nbl text="\r"
 	Notebook $nbl text="		#USAXS measurements \r"
@@ -1292,21 +1628,15 @@ static Function IN3S_WriteCommandFile(show)
 			if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
 	   			thickness = str2num(listWaveG[i][3])
 	   			thickness = thickness>0 ? thickness : DefaultSampleThickness
-	   			if(RunExportHookFunction)
-	   				IN3S_ExportHookFunction("USAXSscan",listWaveG[i][0], listWaveG[i][1],listWaveG[i][2],num2str(thickness), "" )
-	   			else
-					Notebook $nbl text="      USAXSscan      "+listWaveG[i][1]+"      "+listWaveG[i][2]+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+"\"  \r"
-				endif
+	   			SX=str2num(listWaveG[i][1])+sxOffset
+	   			SY=str2num(listWaveG[i][2])+syOffset
+				Notebook $nbl text="      USAXSscan        "+num2str(SX)+"      "+num2str(SY)+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+TitleModifier+"\"  \r"
 			endif
 		endif   
    endfor
+	Notebook $nbl text="\r"
+	Notebook $nbl text="		#END USAXS measurements \r"
 
-	if (show)		///Logbook want to show it...
-		DoWindow/F $nbl
-	else
-		DoWindow/HIDE=1 $nbl
-	endif
-	SetDataFolder OldDf
 end
 
 //*****************************************************************************************************************
@@ -1370,6 +1700,7 @@ static Function IN3S_Initialize()
 	ListOfVariables+="SampleXTable;SampleYTable;SurveySXStep;SurveySYStep;MoveWhenRowChanges;"
 	ListOfVariables+="RunExportHookFunction;"
 	ListOfVariables+="USAXSScanTime;SAXSScanTime;WAXSScanTime;CalculatedOverAllTime;"
+	ListOfVariables+="TableIsSaved;"
 
 	ListOfStrings="SelectedPlateName;UserNameForSampleSet;UserName;WarningForUser;"
 	ListOfStrings+="SelectedSampleName;DefaultCommandFileName;TableClipboard;"
@@ -2254,7 +2585,7 @@ Function IN3S_BeamlineSurvey()
 		Abort "This is useful only at the beamline on usaxspc7" 
 	endif
 	/// abort if instrument in use. 
-	IN3S_BeramlineSurveyAbortIfNeeded()
+	IN3S_BeramlineSurveyAbortIfNeeded("Cannot use survey tool")
 	//
 	Wave/T ListWV = root:Packages:SamplePlateSetup:LBCommandWv
 	NVAR SelectedRow=root:Packages:SamplePlateSetup:SelectedRow
@@ -2290,12 +2621,12 @@ end
 
 //*************************************************************************************************
 //*************************************************************************************************
-static Function IN3S_BeramlineSurveyAbortIfNeeded()
+static Function IN3S_BeramlineSurveyAbortIfNeeded(string WhyString)
 	variable InstrumentUsed
 #if(exists("pvOpen")==4)
 		InstrumentUsed = IN3S_GetPVVariableValue("9idcLAX:dataColInProgress")	
 		if(InstrumentUsed)
-			abort "Instrument is collecting data, cannot Use Beamline Survey tool"
+			abort "Instrument is collecting data, cannot "+WhyString
 		endif
 #endif
 end
@@ -2390,7 +2721,7 @@ Function IN3S_BeamlineSurveyPanel()
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:SamplePlateSetup
 	/// abort if instrument in use. 
-	IN3S_BeramlineSurveyAbortIfNeeded()
+	IN3S_BeramlineSurveyAbortIfNeeded("Cannot use survey tool")
 	
 	DoWindow BeamlinePlateSetup
 	if(V_Flag)
@@ -2399,8 +2730,10 @@ Function IN3S_BeamlineSurveyPanel()
 		PauseUpdate    		// building window...
 		NewPanel /K=1 /W=(592.25,43.25,1000,550)/N=BeamlinePlateSetup as "Beamline Sample Plate survey"
 		SetDrawLayer UserBack
-		SetDrawEnv fillfgc= (0,65535,0),fillbgc= (0,65535,0)
-		DrawRect 188,178,390,198
+		//SetDrawEnv fillfgc= (16386,65535,16385),fillbgc= (0,65535,0)
+		//SetDrawEnv linefgc= (32792,65535,1),fillbgc= (32792,65535,1),fillfgc= (32792,65535,1)
+		SetDrawEnv linefgc= (49151,65535,49151),fillbgc= (49151,65535,49151),fillfgc= (49151,65535,49151)
+		DrawRect 194,175,400,198
 		SetDrawEnv fillfgc= (49151,65535,49151)
 		DrawRRect 6,234,189,400
 		SetDrawEnv fillfgc= (49151,65535,49151)
@@ -2414,8 +2747,10 @@ Function IN3S_BeamlineSurveyPanel()
 		Button MoveRowDown,pos={220,70},size={100,25}, proc=IN3S_SurveyButtonProc,title="Row ⇓",fSize=14, help={"Moves row up (lower row number)"}
 		SetVariable SelectedSampleName,pos={10,105},size={370,25}, limits={0,200,1}, proc=IN3S_SurveySetVarProc,title="Sa Name: ",fSize=14
 		Setvariable SelectedSampleName,fStyle=2, variable=root:Packages:SamplePlateSetup:SelectedSampleName, help={"Sample name from the table or saved to table"}
-		SetVariable SampleThickness,pos={50,130},size={250,25}, limits={0,20,0.1}, proc=IN3S_SurveySetVarProc,title="Sa Thickness [mm]: ",fSize=14
+		SetVariable SampleThickness,pos={20,130},size={250,25}, limits={0,20,0.1}, proc=IN3S_SurveySetVarProc,title="Sa Thickness [mm]: ",fSize=14
 		Setvariable SampleThickness,fStyle=2, variable=root:Packages:SamplePlateSetup:SampleThickness, help={"Sample Thickness in mm"},format="%3.3f"
+		Button GoTo00,pos={300,130},size={100,15}, proc=IN3S_SurveyButtonProc,title="Go 0,0",fSize=14, help={"Moves to 0,0"}
+		Button GoTo00 fColor=(0,65535,0)
 
 		SetVariable SampleXTable,pos={30,155},size={130,15}, limits={-inf,inf,0}, noproc, noedit=1,title="Sa X tbl =",fSize=12, frame=0
 		Setvariable SampleXTable,fStyle=2, variable=root:Packages:SamplePlateSetup:SampleXTable, help={"Sample Thickness in mm"},format="%3.2f"
@@ -2425,12 +2760,10 @@ Function IN3S_BeamlineSurveyPanel()
 		Button DriveTovals,pos={10,178},size={160,20}, proc=IN3S_SurveyButtonProc,title="Drive to table values",fSize=12, help={"Moves SX and SY to table positions"}
 		Button DriveTovals fColor=(0,65535,0)
 		CheckBox MoveWhenRowChanges pos={200,180},size={70,20},title="Drive to SX/SY on row change?", help={"When selected, SX and SY will move when row is changed"}
-		CheckBox MoveWhenRowChanges variable=root:Packages:SamplePlateSetup:MoveWhenRowChanges,  noproc, fColor=(0,0,0),labelBack=(0,65535,0)
+		CheckBox MoveWhenRowChanges variable=root:Packages:SamplePlateSetup:MoveWhenRowChanges,  noproc, fColor=(0,0,0),labelBack=(49151,65535,49151)
 
-		Button GoTo00,pos={10,210},size={100,15}, proc=IN3S_SurveyButtonProc,title="Go 0,0",fSize=14, help={"Moves to 0,0"}
-		Button GoTo00 fColor=(0,65535,0)
-
-		Button SaveValues,pos={129.00,204.00},size={225.00,27.00}, proc=IN3S_SurveyButtonProc,title="Save Values",fSize=14, help={"Copies values to the table of positions"}
+		//save values...
+		Button SaveValues,pos={100,208.00},size={200,20}, proc=IN3S_SurveyButtonProc,title="Save Values",fSize=14, help={"Copies values to the table of positions"}
 		Button SaveValues fColor=(65535,32768,32768)
 
 		TitleBox Info1 title="\Zr200Sx : ",pos={70,235},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0,fstyle=1
@@ -2679,7 +3012,7 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 					endif
 #endif
 			endif		
-			if(StringMatch(ba.ctrlName, "OpenSlitsWSAXS"))
+			if(StringMatch(ba.ctrlName, "OpenSlitsSWAXS"))
 #if(exists("pvOpen")==4)
 					InstrumentUsed = IN3S_GetPVVariableValue("9idcLAX:dataColInProgress")	
 					if(InstrumentUsed)
@@ -2775,6 +3108,9 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 				IN3S_AddTagToImage(SelectedRow)
 				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 				WarningForUser = "Saved positions to table" 
+				NVAR TableIsSaved = root:Packages:SamplePlateSetup:TableIsSaved
+				TableIsSaved = 0
+				IN3S_FixSaveButton()				
 				IN3S_EstimateRunTime()
 			endif
 			break
@@ -2854,3 +3190,24 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
+//Function IN3S_ExportHookFunction(Command, SampleName,SX, SY, Thickness, MD)
+//	string Command, SampleName,SX, SY, Thickness, MD 
+//	//this hook function will modify output of the command file for given line. This needs to be cutomized for specific need. 
+//	SVAR nbl=root:Packages:SamplePlateSetup:NotebookName
+//
+//	//in this case it will write each command in notebook multiple times, in original position and then +/- 1mm in sx and sy
+//	//center	
+//	Notebook $nbl text="      "+Command+"        "+SX+"      "+SY+"      "+Thickness+"      \""+SampleName+"\"  \r"
+//	//and now the variations, only if Sample Name is NOT Blank or Empty
+//	if(!StringMatch(SampleName, "*Blank*")&&!StringMatch(SampleName, "*Empty*"))
+//		string TempStr
+//		TempStr = num2str(str2num(SX)-1)
+//		Notebook $nbl text="      "+Command+"        "+TempStr+"      "+SY+"      "+Thickness+"      \""+SampleName+"_R"+"\"  \r"
+//		TempStr = num2str(str2num(SX)+1)
+//		Notebook $nbl text="      "+Command+"        "+TempStr+"      "+SY+"      "+Thickness+"      \""+SampleName+"_L"+"\"  \r"
+//		TempStr = num2str(str2num(SY)-1)
+//		Notebook $nbl text="      "+Command+"        "+SX+"      "+TempStr+"      "+Thickness+"      \""+SampleName+"_B"+"\"  \r"
+//		TempStr = num2str(str2num(SY)+1)
+//		Notebook $nbl text="      "+Command+"        "+SX+"      "+TempStr+"      "+Thickness+"      \""+SampleName+"_T"+"\"  \r"
+//	endif	
+//end

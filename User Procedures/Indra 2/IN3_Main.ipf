@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
-#pragma version = 1.98
+#pragma version = 1.99
 #pragma IgorVersion=7.05
 
 //DO NOT renumber Main files every time, these are main release numbers...
@@ -11,6 +11,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.99 added ability to load jpg image if user wants to see data collection image (and it exists...). 
 //1.98  September2020 release. 
 //1.97 February 2020, fix GUI for step scanning
 	//1.97 add controls if to remove vibrations or not, seems sometimes is not vibrations which causes less points to be recorded... 
@@ -39,8 +40,8 @@
 //1.79 4/2013 JIL, added pin diode transmission
 //1.78, 2/2013, JIL: Added option to calibrate by weight. Needed for USAXS users.
 
-Constant IN3_ReduceDataMainVersionNumber=2.00		//these two needs to be the same!
-Constant IN3_NewReduceDataMainVersionNum=2.00	 	//these two needs to be the same!
+Constant IN3_ReduceDataMainVersionNumber=2.01		//these two needs to be the same!
+Constant IN3_NewReduceDataMainVersionNum=2.01	 	//these two needs to be the same!
 constant SmoothBlankForUSAXS = 1
 Constant Indra_PDIntBackFixScaleVmin=1.1
 Constant Indra_PDIntBackFixScaleVmax=0.3e-10
@@ -444,8 +445,11 @@ Function IN3_MainPanelNew()
 	SetVariable RemoveDropoutsFraction,limits={0,1,0.1},variable= root:Packages:Indra3:RemoveDropoutsFraction, proc=IN3_ParametersChanged
 
 
-	CheckBox RemoveOscillations,pos={230,749},size={180,22},title="Remove Oscillations ", noproc
-	CheckBox RemoveOscillations,variable= root:Packages:Indra3:RemoveOscillations, help={"Check, if you want to remvoe vibrations"}
+	CheckBox RemoveOscillations,pos={230,743},size={180,22},title="Remove Oscillations ", noproc
+	CheckBox RemoveOscillations,variable= root:Packages:Indra3:RemoveOscillations, help={"Check, if you want to remove vibrations"}
+	CheckBox DisplayJPGFile,pos={230,758},size={180,22},title="Display JPG File ", noproc
+	CheckBox DisplayJPGFile,variable= root:Packages:Indra3:DisplayJPGFile, help={"Check, if you want to display jpg file (if it exists)"}
+//
 
 	SetVariable ListProcDisplayDelay,pos={20,773},size={180,22},title="Display delay ", frame=1
 	SetVariable ListProcDisplayDelay,limits={0.1,100,1},variable= root:Packages:Indra3:ListProcDisplayDelay
@@ -503,6 +507,7 @@ Function/T IN3_USAXSScanLoadHdf5File2(LoadManyDataSets)
 	SVAR DataExtension 	= root:Packages:USAXS_FlyScanImport:DataExtension
 	SVAR RemoveFromNameString = root:Packages:USAXS_FlyScanImport:RemoveFromNameString	
 	NVAR OverWriteExistingData = root:Packages:Indra3:OverWriteExistingData
+	NVAR DisplayJPGFile = root:Packages:Indra3:DisplayJPGFile
 	
 	variable NumSelFiles=sum(WaveOfSelections)	
 	variable NumOpenedFiles=0
@@ -511,7 +516,7 @@ Function/T IN3_USAXSScanLoadHdf5File2(LoadManyDataSets)
 	endif	
 	variable i, Overwrite
 	string FileName, ListOfExistingFolders, tmpDtaFldr, shortNameBckp, TargetRawFoldername
-	String browserName, FileNameNoExtension, HDF5RawFolderWithData, SpecFileName
+	String browserName, FileNameNoExtension, HDF5RawFolderWithData, SpecFileName, JPGFileName
 	Variable locFileID
 	For(i=0;i<numpnts(WaveOfSelections);i+=1)
 		if(WaveOfSelections[i]&&(LoadManyDataSets || NumOpenedFiles<1))
@@ -519,6 +524,21 @@ Function/T IN3_USAXSScanLoadHdf5File2(LoadManyDataSets)
 			NumOpenedFiles=1
 			FileName= WaveOfFiles[i]
 			FileNameNoExtension = ReplaceString("."+DataExtension, FileName, "")
+			//this will display jpg image if it exists... 
+			KillWindow/Z SampleImageDuringMeasurementImg
+			if(DisplayJPGFile)
+				JPGFileName = FileNameNoExtension+".jpg"
+				setDataFOlder root:Packages:Indra3:
+				ImageLoad/P=USAXSHDFPath/T=jpeg/Q/O/Z/N=SampleImageDuringMeasurement JPGFileName
+				if(V_flag)	//success...
+					Wave Img = root:Packages:Indra3:SampleImageDuringMeasurement
+					NewImage/K=1/N=SampleImageDuringMeasurementImg Img
+					MoveWindow /W=SampleImageDuringMeasurementImg 40,45,910,664
+					AutoPositionWindow/R=USAXSDataReduction/M=1 SampleImageDuringMeasurementImg
+				endif
+				setDataFOlder root:raw
+			endif
+			//end if display image... 		
 								//IN2G_CreateUserName(NameIn,MaxShortLength, MakeUnique, FolderWaveStrNum)
 			FileNameNoExtension=IN2G_CreateUserName(ReplaceString(RemoveFromNameString,FileNameNoExtension,""),31,0,11)
 								//shortFileName = IN2G_CreateUserName(shortFileName,31,0,11)
@@ -976,7 +996,7 @@ Function IN3_Initialize()
 
 	ListOfVariables+="DesmearData;DesmearNumberOfInterations;DesmearNumPoints;DesmearBckgStart;"
 
-	ListOfVariables+="SmartSelectBlank;"
+	ListOfVariables+="SmartSelectBlank;DisplayJPGFile;"
 
 	// these are created automatically... "DataFoldername;IntensityWavename;QWavename;ErrorWaveName;"
 	ListOfStrings="SampleName;BlankName;userFriendlySamplename;userFriendlyBlankName;userFriendlySampleDFName;"
@@ -1012,8 +1032,8 @@ Function IN3_Initialize()
 	endif
 	
 	NVAR MinQMinFindRatio
-	if(MinQMinFindRatio<1.05)
-		MinQMinFindRatio=1.3
+	if(MinQMinFindRatio<1.03)
+		MinQMinFindRatio=1.05
 	endif
 	NVAR FindMinQForData
 	FindMinQForData = 1
