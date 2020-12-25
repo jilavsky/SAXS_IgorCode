@@ -1885,7 +1885,7 @@ Function IR1P_CreateCountourGraph()
 	SetVariable ContMinValue, proc=IR1P_ContSetVarProc, help={"Value of minimum Contour"}
 	SetVariable ContMinValue,limits={0,inf,0},value= root:Packages:GeneralplottingTool:ContMinValue
 	SetVariable ContMaxValue,pos={10,35},size={170,15},title="Max Contour val",bodyWidth=70
-	SetVariable ContMaxValue, proc=IR1P_ContSetVarProc, help={"change length of slanted axis"}
+	SetVariable ContMaxValue, proc=IR1P_ContSetVarProc, help={"Value of Max Contour"}
 	SetVariable ContMaxValue,limits={0,inf,0},value= root:Packages:GeneralplottingTool:ContMaxValue
 	Checkbox ContDisplayContValues, pos={200,5}, title="Labels?", size={100,15}, variable=root:Packages:GeneralplottingTool:ContDisplayContValues, proc=IR1P_ContCheckProc
 	PopupMenu ColorTable,pos={200,30},size={150,20},title="Colors:", help={"Select color table"}
@@ -1920,8 +1920,6 @@ Function IR1P_FormatContourPlot()
 	NVAR ContDisplayContValues = root:Packages:GeneralplottingTool:ContDisplayContValues
 	NVAR ContMinValue = root:Packages:GeneralplottingTool:ContMinValue
 	NVAR ContMaxValue = root:Packages:GeneralplottingTool:ContMaxValue
-	NVAR ContNumCountours = root:Packages:GeneralplottingTool:ContNumCountours
-	NVAR ContDisplayContValues = root:Packages:GeneralplottingTool:ContDisplayContValues
 	NVAR ContLogContours = root:Packages:GeneralplottingTool:ContLogContours
 	NVAR ContUseOnlyRedColor = root:Packages:GeneralplottingTool:ContUseOnlyRedColor
 	

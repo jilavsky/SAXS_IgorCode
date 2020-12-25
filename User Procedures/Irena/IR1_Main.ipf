@@ -14,7 +14,7 @@ constant CurrentIrenaVersionNumber = 2.701		//change version of Boot Irena1 mode
 //*************************************************************************
 
 //2.701	Beta version after September 2020 release. 
-//			Fix Multi-dat aGUi tools to handle Liberal names
+//			Fix Multi-data GUi tools to handle Liberal names
 //			Data Manipulation 3
 //2.70		Require Igor 8.03 and higher. No testing for Igor 7 anymore. 
 //2.696	Beta version after February2020 release

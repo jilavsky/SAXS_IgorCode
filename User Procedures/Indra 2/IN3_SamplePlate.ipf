@@ -2680,7 +2680,7 @@ Function IN3S_BackgroundEpics(s) // This is the function that will be called per
 	variable SxPV, SyPV
 	pvOpen/Q SxPV, "9idcLAX:m58:c2:m1.RBV"
 	pvOpen/Q SyPV, "9idcLAX:m58:c2:m2.RBV"
-	pvWait 1
+	pvWait 5
 	//this needs to be in background function and in 10Hz loop. 	
 	SampleXRBV = IN3S_GetMotorPositions(SxPV)
 	SampleYRBV = IN3S_GetMotorPositions(SyPV)
@@ -3176,7 +3176,7 @@ static Function IN3S_PutEpicsPv(PVAddress, target)	//note, this waits until moto
 	variable target
 #if(exists("pvOpen")==4)
 	variable sxRBV
-	pvOpen/T=0.5 sxRBV, PVAddress			// /T is timeout, should wait only this timeout. 
+	pvOpen/T=5 sxRBV, PVAddress				// /T is timeout, should wait only this timeout. 
 	pvPutNumber/Q sxRBV, target				// /Q returns immediately, else waits until completion.  
 	pvClose sxRBV
 #endif	
