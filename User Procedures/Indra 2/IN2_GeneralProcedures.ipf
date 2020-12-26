@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.26
+#pragma version = 2.27
 #pragma IgorVersion = 8.03
 
 //control constants
@@ -37,6 +37,7 @@ strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
+//2.27 added IN2G_ReturnLabelForAxis(WindowName, "bottom|top")
 //2.26 disabled IN2G_CheckScreenSize for IP9
 //2.25 added IN2G_AddWaveStatistics() to right click TopTrace menu. Adds wave stats results and lines with average, ave+sdev, ave-Sdev
 //2.24 new version of IN2G_DuplicateGraphAndData which can copy data with same names. Igor 9 fixes and improvements. 
@@ -301,6 +302,8 @@ strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan
 //IN2G_GenerateLegendForGraph()
 //	generates legend for graph and kills the old one. It uses wave names and waves notes to generate the 
 //	proper label. Very useful...
+//
+//IN2G_ReturnLabelForAxis(GraphName, AxisName) - string function, returns label for graph/axis. Axis can only be bottom/top, if both, "bottom|top"
 //
 //IN2G_ColorTopGrphRainbow()
 //    Colors top graph with rainbow colors
@@ -1185,20 +1188,21 @@ end
 
 //**************************************************************** 
 //**************************************************************** 
-//
-//function IN2G_ConvertTologspacing(qwave)//DWS 2017  best moved to a utility .ipf
-//	wave qwave
-//	duplicate/Free qwave, tempqwave
-//	variable pts=numpnts(tempqwave)
-//	variable logqmax=log(tempqwave(pts-1))
-//	if (tempqwave[0]==0)
-//		tempqwave[0]=tempqwave[1]
-//	endif
-//	variable logqmin=log(tempqwave[0])
-//	tempqwave=logqmin+((logqmax-logqmin)/(pts-1))*p
-//	tempqwave=10^tempqwave	
-//	qwave=tempqwave
-//end
+Function/S IN2G_ReturnLabelForAxis(GraphName, AxisName)
+	string GraphName, AxisName
+	//string function, returns label for graph/axis. 
+	//want to get label from axis here, example expected:
+	//Label left "Intensity [arb]"
+	//Label bottom "Q [A\\S-1\\M]"
+	string OldClipb = GetScrapText()
+	PutScrapText WinRecreation(GraphName, 0)
+	Grep /E={AxisName,0}/Q/LIST "Clipboard"
+	string MyAxisLabel = S_value[strsearch(S_value, "\"", 0)+1, strsearch(S_value, "\"", strlen(S_value)-1,1 )-1]
+	MyAxisLabel = ReplaceString("\\\\", MyAxisLabel, "\\")
+	PutScrapText OldClipb
+	return MyAxisLabel
+end
+
 
 
 Function IN2G_ConvertTologspacing(WaveToRebin,MinStep)

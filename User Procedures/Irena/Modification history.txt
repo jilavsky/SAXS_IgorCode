@@ -11,6 +11,7 @@ Modification history:
 ********************************************
 2.701 - TBA
 Fix All tools using the new Multi-GUI (MultiPlot, Simple Fits, bioSAXS...) to handle data with liberal names, apparently that was forgotten.  
+All - changed wrong spelling Ploting into correct Plotting. This may leave some windows opened on restart. 
 Fixed all fixed length wave names (hopefully). Now should use long names if user chooses so in Configuration for all waves and folders. 
 Merge data tool - fix use of long folder names. It was not following user choice on use of long names. Add merging parameters into the wave note. 
 Merge data tool - Added Optimization method: "Optimize Overlap, trim Data1" when data122 are trimmed at the very start of overlap, removing noise at overlap. 
