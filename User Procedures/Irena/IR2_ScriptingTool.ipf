@@ -30,9 +30,9 @@ Constant IR2SversionNumber=1.30
 //1.11 modified to handle d, t, and m type QRS data (d-spacing, two theta, and distance) for needs to Nika users
 //1.10 added handling of uncertainities (errors) for Results data type (needed for Sizes)
 //1.09 significant increase in speed due to changes to Control procedures.
-//1.08 added Scripting ability for results in Ploting tool I
+//1.08 added Scripting ability for results in plotting tool I
 //1.07 yet another fix for Size distribution tool;. It was not loading the new data properly. 
-//1.06 added sorting order controls and added functionality for the Ploting tool I 
+//1.06 added sorting order controls and added functionality for the plotting tool I 
 //1.05 fixed bug in scripting Unified fit, eventcode was not set correctly.  Added match string (using grep, no * needed), added check versions. 
 //1.04 fixed bug where the tool was missign the one before last folder (wrong wave length)... 
 //1.03 support for single data set Modeling II
@@ -911,7 +911,7 @@ Function IR2S_CallWithPlottingToolII(reset)
 		if(SelectionOfAvailableData[i]>0.5)
 			CurrentFolderName = LStartFolder + ListOfAvailableData[i]
 			//OK, now we know which files to process	
-			//now stuff the name of the new folder in the folder name in Ploting tool.
+			//now stuff the name of the new folder in the folder name in plotting tool.
 			SVAR DataFolderName = root:Packages:GeneralplottingTool:DataFolderName
 			DataFolderName = CurrentFolderName
 			//now except for case when we use Indra 2 data we need to reload the other wave names... 

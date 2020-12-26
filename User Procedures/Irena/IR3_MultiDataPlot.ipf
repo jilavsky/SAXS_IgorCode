@@ -1,6 +1,6 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
 #pragma version=1
-constant IR3LversionNumber = 1.03			//MultiDataPloting tool version number. 
+constant IR3LversionNumber = 1.03			//MultiDataplotting tool version number. 
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2020, Argonne National Laboratory
@@ -13,13 +13,13 @@ constant IR3LversionNumber = 1.03			//MultiDataPloting tool version number.
 //1.03 	Added more graph controls. Reverse traces, added ability to create contour plot. 
 //1.02 	Added Two more versionf of Porod plot - IQ4 vs Q and IQ3 vs Q. 
 //1.01		Changed working folder name.  
-//1.0 		New ploting tool to make plotting various data easy for multiple data sets.  
+//1.0 		New plotting tool to make plotting various data easy for multiple data sets.  
 
 
 
 ///******************************************************************************************
 ///******************************************************************************************
-///			Multi-Data ploting tool, easy way to plot many data sets at once
+///			Multi-Data plotting tool, easy way to plot many data sets at once
 ///******************************************************************************************
 ///******************************************************************************************
 Function IR3L_MultiSamplePlot()
@@ -99,9 +99,9 @@ end
 Function IR3L_MultiSamplePlotPanelFnct()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	PauseUpdate    		// building window...
-	NewPanel /K=1 /W=(5.25,43.25,605,820) as "MultiData Ploting tool"
+	NewPanel /K=1 /W=(5.25,43.25,605,820) as "MultiData plotting tool"
 	DoWIndow/C IR3L_MultiSamplePlotPanel
-	TitleBox MainTitle title="\Zr220Multi Data ploting tool",pos={140,1},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},fColor=(0,0,52224)
+	TitleBox MainTitle title="\Zr220Multi Data plotting tool",pos={140,1},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},fColor=(0,0,52224)
 								//	TitleBox FakeLine2 title=" ",fixedSize=1,size={330,3},pos={16,428},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	string UserDataTypes=""
 	string UserNameString=""
@@ -192,12 +192,16 @@ Function IR3L_MultiSamplePlotPanelFnct()
 	PopupMenu ApplyStyle,pos={260,660},size={300,20},proc=IR3L_PopMenuProc, title="Apply style:",help={"Set tool setting to defined conditions and apply to graph"}
 	PopupMenu ApplyStyle,value=#"root:Packages:Irena:MultiSamplePlot:ListOfDefinedStyles",mode=WhichListItem(SelectedStyle, allStyles)+1  
 	Button ApplyPresetFormating,pos={260,685},size={160,20}, proc=IR3L_ButtonProc,title="Apply All Formating", help={"Apply Preset Formating to update graph based on these choices"}
-	Button ReverseTraces,pos={275,710},size={130,17}, proc=IR3L_ButtonProc,title="Reverese traces", help={"Reverse traces in the controled graph"}
+	Button ReverseTraces,pos={275,710},size={130,17}, proc=IR3L_ButtonProc,title="Reverse traces", help={"Reverse traces in the controled graph"}
 	
 	Button ExportGraphJPG,pos={450,660},size={140,20}, proc=IR3L_ButtonProc,title="Export as jpg", help={"Export as jpg file"}
 	Button ExportGraphTIF,pos={450,685},size={140,20}, proc=IR3L_ButtonProc,title="Export as tiff", help={"Export as tiff file"}
 	Button SaveGraphAsFile,pos={450,710},size={140,20}, proc=IR3L_ButtonProc,title="Export as pxp", help={"Save Graph As Igor experiment"}
-	Button CreateContour,pos={450,735},size={140,17}, proc=IR3L_ButtonProc,title="Create Countour plot", help={"Create contour plot of the controlled graph"}
+	//this is not finioshed, ots of tedious work needs to be done copying code
+	//major issue - Gizmo window name may not be suitable to corry folder name? 
+	//Button CreateGizmo,pos={300,737},size={140,15}, proc=IR3L_ButtonProc,title="Create Gizmo plot", help={"Create Gizmo 3D plot of the controlled graph"}
+	Button CreateContour,pos={450,737},size={140,15}, proc=IR3L_ButtonProc,title="Create Countour plot", help={"Create contour plot of the controlled graph"}
+	Button CreateWaterFall,pos={450,755},size={140,15}, proc=IR3L_ButtonProc,title="Create Waterfall plot", help={"Create waterfall plot of the controlled graph"}
 
 
 	IR3L_FixPanelControls()
@@ -1032,7 +1036,21 @@ Function IR3L_ButtonProc(ba) : ButtonControl
 				//append data to graph
 				DoWIndow $(GraphWindowName)
 				if(V_Flag)
-					IR3L_ConvertXYtoContour(GraphWindowName)
+					IR3L_ConvertXYto3DPlot(GraphWindowName, "Contour")
+				endif
+			endif
+			if(stringmatch(ba.ctrlname,"CreateWaterFall"))
+				//append data to graph
+				DoWIndow $(GraphWindowName)
+				if(V_Flag)
+					IR3L_ConvertXYto3DPlot(GraphWindowName, "Waterfall")
+				endif
+			endif
+			if(stringmatch(ba.ctrlname,"CreateGizmo"))
+				//append data to graph
+				DoWIndow $(GraphWindowName)
+				if(V_Flag)
+					IR3L_ConvertXYto3DPlot(GraphWindowName, "Gizmo")
 				endif
 			endif
 
@@ -1512,10 +1530,11 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
-Function IR3L_ConvertXYtoContour(string WindowName)
+Function IR3L_ConvertXYto3DPlot(string WindowName, string WhichGraph)
+	//WhichGraph = Contour, Waterfall or GizmoPlot. 
 	//this will take X-Y plot with more than 5 waves
 	//create data for Waterfall or countour plots, 
-	//save in root:ContourPlots:ContourPlotX
+	//save in root:MultiDataPlot3DPlots:ContourPlotX
 	//and display contour plot. 
 	//attach bar with controls using functions in this package.  
 	//step 1 Check the top graph if it makes any sense... 
@@ -1585,9 +1604,9 @@ Function IR3L_ConvertXYtoContour(string WindowName)
 	ymax = NumWaves
 	//now we need to create location for data...
 	DFref OldDf=GetDataFolderDFR()
-	NewDataFolder/S/O root:ContourPlots
-	string NewGraphName = UniqueName("CountourPlot" , 11, 0)
-	string NewFldrName = "root:ContourPlots:"+NewGraphName
+	NewDataFolder/S/O root:MultiDataPlot3DPlots
+	string NewGraphName = UniqueName(WhichGraph+"Plot" , 11, 0)
+	string NewFldrName = "root:MultiDataPlot3DPlots:"+NewGraphName
 	NewDataFolder/S/O $(NewFldrName)
 	//now we need to create here the data. 
 	//first we need to know how many intervals in x we need. But to make this simple, let's skip this
@@ -1603,7 +1622,7 @@ Function IR3L_ConvertXYtoContour(string WindowName)
 	Make/O/N=(NumWaves) yWaveValues
 	yWaveValues = p
 	Duplicate/Free xWaveValues, tempYWaveIntp
-	Make/O/N=((starty-startx),NumWaves) ContourWvData
+	Make/O/N=((starty-startx+1),NumWaves) MultiDataPlot3DWvData
 	variable StartP, EndP, MaxP=numpnts(tempYWaveIntp)-1
 	variable StartXTemp = xWaveValues[0]
 	variable EndXTemp   = xWaveValues[numpnts(xWaveValues)-1]
@@ -1617,72 +1636,242 @@ Function IR3L_ConvertXYtoContour(string WindowName)
 		//this may fail if we start asking for values out of range for these data,
 		multithread tempYWaveIntp[StartP,EndP] = interp(xWaveValues[p], TempXwave, TempYwave)		 
 		//there is nothing in the manual about this... 
-		ContourWvData[][i]=tempYWaveIntp[p]
+		MultiDataPlot3DWvData[][i]=tempYWaveIntp[p]
 	endfor
-	Duplicate/O ContourWvData, ContourWvDataRaw			//this is copy of data for smoothing operation, 
-	make/O/N=(7) CountourPlot_left_values
-	make/O/N=(7)/T CountourPlot_left_labels
-	//create needed global variables for controls... 
-	variable/g NumCountours=100
-	variable/g MinCountourVal=zmin
-	variable/g MaxCountourVal=zmax
-	String/G ContourColorScale = "Rainbow"
-	variable/g ContSmoothOverValue = 0
-	variable/g ContLogContours = 0
-	variable/g ContUseOnlyRedColor = 0
-	variable/g ContDisplayContValues = 0
-	variable/g ContYWaveScaling = 1
-	variable/g ContYWaveIntervals = 7
-	variable/g ContLogXAxis = XisLog
-	variable StepVal = floor((NumWaves-1)/(ContYWaveIntervals-1))
-	CountourPlot_left_values = 0 + p*StepVal
-	CountourPlot_left_labels =  num2str(CountourPlot_left_values)
-	
-	NewFldrName = NewFldrName+":"
-	SVAR Graph3DColorScale = $(NewFldrName+"ContourColorScale")
-	NVAR ContSmoothOverValue = $(NewFldrName+"ContSmoothOverValue")
-	//ando now create the graph
-	Display /K=1/W=(405,467,1100,1050)/N=$(NewGraphName) as NewGraphName+" of "+ExistingGraphTitle
-	AppendMatrixContour ContourWvData vs {xWaveValues,yWaveValues}
-	ModifyGraph userticks(left)={CountourPlot_left_values,CountourPlot_left_labels}
-	ModifyGraph mirror=2
-	ControlBar /T/W=$(NewGraphName) 60
-	SetVariable ContNumCountours,pos={10,1},size={160,15},title="Num. contours ",bodyWidth=70
-	SetVariable ContNumCountours, proc=IR3L_ContSetVarProc, help={"Number of contours to use"}
-	SetVariable ContNumCountours,limits={11,100,5},value= $(NewFldrName+"NumCountours")
-	SetVariable ContMinValue,pos={10,20},size={160,15},title="Min Contour val ",bodyWidth=70
-	SetVariable ContMinValue, proc=IR3L_ContSetVarProc, help={"Value of minimum Contour"}, format="%3.3g"	
-	SetVariable ContMinValue,limits={0,inf,0},value= $(NewFldrName+"MinCountourVal") 
-	SetVariable ContMaxValue,pos={10,39},size={160,15},title="Max Contour val ",bodyWidth=70
-	SetVariable ContMaxValue, proc=IR3L_ContSetVarProc, help={"Value of Max Contour"}
-	SetVariable ContMaxValue,limits={0,inf,0},value= $(NewFldrName+"MaxCountourVal"), format="%3.3g"	
-	SetVariable ContYWaveScaling,pos={180,1},size={150,15},title="Y axis scale ",bodyWidth=70
-	SetVariable ContYWaveScaling, proc=IR3L_ContSetVarProc, help={"Step on Y axis"}
-	SetVariable ContYWaveScaling,limits={0,inf,0},value= $(NewFldrName+"ContYWaveScaling"), format="%3.3g"	
-	SetVariable ContYWaveIntervals,pos={180,20},size={150,15},title="Y axis scale ",bodyWidth=70
-	SetVariable ContYWaveIntervals, proc=IR3L_ContSetVarProc, help={"Y axis ticks"}
-	SetVariable ContYWaveIntervals,limits={3,inf,1},value= $(NewFldrName+"ContYWaveIntervals"), format="%3.3g"	
-	Checkbox ContLogXAxis, pos={260,39}, title="Log(X)?", size={100,15}, variable=$(NewFldrName+"ContLogXAxis"), proc=IR3L_ContCheckProc
+	Duplicate/O MultiDataPlot3DWvData, MultiDataPlot3DWvDataRaw			//this is copy of data for smoothing operation, 
 
-	Checkbox ContDisplayContValues, pos={370,3}, title="Labels?", size={100,15}, variable=$(NewFldrName+"ContDisplayContValues"), proc=IR3L_ContCheckProc
-	Checkbox ContLogContours, pos={470,3}, title="Log colors?", size={100,15}, variable=$(NewFldrName+"ContLogContours"), proc=IR3L_ContCheckProc
-	Checkbox ContUseOnlyRedColor, pos={570,3}, title="Only red?", size={100,15}, variable=$(NewFldrName+"ContUseOnlyRedColor"), proc=IR3L_ContCheckProc
-
-	PopupMenu ColorTable,pos={350,30},size={150,20},title="Colors:", help={"Select color table"}
-	PopupMenu ColorTable,mode=1,popvalue=Graph3DColorScale,value= #"CTabList()", bodyWidth=100, proc=IR3L_ContPopMenuProc
-	PopupMenu SmoothOverValue,pos={500,30},size={150,20},title="Smooth val:", help={"Smooth value"}, proc=IR3L_ContPopMenuProc
-	PopupMenu SmoothOverValue,mode=1,popvalue=num2str(ContSmoothOverValue),value= "0;3;5;9;", bodyWidth=40
-	//And now basic setup
-	ModifyContour /W=$(NewGraphName) ContourWvData autoLevels={zmin,zmax,100}	//up to 100 levels. 
-	ModifyContour /W=$(NewGraphName) ContourWvData labels=0,fill=0
-	ModifyContour /W=$(NewGraphName) ContourWvData ctabLines={zmin,zmax,Rainbow,0}
-	//•ModifyContour ContourWvData logLines=0
-	//ModifyContour /W=$(NewGraphName) ContourWvData autoLevels={zmin,zmax,20}
-	Label /W=$(NewGraphName) bottom XAxisLabel
-	ModifyGraph log(bottom)=XisLog
+	if(StringMatch(WhichGraph, "Contour"))
+		make/O/N=(7) CountourPlot_left_values
+		make/O/N=(7)/T CountourPlot_left_labels
+		//create needed global variables for controls... 
+		variable/g NumCountours=100
+		variable/g MinCountourVal=zmin
+		variable/g MaxCountourVal=zmax
+		String/G ContourColorScale = "Rainbow"
+		variable/g ContSmoothOverValue = 0
+		variable/g ContLogContours = 0
+		variable/g ContUseOnlyRedColor = 0
+		variable/g ContDisplayContValues = 0
+		variable/g ContYWaveScaling = 1
+		variable/g ContYWaveIntervals = 7
+		variable/g ContLogXAxis = XisLog
+		variable StepVal = floor((NumWaves-1)/(ContYWaveIntervals-1))
+		CountourPlot_left_values = 0 + p*StepVal
+		CountourPlot_left_labels =  num2str(CountourPlot_left_values)
+		
+		NewFldrName = NewFldrName+":"
+		SVAR Graph3DColorScale = $(NewFldrName+"ContourColorScale")
+		NVAR ContSmoothOverValue = $(NewFldrName+"ContSmoothOverValue")
+		//ando now create the graph
+		Display /K=1/W=(405,467,1100,1050)/N=$(NewGraphName) as NewGraphName+" of "+ExistingGraphTitle
+		AppendMatrixContour MultiDataPlot3DWvData vs {xWaveValues,yWaveValues}
+		ModifyGraph userticks(left)={CountourPlot_left_values,CountourPlot_left_labels}
+		ModifyGraph mirror=2
+		ControlBar /T/W=$(NewGraphName) 60
+		SetVariable ContNumCountours,pos={10,1},size={160,15},title="Num. contours ",bodyWidth=70
+		SetVariable ContNumCountours, proc=IR3L_ContSetVarProc, help={"Number of contours to use"}
+		SetVariable ContNumCountours,limits={11,100,5},value= $(NewFldrName+"NumCountours")
+		SetVariable ContMinValue,pos={10,20},size={160,15},title="Min Contour val ",bodyWidth=70
+		SetVariable ContMinValue, proc=IR3L_ContSetVarProc, help={"Value of minimum Contour"}, format="%3.3g"	
+		SetVariable ContMinValue,limits={0,inf,0},value= $(NewFldrName+"MinCountourVal") 
+		SetVariable ContMaxValue,pos={10,39},size={160,15},title="Max Contour val ",bodyWidth=70
+		SetVariable ContMaxValue, proc=IR3L_ContSetVarProc, help={"Value of Max Contour"}
+		SetVariable ContMaxValue,limits={0,inf,0},value= $(NewFldrName+"MaxCountourVal"), format="%3.3g"	
+		SetVariable ContYWaveScaling,pos={180,1},size={150,15},title="Y axis scale ",bodyWidth=70
+		SetVariable ContYWaveScaling, proc=IR3L_ContSetVarProc, help={"Step on Y axis"}
+		SetVariable ContYWaveScaling,limits={0,inf,0},value= $(NewFldrName+"ContYWaveScaling"), format="%3.3g"	
+		SetVariable ContYWaveIntervals,pos={180,20},size={150,15},title="Y axis scale ",bodyWidth=70
+		SetVariable ContYWaveIntervals, proc=IR3L_ContSetVarProc, help={"Y axis ticks"}
+		SetVariable ContYWaveIntervals,limits={3,inf,1},value= $(NewFldrName+"ContYWaveIntervals"), format="%3.3g"	
+		Checkbox ContLogXAxis, pos={260,39}, title="Log(X)?", size={100,15}, variable=$(NewFldrName+"ContLogXAxis"), proc=IR3L_ContCheckProc
 	
+		Checkbox ContDisplayContValues, pos={370,3}, title="Labels?", size={100,15}, variable=$(NewFldrName+"ContDisplayContValues"), proc=IR3L_ContCheckProc
+		Checkbox ContLogContours, pos={470,3}, title="Log colors?", size={100,15}, variable=$(NewFldrName+"ContLogContours"), proc=IR3L_ContCheckProc
+		Checkbox ContUseOnlyRedColor, pos={570,3}, title="Only red?", size={100,15}, variable=$(NewFldrName+"ContUseOnlyRedColor"), proc=IR3L_ContCheckProc
+	
+		PopupMenu ColorTable,pos={350,30},size={150,20},title="Colors:", help={"Select color table"}
+		PopupMenu ColorTable,mode=1,popvalue=Graph3DColorScale,value= #"CTabList()", bodyWidth=100, proc=IR3L_ContPopMenuProc
+		PopupMenu SmoothOverValue,pos={500,30},size={150,20},title="Smooth val:", help={"Smooth value"}, proc=IR3L_ContPopMenuProc
+		PopupMenu SmoothOverValue,mode=1,popvalue=num2str(ContSmoothOverValue),value= "0;3;5;9;", bodyWidth=40
+		//And now basic setup
+		ModifyContour /W=$(NewGraphName) MultiDataPlot3DWvData autoLevels={zmin,zmax,100}	//up to 100 levels. 
+		ModifyContour /W=$(NewGraphName) MultiDataPlot3DWvData labels=0,fill=0
+		ModifyContour /W=$(NewGraphName) MultiDataPlot3DWvData ctabLines={zmin,zmax,Rainbow,0}
+		//•ModifyContour MultiDataPlot3DWvData logLines=0
+		//ModifyContour /W=$(NewGraphName) MultiDataPlot3DWvData autoLevels={zmin,zmax,20}
+		Label /W=$(NewGraphName) bottom XAxisLabel
+		ModifyGraph log(bottom)=XisLog
+	elseif(StringMatch(WhichGraph, "Waterfall"))
+		//globals are cretaed here...
+		string/g Graph3DColorScale = "Rainbow"
+		string/g Graph3DVisibility = "Off"
+		variable/g Graph3DAngle = 30
+		variable/g Graph3DAxLength = 0.3
+		variable/g Graph3DLogColors = 0
+		variable/g Graph3DColorsReverse = 0
+		variable/g Graph3DClrMin = zmin
+		variable/g Graph3DClrMax = zmax
+		
+		//and now the graph
+		NewWaterfall/W=(405,467,950,900) /K=1/N=$NewGraphName MultiDataPlot3DWvData vs {xWaveValues,*} as NewGraphName+" of "+ExistingGraphTitle
+		ControlBar /T/W=$NewGraphName 50
+		pauseUpdate
+		//Angle, colorscale, ax length
+		PopupMenu ColorTableWf,pos={140,5},size={150,20},title="Colors:", proc=IR3L_ContPopMenuProc, help={"Select color table"}
+		PopupMenu ColorTableWf,mode=1,popvalue=Graph3DColorScale,value= #"CTabList()", bodyWidth=100
+		PopupMenu Graph3DVisibilityWf,pos={140,30},size={150,20},title="Hidden lines:", bodyWidth=100, proc=IR3L_ContPopMenuProc
+		PopupMenu Graph3DVisibilityWf,mode=1,popvalue=Graph3DVisibility,value= #"\"Off;Painter;True;No bottom;Color bottom\""
+		SetVariable angVar,size={120,15},pos={10,5},bodyWidth=50,title="Angle"
+		SetVariable angVar,format="%.1f", proc=IR3L_ContSetVarProc, help={"Change angle of the slant"}
+		SetVariable angVar,limits={10,90,1},value= $(NewFldrName+":Graph3DAngle")
+		SetVariable alenVar,pos={10,30},size={120,15},bodyWidth=50,title="Axis Length"
+		SetVariable alenVar,format="%.2f", proc=IR3L_ContSetVarProc, help={"change length of slanted axis"}
+		SetVariable alenVar,limits={0.1,0.9,0.05},value= $(NewFldrName+":Graph3DAxLength")
+		Checkbox Graph3DLogColors, pos={420,10}, title="Log Colors?", size={80,15}, variable=$(NewFldrName+":Graph3DLogColors"), proc=IR3L_ContCheckProc
+		Checkbox Graph3DColorsReverse, pos={420,30}, title="Reverse Colors?", size={80,15}, variable=$(NewFldrName+":Graph3DColorsReverse"), proc=IR3L_ContCheckProc
+	
+		Slider /Z Graph3DClrMax  limits = {Graph3DClrMin,Graph3DClrMax,0} , vert=0, pos = {300,10}, size = {100,10}, variable= $(NewFldrName+":Graph3DClrMax")
+		Slider /Z Graph3DClrMax proc=IR3L_ContSliderProc,ticks=0, help={"Slide to change color scaling"}, title = "Max"
+	
+		Slider /Z Graph3DClrMin  limits = {Graph3DClrMin,Graph3DClrMax,0} , vert=0, pos = {300,30}, size = {100,10}, variable= $(NewFldrName+":Graph3DClrMin")
+		Slider /Z Graph3DClrMin proc=IR3L_ContSliderProc,ticks=0, help={"Slide to change color scaling"}, title="min"
+		//format
+		SetAxis/W=$NewGraphName bottom xmin,xmax
+		SetAxis/W=$NewGraphName left zmin,zmax
+		ModifyGraph/W=$NewGraphName log(bottom)=XisLog
+		ModifyWaterfall/W=$NewGraphName  angle=Graph3DAngle, axlen= Graph3DAxLength, hidden= 0
+		ModifyGraph /W=$NewGraphName zColor(MultiDataPlot3DWvData)={MultiDataPlot3DWvData,*,*,$(Graph3DColorScale),Graph3DColorsReverse}	
+		resumeUpdate
+	elseif(StringMatch(WhichGraph, "Gizmo"))
+//		if(!IR1P_GizmoFunctionality())
+//			Abort "The graphic card of your system is insufficient for Gizmo functionality. You need to get better graphic card before using Gizmo."
+//		endif
+//		//create  Gizmo related globals here... Using codee from Plotting tool...
+//		variable/g GizmoNumLevels = 100
+//		variable/g GizmoEstimatedVoronoiTime = 0
+//		variable/g GizmoDisplayGrids = 0
+//		variable/g GizmoDisplayLabels = 0
+//		string/g GizmoYaxisLegend = ""
+//		string/g Graph3DColorScale = "Rainbow"
+//		NVAR GizmoEstimatedVoronoiTime
+//		
+//		
+//		IR3L_GizmoCreatePanel(NewFldrName)
+////		Button GizmoGenerateDataAndGraph,pos={62,80},size={200,15},title="Create 3D data and plot", proc=IR1P_InputPanelButtonProc, help={"Create/Recreate the data and create plot"}
+////		Button GizmoReGraph,pos={62,100},size={200,15},title="Recreate 3D plot", proc=IR1P_InputPanelButtonProc,help={"Use old data iof available without recreating them. Create plot. Fast. "}
+////		
+////		Button UpdateGizmo,pos={62,240},size={200,20},title="Sync w/Main panel", proc=IR1P_InputPanelButtonProc, help={"update to reflect changes made in main panel, such as zoom etc. "}
+//		GizmoEstimatedVoronoiTime = IR3L_GuessVoronoiTime(NumWaves, MaxP+1,GizmoNumLevels)
+//		
+//	
+	endif
+
 	setDataFolder OldDf
 end
+//**********************************************************************************************************
+//**********************************************************************************************************
+
+
+//static Function IR3L_GizmoCreatePanel(string NewFldrName)
+////GizmoNumLevels
+//	DoWindow GizmoControlPanel
+//	if(V_Flag)
+//		DoWindow/F GizmoControlPanel
+//	else
+//	
+//		NewPanel /K=1/N=GizmoControlPanel/W=(402,44,782,319) as "Irena Gizmo control panel"
+//		SetDrawLayer UserBack
+//		SetDrawEnv fsize= 14,fstyle= 3,textrgb= (0,0,65535)
+//		DrawText 87,28,"Irena \"Gizmo\" 3D plot panel"
+//		SetVariable GizmoNumLevels,pos={13,37},size={200,15},title="Number of q points", help={"Number of points in Q rto be calculated"}
+//		SetVariable GizmoNumLevels,value= $(NewFldrName+":GizmoNumLevels"), limits={10,500,25}
+//		SetVariable GizmoNumLevels proc=IR1P_GizmoSetVarProc
+//		SetVariable GizmoEstimatedVoronoiTime,pos={13,60},size={300,15},title="Estimated Calculation time [sec]   ", help={"Wild guess how long the Data preparation will take"}
+//		SetVariable GizmoEstimatedVoronoiTime,value= $(NewFldrName+":GizmoEstimatedVoronoiTime")
+//		SetVariable GizmoEstimatedVoronoiTime noedit=1,fstyle=2,valueColor=(65535,0,0),limits={-inf,inf,0}, frame=0
+//
+//	
+//		Button GizmoGenerateDataAndGraph,pos={62,80},size={200,15},title="Create 3D data and plot", proc=IR1P_InputPanelButtonProc, help={"Create/Recreate the data and create plot"}
+//		Button GizmoReGraph,pos={62,100},size={200,15},title="Recreate 3D plot", proc=IR1P_InputPanelButtonProc,help={"Use old data iof available without recreating them. Create plot. Fast. "}
+//	
+//		CheckBox GizmoDisplayGridLines title="Grid lines?",proc=IR1P_GizmoCheckProc, pos={10,130}, help={"Display grid lines"}
+//		CheckBox GizmoDisplayGridLines variable=$(NewFldrName+":GizmoDisplayGrids")
+//		CheckBox GizmoDisplayLabels title="Axes lables?",proc=IR1P_GizmoCheckProc, pos={10,150},help={"Display legends, uses legends from main tool"}
+//		CheckBox GizmoDisplayLabels variable=$(NewFldrName+"::GizmoDisplayLabels")
+//	
+//		SetVariable GizmoYaxisLegend,pos={120,150},size={250,15},title="Data order legend", help={"Text to be used on data order axis"}
+//		SetVariable GizmoYaxisLegend,value= $(NewFldrName+":GizmoYaxisLegend"), limits={-inf,inf,0}
+//		SetVariable GizmoYaxisLegend proc=IR1P_GizmoSetVarProc
+//	
+//		PopupMenu ColorTable,pos={15,180},size={180,20},title="Colors:", proc=IR1P_Gizmo_PopMenuProc, help={"Select color table"}
+//		SVAR Graph3DColorScale=$(NewFldrName+":Graph3DColorScale")
+//		PopupMenu ColorTable,mode=1,popvalue=Graph3DColorScale,value= #"CTabList()", bodyWidth=150
+//	
+//		Button UpdateGizmo,pos={62,240},size={200,20},title="Sync w/Main panel", proc=IR1P_InputPanelButtonProc, help={"update to reflect changes made in main panel, such as zoom etc. "}
+//		// add Gizmo procedures
+//		Execute/P "INSERTINCLUDE <All Gizmo Procedures>"
+//		Execute/P "COMPILEPROCEDURES "
+//		
+//	endif
+//	SetWindow GizmoControlPanel, hook(GizmoHook)= IR1P_GizmoHookFunction
+//	AutoPositionWindow/M=0/R=IR3L_MultiSamplePlotPanel GizmoControlPanel
+//	DoWIndow Irena_Gizmo
+//	if(V_Flag)
+//		AutoPositionWindow/M=1/R=GizmoControlPanel  Irena_Gizmo
+//	endif
+//end
+////*************************************************************************************************************
+////*************************************************************************************************************
+//
+//static Function IR3L_GuessVoronoiTime(NumWave, NumPoints, NumLevels)
+//	variable NumWave, NumPoints, NumLevels
+//	//	t=k1*(Ninp^2)+k3*Ninp*(Nx*Ny)
+//	//count Ninp
+//	variable NumberOfWaves,i, Ninp, Nx, Ny
+//	Ninp=NumPoints
+//	Nx=NumLevels
+//	Ny=NumWave
+//	
+//	variable TriangK=2.111e-08
+//	variable CalcK=4.50514e-08
+//	variable result=TriangK*Ninp^2 + CalcK*Ninp*Nx*Ny
+//	return result
+//end
+//**********************************************************************************************************
+//**********************************************************************************************************
+//************************************************************************************************************************
+//************************************************************************************************************************
+//************************************************************************************************************************
+//************************************************************************************************************************
+
+Function IR3L_ContSliderProc(sa) : SliderControl
+	STRUCT WMSliderAction &sa
+
+	string Foldername
+	switch( sa.eventCode )
+		case -1: // control being killed
+			break
+		default:
+			Foldername = "root:MultiDataPlot3DPlots:"+sa.win
+			if(!DataFolderExists(Foldername))
+				return 0
+			endif
+			//Waterfall controls
+			if( sa.eventCode & 1 ) // value set
+				Variable curval = sa.curval
+				NVAR Graph3DClrMax = $(Foldername+":Graph3DClrMax")
+				NVAR Graph3DClrMin = $(Foldername+":Graph3DClrMin")
+				SVAR Graph3DColorScale=$(Foldername+":Graph3DColorScale")
+				NVAR Graph3DColorsReverse=$(Foldername+":Graph3DColorsReverse")
+				WAVE MultiDataPlot3DWvData = $(Foldername+":MultiDataPlot3DWvData")
+				ModifyGraph zColor(MultiDataPlot3DWvData)={MultiDataPlot3DWvData,Graph3DClrMin,Graph3DClrMax,$(Graph3DColorScale),Graph3DColorsReverse}	
+			endif
+			break
+	endswitch
+
+	return 0
+End
+
 //************************************************************************************************************************
 //************************************************************************************************************************
 //************************************************************************************************************************
@@ -1693,45 +1882,67 @@ Function IR3L_ContCheckProc(cba) : CheckBoxControl
 	string Foldername
 	switch( cba.eventCode )
 		case 2: // mouse up
-			Foldername = "root:ContourPlots:"+cba.win
+			Foldername = "root:MultiDataPlot3DPlots:"+cba.win
 			if(!DataFolderExists(Foldername))
 				return 0
 			endif
 			Variable checked = cba.checked
 			if(stringmatch(cba.ctrlName,"ContDisplayContValues"))
+				NVAR ContMinValue = $(Foldername+":MinCountourVal")
+				NVAR ContMaxValue = $(Foldername+":MaxCountourVal")
+				NVAR ContLogContours = $(Foldername+":ContLogContours")
+				NVAR ContUseOnlyRedColor = $(Foldername+":ContUseOnlyRedColor")
+				SVAR Graph3DColorScale = $(Foldername+":ContourColorScale")
+				Wave MultiDataPlot3DWvData = $(Foldername+":MultiDataPlot3DWvData")
 				NVAR ContDisplayContValues = $(Foldername+":ContDisplayContValues")
-				ModifyContour ContourWvData labels=2*ContDisplayContValues
+				ModifyContour MultiDataPlot3DWvData labels=2*ContDisplayContValues
 				//do something
 			endif
-			NVAR ContMinValue = $(Foldername+":MinCountourVal")
-			NVAR ContMaxValue = $(Foldername+":MaxCountourVal")
-			NVAR ContLogContours = $(Foldername+":ContLogContours")
-			NVAR ContUseOnlyRedColor = $(Foldername+":ContUseOnlyRedColor")
-			SVAR Graph3DColorScale = $(Foldername+":ContourColorScale")
-			Wave ContourWvData = $(Foldername+":ContourWvData")
 			if(stringmatch(cba.ctrlName,"ContUseOnlyRedColor"))
+				NVAR ContMinValue = $(Foldername+":MinCountourVal")
+				NVAR ContMaxValue = $(Foldername+":MaxCountourVal")
+				NVAR ContLogContours = $(Foldername+":ContLogContours")
+				NVAR ContUseOnlyRedColor = $(Foldername+":ContUseOnlyRedColor")
+				SVAR Graph3DColorScale = $(Foldername+":ContourColorScale")
+				Wave MultiDataPlot3DWvData = $(Foldername+":MultiDataPlot3DWvData")
 				if(checked)
 					ContLogContours=0
-					ModifyContour ContourWvData rgbLines=(65535, 0, 0 )
+					ModifyContour MultiDataPlot3DWvData rgbLines=(65535, 0, 0 )
 				else
-					ModifyContour ContourWvData ctabLines={ContMinValue, ContMaxValue, $(Graph3DColorScale), 1 }
-					ModifyContour ContourWvData logLines=ContLogContours
+					ModifyContour MultiDataPlot3DWvData ctabLines={ContMinValue, ContMaxValue, $(Graph3DColorScale), 1 }
+					ModifyContour MultiDataPlot3DWvData logLines=ContLogContours
 				endif
 			endif
 			if(stringmatch(cba.ctrlName,"ContLogContours"))
+				NVAR ContMinValue = $(Foldername+":MinCountourVal")
+				NVAR ContMaxValue = $(Foldername+":MaxCountourVal")
+				NVAR ContLogContours = $(Foldername+":ContLogContours")
+				NVAR ContUseOnlyRedColor = $(Foldername+":ContUseOnlyRedColor")
+				SVAR Graph3DColorScale = $(Foldername+":ContourColorScale")
+				Wave MultiDataPlot3DWvData = $(Foldername+":MultiDataPlot3DWvData")
 				ContUseOnlyRedColor = 0
 				//cannot have 0 as Minvalue or everything is red... 
 				if(ContMinValue<1e-20)
-					Wavestats/Q ContourWvData
+					Wavestats/Q MultiDataPlot3DWvData
 					ContMinValue = V_min>0 ? 0.99*V_min : 0.00001*ContMaxValue
 					print "Had to reset min value displayed, for log-colors you cannot have minimum <= 0"
 				endif
-				ModifyContour ContourWvData ctabLines={ContMinValue, ContMaxValue, $(Graph3DColorScale), 1 }
-				ModifyContour ContourWvData logLines=ContLogContours
+				ModifyContour MultiDataPlot3DWvData ctabLines={ContMinValue, ContMaxValue, $(Graph3DColorScale), 1 }
+				ModifyContour MultiDataPlot3DWvData logLines=ContLogContours
 			endif
 			if(stringmatch(cba.ctrlName,"ContLogXAxis"))
 				ModifyGraph log(bottom)=checked
 			endif
+			//Waterfall controls
+			if(stringmatch(cba.ctrlName,"Graph3DLogColors")||stringmatch(cba.ctrlName,"Graph3DColorsReverse"))
+				NVAR Graph3DLogColors=$(Foldername+":Graph3DLogColors")
+				NVAR Graph3DColorsReverse=$(Foldername+":Graph3DColorsReverse")
+				SVAR Graph3DColorScale=$(Foldername+":Graph3DColorScale")
+				WAVE MultiDataPlot3DWvData = $(Foldername+":MultiDataPlot3DWvData")
+				ModifyGraph zColor(MultiDataPlot3DWvData)={MultiDataPlot3DWvData,*,*,$(Graph3DColorScale),Graph3DColorsReverse}	
+				ModifyGraph/W=$(cba.win) logZColor=Graph3DLogColors
+			endif
+
 			break
 		case -1: // control being killed
 			break
@@ -1746,7 +1957,7 @@ End
 Function IR3L_FormatContourPlot(string WindowNameStr)
 	
 	string Foldername
-	Foldername = "root:ContourPlots:"+WindowNameStr
+	Foldername = "root:MultiDataPlot3DPlots:"+WindowNameStr
 	if(!DataFolderExists(Foldername))
 		return 0
 	endif
@@ -1758,44 +1969,44 @@ Function IR3L_FormatContourPlot(string WindowNameStr)
 	NVAR ContLogContours = $(Foldername+":ContLogContours")
 	NVAR ContUseOnlyRedColor = $(Foldername+":ContUseOnlyRedColor")
 	NVAR ContSmoothOverValue=$(Foldername+":ContSmoothOverValue")
-	WAVE ContourWvData = $(Foldername+":ContourWvData")
-	WAVE ContourWvDataRaw = $(Foldername+":ContourWvDataRaw")
+	WAVE MultiDataPlot3DWvData = $(Foldername+":MultiDataPlot3DWvData")
+	WAVE MultiDataPlot3DWvDataRaw = $(Foldername+":MultiDataPlot3DWvDataRaw")
 
 	NVAR ContNumCountours = $(Foldername+":NumCountours")
 	NVAR ContMinValue = $(Foldername+":MinCountourVal")
 	NVAR ContMaxValue = $(Foldername+":MaxCountourVal")
 	//setvariable stuff...
 	//min, max and num contours. 
-	ModifyContour ContourWvData autoLevels={ContMinValue,ContMaxValue,ContNumCountours}
+	ModifyContour MultiDataPlot3DWvData autoLevels={ContMinValue,ContMaxValue,ContNumCountours}
 	//popup stuff
 	if(stringMatch(Graph3DColorScale,"none"))
-		ModifyContour ContourWvData rgbLines=(65535, 0, 0 )
+		ModifyContour MultiDataPlot3DWvData rgbLines=(65535, 0, 0 )
 	else
-		ModifyContour ContourWvData ctabLines={ContMinValue, ContMaxValue, $(Graph3DColorScale), 1 }
-		ModifyContour ContourWvData logLines=ContLogContours
+		ModifyContour MultiDataPlot3DWvData ctabLines={ContMinValue, ContMaxValue, $(Graph3DColorScale), 1 }
+		ModifyContour MultiDataPlot3DWvData logLines=ContLogContours
 	endif
 	//smoothing is done ONLY in popup procedure to reduce cpu load. 
 	//checkbox stuff
 	if(ContUseOnlyRedColor)
 		ContLogContours=0
-		ModifyContour ContourWvData rgbLines=(65535, 0, 0 )
+		ModifyContour MultiDataPlot3DWvData rgbLines=(65535, 0, 0 )
 	else
-		ModifyContour ContourWvData ctabLines={ContMinValue, ContMaxValue, $(Graph3DColorScale), 1 }
-		ModifyContour ContourWvData logLines=ContLogContours
+		ModifyContour MultiDataPlot3DWvData ctabLines={ContMinValue, ContMaxValue, $(Graph3DColorScale), 1 }
+		ModifyContour MultiDataPlot3DWvData logLines=ContLogContours
 	endif
 	if(ContLogContours)
 		ContUseOnlyRedColor = 0
 		//cannot have 0 as Minvalue or everything is red... 
 		if(ContMinValue<1e-20)
-			Wavestats/Q ContourWvData
+			Wavestats/Q MultiDataPlot3DWvData
 			ContMinValue = V_min>0 ? 0.99*V_min : 0.00001*ContMaxValue
 			print "Had to reset min value displayed, for log-colors you cannot have minimum <= 0"
 		endif
-		ModifyContour ContourWvData ctabLines={ContMinValue, ContMaxValue, $(Graph3DColorScale), 1 }
-		ModifyContour ContourWvData logLines=ContLogContours
+		ModifyContour MultiDataPlot3DWvData ctabLines={ContMinValue, ContMaxValue, $(Graph3DColorScale), 1 }
+		ModifyContour MultiDataPlot3DWvData logLines=ContLogContours
 	endif
 	
-//	Label/W=PlotingToolContourGrph left "Data Order"
+//	Label/W=plottingToolContourGrph left "Data Order"
 	setDataFolder oldDf
 end
 
@@ -1813,7 +2024,7 @@ Function IR3L_ContPopMenuProc(pa) : PopupMenuControl
 			Variable popNum = pa.popNum
 			String popStr = pa.popStr
 			if(stringmatch(pa.ctrlName,"ColorTable"))
-				Foldername = "root:ContourPlots:"+pa.win
+				Foldername = "root:MultiDataPlot3DPlots:"+pa.win
 				if(!DataFolderExists(Foldername))
 					return 0
 				endif
@@ -1825,27 +2036,61 @@ Function IR3L_ContPopMenuProc(pa) : PopupMenuControl
 				NVAR ContUseOnlyRedColor = $(Foldername+":ContUseOnlyRedColor")
 				ContUseOnlyRedColor=0
 				if(stringMatch(Graph3DColorScale,"none"))
-					ModifyContour ContourWvData rgbLines=(65535, 0, 0 )
+					ModifyContour MultiDataPlot3DWvData rgbLines=(65535, 0, 0 )
 				else
-					ModifyContour ContourWvData ctabLines={ContMinValue, ContMaxValue, $(Graph3DColorScale), 1 }
-					ModifyContour ContourWvData logLines=ContLogContours
+					ModifyContour MultiDataPlot3DWvData ctabLines={ContMinValue, ContMaxValue, $(Graph3DColorScale), 1 }
+					ModifyContour MultiDataPlot3DWvData logLines=ContLogContours
 				endif
 			endif
 			if(stringmatch(pa.ctrlName,"SmoothOverValue"))
-				Foldername = "root:ContourPlots:"+pa.win
+				Foldername = "root:MultiDataPlot3DPlots:"+pa.win
 				if(!DataFolderExists(Foldername))
 					return 0
 				endif
 				NVAR ContSmoothOverValue=$(Foldername+":ContSmoothOverValue")
-				WAVE ContourWvData = $(Foldername+":ContourWvData")
-				WAVE ContourWvDataRaw = $(Foldername+":ContourWvDataRaw")
-				Duplicate /O ContourWvDataRaw, ContourWvData
+				WAVE MultiDataPlot3DWvData = $(Foldername+":MultiDataPlot3DWvData")
+				WAVE MultiDataPlot3DWvDataRaw = $(Foldername+":MultiDataPlot3DWvDataRaw")
+				Duplicate /O MultiDataPlot3DWvDataRaw, MultiDataPlot3DWvData
 				ContSmoothOverValue = str2num(pa.popStr)
 				if(ContSmoothOverValue>1)
-					MatrixFilter /N=(ContSmoothOverValue) avg ContourWvData
+					MatrixFilter /N=(ContSmoothOverValue) avg MultiDataPlot3DWvData
 				endif
 				IR3L_FormatContourPlot(pa.win)
 			endif
+			//Waterfall controls
+			if(stringmatch(pa.ctrlName,"ColorTableWf"))
+				Foldername = "root:MultiDataPlot3DPlots:"+pa.win
+				if(!DataFolderExists(Foldername))
+					return 0
+				endif
+				SVAR Graph3DColorScale=$(Foldername+":Graph3DColorScale")
+				Graph3DColorScale = popStr
+				NVAR Graph3DColorsReverse=$(Foldername+":Graph3DColorsReverse")
+				WAVE MultiDataPlot3DWvData = $(Foldername+":MultiDataPlot3DWvData")
+				WAVE MultiDataPlot3DWvDataRaw = $(Foldername+":MultiDataPlot3DWvDataRaw")
+				ModifyGraph /W=$(pa.win) zColor(MultiDataPlot3DWvData)={MultiDataPlot3DWvData,*,*,$(Graph3DColorScale),Graph3DColorsReverse}	
+			endif
+			if(stringmatch(pa.ctrlName,"Graph3DVisibilityWf"))
+				Foldername = "root:MultiDataPlot3DPlots:"+pa.win
+				if(!DataFolderExists(Foldername))
+					return 0
+				endif
+				SVAR Graph3DVisibility=$(Foldername+":Graph3DVisibility")
+				Graph3DVisibility = popStr
+				//ModifyGraph zColor(MultiDataPlot3DWvData)={MultiDataPlot3DWvData,*,*,$(Graph3DColorScale),Graph3DColorsReverse}	
+				if(stringmatch(Graph3DVisibility,"Off"))
+					ModifyWaterfall /W=$(pa.win) hidden=0
+				elseif(stringmatch(Graph3DVisibility,"Painter"))
+					ModifyWaterfall /W=$(pa.win) hidden=1
+				elseif(stringmatch(Graph3DVisibility,"True"))
+					ModifyWaterfall /W=$(pa.win) hidden=2
+				elseif(stringmatch(Graph3DVisibility,"No bottom"))
+					ModifyWaterfall /W=$(pa.win) hidden=3
+				elseif(stringmatch(Graph3DVisibility,"Color bottom"))
+					ModifyWaterfall /W=$(pa.win) hidden=4
+				endif
+			endif
+
 			break
 		case -1: // control being killed
 			break
@@ -1864,7 +2109,7 @@ Function IR3L_ContSetVarProc(sva) : SetVariableControl
 	variable NumWaves, StepVal
 	switch( sva.eventCode )
 		case 1: // mouse up
-			Foldername = "root:ContourPlots:"+sva.win
+			Foldername = "root:MultiDataPlot3DPlots:"+sva.win
 			if(!DataFolderExists(Foldername))
 				return 0
 			endif
@@ -1876,23 +2121,35 @@ Function IR3L_ContSetVarProc(sva) : SetVariableControl
 					ContNumCountours=100
 					print "Cannot set more than 100 contours in Igor Pro"
 				endif
-				ModifyContour ContourWvData autoLevels={ContMinValue,ContMaxValue,ContNumCountours}
+				ModifyContour MultiDataPlot3DWvData autoLevels={ContMinValue,ContMaxValue,ContNumCountours}
 			endif
 			if(stringmatch(sva.ctrlName,"ContYWaveScaling")||stringmatch(sva.ctrlName,"ContYWaveIntervals"))
 				NVAR ContYWaveScaling = $(Foldername+":ContYWaveScaling")
 				NVAR ContYWaveIntervals = $(Foldername+":ContYWaveIntervals")
 				Wave CountourPlot_left_values = $(Foldername+":CountourPlot_left_values")
 				Wave/T CountourPlot_left_labels = $(Foldername+":CountourPlot_left_labels")
-				WAVE ContourWvData = $(Foldername+":ContourWvData")
+				WAVE MultiDataPlot3DWvData = $(Foldername+":MultiDataPlot3DWvData")
 				Redimension/N=(ContYWaveIntervals) CountourPlot_left_labels, CountourPlot_left_values
-				NumWaves = DimSize(ContourWvData, 1 )
+				NumWaves = DimSize(MultiDataPlot3DWvData, 1 )
 				StepVal = floor((NumWaves-1)/(ContYWaveIntervals-1))
 				CountourPlot_left_values = (0 + p*StepVal)
 				CountourPlot_left_labels =  num2str(CountourPlot_left_values[p]*ContYWaveScaling)
 			endif
+			//Waterfall controls
+			if(stringmatch(sva.ctrlName,"angVar")||stringmatch(sva.ctrlName,"alenVar"))
+				Foldername = "root:MultiDataPlot3DPlots:"+sva.win
+				if(!DataFolderExists(Foldername))
+					return 0
+				endif
+				NVAR Graph3DAxLength	=$(Foldername+":Graph3DAxLength")
+				NVAR Graph3DAngle		=$(Foldername+":Graph3DAngle")
+				WAVE MultiDataPlot3DWvData = $(Foldername+":MultiDataPlot3DWvData")
+				WAVE MultiDataPlot3DWvDataRaw = $(Foldername+":MultiDataPlot3DWvDataRaw")
+				ModifyWaterfall /W=$(sva.win) angle=Graph3DAngle, axlen= Graph3DAxLength	
+			endif
 			break
 		case 2: // Enter key
-			Foldername = "root:ContourPlots:"+sva.win
+			Foldername = "root:MultiDataPlot3DPlots:"+sva.win
 			if(!DataFolderExists(Foldername))
 				return 0
 			endif
@@ -1906,19 +2163,33 @@ Function IR3L_ContSetVarProc(sva) : SetVariableControl
 					ContNumCountours=100
 					print "Cannot set more than 100 contours in Igor Pro"
 				endif
-				ModifyContour ContourWvData autoLevels={ContMinValue,ContMaxValue,ContNumCountours}
+				ModifyContour MultiDataPlot3DWvData autoLevels={ContMinValue,ContMaxValue,ContNumCountours}
 			endif
 			if(stringmatch(sva.ctrlName,"ContYWaveScaling")||stringmatch(sva.ctrlName,"ContYWaveIntervals"))
 				NVAR ContYWaveScaling = $(Foldername+":ContYWaveScaling")
 				NVAR ContYWaveIntervals = $(Foldername+":ContYWaveIntervals")
 				Wave CountourPlot_left_values = $(Foldername+":CountourPlot_left_values")
 				Wave/T CountourPlot_left_labels = $(Foldername+":CountourPlot_left_labels")
-				WAVE ContourWvData = $(Foldername+":ContourWvData")
+				WAVE MultiDataPlot3DWvData = $(Foldername+":MultiDataPlot3DWvData")
 				Redimension/N=(ContYWaveIntervals) CountourPlot_left_labels, CountourPlot_left_values
-				NumWaves = DimSize(ContourWvData, 1 )
+				NumWaves = DimSize(MultiDataPlot3DWvData, 1 )
 				StepVal = floor((NumWaves-1)/(ContYWaveIntervals-1))
 				CountourPlot_left_values = (0 + p*StepVal)
 				CountourPlot_left_labels =  num2str(CountourPlot_left_values[p]*ContYWaveScaling)
+			endif
+
+
+			//Waterfall controls
+			if(stringmatch(sva.ctrlName,"angVar")||stringmatch(sva.ctrlName,"alenVar"))
+				Foldername = "root:MultiDataPlot3DPlots:"+sva.win
+				if(!DataFolderExists(Foldername))
+					return 0
+				endif
+				NVAR Graph3DAxLength	=$(Foldername+":Graph3DAxLength")
+				NVAR Graph3DAngle		=$(Foldername+":Graph3DAngle")
+				WAVE MultiDataPlot3DWvData = $(Foldername+":MultiDataPlot3DWvData")
+				WAVE MultiDataPlot3DWvDataRaw = $(Foldername+":MultiDataPlot3DWvDataRaw")
+				ModifyWaterfall /W=$(sva.win) angle=Graph3DAngle, axlen= Graph3DAxLength	
 			endif
 			break
 		case 3: // Live update

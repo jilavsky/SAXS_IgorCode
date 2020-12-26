@@ -15,6 +15,7 @@ Fixed all fixed length wave names (hopefully). Now should use long names if user
 Merge data tool - fix use of long folder names. It was not following user choice on use of long names. Add merging parameters into the wave note. 
 Merge data tool - Added Optimization method: "Optimize Overlap, trim Data1" when data122 are trimmed at the very start of overlap, removing noise at overlap. 
 Unified fit - fixed fitting problem when "Link B to G/Rg/P?" was selected, code was not refreshing calculated B during fitting. Caused misfits.  
+Multi data plotting tool - added Contour plot and Waterfall plot. 
 
 
 

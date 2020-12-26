@@ -81,7 +81,7 @@
 //	Function IR3C_MultiAppendControls(ToolPackageFolder,PanelName, DoubleClickFunNm)
 //		string PanelName,ToolPackageFolder,DoubleClickFunNm
 	//this will append controls to panels, which require set of control for multi sample selection	
-	//	NewPanel /K=1 /W=(5.25,43.25,605,820) as "MultiData Ploting tool"
+	//	NewPanel /K=1 /W=(5.25,43.25,605,820) as "MultiData plottingg tool"
 	//initialize controls first by running this command
 	//IR2C_AddDataControls("Irena:MultiSaPlotFit","IR3L_MultiSaPlotFitPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
 	//then call this function:
@@ -3246,7 +3246,7 @@ Function IR3C_MultiAppendControls(ToolPackageFolder,PanelName, DoubleClickFunNm,
 		string PanelName,ToolPackageFolder,DoubleClickFunNm, MouseDownFunNm
 		variable OnlyUSAXSReducedData,AllowSlitSmearedData
 		//this will append controls to panels, which require set of control for multi sample selection	
-		//	NewPanel /K=1 /W=(5.25,43.25,605,820) as "MultiData Ploting tool"
+		//	NewPanel /K=1 /W=(5.25,43.25,605,820) as "MultiData plottingg tool"
 		//initialize controls first by running this command
 		//IR2C_AddDataControls("Irena:MultiSaPlotFit","IR3L_MultiSaPlotFitPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
 		//then call this function, it will add listbox and other controls. 

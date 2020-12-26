@@ -56,8 +56,8 @@
 #include "IR1_Fractals", version>=2.11
 #include "IR1_ImportData", version>=2.40
 #include "IR1_Main", version>=2.70
-#include "IR1_PlotingToolI", version >=2.34
-#include "IR1_PlotingToolI2", version >=2.24
+#include "IR1_PlottingToolI", version >=2.34
+#include "IR1_PlottingToolI2", version >=2.24
 #include "IR1_ScattContrast", version>=2.27
 #include "IR1_Sizes", version>=2.31
 #include "IR1_UnifiedFitFncts", version>=2.34

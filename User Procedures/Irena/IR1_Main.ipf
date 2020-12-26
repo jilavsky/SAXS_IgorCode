@@ -279,7 +279,7 @@ Menu "BioSAXS"
 	"Average, Subtract, Scale Data", IRB1_DataManipulation()
 	help={"Tools to average many data sets and subtract buffer"}
 	"Plot data", IR3L_MultiSamplePlot()
-	help={"Multi sample ploting tool, same as in SAS menu."}
+	help={"Multi sample plotting tool, same as in SAS menu."}
 	"Simple fits", IR3J_SimpleFits()
 	help={"Tool to fit data with Guinier, Porod, SphereFF, SpheroidFF etc."}
 	"Merge SAXS-WAXS data", IRB1_MergeMultipleData()
@@ -3254,8 +3254,8 @@ Function IR1_KillGraphsAndPanels()
 	ListOfWindows += "IR1A_ControlPanel;IR1R_SizesInputGraph;IR1P_PlottingTool;GeneralGraph;IR1P_ControlPanel;IR1P_RemoveDataPanel;"
 	ListOfWindows += "IR1P_ModifyDataPanel;IR1P_RemoveDataPanel;IR1P_StoreGraphsCtrlPnl;IR1D_DataManipulationPanel;IR1D_DataManipulationGraph;"
 	ListOfWindows += "IR1I_ImportData;IR1V_ControlPanel;IR1V_LogLogPlotV;IR1V_IQ4_Q_PlotV;IR2S_ScriptingToolPnl;IR2Pr_PDFInputGraph;IR2Pr_ControlPanel;"
-	ListOfWindows += "PlotingToolWaterfallGrph;LSQF2_MainPanel;LSQF_MainGraph;GraphSizeDistributions;LSQF_ResidualsGraph;Irena_Gizmo;GizmoControlPanel;"
-	ListOfWindows += "DataMiningTool;ItemsInFolderPanel;ItemsInFolderPanel_DMII;DataManipulationII;IR2R_InsertRemoveLayers;PlotingToolContourGrph;"
+	ListOfWindows += "plottingToolWaterfallGrph;LSQF2_MainPanel;LSQF_MainGraph;GraphSizeDistributions;LSQF_ResidualsGraph;Irena_Gizmo;GizmoControlPanel;"
+	ListOfWindows += "DataMiningTool;ItemsInFolderPanel;ItemsInFolderPanel_DMII;DataManipulationII;IR2R_InsertRemoveLayers;plottingToolContourGrph;"
 	ListOfWindows += "FormFactorControlScreen;StructureFactorControlScreen;UnifiedEvaluationPanel;IR2H_ResidualsPlot;IR1P_StylesManagementPanel;"
 	ListOfWindows += "ModelingII_Results;LSQF_IQ4vsQGraph;IR2L_ResSmearingPanel;IR1P_MoreToolsPanel;IR1R_SizeDistImportFitPanel;"
 	ListOfWindows += "TwoPhaseSystemData;TwoPhaseSolidGizmo;TwoPhaseSystems;FractalAggregatePanel;MassFractalAggregateView;TwoPhaseSolid2DImage;"

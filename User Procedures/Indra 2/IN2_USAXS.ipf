@@ -134,12 +134,12 @@ Menu "USAXS"
 	End
 	SubMenu "USAXS Plotting tools"
 		"Standard USAXS Plots with math", IN2S_StandardUSAXSPlots()
-		help={"This is advanced ploting tools which with math functions"}
+		help={"This is advanced plotting tools which with math functions"}
 		"Basic USAXS Plots", IN2P_CommonUSAXSPlots()
-		help={"This is basic ploting tools which without math functions"}
+		help={"This is basic plotting tools which without math functions"}
 	//	"Common non-USAXS Plots", IN2P_CommonNonUSAXSPlots()
-		"Generic Ploting tool for power users", IN2P_GenericUSAXSPlots()
-		help={"This is  ploting tools which can plot any wave against any other wave, unlikely useful to regular users..."}
+		"Generic plotting tool for power users", IN2P_GenericUSAXSPlots()
+		help={"This is  plotting tools which can plot any wave against any other wave, unlikely useful to regular users..."}
 		"--"
 		"Draw Line Of Any Slope", IN2P_DrawLineOfAnySlope()
 		"Draw Line Of -4 Slope",  IN2P_DrawLineOf4Slope()

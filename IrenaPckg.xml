@@ -21,8 +21,8 @@
 		<File>User Procedures/Irena/IR1_Fractals.ipf</File>
 		<File>User Procedures/Irena/IR1_ImportData.ipf</File>
 		<File>User Procedures/Irena/IR1_Main.ipf</File>
-		<File>User Procedures/Irena/IR1_PlotingToolI.ipf</File>
-		<File>User Procedures/Irena/IR1_PlotingToolI2.ipf</File>
+		<File>User Procedures/Irena/IR1_PlottingToolI.ipf</File>
+		<File>User Procedures/Irena/IR1_PlottingToolI2.ipf</File>
 		<File>User Procedures/Irena/IR1_ScattContrast.ipf</File>
 		<File>User Procedures/Irena/IR1_Sizes.ipf</File>
 		<File>User Procedures/Irena/IR1_UnifiedFitFncts.ipf</File>
