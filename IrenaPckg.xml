@@ -51,7 +51,8 @@
 		<File>User Procedures/Irena/IR3_WAXSDiffraction.ihf</File>
 		<File>User Procedures/Irena/IRB1_bioSAXS.ipf</File>
 		<File>User Procedures/Irena/IRB1_EvaluationTools.ipf</File>
-		<File>User Procedures/Irena/IR3_DataManipulationIII.ipf</File>		
+		<File>User Procedures/Irena/IR3_DataManipulationIII.ipf</File>			
+		<File>User Procedures/Irena/IR3_SystemSpecificModels.ipf</File>		
 		<File>User Procedures/Irena/license.txt</File>
 		<File>User Procedures/Irena/Modification history.txt</File>
 		<File>User Procedures/Irena/ReadMe.txt</File>

@@ -5,7 +5,7 @@ Constant IR2MversionNumber = 1.13			//Data mining tool version number
 constant IR3BversionNumber = 0.1			//MetadataBrowser tool version number. 
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2020, Argonne National Laboratory
+//* Copyright (c) 2005 - 2021, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/

@@ -431,8 +431,8 @@ end
 
 
 //*******************************************************************************
- // Panel to generate conversion from RAW to USAXS
- 
+// // Panel to generate conversion from RAW to USAXS
+// 
 Function IN2_RAWtoUSAXSParametersSetup(here)							//This offerss user panel to setup Raw to USAXS 
 	variable here														//if here, then we need to call this function in the current folder
 																	//table - for waves
@@ -484,7 +484,7 @@ Function IN2_RAWtoUSAXSParametersSetup(here)							//This offerss user panel to 
 
 	Execute ("IN2_RawToUSAXSPanel()")								//create panel
 end
-
+//
 Window IN2_RawToUSAXSPanel() : Panel								//the panel
 	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(297.75,56.75,627,450)
@@ -543,325 +543,325 @@ Function/T IN2_GetMeMostLikelyUSAXSWave(str)	//this returns the most likely wave
 	SetDataFolder $dfSave
 	return result
 end
-
-Function IN2_PopMenuProc_Fldr(ctrlName,popNum,popStr) : PopupMenuControl		//sets folder to raw subfolder if selected
-	String ctrlName
-	Variable popNum
-	String popStr
-	
-	if (!stringmatch(popStr, "*--*"))
-		String df="root:raw:'"+popStr+"'"
-		SetDataFolder $df
-	endif
-End
-
-
-Function IN2_PopMenuProc_SpecRun(ctrlName,popNum,popStr) : PopupMenuControl	//sets folder to specXX folder in raw
-	String ctrlName
-	Variable popNum
-	String popStr
-
-	if (!stringmatch(popStr, "*--*" ))													//if valid folder selected go there
-		SVAR /Z SpecFile=root:Packages:Indra3:PanelSpecScanSelected				//set global string and creates it, if needed
-		if (!SVAR_Exists(SpecFile))
-			string/g root:Packages:Indra3:PanelSpecScanSelected
-			SVAR SpecFile=root:Packages:Indra3:PanelSpecScanSelected				//set global string and creates it, if needed
-		endif
-		SpecFile=GetDataFolder(1)+popStr											//this sets the global string
-		IN2_GenerateTheLiberalName("yes")										//this generates name for the folder where the data will go
-		IN2_GetDataTransferredTo()												//this pulls out the list of folders, where we already transferred the data
-	endif																		//and puts it into the panel
-End
-
-
-Function IN2_WavesPanelControl(ctrlName,popNum,popStr) : PopupMenuControl			//bunch of procedures for the panel control
-	String ctrlName															
-	Variable popNum
-	String popStr
-	
-	SVAR TR_list=root:Packages:Indra3:RawToUSAXS
-	
-	if (cmpstr(ctrlName,"SelectPDWaveName")==0)
-		TR_List=ReplaceStringByKey("USAXS_PD", TR_list,  popStr,"=")
-	Endif
-
-	if (cmpstr(ctrlName,"Monitor")==0)
-		TR_List=ReplaceStringByKey("Monitor", TR_list,  popStr,"=")
-	Endif
-	if (cmpstr(ctrlName,"PDrange")==0)
-		TR_List=ReplaceStringByKey("PD_range", TR_list,  popStr,"=")	
-	Endif
-	if (cmpstr(ctrlName,"AREnc")==0)
-		TR_List=ReplaceStringByKey( "AR_enc", TR_list, popStr,"=")
-	Endif
-	if (cmpstr(ctrlName,"Timew")==0)
-		TR_List=ReplaceStringByKey("Time", TR_list, popStr,"=")
-	Endif
-End
-
-
-Function IN2_DeleteWavesFromRaw(ctrlName) : ButtonControl					//this creates list of waves which will be deleted 
-	String ctrlName														//from raw
-
-	SVAR/Z str1=root:Packages:Indra3:ListOfWavesToDeleteFromRaw
-	SVAR/Z str2=root:Packages:Indra3:TempListOfWavesToDeleteFromRaw
-	
-	if(!SVAR_Exists(str1))
-		string/G root:Packages:Indra3:ListOfWavesToDeleteFromRaw
-		SVAR str1=root:Packages:Indra3:ListOfWavesToDeleteFromRaw
-	endif
-	if(!SVAR_Exists(str2))
-		string/G root:Packages:Indra3:TempListOfWavesToDeleteFromRaw
-		SVAR str2=root:Packages:Indra3:TempListOfWavesToDeleteFromRaw
-	endif
-	
-	//here goes procedure to delete waves
-	Execute "IN2_PanelToSelectDeleteWaves()"								//this creates the panel for user control
-End
-
-
-
-
-Function IN2_SelectWhichWavesToDelete1(ctrlName,popNum,popStr) : PopupMenuControl	//what this one does?
-	String ctrlName
-	Variable popNum
-	String popStr
-
-	SVAR TempDeleteList=root:Packages:Indra3:TempListOfWavesToDeleteFromRaw
-	if (!stringmatch(popStr,"----"))
-		TempDeleteList=popStr
-	endif
-End
-
-Function IN2_AddToDeleteList(ctrlName) : ButtonControl				//button control which adds wave name to delete list
-	String ctrlName
-
-	SVAR ListToDelete=root:Packages:Indra3:ListOfWavesToDeleteFromRaw
-	SVAR TempListToDelete=root:Packages:Indra3:TempListOfWavesToDeleteFromRaw
-
-	if (!stringmatch(ListToDelete, "*"+TempListToDelete+"*"))
-		ListToDelete+=TempListToDelete + ";"
-	endif
-End
-
-Window IN2_PanelToSelectDeleteWaves() : Panel								//panel for user to select waves to delete
-	PauseUpdate    		// building window...
-	NewPanel /K=1/W=(320.25,305,728.25,553.25)
-	SetDrawLayer UserBack
-	SetDrawEnv fsize= 16,fstyle= 1
-	DrawText 31,23,"Here you can select waves which will be "
-	SetDrawEnv fsize= 16,fstyle= 1
-	DrawText 30,45,"DELETED from raw data."
-	SetDrawEnv fsize= 16,fstyle= 1,textrgb= (65280,16384,16384)
-	DrawText 63,72,"Use this ONLY when really sure!!"
-	SetDrawEnv fsize= 14,fstyle= 3
-	DrawText 16,151,"This is List of waves you want to delete:"
-	SetDrawEnv linepat= 2,linefgc= (65535,65535,65535),fillfgc= (52224,52224,52224)
-	DrawRect 24,195,217,240
-	SetDrawEnv fsize= 14,fstyle= 1,textrgb= (65280,16384,16384)
-	DrawText 46,225,"Kill panel when done"
-	PopupMenu SelectWave,pos={8,93},size={169,21},proc=IN2_SelectWhichWavesToDelete1,title="Select wave to delete:"
-	PopupMenu SelectWave,mode=1,popvalue="----",value= #"\"----;\"+IN2G_CreateListOfItemsInFolder(root:Packages:Indra3:PanelSpecScanSelected,2)"
-	Button AppendToListToDelete,pos={279,93},size={120,20},proc=IN2_AddToDeleteList,title="Add to delete list"
-	SetVariable ListOfWavesToDelete,pos={12,158},size={400,19},title=" ",fSize=12
-	SetVariable ListOfWavesToDelete,limits={-Inf,Inf,1},value= root:Packages:Indra3:ListOfWavesToDeleteFromRaw
-	Button ClearDeleteList,pos={271,188},size={100,20},proc=IN2_ClearDeleteList,title="Clear Delete list"
-	DoUpdate
-EndMacro
-
-Function IN2_ClearDeleteList(ctrlName) : ButtonControl							//clear the delete list
-	String ctrlName
-
-	SVAR ListToClear=root:Packages:Indra3:ListOfWavesToDeleteFromRaw
-	
-	ListToClear=""
-End
-
-//End of panel area
-//*************************************************************************************************************
-//*************************************************************************************************************
-
-Function IN2_ConvertSpecSetVarProc(sva) : SetVariableControl
-	STRUCT WMSetVariableAction &sva
-
-	switch( sva.eventCode )
-		case 1: // mouse up
-		case 2: // Enter key
-				IN2_CreateDialogForRangeSel()
-		case 3: // Live update
-			Variable dval = sva.dval
-			String sval = sva.sval
-			break
-		case -1: // control being killed
-			break
-	endswitch
-
-	return 0
-End
-
-
-//*************************************************************************************************************
-// ***************Begining of RAW to USAXS conversion************************************************
-
-
-Function IN2_ConvertRAW_To_USAXSFnct()										//function to convert Raw to USAXS
-	string/G root:Packages:Indra3:NewUSAXSSubfolder=""
-	string/G root:Packages:Indra3:USAXSSubfolder=""							//setup global strings
-	string/G root:Packages:Indra3:NextRTUtoConvert="----"
-	string/G root:Packages:Indra3:ListOfTransfers=" -- "
-
-	string df1=GetdataFolder(1)						//next few lines can change the folder, including the FldrRAW
-	IN2_CheckForRawToUSAXSSet()					//check if tranfer table is somehow set
-	if (strlen(WinList("*RawTo*", ",", "")))				//if not, let user to set it
-		PauseForUser IN2_RawToUSAXSPanel  
-	endif
-	SetDataFolder $df1								//here we should have recovered if the input was needed
-
-	Execute ("IN2_ConvertRAW_To_USAXS()")			//give user the panel to do selective transfer
-end
-
-
-Window IN2_ConvertRAW_To_USAXS() : Panel			//the panel to convert Raw to USAXS one by one
-	PauseUpdate    		// building window...
-	NewPanel /K=1/W=(393.75,77,906,449)
-	SetDrawLayer UserBack
-	DrawRect 55,253,460,295
-	SetDrawEnv fsize= 16,fstyle= 1
-	DrawText 105,22,"Convert SPEC data to USAXS one by one"
-	SetDrawEnv fsize= 14,fstyle= 1
-	DrawText 19,318,"This is list of raw-to-USAXS conversions you selected: "
-	SetDrawEnv fsize= 16,fstyle= 5,textrgb= (65280,0,0)
-	DrawText 64,283,"When ready push button:"
-	SetDrawEnv fstyle= 1
-	DrawText 25,111,"The USAXS data go to root:USAXS folder, do you want subfolder?"
-	DrawLine 27,91,454,91
-	SetDrawEnv fsize= 10
-	DrawText 245,64,"These data were already copied to USAXS fldr:"
-	PopupMenu SelectSPECFile,pos={5,34},size={171,21},proc=IN2_PopMenuProc_Fldr,title="Select RAW sub-folder"
-	PopupMenu SelectSPECFile,mode=1,popvalue="----",value= #"\"----;\"+IN2G_CreateListOfItemsInFolder(\"root:raw\",1)"
-	PopupMenu SelectScanFolder,pos={5,64},size={154,21},proc=IN2_PopMenuProc_SpecRun,title="Select scan folder: "
-	PopupMenu SelectScanFolder,mode=1,popvalue="----",value= #"root:Packages:Indra3:NextRTUtoConvert+\";\"+IN2_FindFolderWithScanTypes(GetDataFolder(1), 2, \"uascan\",0)" //IN2G_CreateListOfItemsInFolder(GetDataFolder(1),1)"
-	SetVariable CreateFolderName,pos={34,222},size={400,19},title="Modify USAXS Folder name?"
-	SetVariable CreateFolderName,fSize=12
-	SetVariable CreateFolderName,limits={-Inf,Inf,1},value= root:Packages:Indra3:LiberalUSAXSFolderName
-	SetVariable ListOfRawToUSAXS,pos={20,323},size={450,16},title=" ",fSize=9
-	SetVariable ListOfRawToUSAXS,limits={-Inf,Inf,1},value= root:Packages:Indra3:RawToUSAXS
-	Button CallRawToUSAXSProc,pos={143,345},size={240,20},proc=IN2_CallRawToUSAXSProc,title="Change Raw-to-USAXS conv."
-	Button GenerateLibName,pos={33,194},size={220,20},proc=IN2_GenerateTheLiberalName,title="Generate USAXS Folder name"
-	Button DoRawToUSAXSConv,pos={269,265},size={180,20},proc=IN2_DoRawToUSAXSConversion,title="Do the conversion"
-	PopupMenu ListOfUSAXSfldrs,pos={23,117},size={211,21},proc=IN2_Set2USAXSSubFolder,title="Select subfolder for USAXS data:"
-	PopupMenu ListOfUSAXSfldrs,mode=2,popvalue=" ",value= #"root:Packages:Indra3:USAXSSubfolder+\";\"+\" ;\"+IN2_GenListOfFoldersInUSAXS()"
-	SetVariable NewUSAXSFldrname,pos={12,149},size={440,19},title="Create new subfolder for USAXS data?"
-	SetVariable NewUSAXSFldrname,fSize=12
-	SetVariable NewUSAXSFldrname,limits={-Inf,Inf,1},value= root:Packages:Indra3:NewUSAXSSubfolder
-	Button CreateNewFldr,pos={300,175},size={210,20},proc=IN2_SetUSAXSSubfolder,title="Create new USAXS subfolder"
-	SetVariable ShowTransferredTo,pos={230,68},size={260,16},title=" ",fSize=5
-	SetVariable ShowTransferredTo,limits={-Inf,Inf,1},value= root:Packages:Indra3:ListOfTransfers,noedit= 1
-EndMacro
-
-//Function IN2_RefreshUSAXSLibName(ctrlName,varNum,varStr,varName) : SetVariableControl
-//	String ctrlName			//variable control to refresh Liberal name in the panel on change of some parameters
-//	Variable varNum
-//	String varStr
-//	String varName
 //
-//	 IN2_GenerateLibUSAXSFolderName()
+//Function IN2_PopMenuProc_Fldr(ctrlName,popNum,popStr) : PopupMenuControl		//sets folder to raw subfolder if selected
+//	String ctrlName
+//	Variable popNum
+//	String popStr
+//	
+//	if (!stringmatch(popStr, "*--*"))
+//		String df="root:raw:'"+popStr+"'"
+//		SetDataFolder $df
+//	endif
 //End
-
-Function/S IN2_FindFolderWithScanTypes(startDF, levels, ScanType, LongShortType)	//finds folders with scan types, scan type depends on SpecCommand
-        String startDF, ScanType                  // startDF requires trailing colon.
-        Variable levels, LongShortType		//set 1 for long type and 0 for short type return
-        			//returns the list of folders with specCommand with "uascan" in it - may not work yet for sbuascan 
-        String dfSave
-        String list = "", templist
-        
-        dfSave = GetDataFolder(1)
-        SetDataFolder startDF
-        
-       // templist = DataFolderDir(0)
-        templist = DataFolderDir(1)
-    	 SVAR/Z Command=specCommand
-    	 if (SVAR_exists (Command))
-        	if (stringmatch(Command,ScanType+"*"))
-			if (LongShortType)
-	            		list += startDF + ";"
-      		      	else
-      		      		list += GetDataFolder(0) + ";"
-        		endif
-        	endif
-        endif
-        
-        levels -= 1
-        if (levels <= 0)
-                return list
-        endif
-        
-        String subDF
-        Variable index = 0
-        do
-                String temp
-                temp = PossiblyQuoteName(GetIndexedObjName(startDF, 4, index))     	// Name of next data folder.
-                if (strlen(temp) == 0)
-                        break                                                                           			// No more data folders.
-                endif
-     	              subDF = startDF + temp + ":"
-            		 list += IN2_FindFolderWithScanTypes(subDF, levels, ScanType, LongShortType)       	// Recurse.
-                index += 1
-        while(1)
-        
-        SetDataFolder(dfSave)
-        return list
-End
-
-
-Function/T IN2_GetDataTransferredTo()										//this puts list of folders where the raw data were trnasferred to
-	SVAR subfolder=root:Packages:Indra3:PanelSpecScanSelected		
-	SVAR/Z ListR=root:Packages:Indra3:ListOfTransfers
-		if (!SVAR_Exists(ListR))
-			string/g root:Packages:Indra3:ListOfTransfers
-			SVAR ListR=root:Packages:Indra3:ListOfTransfers
-		endif
-		string str=subfolder
-		if (!stringmatch(str,"*--*"))
-			str +=":DataTransferredto"
-			SVAR/Z ListR1=$str
-			if(SVAR_Exists(ListR1))
-				ListR=ListR1
-			else
-				ListR= " -- "
-			endif
-		else
-			ListR="  --  "
-		endif
-end
-
-Function/T IN2_GenListOfFoldersInUSAXS()						//creates list of folders in the USAXS folder
-	string str="---"
-	if (DataFolderExists("root:USAXS"))
-		string df=GetDataFolder(1)
-		SetDataFolder root:USAXS
-		str=IN2G_ConvertDataDirToList(DataFolderDir(1))
-		SetDataFolder $df
-	endif
-	return str
-end
-
-
-Function IN2_SetUSAXSSubfolder(ctrlName) :ButtonControl		//sets the USAXS subfolder selected in the panel
-	String ctrlName
-		
-	SVAR USAXSsubf=root:Packages:Indra3:NewUSAXSSubfolder
-	SVAR USAXSsetTo=root:Packages:Indra3:USAXSSubfolder
-	string str = "root:USAXS:"+PossiblyQuoteName(CleanupName(USAXSsubf,1))
-	if (!DataFolderExists("root:USAXS"))
-		NewDataFolder root:USAXS
-	endif
-	if (!DataFolderExists(str))
-		NewDataFolder $str
-	endif
-	USAXSsetTo=USAXSsubf
-end	
-
+//
+//
+//Function IN2_PopMenuProc_SpecRun(ctrlName,popNum,popStr) : PopupMenuControl	//sets folder to specXX folder in raw
+//	String ctrlName
+//	Variable popNum
+//	String popStr
+//
+//	if (!stringmatch(popStr, "*--*" ))													//if valid folder selected go there
+//		SVAR /Z SpecFile=root:Packages:Indra3:PanelSpecScanSelected				//set global string and creates it, if needed
+//		if (!SVAR_Exists(SpecFile))
+//			string/g root:Packages:Indra3:PanelSpecScanSelected
+//			SVAR SpecFile=root:Packages:Indra3:PanelSpecScanSelected				//set global string and creates it, if needed
+//		endif
+//		SpecFile=GetDataFolder(1)+popStr											//this sets the global string
+//		IN2_GenerateTheLiberalName("yes")										//this generates name for the folder where the data will go
+//		IN2_GetDataTransferredTo()												//this pulls out the list of folders, where we already transferred the data
+//	endif																		//and puts it into the panel
+//End
+//
+//
+//Function IN2_WavesPanelControl(ctrlName,popNum,popStr) : PopupMenuControl			//bunch of procedures for the panel control
+//	String ctrlName															
+//	Variable popNum
+//	String popStr
+//	
+//	SVAR TR_list=root:Packages:Indra3:RawToUSAXS
+//	
+//	if (cmpstr(ctrlName,"SelectPDWaveName")==0)
+//		TR_List=ReplaceStringByKey("USAXS_PD", TR_list,  popStr,"=")
+//	Endif
+//
+//	if (cmpstr(ctrlName,"Monitor")==0)
+//		TR_List=ReplaceStringByKey("Monitor", TR_list,  popStr,"=")
+//	Endif
+//	if (cmpstr(ctrlName,"PDrange")==0)
+//		TR_List=ReplaceStringByKey("PD_range", TR_list,  popStr,"=")	
+//	Endif
+//	if (cmpstr(ctrlName,"AREnc")==0)
+//		TR_List=ReplaceStringByKey( "AR_enc", TR_list, popStr,"=")
+//	Endif
+//	if (cmpstr(ctrlName,"Timew")==0)
+//		TR_List=ReplaceStringByKey("Time", TR_list, popStr,"=")
+//	Endif
+//End
+//
+//
+//Function IN2_DeleteWavesFromRaw(ctrlName) : ButtonControl					//this creates list of waves which will be deleted 
+//	String ctrlName														//from raw
+//
+//	SVAR/Z str1=root:Packages:Indra3:ListOfWavesToDeleteFromRaw
+//	SVAR/Z str2=root:Packages:Indra3:TempListOfWavesToDeleteFromRaw
+//	
+//	if(!SVAR_Exists(str1))
+//		string/G root:Packages:Indra3:ListOfWavesToDeleteFromRaw
+//		SVAR str1=root:Packages:Indra3:ListOfWavesToDeleteFromRaw
+//	endif
+//	if(!SVAR_Exists(str2))
+//		string/G root:Packages:Indra3:TempListOfWavesToDeleteFromRaw
+//		SVAR str2=root:Packages:Indra3:TempListOfWavesToDeleteFromRaw
+//	endif
+//	
+//	//here goes procedure to delete waves
+//	Execute "IN2_PanelToSelectDeleteWaves()"								//this creates the panel for user control
+//End
+//
+//
+//
+//
+//Function IN2_SelectWhichWavesToDelete1(ctrlName,popNum,popStr) : PopupMenuControl	//what this one does?
+//	String ctrlName
+//	Variable popNum
+//	String popStr
+//
+//	SVAR TempDeleteList=root:Packages:Indra3:TempListOfWavesToDeleteFromRaw
+//	if (!stringmatch(popStr,"----"))
+//		TempDeleteList=popStr
+//	endif
+//End
+//
+//Function IN2_AddToDeleteList(ctrlName) : ButtonControl				//button control which adds wave name to delete list
+//	String ctrlName
+//
+//	SVAR ListToDelete=root:Packages:Indra3:ListOfWavesToDeleteFromRaw
+//	SVAR TempListToDelete=root:Packages:Indra3:TempListOfWavesToDeleteFromRaw
+//
+//	if (!stringmatch(ListToDelete, "*"+TempListToDelete+"*"))
+//		ListToDelete+=TempListToDelete + ";"
+//	endif
+//End
+//
+//Window IN2_PanelToSelectDeleteWaves() : Panel								//panel for user to select waves to delete
+//	PauseUpdate    		// building window...
+//	NewPanel /K=1/W=(320.25,305,728.25,553.25)
+//	SetDrawLayer UserBack
+//	SetDrawEnv fsize= 16,fstyle= 1
+//	DrawText 31,23,"Here you can select waves which will be "
+//	SetDrawEnv fsize= 16,fstyle= 1
+//	DrawText 30,45,"DELETED from raw data."
+//	SetDrawEnv fsize= 16,fstyle= 1,textrgb= (65280,16384,16384)
+//	DrawText 63,72,"Use this ONLY when really sure!!"
+//	SetDrawEnv fsize= 14,fstyle= 3
+//	DrawText 16,151,"This is List of waves you want to delete:"
+//	SetDrawEnv linepat= 2,linefgc= (65535,65535,65535),fillfgc= (52224,52224,52224)
+//	DrawRect 24,195,217,240
+//	SetDrawEnv fsize= 14,fstyle= 1,textrgb= (65280,16384,16384)
+//	DrawText 46,225,"Kill panel when done"
+//	PopupMenu SelectWave,pos={8,93},size={169,21},proc=IN2_SelectWhichWavesToDelete1,title="Select wave to delete:"
+//	PopupMenu SelectWave,mode=1,popvalue="----",value= #"\"----;\"+IN2G_CreateListOfItemsInFolder(root:Packages:Indra3:PanelSpecScanSelected,2)"
+//	Button AppendToListToDelete,pos={279,93},size={120,20},proc=IN2_AddToDeleteList,title="Add to delete list"
+//	SetVariable ListOfWavesToDelete,pos={12,158},size={400,19},title=" ",fSize=12
+//	SetVariable ListOfWavesToDelete,limits={-Inf,Inf,1},value= root:Packages:Indra3:ListOfWavesToDeleteFromRaw
+//	Button ClearDeleteList,pos={271,188},size={100,20},proc=IN2_ClearDeleteList,title="Clear Delete list"
+//	DoUpdate
+//EndMacro
+//
+//Function IN2_ClearDeleteList(ctrlName) : ButtonControl							//clear the delete list
+//	String ctrlName
+//
+//	SVAR ListToClear=root:Packages:Indra3:ListOfWavesToDeleteFromRaw
+//	
+//	ListToClear=""
+//End
+//
+////End of panel area
+////*************************************************************************************************************
+////*************************************************************************************************************
+//
+//Function IN2_ConvertSpecSetVarProc(sva) : SetVariableControl
+//	STRUCT WMSetVariableAction &sva
+//
+//	switch( sva.eventCode )
+//		case 1: // mouse up
+//		case 2: // Enter key
+//				IN2_CreateDialogForRangeSel()
+//		case 3: // Live update
+//			Variable dval = sva.dval
+//			String sval = sva.sval
+//			break
+//		case -1: // control being killed
+//			break
+//	endswitch
+//
+//	return 0
+//End
+//
+//
+////*************************************************************************************************************
+//// ***************Begining of RAW to USAXS conversion************************************************
+//
+//
+//Function IN2_ConvertRAW_To_USAXSFnct()										//function to convert Raw to USAXS
+//	string/G root:Packages:Indra3:NewUSAXSSubfolder=""
+//	string/G root:Packages:Indra3:USAXSSubfolder=""							//setup global strings
+//	string/G root:Packages:Indra3:NextRTUtoConvert="----"
+//	string/G root:Packages:Indra3:ListOfTransfers=" -- "
+//
+//	string df1=GetdataFolder(1)						//next few lines can change the folder, including the FldrRAW
+//	IN2_CheckForRawToUSAXSSet()					//check if tranfer table is somehow set
+//	if (strlen(WinList("*RawTo*", ",", "")))				//if not, let user to set it
+//		PauseForUser IN2_RawToUSAXSPanel  
+//	endif
+//	SetDataFolder $df1								//here we should have recovered if the input was needed
+//
+//	Execute ("IN2_ConvertRAW_To_USAXS()")			//give user the panel to do selective transfer
+//end
+//
+//
+//Window IN2_ConvertRAW_To_USAXS() : Panel			//the panel to convert Raw to USAXS one by one
+//	PauseUpdate    		// building window...
+//	NewPanel /K=1/W=(393.75,77,906,449)
+//	SetDrawLayer UserBack
+//	DrawRect 55,253,460,295
+//	SetDrawEnv fsize= 16,fstyle= 1
+//	DrawText 105,22,"Convert SPEC data to USAXS one by one"
+//	SetDrawEnv fsize= 14,fstyle= 1
+//	DrawText 19,318,"This is list of raw-to-USAXS conversions you selected: "
+//	SetDrawEnv fsize= 16,fstyle= 5,textrgb= (65280,0,0)
+//	DrawText 64,283,"When ready push button:"
+//	SetDrawEnv fstyle= 1
+//	DrawText 25,111,"The USAXS data go to root:USAXS folder, do you want subfolder?"
+//	DrawLine 27,91,454,91
+//	SetDrawEnv fsize= 10
+//	DrawText 245,64,"These data were already copied to USAXS fldr:"
+//	PopupMenu SelectSPECFile,pos={5,34},size={171,21},proc=IN2_PopMenuProc_Fldr,title="Select RAW sub-folder"
+//	PopupMenu SelectSPECFile,mode=1,popvalue="----",value= #"\"----;\"+IN2G_CreateListOfItemsInFolder(\"root:raw\",1)"
+//	PopupMenu SelectScanFolder,pos={5,64},size={154,21},proc=IN2_PopMenuProc_SpecRun,title="Select scan folder: "
+//	PopupMenu SelectScanFolder,mode=1,popvalue="----",value= #"root:Packages:Indra3:NextRTUtoConvert+\";\"+IN2_FindFolderWithScanTypes(GetDataFolder(1), 2, \"uascan\",0)" //IN2G_CreateListOfItemsInFolder(GetDataFolder(1),1)"
+//	SetVariable CreateFolderName,pos={34,222},size={400,19},title="Modify USAXS Folder name?"
+//	SetVariable CreateFolderName,fSize=12
+//	SetVariable CreateFolderName,limits={-Inf,Inf,1},value= root:Packages:Indra3:LiberalUSAXSFolderName
+//	SetVariable ListOfRawToUSAXS,pos={20,323},size={450,16},title=" ",fSize=9
+//	SetVariable ListOfRawToUSAXS,limits={-Inf,Inf,1},value= root:Packages:Indra3:RawToUSAXS
+//	Button CallRawToUSAXSProc,pos={143,345},size={240,20},proc=IN2_CallRawToUSAXSProc,title="Change Raw-to-USAXS conv."
+//	Button GenerateLibName,pos={33,194},size={220,20},proc=IN2_GenerateTheLiberalName,title="Generate USAXS Folder name"
+//	Button DoRawToUSAXSConv,pos={269,265},size={180,20},proc=IN2_DoRawToUSAXSConversion,title="Do the conversion"
+//	PopupMenu ListOfUSAXSfldrs,pos={23,117},size={211,21},proc=IN2_Set2USAXSSubFolder,title="Select subfolder for USAXS data:"
+//	PopupMenu ListOfUSAXSfldrs,mode=2,popvalue=" ",value= #"root:Packages:Indra3:USAXSSubfolder+\";\"+\" ;\"+IN2_GenListOfFoldersInUSAXS()"
+//	SetVariable NewUSAXSFldrname,pos={12,149},size={440,19},title="Create new subfolder for USAXS data?"
+//	SetVariable NewUSAXSFldrname,fSize=12
+//	SetVariable NewUSAXSFldrname,limits={-Inf,Inf,1},value= root:Packages:Indra3:NewUSAXSSubfolder
+//	Button CreateNewFldr,pos={300,175},size={210,20},proc=IN2_SetUSAXSSubfolder,title="Create new USAXS subfolder"
+//	SetVariable ShowTransferredTo,pos={230,68},size={260,16},title=" ",fSize=5
+//	SetVariable ShowTransferredTo,limits={-Inf,Inf,1},value= root:Packages:Indra3:ListOfTransfers,noedit= 1
+//EndMacro
+//
+////Function IN2_RefreshUSAXSLibName(ctrlName,varNum,varStr,varName) : SetVariableControl
+////	String ctrlName			//variable control to refresh Liberal name in the panel on change of some parameters
+////	Variable varNum
+////	String varStr
+////	String varName
+////
+////	 IN2_GenerateLibUSAXSFolderName()
+////End
+//
+//Function/S IN2_FindFolderWithScanTypes(startDF, levels, ScanType, LongShortType)	//finds folders with scan types, scan type depends on SpecCommand
+//        String startDF, ScanType                  // startDF requires trailing colon.
+//        Variable levels, LongShortType		//set 1 for long type and 0 for short type return
+//        			//returns the list of folders with specCommand with "uascan" in it - may not work yet for sbuascan 
+//        String dfSave
+//        String list = "", templist
+//        
+//        dfSave = GetDataFolder(1)
+//        SetDataFolder startDF
+//        
+//       // templist = DataFolderDir(0)
+//        templist = DataFolderDir(1)
+//    	 SVAR/Z Command=specCommand
+//    	 if (SVAR_exists (Command))
+//        	if (stringmatch(Command,ScanType+"*"))
+//			if (LongShortType)
+//	            		list += startDF + ";"
+//      		      	else
+//      		      		list += GetDataFolder(0) + ";"
+//        		endif
+//        	endif
+//        endif
+//        
+//        levels -= 1
+//        if (levels <= 0)
+//                return list
+//        endif
+//        
+//        String subDF
+//        Variable index = 0
+//        do
+//                String temp
+//                temp = PossiblyQuoteName(GetIndexedObjName(startDF, 4, index))     	// Name of next data folder.
+//                if (strlen(temp) == 0)
+//                        break                                                                           			// No more data folders.
+//                endif
+//     	              subDF = startDF + temp + ":"
+//            		 list += IN2_FindFolderWithScanTypes(subDF, levels, ScanType, LongShortType)       	// Recurse.
+//                index += 1
+//        while(1)
+//        
+//        SetDataFolder(dfSave)
+//        return list
+//End
+//
+//
+//Function/T IN2_GetDataTransferredTo()										//this puts list of folders where the raw data were trnasferred to
+//	SVAR subfolder=root:Packages:Indra3:PanelSpecScanSelected		
+//	SVAR/Z ListR=root:Packages:Indra3:ListOfTransfers
+//		if (!SVAR_Exists(ListR))
+//			string/g root:Packages:Indra3:ListOfTransfers
+//			SVAR ListR=root:Packages:Indra3:ListOfTransfers
+//		endif
+//		string str=subfolder
+//		if (!stringmatch(str,"*--*"))
+//			str +=":DataTransferredto"
+//			SVAR/Z ListR1=$str
+//			if(SVAR_Exists(ListR1))
+//				ListR=ListR1
+//			else
+//				ListR= " -- "
+//			endif
+//		else
+//			ListR="  --  "
+//		endif
+//end
+//
+//Function/T IN2_GenListOfFoldersInUSAXS()						//creates list of folders in the USAXS folder
+//	string str="---"
+//	if (DataFolderExists("root:USAXS"))
+//		string df=GetDataFolder(1)
+//		SetDataFolder root:USAXS
+//		str=IN2G_ConvertDataDirToList(DataFolderDir(1))
+//		SetDataFolder $df
+//	endif
+//	return str
+//end
+//
+//
+//Function IN2_SetUSAXSSubfolder(ctrlName) :ButtonControl		//sets the USAXS subfolder selected in the panel
+//	String ctrlName
+//		
+//	SVAR USAXSsubf=root:Packages:Indra3:NewUSAXSSubfolder
+//	SVAR USAXSsetTo=root:Packages:Indra3:USAXSSubfolder
+//	string str = "root:USAXS:"+PossiblyQuoteName(CleanupName(USAXSsubf,1))
+//	if (!DataFolderExists("root:USAXS"))
+//		NewDataFolder root:USAXS
+//	endif
+//	if (!DataFolderExists(str))
+//		NewDataFolder $str
+//	endif
+//	USAXSsetTo=USAXSsubf
+//end	
+//
 Function/T IN2_GenerateLibUSAXSFolderName()			//complicated way to create unique & liberal name of USAXS data
 	
 	SVAR/Z LibName=root:Packages:Indra3:LiberalUSAXSFolderName			//global string with the name for panel
@@ -899,26 +899,26 @@ Function/T IN2_GenerateLibUSAXSFolderName()			//complicated way to create unique
 	Libname= PossiblyQuoteName(LibName)				//cleanup the name
 	return Libname
 end
-
-
-
-Function IN2_CallRawToUSAXSProc(ctrlName) : ButtonControl		//call the Raw to USAXS panel
-	String ctrlName
-
-	Execute ("IN2_RawToUSAXSPanel()")						//call the panel
-End
-
-Function IN2_GenerateTheLiberalName(ctrlName) : ButtonControl		//Button which calls the Generate Liberal names - refresh
-	String ctrlName
-	
-	SVAR/Z newname=root:Packages:Indra3:LiberalUSAXSFolderName		//check if the needed global string exist 
-	if (!SVAR_Exists(newname))
-		string/g root:Packages:Indra3:LiberalUSAXSFolderName
-		SVAR newname=root:Packages:Indra3:LiberalUSAXSFolderName		//check if the needed global string exist 
-	endif
-	newname=IN2_GenerateLibUSAXSFolderName()						//sets the global string to liberal name
-End
-
+//
+//
+//
+//Function IN2_CallRawToUSAXSProc(ctrlName) : ButtonControl		//call the Raw to USAXS panel
+//	String ctrlName
+//
+//	Execute ("IN2_RawToUSAXSPanel()")						//call the panel
+//End
+//
+//Function IN2_GenerateTheLiberalName(ctrlName) : ButtonControl		//Button which calls the Generate Liberal names - refresh
+//	String ctrlName
+//	
+//	SVAR/Z newname=root:Packages:Indra3:LiberalUSAXSFolderName		//check if the needed global string exist 
+//	if (!SVAR_Exists(newname))
+//		string/g root:Packages:Indra3:LiberalUSAXSFolderName
+//		SVAR newname=root:Packages:Indra3:LiberalUSAXSFolderName		//check if the needed global string exist 
+//	endif
+//	newname=IN2_GenerateLibUSAXSFolderName()						//sets the global string to liberal name
+//End
+//
 Function IN2_CheckRawToUSAXSConversion()						//this checks, if the waves in the conversion table exists, if not calls the input panel
 
 	string oldf=GetDataFolder(1)
@@ -957,8 +957,8 @@ Function IN2_CheckRawToUSAXSConversion()						//this checks, if the waves in the
 	
 	SetDataFolder $oldf
 end
-
-
+//
+//
 Function IN2_DoRawToUSAXSConversion(ctrlName) : ButtonControl			//this function converts data to USAXS
 	String ctrlName
 	//here we do raw to USAXS conversion
@@ -1155,7 +1155,7 @@ Function IN2_DoRawToUSAXSConversion(ctrlName) : ButtonControl			//this function 
 	SetNextScan=IN2_GenNextScanToProcess(LspecName)
 
 End
-
+//
 Function IN2_CheckScanIntegrity()		//checks if the scan has proper number of points and if beam did not dump
 		//I assume I am in the folder where I need to be
 	variable valid=1
@@ -1185,7 +1185,7 @@ Function IN2_CheckScanIntegrity()		//checks if the scan has proper number of poi
 	endif
 	return Valid
 end
-
+//
 Function/T IN2_GenNextScanToProcess(scan)								//this returns next scanX in the folder or XX 
 	string scan
 	
@@ -1213,13 +1213,13 @@ Function IN2_Set2USAXSSubFolder(ctrlName,popNum,popStr) : PopupMenuControl	//Gen
 	SVAR USAXSname=root:Packages:Indra3:LiberalUSAXSFolderName 
 	USAXSname=IN2_GenerateLibUSAXSFolderName()
 End
-
-
-
+//
+//
+//
 //**********This is set of macros which allows user to load set of scans
 //********************************************************************************************
 //********************************************************************************************
-
+//
 Function IN2_CovertRaw_To_USAXSAutoF(Automat)		
 	variable automat //this will be set to 1, if called from routine which needs to have some parts skipped			
 	//this function gets input from user which range of spec scans to convert to USAXS and does it in auto cycle
@@ -1462,73 +1462,73 @@ Function IN2_SetRawToUSAXSConv()								//preset conversion for UPD using UPD2se
 end
 
 
-
-Window IN2_PhotodiodeConvPanel() : Panel						//this allows user intervention if needed becaused my conversion does not work automatically
-	PauseUpdate    		// building window...
-	NewPanel /K=1 /W=(356.25,40.25,783.75,733.25)
-	SetDrawLayer UserBack
-	SetDrawEnv fstyle= 5
-	DrawText 42,21,"Create \"conversion\" for SPEC to USAXS PhotoDiode parameters"
-	SetDrawEnv fstyle= 1
-	DrawText 3,97,"Select proper relationship for each of following:"
-	SetDrawEnv gstart
-	SetDrawEnv fsize= 10
-	DrawText 70,661,"Note, that this sets default setting for this Igor file"
-	SetDrawEnv fsize= 10
-	DrawText 70,673,"If the data from different SPEC file are loaded"
-	SetDrawEnv fsize= 10
-	DrawText 70,685,"This macro may have to be rerun!!!"
-	SetDrawEnv gstop
-	SetDrawEnv gstart
-	DrawRect 351,75,426,131
-	SetDrawEnv fstyle= 1,textrgb= (65280,0,0)
-	DrawText 364,100,"Kill panel"
-	SetDrawEnv fstyle= 1,textrgb= (65280,0,0)
-	DrawText 355,123,"When done!"
-	SetDrawEnv gstop
-	PopupMenu SetSpecDataFldr,pos={20,25},size={170,21},proc=IN2_PopMenuProc_Fldr,title="Select Raw sub-Folder"
-	PopupMenu SetSpecDataFldr,mode=2,popvalue="----",value= #"\"----;\"+IN2G_CreateListOfItemsInFolder(\"root:raw\",1)"
-	PopupMenu SelectSpecRun,pos={20,50},size={139,21},proc=IN2_PopMenuProc_SpecRun,title="Select Spec run"
-	PopupMenu SelectSpecRun,mode=2,popvalue="----",value= #"\"----;\"+IN2G_CreateListOfItemsInFolder(GetDataFolder(1),1)"
-	PopupMenu Energy,pos={49,130},size={228,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with Energy: "
-	PopupMenu Energy,mode=1,popvalue=StringByKey("Energy", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"Energ\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
-	PopupMenu VtoF,pos={18,102},size={251,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with V to f conversion: "
-	PopupMenu VtoF,mode=1,popvalue=StringByKey("Vfc", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"vfc\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
-	PopupMenu UPDGain1,pos={22,161},size={250,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with UPD gain 1: "
-	PopupMenu UPDGain1,mode=1,popvalue=StringByKey("Gain1", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"Gain1\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
-	PopupMenu UPDGain2,pos={22,188},size={250,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with UPD gain 2: "
-	PopupMenu UPDGain2,mode=1,popvalue=StringByKey("Gain2", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"Gain2\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
-	PopupMenu UPDGain3,pos={22,214},size={250,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with UPD gain 3: "
-	PopupMenu UPDGain3,mode=1,popvalue=StringByKey("Gain3", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"Gain3\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
-	PopupMenu UPDGain4,pos={22,242},size={250,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with UPD gain 4: "
-	PopupMenu UPDGain4,mode=1,popvalue=StringByKey("Gain4", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"Gain4\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
-	PopupMenu UPDGain5,pos={22,269},size={250,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with UPD gain 5: "
-	PopupMenu UPDGain5,mode=1,popvalue=StringByKey("Gain5", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"Gain5\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
-	PopupMenu UPDBkg1,pos={17,310},size={248,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with UPD bkg 1: "
-	PopupMenu UPDBkg1,mode=1,popvalue=StringByKey("Bkg1", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"bkg1\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
-	PopupMenu UPDBkg2,pos={17,340},size={248,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with UPD bkg 2: "
-	PopupMenu UPDBkg2,mode=1,popvalue=StringByKey("Bkg2", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"bkg2\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
-	PopupMenu UPDBkg3,pos={17,369},size={248,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with UPD bkg 3: "
-	PopupMenu UPDBkg3,mode=1,popvalue=StringByKey("Bkg3", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"bkg3\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
-	PopupMenu UPDBkg4,pos={17,398},size={248,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with UPD bkg 4: "
-	PopupMenu UPDBkg4,mode=1,popvalue=StringByKey("Bkg4", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"bkg4\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
-	PopupMenu UPDBkg5,pos={17,428},size={248,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with UPD bkg 5: "
-	PopupMenu UPDBkg5,mode=1,popvalue=StringByKey("Bkg5", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"bkg5\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
-	PopupMenu UPDBkg1Err,pos={20,470},size={276,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with UPD bkg 1 error: "
-	PopupMenu UPDBkg1Err,mode=9,popvalue=StringByKey("Bkg1Err", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"bkgErr1\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
-	PopupMenu UPDBkg2Err,pos={20,501},size={276,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with UPD bkg 2 error: "
-	PopupMenu UPDBkg2Err,mode=9,popvalue=StringByKey("Bkg2Err", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"bkgErr2\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
-	PopupMenu UPDBkg3Err,pos={20,529},size={276,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with UPD bkg 3 error: "
-	PopupMenu UPDBkg3Err,mode=9,popvalue=StringByKey("Bkg3Err", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"bkgErr3\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
-	PopupMenu UPDBkg4Err,pos={20,560},size={276,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with UPD bkg 4 error: "
-	PopupMenu UPDBkg4Err,mode=9,popvalue=StringByKey("Bkg4Err", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"bkgErr4\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
-	PopupMenu UPDBkg5Err,pos={20,590},size={276,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with UPD bkg 5 error: "
-	PopupMenu UPDBkg5Err,mode=9,popvalue=StringByKey("Bkg5Err", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"bkgErr5\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
-	PopupMenu I0AmpDark,pos={20,620},size={276,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with I0 dark current: "
-	PopupMenu I0AmpDark,mode=9,popvalue=StringByKey("I0AmpDark", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"I0AmpDark\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
-
-
-EndMacro
+//
+//Window IN2_PhotodiodeConvPanel() : Panel						//this allows user intervention if needed becaused my conversion does not work automatically
+//	PauseUpdate    		// building window...
+//	NewPanel /K=1 /W=(356.25,40.25,783.75,733.25)
+//	SetDrawLayer UserBack
+//	SetDrawEnv fstyle= 5
+//	DrawText 42,21,"Create \"conversion\" for SPEC to USAXS PhotoDiode parameters"
+//	SetDrawEnv fstyle= 1
+//	DrawText 3,97,"Select proper relationship for each of following:"
+//	SetDrawEnv gstart
+//	SetDrawEnv fsize= 10
+//	DrawText 70,661,"Note, that this sets default setting for this Igor file"
+//	SetDrawEnv fsize= 10
+//	DrawText 70,673,"If the data from different SPEC file are loaded"
+//	SetDrawEnv fsize= 10
+//	DrawText 70,685,"This macro may have to be rerun!!!"
+//	SetDrawEnv gstop
+//	SetDrawEnv gstart
+//	DrawRect 351,75,426,131
+//	SetDrawEnv fstyle= 1,textrgb= (65280,0,0)
+//	DrawText 364,100,"Kill panel"
+//	SetDrawEnv fstyle= 1,textrgb= (65280,0,0)
+//	DrawText 355,123,"When done!"
+//	SetDrawEnv gstop
+//	PopupMenu SetSpecDataFldr,pos={20,25},size={170,21},proc=IN2_PopMenuProc_Fldr,title="Select Raw sub-Folder"
+//	PopupMenu SetSpecDataFldr,mode=2,popvalue="----",value= #"\"----;\"+IN2G_CreateListOfItemsInFolder(\"root:raw\",1)"
+//	PopupMenu SelectSpecRun,pos={20,50},size={139,21},proc=IN2_PopMenuProc_SpecRun,title="Select Spec run"
+//	PopupMenu SelectSpecRun,mode=2,popvalue="----",value= #"\"----;\"+IN2G_CreateListOfItemsInFolder(GetDataFolder(1),1)"
+//	PopupMenu Energy,pos={49,130},size={228,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with Energy: "
+//	PopupMenu Energy,mode=1,popvalue=StringByKey("Energy", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"Energ\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
+//	PopupMenu VtoF,pos={18,102},size={251,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with V to f conversion: "
+//	PopupMenu VtoF,mode=1,popvalue=StringByKey("Vfc", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"vfc\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
+//	PopupMenu UPDGain1,pos={22,161},size={250,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with UPD gain 1: "
+//	PopupMenu UPDGain1,mode=1,popvalue=StringByKey("Gain1", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"Gain1\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
+//	PopupMenu UPDGain2,pos={22,188},size={250,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with UPD gain 2: "
+//	PopupMenu UPDGain2,mode=1,popvalue=StringByKey("Gain2", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"Gain2\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
+//	PopupMenu UPDGain3,pos={22,214},size={250,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with UPD gain 3: "
+//	PopupMenu UPDGain3,mode=1,popvalue=StringByKey("Gain3", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"Gain3\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
+//	PopupMenu UPDGain4,pos={22,242},size={250,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with UPD gain 4: "
+//	PopupMenu UPDGain4,mode=1,popvalue=StringByKey("Gain4", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"Gain4\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
+//	PopupMenu UPDGain5,pos={22,269},size={250,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with UPD gain 5: "
+//	PopupMenu UPDGain5,mode=1,popvalue=StringByKey("Gain5", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"Gain5\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
+//	PopupMenu UPDBkg1,pos={17,310},size={248,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with UPD bkg 1: "
+//	PopupMenu UPDBkg1,mode=1,popvalue=StringByKey("Bkg1", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"bkg1\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
+//	PopupMenu UPDBkg2,pos={17,340},size={248,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with UPD bkg 2: "
+//	PopupMenu UPDBkg2,mode=1,popvalue=StringByKey("Bkg2", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"bkg2\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
+//	PopupMenu UPDBkg3,pos={17,369},size={248,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with UPD bkg 3: "
+//	PopupMenu UPDBkg3,mode=1,popvalue=StringByKey("Bkg3", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"bkg3\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
+//	PopupMenu UPDBkg4,pos={17,398},size={248,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with UPD bkg 4: "
+//	PopupMenu UPDBkg4,mode=1,popvalue=StringByKey("Bkg4", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"bkg4\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
+//	PopupMenu UPDBkg5,pos={17,428},size={248,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with UPD bkg 5: "
+//	PopupMenu UPDBkg5,mode=1,popvalue=StringByKey("Bkg5", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"bkg5\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
+//	PopupMenu UPDBkg1Err,pos={20,470},size={276,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with UPD bkg 1 error: "
+//	PopupMenu UPDBkg1Err,mode=9,popvalue=StringByKey("Bkg1Err", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"bkgErr1\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
+//	PopupMenu UPDBkg2Err,pos={20,501},size={276,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with UPD bkg 2 error: "
+//	PopupMenu UPDBkg2Err,mode=9,popvalue=StringByKey("Bkg2Err", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"bkgErr2\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
+//	PopupMenu UPDBkg3Err,pos={20,529},size={276,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with UPD bkg 3 error: "
+//	PopupMenu UPDBkg3Err,mode=9,popvalue=StringByKey("Bkg3Err", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"bkgErr3\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
+//	PopupMenu UPDBkg4Err,pos={20,560},size={276,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with UPD bkg 4 error: "
+//	PopupMenu UPDBkg4Err,mode=9,popvalue=StringByKey("Bkg4Err", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"bkgErr4\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
+//	PopupMenu UPDBkg5Err,pos={20,590},size={276,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with UPD bkg 5 error: "
+//	PopupMenu UPDBkg5Err,mode=9,popvalue=StringByKey("Bkg5Err", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"bkgErr5\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
+//	PopupMenu I0AmpDark,pos={20,620},size={276,21},proc=IN2_FixRawToUSAXS_All,title="Select Key with I0 dark current: "
+//	PopupMenu I0AmpDark,mode=9,popvalue=StringByKey("I0AmpDark", root:Packages:Indra3:RawToUSAXS,"="),value= #"IN2G_GetMeMostLikelyEPICSKey(\"I0AmpDark\")+\";\"+IN2G_GetMeListOfEPICSKeys()"
+//
+//
+//EndMacro
 
 
 Function IN2_FixRawToUSAXS_All(ctrlName,popNum,popStr) : PopupMenuControl		//this is popup control for above panel
@@ -2419,7 +2419,7 @@ Function IN2_FinishSPecLoad(ListOfSpecDataToLoad)
  	if (cmpstr(ConvertUSAXSImmediately,"Yes")==0)
 		SVAR ConvList=root:Packages:Indra3:RawToUSAXS		//here we check if the conversion list is set properly 
 		if (stringmatch(ConvList, "*XX*" ))							//well, who knows what is proper, but at least somehow
-			IN2_RAWtoUSAXSParametersSetup(0) 					//so if this list has any XX in it, we push usedr into the 
+			IN2_RAWtoUSAXSParametersSetup(0) 					//so if this list has any XX in it, we push user into the 
 			if (strlen(WinList("*RawTo*", ",", "")))						//conversion panel again
 				PauseForUser IN2_RawToUSAXSPanel  				//and wait until the panel is killed
 			endif

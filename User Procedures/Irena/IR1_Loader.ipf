@@ -1,13 +1,14 @@
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
 #pragma IgorVersion=8.03 	//requires Igor version 8.03 or higher
-#pragma version=2.251
+#pragma version=2.252
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2020, Argonne National Laboratory
+//* Copyright (c) 2005 - 2021, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.252 added System Specific Models (Analytical models replacement). Move ANalytical models to old. 
 //2.251 added DataManipulation3
 //2.25 September2020 release
 //2.24 added IRB1_bioSAXS, removed absolute paths to these included files. 
@@ -48,7 +49,7 @@
 //this function loads the modeling of Distribution modeling macros...
 
 //these should be all in /User Procedures/Irena folder
-#include "IR1_CromerLiberman", version>=2.05		//cannot be rtG=1, runtime error in Cromer_Get_fp
+#include "IR1_CromerLiberman", version>=2.05		//cannot be rtGlobals!=1, runtime error in Cromer_Get_fp
 #include "IR1_DataManipulation", version>=2.70
 #include "IR1_Desmearing", version>=2.13
 #include "IR1_EvaluationGraph", version>=2.11
@@ -83,9 +84,15 @@
 #include "IR3_MultiDataPlot", version>=1
 #include "IR3_SimpleFits", version>=1.11
 #include "IR3_WAXSDiffraction", version>=1.16
-
+//bio tools
 #include "IRB1_bioSAXS", version>=1
 #include "IRB1_EvaluationTools", version>=1.0
+
+//development versions
+#include "IR3_DataManipulationIII", version>=1
+#include "IR3_SystemSpecificModels", version>=1
+
+
 
 //these are in different folders... 
 #include "cansasXML_GUI", version>=1.04
@@ -95,7 +102,6 @@
 
 #include "IRNI_NexusSupport", version>=1.14
 
-#include "IR3_DataManipulationIII", version>=1
 
 
 //removed December 2018, need to delete them from distributions 

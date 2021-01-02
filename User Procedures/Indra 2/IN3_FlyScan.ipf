@@ -89,15 +89,15 @@ Constant AmplifierRange5BlockTime=0.4
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
-Function IN3_FlyScanMain()
-	KillWIndow/Z IN3_FlyScanImportPanel
- 	KillWIndow/Z USAXSDataReduction
- 	IN3_FlyScanInitializeImport()
-	IN3_FlyScanImportPanelFnct()
-	ING2_AddScrollControl()
-	IN3_UpdatePanelVersionNumber("USAXSDataReduction", IN3_FlyImportVersionNumber)
-	IN3_FSUpdateListOfFilesInWvs()
-end
+//Function IN3_FlyScanMain()
+//	KillWIndow/Z IN3_FlyScanImportPanel
+// 	KillWIndow/Z USAXSDataReduction
+// 	IN3_FlyScanInitializeImport()
+//	IN3_FlyScanImportPanelFnct()
+//	ING2_AddScrollControl()
+//	IN3_UpdatePanelVersionNumber("USAXSDataReduction", IN3_FlyImportVersionNumber)
+//	IN3_FSUpdateListOfFilesInWvs()
+//end
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
@@ -1236,82 +1236,82 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
-Function IN3_AutoFindPeaksWorker(w, wx, pBegin, pEnd, maxPeaks, minPeakPercent, noiseLevel, smoothingFactor)
-	WAVE w
-	WAVE/Z wx
-	Variable pBegin, pEnd
-	Variable maxPeaks, minPeakPercent, noiseLevel, smoothingFactor
-	
-	Variable peaksFound= AutoFindPeaks(w,pBegin,pEnd,noiseLevel,smoothingFactor,maxPeaks)
-	if( peaksFound > 0 )
-		WAVE W_AutoPeakInfo
-		// Remove too-small peaks
-		peaksFound= TrimAmpAutoPeakInfo(W_AutoPeakInfo,minPeakPercent/100)
-		if( peaksFound > 0 )
-			// Make waves to display in a graph
-			// The x values in W_AutoPeakInfo are still actually points, not X
-			Make/O/N=(peaksFound) WA_PeakCentersY = w[W_AutoPeakInfo[p][0]]
-			AdjustAutoPeakInfoForX(W_AutoPeakInfo,w,wx)
-			Make/O/N=(peaksFound) WA_PeakCentersX = W_AutoPeakInfo[p][0]
-		endif
-	endif
-	if( peaksFound < 1 )
-		return 0
-	endif
-	return peaksFound
-End
+//Function IN3_AutoFindPeaksWorker(w, wx, pBegin, pEnd, maxPeaks, minPeakPercent, noiseLevel, smoothingFactor)
+//	WAVE w
+//	WAVE/Z wx
+//	Variable pBegin, pEnd
+//	Variable maxPeaks, minPeakPercent, noiseLevel, smoothingFactor
+//	
+//	Variable peaksFound= AutoFindPeaks(w,pBegin,pEnd,noiseLevel,smoothingFactor,maxPeaks)
+//	if( peaksFound > 0 )
+//		WAVE W_AutoPeakInfo
+//		// Remove too-small peaks
+//		peaksFound= TrimAmpAutoPeakInfo(W_AutoPeakInfo,minPeakPercent/100)
+//		if( peaksFound > 0 )
+//			// Make waves to display in a graph
+//			// The x values in W_AutoPeakInfo are still actually points, not X
+//			Make/O/N=(peaksFound) WA_PeakCentersY = w[W_AutoPeakInfo[p][0]]
+//			AdjustAutoPeakInfoForX(W_AutoPeakInfo,w,wx)
+//			Make/O/N=(peaksFound) WA_PeakCentersX = W_AutoPeakInfo[p][0]
+//		endif
+//	endif
+//	if( peaksFound < 1 )
+//		return 0
+//	endif
+//	return peaksFound
+//End
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
-
-Function IN3_FailedPositionsFixedGraph() : Graph
-	PauseUpdate    		// building window...
-	wave MeasTime
-	wave Ar_encoder
-	Display/K=1 /W=(640,52,1250,753) MeasTime vs Ar_encoder
-	ModifyGraph log=1
-	SetAxis left 266169.802796858,26038485.0119416
-	SetAxis bottom 10.895,10.914
-EndMacro
-
+//
+//Function IN3_FailedPositionsFixedGraph() : Graph
+//	PauseUpdate    		// building window...
+//	wave MeasTime
+//	wave Ar_encoder
+//	Display/K=1 /W=(640,52,1250,753) MeasTime vs Ar_encoder
+//	ModifyGraph log=1
+//	SetAxis left 266169.802796858,26038485.0119416
+//	SetAxis bottom 10.895,10.914
+//EndMacro
+//
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
-Function IN3_FixTheOscilllations()
-	//uses information from prior code which finds oscillations and removes them.
-	Wave MeasTime
-	Wave Monitor
-	Wave USAXS_PD
-	Wave PD_range
-	Wave I0gain
-	wave AR_PSOpulse
-	wave AR_angle
-	Wave/Z RemoveInformation
-	variable shiftARPSOpulse
-	if(WaveExists(RemoveInformation))
-		Wave Ar_encoder	
-		Variable i, StartARshift, StartRemoval, EndRemoval, ShiftArBy
-		StartARshift = 0
-		For(i=0;i<dimsize(RemoveInformation,0);i+=1)
-			if(RemoveInformation[i][1]>0)		//seems to get some errors with lines containing only 0
-				StartRemoval= RemoveInformation[i][1]
-				EndRemoval=RemoveInformation[i][2]
-				ShiftArBy=RemoveInformation[i][0]
-				Ar_encoder[StartARshift,StartRemoval-1]+=ShiftArBy		//?????
-				if(numtype(EndRemoval)==0)
-					shiftARPSOpulse= BinarySearch(AR_PSOpulse, EndRemoval)		//this fixes the PSO record
-					AR_PSOpulse[shiftARPSOpulse,numpnts(AR_PSOpulse)-1] -= EndRemoval - StartRemoval
-					Ar_encoder[StartRemoval,1.4*EndRemoval]=NaN
-				endif
-				StartARshift=EndRemoval+1
-			endif
-		endfor
-		IN2G_RemoveNaNsFrom6Waves(MeasTime,Monitor,USAXS_PD,PD_range,I0gain,Ar_encoder)
-	else
-	//	print "Nothing to fix here"
-	endif
-end
-
+//Function IN3_FixTheOscilllations()
+//	//uses information from prior code which finds oscillations and removes them.
+//	Wave MeasTime
+//	Wave Monitor
+//	Wave USAXS_PD
+//	Wave PD_range
+//	Wave I0gain
+//	wave AR_PSOpulse
+//	wave AR_angle
+//	Wave/Z RemoveInformation
+//	variable shiftARPSOpulse
+//	if(WaveExists(RemoveInformation))
+//		Wave Ar_encoder	
+//		Variable i, StartARshift, StartRemoval, EndRemoval, ShiftArBy
+//		StartARshift = 0
+//		For(i=0;i<dimsize(RemoveInformation,0);i+=1)
+//			if(RemoveInformation[i][1]>0)		//seems to get some errors with lines containing only 0
+//				StartRemoval= RemoveInformation[i][1]
+//				EndRemoval=RemoveInformation[i][2]
+//				ShiftArBy=RemoveInformation[i][0]
+//				Ar_encoder[StartARshift,StartRemoval-1]+=ShiftArBy		//?????
+//				if(numtype(EndRemoval)==0)
+//					shiftARPSOpulse= BinarySearch(AR_PSOpulse, EndRemoval)		//this fixes the PSO record
+//					AR_PSOpulse[shiftARPSOpulse,numpnts(AR_PSOpulse)-1] -= EndRemoval - StartRemoval
+//					Ar_encoder[StartRemoval,1.4*EndRemoval]=NaN
+//				endif
+//				StartARshift=EndRemoval+1
+//			endif
+//		endfor
+//		IN2G_RemoveNaNsFrom6Waves(MeasTime,Monitor,USAXS_PD,PD_range,I0gain,Ar_encoder)
+//	else
+//	//	print "Nothing to fix here"
+//	endif
+//end
+//
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************

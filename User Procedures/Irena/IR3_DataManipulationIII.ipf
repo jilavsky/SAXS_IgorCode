@@ -19,6 +19,7 @@ Function IR3DM_DataManipulationIII()
 	if(V_Flag)
 		DoWindow/F IR3DM_DataManIIIPanel
 	else
+		DoAlert /T="This is not finished yet" 0, "This tool is really not finished yet. It needs lot more work, so use the other Data Manipulation tools, please. "
 		IR3DM_InitDMIII()
 		IR3DM_DataManIIIPanelFnct()
 		ING2_AddScrollControl()
@@ -645,7 +646,9 @@ Function IR3DM_AppendDataToGraphLogLog()
 			endif
 		endif
 	else
-		RemoveFromGraph /W=IR3DM_LogLogDataDisplay /Z $(nameofWave(OriginalSubtractIntWave))
+		if(WaveExists(OriginalSubtractIntWave) && WaveExists(OriginalSubtractQWave))
+			RemoveFromGraph /W=IR3DM_LogLogDataDisplay /Z $(nameofWave(OriginalSubtractIntWave))
+		endif
 	endif
 
 	SVAR DataFolderName=root:Packages:Irena:DataManIII:DataFolderName

@@ -1,14 +1,15 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
-#pragma version = 1.61
+#pragma version = 1.62
 
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2020, Argonne National Laboratory
+//* Copyright (c) 2005 - 2021, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.62 added System Speciifc data type in results. 
 //1.61 add to Multi controls sorting by _xyzs as time in seconds. 
 //1.60 add Multi controls - controls with listbox... For tools needing ability to select multiple data sets. 
 //			changed bahavior for generic (no defined data types selected) data. Now, if user selects X, Y, or E wave and in next folder user selects such waves exist, 
@@ -241,7 +242,7 @@ Function IR2C_InitControls(PckgDataFolder,PanelWindowName,AllowedIrenaTypes, All
 	AllCurrentlyAllowedTypes+="IntensityModelLSQF2pop5;NumberDistModelLSQF2pop5;VolumeDistModelLSQF2pop5;"
 	AllCurrentlyAllowedTypes+="IntensityModelLSQF2pop6;NumberDistModelLSQF2pop6;VolumeDistModelLSQF2pop6;"
 	AllCurrentlyAllowedTypes+= "ReflModel;SLDProfile;"
-	AllCurrentlyAllowedTypes+="ModelingNumberDistribution;ModelingVolumeDistribution;ModelingIntensity;FractFitIntensity;DebyeBuecheModelInt;AnalyticalModelInt;"
+	AllCurrentlyAllowedTypes+="ModelingNumberDistribution;ModelingVolumeDistribution;ModelingIntensity;FractFitIntensity;DebyeBuecheModelInt;AnalyticalModelInt;SysSpecModelInt;"
 	AllCurrentlyAllowedTypes+="ModelingNumDist_Pop1;ModelingVolDist_Pop1;Mass1FractFitInt;Surf1FractFitInt;UniLocalLevel1Unified;UniLocalLevel1Pwrlaw;UniLocalLevel1Guinier;"
 	AllCurrentlyAllowedTypes+="ModelingNumDist_Pop2;ModelingVolDist_Pop2;Mass2FractFitInt;Surf2FractFitInt;UniLocalLevel2Unified;UniLocalLevel2Pwrlaw;UniLocalLevel2Guinier;"
 	AllCurrentlyAllowedTypes+="ModelingNumDist_Pop3;ModelingVolDist_Pop3;Mass3FractFitInt;Surf3FractFitInt;UniLocalLevel3Unified;UniLocalLevel3Pwrlaw;UniLocalLevel3Guinier;"
@@ -261,7 +262,7 @@ Function IR2C_InitControls(PckgDataFolder,PanelWindowName,AllowedIrenaTypes, All
 	AllCurrentlyAllowedTypes+="SimFitGuinierI;SimFitGuinierRI;SimFitGuinierSII;SimFitSphereI;SimFitSpheroidI;SimFitPorodI;"
 
 	string/g AllKnownToolsResults
-	AllKnownToolsResults = "Unified Fit;Size Distribution;Modeling II;Modeling I;Small-angle diffraction;Analytical models;Fractals;PDDF;Reflectivity;Guinier-Porod;Simple Fits;Evaluate Size Dist;"
+	AllKnownToolsResults = "Unified Fit;Size Distribution;Modeling II;Modeling I;Small-angle diffraction;Analytical models;Fractals;PDDF;Reflectivity;Guinier-Porod;Simple Fits;Evaluate Size Dist;System Specific Models;"
 
 	if(cmpstr(AllowedResultsTypes,"AllCurrentlyAllowedTypes")==0)
 		AllowedResultsTypes=AllCurrentlyAllowedTypes
@@ -446,8 +447,10 @@ Function IR2C_InitControls(PckgDataFolder,PanelWindowName,AllowedIrenaTypes, All
 	ResultsDataTypesLookup+="SADUnifiedIntensity:SADUnifiedQvector;"
 	//Gels
 	ResultsDataTypesLookup+="DebyeBuecheModelInt:DebyeBuecheModelQvec;"//old, now next line...
-	ResultsDataTypesLookup+="AnalyticalModelInt:AnalyticalModelQvec;"
-	//Reflcecitivty
+	ResultsDataTypesLookup+="AnalyticalModelInt:SysSpecModelQvec;"
+	//System Sepcific Models (repalce Gels)
+	ResultsDataTypesLookup+="SysSpecModelInt:SysSpecModelQvec;"
+	//Reflecitivty
 	ResultsDataTypesLookup+="ReflModel:ReflQ;"
 	ResultsDataTypesLookup+="SLDProfile:SLDProfileX;SLDProfile:x-scaling;"
 	//PDDF
@@ -2582,6 +2585,8 @@ Function/S IR2C_ReturnKnownToolResults(ToolName)
 		ListOfLookups = GrepList(ResultsDataTypesLookup, "^(Refl|SLD)",0, ";" )
 	elseif(stringmatch(ToolName,"Modeling II"))
 		ListOfLookups = GrepList(ResultsDataTypesLookup, "ModelLSQF",0, ";" )
+	elseif(stringmatch(ToolName,"System Specific Models"))
+		ListOfLookups = GrepList(ResultsDataTypesLookup, "^SysSpecModel",0, ";" )
 	elseif(stringmatch(ToolName,"Guinier-Porod"))
 		ListOfLookups = GrepList(ResultsDataTypesLookup, "GuinierPorod",0, ";" )
 	elseif(stringmatch(ToolName,"Simple Fits"))

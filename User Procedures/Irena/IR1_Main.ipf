@@ -1,20 +1,21 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
-#pragma version=2.701
+#pragma version=2.702
 #pragma IgorVersion=8.03
 
 //DO NOT renumber Main files every time, these are main release numbers...
 //define manual date and release verison 
-constant CurrentIrenaVersionNumber = 2.701		//change version of Boot Irena1 modeling.ipf to get proper check version. 
+constant CurrentIrenaVersionNumber = 2.702		//change version of Boot Irena1 modeling.ipf to get proper check version. 
 
 //*************************************************************************
-//* Copyright (c) 2005 - 2020, Argonne National Laboratory
+//* Copyright (c) 2005 - 2021, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************
 
-//2.701	Beta version after September 2020 release. 
-//			Fix Multi-data GUi tools to handle Liberal names
+//2.702	Beta version after September 2020 release. 
+//			Add replaement for Analytical models: System Specific models
+//			Fix Multi-data GUI tools to handle Liberal names
 //			Data Manipulation 3
 //2.70		Require Igor 8.03 and higher. No testing for Igor 7 anymore. 
 //2.696	Beta version after February2020 release
@@ -184,7 +185,7 @@ Menu "SAS"
 	   "Clone top window with data", IN2G_CloneWindow()
 		End
 	"---"
-	"Basic Fits+Simple Analysis", IR3J_SimpleFits()
+	"Simple Fits and Analysis", IR3J_SimpleFits()
 	help={"Quick and simple fitting of multiple SAS or results data. Guinier, Porod, Sphere and Spheroid. "}
 	"Unified Fit", IR1A_UnifiedModel()
 	help = {"Modeling of SAS by modeling Guinier and Power law dependecies, based on Unified model by Gregg Beaucage"}
@@ -196,11 +197,11 @@ Menu "SAS"
 	help = {"Modeling of SAS as Guinier and Power law dependecies, based on Guinier-Porod model by Bualem Hammouda"}
 	"Fractals model", IR1V_FractalsModel()
 	help = {"Modeling of SAS by combining mass and surface fractal dependecies, based on model by Andrew Allen"}
-	"Analytical models", IR2H_GelsMainFnct()
-	help={"Debye-Bueche, Teubner-Strey model"}
+	"System Specific Models", IR3S_SysSpecModels()
+	help={"Debye-Bueche, Teubner-Strey model, Benedetti-Ciccariello "}
 	"Small-Angle Diffraction", IR2D_MainSmallAngleDiff()
 	help={"Modeling of small angle diffraction - up to 6 peaks and Powerlaw background"}
-	"Powder Diffraction fitting = WAXS", IR3W_WAXS()
+	"Powder Diffraction fitting (WAXS, XRD)", IR3W_WAXS()
 	help={"Tool for analysis of WAXS/Powder diffraction data. Developement version for public."}
 	"Pair distance dist. fnct.", IR2Pr_MainPDDF()
 	help={"Calculate pair distribution function using various methods"}
@@ -214,6 +215,10 @@ Menu "SAS"
 	end
 	SubMenu "Anisotropy"
 		"Anisotropy analysis (HOP)", IR3N_AnisotropicSystems()
+	end
+	Submenu "Old stuff"
+		"Analytical models", IR2H_GelsMainFnct()
+		help={"Debye-Bueche, Teubner-Strey model"}
 	end
 	"---"
 	"Scattering contrast calculator", IR1K_ScattCont2()
@@ -341,6 +346,7 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	WindowProcNames+="POVPDBPanel=IR3P_MainCheckVersion;AnisotropicSystemsPanel=IR3N_MainCheckVersion;IR3L_MultiSamplePlotPanel=IR3L_MainCheckVersion;"
 	WindowProcNames+="IRB1_ImportBioSAXSASCIIData=IRB1_ImpASCIIMainCheckVer;IRB1_DataManipulationPanel=IRB1_DataManMainCheckVersion;"
 	WindowProcNames+="IRB1_ATSASInterfacePanel=IR1B_PDDFMainCheckVersion;IR3J_SimpleFitsPanel=IR1B_SimpleFitsMainCheckVersion;IR3B_MetadataBrowserPanel=IR3B_MainCheckVersion;"
+	WindowProcNames+="IR3S_SysSpecModelsPanel=IR3S_MainCheckVersion;IR3DM_DataManIIIPanel=IR3DM_MainCheckVersion;"
   
 	IR2C_CheckWindowsProcVersions(WindowProcNames)
 	IN2G_CheckPlatformGUIFonts()
@@ -871,7 +877,7 @@ Function IR1_AboutPanel()
 	SetDrawEnv fsize= 20,fstyle= 1,textrgb= (16384,28160,65280)
 	DrawText 23,30,"Irena macros for Igor Pro 8.03+"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
-	DrawText 100,60,"@ ANL, 2020"
+	DrawText 100,60,"@ ANL, 2021"
 	DrawText 10,80,"release "+num2str(CurrentIrenaVersionNumber)
 	DrawText 11,100,"To get help please contact: ilavsky@aps.anl.gov"
 	SetDrawEnv textrgb= (0,0,65535)
@@ -3261,7 +3267,8 @@ Function IR1_KillGraphsAndPanels()
 	ListOfWindows += "TwoPhaseSystemData;TwoPhaseSolidGizmo;TwoPhaseSystems;FractalAggregatePanel;MassFractalAggregateView;TwoPhaseSolid2DImage;"
 	ListOfWindows += "IR3D_DataMergePanel;IRB1_PDDFInterfacePanel;IR3J_SimpleFitsPanel;IRB1_DataManipulationPanel;IR3J_LinDataDisplay;"
 	ListOfWindows += "IR3L_MultiSamplePlotPanel;IR3J_LogLogDataDisplay;IR3L_MultiSamplePlotPanel;IRB1_ImportBioSAXSASCIIData;"
-	ListOfWindows += "IR2E_MultipleDataSelectionPnl;IR3W_WAXSPanel;IRB1_ConcSeriesPanel;"
+	ListOfWindows += "IR2E_MultipleDataSelectionPnl;IR3W_WAXSPanel;IRB1_ConcSeriesPanel;IR3S_SysSpecModelsPanel;IR3S_LogLogDataDisplay;"
+	ListOfWindows += "IR3DM_DataManIIIPanel;IR3DM_LogLogDataDisplay;"
 	
 	
 	variable i

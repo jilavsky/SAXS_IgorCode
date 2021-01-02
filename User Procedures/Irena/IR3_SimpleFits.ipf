@@ -1,9 +1,9 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.11
+#pragma version=1.12
 constant IR3JversionNumber = 0.3			//Simple Fit panel version number
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2020, Argonne National Laboratory
+//* Copyright (c) 2005 - 2021, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -11,9 +11,9 @@ constant IR3JversionNumber = 0.3			//Simple Fit panel version number
 constant SimpleFitsLinPlotMaxScale = 1.07
 constant SimpleFitsLinPlotMinScale = 0.8
 
-
-//1.1 combined this ipf with "Simple fits models"
-//1.0 Simple Fits tool first release version 
+//1.12 	Added Invariant calculation. 
+//1.1 		combined this ipf with "Simple fits models"
+//1.0 		Simple Fits tool first release version 
 
 
 //To add new function:
@@ -42,7 +42,7 @@ constant SimpleFitsLinPlotMinScale = 0.8
 //IR3J_DeleteExistingModelResults()
 //			add here how to delete new data types being created... 
 //add also results type to IR2_PanelControLProcedures.ipf 
-//			Procedrfue is IR2C_InitControls
+//			Procedure is IR2C_InitControls
 //existing:  	AllCurrentlyAllowedTypes+="SimFitYGuinier;SimFitYGuinierR;SimFitYGuinierS;SimFitYSphere;SimFitYSpheroid;"
 
 ///******************************************************************************************
@@ -90,9 +90,9 @@ end
 Function IR3J_SimpleFitsPanelFnct()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	PauseUpdate    		// building window...
-	NewPanel /K=1 /W=(2.25,43.25,530,800) as "Multi Sample Fits"
+	NewPanel /K=1 /W=(2.25,43.25,530,800) as "Simple Fits & Analysis tool"
 	DoWIndow/C IR3J_SimpleFitsPanel
-	TitleBox MainTitle title="Simple & Basic Analysis tool",pos={140,2},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},fSize=22,fColor=(0,0,52224)
+	TitleBox MainTitle title="Simple Fists & Analysis tool",pos={120,2},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},fSize=22,fColor=(0,0,52224)
 	string UserDataTypes=""
 	string UserNameString=""
 	string XUserLookup=""
@@ -108,10 +108,7 @@ Function IR3J_SimpleFitsPanelFnct()
 	SetVariable DataFolderName,noproc,title=" ",pos={250,140},size={270,17},frame=0, fstyle=1,valueColor=(0,0,65535)
 	Setvariable DataFolderName, variable=root:Packages:Irena:SimpleFits:DataFolderName, noedit=1
 
-
-
 	Button SelectAll,pos={200,680},size={80,15}, proc=IR3J_ButtonProc,title="SelectAll", help={"Select All data in Listbox"}
-
 	Button GetHelp,pos={430,50},size={80,15},fColor=(65535,32768,32768), proc=IR3J_ButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 
 	PopupMenu SimpleModel,pos={280,175},size={200,20},fStyle=2,proc=IR3J_PopMenuProc,title="Model to fit : "
@@ -145,10 +142,26 @@ Function IR3J_SimpleFitsPanelFnct()
 	Setvariable Spheroid_Beta, variable=root:Packages:Irena:SimpleFits:Spheroid_Beta, limits={0.001,1000,0}, help={"Particle aspect ratio, beta, particle is R x R x Beta*R"}
 	SetVariable DataBackground,pos={240,320},size={220,15}, proc=IR3J_SetVarProc,title="Flat Background ", bodywidth=80
 	Setvariable DataBackground, variable=root:Packages:Irena:SimpleFits:DataBackground, limits={-inf,inf,0}, help={"Flat background for scattering intensity"}
+
+	//Invariant controls
+	PopupMenu InvBackgModel,pos={260,230},size={200,20},fStyle=2,proc=IR3J_PopMenuProc,title="Bckg model: "
+	SVAR InvBackgModel = root:Packages:Irena:SimpleFits:InvBackgModel
+	SVAR InvBackgModelList = root:Packages:Irena:SimpleFits:InvBackgModelList
+	print WhichListItem(InvBackgModel, InvBackgModelList)
+	PopupMenu InvBackgModel,value= #"root:Packages:Irena:SimpleFits:InvBackgModelList" ,mode=(WhichListItem(InvBackgModel, InvBackgModelList)+1) 
+	SetVariable InvBckgMinQ,pos={240,320},size={220,15}, proc=IR3J_SetVarProc,title="Backg Fit Qmin", bodywidth=80
+	Setvariable InvBckgMinQ, variable=root:Packages:Irena:SimpleFits:InvBckgMinQ, limits={0,10,0}, help={"Start of range to fit background"}
+	SetVariable InvBckgMaxQ,pos={240,340},size={220,15}, proc=IR3J_SetVarProc,title="Bckg Fit Qmax ", bodywidth=80
+	Setvariable InvBckgMaxQ, variable=root:Packages:Irena:SimpleFits:InvBckgMaxQ, limits={-inf,inf,0}, help={"End of Q range to fit background"}
+	SetVariable invariant,pos={240,380},size={220,15}, noproc,title="Invariant = ", bodywidth=80, noedit=1, limits={0,inf,0}
+	Setvariable invariant, variable=root:Packages:Irena:SimpleFits:invariant, help={"Start of range to fit background"}
+	TitleBox invariantInfo title="\Zr100Inv. units: [(mol e-^2/cm^3)^3]",size={330,15},pos={300,405},frame=0,fColor=(0,0,65535),labelBack=0
+	SetVariable InvQmaxUsed,pos={240,425},size={220,15}, noproc,title="Qmax used = ", bodywidth=80, noedit=1, limits={0,inf,0}
+	Setvariable InvQmaxUsed, variable=root:Packages:Irena:SimpleFits:InvQmaxUsed, limits={0,10,0}, help={"Calculated Qmax used in evaluation"}
+
+	//other stuff...
 	Button FitCurrentDataSet,pos={280,450},size={180,20}, proc=IR3J_ButtonProc,title="Fit Current (one) Dataset", help={"Fit current data set"}
-
 	Button FitSelectionDataSet,pos={280,480},size={180,20}, proc=IR3J_ButtonProc,title="Fit (All) Selected Data", help={"Fit all data selected in listbox"}
-
 	SetVariable AchievedChiSquare,pos={270,510},size={220,15}, noproc,title="Achieved chi-square"
 	Setvariable AchievedChiSquare, variable=root:Packages:Irena:SimpleFits:AchievedChiSquare, disable=2, limits={0,inf,0}, format="%3.2f"
 
@@ -157,11 +170,8 @@ Function IR3J_SimpleFitsPanelFnct()
 	Checkbox SaveToFolder, pos={280,567},size={76,14},title="Record to Folder?", noproc, variable=root:Packages:Irena:SimpleFits:SaveToFolder, help={"Saves Intensity and Q in teh data folder"}
 
 	Button RecordCurrentresults,pos={280,590},size={180,20}, proc=IR3J_ButtonProc,title="Record Results", help={"Record results in notebook and table"}
-
 	Button GetTableWithResults,pos={280,620},size={180,20}, proc=IR3J_ButtonProc,title="Get Table With Results", help={"Open Table with results for current Model"}
-
 	Button GetNotebookWithResults,pos={280,650},size={180,20}, proc=IR3J_ButtonProc,title="Get Notebook With Results", help={"Open Notebook with results for current Model"}
-
 	Button DeleteOldResults,pos={280,705},size={180,20}, proc=IR3J_ButtonProc,title="Delete Existing Results", help={"Delete results for the current model"}, fColor=(34952,34952,34952)
 
 	SetVariable DelayBetweenProcessing,pos={260,735},size={220,15}, noproc,title="Delay between Processing ", bodywidth=80
@@ -200,6 +210,7 @@ Function IR3J_CreateCheckGraphs()
 
 	variable exists2=0
 	SVAR SimpleModel = root:Packages:Irena:SimpleFits:SimpleModel
+
 	if(StringMatch(SimpleModel,"Guinier*") || StringMatch(SimpleModel,"Porod*"))
 		DoWIndow IR3J_LinDataDisplay
 		if(V_Flag)
@@ -248,6 +259,8 @@ Function IR3J_InitSimpleFits()
 	ListOfStrings+="DataStartFolder;DataMatchString;FolderSortString;FolderSortStringAll;"
 	ListOfStrings+="UserMessageString;SavedDataMessage;"
 	ListOfStrings+="SimpleModel;ListOfSimpleModels;"
+	//parameters for Invariant
+	ListOfStrings+="InvBackgModel;InvBackgModelList;"
 
 	ListOfVariables="UseIndra2Data1;UseQRSdata1;"
 	ListOfVariables+="DataBackground;AchievedChiSquare;ScatteringContrast;"
@@ -257,6 +270,9 @@ Function IR3J_InitSimpleFits()
 	ListOfVariables+="ProcessManually;ProcessSequentially;OverwriteExistingData;AutosaveAfterProcessing;DelayBetweenProcessing;"
 	ListOfVariables+="DataQEnd;DataQstart;DataQEndPoint;DataQstartPoint;"
 	ListOfVariables+="SaveToNotebook;SaveToWaves;SaveToFolder;"
+	//parameters for Invariant
+	ListOfVariables+="InvBckgMinQ;InvBckgMaxQ;Invariant;InvQmaxUsed;"
+	 
 	ListOfVariables+="VOlSD_Rg;VolSD_Volume;VolSD_MeanDiameter;VolSD_MedianDiameter;VOlSD_ModeDiamater;"
 	ListOfVariables+="NumSD_NumPartPerCm3;NumSD_MeanDiameter;NumSD_MedianDiameter;NumSD_ModeDiamater;"
 
@@ -270,7 +286,6 @@ Function IR3J_InitSimpleFits()
 	endfor	
 
 	ListOfStrings="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;dQWavename;"
-//	ListOfStrings+="NewDataFolderName;NewIntensityWaveName;NewQWavename;NewErrorWaveName;"
 	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
 		SVAR teststr=$(StringFromList(i,ListOfStrings))
 		teststr =""
@@ -289,8 +304,15 @@ Function IR3J_InitSimpleFits()
 			teststr ="root:"
 		endif
 	endfor		
+	SVAR InvBackgModelList
+	SVAR InvBackgModel
+	InvBackgModelList = "Porod+y0;PowerLaw+y0;Constant;Gauss y0+A*exp((X-X0)^2/width;Ruland A*exp(B*X^2)+y0;None;"
+	if(strlen(InvBackgModel)<2)
+		InvBackgModel = "Constant" 
+	endif
 	SVAR ListOfSimpleModels
-	ListOfSimpleModels="Guinier;Porod;Sphere;Spheroid;Guinier Rod;Guinier Sheet;Volume Size Distribution;Number Size Distribution;"
+	ListOfSimpleModels="Guinier;Porod;Sphere;Spheroid;Guinier Rod;Guinier Sheet;"
+	ListOfSimpleModels+="Invariant;Volume Size Distribution;Number Size Distribution;"
 	SVAR SimpleModel
 	if(strlen(SimpleModel)<1)
 		SimpleModel="Guinier"
@@ -335,6 +357,14 @@ Function IR3J_InitSimpleFits()
 	if(ScatteringContrast<1)
 		ScatteringContrast = 1
 	endif
+	NVAR InvBckgMinQ
+	//InvBckgMinQ = 0
+	NVAR InvBckgMaxQ
+	//InvBckgMaxQ = 0
+	NVAR Invariant
+	Invariant = 0
+	NVAR InvQmaxUsed
+	InvQmaxUsed = 0
 	Make/O/T/N=(0) ListOfAvailableData
 	Make/O/N=(0) SelectionOfAvailableData
 	SetDataFolder oldDf
@@ -395,7 +425,7 @@ Function IR3J_SetVarProc(sva) : SetVariableControl
 			if(stringmatch(sva.ctrlName,"DataQEnd"))
 				WAVE OriginalDataQWave = root:Packages:Irena:SimpleFits:OriginalDataQWave
 				tempP = BinarySearch(OriginalDataQWave, DataQEnd )
-				if(tempP<1)
+				if(tempP>numpnts(OriginalDataQWave)-2)
 					print "Wrong Q value set, Data Q max must be at most 1 point before the end of Data"
 					tempP = numpnts(OriginalDataQWave)-2
 					DataQEnd = OriginalDataQWave[tempP]
@@ -415,7 +445,29 @@ Function IR3J_SetVarProc(sva) : SetVariableControl
 				DataQstartPoint=tempP
 				IR3J_SyncCursorsTogether("OriginalDataIntWave","A",tempP)
 				IR3J_SyncCursorsTogether("LinModelDataIntWave","A",tempP)
-		endif
+			endif
+			if(stringmatch(sva.ctrlName,"InvBckgMinQ"))		//invariant background fitting function
+				NVAR InvBckgMinQ = root:Packages:Irena:SimpleFits:InvBckgMinQ
+				WAVE OriginalDataQWave = root:Packages:Irena:SimpleFits:OriginalDataQWave
+				tempP = BinarySearch(OriginalDataQWave, InvBckgMinQ )
+				if(tempP<1)
+					print "Wrong Q value set, Data Q min must be at least 1 point from the start of Data"
+					tempP = 1
+					InvBckgMinQ = OriginalDataQWave[tempP]
+				endif
+				IR3J_InvSyncBckgCursors(0)
+			endif
+			if(stringmatch(sva.ctrlName,"InvBckgMaxQ"))		//invariant background fitting function
+				NVAR InvBckgMaxQ = root:Packages:Irena:SimpleFits:InvBckgMaxQ
+				WAVE OriginalDataQWave = root:Packages:Irena:SimpleFits:OriginalDataQWave
+				tempP = BinarySearch(OriginalDataQWave, InvBckgMaxQ )
+				if(tempP>numpnts(OriginalDataQWave)-2)
+					print "Wrong Q value set, Data Q max must be at most 1 point before the end of Data"
+					tempP = numpnts(OriginalDataQWave)-2
+					InvBckgMaxQ = OriginalDataQWave[tempP]
+				endif
+				IR3J_InvSyncBckgCursors(0)
+			endif			
 			break
 
 		case 3: // live update
@@ -557,7 +609,7 @@ end
 
 
 Function IR3J_AppendDataToGraphModel()
-	
+	//this deals with lin-lin model. 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	IR3J_CreateCheckGraphs()
 	variable WhichLegend=0
@@ -604,18 +656,6 @@ Function IR3J_AppendDataToGraphModel()
 					Label /W=IR3J_LinDataDisplay left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"ln(Q\\S2\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"*Intensity)"
 					Label /W=IR3J_LinDataDisplay bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q\\S2\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"[A\\S-2\\M"+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 				break		// exit from switch
-				//			case "Sphere":			// execute if case matches expression
-				//					ModifyGraph /W=IR3J_LinDataDisplay log=0, mirror(bottom)=1
-				//					SetAxis/A/W=IR3J_LinDataDisplay
-				//					Label /W=IR3J_LinDataDisplay left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"ln(Intensity)"
-				//					Label /W=IR3J_LinDataDisplay bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q\\S2\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"[A\\S-2\\M"+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
-				//				break		// exit from switch
-				//			case "Spheroid":			// execute if case matches expression
-				//					ModifyGraph /W=IR3J_LinDataDisplay log=0, mirror(bottom)=1
-				//					SetAxis/A/W=IR3J_LinDataDisplay
-				//					Label /W=IR3J_LinDataDisplay left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"ln(Intensity)"
-				//					Label /W=IR3J_LinDataDisplay bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q\\S2\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"[A\\S-2\\M"+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
-				//				break		// exit from switch
 			case "Porod":	// execute if case matches expression
 					ModifyGraph /W=IR3J_LinDataDisplay log=0, mirror(bottom)=1
 					ModifyGraph /W=IR3J_LinDataDisplay mode(LinModelDataIntWave)=3,marker(LinModelDataIntWave)=8
@@ -675,7 +715,13 @@ Function IR3J_AppendDataToGraphLogLog()
 	// for "Size Distribution" use linear left axis.  
 	SVAR SimpleModel = root:Packages:Irena:SimpleFits:SimpleModel
 	if(StringMatch(SimpleModel, "*size distribution"))
-				ModifyGraph /W=IR3J_LogLogDataDisplay log(left)=0, mirror=1
+		ModifyGraph /W=IR3J_LogLogDataDisplay log(left)=0, mirror=1
+	endif
+	//this is from Invariant and needs to be removed if it exists.. 
+	Wave/Z InvBckgWaveModel = root:Packages:Irena:SimpleFits:InvBckgWaveModel
+	if(WaveExists(InvBckgWaveModel))	//this is used to show how Porod and Powerlaw fit... 
+		RemoveFromGraph /W=IR3J_LogLogDataDisplay /Z InvBckgWaveModel
+		KillWaves/Z InvBckgWaveModel, QWaveModel	
 	endif
 	
 	NVAR DataQEnd = root:Packages:Irena:SimpleFits:DataQEnd
@@ -701,33 +747,12 @@ Function IR3J_AppendDataToGraphLogLog()
 	cursor /W=IR3J_LogLogDataDisplay A, OriginalDataIntWave, DataQstartPoint
 	SetWindow IR3J_LogLogDataDisplay, hook(SimpleFitsLogCursorMoved) = IR3J_GraphWindowHook
 
-	
-	switch(V_Flag)	// numeric switch
-		case 0:		// execute if case matches expression
-			Legend/W=IR3J_LogLogDataDisplay /N=text0/K
-			break						// exit from switch
-//		case 1:		// execute if case matches expression
-//			SVAR DataFolderName=root:Packages:Irena:SimpleFits:DataFolderName
-//			Shortname1 = StringFromList(ItemsInList(DataFolderName1, ":")-1, DataFolderName1  ,":")
-//			Legend/W=IR3J_LogLogDataDisplay /C/N=text0/J/A=LB "\\s(OriginalData1IntWave) "+Shortname1
-//			break
-//		case 2:
-//			SVAR DataFolderName=root:Packages:Irena:SimpleFits:DataFolderName
-//			Shortname2 = StringFromList(ItemsInList(DataFolderName2, ":")-1, DataFolderName2  ,":")
-//			Legend/W=IR3J_LogLogDataDisplay /C/N=text0/J/A=LB "\\s(OriginalData2IntWave) " + Shortname2		
-//			break
-//		case 3:
-//			SVAR DataFolderName=root:Packages:Irena:SimpleFits:DataFolderName
-//			Shortname1 = StringFromList(ItemsInList(DataFolderName1, ":")-1, DataFolderName1  ,":")
-//			Legend/W=IR3J_LogLogDataDisplay /C/N=text0/J/A=LB "\\s(OriginalData1IntWave) "+Shortname1+"\r\\s(OriginalData2IntWave) "+Shortname2
-//			break
-//		case 7:
-//			SVAR DataFolderName=root:Packages:Irena:SimpleFits:DataFolderName
-//			Shortname1 = StringFromList(ItemsInList(DataFolderName1, ":")-1, DataFolderName1  ,":")
-//			Legend/W=IR3J_LogLogDataDisplay /C/N=text0/J/A=LB "\\s(OriginalData1IntWave) "+Shortname1+"\r\\s(OriginalData2IntWave) "+Shortname2+"\r\\s(ResultIntensity) Merged Data"
-			break
-	endswitch
-
+	SVAR SimpleModel = root:Packages:Irena:SimpleFits:SimpleModel
+	if(StringMatch(SimpleModel, "Invariant" ))
+		IR3J_InvInitializeBackground()			//init background and add CD cursors in graph
+	else
+		SetWindow IR3J_LogLogDataDisplay, hook(InvariantBackgroundHook) = $""
+	endif	
 	
 end
 //**********************************************************************************************************
@@ -849,6 +874,10 @@ static Function IR3J_FitData()
 			IR3J_FitSpheroid()
 			IR3J_CalculateModel()		
 			break
+		case "Invariant":			// Spheroid
+			IR3J_InvFitBackground()
+			IR3J_InvCalculateInvariant()	
+			break
 		case "Volume Size Distribution":			// Spheroid
 			IR3J_FitSizeDistribution("Volume")
 			//IR3J_CalculateModel()		
@@ -917,7 +946,6 @@ Function IR3J_GraphWindowHook(s)
 	STRUCT WMWinHookStruct &s
 
 	Variable hookResult = 0
-
 	switch(s.eventCode) 
 		case 0:				// Activate
 			// Handle activate
@@ -926,8 +954,24 @@ Function IR3J_GraphWindowHook(s)
 		case 1:				// Deactivate
 			// Handle deactivate
 			break
-		case 7:				//coursor moved
-			IR3J_SyncCursorsTogether(s.traceName,s.cursorName,s.pointNumber)
+		case 7:				//cursor moved
+			if(StringMatch(s.cursorName, "A")||StringMatch(s.cursorName, "B"))
+				IR3J_SyncCursorsTogether(s.traceName,s.cursorName,s.pointNumber)
+			elseif(StringMatch(s.cursorName, "C")||StringMatch(s.cursorName, "D"))
+				//this resets Qmin and Qmax even when added through code and cursors moved due to 
+				//code setting cursor to nearest point. There does not seem to be any way to catch this
+				//in both cases we get cursor moved event 7 and no other info
+				//the only thing which seems to be useful is, that mouse loc may be outside the graph...  
+				//still will fail, if user moves mouse inside the graph while running sequence. Not sur ehow to fix that. 
+				GetWindow /Z IR3J_LogLogDataDisplay  gsize 
+				//V_left, V_right, V_top, and V_bottom
+				if( s.mouseLoc.v>V_top && s.mouseLoc.v<(V_bottom-V_top) && s.mouseLoc.h>V_left && s.mouseLoc.h<(V_right-V_left)) 
+					//print "fixed position"
+					//print s.mouseLoc.v
+					//print s.mouseLoc.h
+					IR3J_InvSyncBckgCursors(1)
+				endif
+			endif
 			hookResult = 1
 		// And so on . . .
 	endswitch
@@ -1207,6 +1251,45 @@ Function IR1_GuinierSheetFit(w,q) : FitFunc
 	w[1]=abs(w[1])
 	return w[0]/(q*q) * exp(-q^2*w[1]^2)
 End
+//*****************************************************************************************************************
+Function IR3J_Gauss1D(w,q) : FitFunc
+	Wave w
+	Variable q
+
+	//CurveFitDialog/ These comments were created by the Curve Fitting dialog. Altering them will
+	//CurveFitDialog/ make the function less convenient to work with in the Curve Fitting dialog.
+	//CurveFitDialog/ Equation:
+	//CurveFitDialog/ f(q) = (A / (sigma*sqrt(2*pi)) * exp((-1/2)*((q-q0)/sigma)^2)+y0
+	//CurveFitDialog/ End of Equation
+	//CurveFitDialog/ Independent Variables 1
+	//CurveFitDialog/ q
+	//CurveFitDialog/ Coefficients 4
+	//CurveFitDialog/ w[0] = A
+	//CurveFitDialog/ w[1] = q0
+	//CurveFitDialog/ w[2] = sigma
+	//CurveFitDialog/ w[3] = y0
+
+	return w[0]/(w[2]*sqrt(2*pi))*exp((-1/2)*((q-w[1])/w[2])^2) + w[3]
+End
+Function IR3J_Porod_Ruland(w,q) : FitFunc
+	Wave w
+	Variable q
+
+	//CurveFitDialog/ These comments were created by the Curve Fitting dialog. Altering them will
+	//CurveFitDialog/ make the function less convenient to work with in the Curve Fitting dialog.
+	//CurveFitDialog/ Equation:
+	//CurveFitDialog/ f(q) = A*exp(B*q^2)+y0
+	//CurveFitDialog/ End of Equation
+	//CurveFitDialog/ Independent Variables 1
+	//CurveFitDialog/ q
+	//CurveFitDialog/ Coefficients 3
+	//CurveFitDialog/ w[0] = A
+	//CurveFitDialog/ w[1] = B
+	//CurveFitDialog/ w[2] = y0
+
+	return w[0]*exp(w[1]*q^2)+w[2]
+End
+
 
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -1588,7 +1671,7 @@ static Function IR3J_CalculateModel()
 		ZeroLineResidualLinLin = 0
 	else
 		UsingLinearizedModel=0
-		KillWaves/Z ModelLlinLinQ2, ModelLinLinLogInt, NormalizedResidualLinLinQ, NormalizedResidualLinLin, ZeroLineResidualLinLin
+		KillWaves/Z ModelLinLinQ2, ModelLinLinLogInt, NormalizedResidualLinLinQ, NormalizedResidualLinLin, ZeroLineResidualLinLin
 	endif
 
 	Duplicate/Free/R=[DataQstartPoint,DataQEndPoint] OriginalDataIntWave, TempOriginalIntensity
@@ -1722,6 +1805,7 @@ static Function IR3J_SaveResultsToNotebook()
 	NVAR Spheroid_Beta				=root:Packages:Irena:SimpleFits:Spheroid_Beta
 	NVAR DataBackground			=root:Packages:Irena:SimpleFits:DataBackground
 	SVAR SimpleModel 				= root:Packages:Irena:SimpleFits:SimpleModel
+
 	NVAR VOlSD_Rg					=root:Packages:Irena:SimpleFits:VOlSD_Rg
 	NVAR VolSD_Volume				=root:Packages:Irena:SimpleFits:VolSD_Volume
 	NVAR VolSD_MeanDiameter		=root:Packages:Irena:SimpleFits:VolSD_MeanDiameter
@@ -1731,6 +1815,16 @@ static Function IR3J_SaveResultsToNotebook()
 	NVAR NumSD_MeanDiameter		=root:Packages:Irena:SimpleFits:NumSD_MeanDiameter
 	NVAR NumSD_MedianDiameter	=root:Packages:Irena:SimpleFits:NumSD_MedianDiameter
 	NVAR NumSD_ModeDiamater		=root:Packages:Irena:SimpleFits:NumSD_ModeDiamater
+
+	NVAR InvQmaxUsed =	root:Packages:Irena:SimpleFits:InvQmaxUsed
+	NVAR Invariant =	root:Packages:Irena:SimpleFits:invariant
+	NVAR DataQEnd = 	root:Packages:Irena:SimpleFits:DataQEnd
+	NVAR DataQstart = 	root:Packages:Irena:SimpleFits:DataQstart
+	NVAR DataQEndPoint = root:Packages:Irena:SimpleFits:DataQEndPoint
+	NVAR DataQstartPoint = root:Packages:Irena:SimpleFits:DataQstartPoint
+	SVAR InvBackgModel = root:Packages:Irena:SimpleFits:InvBackgModel
+	NVAR InvBckgMinQ = root:Packages:Irena:SimpleFits:InvBckgMinQ
+	NVAR InvBckgMaxQ = root:Packages:Irena:SimpleFits:InvBckgMaxQ
 
 	Wave/Z ModelInt = root:Packages:Irena:SimpleFits:ModelLogLogInt
 	Wave/Z ModelQ = root:Packages:Irena:SimpleFits:ModelLogLogQ
@@ -1769,6 +1863,12 @@ static Function IR3J_SaveResultsToNotebook()
 		IR1_AppendAnyText("\tScaling constant    = "+num2str(Spheroid_ScalingConstant),0)
 		IR1_AppendAnyText("\tSpheroid Beta       = "+num2str(Spheroid_Beta),0)
 		IR1_AppendAnyText("\tBackground          = "+num2str(DataBackground),0)
+	elseif(stringmatch(SimpleModel,"Invariant"))
+		IR1_AppendAnyText("\tInvariant [(mol e-^2/cm^3)^3] 	= "+num2str(Invariant),0)
+		IR1_AppendAnyText("\tQmax used for calc.				= "+num2str(InvQmaxUsed),0)
+		IR1_AppendAnyText("\tBackground Model				= "+InvBackgModel,0)
+		IR1_AppendAnyText("\tBckg Q start         					= "+num2str(InvBckgMinQ),0)
+		IR1_AppendAnyText("\tBckg Q end          					= "+num2str(InvBckgMaxQ),0)
 	elseif(stringmatch(SimpleModel,"Volume Size Distribution"))
 		IR1_AppendAnyText("\tRg [A]              =  "+num2str(VOlSD_Rg),0)
 		IR1_AppendAnyText("\tVolume fraction     =  "+num2str(VolSD_Volume),0)
@@ -1803,6 +1903,10 @@ static Function IR3J_SaveResultsToFolder()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()	
 	SetDataFolder root:Packages:Irena:SimpleFits								//go into the folder
+	NVAR SaveToFolder=root:Packages:Irena:SimpleFits:SaveToFolder
+	if(!SaveToFolder)
+		return 0
+	endif	
 	SVAR  DataFolderName=root:Packages:Irena:SimpleFits:DataFolderName
 	SVAR  IntensityWaveName=root:Packages:Irena:SimpleFits:IntensityWaveName
 	SVAR  QWavename=root:Packages:Irena:SimpleFits:QWavename
@@ -1827,20 +1931,16 @@ static Function IR3J_SaveResultsToFolder()
 	SVAR SimpleModel 				= root:Packages:Irena:SimpleFits:SimpleModel
 	NVAR SaveToNotebook=root:Packages:Irena:SimpleFits:SaveToNotebook
 	NVAR SaveToWaves=root:Packages:Irena:SimpleFits:SaveToWaves
-	NVAR SaveToFolder=root:Packages:Irena:SimpleFits:SaveToFolder
-	if(!SaveToFolder)
-		return 0
-	endif	
 	//create new results names...
 	//AllCurrentlyAllowedTypes+="SimFitGuinierY;SimFitGuinierRY;SimFitGuinierSY;SimFitSphereY;SimFitSpheroidY;"
 	//save these waves here:
 	Wave/Z ModelInt = root:Packages:Irena:SimpleFits:ModelLogLogInt
 	Wave/Z ModelQ = root:Packages:Irena:SimpleFits:ModelLogLogQ
 	//others can be created via Simple polots as needed... 
-	if(!WaveExists(modelInt)||!WaveExists(ModelQ))
+	if(!WaveExists(modelInt)||!WaveExists(ModelQ)&&!StringMatch(SimpleModel, "Invariant" ))
 		return 0			//cannot do anything, bail out. 
 	endif
-	//note, there is nothng to do here for : 
+	//note, there is nothing to do here for : 
 	// Volume Size Distribution and Number Size Distribution
 	//get old note here... 
 	Wave/Z SourceIntWv=$(DataFolderName+IntensityWaveName)
@@ -1918,6 +2018,12 @@ static Function IR3J_SaveResultsToFolder()
 			Note /K/NOCR ResultInt, NoteWithResults
 			Note /K/NOCR ResuldQ, NoteWithResults
 			break
+		case "Invariant":	// nothing to do here...
+			variable/g  $(DataFolderName+"Invariant")
+			NVAR InvariantResult = $(DataFolderName+"Invariant")
+			NVAR Invariant =	root:Packages:Irena:SimpleFits:invariant
+			InvariantResult = Invariant
+			break
 		case "Volume Size Distribution":	// nothing to do here...
 			break
 		case "Number Size Distribution":	// nothing to do here...
@@ -1961,7 +2067,20 @@ static Function IR3J_SaveResultsToWaves()
 	NVAR Spheroid_ScalingConstant=root:Packages:Irena:SimpleFits:Spheroid_ScalingConstant
 	NVAR Spheroid_Beta				=root:Packages:Irena:SimpleFits:Spheroid_Beta
 	NVAR DataBackground			=root:Packages:Irena:SimpleFits:DataBackground
+
 	SVAR SimpleModel 				= root:Packages:Irena:SimpleFits:SimpleModel
+
+	NVAR InvQmaxUsed =	root:Packages:Irena:SimpleFits:InvQmaxUsed
+	NVAR Invariant =	root:Packages:Irena:SimpleFits:invariant
+	NVAR DataQEnd = 	root:Packages:Irena:SimpleFits:DataQEnd
+	NVAR DataQstart = 	root:Packages:Irena:SimpleFits:DataQstart
+	NVAR DataQEndPoint = root:Packages:Irena:SimpleFits:DataQEndPoint
+	NVAR DataQstartPoint = root:Packages:Irena:SimpleFits:DataQstartPoint
+	SVAR InvBackgModel = root:Packages:Irena:SimpleFits:InvBackgModel
+	NVAR InvBckgMinQ = root:Packages:Irena:SimpleFits:InvBckgMinQ
+	NVAR InvBckgMaxQ = root:Packages:Irena:SimpleFits:InvBckgMaxQ
+
+
 	NVAR VOlSD_Rg					=root:Packages:Irena:SimpleFits:VOlSD_Rg
 	NVAR VolSD_Volume				=root:Packages:Irena:SimpleFits:VolSD_Volume
 	NVAR VolSD_MeanDiameter		=root:Packages:Irena:SimpleFits:VolSD_MeanDiameter
@@ -2001,6 +2120,26 @@ static Function IR3J_SaveResultsToWaves()
 		GuinierQmin[curlength] 			= DataQstart
 		GuinierQmax[curlength] 			= DataQEnd
 		GuinierChiSquare[curlength] 	= AchievedChiSquare
+		IR3J_GetTableWithresults()
+	elseif(stringmatch(SimpleModel,"Invariant"))
+		//tabulate data for Invariant
+		NewDATAFolder/O/S root:InvariantFitResults
+		Wave/Z InvariantWV
+		if(!WaveExists(InvariantWV))
+			make/O/N=0 InvariantWV, InvariantQmax, TimeWave, TemperatureWave, PercentWave, OrderWave
+			make/O/N=0/T SampleName
+			SetScale/P x 0,1,"(mol e-^2/cm^3)^3", InvariantWV
+			SetScale/P x 0,1,"1/A", InvariantQmax
+		endif
+		curlength = numpnts(InvariantWV)
+		redimension/N=(curlength+1) SampleName, InvariantWV, InvariantQmax, TimeWave, TemperatureWave, PercentWave, OrderWave 
+		SampleName[curlength] = DataFolderName
+		TimeWave[curlength]				=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzmin")
+		TemperatureWave[curlength]  	=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzC")
+		PercentWave[curlength] 			=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzpct")
+		OrderWave[curlength]				= 	IN2G_IdentifyNameComponent(DataFolderName, "_xyz")
+		InvariantWV[curlength] = Invariant
+		InvariantQmax[curlength] = InvQmaxUsed
 		IR3J_GetTableWithresults()
 	elseif(stringmatch(SimpleModel,"Guinier Rod"))
 		//tabulate data for Guinier
@@ -2228,6 +2367,14 @@ static Function IR3J_GetTableWithResults()
 				IR3J_SpheroidFFFitResTblFnct() 
 			endif 
 			break
+		case "Invariant":	// execute if case matches expression
+			DoWindow IR3J_InvResultsTable
+			if(V_Flag)
+				DoWindow/F IR3J_InvResultsTable
+			else
+				IR3J_InvResultsTableFnct() 
+			endif 
+			break
 		case "Volume Size Distribution":	// execute if case matches expression
 			DoWindow IR3J_VolSDResultsTable
 			if(V_Flag)
@@ -2311,6 +2458,15 @@ Function IR3J_DeleteExistingModelResults()
 					KillDataFolder/Z root:SpheroidFitResults:
 					if(V_Flag!=0)
 						DoAlert/T="Could not delete data folder" 0, "Spheroid FF results folder root:SpheroidFitResults could not be deleted. It is likely used in some graph or table. Close graphs/tables and try again."
+					endif
+				endif
+				break
+			case "Invariant":	// execute if case matches expression
+				DoWindow/K/Z IR3J_InvResultsTable
+				if(DataFolderExists("root:InvariantFitResults:"))
+					KillDataFolder/Z root:InvariantFitResults:
+					if(V_Flag!=0)
+						DoAlert/T="Could not delete data folder" 0, "Invariant results folder root:InvariantFitResults could not be deleted. It is likely used in some graph or table. Close graphs/tables and try again."
 					endif
 				endif
 				break
@@ -2500,6 +2656,29 @@ Function IR3J_VolumeSDResTblFnct() : Table
 	ModifyTable sigDigits(MeadianDiaVolDist)=4,width(MeadianDiaVolDist)=100,title(MeadianDiaVolDist)="Meadian Dia [A]"
 	SetDataFolder fldrSav0
 EndMacro
+//*****************************************************************************************************************
+
+Function IR3J_InvResultsTableFnct() : Table
+	PauseUpdate    		// building window...
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	String fldrSav0= GetDataFolder(1)
+	if(!DataFolderExists("root:InvariantFitResults:"))
+		Abort "No Invariant data exist."
+	endif
+	SetDataFolder root:InvariantFitResults:
+	Wave/T SampleName
+	Wave InvariantWV, InvariantQmax, TimeWave, TemperatureWave, PercentWave, OrderWave  
+	Edit/K=1/W=(238,397,1078,679)/N=IR3J_InvResultsTable SampleName,InvariantWV, InvariantQmax, TimeWave, TemperatureWave, PercentWave as "Volume Size Distribution Analysis"
+	AppendToTable OrderWave
+	ModifyTable format(Point)=1,width(SampleName)=264,title(SampleName)="Sample name"
+	ModifyTable alignment(InvariantWV)=1,sigDigits(InvariantWV)=4,title(InvariantWV)="Invariant",alignment(InvariantQmax)=1
+	ModifyTable sigDigits(InvariantQmax)=3,title(InvariantQmax)="Invariant Qmax"
+//	alignment(MeanDiaVolDist)=1
+//	ModifyTable sigDigits(MeanDiaVolDist)=4,title(MeanDiaVolDist)="Mean Dia [A]",alignment(ModeDiaVolDist)=1
+//	ModifyTable sigDigits(ModeDiaVolDist)=4,title(ModeDiaVolDist)="Mode dia [A]",alignment(MeadianDiaVolDist)=1
+//	ModifyTable sigDigits(MeadianDiaVolDist)=4,width(MeadianDiaVolDist)=100,title(MeadianDiaVolDist)="Meadian Dia [A]"
+	SetDataFolder fldrSav0
+EndMacro
 
 //*****************************************************************************************************************
 
@@ -2544,8 +2723,16 @@ Function IR3J_PopMenuProc(pa) : PopupMenuControl
 				KillWIndow/Z IR3J_LinDataDisplay
 				KillWindow/Z IR3J_LogLogDataDisplay
 				IR3J_CreateCheckGraphs()
+				if(StringMatch(SimpleModel, "Invariant" ))
+					IR3J_InvInitializeBackground()
+					IR3J_InvFitBackground()
+				endif	
 			endif
-			
+			if(StringMatch(pa.ctrlName, "InvBackgModel" ))
+				SVAR InvBackgModel = root:Packages:Irena:SimpleFits:InvBackgModel
+				InvBackgModel = popStr
+				IR3J_InvFitBackground()
+			endif			
 			break
 		case -1: // control being killed
 			break
@@ -2576,6 +2763,12 @@ static Function IR3J_SetupControlsOnMainpanel()
 		SetVariable DataBackground,  disable=1
 		SetVariable Porod_SpecificSurface, disable=1
 		SetVariable ScatteringContrast, disable=1
+		PopupMenu InvBackgModel, disable=1
+		SetVariable InvBckgMinQ, disable=1
+		Setvariable InvBckgMaxQ, disable=1
+		Setvariable invariant, disable=1
+		TitleBox invariantInfo, disable=1
+		Setvariable InvQmaxUsed, disable=1
 
 		strswitch(SimpleModel)	// string switch
 			case "Guinier":	// execute if case matches expression
@@ -2599,6 +2792,16 @@ static Function IR3J_SetupControlsOnMainpanel()
 				Setvariable Spheroid_Beta,  disable=0
 				SetVariable DataBackground,  disable=0
 				break
+			case "Invariant":	// execute if case matches expression
+				PopupMenu InvBackgModel, disable=0
+				SetVariable InvBckgMinQ, disable=0
+				Setvariable InvBckgMaxQ, disable=0
+				Setvariable invariant, disable=0
+				TitleBox invariantInfo, disable=0
+				Setvariable InvQmaxUsed, disable=0
+				break
+
+
 			default:			// optional default expression executed
 
 		endswitch
@@ -2608,6 +2811,326 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-//		SetWindow IR3J_LogLogDataDisplay, hook(SimpleFitsLogCursorMoved) = IR3J_GraphWindowHook
-//		SetWindow IR3J_LinDataDisplay, hook(SimpleFitsLinCursorMoved) = IR3J_GraphWindowHook
-//IR3J_FitSequenceOfData
+
+FUnction IR3J_InvInitializeBackground()
+	DoWIndow IR3J_LogLogDataDisplay
+	if(!V_Flag)
+		return 0 //nothing to do here...  
+	endif
+	
+	NVAR InvBckgMinQ = root:Packages:Irena:SimpleFits:InvBckgMinQ
+	NVAR InvBckgMaxQ = root:Packages:Irena:SimpleFits:InvBckgMaxQ
+	SVAR InvBackgModel = root:Packages:Irena:SimpleFits:InvBackgModel
+	Wave/Z IntWave = root:Packages:Irena:SimpleFits:OriginalDataIntWave
+	
+	if(WaveExists(IntWave))
+		Wave QWave = root:Packages:Irena:SimpleFits:OriginalDataQWave
+		variable DataPoints=numpnts(QWave)
+		if((InvBckgMinQ<QWave[0] || InvBckgMaxQ<QWave[0] || InvBckgMinQ>QWave[DataPoints-1] || InvBckgMaxQ>QWave[DataPoints-1] || InvBckgMinQ>=InvBckgMaxQ) && !(StringMatch(InvBackgModel, "none" )))
+			//bad setting for fitting background range. 
+			InvBckgMinQ= QWave[2*DataPoints/3]
+			InvBckgMaxQ= QWave[DataPoints-2]	
+		endif
+		CheckDisplayed /W=IR3J_LogLogDataDisplay  IntWave
+		if(V_Flag>0)
+			Cursor/W=IR3J_LogLogDataDisplay /A=1/N=1/P  C  OriginalDataIntWave  BinarySearch(QWave, InvBckgMinQ )
+			Cursor/W=IR3J_LogLogDataDisplay /A=1/N=1/P  D  OriginalDataIntWave  BinarySearch(QWave, InvBckgMaxQ )
+		endif
+	endif
+end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+Function IR3J_InvSyncBckgCursors(variable PreferCursors)
+	//if PreferCursors=1 overwrite variables with cursors, 0 opposite
+	DoWIndow IR3J_LogLogDataDisplay
+	if(!V_Flag)
+		return 0 //nothing to do here...  
+	endif
+	//cursor positions now:
+	variable MinQcsrP
+	if(strlen(CsrInfo(C, "IR3J_LogLogDataDisplay")) > 0 && stringMatch(CsrWave(C, "IR3J_LogLogDataDisplay", 0),"OriginalDataIntWave"))
+		MinQcsrP = pcsr(C, "IR3J_LogLogDataDisplay")
+	else
+		MinQcsrP = 0
+		PreferCursors = 0
+	endif
+	variable MaxQcsrP
+	if(strlen(CsrInfo(D, "IR3J_LogLogDataDisplay")) > 0&& stringMatch(CsrWave(D, "IR3J_LogLogDataDisplay", 0),"OriginalDataIntWave"))
+		MaxQcsrP = pcsr(D, "IR3J_LogLogDataDisplay")
+	else
+		MaxQcsrP = 0
+		PreferCursors = 0
+	endif
+	
+	NVAR InvBckgMinQ = root:Packages:Irena:SimpleFits:InvBckgMinQ
+	NVAR InvBckgMaxQ = root:Packages:Irena:SimpleFits:InvBckgMaxQ
+	Wave QWave = root:Packages:Irena:SimpleFits:OriginalDataQWave
+	if(PreferCursors)
+		if(MinQcsrP>0)
+			InvBckgMinQ = QWave[MinQcsrP]
+		endif	
+		if(MaxQcsrP>0)
+			InvBckgMaxQ = QWave[MaxQcsrP]
+		endif	
+	else
+		//set cursors...
+		Cursor/W=IR3J_LogLogDataDisplay /A=1/N=1/P  C  OriginalDataIntWave  BinarySearch(QWave, InvBckgMinQ )
+		Cursor/W=IR3J_LogLogDataDisplay /A=1/N=1/P  D  OriginalDataIntWave  BinarySearch(QWave, InvBckgMaxQ )
+	endif
+	IR3J_InvFitBackground()
+
+end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+Function IR3J_InvFitBackground()
+
+	//check we are doing Invariant and if not, get out...
+	SVAR SimpleModel = root:Packages:Irena:SimpleFits:SimpleModel
+	if(!Stringmatch(SimpleModel,"Invariant"))
+		return 0
+	endif
+	dfref OldDf
+	OldDf = GetDataFolderDFR
+	setDataFolder root:Packages:Irena:SimpleFits:
+	SVAR InvBackgModel = root:Packages:Irena:SimpleFits:InvBackgModel
+	Wave IntWave = root:Packages:Irena:SimpleFits:OriginalDataIntWave
+	Wave QWave = root:Packages:Irena:SimpleFits:OriginalDataQWave
+	NVAR InvBckgMinQ = root:Packages:Irena:SimpleFits:InvBckgMinQ
+	NVAR InvBckgMaxQ = root:Packages:Irena:SimpleFits:InvBckgMaxQ
+	Duplicate/O IntWave, root:Packages:Irena:SimpleFits:InvBckgWave
+	Wave InvBckgWave = root:Packages:Irena:SimpleFits:InvBckgWave
+	Wave/Z Ewave = root:Packages:Irena:SimpleFits:OriginalDataErrorWave
+	if(!WaveExists(Ewave))
+		Duplicate/Free IntWave, Ewave
+		Ewave*=0.01
+	endif
+	variable StartPnt, EndPnt
+	StartPnt = BinarySearch(QWave, InvBckgMinQ )
+	EndPnt   = BinarySearch(QWave, InvBckgMaxQ )
+	variable A, B, C, D
+	Wave/Z InvBckgWaveModel = root:Packages:Irena:SimpleFits:InvBckgWaveModel
+	if(WaveExists(InvBckgWaveModel))	//this is used to show how Porod and Powerlaw fit... 
+		RemoveFromGraph /W=IR3J_LogLogDataDisplay /Z InvBckgWaveModel
+		KillWaves/Z InvBckgWaveModel, QWaveModel	
+	endif
+	//Calculate background to be subtracted based on user input for fn type
+	If (StringMatch(InvBackgModel, "Gauss y0+A*exp((X-X0)^2/width" ))
+		//Print "Fit Function is 'Gaussian'."
+		Make/N=4/O/D r_bkgd_coef
+		WaveStats/Q/R=[StartPnt,EndPnt]  IntWave
+		//A=0.1;B=0.48;C=0.1;D=0.05
+		//Prompt A,"Coefficient A"
+		//Prompt B,"Coefficient X0"
+		//Prompt C,"Coefficient width"
+		//Prompt D,"Coefficient y0"
+		A = V_max
+		B = QWave[V_maxloc]
+		C = (QWave[EndPnt]-QWave[StartPnt])/5
+		D = V_min/10	
+		r_bkgd_coef = {A,B,C,D}
+		FuncFit/X=1/Q IR3J_Gauss1D kwCWave=r_bkgd_coef IntWave[StartPnt,EndPnt] /X=QWave/W=Ewave/I=1
+		InvBckgWave = IR3J_Gauss1D(r_bkgd_coef,QWave)
+	ElseIf (StringMatch(InvBackgModel, "Ruland A*exp(B*X^2)+y0" ))
+		//Print "Fit Function is 'Ruland'."
+		Make/N=3/O/D r_bkgd_coef
+		WaveStats/Q/R=[StartPnt,EndPnt]  IntWave
+		//A=0.1;B=0.48;C=0.1;D=0.05
+		//Prompt A,"Coefficient A"
+		//Prompt B,"Coefficient B"
+		//Prompt D,"Coefficient y0"
+		A = V_max
+		B = (ln(IntWave[EndPnt-1]/A))/(QWave[EndPnt-1])^2
+		D = V_min	
+		r_bkgd_coef = {A,B,D}
+		FuncFit/X=1/Q IR3J_Porod_Ruland, r_bkgd_coef, IntWave[StartPnt,EndPnt] /X=QWave/W=Ewave/I=1
+		InvBckgWave = IR3J_Porod_Ruland(r_bkgd_coef,QWave)
+	ElseIf (StringMatch(InvBackgModel, "Porod+y0" ))
+		//Print "Fit Function is 'Ruland'."
+		Make/N=2/O/D r_bkgd_coef, ewaveStep
+		WaveStats/Q/R=[StartPnt,EndPnt]  IntWave
+		A = (V_max-V_min)*(QWave[StartPnt]^4)
+		D = V_min	
+		r_bkgd_coef = {A,D}
+		ewaveStep = {0.1*A,0.1*D}
+		Make/D/T/N=0/O T_Constraints
+		//find the error wave and make it available, if exists
+		//Variable V_FitError=0			//This should prevent errors from being generated
+		Redimension/N=1 T_Constraints
+		T_Constraints[0] = {"K1 > 0"}
+		FuncFit/Q PorodInLogLog, r_bkgd_coef, IntWave[StartPnt,EndPnt]  /C=T_Constraints /X=QWave /E=ewaveStep /W=Ewave /I=1
+		//InvBckgWave = PorodInLogLog(r_bkgd_coef,QWave)
+		InvBckgWave = r_bkgd_coef[1]
+		Duplicate/O/R=[StartPnt,EndPnt] InvBckgWave, InvBckgWaveModel
+		Duplicate/O/R=[StartPnt,EndPnt] QWave, QWaveModel
+		InvBckgWaveModel = PorodInLogLog(r_bkgd_coef,QWaveModel)
+	ElseIf (StringMatch(InvBackgModel, "PowerLaw+y0" ))
+		//Print "Fit Function is 'Ruland'."
+		Make/N=3/O/D r_bkgd_coef, ewaveStep
+		WaveStats/Q/R=[StartPnt,EndPnt]  IntWave
+		Make/D/T/N=0/O T_Constraints
+		//find the error wave and make it available, if exists
+		//Variable V_FitError=0			//This should prevent errors from being generated
+		A = (V_max-V_min)*(QWave[StartPnt]^3.7)
+		B = 3.5
+		D = V_min	>0 ? V_min : abs(IntWave[EndPnt-3])
+		Redimension/N=4 T_Constraints
+		T_Constraints[0] = {"K0 > 0"}
+		T_Constraints[1] = {"K1 > 1"}
+		T_Constraints[2] = {"K1 < 5"}
+		T_Constraints[3] = {"K2 > 0"}
+		r_bkgd_coef = {A,B,D}
+		ewaveStep = {0.1*A,0.03*B,0.1*D}
+		//print " "
+		//print r_bkgd_coef
+		FuncFit/Q IR3J_PowerLawAndFlat, r_bkgd_coef, IntWave[StartPnt,EndPnt] /C=T_Constraints /X=QWave /E=ewaveStep /W=Ewave /I=1
+		//print r_bkgd_coef
+		InvBckgWave = r_bkgd_coef[2]
+		Duplicate/O/R=[StartPnt,EndPnt] InvBckgWave, InvBckgWaveModel
+		Duplicate/O/R=[StartPnt,EndPnt] QWave, QWaveModel
+		InvBckgWaveModel = IR3J_PowerLawAndFlat(r_bkgd_coef,QWaveModel)
+	ElseIf (StringMatch(InvBackgModel, "Constant" ))
+		InvBckgWave = sum(IntWave, StartPnt, EndPnt) / (EndPnt - StartPnt)
+	ElseIf (StringMatch(InvBackgModel, "None" ))
+		WaveStats/Q/R=[StartPnt,EndPnt]  IntWave
+		InvBckgWave = V_min/10
+	EndIf
+	
+	CheckDisplayed /W=IR3J_LogLogDataDisplay IntWave, InvBckgWave 
+	if(V_Flag==1)
+		AppendToGraph /W=IR3J_LogLogDataDisplay InvBckgWave vs QWave
+		ModifyGraph rgb(InvBckgWave)=(0,0,0)
+	endif
+	Wave/Z InvBckgWaveModel
+	if(WaveExists(InvBckgWaveModel))
+		CheckDisplayed /W=IR3J_LogLogDataDisplay IntWave, InvBckgWaveModel
+		if(V_Flag) 
+			AppendToGraph /W=IR3J_LogLogDataDisplay InvBckgWaveModel vs QWaveModel
+			ModifyGraph lstyle(InvBckgWaveModel)=3,rgb(InvBckgWaveModel)=(1,12815,52428)
+		endif
+	endif
+	setDataFolder OldDf
+end
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+Function IR3J_PowerLawAndFlat(w,q) : FitFunc
+	Wave w
+	Variable q
+
+	//CurveFitDialog/ These comments were created by the Curve Fitting dialog. Altering them will
+	//CurveFitDialog/ make the function less convenient to work with in the Curve Fitting dialog.
+	//CurveFitDialog/ Equation:
+	//CurveFitDialog/ Prefactor=abs(Prefactor)
+	//CurveFitDialog/ Slope=abs(slope)
+	//CurveFitDialog/ f(q) = Prefactor*q^(-Slope)
+	//CurveFitDialog/ End of Equation
+	//CurveFitDialog/ Independent Variables 1
+	//CurveFitDialog/ q
+	//CurveFitDialog/ Coefficients 2
+	//CurveFitDialog/ w[0] = Prefactor
+	//CurveFitDialog/ w[1] = Slope
+	//CurveFitDialog/ w[2] = Flat Background
+
+	w[0]=abs(w[0])
+	w[1]=abs(w[1])
+	return w[0]*q^(-w[1])+w[2]
+End
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+Function IR3J_InvCalculateInvariant()
+
+	dfref oldDF
+	OldDf = GetDataFolderDFR
+	setDataFolder root:Packages:Irena:SimpleFits:
+	NVAR Invariant =	root:Packages:Irena:SimpleFits:invariant
+	NVAR DataQEnd = 	root:Packages:Irena:SimpleFits:DataQEnd
+	NVAR DataQstart = 	root:Packages:Irena:SimpleFits:DataQstart
+	NVAR DataQEndPoint = root:Packages:Irena:SimpleFits:DataQEndPoint
+	NVAR DataQstartPoint = root:Packages:Irena:SimpleFits:DataQstartPoint
+	SVAR InvBackgModel = root:Packages:Irena:SimpleFits:InvBackgModel
+	Wave IntWave = root:Packages:Irena:SimpleFits:OriginalDataIntWave
+	Wave QWave = root:Packages:Irena:SimpleFits:OriginalDataQWave
+	NVAR InvBckgMinQ = root:Packages:Irena:SimpleFits:InvBckgMinQ
+	NVAR InvBckgMaxQ = root:Packages:Irena:SimpleFits:InvBckgMaxQ
+	NVAR InvQmaxUsed =	root:Packages:Irena:SimpleFits:InvQmaxUsed
+	
+	Wave InvBckgWave = root:Packages:Irena:SimpleFits:InvBckgWave
+	variable StartPnt, EndPnt
+	StartPnt = BinarySearch(QWave, InvBckgMinQ )
+	EndPnt   = BinarySearch(QWave, InvBckgMaxQ )
+
+	Duplicate/O IntWave, InvariantIntWaveCorr
+	//Correct data for background and add corrected data to graph
+	InvariantIntWaveCorr = IntWave - InvBckgWave
+	CheckDisplayed /W=IR3J_LogLogDataDisplay InvariantIntWaveCorr
+	if(!V_Flag)
+		AppendToGraph/W=IR3J_LogLogDataDisplay InvariantIntWaveCorr vs QWave
+		ModifyGraph/W=IR3J_LogLogDataDisplay rgb(InvariantIntWaveCorr)=(0,65535,0)
+	endif
+	//Calculate q^2*I(q) for integral
+	Duplicate/Free InvariantIntWaveCorr, Integrand
+	Integrand = InvariantIntWaveCorr*QWave^2
+	//endforce use of A and B curosrs to limit Q range if needed
+	Duplicate/Free/R=[DataQstartPoint, DataQEndPoint] Integrand, IntegrandTrimmed
+	Duplicate/O Integrand, IntegrantInt
+	Duplicate/O/R=[DataQstartPoint, DataQEndPoint] QWave, QWaveTrimmed
+	//Integrate, divide by 2*pi^2 when calculating from 1D I(q) data.
+	Integrate/T IntegrandTrimmed /X=QWaveTrimmed/D=IntegrantInt
+	IntegrantInt = IntegrantInt/(2*pi^2)		
+			
+	//Add Integrand_int to graph with Iq^2
+	CheckDisplayed /W=IR3J_LogLogDataDisplay IntegrantInt
+	if(!V_Flag)
+		AppendToGraph/R/W=IR3J_LogLogDataDisplay IntegrantInt vs QWaveTrimmed
+		//Label/W=IR3J_LogLogDataDisplay right "\\K(65535,0,0)\\Z14Invariant (cm\\S-1\\M\\Z14A\\S-3\\M\\Z14)"
+		//SetAxis/W=IR3J_LogLogDataDisplay right 8.0271834e-10,8.792794e-05
+		ModifyGraph/W=IR3J_LogLogDataDisplay log(right)=1,standoff(right)=0
+	endif
+	//Determine point at which slope of integral becomes zero and use that value as Q
+	//checks value of integrand_int_DIF_smth at [index], and if is < 0, records Q
+	//Need to use < 0 because is unlikely to be exactly 0, but will go from (+) to (-)
+	Duplicate/Free IntegrantInt IntegrantInt_DIF IntegrantInt_DIF_smth
+	Differentiate IntegrantInt /X=QWaveTrimmed/D=IntegrantInt_DIF
+	IntegrantInt_DIF_smth = IntegrantInt_DIF 
+	Smooth/EVEN/B 20, IntegrantInt_DIF_smth
+
+	variable index, NumPntsMax=numpnts(IntegrantInt_DIF_smth)
+	invariant=0
+	index=0
+	do
+		if(IntegrantInt_DIF_smth[index]<0)		 
+			invariant=IntegrantInt[index]
+		endif
+		index = index+1
+	while(invariant==0 && index<NumPntsMax )								
+	if(invariant==0)
+		invariant = IntegrantInt[NumPntsMax-1]	//no cross o ver with 0 found. 
+		index = NumPntsMax-1
+	endif
+	
+	//Correct Output for unit
+	//Divide twice by re to put I(q) in terms of e-^2/cm^3
+	//Divide twice by Avogadro's Number to convert # of e- into mol e-
+	//Convert from 1/A to 1/cm for q (three times)
+	//Final units should be (mol e-/cm^3)^2
+	invariant = invariant*(1e8)^3/(2.81794e-13)^2/(6.022e23)^2
+	InvQmaxUsed = QWaveTrimmed[index-1]
+//	//Report final values
+//	Print "**********************************************"
+//	//Print "Input wave is",rwave_str
+//	Print "The invariant is",invariant,"(mol e-^2/cm^3)^3"
+//	Print "Value of q for invariant is",QWaveTrimmed[index-1]
+//	Print "**********************************************"	
+	setDataFolder OldDf
+end
+
+
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************

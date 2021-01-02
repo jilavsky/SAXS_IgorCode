@@ -3,7 +3,7 @@
 constant IR3LversionNumber = 1.03			//MultiDataplotting tool version number. 
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2020, Argonne National Laboratory
+//* Copyright (c) 2005 - 2021, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -1164,13 +1164,17 @@ static Function IR3L_ReverseTraces(GraphNameString)
 		string GraphNameString
 		String tlist = tracenameList(GraphNameString, ";", 1)
 		Variable i
-		Variable nt = itemsinList(tlist)
-		PauseUpdate
-		for (i = nt-1; i >= 0; i--)
-			String oneTrace = StringFromList(i, tlist)
-			ReorderTraces/W=$GraphNameString _front_, {$oneTrace}
+		//Variable start = StopMSTimer(-2)
+		WAVE/T traceNameListWave = ListToTextWave(tlist, ";")
+		Variable nt = numpnts(traceNameListWave)
+		//for (i = nt-1; i >= 0; i--)
+		//per Adam WM seems 15% faster in this order... 
+		for (i = 0; i < nt; i++)
+			String oneTrace = traceNameListWave[i]
+			//ReorderTraces/W=$GraphNameString _front_, {$oneTrace}
+			ReorderTraces/W=$GraphNameString _back_, {$oneTrace}
 		endfor
-		DoUpdate
+		//printf "Took %g for %d traces.\r", (StopMSTimer(-2)-start)/1e6, nt
 end
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -1900,11 +1904,11 @@ Function IR3L_ContCheckProc(cba) : CheckBoxControl
 				//do something
 			endif
 			if(stringmatch(cba.ctrlName,"ContUseOnlyRedColor"))
+				NVAR ContLogColors = $(Foldername+":ContLogColors")
+				ContLogColors = 0
+				NVAR ContUseOnlyRedColor = $(Foldername+":ContUseOnlyRedColor")
+				ContUseOnlyRedColor = checked
 				IR3L_FormatContourPlot(cba.win)
-					//				NVAR ContMinValue = $(Foldername+":MinCountourVal")
-					//				NVAR ContMaxValue = $(Foldername+":MaxCountourVal")
-					//				NVAR ContLogColors = $(Foldername+":ContLogColors")
-					//				NVAR ContUseOnlyRedColor = $(Foldername+":ContUseOnlyRedColor")
 					//				SVAR Graph3DColorScale = $(Foldername+":ContourColorScale")
 					//				Wave MultiDataPlot3DWvData = $(Foldername+":MultiDataPlot3DWvData")
 					//				NVAR Graph3DColorsReverse = $(Foldername+":Graph3DColorsReverse")
@@ -1918,11 +1922,11 @@ Function IR3L_ContCheckProc(cba) : CheckBoxControl
 					//				endif
 			endif
 			if(stringmatch(cba.ctrlName,"ContLogColors")|| stringmatch(cba.ctrlName,"Graph3DColorsReverse") )
+					NVAR ContLogColors = $(Foldername+":ContLogColors")
+					ContLogColors = checked
+					NVAR ContUseOnlyRedColor = $(Foldername+":ContUseOnlyRedColor")
+					ContUseOnlyRedColor = 0
 					IR3L_FormatContourPlot(cba.win)
-					//				NVAR ContMinValue = $(Foldername+":MinCountourVal")
-					//				NVAR ContMaxValue = $(Foldername+":MaxCountourVal")
-					//				NVAR ContLogColors = $(Foldername+":ContLogColors")
-					//				NVAR ContUseOnlyRedColor = $(Foldername+":ContUseOnlyRedColor")
 					//				SVAR Graph3DColorScale = $(Foldername+":ContourColorScale")
 					//				Wave MultiDataPlot3DWvData = $(Foldername+":MultiDataPlot3DWvData")
 					//				NVAR Graph3DColorsReverse = $(Foldername+":Graph3DColorsReverse")
