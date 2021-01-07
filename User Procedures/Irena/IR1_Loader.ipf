@@ -84,6 +84,7 @@
 #include "IR3_MultiDataPlot", version>=1
 #include "IR3_SimpleFits", version>=1.11
 #include "IR3_WAXSDiffraction", version>=1.16
+#include "IR3_AnalyzeResults2", version>=0.1
 //bio tools
 #include "IRB1_bioSAXS", version>=1
 #include "IRB1_EvaluationTools", version>=1.0

@@ -382,7 +382,7 @@ static Function IR3L_InitMultiSamplePlot()
 		SelectedResultsTool="Unified Fit"
 	endif
 	if(strlen(SelectedResultsTool)<1)
-		SelectedResultsTool=IR2C_ReturnKnownToolResults(SelectedResultsTool)
+		SelectedResultsTool=IR2C_ReturnKnownToolResults(SelectedResultsTool,"")
 	endif
 	if(strlen(ResultsGenerationToUse)<1)
 		ResultsGenerationToUse="Latest"
@@ -939,10 +939,6 @@ Function IR3L_ButtonProc(ba) : ButtonControl
 		case 2: // mouse up
 			SVAR GraphUserTitle=root:Packages:Irena:MultiSamplePlot:GraphUserTitle
 			SVAR GraphWindowName=root:Packages:Irena:MultiSamplePlot:GraphWindowName
-			//  	DoWindow $(GraphWindowName)	//widnow does not exist
-			//  	if(V_Flag==0)
-			//  		return 0
-			//  	endif
 			// click code here
 			if(stringmatch(ba.ctrlname,"NewGraphPlotData"))
 				//set some meaningful values for these data first
@@ -1542,6 +1538,16 @@ Function IR3L_ConvertXYto3DPlot(string WindowName, string WhichGraph)
 	//and display contour plot. 
 	//attach bar with controls using functions in this package.  
 	//step 1 Check the top graph if it makes any sense... 
+	//   John Weeks suggestion: 
+	//TraceInfo has the keyword TYPE:
+	//TYPE    Gives the type of trace:
+	//    0: XY or waveform trace
+	//    1: Contour trace
+	//    2: Box plot trace
+	//    3: Violin plot trace
+	//    TYPE was added in Igor Pro 8.00.
+	//So a value of zero is what you're looking for; to get XY or Waveform you then need to check the XWAVE keyword
+	// 
 	if(strlen(WindowName)==0)
 		print "No Graph widnow specified"
 		abort
@@ -1583,8 +1589,10 @@ Function IR3L_ConvertXYto3DPlot(string WindowName, string WhichGraph)
 	//XAxisLabel = ReplaceString("\\\\", XAxisLabel, "\\")
 	XAxisLabel = IN2G_ReturnLabelForAxis(WindowName, "bottom|top")
 	string TraceNameListStr =  TraceNameList(WindowName, ";", 1)
-	//XWaveRefFromTrace(graphNameStr, traceNameStr )
-	//WaveRefFromTrace(graphNameStr, traceNameStr )
+	if(NumberByKey("TYPE", TraceInfo(WindowName, StringFromList(0, TraceNameListStr), 0 ))!=0 || strlen(StringByKey("XWAVE", TraceInfo(WindowName, StringFromList(0, TraceNameListStr), 0 )))<1)
+		print "This is NOT correct graph type"
+		abort
+	endif
 	variable NumWaves=ItemsInList(TraceNameListStr)
 	if(NumWaves<5)
 		print "Contour plots needs at least 5 waves, the graph has less"
@@ -1750,6 +1758,7 @@ Function IR3L_ConvertXYto3DPlot(string WindowName, string WhichGraph)
 		ModifyGraph /W=$NewGraphName zColor(MultiDataPlot3DWvData)={MultiDataPlot3DWvData,*,*,$(Graph3DColorScale),Graph3DColorsReverse}	
 		resumeUpdate
 	elseif(StringMatch(WhichGraph, "Gizmo"))
+		DoAlert /T="Unfinsihed feature" 0, "This is unfinsihed feature. If you really need to use it, conatct author of the software."
 //		if(!IR1P_GizmoFunctionality())
 //			Abort "The graphic card of your system is insufficient for Gizmo functionality. You need to get better graphic card before using Gizmo."
 //		endif

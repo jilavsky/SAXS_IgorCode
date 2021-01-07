@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
-#pragma version = 1.62
+#pragma version = 1.63
 
 
 //*************************************************************************\
@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.63 modified IR2C_ReturnKnownToolResults to enable downselection of results types. This makes AllowedResultsTypes parameter finally useful. From code pass "" if no downselection is needed. 
 //1.62 added System Speciifc data type in results. 
 //1.61 add to Multi controls sorting by _xyzs as time in seconds. 
 //1.60 add Multi controls - controls with listbox... For tools needing ability to select multiple data sets. 
@@ -2557,13 +2558,20 @@ End
 //**********************************************************************************************
 //**********************************************************************************************
 
-Function/S IR2C_ReturnKnownToolResults(ToolName)
-	string ToolName
+Function/S IR2C_ReturnKnownToolResults(ToolName, TopPanel)
+	string ToolName, TopPanel
 	
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string KnownToolResults=""
 
-	SVAR KnownTools= root:Packages:IrenaControlProcs:AllKnownToolsResults
+	SVAR AllKnownToolsResults= root:Packages:IrenaControlProcs:AllKnownToolsResults
+	string LocallyAllowedResultsData
+	if(strlen(TopPanel)>0)		//this is called from IR2_ControlsCntrlProc [paclkage and not form old code
+		SVAR ControlAllowedResultsTypes=root:Packages:IrenaControlProcs:ControlAllowedResultsTypes
+		LocallyAllowedResultsData=StringByKey(TopPanel, ControlAllowedResultsTypes,"=",">")
+	else
+		LocallyAllowedResultsData=""
+	endif
 	// "Unified Fit;Size Distribution;Modeling II;Modeling I;Small-angle diffraction;Analytical models;Fractals;PDDF;Reflectivity;"
 	SVAR ResultsDataTypesLookup= root:Packages:IrenaControlProcs:ResultsDataTypesLookup
 	string ListOfLookups=""
@@ -2599,12 +2607,18 @@ Function/S IR2C_ReturnKnownToolResults(ToolName)
 		ListOfLookups = ""
 	endif
 
-
-
-	variable i
-	For(i=0;i<ItemsInList(ListOfLookups  , ";");i+=1)
+	variable i, j
+	For(i=0;i<ItemsInList(ListOfLookups, ";");i+=1)	//we have found some stuff
 		KnownToolResults += stringFromList(0,stringFromList(i,ListOfLookups,";"),":")+";"
 	endfor
+	string TmpList="" , TmpName=""
+	if(strlen(LocallyAllowedResultsData)>0)			//need to limit to only predefined smaller number of stuff...
+		For(i=0;i<ItemsInList(LocallyAllowedResultsData, ";");i+=1)	//we have found some stuff
+			TmpName = stringFromList(i,LocallyAllowedResultsData,";")
+			TmpList += GrepList(KnownToolResults, TmpName,0, ";")
+		endfor
+		KnownToolResults = TmpList
+	endif
 	
 	
 	return KnownToolResults
@@ -3288,7 +3302,7 @@ Function IR3C_MultiAppendControls(ToolPackageFolder,PanelName, DoubleClickFunNm,
 		PopupMenu ToolResultsSelector,win=$(PanelName),pos={10,120},size={230,15},fStyle=2,proc=IR3C_MultiPopMenuProc,title="Which tool results?    "
 		PopupMenu ToolResultsSelector,win=$(PanelName),mode=1,popvalue=SelectedResultsTool,value= #"root:Packages:IrenaControlProcs:AllKnownToolsResults"
 		PopupMenu ResultsTypeSelector,win=$(PanelName),pos={10,140},size={230,15},fStyle=2,proc=IR3C_MultiPopMenuProc,title="Which results?          "
-		PopupMenu ResultsTypeSelector,win=$(PanelName),mode=1,popvalue=SelectedResultsType,value= #"IR2C_ReturnKnownToolResults(\"+PathToPackagesFolder+\":SelectedResultsTool)"
+		PopupMenu ResultsTypeSelector,win=$(PanelName),mode=1,popvalue=SelectedResultsType,value= #"IR2C_ReturnKnownToolResults(\"+PathToPackagesFolder+\":SelectedResultsTool,\"+PanelName+\")"
 		PopupMenu ResultsGenerationToUse,pos={10,160},size={230,15},fStyle=2,proc=IR3C_MultiPopMenuProc,title="Results Generation?           "
 		PopupMenu ResultsGenerationToUse,win=$(PanelName),mode=1,popvalue=ResultsGenerationToUse,value= "Latest;_0;_1;_2;_3;_4;_5;_6;_7;_8;_9;_10;"
 
@@ -3915,8 +3929,9 @@ Function IR3C_MultiPopMenuProc(pa) : PopupMenuControl
 	if(stringmatch(ctrlName,"ToolResultsSelector"))
 		SVAR SelectedResultsTool=$(CntrlLocation+":SelectedResultsTool")
 		SelectedResultsTool = popStr
-		string ListOfAvailableResults=IR2C_ReturnKnownToolResults(popStr)
-		execute("PopupMenu ResultsTypeSelector, win="+TopPanel+", mode=1, value=IR2C_ReturnKnownToolResults(\""+popStr+"\")")
+		string ListOfAvailableResults=IR2C_ReturnKnownToolResults(popStr, TopPanel)
+		execute("PopupMenu ResultsTypeSelector, win="+TopPanel+", mode=1, value=IR2C_ReturnKnownToolResults(\""+popStr+"\",\""+TopPanel+"\")")
+		//execute("PopupMenu ResultsTypeSelector, win="+TopPanel+", mode=1, value=IR2C_ReturnKnownToolResults(\""+popStr+","+TopPanel+"\")")
 		SVAR SelectedResultsType=$(CntrlLocation+":SelectedResultsType")
 		SelectedResultsType = stringFromList(0,ListOfAvailableResults)
 		IR3C_MultiUpdListOfAvailFiles(CntrlLocationShort)

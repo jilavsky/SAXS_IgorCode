@@ -921,7 +921,7 @@ static Function IR3B_InitMetadataBrowser()
 		SelectedResultsTool="Unified Fit"
 	endif
 	if(strlen(SelectedResultsTool)<1)
-		SelectedResultsTool=IR2C_ReturnKnownToolResults(SelectedResultsTool)
+		SelectedResultsTool=IR2C_ReturnKnownToolResults(SelectedResultsTool,"")
 	endif
 	if(strlen(ResultsGenerationToUse)<1)
 		ResultsGenerationToUse="Latest"

@@ -45,6 +45,12 @@ constant SimpleFitsLinPlotMinScale = 0.8
 //			Procedure is IR2C_InitControls
 //existing:  	AllCurrentlyAllowedTypes+="SimFitYGuinier;SimFitYGuinierR;SimFitYGuinierS;SimFitYSphere;SimFitYSpheroid;"
 
+
+//Invariant background definitions:
+//InvBackgModelList = "Porod+y0;PowerLaw+y0;Constant;Gauss y0+A*exp((X-X0)^2/width;Ruland A*exp(B*X^2)+y0;None;"
+//InvBackgModelList = "Porod+y0;PowerLaw+y0;Constant;Gauss Peak;Exponential;None;"
+//	Gauss y0+A*exp((X-X0)^2/width 	= 	Gauss Peak
+//	Ruland A*exp(B*X^2)+y0 			=  Exponential
 ///******************************************************************************************
 ///******************************************************************************************
 ///******************************************************************************************
@@ -105,7 +111,7 @@ Function IR3J_SimpleFitsPanelFnct()
 	Setvariable DataQEnd, variable=root:Packages:Irena:SimpleFits:DataQEnd, limits={-inf,inf,0}
 	SetVariable DataQstart,pos={290,110},size={190,15}, proc=IR3J_SetVarProc,title="Q min for fitting     "
 	Setvariable DataQstart, variable=root:Packages:Irena:SimpleFits:DataQstart, limits={-inf,inf,0}
-	SetVariable DataFolderName,noproc,title=" ",pos={250,140},size={270,17},frame=0, fstyle=1,valueColor=(0,0,65535)
+	SetVariable DataFolderName,noproc,title=" ",pos={260,160},size={270,17},frame=0, fstyle=1,valueColor=(0,0,65535)
 	Setvariable DataFolderName, variable=root:Packages:Irena:SimpleFits:DataFolderName, noedit=1
 
 	Button SelectAll,pos={200,680},size={80,15}, proc=IR3J_ButtonProc,title="SelectAll", help={"Select All data in Listbox"}
@@ -144,20 +150,31 @@ Function IR3J_SimpleFitsPanelFnct()
 	Setvariable DataBackground, variable=root:Packages:Irena:SimpleFits:DataBackground, limits={-inf,inf,0}, help={"Flat background for scattering intensity"}
 
 	//Invariant controls
-	PopupMenu InvBackgModel,pos={260,230},size={200,20},fStyle=2,proc=IR3J_PopMenuProc,title="Bckg model: "
+	Checkbox InvExtrapolateLowQ, pos={280,200},size={76,14},title="Extrapolate to Q=0?", proc=IR3J_CheckProc, variable=root:Packages:Irena:SimpleFits:InvExtrapolateLowQ, help={"Extrapolate from Qmin to Q=0 with constant intensity"}
+	SetVariable InvContrast,pos={240,220},size={220,15}, proc=IR3J_SetVarProc,title="Contrast = ", bodywidth=80
+	Setvariable InvContrast, variable=root:Packages:Irena:SimpleFits:InvContrast, limits={-inf,inf,0}, help={"Scattering contrast (delta-rho^2) to calculate volume fraction"}
+
+	PopupMenu InvBackgModel,pos={280,252},size={200,20},fStyle=2,proc=IR3J_PopMenuProc,title="Bckg model: "
 	SVAR InvBackgModel = root:Packages:Irena:SimpleFits:InvBackgModel
 	SVAR InvBackgModelList = root:Packages:Irena:SimpleFits:InvBackgModelList
-	print WhichListItem(InvBackgModel, InvBackgModelList)
 	PopupMenu InvBackgModel,value= #"root:Packages:Irena:SimpleFits:InvBackgModelList" ,mode=(WhichListItem(InvBackgModel, InvBackgModelList)+1) 
-	SetVariable InvBckgMinQ,pos={240,320},size={220,15}, proc=IR3J_SetVarProc,title="Backg Fit Qmin", bodywidth=80
+	SetVariable InvBckgMinQ,pos={240,285},size={220,15}, proc=IR3J_SetVarProc,title="Backg Fit Qmin", bodywidth=80
 	Setvariable InvBckgMinQ, variable=root:Packages:Irena:SimpleFits:InvBckgMinQ, limits={0,10,0}, help={"Start of range to fit background"}
-	SetVariable InvBckgMaxQ,pos={240,340},size={220,15}, proc=IR3J_SetVarProc,title="Bckg Fit Qmax ", bodywidth=80
+	SetVariable InvBckgMaxQ,pos={240,305},size={220,15}, proc=IR3J_SetVarProc,title="Bckg Fit Qmax ", bodywidth=80
 	Setvariable InvBckgMaxQ, variable=root:Packages:Irena:SimpleFits:InvBckgMaxQ, limits={-inf,inf,0}, help={"End of Q range to fit background"}
-	SetVariable invariant,pos={240,380},size={220,15}, noproc,title="Invariant = ", bodywidth=80, noedit=1, limits={0,inf,0}
-	Setvariable invariant, variable=root:Packages:Irena:SimpleFits:invariant, help={"Start of range to fit background"}
-	TitleBox invariantInfo title="\Zr100Inv. units: [(mol e-^2/cm^3)^3]",size={330,15},pos={300,405},frame=0,fColor=(0,0,65535),labelBack=0
-	SetVariable InvQmaxUsed,pos={240,425},size={220,15}, noproc,title="Qmax used = ", bodywidth=80, noedit=1, limits={0,inf,0}
-	Setvariable InvQmaxUsed, variable=root:Packages:Irena:SimpleFits:InvQmaxUsed, limits={0,10,0}, help={"Calculated Qmax used in evaluation"}
+	
+	TitleBox invariantInfo title="\Zr100Inv. units: [(mol e-^2/cm^3)^3]",size={330,15},pos={300,335},frame=0,fColor=(0,0,65535),labelBack=0
+	SetVariable invariant,pos={240,355},size={220,15}, noproc,title="Invariant = ", bodywidth=80, noedit=1, limits={0,inf,0}, format="%4.3e",frame=0
+	Setvariable invariant, variable=root:Packages:Irena:SimpleFits:invariant, help={"Invariant in [(mol e-^2/cm^3)^3]"}
+	SetVariable InvariantIrena,pos={240,375},size={220,15}, noproc,title="Invariant [1/cm4]= ", bodywidth=80, noedit=1, limits={0,inf,0}, format="%4.3e",frame=0
+	Setvariable InvariantIrena, variable=root:Packages:Irena:SimpleFits:InvariantIrena, help={"Invariant in [1/cm4]"}, format="%4.3e"
+
+
+	SetVariable InvVolumeFraction,pos={240,400},size={220,15}, noproc,title="Volume Fraction = ", bodywidth=80, format="%3.2g",frame=0
+	Setvariable InvVolumeFraction, variable=root:Packages:Irena:SimpleFits:InvVolumeFraction, noedit=1, limits={0,inf,0},help={"Volume fraction from contrast"}
+	SetVariable InvQmaxUsed,pos={240,420},size={220,15}, noproc,title="Qmax used = ", bodywidth=80, noedit=1, limits={0,inf,0}, format="%4.3g",frame=0
+	Setvariable InvQmaxUsed, variable=root:Packages:Irena:SimpleFits:InvQmaxUsed,  help={"Calculated Qmax used in evaluation"}
+
 
 	//other stuff...
 	Button FitCurrentDataSet,pos={280,450},size={180,20}, proc=IR3J_ButtonProc,title="Fit Current (one) Dataset", help={"Fit current data set"}
@@ -271,10 +288,12 @@ Function IR3J_InitSimpleFits()
 	ListOfVariables+="DataQEnd;DataQstart;DataQEndPoint;DataQstartPoint;"
 	ListOfVariables+="SaveToNotebook;SaveToWaves;SaveToFolder;"
 	//parameters for Invariant
-	ListOfVariables+="InvBckgMinQ;InvBckgMaxQ;Invariant;InvQmaxUsed;"
+	ListOfVariables+="InvBckgMinQ;InvBckgMaxQ;Invariant;InvQmaxUsed;InvExtrapolateLowQ;InvContrast;InvVolumeFraction;"
+	ListOfVariables+="InvariantIrena;"
+	//InvariantIrena is in 1/cm4
 	 
-	ListOfVariables+="VOlSD_Rg;VolSD_Volume;VolSD_MeanDiameter;VolSD_MedianDiameter;VOlSD_ModeDiamater;"
-	ListOfVariables+="NumSD_NumPartPerCm3;NumSD_MeanDiameter;NumSD_MedianDiameter;NumSD_ModeDiamater;"
+//	ListOfVariables+="VOlSD_Rg;VolSD_Volume;VolSD_MeanDiameter;VolSD_MedianDiameter;VOlSD_ModeDiamater;"
+//	ListOfVariables+="NumSD_NumPartPerCm3;NumSD_MeanDiameter;NumSD_MedianDiameter;NumSD_ModeDiamater;"
 
 	//and here we create them
 	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
@@ -306,13 +325,14 @@ Function IR3J_InitSimpleFits()
 	endfor		
 	SVAR InvBackgModelList
 	SVAR InvBackgModel
-	InvBackgModelList = "Porod+y0;PowerLaw+y0;Constant;Gauss y0+A*exp((X-X0)^2/width;Ruland A*exp(B*X^2)+y0;None;"
+	InvBackgModelList = "Porod+y0;PowerLaw+y0;Constant;Gauss Peak;Exponential;None;"
 	if(strlen(InvBackgModel)<2)
 		InvBackgModel = "Constant" 
 	endif
 	SVAR ListOfSimpleModels
 	ListOfSimpleModels="Guinier;Porod;Sphere;Spheroid;Guinier Rod;Guinier Sheet;"
-	ListOfSimpleModels+="Invariant;Volume Size Distribution;Number Size Distribution;"
+	ListOfSimpleModels+="Invariant;"
+	//ListOfSimpleModels+="Invariant;Volume Size Distribution;Number Size Distribution;"
 	SVAR SimpleModel
 	if(strlen(SimpleModel)<1)
 		SimpleModel="Guinier"
@@ -388,7 +408,9 @@ Function IR3J_CheckProc(cba) : CheckBoxControl
 			NVAR UseIndra2Data =  root:Packages:Irena:SimpleFits:UseIndra2Data
 			NVAR UseQRSData =  root:Packages:Irena:SimpleFits:UseQRSData
 			SVAR DataStartFolder = root:Packages:Irena:SimpleFits:DataStartFolder
-  		
+  			if(StringMatch(cba.ctrlName, "InvExtrapolateLowQ") )
+  				IR3J_InvCalculateInvariant()
+  			endif
 			break
 		case -1: // control being killed
 			break
@@ -468,6 +490,9 @@ Function IR3J_SetVarProc(sva) : SetVariableControl
 				endif
 				IR3J_InvSyncBckgCursors(0)
 			endif			
+			if(stringmatch(sva.ctrlName,"InvContrast"))		//contrast changed
+				IR3J_InvCalculateInvariant()
+			endif
 			break
 
 		case 3: // live update
@@ -553,6 +578,11 @@ Function IR3J_CopyAndAppendData(FolderNameStr)
 		//now this deals with linearized data, if needed...
 		IR3J_CreateLinearizedData()
 		IR3J_AppendDataToGraphModel()
+		SVAR SimpleModel=root:Packages:Irena:SimpleFits:SimpleModel
+		if(StringMatch(SimpleModel, "Invariant" ))
+			IR3J_InvInitializeBackground()
+			IR3J_InvFitBackground()
+		endif	
 		DoUpdate
 		print "Added Data from folder : "+DataFolderName
 	SetDataFolder oldDf
@@ -712,6 +742,8 @@ Function IR3J_AppendDataToGraphLogLog()
 		Label /W=IR3J_LogLogDataDisplay bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q[A\\S-1\\M"+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 		ErrorBars /W=IR3J_LogLogDataDisplay OriginalDataIntWave Y,wave=(OriginalDataErrorWave,OriginalDataErrorWave)		
 	endif
+	RemoveFromGraph/Z/W=IR3J_LogLogDataDisplay IntegrantInt, InvBckgWave, InvariantIntWaveCorr
+	ModifyGraph /W=IR3J_LogLogDataDisplay mirror=1
 	// for "Size Distribution" use linear left axis.  
 	SVAR SimpleModel = root:Packages:Irena:SimpleFits:SimpleModel
 	if(StringMatch(SimpleModel, "*size distribution"))
@@ -878,14 +910,14 @@ static Function IR3J_FitData()
 			IR3J_InvFitBackground()
 			IR3J_InvCalculateInvariant()	
 			break
-		case "Volume Size Distribution":			// Spheroid
-			IR3J_FitSizeDistribution("Volume")
-			//IR3J_CalculateModel()		
-			break
-		case "Number Size Distribution":			// Spheroid
-			IR3J_FitSizeDistribution("Number")
-			//IR3J_CalculateModel()		
-			break
+//		case "Volume Size Distribution":			// Spheroid
+//			IR3J_FitSizeDistribution("Volume")
+//			//IR3J_CalculateModel()		
+//			break
+//		case "Number Size Distribution":			// Spheroid
+//			IR3J_FitSizeDistribution("Number")
+//			//IR3J_CalculateModel()		
+//			break
 		default:			
 		//nothing here.
 		Abort "No model calculated in static IR3J_FitData()" 
@@ -1415,24 +1447,24 @@ Function IR3J_FitSizeDistribution(Which)
 		FindPeak/P/Q Temp_Probability
 		modeDia=2* tempXwave[V_PeakLoc]								//location of maximum on the P(D)
 	endif
-	if(StringMatch(Which, "Number" ))
-		NumSD_NumPartPerCm3 	= AreaUnderTheCurve
-		NumSD_MeanDiameter  	= MeanDia
-		NumSD_MedianDiameter	= MedianDia
-		NumSD_ModeDiamater		= modeDia 
-		TagText = "Number Size Distribution analysis \r"+"Number of particles/cm3 = "+num2str(AreaUnderTheCurve)
-		TagText+="\r Mean Diameter [A] = "+num2str(MeanDia)
-		TagText+="\r Mode Dia [A] = "+num2str(modeDia)+"\tMedian Diameter [A] = "+num2str(MedianDia)
-	else		//default is volume
-		VOlSD_Rg					= Rg
-		VolSD_Volume				= AreaUnderTheCurve
-		VolSD_MeanDiameter		= MeanDia
-		VolSD_MedianDiameter 	= MedianDia
-		VOlSD_ModeDiamater		= modeDia
-		TagText = "Volume Size Distribution analysis \r"+"Volume fraction = "+num2str(AreaUnderTheCurve)
-		TagText+="\r Rg = "+num2str(Rg)+"\tMean Diameter [A] = "+num2str(MeanDia)
-		TagText+="\r Mode Dia [A] = "+num2str(modeDia)+"\tMedian Diameter [A] = "+num2str(MedianDia)
-	endif
+//	if(StringMatch(Which, "Number" ))
+//		NumSD_NumPartPerCm3 	= AreaUnderTheCurve
+//		NumSD_MeanDiameter  	= MeanDia
+//		NumSD_MedianDiameter	= MedianDia
+//		NumSD_ModeDiamater		= modeDia 
+//		TagText = "Number Size Distribution analysis \r"+"Number of particles/cm3 = "+num2str(AreaUnderTheCurve)
+//		TagText+="\r Mean Diameter [A] = "+num2str(MeanDia)
+//		TagText+="\r Mode Dia [A] = "+num2str(modeDia)+"\tMedian Diameter [A] = "+num2str(MedianDia)
+//	else		//default is volume
+//		VOlSD_Rg					= Rg
+//		VolSD_Volume				= AreaUnderTheCurve
+//		VolSD_MeanDiameter		= MeanDia
+//		VolSD_MedianDiameter 	= MedianDia
+//		VOlSD_ModeDiamater		= modeDia
+//		TagText = "Volume Size Distribution analysis \r"+"Volume fraction = "+num2str(AreaUnderTheCurve)
+//		TagText+="\r Rg = "+num2str(Rg)+"\tMean Diameter [A] = "+num2str(MeanDia)
+//		TagText+="\r Mode Dia [A] = "+num2str(modeDia)+"\tMedian Diameter [A] = "+num2str(MedianDia)
+//	endif
 	//make a good starting guesses:
 	AchievedChiSquare = 0
 	string TagName= "SizeDistribution" 
@@ -1869,17 +1901,17 @@ static Function IR3J_SaveResultsToNotebook()
 		IR1_AppendAnyText("\tBackground Model				= "+InvBackgModel,0)
 		IR1_AppendAnyText("\tBckg Q start         					= "+num2str(InvBckgMinQ),0)
 		IR1_AppendAnyText("\tBckg Q end          					= "+num2str(InvBckgMaxQ),0)
-	elseif(stringmatch(SimpleModel,"Volume Size Distribution"))
-		IR1_AppendAnyText("\tRg [A]              =  "+num2str(VOlSD_Rg),0)
-		IR1_AppendAnyText("\tVolume fraction     =  "+num2str(VolSD_Volume),0)
-		IR1_AppendAnyText("\tMean Diameter [A]   =  "+num2str(VolSD_MeanDiameter),0)
-		IR1_AppendAnyText("\tMedian Diameter [A] =  "+num2str(VolSD_MedianDiameter),0)
-		IR1_AppendAnyText("\tMode Diameter [A]   =  "+num2str(VOlSD_ModeDiamater),0)
-	elseif(stringmatch(SimpleModel,"Number Size Distribution"))
-		IR1_AppendAnyText("\tNum Particles/cm3   =  "+num2str(NumSD_NumPartPerCm3),0)
-		IR1_AppendAnyText("\tMean Diameter [A]   =  "+num2str(NumSD_MeanDiameter),0)
-		IR1_AppendAnyText("\tMedian Diameter [A] =  "+num2str(NumSD_MedianDiameter),0)
-		IR1_AppendAnyText("\tMode Diameter [A]   =  "+num2str(NumSD_ModeDiamater),0)
+//	elseif(stringmatch(SimpleModel,"Volume Size Distribution"))
+//		IR1_AppendAnyText("\tRg [A]              =  "+num2str(VOlSD_Rg),0)
+//		IR1_AppendAnyText("\tVolume fraction     =  "+num2str(VolSD_Volume),0)
+//		IR1_AppendAnyText("\tMean Diameter [A]   =  "+num2str(VolSD_MeanDiameter),0)
+//		IR1_AppendAnyText("\tMedian Diameter [A] =  "+num2str(VolSD_MedianDiameter),0)
+//		IR1_AppendAnyText("\tMode Diameter [A]   =  "+num2str(VOlSD_ModeDiamater),0)
+//	elseif(stringmatch(SimpleModel,"Number Size Distribution"))
+//		IR1_AppendAnyText("\tNum Particles/cm3   =  "+num2str(NumSD_NumPartPerCm3),0)
+//		IR1_AppendAnyText("\tMean Diameter [A]   =  "+num2str(NumSD_MeanDiameter),0)
+//		IR1_AppendAnyText("\tMedian Diameter [A] =  "+num2str(NumSD_MedianDiameter),0)
+//		IR1_AppendAnyText("\tMode Diameter [A]   =  "+num2str(NumSD_ModeDiamater),0)
 	endif
 
 	IR1_AppendAnyText("Achieved Normalized chi-square = "+num2str(AchievedChiSquare),0)
@@ -1929,8 +1961,9 @@ static Function IR3J_SaveResultsToFolder()
 	NVAR Spheroid_Beta				=root:Packages:Irena:SimpleFits:Spheroid_Beta
 	NVAR DataBackground			=root:Packages:Irena:SimpleFits:DataBackground
 	SVAR SimpleModel 				= root:Packages:Irena:SimpleFits:SimpleModel
-	NVAR SaveToNotebook=root:Packages:Irena:SimpleFits:SaveToNotebook
-	NVAR SaveToWaves=root:Packages:Irena:SimpleFits:SaveToWaves
+	NVAR SaveToNotebook			=root:Packages:Irena:SimpleFits:SaveToNotebook
+	NVAR SaveToWaves				=root:Packages:Irena:SimpleFits:SaveToWaves
+
 	//create new results names...
 	//AllCurrentlyAllowedTypes+="SimFitGuinierY;SimFitGuinierRY;SimFitGuinierSY;SimFitSphereY;SimFitSpheroidY;"
 	//save these waves here:
@@ -2021,13 +2054,17 @@ static Function IR3J_SaveResultsToFolder()
 		case "Invariant":	// nothing to do here...
 			variable/g  $(DataFolderName+"Invariant")
 			NVAR InvariantResult = $(DataFolderName+"Invariant")
+			variable/g  $(DataFolderName+"Invariantcm4")
+			NVAR InvariantResultcm4 = $(DataFolderName+"Invariantcm4")
 			NVAR Invariant =	root:Packages:Irena:SimpleFits:invariant
+			NVAR InvariantIrena =	root:Packages:Irena:SimpleFits:InvariantIrena
 			InvariantResult = Invariant
+			InvariantResultcm4 = InvariantIrena
 			break
-		case "Volume Size Distribution":	// nothing to do here...
-			break
-		case "Number Size Distribution":	// nothing to do here...
-			break
+//		case "Volume Size Distribution":	// nothing to do here...
+//			break
+//		case "Number Size Distribution":	// nothing to do here...
+//			break
 		default:			// optional default expression executed
 			Abort "Unknown data type, cannot save the data"
 	endswitch	
@@ -2070,16 +2107,18 @@ static Function IR3J_SaveResultsToWaves()
 
 	SVAR SimpleModel 				= root:Packages:Irena:SimpleFits:SimpleModel
 
-	NVAR InvQmaxUsed =	root:Packages:Irena:SimpleFits:InvQmaxUsed
-	NVAR Invariant =	root:Packages:Irena:SimpleFits:invariant
-	NVAR DataQEnd = 	root:Packages:Irena:SimpleFits:DataQEnd
-	NVAR DataQstart = 	root:Packages:Irena:SimpleFits:DataQstart
-	NVAR DataQEndPoint = root:Packages:Irena:SimpleFits:DataQEndPoint
-	NVAR DataQstartPoint = root:Packages:Irena:SimpleFits:DataQstartPoint
-	SVAR InvBackgModel = root:Packages:Irena:SimpleFits:InvBackgModel
-	NVAR InvBckgMinQ = root:Packages:Irena:SimpleFits:InvBckgMinQ
-	NVAR InvBckgMaxQ = root:Packages:Irena:SimpleFits:InvBckgMaxQ
-
+	NVAR InvQmaxUsed 		=	root:Packages:Irena:SimpleFits:InvQmaxUsed
+	NVAR Invariant 			=	root:Packages:Irena:SimpleFits:invariant
+	NVAR DataQEnd 			= 	root:Packages:Irena:SimpleFits:DataQEnd
+	NVAR DataQstart 		= 	root:Packages:Irena:SimpleFits:DataQstart
+	NVAR DataQEndPoint 	= root:Packages:Irena:SimpleFits:DataQEndPoint
+	NVAR DataQstartPoint 	= root:Packages:Irena:SimpleFits:DataQstartPoint
+	SVAR InvBackgModel 	= root:Packages:Irena:SimpleFits:InvBackgModel
+	NVAR InvBckgMinQ 		= root:Packages:Irena:SimpleFits:InvBckgMinQ
+	NVAR InvBckgMaxQ 		= root:Packages:Irena:SimpleFits:InvBckgMaxQ
+	NVAR InvariantIrena 	= root:Packages:Irena:SimpleFits:InvariantIrena
+	NVAR InvContrast 		= root:Packages:Irena:SimpleFits:InvContrast
+	NVAR InvVolumeFraction = root:Packages:Irena:SimpleFits:InvVolumeFraction
 
 	NVAR VOlSD_Rg					=root:Packages:Irena:SimpleFits:VOlSD_Rg
 	NVAR VolSD_Volume				=root:Packages:Irena:SimpleFits:VolSD_Volume
@@ -2126,20 +2165,24 @@ static Function IR3J_SaveResultsToWaves()
 		NewDATAFolder/O/S root:InvariantFitResults
 		Wave/Z InvariantWV
 		if(!WaveExists(InvariantWV))
-			make/O/N=0 InvariantWV, InvariantQmax, TimeWave, TemperatureWave, PercentWave, OrderWave
+			make/O/N=0 InvariantWV, InvariantQmax, TimeWave, TemperatureWave, PercentWave, OrderWave, InvariantIrenaWV, InvContrastWv, InvVolumeFractionWv
 			make/O/N=0/T SampleName
 			SetScale/P x 0,1,"(mol e-^2/cm^3)^3", InvariantWV
 			SetScale/P x 0,1,"1/A", InvariantQmax
+			SetScale/P x 0,1,"1/cm4", InvariantIrenaWV	
 		endif
 		curlength = numpnts(InvariantWV)
-		redimension/N=(curlength+1) SampleName, InvariantWV, InvariantQmax, TimeWave, TemperatureWave, PercentWave, OrderWave 
+		redimension/N=(curlength+1) SampleName, InvariantWV, InvariantQmax, TimeWave, TemperatureWave, PercentWave, OrderWave , InvariantIrenaWV, InvContrastWv, InvVolumeFractionWv
 		SampleName[curlength] = DataFolderName
 		TimeWave[curlength]				=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzmin")
 		TemperatureWave[curlength]  	=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzC")
 		PercentWave[curlength] 			=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzpct")
 		OrderWave[curlength]				= 	IN2G_IdentifyNameComponent(DataFolderName, "_xyz")
-		InvariantWV[curlength] = Invariant
-		InvariantQmax[curlength] = InvQmaxUsed
+		InvariantWV[curlength] 			= Invariant
+		InvariantQmax[curlength] 		= InvQmaxUsed
+		InvariantIrenaWV[curlength] 	= InvariantIrena
+		InvContrastWv[curlength] 		= InvContrast
+		InvVolumeFractionWv[curlength]	= InvVolumeFraction
 		IR3J_GetTableWithresults()
 	elseif(stringmatch(SimpleModel,"Guinier Rod"))
 		//tabulate data for Guinier
@@ -2261,53 +2304,53 @@ static Function IR3J_SaveResultsToWaves()
 		SpheroidQmax[curlength] 			= DataQEnd
 		SpheroidChiSquare[curlength] 	= AchievedChiSquare
 		IR3J_GetTableWithresults()
-	elseif(stringmatch(SimpleModel,"Volume Size Distribution"))
-		//tabulate data for Porod
-		NewDATAFolder/O/S root:VolSizeDistResults
-		Wave/Z Rg
-		if(!WaveExists(Rg))
-			make/O/N=0 Rg, VolumeFraction, MeanDiaVolDist, ModeDiaVolDist, MeadianDiaVolDist, TimeWave, TemperatureWave, PercentWave, OrderWave
-			make/O/N=0/T SampleName
-			SetScale/P x 0,1,"A", Rg, MeanDiaVolDist, ModeDiaVolDist, MeadianDiaVolDist
-			SetScale/P x 0,1,"Fraction", VolumeFraction		
-		endif
-		curlength = numpnts(Rg)
-		redimension/N=(curlength+1) SampleName,Rg, VolumeFraction, MeanDiaVolDist, ModeDiaVolDist, MeadianDiaVolDist, TimeWave, TemperatureWave, PercentWave, OrderWave 
-		SampleName[curlength] 			= DataFolderName
-		TimeWave[curlength]				=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzmin")
-		TemperatureWave[curlength]  	=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzC")
-		PercentWave[curlength] 			=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzpct")
-		OrderWave[curlength]				= 	IN2G_IdentifyNameComponent(DataFolderName, "_xyz")
-		Rg[curlength] 						= VOlSD_Rg
-		VolumeFraction[curlength]		= VolSD_Volume
-		MeanDiaVolDist[curlength] 		= VolSD_MeanDiameter
-		ModeDiaVolDist[curlength]		= VOlSD_ModeDiamater
-		MeadianDiaVolDist[curlength]	= VolSD_MedianDiameter
-
-		//IR3J_GetTableWithresults()
-	elseif(stringmatch(SimpleModel,"Number Size Distribution"))
-		//tabulate data for Porod
-		NewDATAFolder/O/S root:NumbSizeDistResults
-		Wave/Z NumPartsPercm3
-		if(!WaveExists(NumPartsPercm3))	
-			make/O/N=0 NumPartsPercm3, MeanDiaNumDist, ModeDiaNumDist, MeadianDiaNumDist, TimeWave, TemperatureWave, PercentWave, OrderWave
-			make/O/N=0/T SampleName
-			SetScale/P x 0,1,"A", MeanDiaNumDist, ModeDiaNumDist, MeadianDiaNumDist
-			SetScale/P x 0,1,"1/cm3", NumPartsPercm3		
-		endif
-		curlength = numpnts(NumPartsPercm3)
-		redimension/N=(curlength+1) SampleName, NumPartsPercm3, MeanDiaNumDist, ModeDiaNumDist, MeadianDiaNumDist, TimeWave, TemperatureWave, PercentWave, OrderWave 
-		SampleName[curlength] 			= DataFolderName
-		TimeWave[curlength]				=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzmin")
-		TemperatureWave[curlength]  	=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzC")
-		PercentWave[curlength] 			=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzpct")
-		OrderWave[curlength]				= 	IN2G_IdentifyNameComponent(DataFolderName, "_xyz")
-		NumPartsPercm3[curlength] 		= NumSD_NumPartPerCm3
-		MeanDiaNumDist[curlength] 		= NumSD_MeanDiameter
-		ModeDiaNumDist[curlength]		= NumSD_ModeDiamater
-		MeadianDiaNumDist[curlength]	= NumSD_MedianDiameter
-
-		//IR3J_GetTableWithresults()
+//	elseif(stringmatch(SimpleModel,"Volume Size Distribution"))
+//		//tabulate data for Porod
+//		NewDATAFolder/O/S root:VolSizeDistResults
+//		Wave/Z Rg
+//		if(!WaveExists(Rg))
+//			make/O/N=0 Rg, VolumeFraction, MeanDiaVolDist, ModeDiaVolDist, MeadianDiaVolDist, TimeWave, TemperatureWave, PercentWave, OrderWave
+//			make/O/N=0/T SampleName
+//			SetScale/P x 0,1,"A", Rg, MeanDiaVolDist, ModeDiaVolDist, MeadianDiaVolDist
+//			SetScale/P x 0,1,"Fraction", VolumeFraction		
+//		endif
+//		curlength = numpnts(Rg)
+//		redimension/N=(curlength+1) SampleName,Rg, VolumeFraction, MeanDiaVolDist, ModeDiaVolDist, MeadianDiaVolDist, TimeWave, TemperatureWave, PercentWave, OrderWave 
+//		SampleName[curlength] 			= DataFolderName
+//		TimeWave[curlength]				=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzmin")
+//		TemperatureWave[curlength]  	=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzC")
+//		PercentWave[curlength] 			=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzpct")
+//		OrderWave[curlength]				= 	IN2G_IdentifyNameComponent(DataFolderName, "_xyz")
+//		Rg[curlength] 						= VOlSD_Rg
+//		VolumeFraction[curlength]		= VolSD_Volume
+//		MeanDiaVolDist[curlength] 		= VolSD_MeanDiameter
+//		ModeDiaVolDist[curlength]		= VOlSD_ModeDiamater
+//		MeadianDiaVolDist[curlength]	= VolSD_MedianDiameter
+//
+//		//IR3J_GetTableWithresults()
+//	elseif(stringmatch(SimpleModel,"Number Size Distribution"))
+//		//tabulate data for Porod
+//		NewDATAFolder/O/S root:NumbSizeDistResults
+//		Wave/Z NumPartsPercm3
+//		if(!WaveExists(NumPartsPercm3))	
+//			make/O/N=0 NumPartsPercm3, MeanDiaNumDist, ModeDiaNumDist, MeadianDiaNumDist, TimeWave, TemperatureWave, PercentWave, OrderWave
+//			make/O/N=0/T SampleName
+//			SetScale/P x 0,1,"A", MeanDiaNumDist, ModeDiaNumDist, MeadianDiaNumDist
+//			SetScale/P x 0,1,"1/cm3", NumPartsPercm3		
+//		endif
+//		curlength = numpnts(NumPartsPercm3)
+//		redimension/N=(curlength+1) SampleName, NumPartsPercm3, MeanDiaNumDist, ModeDiaNumDist, MeadianDiaNumDist, TimeWave, TemperatureWave, PercentWave, OrderWave 
+//		SampleName[curlength] 			= DataFolderName
+//		TimeWave[curlength]				=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzmin")
+//		TemperatureWave[curlength]  	=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzC")
+//		PercentWave[curlength] 			=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzpct")
+//		OrderWave[curlength]				= 	IN2G_IdentifyNameComponent(DataFolderName, "_xyz")
+//		NumPartsPercm3[curlength] 		= NumSD_NumPartPerCm3
+//		MeanDiaNumDist[curlength] 		= NumSD_MeanDiameter
+//		ModeDiaNumDist[curlength]		= NumSD_ModeDiamater
+//		MeadianDiaNumDist[curlength]	= NumSD_MedianDiameter
+//
+//		IR3J_GetTableWithresults()
 	endif
 	
 end
@@ -2375,22 +2418,22 @@ static Function IR3J_GetTableWithResults()
 				IR3J_InvResultsTableFnct() 
 			endif 
 			break
-		case "Volume Size Distribution":	// execute if case matches expression
-			DoWindow IR3J_VolSDResultsTable
-			if(V_Flag)
-				DoWindow/F IR3J_VolSDResultsTable
-			else
-				IR3J_VolumeSDResTblFnct() 
-			endif 
-			break
-		case "Number Size Distribution":	// execute if case matches expression
-			DoWindow IR3J_NumberSDResultsTable
-			if(V_Flag)
-				DoWindow/F IR3J_NumberSDResultsTable
-			else
-				IR3J_NumberSDResTblFnct() 
-			endif 
-			break
+//		case "Volume Size Distribution":	// execute if case matches expression
+//			DoWindow IR3J_VolSDResultsTable
+//			if(V_Flag)
+//				DoWindow/F IR3J_VolSDResultsTable
+//			else
+//				IR3J_VolumeSDResTblFnct() 
+//			endif 
+//			break
+//		case "Number Size Distribution":	// execute if case matches expression
+//			DoWindow IR3J_NumberSDResultsTable
+//			if(V_Flag)
+//				DoWindow/F IR3J_NumberSDResultsTable
+//			else
+//				IR3J_NumberSDResTblFnct() 
+//			endif 
+//			break
 
 		default:			// optional default expression executed
 
@@ -2470,24 +2513,24 @@ Function IR3J_DeleteExistingModelResults()
 					endif
 				endif
 				break
-			case "Volume Size Distribution":	// execute if case matches expression
-				DoWindow/K/Z IR3J_VolSDResultsTable
-				if(DataFolderExists("root:VolSizeDistResults"))
-					KillDataFolder/Z root:VolSizeDistResults:
-					if(V_Flag!=0)
-						DoAlert/T="Could not delete data folder" 0, "Volume Size distribution analysis results folder root:VolSizeDistResults could not be deleted. It is likely used in some graph or table. Close graphs/tables and try again."
-					endif
-				endif
-				break
-			case "Number Size Distribution":	// execute if case matches expression
-				DoWindow/K/Z IR3J_NumberSDResultsTable
-				if(DataFolderExists("root:NumbSizeDistResults"))
-					KillDataFolder/Z root:NumbSizeDistResults:
-					if(V_Flag!=0)
-						DoAlert/T="Could not delete data folder" 0, "Number Size distribution analysis results folder root:NumbSizeDistResults could not be deleted. It is likely used in some graph or table. Close graphs/tables and try again."
-					endif
-				endif
-				break
+//			case "Volume Size Distribution":	// execute if case matches expression
+//				DoWindow/K/Z IR3J_VolSDResultsTable
+//				if(DataFolderExists("root:VolSizeDistResults"))
+//					KillDataFolder/Z root:VolSizeDistResults:
+//					if(V_Flag!=0)
+//						DoAlert/T="Could not delete data folder" 0, "Volume Size distribution analysis results folder root:VolSizeDistResults could not be deleted. It is likely used in some graph or table. Close graphs/tables and try again."
+//					endif
+//				endif
+//				break
+//			case "Number Size Distribution":	// execute if case matches expression
+//				DoWindow/K/Z IR3J_NumberSDResultsTable
+//				if(DataFolderExists("root:NumbSizeDistResults"))
+//					KillDataFolder/Z root:NumbSizeDistResults:
+//					if(V_Flag!=0)
+//						DoAlert/T="Could not delete data folder" 0, "Number Size distribution analysis results folder root:NumbSizeDistResults could not be deleted. It is likely used in some graph or table. Close graphs/tables and try again."
+//					endif
+//				endif
+//				break
 			default:			// optional default expression executed
 		endswitch
 	endif
@@ -2497,211 +2540,251 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 static Function IR3J_GuinierFitResultsTableFnct() : Table
-	PauseUpdate    		// building window...
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFref oldDf= GetDataFolderDFR()	
-	if(!DataFolderExists("root:GuinierFitResults:"))
-		Abort "No Guinier Fit data exist."
+	DoWIndow IR3J_GuinierFitResultsTable
+	if(V_Flag)
+		DoWIndow/F IR3J_GuinierFitResultsTable 
+	else
+		PauseUpdate    		// building window...
+		DFref oldDf= GetDataFolderDFR()	
+		if(!DataFolderExists("root:GuinierFitResults:"))
+			Abort "No Guinier Fit data exist."
+		endif
+		SetDataFolder root:GuinierFitResults:
+		Wave/T SampleName
+		Wave GuinierRg,GuinierI0,GuinierChiSquare,GuinierQmax,GuinierQmin
+		Edit/K=1/W=(860,772,1831,1334)/N=IR3J_GuinierFitResultsTable SampleName,GuinierRg,GuinierI0,GuinierChiSquare,GuinierQmax as "Guinier fitting results Table"
+		AppendToTable GuinierQmin
+		ModifyTable format(Point)=1,width(SampleName)=304,title(SampleName)="Sample Folder"
+		ModifyTable alignment(GuinierRg)=1,sigDigits(GuinierRg)=4,title(GuinierRg)="Rg [A]"
+		ModifyTable alignment(GuinierI0)=1,sigDigits(GuinierI0)=4,width(GuinierI0)=100,title(GuinierI0)="Guinier I0"
+		ModifyTable alignment(GuinierChiSquare)=1,sigDigits(GuinierChiSquare)=4,width(GuinierChiSquare)=104
+		ModifyTable title(GuinierChiSquare)="Chi^2",alignment(GuinierQmax)=1,sigDigits(GuinierQmax)=4
+		ModifyTable width(GuinierQmax)=92,title(GuinierQmax)="Qmax [1/A]",alignment(GuinierQmin)=1
+		ModifyTable sigDigits(GuinierQmin)=4,width(GuinierQmin)=110,title(GuinierQmin)="Qmin [1/A]"
+		SetDataFolder oldDf
 	endif
-	SetDataFolder root:GuinierFitResults:
-	Wave/T SampleName
-	Wave GuinierRg,GuinierI0,GuinierChiSquare,GuinierQmax,GuinierQmin
-	Edit/K=1/W=(860,772,1831,1334)/N=IR3J_GuinierFitResultsTable SampleName,GuinierRg,GuinierI0,GuinierChiSquare,GuinierQmax as "Guinier fitting results Table"
-	AppendToTable GuinierQmin
-	ModifyTable format(Point)=1,width(SampleName)=304,title(SampleName)="Sample Folder"
-	ModifyTable alignment(GuinierRg)=1,sigDigits(GuinierRg)=4,title(GuinierRg)="Rg [A]"
-	ModifyTable alignment(GuinierI0)=1,sigDigits(GuinierI0)=4,width(GuinierI0)=100,title(GuinierI0)="Guinier I0"
-	ModifyTable alignment(GuinierChiSquare)=1,sigDigits(GuinierChiSquare)=4,width(GuinierChiSquare)=104
-	ModifyTable title(GuinierChiSquare)="Chi^2",alignment(GuinierQmax)=1,sigDigits(GuinierQmax)=4
-	ModifyTable width(GuinierQmax)=92,title(GuinierQmax)="Qmax [1/A]",alignment(GuinierQmin)=1
-	ModifyTable sigDigits(GuinierQmin)=4,width(GuinierQmin)=110,title(GuinierQmin)="Qmin [1/A]"
-	SetDataFolder oldDf
 EndMacro
 //*****************************************************************************************************************
 static Function IR3J_GuinRodFitResTblFnct() : Table
-	PauseUpdate    		// building window...
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFref oldDf= GetDataFolderDFR()	
-	if(!DataFolderExists("root:GuinierRodFitResults:"))
-		Abort "No Guinier Rod Fit data exist."
+	DoWIndow IR3J_GuinierRodFitResultsTable
+	if(V_Flag)
+		DoWIndow/F IR3J_GuinierRodFitResultsTable 
+	else
+		PauseUpdate    		// building window...
+		DFref oldDf= GetDataFolderDFR()	
+		if(!DataFolderExists("root:GuinierRodFitResults:"))
+			Abort "No Guinier Rod Fit data exist."
+		endif
+		SetDataFolder root:GuinierRodFitResults:
+		Wave/T SampleName
+		Wave GuinierRc,GuinierI0,GuinierChiSquare,GuinierQmax,GuinierQmin
+		Edit/K=1/W=(860,772,1831,1334)/N=IR3J_GuinierRodFitResultsTable SampleName,GuinierRc,GuinierI0,GuinierChiSquare,GuinierQmax as "Guinier Rod fitting results Table"
+		AppendToTable GuinierQmin
+		ModifyTable format(Point)=1,width(SampleName)=304,title(SampleName)="Sample Folder"
+		ModifyTable alignment(GuinierRc)=1,sigDigits(GuinierRc)=4,title(GuinierRc)="Rc [A]"
+		ModifyTable alignment(GuinierI0)=1,sigDigits(GuinierI0)=4,width(GuinierI0)=100,title(GuinierI0)="Guinier I0"
+		ModifyTable alignment(GuinierChiSquare)=1,sigDigits(GuinierChiSquare)=4,width(GuinierChiSquare)=104
+		ModifyTable title(GuinierChiSquare)="Chi^2",alignment(GuinierQmax)=1,sigDigits(GuinierQmax)=4
+		ModifyTable width(GuinierQmax)=92,title(GuinierQmax)="Qmax [1/A]",alignment(GuinierQmin)=1
+		ModifyTable sigDigits(GuinierQmin)=4,width(GuinierQmin)=110,title(GuinierQmin)="Qmin [1/A]"
+		SetDataFolder oldDf
 	endif
-	SetDataFolder root:GuinierRodFitResults:
-	Wave/T SampleName
-	Wave GuinierRc,GuinierI0,GuinierChiSquare,GuinierQmax,GuinierQmin
-	Edit/K=1/W=(860,772,1831,1334)/N=IR3J_GuinierRodFitResultsTable SampleName,GuinierRc,GuinierI0,GuinierChiSquare,GuinierQmax as "Guinier Rod fitting results Table"
-	AppendToTable GuinierQmin
-	ModifyTable format(Point)=1,width(SampleName)=304,title(SampleName)="Sample Folder"
-	ModifyTable alignment(GuinierRc)=1,sigDigits(GuinierRc)=4,title(GuinierRc)="Rc [A]"
-	ModifyTable alignment(GuinierI0)=1,sigDigits(GuinierI0)=4,width(GuinierI0)=100,title(GuinierI0)="Guinier I0"
-	ModifyTable alignment(GuinierChiSquare)=1,sigDigits(GuinierChiSquare)=4,width(GuinierChiSquare)=104
-	ModifyTable title(GuinierChiSquare)="Chi^2",alignment(GuinierQmax)=1,sigDigits(GuinierQmax)=4
-	ModifyTable width(GuinierQmax)=92,title(GuinierQmax)="Qmax [1/A]",alignment(GuinierQmin)=1
-	ModifyTable sigDigits(GuinierQmin)=4,width(GuinierQmin)=110,title(GuinierQmin)="Qmin [1/A]"
-	SetDataFolder oldDf
 EndMacro
 //*****************************************************************************************************************
 static Function IR3J_GuinSheetFitResTblFnct() : Table
-	PauseUpdate    		// building window...
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFref oldDf= GetDataFolderDFR()	
-	if(!DataFolderExists("root:GuinierSheetFitResults:"))
-		Abort "No Guinier Sheet Fit data exist."
+	DoWIndow IR3J_GuinierSheetFitResTable
+	if(V_Flag)
+		DoWIndow/F IR3J_GuinierSheetFitResTable 
+	else
+		PauseUpdate    		// building window...
+		DFref oldDf= GetDataFolderDFR()	
+		if(!DataFolderExists("root:GuinierSheetFitResults:"))
+			Abort "No Guinier Sheet Fit data exist."
+		endif
+		SetDataFolder root:GuinierSheetFitResults:
+		Wave/T SampleName
+		Wave GuinierTh,GuinierI0,GuinierChiSquare,GuinierQmax,GuinierQmin
+		Edit/K=1/W=(860,772,1831,1334)/N=IR3J_GuinierSheetFitResTable SampleName,GuinierTh,GuinierI0,GuinierChiSquare,GuinierQmax as "Guinier Sheet fitting results Table"
+		AppendToTable GuinierQmin
+		ModifyTable format(Point)=1,width(SampleName)=304,title(SampleName)="Sample Folder"
+		ModifyTable alignment(GuinierTh)=1,sigDigits(GuinierTh)=4,title(GuinierTh)="Tc [A]"
+		ModifyTable alignment(GuinierI0)=1,sigDigits(GuinierI0)=4,width(GuinierI0)=100,title(GuinierI0)="Guinier I0"
+		ModifyTable alignment(GuinierChiSquare)=1,sigDigits(GuinierChiSquare)=4,width(GuinierChiSquare)=104
+		ModifyTable title(GuinierChiSquare)="Chi^2",alignment(GuinierQmax)=1,sigDigits(GuinierQmax)=4
+		ModifyTable width(GuinierQmax)=92,title(GuinierQmax)="Qmax [1/A]",alignment(GuinierQmin)=1
+		ModifyTable sigDigits(GuinierQmin)=4,width(GuinierQmin)=110,title(GuinierQmin)="Qmin [1/A]"
+		SetDataFolder oldDf
 	endif
-	SetDataFolder root:GuinierSheetFitResults:
-	Wave/T SampleName
-	Wave GuinierTh,GuinierI0,GuinierChiSquare,GuinierQmax,GuinierQmin
-	Edit/K=1/W=(860,772,1831,1334)/N=IR3J_GuinierSheetFitResTable SampleName,GuinierTh,GuinierI0,GuinierChiSquare,GuinierQmax as "Guinier Sheet fitting results Table"
-	AppendToTable GuinierQmin
-	ModifyTable format(Point)=1,width(SampleName)=304,title(SampleName)="Sample Folder"
-	ModifyTable alignment(GuinierTh)=1,sigDigits(GuinierTh)=4,title(GuinierTh)="Tc [A]"
-	ModifyTable alignment(GuinierI0)=1,sigDigits(GuinierI0)=4,width(GuinierI0)=100,title(GuinierI0)="Guinier I0"
-	ModifyTable alignment(GuinierChiSquare)=1,sigDigits(GuinierChiSquare)=4,width(GuinierChiSquare)=104
-	ModifyTable title(GuinierChiSquare)="Chi^2",alignment(GuinierQmax)=1,sigDigits(GuinierQmax)=4
-	ModifyTable width(GuinierQmax)=92,title(GuinierQmax)="Qmax [1/A]",alignment(GuinierQmin)=1
-	ModifyTable sigDigits(GuinierQmin)=4,width(GuinierQmin)=110,title(GuinierQmin)="Qmin [1/A]"
-	SetDataFolder oldDf
 EndMacro
 
 //*****************************************************************************************************************
 Function IR3J_PorodFitResultsTableFnct() : Table
-	PauseUpdate    		// building window...
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	String fldrSav0= GetDataFolder(1)
-	if(!DataFolderExists("root:PorodFitResults:"))
-		Abort "No Porod Fit data exist."
+	DoWIndow IR3J_PorodFitResultsTable
+	if(V_Flag)
+		DoWIndow/F IR3J_PorodFitResultsTable 
+	else
+		PauseUpdate    		// building window...
+		String fldrSav0= GetDataFolder(1)
+		if(!DataFolderExists("root:PorodFitResults:"))
+			Abort "No Porod Fit data exist."
+		endif
+		SetDataFolder root:PorodFitResults:
+		Wave/T SampleName
+		Wave PorodConstant,PorodBackground,PorodChiSquare, PorodQmax,PorodQmin, ScatteringContrastWave, PorodSpecificSurfaceWave
+		Edit/K=1/W=(576,346,1528,878)/N=IR3J_PorodFitResultsTable SampleName,PorodConstant,PorodSpecificSurfaceWave, PorodBackground,PorodChiSquare as "Porod fitting results Table"
+		AppendToTable PorodQmax,PorodQmin, ScatteringContrastWave
+		ModifyTable format(Point)=1,width(SampleName)=314,title(SampleName)="Sample Folder"
+		ModifyTable alignment(PorodConstant)=1,sigDigits(PorodConstant)=4,width(PorodConstant)=122
+		ModifyTable title(PorodConstant)="Porod Constant",alignment(PorodBackground)=1,sigDigits(PorodBackground)=4
+		ModifyTable width(PorodBackground)=110,title(PorodBackground)="Background",alignment(PorodChiSquare)=1
+		ModifyTable sigDigits(PorodChiSquare)=4,width(PorodChiSquare)=106,title(PorodChiSquare)="Chi^2"
+		ModifyTable alignment(PorodQmax)=1,sigDigits(PorodQmax)=4,title(PorodQmax)="Qmax [1/A]"
+		ModifyTable alignment(PorodQmin)=1,sigDigits(PorodQmin)=4,width(PorodQmin)=94,title(PorodQmin)="Qmin [1/A]"
+		ModifyTable alignment(PorodSpecificSurfaceWave)=1,sigDigits(PorodSpecificSurfaceWave)=7,width(PorodSpecificSurfaceWave)=94,title(PorodQmin)="Spec Surface [cm2/cm3]"
+		ModifyTable alignment(ScatteringContrastWave)=1,sigDigits(ScatteringContrastWave)=4,width(ScatteringContrastWave)=94,title(ScatteringContrastWave)="Contrast [10^20 cm^-4]"
+		SetDataFolder fldrSav0
 	endif
-	SetDataFolder root:PorodFitResults:
-	Wave/T SampleName
-	Wave PorodConstant,PorodBackground,PorodChiSquare, PorodQmax,PorodQmin, ScatteringContrastWave, PorodSpecificSurfaceWave
-	Edit/K=1/W=(576,346,1528,878)/N=IR3J_PorodFitResultsTable SampleName,PorodConstant,PorodSpecificSurfaceWave, PorodBackground,PorodChiSquare as "Porod fitting results Table"
-	AppendToTable PorodQmax,PorodQmin, ScatteringContrastWave
-	ModifyTable format(Point)=1,width(SampleName)=314,title(SampleName)="Sample Folder"
-	ModifyTable alignment(PorodConstant)=1,sigDigits(PorodConstant)=4,width(PorodConstant)=122
-	ModifyTable title(PorodConstant)="Porod Constant",alignment(PorodBackground)=1,sigDigits(PorodBackground)=4
-	ModifyTable width(PorodBackground)=110,title(PorodBackground)="Background",alignment(PorodChiSquare)=1
-	ModifyTable sigDigits(PorodChiSquare)=4,width(PorodChiSquare)=106,title(PorodChiSquare)="Chi^2"
-	ModifyTable alignment(PorodQmax)=1,sigDigits(PorodQmax)=4,title(PorodQmax)="Qmax [1/A]"
-	ModifyTable alignment(PorodQmin)=1,sigDigits(PorodQmin)=4,width(PorodQmin)=94,title(PorodQmin)="Qmin [1/A]"
-	ModifyTable alignment(PorodSpecificSurfaceWave)=1,sigDigits(PorodSpecificSurfaceWave)=7,width(PorodSpecificSurfaceWave)=94,title(PorodQmin)="Spec Surface [cm2/cm3]"
-	ModifyTable alignment(ScatteringContrastWave)=1,sigDigits(ScatteringContrastWave)=4,width(ScatteringContrastWave)=94,title(ScatteringContrastWave)="Contrast [10^20 cm^-4]"
-	SetDataFolder fldrSav0
 EndMacro
 //*****************************************************************************************************************
 Function IR3J_SphFFFitResTblFnct() : Table
-	PauseUpdate    		// building window...
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	String fldrSav0= GetDataFolder(1)
-	if(!DataFolderExists("root:SphereFitResults:"))
-		Abort "No Sphere FF Fit data exist."
+	DoWIndow IR3J_SphereFFFitResultsTable
+	if(V_Flag)
+		DoWIndow/F IR3J_SphereFFFitResultsTable 
+	else
+		PauseUpdate    		// building window...
+		String fldrSav0= GetDataFolder(1)
+		if(!DataFolderExists("root:SphereFitResults:"))
+			Abort "No Sphere FF Fit data exist."
+		endif
+		SetDataFolder root:SphereFitResults:
+		Wave/T SampleName
+		Wave SphereRadius,SphereScalingFactor,SphereBackground,SphereChiSquare,SphereQmax,SphereQmin 
+		Edit/K=1/W=(576,784,1527,1226)/N=IR3J_SphereFFFitResultsTable SampleName,SphereRadius,SphereScalingFactor,SphereBackground as "Sphere FF fiting results table"
+		AppendToTable SphereChiSquare,SphereQmax,SphereQmin
+		ModifyTable format(Point)=1,width(SampleName)=330,title(SampleName)="Sample Folder"
+		ModifyTable alignment(SphereRadius)=1,sigDigits(SphereRadius)=4,width(SphereRadius)=86
+		ModifyTable title(SphereRadius)="Radius [A]",alignment(SphereScalingFactor)=1,sigDigits(SphereScalingFactor)=4
+		ModifyTable title(SphereScalingFactor)="Scaling fact.",alignment(SphereBackground)=1
+		ModifyTable sigDigits(SphereBackground)=4,title(SphereBackground)="Background",alignment(SphereChiSquare)=1
+		ModifyTable sigDigits(SphereChiSquare)=4,title(SphereChiSquare)="Chi^2",alignment(SphereQmax)=1
+		ModifyTable sigDigits(SphereQmax)=4,title(SphereQmax)="Qmax [1/A]",alignment(SphereQmin)=1
+		ModifyTable sigDigits(SphereQmin)=4,width(SphereQmin)=88,title(SphereQmin)="Qmin [1/A]"
+		SetDataFolder fldrSav0
 	endif
-	SetDataFolder root:SphereFitResults:
-	Wave/T SampleName
-	Wave SphereRadius,SphereScalingFactor,SphereBackground,SphereChiSquare,SphereQmax,SphereQmin 
-	Edit/K=1/W=(576,784,1527,1226)/N=IR3J_SphereFFFitResultsTable SampleName,SphereRadius,SphereScalingFactor,SphereBackground as "Sphere FF fiting results table"
-	AppendToTable SphereChiSquare,SphereQmax,SphereQmin
-	ModifyTable format(Point)=1,width(SampleName)=330,title(SampleName)="Sample Folder"
-	ModifyTable alignment(SphereRadius)=1,sigDigits(SphereRadius)=4,width(SphereRadius)=86
-	ModifyTable title(SphereRadius)="Radius [A]",alignment(SphereScalingFactor)=1,sigDigits(SphereScalingFactor)=4
-	ModifyTable title(SphereScalingFactor)="Scaling fact.",alignment(SphereBackground)=1
-	ModifyTable sigDigits(SphereBackground)=4,title(SphereBackground)="Background",alignment(SphereChiSquare)=1
-	ModifyTable sigDigits(SphereChiSquare)=4,title(SphereChiSquare)="Chi^2",alignment(SphereQmax)=1
-	ModifyTable sigDigits(SphereQmax)=4,title(SphereQmax)="Qmax [1/A]",alignment(SphereQmin)=1
-	ModifyTable sigDigits(SphereQmin)=4,width(SphereQmin)=88,title(SphereQmin)="Qmin [1/A]"
-	SetDataFolder fldrSav0
 EndMacro
 //*****************************************************************************************************************
 
 Function IR3J_SpheroidFFFitResTblFnct() : Table
-	PauseUpdate    		// building window...
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	String fldrSav0= GetDataFolder(1)
-	if(!DataFolderExists("root:SpheroidFitResults:"))
-		Abort "No Spheroid FF Fit data exist."
+	DoWIndow IR3J_SpheroidFFFitResultsTable
+	if(V_Flag)
+		DoWIndow/F IR3J_SpheroidFFFitResultsTable 
+	else
+		PauseUpdate    		// building window...
+		String fldrSav0= GetDataFolder(1)
+		if(!DataFolderExists("root:SpheroidFitResults:"))
+			Abort "No Spheroid FF Fit data exist."
+		endif
+		SetDataFolder root:SpheroidFitResults:
+		Wave/T SampleName
+		Wave SpheroidRadius,SpheroidAspectRatio,SpheroidScalingFactor,SpheroidChiSquare,SpheroidBackground,SpheroidQmax,SpheroidQmin 
+		Edit/K=1/W=(528,552,1494,1048)/N=IR3J_SpheroidFFFitResultsTable SampleName,SpheroidRadius,SpheroidAspectRatio,SpheroidScalingFactor as "Spheroid FF fitting results table"
+		AppendToTable SpheroidChiSquare,SpheroidBackground,SpheroidQmax,SpheroidQmin
+		ModifyTable format(Point)=1,width(SampleName)=306,title(SampleName)="Sample Folder"
+		ModifyTable alignment(SpheroidRadius)=1,sigDigits(SpheroidRadius)=4,title(SpheroidRadius)="Radius [A]"
+		ModifyTable alignment(SpheroidAspectRatio)=1,sigDigits(SpheroidAspectRatio)=3,title(SpheroidAspectRatio)="Aspect Ratio"
+		ModifyTable alignment(SpheroidScalingFactor)=1,sigDigits(SpheroidScalingFactor)=4
+		ModifyTable title(SpheroidScalingFactor)="Scaling fact.",alignment(SpheroidChiSquare)=1
+		ModifyTable sigDigits(SpheroidChiSquare)=4,title(SpheroidChiSquare)="Chi^2",alignment(SpheroidBackground)=1
+		ModifyTable sigDigits(SpheroidBackground)=4,title(SpheroidBackground)="Background"
+		ModifyTable alignment(SpheroidQmax)=1,sigDigits(SpheroidQmax)=4,title(SpheroidQmax)="Qmax [1/A]"
+		ModifyTable alignment(SpheroidQmin)=1,sigDigits(SpheroidQmin)=4,title(SpheroidQmin)="Qmin [1/A]"
+		SetDataFolder fldrSav0
 	endif
-	SetDataFolder root:SpheroidFitResults:
-	Wave/T SampleName
-	Wave SpheroidRadius,SpheroidAspectRatio,SpheroidScalingFactor,SpheroidChiSquare,SpheroidBackground,SpheroidQmax,SpheroidQmin 
-	Edit/K=1/W=(528,552,1494,1048)/N=IR3J_SpheroidFFFitResultsTable SampleName,SpheroidRadius,SpheroidAspectRatio,SpheroidScalingFactor as "Spheroid FF fitting results table"
-	AppendToTable SpheroidChiSquare,SpheroidBackground,SpheroidQmax,SpheroidQmin
-	ModifyTable format(Point)=1,width(SampleName)=306,title(SampleName)="Sample Folder"
-	ModifyTable alignment(SpheroidRadius)=1,sigDigits(SpheroidRadius)=4,title(SpheroidRadius)="Radius [A]"
-	ModifyTable alignment(SpheroidAspectRatio)=1,sigDigits(SpheroidAspectRatio)=3,title(SpheroidAspectRatio)="Aspect Ratio"
-	ModifyTable alignment(SpheroidScalingFactor)=1,sigDigits(SpheroidScalingFactor)=4
-	ModifyTable title(SpheroidScalingFactor)="Scaling fact.",alignment(SpheroidChiSquare)=1
-	ModifyTable sigDigits(SpheroidChiSquare)=4,title(SpheroidChiSquare)="Chi^2",alignment(SpheroidBackground)=1
-	ModifyTable sigDigits(SpheroidBackground)=4,title(SpheroidBackground)="Background"
-	ModifyTable alignment(SpheroidQmax)=1,sigDigits(SpheroidQmax)=4,title(SpheroidQmax)="Qmax [1/A]"
-	ModifyTable alignment(SpheroidQmin)=1,sigDigits(SpheroidQmin)=4,title(SpheroidQmin)="Qmin [1/A]"
-	SetDataFolder fldrSav0
 EndMacro
 //*****************************************************************************************************************
-
-Function IR3J_VolumeSDResTblFnct() : Table
-	PauseUpdate    		// building window...
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	String fldrSav0= GetDataFolder(1)
-	if(!DataFolderExists("root:VolSizeDistResults:"))
-		Abort "No Volume Size Distribution analysis data exist."
-	endif
-	SetDataFolder root:VolSizeDistResults:
-	Wave/T SampleName
-	Wave Rg,VolumeFraction,MeanDiaVolDist,ModeDiaVolDist,MeadianDiaVolDist  
-	Edit/K=1/W=(238,397,1078,679)/N=IR3J_VolSDResultsTable SampleName,Rg,VolumeFraction,MeanDiaVolDist,ModeDiaVolDist as "Volume Size Distribution Analysis"
-	AppendToTable MeadianDiaVolDist
-	ModifyTable format(Point)=1,width(SampleName)=264,title(SampleName)="Sample name"
-	ModifyTable alignment(Rg)=1,sigDigits(Rg)=4,title(Rg)="Rg [A]",alignment(VolumeFraction)=1
-	ModifyTable sigDigits(VolumeFraction)=3,title(VolumeFraction)="Vol. Fraction",alignment(MeanDiaVolDist)=1
-	ModifyTable sigDigits(MeanDiaVolDist)=4,title(MeanDiaVolDist)="Mean Dia [A]",alignment(ModeDiaVolDist)=1
-	ModifyTable sigDigits(ModeDiaVolDist)=4,title(ModeDiaVolDist)="Mode dia [A]",alignment(MeadianDiaVolDist)=1
-	ModifyTable sigDigits(MeadianDiaVolDist)=4,width(MeadianDiaVolDist)=100,title(MeadianDiaVolDist)="Meadian Dia [A]"
-	SetDataFolder fldrSav0
-EndMacro
+//
+//Function IR3J_VolumeSDResTblFnct() : Table
+//	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+//	DoWIndow IR3J_SpheroidFFFitResultsTable
+//	if(V_Flag)
+//		DoWIndow/F IR3J_SpheroidFFFitResultsTable 
+//	else
+//		PauseUpdate    		// building window...
+//		String fldrSav0= GetDataFolder(1)
+//		if(!DataFolderExists("root:VolSizeDistResults:"))
+//			Abort "No Volume Size Distribution analysis data exist."
+//		endif
+//		SetDataFolder root:VolSizeDistResults:
+//		Wave/T SampleName
+//		Wave Rg,VolumeFraction,MeanDiaVolDist,ModeDiaVolDist,MeadianDiaVolDist  
+//		Edit/K=1/W=(238,397,1078,679)/N=IR3J_VolSDResultsTable SampleName,Rg,VolumeFraction,MeanDiaVolDist,ModeDiaVolDist as "Volume Size Distribution Analysis"
+//		AppendToTable MeadianDiaVolDist
+//		ModifyTable format(Point)=1,width(SampleName)=264,title(SampleName)="Sample name"
+//		ModifyTable alignment(Rg)=1,sigDigits(Rg)=4,title(Rg)="Rg [A]",alignment(VolumeFraction)=1
+//		ModifyTable sigDigits(VolumeFraction)=3,title(VolumeFraction)="Vol. Fraction",alignment(MeanDiaVolDist)=1
+//		ModifyTable sigDigits(MeanDiaVolDist)=4,title(MeanDiaVolDist)="Mean Dia [A]",alignment(ModeDiaVolDist)=1
+//		ModifyTable sigDigits(ModeDiaVolDist)=4,title(ModeDiaVolDist)="Mode dia [A]",alignment(MeadianDiaVolDist)=1
+//		ModifyTable sigDigits(MeadianDiaVolDist)=4,width(MeadianDiaVolDist)=100,title(MeadianDiaVolDist)="Meadian Dia [A]"
+//		SetDataFolder fldrSav0
+//	endif
+//EndMacro
 //*****************************************************************************************************************
 
 Function IR3J_InvResultsTableFnct() : Table
-	PauseUpdate    		// building window...
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	String fldrSav0= GetDataFolder(1)
-	if(!DataFolderExists("root:InvariantFitResults:"))
-		Abort "No Invariant data exist."
+	DoWIndow IR3J_InvResultsTable
+	if(V_Flag)
+		DoWIndow/F IR3J_InvResultsTable 
+	else
+		PauseUpdate    		// building window...
+		String fldrSav0= GetDataFolder(1)
+		if(!DataFolderExists("root:InvariantFitResults:"))
+			Abort "No Invariant data exist."
+		endif
+		SetDataFolder root:InvariantFitResults:
+		Wave/T SampleName
+		Wave InvariantWV, InvariantQmax, TimeWave, TemperatureWave, PercentWave, OrderWave, InvariantIrenaWV, InvContrastWv, InvVolumeFractionWv  
+		Edit/K=1/W=(238,397,1078,679)/N=IR3J_InvResultsTable SampleName,InvariantWV, InvariantQmax as "Invariant calculation"
+		AppendToTable  InvariantIrenaWV, InvContrastWv, InvVolumeFractionWv, OrderWave, TimeWave, TemperatureWave, PercentWave
+		ModifyTable format(Point)=1,width(SampleName)=264,title(SampleName)="Sample name"
+		ModifyTable alignment(InvariantWV)=1,sigDigits(InvariantWV)=4,title(InvariantWV)="Invariant",alignment(InvariantQmax)=1
+		ModifyTable sigDigits(InvariantQmax)=3,title(InvariantQmax)="Invariant Qmax"
+	//	alignment(MeanDiaVolDist)=1
+	//	ModifyTable sigDigits(MeanDiaVolDist)=4,title(MeanDiaVolDist)="Mean Dia [A]",alignment(ModeDiaVolDist)=1
+	//	ModifyTable sigDigits(ModeDiaVolDist)=4,title(ModeDiaVolDist)="Mode dia [A]",alignment(MeadianDiaVolDist)=1
+	//	ModifyTable sigDigits(MeadianDiaVolDist)=4,width(MeadianDiaVolDist)=100,title(MeadianDiaVolDist)="Meadian Dia [A]"
+		SetDataFolder fldrSav0
 	endif
-	SetDataFolder root:InvariantFitResults:
-	Wave/T SampleName
-	Wave InvariantWV, InvariantQmax, TimeWave, TemperatureWave, PercentWave, OrderWave  
-	Edit/K=1/W=(238,397,1078,679)/N=IR3J_InvResultsTable SampleName,InvariantWV, InvariantQmax, TimeWave, TemperatureWave, PercentWave as "Volume Size Distribution Analysis"
-	AppendToTable OrderWave
-	ModifyTable format(Point)=1,width(SampleName)=264,title(SampleName)="Sample name"
-	ModifyTable alignment(InvariantWV)=1,sigDigits(InvariantWV)=4,title(InvariantWV)="Invariant",alignment(InvariantQmax)=1
-	ModifyTable sigDigits(InvariantQmax)=3,title(InvariantQmax)="Invariant Qmax"
-//	alignment(MeanDiaVolDist)=1
-//	ModifyTable sigDigits(MeanDiaVolDist)=4,title(MeanDiaVolDist)="Mean Dia [A]",alignment(ModeDiaVolDist)=1
-//	ModifyTable sigDigits(ModeDiaVolDist)=4,title(ModeDiaVolDist)="Mode dia [A]",alignment(MeadianDiaVolDist)=1
-//	ModifyTable sigDigits(MeadianDiaVolDist)=4,width(MeadianDiaVolDist)=100,title(MeadianDiaVolDist)="Meadian Dia [A]"
-	SetDataFolder fldrSav0
 EndMacro
 
 //*****************************************************************************************************************
-
-Function IR3J_NumberSDResTblFnct() : Table
-	PauseUpdate    		// building window...
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	String fldrSav0= GetDataFolder(1)
-	if(!DataFolderExists("root:NumbSizeDistResults:"))
-		Abort "No Number Size Distribution analysis data exist."
-	endif
-	SetDataFolder root:NumbSizeDistResults:
-	Wave/T SampleName
-	Wave NumPartsPercm3,MeanDiaNumDist,ModeDiaNumDist,MeadianDiaNumDist 
-	Edit/K=1/W=(238,397,1078,679)/N=IR3J_NumberSDResultsTable SampleName,NumPartsPercm3,MeanDiaNumDist,ModeDiaNumDist,MeadianDiaNumDist as "Volume Size Distribution Analysis"
-	ModifyTable format(Point)=1,width(SampleName)=264,title(SampleName)="Sample name"
-	ModifyTable alignment(NumPartsPercm3)=1,sigDigits(NumPartsPercm3)=4,title(NumPartsPercm3)="Num Particles [1/cm3]"
-	ModifyTable alignment(MeanDiaNumDist)=1, width(NumPartsPercm3)=120
-	ModifyTable sigDigits(MeanDiaNumDist)=4,title(MeanDiaNumDist)="Mean Dia [A]",alignment(ModeDiaNumDist)=1
-	ModifyTable sigDigits(ModeDiaNumDist)=4,title(ModeDiaNumDist)="Mode dia [A]",alignment(MeadianDiaNumDist)=1
-	ModifyTable sigDigits(MeadianDiaNumDist)=4,width(MeadianDiaNumDist)=100,title(MeadianDiaNumDist)="Meadian Dia [A]"
-	SetDataFolder fldrSav0
-EndMacro
-
+//
+//Function IR3J_NumberSDResTblFnct() : Table
+//	PauseUpdate    		// building window...
+//	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+//	String fldrSav0= GetDataFolder(1)
+//	if(!DataFolderExists("root:NumbSizeDistResults:"))
+//		Abort "No Number Size Distribution analysis data exist."
+//	endif
+//	SetDataFolder root:NumbSizeDistResults:
+//	Wave/T SampleName
+//	Wave NumPartsPercm3,MeanDiaNumDist,ModeDiaNumDist,MeadianDiaNumDist 
+//	Edit/K=1/W=(238,397,1078,679)/N=IR3J_NumberSDResultsTable SampleName,NumPartsPercm3,MeanDiaNumDist,ModeDiaNumDist,MeadianDiaNumDist as "Volume Size Distribution Analysis"
+//	ModifyTable format(Point)=1,width(SampleName)=264,title(SampleName)="Sample name"
+//	ModifyTable alignment(NumPartsPercm3)=1,sigDigits(NumPartsPercm3)=4,title(NumPartsPercm3)="Num Particles [1/cm3]"
+//	ModifyTable alignment(MeanDiaNumDist)=1, width(NumPartsPercm3)=120
+//	ModifyTable sigDigits(MeanDiaNumDist)=4,title(MeanDiaNumDist)="Mean Dia [A]",alignment(ModeDiaNumDist)=1
+//	ModifyTable sigDigits(ModeDiaNumDist)=4,title(ModeDiaNumDist)="Mode dia [A]",alignment(MeadianDiaNumDist)=1
+//	ModifyTable sigDigits(MeadianDiaNumDist)=4,width(MeadianDiaNumDist)=100,title(MeadianDiaNumDist)="Meadian Dia [A]"
+//	SetDataFolder fldrSav0
+//EndMacro
+//
 
 
 //*****************************************************************************************************************
@@ -2769,6 +2852,11 @@ static Function IR3J_SetupControlsOnMainpanel()
 		Setvariable invariant, disable=1
 		TitleBox invariantInfo, disable=1
 		Setvariable InvQmaxUsed, disable=1
+		Checkbox InvExtrapolateLowQ, disable=1
+		SetVariable InvContrast, disable=1
+		SetVariable InvVolumeFraction, disable=1
+		SetVariable InvariantIrena, disable=1
+		
 
 		strswitch(SimpleModel)	// string switch
 			case "Guinier":	// execute if case matches expression
@@ -2799,6 +2887,10 @@ static Function IR3J_SetupControlsOnMainpanel()
 				Setvariable invariant, disable=0
 				TitleBox invariantInfo, disable=0
 				Setvariable InvQmaxUsed, disable=0
+				Checkbox InvExtrapolateLowQ, disable=0
+				SetVariable InvContrast, disable=0
+				SetVariable InvVolumeFraction, disable=0
+				SetVariable InvariantIrena, disable=0
 				break
 
 
@@ -2906,7 +2998,7 @@ Function IR3J_InvFitBackground()
 		Duplicate/Free IntWave, Ewave
 		Ewave*=0.01
 	endif
-	variable StartPnt, EndPnt
+	variable StartPnt, EndPnt, V_FitError
 	StartPnt = BinarySearch(QWave, InvBckgMinQ )
 	EndPnt   = BinarySearch(QWave, InvBckgMaxQ )
 	variable A, B, C, D
@@ -2916,7 +3008,7 @@ Function IR3J_InvFitBackground()
 		KillWaves/Z InvBckgWaveModel, QWaveModel	
 	endif
 	//Calculate background to be subtracted based on user input for fn type
-	If (StringMatch(InvBackgModel, "Gauss y0+A*exp((X-X0)^2/width" ))
+	If (StringMatch(InvBackgModel, "Gauss Peak" ))
 		//Print "Fit Function is 'Gaussian'."
 		Make/N=4/O/D r_bkgd_coef
 		WaveStats/Q/R=[StartPnt,EndPnt]  IntWave
@@ -2931,8 +3023,13 @@ Function IR3J_InvFitBackground()
 		D = V_min/10	
 		r_bkgd_coef = {A,B,C,D}
 		FuncFit/X=1/Q IR3J_Gauss1D kwCWave=r_bkgd_coef IntWave[StartPnt,EndPnt] /X=QWave/W=Ewave/I=1
-		InvBckgWave = IR3J_Gauss1D(r_bkgd_coef,QWave)
-	ElseIf (StringMatch(InvBackgModel, "Ruland A*exp(B*X^2)+y0" ))
+		if(V_FitError>0)
+			print "Background function Gauss Peak fit failed" 
+			InvBckgWave = V_min
+		else
+			InvBckgWave = IR3J_Gauss1D(r_bkgd_coef,QWave)
+		endif
+	ElseIf (StringMatch(InvBackgModel, "Exponential" ))
 		//Print "Fit Function is 'Ruland'."
 		Make/N=3/O/D r_bkgd_coef
 		WaveStats/Q/R=[StartPnt,EndPnt]  IntWave
@@ -2945,7 +3042,12 @@ Function IR3J_InvFitBackground()
 		D = V_min	
 		r_bkgd_coef = {A,B,D}
 		FuncFit/X=1/Q IR3J_Porod_Ruland, r_bkgd_coef, IntWave[StartPnt,EndPnt] /X=QWave/W=Ewave/I=1
-		InvBckgWave = IR3J_Porod_Ruland(r_bkgd_coef,QWave)
+		if(V_FitError>0)
+			print "Background function Exponential fit failed" 
+			InvBckgWave = V_min
+		else
+			InvBckgWave = IR3J_Porod_Ruland(r_bkgd_coef,QWave)	
+		endif
 	ElseIf (StringMatch(InvBackgModel, "Porod+y0" ))
 		//Print "Fit Function is 'Ruland'."
 		Make/N=2/O/D r_bkgd_coef, ewaveStep
@@ -3056,6 +3158,8 @@ Function IR3J_InvCalculateInvariant()
 	NVAR InvBckgMinQ = root:Packages:Irena:SimpleFits:InvBckgMinQ
 	NVAR InvBckgMaxQ = root:Packages:Irena:SimpleFits:InvBckgMaxQ
 	NVAR InvQmaxUsed =	root:Packages:Irena:SimpleFits:InvQmaxUsed
+	NVAR InvExtrapolateLowQ = root:Packages:Irena:SimpleFits:InvExtrapolateLowQ
+	NVAR InvariantIrena = root:Packages:Irena:SimpleFits:InvariantIrena							//this is in 1/cm4
 	
 	Wave InvBckgWave = root:Packages:Irena:SimpleFits:InvBckgWave
 	variable StartPnt, EndPnt
@@ -3073,13 +3177,25 @@ Function IR3J_InvCalculateInvariant()
 	//Calculate q^2*I(q) for integral
 	Duplicate/Free InvariantIntWaveCorr, Integrand
 	Integrand = InvariantIntWaveCorr*QWave^2
-	//endforce use of A and B curosrs to limit Q range if needed
+	//endforce use of A and B cursors to limit Q range if needed
 	Duplicate/Free/R=[DataQstartPoint, DataQEndPoint] Integrand, IntegrandTrimmed
-	Duplicate/O Integrand, IntegrantInt
 	Duplicate/O/R=[DataQstartPoint, DataQEndPoint] QWave, QWaveTrimmed
+	if(InvExtrapolateLowQ)		//this will add Q=0 point with intensity of Q[1] point
+		InsertPoints  0, 0, IntegrandTrimmed, QWaveTrimmed
+		QWaveTrimmed[0] = 0
+		IntegrandTrimmed[0]=IntegrandTrimmed[1]
+	endif
+	Duplicate/O Integrand, IntegrantInt
 	//Integrate, divide by 2*pi^2 when calculating from 1D I(q) data.
 	Integrate/T IntegrandTrimmed /X=QWaveTrimmed/D=IntegrantInt
 	IntegrantInt = IntegrantInt/(2*pi^2)		
+	//Correct Output for unit
+	//Divide twice by re to put I(q) in terms of e-^2/cm^3
+	//Divide twice by Avogadro's Number to convert # of e- into mol e-
+	//Convert from 1/A to 1/cm for q (three times)
+	//Final units should be (mol e-/cm^3)^2
+	variable COnversionScale=(1e8)^3/(2.81794e-13)^2/(6.022e23)^2
+	IntegrantInt = IntegrantInt*COnversionScale
 			
 	//Add Integrand_int to graph with Iq^2
 	CheckDisplayed /W=IR3J_LogLogDataDisplay IntegrantInt
@@ -3088,6 +3204,7 @@ Function IR3J_InvCalculateInvariant()
 		//Label/W=IR3J_LogLogDataDisplay right "\\K(65535,0,0)\\Z14Invariant (cm\\S-1\\M\\Z14A\\S-3\\M\\Z14)"
 		//SetAxis/W=IR3J_LogLogDataDisplay right 8.0271834e-10,8.792794e-05
 		ModifyGraph/W=IR3J_LogLogDataDisplay log(right)=1,standoff(right)=0
+		Label/W=IR3J_LogLogDataDisplay right "(mol e\\S-2\\Mcm\\S3\\M)\\S3"
 	endif
 	//Determine point at which slope of integral becomes zero and use that value as Q
 	//checks value of integrand_int_DIF_smth at [index], and if is < 0, records Q
@@ -3110,13 +3227,27 @@ Function IR3J_InvCalculateInvariant()
 		invariant = IntegrantInt[NumPntsMax-1]	//no cross o ver with 0 found. 
 		index = NumPntsMax-1
 	endif
+	//now calculate volume fraction
+	InvariantIrena= invariant * (2*pi^2) * 10^24 / ConversionScale 
+	NVAR InvContrast = root:Packages:Irena:SimpleFits:InvContrast
+	NVAR InvVolumeFraction = root:Packages:Irena:SimpleFits:InvVolumeFraction
+	InvVolumeFraction = (InvariantIrena / InvContrast) *1e-20/(2*pi^2)		//4/14/2014, JIL, this is really phi*(1-phi). 
+	if(InvVolumeFraction>0.249)
+		print "Calculated volume is too large when we do phi*(1-phi). Seems like there is problem with calibration of contrast"
+		InvVolumeFraction = NaN
+	else
+		InvVolumeFraction = (1-sqrt(1-4*InvVolumeFraction))/2					//this is quadratic equation solver
+	endif
 	
+
+
+	//this is now done higher above to get output data in same units. 
 	//Correct Output for unit
 	//Divide twice by re to put I(q) in terms of e-^2/cm^3
 	//Divide twice by Avogadro's Number to convert # of e- into mol e-
 	//Convert from 1/A to 1/cm for q (three times)
 	//Final units should be (mol e-/cm^3)^2
-	invariant = invariant*(1e8)^3/(2.81794e-13)^2/(6.022e23)^2
+	//invariant = invariant*(1e8)^3/(2.81794e-13)^2/(6.022e23)^2
 	InvQmaxUsed = QWaveTrimmed[index-1]
 //	//Report final values
 //	Print "**********************************************"

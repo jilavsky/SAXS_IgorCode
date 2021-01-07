@@ -139,7 +139,7 @@ Function IR3S_SysSpecModelsPanelFnct()
 	Setvariable DataQEnd, variable=root:Packages:Irena:SysSpecModels:DataQEnd, limits={-inf,inf,0}
 	SetVariable DataQstart,pos={290,110},size={190,15}, proc=IR3S_SetVarProc,title="Q min "
 	Setvariable DataQstart, variable=root:Packages:Irena:SysSpecModels:DataQstart, limits={-inf,inf,0}
-	SetVariable DataFolderName,noproc,title=" ",pos={250,140},size={270,17},frame=0, fstyle=1,valueColor=(0,0,65535)
+	SetVariable DataFolderName,noproc,title=" ",pos={260,160},size={270,17},frame=0, fstyle=1,valueColor=(0,0,65535)
 	Setvariable DataFolderName, variable=root:Packages:Irena:SysSpecModels:DataFolderName, noedit=1
 
 	Button SelectAll,pos={187,680},size={80,15}, proc=IR3S_ButtonProc,title="SelectAll", help={"Select All data in Listbox"}
@@ -227,8 +227,8 @@ Function IR3S_SysSpecModelsPanelFnct()
 	
 	SetVariable DelayBetweenProcessing,pos={240,735},size={150,16},noproc,title="Delay in Seq. Proc:", help={"Delay between sample in sequence of processing data sets"}
 	SetVariable DelayBetweenProcessing,limits={0,30,0},variable= root:Packages:Irena:SysSpecModels:DelayBetweenProcessing, bodywidth=50
-	CheckBox DoNotTryRecoverData,pos={250,753},size={79,14},noproc,title="Do not restore prior result", variable= root:Packages:Irena:SysSpecModels:DoNotTryRecoverData, help={"Save results to Notebook?"}
-	CheckBox HideTagsAlways,pos={430,753},size={79,14},proc=IR3S_MainPanelCheckProc,title="Hide Tags", variable= root:Packages:Irena:SysSpecModels:HideTagsAlways, help={"Save results to Notebook?"}
+	CheckBox DoNotTryRecoverData,pos={245,754},size={79,14},noproc,title="Do not restore prior result", variable= root:Packages:Irena:SysSpecModels:DoNotTryRecoverData, help={"Save results to Notebook?"}
+	CheckBox HideTagsAlways,pos={425,754},size={79,14},proc=IR3S_MainPanelCheckProc,title="Hide Tags", variable= root:Packages:Irena:SysSpecModels:HideTagsAlways, help={"Save results to Notebook?"}
 
 	//and fix which controls are displayed:
 	IR3S_SetupControlsOnMainpanel()
@@ -2179,7 +2179,7 @@ static Function IR3S_AttachTags(Attach)
 				attachPoint = 0
 			endif
 			LowQText = "\Z"+IN2G_LkUpDfltVar("LegendSize")+"Low Q Unified model"+"\r"
-			if(UnifRg>1e9)
+			if(UnifRg<1e9 && UnifG>0)
 				 LowQText +="Rg = "+num2str(UnifRg)+" +/- "+num2str(UnifRgError)+"\r"
 				 LowQText +="Rg prefactor (G) = "+num2str(UnifG)+" +/- "+num2str(UnifGError)+"\r"
 			endif

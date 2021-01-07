@@ -1,11 +1,11 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
-#pragma version=2.702
+#pragma version=2.703
 #pragma IgorVersion=8.03
 
 //DO NOT renumber Main files every time, these are main release numbers...
 //define manual date and release verison 
-constant CurrentIrenaVersionNumber = 2.702		//change version of Boot Irena1 modeling.ipf to get proper check version. 
+constant CurrentIrenaVersionNumber = 2.703		//change version of Boot Irena1 modeling.ipf to get proper check version. 
 
 //*************************************************************************
 //* Copyright (c) 2005 - 2021, Argonne National Laboratory
@@ -13,8 +13,9 @@ constant CurrentIrenaVersionNumber = 2.702		//change version of Boot Irena1 mode
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************
 
-//2.702	Beta version after September 2020 release. 
-//			Add replaement for Analytical models: System Specific models
+//2.703	Beta version after September 2020 release. 
+//			Add replacement for Analytical models: System Specific models
+//			Add repalcement for Evaluaate Size Distributions : Analyze Results tool
 //			Fix Multi-data GUI tools to handle Liberal names
 //			Data Manipulation 3
 //2.70		Require Igor 8.03 and higher. No testing for Igor 7 anymore. 
@@ -219,6 +220,7 @@ Menu "SAS"
 	Submenu "Old stuff"
 		"Analytical models", IR2H_GelsMainFnct()
 		help={"Debye-Bueche, Teubner-Strey model"}
+		"Evaluate Size Distributions", IR1G_EvaluateONESample()
 	end
 	"---"
 	"Scattering contrast calculator", IR1K_ScattCont2()
@@ -227,7 +229,7 @@ Menu "SAS"
 	help={"Configure default values for GUI Panels and Graph common items, such as font sizes and font types"}
 
 	SubMenu "Support tools"
-			"Evaluate Size Distributions", IR1G_EvaluateONESample()
+			"Analyze results", IR3E_AnalyzeResults()
 			help = {"Not fully finished GUI to evaluate results from methods producing size distributions"}
 			"Scripting tool",  IR2S_ScriptingTool()
 			help = {"Scripting tool enabes to run some tools on multiple data sets."}
@@ -242,7 +244,7 @@ Menu "SAS"
 			"Export To XLS File Panel", ExportToXLSFilePanel()
 			help={"This is tool for Unified fit, made by Gregg Beaucage. For help, contact him..."}
 		End
-		Submenu "Help, About, Manuals, Remove Irena"
+	Submenu "Help, About, Manuals, Remove Irena"
 			"About", IR1_AboutPanel()
 			help={"Get Panel with info about this release of Irena macros"}
 			"Open Readme", IR1_OpenReadme()
@@ -346,7 +348,7 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	WindowProcNames+="POVPDBPanel=IR3P_MainCheckVersion;AnisotropicSystemsPanel=IR3N_MainCheckVersion;IR3L_MultiSamplePlotPanel=IR3L_MainCheckVersion;"
 	WindowProcNames+="IRB1_ImportBioSAXSASCIIData=IRB1_ImpASCIIMainCheckVer;IRB1_DataManipulationPanel=IRB1_DataManMainCheckVersion;"
 	WindowProcNames+="IRB1_ATSASInterfacePanel=IR1B_PDDFMainCheckVersion;IR3J_SimpleFitsPanel=IR1B_SimpleFitsMainCheckVersion;IR3B_MetadataBrowserPanel=IR3B_MainCheckVersion;"
-	WindowProcNames+="IR3S_SysSpecModelsPanel=IR3S_MainCheckVersion;IR3DM_DataManIIIPanel=IR3DM_MainCheckVersion;"
+	WindowProcNames+="IR3S_SysSpecModelsPanel=IR3S_MainCheckVersion;IR3DM_DataManIIIPanel=IR3DM_MainCheckVersion;IR3E_AnalyzeResultsPanel=IR3E_MainCheckVersion;"
   
 	IR2C_CheckWindowsProcVersions(WindowProcNames)
 	IN2G_CheckPlatformGUIFonts()

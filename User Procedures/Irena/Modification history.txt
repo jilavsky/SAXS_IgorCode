@@ -13,7 +13,8 @@ Modification history:
 Fix All tools using the new Multi-GUI (MultiPlot, Simple Fits, bioSAXS...) to handle data with liberal names, apparently that was forgotten.  
 New tools:
 System Specific models - this is replacement of Analytical models with new GUI. Mostly working. Needs testing and may be add more functionality. 
-Data Manipulation III - WIP, noty finished yet. Multi sample selection tool and ability to modify data. Can delete data (finished). 
+Analyze Results - new tool with new GUI for analysis of results Irena produces. For now, Size distributions. Replaced Analyze Size Distribution tool. Can be extended as needed. 
+Data Manipulation III - WIP, not finished yet. Multi sample selection tool and ability to modify data. Can delete data (finished). 
 All - changed wrong spelling Ploting into correct Plotting. This may leave some windows opened on restart. 
 Fixed all fixed length wave names (hopefully). Now should use long names if user chooses so in Configuration for all waves and folders. 
 Merge data tool - fix use of long folder names. It was not following user choice on use of long names. Add merging parameters into the wave note. 

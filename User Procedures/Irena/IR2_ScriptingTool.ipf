@@ -120,7 +120,7 @@ Function IR2S_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 		//Update the listbox using start folde popStr
 		SVAR SelectedResultsTool=root:Packages:Irena:ScriptingTool:SelectedResultsTool
 		SelectedResultsTool = popStr
-		string ListOfAvailableResults=IR2C_ReturnKnownToolResults(popStr)
+		string ListOfAvailableResults=IR2C_ReturnKnownToolResults(popStr,"")
 		//execute("PopupMenu ResultsTypeSelector, win=IR2S_ScriptingToolPnl, popvalue="+StringFromList(0,ListOfAvailableResults)+", value=IR2C_ReturnKnownToolResults(\""+popStr+"\")")
 		execute("PopupMenu ResultsTypeSelector, win=IR2S_ScriptingToolPnl, mode=1, value=IR2C_ReturnKnownToolResults(\""+popStr+"\")")
 		SVAR SelectedResultsType=root:Packages:Irena:ScriptingTool:SelectedResultsType
