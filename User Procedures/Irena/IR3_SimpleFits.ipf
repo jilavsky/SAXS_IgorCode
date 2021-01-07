@@ -2987,8 +2987,12 @@ Function IR3J_InvFitBackground()
 	OldDf = GetDataFolderDFR
 	setDataFolder root:Packages:Irena:SimpleFits:
 	SVAR InvBackgModel = root:Packages:Irena:SimpleFits:InvBackgModel
-	Wave IntWave = root:Packages:Irena:SimpleFits:OriginalDataIntWave
-	Wave QWave = root:Packages:Irena:SimpleFits:OriginalDataQWave
+	Wave/Z IntWave = root:Packages:Irena:SimpleFits:OriginalDataIntWave
+	Wave/Z QWave = root:Packages:Irena:SimpleFits:OriginalDataQWave
+	if(!WaveExists(IntWave)||!WaveExists(QWave))
+		return 0
+	endif
+	
 	NVAR InvBckgMinQ = root:Packages:Irena:SimpleFits:InvBckgMinQ
 	NVAR InvBckgMaxQ = root:Packages:Irena:SimpleFits:InvBckgMaxQ
 	Duplicate/O IntWave, root:Packages:Irena:SimpleFits:InvBckgWave
