@@ -771,7 +771,7 @@ Function  NI1A_GenerateGeometryCorr2DWave()
 	endif
 	string O2N = note(Q2DWave)
 
-
+	variable recalculate=1
 	if(WaveExists(GeometryCorrection))
 		string OGN= note(GeometryCorrection)
 		//BeamCenterX=501.19;BeamCenterY=506.05;PixelSizeX=0.1;  PixelSizeY=0.1;HorizontalTilt=0;VerticalTilt=0;SampleToCCDDistance=250.5;Wavelength=1.541;
@@ -795,9 +795,9 @@ Function  NI1A_GenerateGeometryCorr2DWave()
 			return 1
 		endif
 	endif
-	//OK, we need to recaluclate the GeometryCorrention, here is the procedure...
+	//OK, we need to recalculate the GeometryCorrention, here is the procedure...
 	variable Ltemp = Wavelength / (4 * pi)
-	NI1A_Create2DQWave(DataWave)			//creates 2-D Q wave 
+	//NI1A_Create2DQWave(DataWave)			//creates 2-D Q wave - this must extsting by now... 
 	wave Q2DWave = root:Packages:Convert2Dto1D:Q2DWave
 	MatrixOp/O/NTHR=0 GeometryCorrection =  2 * asin(Q2DWave * Ltemp))
 	MatrixOp/O/NTHR=0 GeometryCorrection = powR(cos(GeometryCorrection),3)

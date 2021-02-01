@@ -3174,7 +3174,7 @@ Function IR1I_NexusOpenHdf5File()
 	For(i=0;i<numpnts(WaveOfSelections);i+=1)
 		if(WaveOfSelections[i])
 			FileName= WaveOfFiles[i]
-			CreateNewHDF5Browser()
+			HDf5Browser#CreateNewHDF5Browser()
 		 	browserName = WinName(0, 64)
 			HDF5OpenFile/R /P=ImportDataPath locFileID as FileName
 			if (V_flag == 0)					// Open OK?

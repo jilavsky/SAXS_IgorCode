@@ -766,7 +766,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 				if(strlen(valueStrFromUser)>0)
 					variable valueNumFromUser = str2num(valueStrFromUser)
 					if(numtype(valueNumFromUser)==0)	//something is number... 
-						listWave[row][col] = num2str(IN2G_roundDecimalPlaces(valueNumFromUser,2))
+						listWave[row][col] = num2str(IN2G_roundDecimalPlaces(valueNumFromUser,3))
 						DoWIndow BeamlinePlateSetup
 						if(V_Flag)
 							NVAR SampleXTable = root:Packages:SamplePlateSetup:SampleXTable
@@ -779,7 +779,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 								SampleYTable = IN2G_roundDecimalPlaces(valueNumFromUser,2)
 								IN3S_MoveToPositionIfOK()
 							elseif(col==3)
-								Thick = IN2G_roundDecimalPlaces(valueNumFromUser,2)
+								Thick = IN2G_roundDecimalPlaces(valueNumFromUser,3)
 							endif
 						endif
 					else
@@ -1128,7 +1128,7 @@ Function IN3_FTPUSAXSMacFile()
 			IN3S_BeramlineSurveyAbortIfNeeded("Cannot sftp usaxs.mac")				//this will abort if instrument is running. 
 			DoAlert /T="Sftp usaxs.mac to usaxscontrol?" 1, "Do you want to sftp new usaxs.mac to usaxscontrol? Existing one will be overwritten!"
 			if(V_Flag==1)
-				ExecuteScriptText /W=1 "\"C:\\Users\\usaxs\\Documents\\WinSCP\\putUSAXSMacFile.bat\""
+				ExecuteScriptText /W=5 "\"C:\\Users\\usaxs\\Documents\\WinSCP\\putUSAXSMacFile.bat\""
 			endif
 		endif
 	

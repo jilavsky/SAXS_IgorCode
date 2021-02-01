@@ -1,12 +1,13 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version = 1.14
+#pragma version = 1.15
 #include "HDF5Gateway"
 
 constant NexusVersionNumber=1.05
 
 // support of Nexus files
 
+//1.15 fix for NDF5 changes in IP9
 //1.14 added NEXUS_Read_Metadata, NEXUS_Read_Sample, NEXUS_Read_User, NEXUS_Read_Instrument, NEXUS_Read_CreateLocalList - used to store lists with teh values from these metadata locations. 
 //1.13 added skip for printing stuff in history in Nika batch mode. 
 //1,12 fix typo in Nexus attribute name dQI - capital i, instead of correct dQl - lower case l as slit length
@@ -571,7 +572,7 @@ Function Nexus_NexusOpenHdf5File()
 	For(i=0;i<numpnts(WaveOfSelections);i+=1)
 		if(WaveOfSelections[i])
 			FileName= WaveOfFiles[i]
-			CreateNewHDF5Browser()
+			HDf5Browser#CreateNewHDF5Browser()
 		 	browserName = WinName(0, 64)
 			HDF5OpenFile/R /P=Convert2Dto1DDataPath locFileID as FileName
 			if (V_flag == 0)					// Open OK?

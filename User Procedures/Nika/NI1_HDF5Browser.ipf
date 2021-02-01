@@ -1,6 +1,5 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
-//#pragma rtGlobals=1		// Use modern global access method.
 #pragma version = 1.01
 
 #include <WaveSelectorWidget>
@@ -28,8 +27,11 @@ Function/S NI2_LoadGeneralHDFFile(CalledFrom, fileName, PathName)
 	Wave/Z/T GroupNames=$("root:Packages:"+CalledFrom+"HDF5Loader:GroupNames")
 	//this should contain list of data sets names to load form all selected hdf5 files... 
 	if(!WaveExists(GroupNames))
-		NI2_CreateNewHDF5Browser(CalledFrom)
-		DoAlert 0, "Set Hdf options first"
+		DoAlert /T="This feature broke in IP9" 0, "Set Hdf options first. Should open HDF5 browser for you... NI2_LoadGeneralHDFFile is broken by IP9 changes. It can be fixed, contact author is needed. "
+		//NI2_CreateNewHDF5Browser(CalledFrom)
+		//DoAlert 0, "Set Hdf options first"
+		//this will work ONLY from Nika main panel... 
+		Nexus_NexusOpenHdf5File()
 	endif
 	variable locFileID
 
@@ -1262,15 +1264,15 @@ End
 //	Abort "Hdf5 xop is not found. Reinstall xops using one of the Installers or link the hdf5.xop from Igor distribution to your Igor extensions folder"
 //#endif
 //End
-//
-Function NI2_AttachListWaves(bd)
-	STRUCT HDF5BrowserData &bd
-	
-	ListBox GroupsList win=$bd.browserName, listWave=bd.groupsList
-	ListBox GroupAttributesList win=$bd.browserName, listWave=bd.groupAttributesList
-	ListBox DatasetsList win=$bd.browserName, listWave=bd.datasetsList
-	ListBox DatasetAttributesList win=$bd.browserName, listWave=bd.datasetAttributesList
-End
+//HDf5Browser#CreateNewHDF5Browser
+//Function NI2_AttachListWaves(bd)
+//	STRUCT HDf5Browser#HDF5BrowserData &bd
+//	
+//	ListBox GroupsList win=$bd.browserName, listWave=bd.groupsList
+//	ListBox GroupAttributesList win=$bd.browserName, listWave=bd.groupAttributesList
+//	ListBox DatasetsList win=$bd.browserName, listWave=bd.datasetsList
+//	ListBox DatasetAttributesList win=$bd.browserName, listWave=bd.datasetAttributesList
+//End
 //
 //Function NI2_HDF5BrowserPanelHook(infoStr)
 //	String infoStr
@@ -1790,40 +1792,42 @@ End
 //
 Function NI2_CreateNewHDF5Browser(WhereFrom)
 	string WhereFrom			//Nika or Irena
-	if (Exists("HDF5LoadData") != 4)
-		String message
-		message = "The HDF5XOP is not activated. Please see the HDF5XOP Help file for instructions."
-		DoAlert 0, message
-		DisplayHelpTopic "HDF5XOP"
-		return -1	
-	endif
-
-	SetDataFolder root:
-	NewDataFolder/O/S root:Packages
-	NewDataFolder/O/S $(WhereFrom+"HDF5Loader")
-	//Init here the Nika part...
-	make/O/N=0/T DataSetNames, GroupNames		//these are pointes to waht user wants to get into Igor...
-	String/g BrowserNameFldr
-		
-	String browserName = UniqueName(WhereFrom+"HDF5Browser", 9, 0)
-	BrowserNameFldr = browserName		//thsi is where all teh otehr stuff will be....
 	
-	CreateHDF5BrowserGlobals(browserName)
-	
-	HDF5Browser#CreateHDF5BrowserPanel(browserName)
-
-	STRUCT HDF5BrowserData bd
-
-#if(IgorVersion()<9)
-	//STRUCT NI2HDF5BrowserData bd
-	HDF5Browser#SetHDF5BrowserData(browserName, bd)
-	NI2_AttachListWaves(bd)
-	HDF5Browser#SetButtonStates(bd)
-#else
-	HDF5Browser#SetHDF5BrowserData(browserName, bd)
-	NI2_AttachListWaves(bd)
-	HDF5Browser#SetButtonStates(bd)
-#endif
+	DoAlert /T="This feature is broken" 0, "This broke in IP9 and will be challenge to deal with"
+//	if (Exists("HDF5LoadData") != 4)
+//		String message
+//		message = "The HDF5XOP is not activated. Please see the HDF5XOP Help file for instructions."
+//		DoAlert 0, message
+//		DisplayHelpTopic "HDF5XOP"
+//		return -1	
+//	endif
+//
+//	SetDataFolder root:
+//	NewDataFolder/O/S root:Packages
+//	NewDataFolder/O/S $(WhereFrom+"HDF5Loader")
+//	//Init here the Nika part...
+//	make/O/N=0/T DataSetNames, GroupNames		//these are pointes to waht user wants to get into Igor...
+//	String/g BrowserNameFldr
+//		
+//	String browserName = UniqueName(WhereFrom+"HDF5Browser", 9, 0)
+//	BrowserNameFldr = browserName		//thsi is where all teh otehr stuff will be....
+//	
+//	CreateHDF5BrowserGlobals(browserName)
+//	
+//	HDF5Browser#CreateHDF5BrowserPanel(browserName)
+//
+//	STRUCT HDF5BrowserData bd
+//
+//#if(IgorVersion()<9)
+//	//STRUCT NI2HDF5BrowserData bd
+//	HDF5Browser#SetHDF5BrowserData(browserName, bd)
+//	NI2_AttachListWaves(bd)
+//	HDF5Browser#SetButtonStates(bd)
+//#else
+//	HDF5Browser#SetHDF5BrowserData(browserName, bd)
+//	NI2_AttachListWaves(bd)
+//	HDF5Browser#SetButtonStates(bd)
+//#endif
 
 	
 End

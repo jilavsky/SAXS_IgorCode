@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.06
+#pragma version=1.07
 #include <Peak AutoFind>
 
 
@@ -14,6 +14,7 @@ Constant IN3_TrimDoNOTremoveVibrations=0			//this controls if vibrations are fou
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+//1.07 fixes for HDF5 changes in IP9, removed old FLyScan Import code (separate panel to import FS data which were then reduced by old USAXS `panel). Obsolete. 
 //1.06 added passing through NXMetadata, NXSample, NXInstrument, NXUser
 //1.05 added option to disable removing of raneg change transitional effects, constant IN3_RemoveRangeChangeEffects
 //1.04 removed spec file name as folder under USAXS, not needed with SAXS and WAXS not having it anyway. 
@@ -119,211 +120,211 @@ Function IN3_FlyScanCheckVersion()
 end
 //************************************************************************************************************
 //************************************************************************************************************
+////************************************************************************************************************
+////************************************************************************************************************
+//
+//Function IN3_FlyScanImportPanelFnct() 
+//	PauseUpdate    		// building window...
+//	NewPanel /K=1 /W=(49,49,412,545) as "USAXS FlyScan Import data"
+//	DoWindow/C IN3_FlyScanImportPanel
+//	TitleBox MainTitle,pos={13,5},size={330,24},title="\Zr210Import USAXS Data "
+//	TitleBox MainTitle,font="Times New Roman",frame=0,fStyle=3,anchor=MC
+//	TitleBox MainTitle,fColor=(0,0,52224),fixedSize=1
+//	TitleBox FakeLine1,pos={16,40},size={330,3},title=" ",labelBack=(0,0,52224)
+//	TitleBox FakeLine1,frame=0,fColor=(0,0,52224),fixedSize=1
+//	TitleBox Info1,pos={11,112},size={120,20},title="List of available files :"
+//	TitleBox Info1,fSize=12,frame=0,fStyle=1,fColor=(0,0,52224),fixedSize=1
+//	Button SelectDataPath,pos={35,53},size={130,20}, proc=IN3_FlyScanButtonProc,title="Select data path"
+//	Button SelectDataPath,help={"Select data path to the data"}
+//	Button RefreshHDF5Data,pos={220,53},size={90,20}, proc=IN3_FlyScanButtonProc,title="Refresh"
+//	Button RefreshHDF5Data,help={"Refresh data in Listbox"}
+//	SetVariable DataPathString,pos={6,83},size={348,15},title="Data path :"
+//	SetVariable DataPathString,help={"This is currently selected data path where Igor looks for the data"}
+//	SetVariable DataPathString,limits={-inf,inf,0},value= root:Packages:USAXS_FlyScanImport:DataPathString,noedit= 1
+//	SetVariable DataExtensionString,pos={202,107},size={150,15},proc=IN3_FlyScanSetVarProc,title="Data extension:"
+//	SetVariable DataExtensionString,help={"Insert extension string to mask data of only some type (dat, txt, ...)"}
+//	SetVariable DataExtensionString,value= root:Packages:USAXS_FlyScanImport:DataExtension
+//	ListBox ListOfAvailableData,pos={9,133},size={320,232},proc=IN3_FlyScanImportListBoxProc
+//	ListBox ListOfAvailableData,help={"Select files from this location you want to import"}
+//	ListBox ListOfAvailableData,listWave=root:Packages:USAXS_FlyScanImport:WaveOfFiles
+//	ListBox ListOfAvailableData,selWave=root:Packages:USAXS_FlyScanImport:WaveOfSelections
+//	ListBox ListOfAvailableData,mode= 9
+//	SetVariable NameMatchString,pos={10,370},size={230,15},proc=IN3_FlyScanSetVarProc,title="Match name (string):"
+//	SetVariable NameMatchString,help={"Insert name match string to display only some data"}
+//	SetVariable NameMatchString,value= root:Packages:USAXS_FlyScanImport:NameMatchString
+//	SetVariable RemoveFromNameString,pos={10,395},size={230,15},proc=IN3_FlyScanSetVarProc,title="Remove From name (str):"
+//	SetVariable RemoveFromNameString,help={"String which will be removed from data name"}
+//	SetVariable RemoveFromNameString,value= root:Packages:USAXS_FlyScanImport:RemoveFromNameString
+//	CheckBox LatestOnTopInPanel,pos={244,370},size={16,14},proc=IN3_FlyCheckProc,title="Latest on top?",variable= root:Packages:USAXS_FlyScanImport:LatestOnTopInPanel, help={"Check to display latest files at the top"}
+//	CheckBox ReduceXPCSdata,pos={244,390},size={16,14},proc=IN3_FlyCheckProc,title="Reduce XPCS data?",variable= root:Packages:USAXS_FlyScanImport:ReduceXPCSdata, help={"Check to redeuce XPCS not USAXS data"}
+//
+//	Button SelectAll,pos={7,420},size={100,20},proc=IN3_FlyScanButtonProc,title="Select All"
+//	Button SelectAll,help={"Select all waves in the list"}
+//	Button DeSelectAll,pos={120,420},size={100,20},proc=IN3_FlyScanButtonProc,title="Deselect All"
+//	Button DeSelectAll,help={"Deselect all waves in the list"}
+//	Button OpenFileInBrowser,pos={7,450},size={100,30},proc=IN3_FlyScanButtonProc,title="Open in Browser"
+//	Button OpenFileInBrowser,help={"Check file in HDF5 Browser"}
+//	Button ImportData,pos={120,450},size={100,30},proc=IN3_FlyScanButtonProc,title="Import"
+//	Button ImportData,help={"Import the selected data files."}
+//	Button ConfigureBehavior,pos={240,450},size={100,20},proc=IN3_FlyScanButtonProc,title="Configure"
+//	Button ConfigureBehavior,help={"Import the selected data files."}
+//
+//EndMacro
+//
 //************************************************************************************************************
 //************************************************************************************************************
-
-Function IN3_FlyScanImportPanelFnct() 
-	PauseUpdate    		// building window...
-	NewPanel /K=1 /W=(49,49,412,545) as "USAXS FlyScan Import data"
-	DoWindow/C IN3_FlyScanImportPanel
-	TitleBox MainTitle,pos={13,5},size={330,24},title="\Zr210Import USAXS Data "
-	TitleBox MainTitle,font="Times New Roman",frame=0,fStyle=3,anchor=MC
-	TitleBox MainTitle,fColor=(0,0,52224),fixedSize=1
-	TitleBox FakeLine1,pos={16,40},size={330,3},title=" ",labelBack=(0,0,52224)
-	TitleBox FakeLine1,frame=0,fColor=(0,0,52224),fixedSize=1
-	TitleBox Info1,pos={11,112},size={120,20},title="List of available files :"
-	TitleBox Info1,fSize=12,frame=0,fStyle=1,fColor=(0,0,52224),fixedSize=1
-	Button SelectDataPath,pos={35,53},size={130,20}, proc=IN3_FlyScanButtonProc,title="Select data path"
-	Button SelectDataPath,help={"Select data path to the data"}
-	Button RefreshHDF5Data,pos={220,53},size={90,20}, proc=IN3_FlyScanButtonProc,title="Refresh"
-	Button RefreshHDF5Data,help={"Refresh data in Listbox"}
-	SetVariable DataPathString,pos={6,83},size={348,15},title="Data path :"
-	SetVariable DataPathString,help={"This is currently selected data path where Igor looks for the data"}
-	SetVariable DataPathString,limits={-inf,inf,0},value= root:Packages:USAXS_FlyScanImport:DataPathString,noedit= 1
-	SetVariable DataExtensionString,pos={202,107},size={150,15},proc=IN3_FlyScanSetVarProc,title="Data extension:"
-	SetVariable DataExtensionString,help={"Insert extension string to mask data of only some type (dat, txt, ...)"}
-	SetVariable DataExtensionString,value= root:Packages:USAXS_FlyScanImport:DataExtension
-	ListBox ListOfAvailableData,pos={9,133},size={320,232},proc=IN3_FlyScanImportListBoxProc
-	ListBox ListOfAvailableData,help={"Select files from this location you want to import"}
-	ListBox ListOfAvailableData,listWave=root:Packages:USAXS_FlyScanImport:WaveOfFiles
-	ListBox ListOfAvailableData,selWave=root:Packages:USAXS_FlyScanImport:WaveOfSelections
-	ListBox ListOfAvailableData,mode= 9
-	SetVariable NameMatchString,pos={10,370},size={230,15},proc=IN3_FlyScanSetVarProc,title="Match name (string):"
-	SetVariable NameMatchString,help={"Insert name match string to display only some data"}
-	SetVariable NameMatchString,value= root:Packages:USAXS_FlyScanImport:NameMatchString
-	SetVariable RemoveFromNameString,pos={10,395},size={230,15},proc=IN3_FlyScanSetVarProc,title="Remove From name (str):"
-	SetVariable RemoveFromNameString,help={"String which will be removed from data name"}
-	SetVariable RemoveFromNameString,value= root:Packages:USAXS_FlyScanImport:RemoveFromNameString
-	CheckBox LatestOnTopInPanel,pos={244,370},size={16,14},proc=IN3_FlyCheckProc,title="Latest on top?",variable= root:Packages:USAXS_FlyScanImport:LatestOnTopInPanel, help={"Check to display latest files at the top"}
-	CheckBox ReduceXPCSdata,pos={244,390},size={16,14},proc=IN3_FlyCheckProc,title="Reduce XPCS data?",variable= root:Packages:USAXS_FlyScanImport:ReduceXPCSdata, help={"Check to redeuce XPCS not USAXS data"}
-
-	Button SelectAll,pos={7,420},size={100,20},proc=IN3_FlyScanButtonProc,title="Select All"
-	Button SelectAll,help={"Select all waves in the list"}
-	Button DeSelectAll,pos={120,420},size={100,20},proc=IN3_FlyScanButtonProc,title="Deselect All"
-	Button DeSelectAll,help={"Deselect all waves in the list"}
-	Button OpenFileInBrowser,pos={7,450},size={100,30},proc=IN3_FlyScanButtonProc,title="Open in Browser"
-	Button OpenFileInBrowser,help={"Check file in HDF5 Browser"}
-	Button ImportData,pos={120,450},size={100,30},proc=IN3_FlyScanButtonProc,title="Import"
-	Button ImportData,help={"Import the selected data files."}
-	Button ConfigureBehavior,pos={240,450},size={100,20},proc=IN3_FlyScanButtonProc,title="Configure"
-	Button ConfigureBehavior,help={"Import the selected data files."}
-
-EndMacro
-
+//Function IN3_FlyCheckProc(cba) : CheckBoxControl
+//	STRUCT WMCheckboxAction &cba
+//
+//	switch( cba.eventCode )
+//		case 2: // mouse up
+//			Variable checked = cba.checked
+//			if(stringmatch(cba.ctrlName,"LatestOnTopInPanel"))
+//				IN3_FSUpdateListOfFilesInWvs()
+//			endif
+//			break
+//		case -1: // control being killed
+//			break
+//	endswitch
+//
+//	return 0
+//End
 //************************************************************************************************************
 //************************************************************************************************************
-Function IN3_FlyCheckProc(cba) : CheckBoxControl
-	STRUCT WMCheckboxAction &cba
-
-	switch( cba.eventCode )
-		case 2: // mouse up
-			Variable checked = cba.checked
-			if(stringmatch(cba.ctrlName,"LatestOnTopInPanel"))
-				IN3_FSUpdateListOfFilesInWvs()
-			endif
-			break
-		case -1: // control being killed
-			break
-	endswitch
-
-	return 0
-End
-//************************************************************************************************************
-//************************************************************************************************************
-
-Function IN3_FlyScanSelectDataPath()
-	
-	//check if we are running on USAXS computers
-	GetFileFOlderInfo/Q/Z "Z:USAXS_data:"
-	if(V_isFolder)
-		//OK, this computer has Z:USAXS_data 
-		PathInfo USAXSHDFPath
-		if(V_flag==0)
-			NewPath/Q  USAXSHDFPath, "Z:USAXS_data:"
-			pathinfo/S USAXSHDFPath
-		endif
-	endif
-	NewPath /M="Select path to data to be imported" /O USAXSHDFPath
-	if (V_Flag!=0)
-		abort
-	endif 
-	PathInfo USAXSHDFPath
-	SVAR DataPathString=root:Packages:USAXS_FlyScanImport:DataPathString
-	DataPathString = S_Path
-end
-//************************************************************************************************************
-//************************************************************************************************************
-//************************************************************************************************************
-//************************************************************************************************************
-Function IN3_FSUpdateListOfFilesInWvs()
-
-	SVAR DataPathName = root:Packages:USAXS_FlyScanImport:DataPathString
-	SVAR DataExtension  = root:Packages:USAXS_FlyScanImport:DataExtension
-	SVAR NameMatchString = root:Packages:USAXS_FlyScanImport:NameMatchString
-	NVAR LatestOnTopInPanel = root:Packages:USAXS_FlyScanImport:LatestOnTopInPanel
-	
-	Wave/T WaveOfFiles      = root:Packages:USAXS_FlyScanImport:WaveOfFiles
-	Wave WaveOfSelections = root:Packages:USAXS_FlyScanImport:WaveOfSelections
-	string ListOfAllFiles
-	string LocalDataExtension
-	variable i, imax
-	LocalDataExtension = DataExtension
-	if (cmpstr(LocalDataExtension[0],".")!=0)
-		LocalDataExtension = "."+LocalDataExtension
-	endif
-	PathInfo USAXSHDFPath
-	if(V_Flag && strlen(DataPathName)>0)
-		if (strlen(LocalDataExtension)<=1)
-			ListOfAllFiles = IndexedFile(USAXSHDFPath,-1,"????")
-		else		
-			ListOfAllFiles = IndexedFile(USAXSHDFPath,-1,LocalDataExtension)
-		endif
-		if(strlen(NameMatchString)>0)
-			ListOfAllFiles = GrepList(ListOfAllFiles, NameMatchString )
-		endif
-		//remove Invisible Mac files, .DS_Store and .plist
-		ListOfAllFiles = RemoveFromList(".DS_Store", ListOfAllFiles)
-		ListOfAllFiles = RemoveFromList("EagleFiler Metadata.plist", ListOfAllFiles)
-	
-		imax = ItemsInList(ListOfAllFiles,";")
-		Redimension/N=(imax) WaveOfSelections
-		Redimension/N=(imax) WaveOfFiles
-		Duplicate/Free WaveOfSelections, TmpSortWv
-		for (i=0;i<imax;i+=1)
-			WaveOfFiles[i] = stringFromList(i, ListOfAllFiles,";")
-		endfor
-		For(i=0;i<numpnts(TmpSortWv);i+=1)
-			//decide if using old or new naming system
-			if(grepstring(WaveOfFiles[i],"^S[0-9]+"))//OLD METHOD
-				TmpSortWv[i] = str2num(StringFromList(0, WaveOfFiles[i] , "_")[1,inf])
-			else	//number at the end... 
-				TmpSortWv[i] = str2num(StringFromList(ItemsInList(WaveOfFiles[i] , "_")-1, WaveOfFiles[i] , "_")[1,inf])
-			endif
-		endfor
-		if(LatestOnTopInPanel)
-			Sort/R TmpSortWv, WaveOfFiles
-		else
-			Sort TmpSortWv, WaveOfFiles
-		endif
-	else
-		Redimension/N=0 WaveOfSelections
-		Redimension/N=0 WaveOfFiles
-	endif 
-end
+//
+//Function IN3_FlyScanSelectDataPath()
+//	
+//	//check if we are running on USAXS computers
+//	GetFileFOlderInfo/Q/Z "Z:USAXS_data:"
+//	if(V_isFolder)
+//		//OK, this computer has Z:USAXS_data 
+//		PathInfo USAXSHDFPath
+//		if(V_flag==0)
+//			NewPath/Q  USAXSHDFPath, "Z:USAXS_data:"
+//			pathinfo/S USAXSHDFPath
+//		endif
+//	endif
+//	NewPath /M="Select path to data to be imported" /O USAXSHDFPath
+//	if (V_Flag!=0)
+//		abort
+//	endif 
+//	PathInfo USAXSHDFPath
+//	SVAR DataPathString=root:Packages:USAXS_FlyScanImport:DataPathString
+//	DataPathString = S_Path
+//end
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
-
-Function IN3_FSSelectDeselectAll(SetNumber)
-		variable setNumber
-		
-		Wave WaveOfSelections=root:Packages:USAXS_FlyScanImport:WaveOfSelections
-
-		WaveOfSelections = SetNumber
-end
+//Function IN3_FSUpdateListOfFilesInWvs()
+//
+//	SVAR DataPathName = root:Packages:USAXS_FlyScanImport:DataPathString
+//	SVAR DataExtension  = root:Packages:USAXS_FlyScanImport:DataExtension
+//	SVAR NameMatchString = root:Packages:USAXS_FlyScanImport:NameMatchString
+//	NVAR LatestOnTopInPanel = root:Packages:USAXS_FlyScanImport:LatestOnTopInPanel
+//	
+//	Wave/T WaveOfFiles      = root:Packages:USAXS_FlyScanImport:WaveOfFiles
+//	Wave WaveOfSelections = root:Packages:USAXS_FlyScanImport:WaveOfSelections
+//	string ListOfAllFiles
+//	string LocalDataExtension
+//	variable i, imax
+//	LocalDataExtension = DataExtension
+//	if (cmpstr(LocalDataExtension[0],".")!=0)
+//		LocalDataExtension = "."+LocalDataExtension
+//	endif
+//	PathInfo USAXSHDFPath
+//	if(V_Flag && strlen(DataPathName)>0)
+//		if (strlen(LocalDataExtension)<=1)
+//			ListOfAllFiles = IndexedFile(USAXSHDFPath,-1,"????")
+//		else		
+//			ListOfAllFiles = IndexedFile(USAXSHDFPath,-1,LocalDataExtension)
+//		endif
+//		if(strlen(NameMatchString)>0)
+//			ListOfAllFiles = GrepList(ListOfAllFiles, NameMatchString )
+//		endif
+//		//remove Invisible Mac files, .DS_Store and .plist
+//		ListOfAllFiles = RemoveFromList(".DS_Store", ListOfAllFiles)
+//		ListOfAllFiles = RemoveFromList("EagleFiler Metadata.plist", ListOfAllFiles)
+//	
+//		imax = ItemsInList(ListOfAllFiles,";")
+//		Redimension/N=(imax) WaveOfSelections
+//		Redimension/N=(imax) WaveOfFiles
+//		Duplicate/Free WaveOfSelections, TmpSortWv
+//		for (i=0;i<imax;i+=1)
+//			WaveOfFiles[i] = stringFromList(i, ListOfAllFiles,";")
+//		endfor
+//		For(i=0;i<numpnts(TmpSortWv);i+=1)
+//			//decide if using old or new naming system
+//			if(grepstring(WaveOfFiles[i],"^S[0-9]+"))//OLD METHOD
+//				TmpSortWv[i] = str2num(StringFromList(0, WaveOfFiles[i] , "_")[1,inf])
+//			else	//number at the end... 
+//				TmpSortWv[i] = str2num(StringFromList(ItemsInList(WaveOfFiles[i] , "_")-1, WaveOfFiles[i] , "_")[1,inf])
+//			endif
+//		endfor
+//		if(LatestOnTopInPanel)
+//			Sort/R TmpSortWv, WaveOfFiles
+//		else
+//			Sort TmpSortWv, WaveOfFiles
+//		endif
+//	else
+//		Redimension/N=0 WaveOfSelections
+//		Redimension/N=0 WaveOfFiles
+//	endif 
+//end
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
-Function IN3_FlyScanOpenHdf5File()
-	
-	Wave/T WaveOfFiles      = root:Packages:USAXS_FlyScanImport:WaveOfFiles
-	Wave WaveOfSelections = root:Packages:USAXS_FlyScanImport:WaveOfSelections
-	
-	variable NumSelFiles=sum(WaveOfSelections)	
-	variable OpenMultipleFiles=0
-	if(NumSelFiles==0)
-		return 0
-	endif
-	if(NumSelFiles>1)
-		DoAlert /T="Choose what to do:" 2, "You have selected multiple files, do you want to open the first one [Yes], all [No], or cancel?" 
-		if(V_Flag==0)
-			return 0
-		elseif(V_Flag==2)
-			OpenMultipleFiles=1
-		endif
-	endif
-
-	variable i
-	string FileName
-	String browserName
-	Variable locFileID
-	For(i=0;i<numpnts(WaveOfSelections);i+=1)
-		if(WaveOfSelections[i])
-			FileName= WaveOfFiles[i]
-			CreateNewHDF5Browser()
-		 	browserName = WinName(0, 64)
-			HDF5OpenFile/R /P=USAXSHDFPath locFileID as FileName
-			if (V_flag == 0)					// Open OK?
-				HDf5Browser#UpdateAfterFileCreateOrOpen(0, browserName, locFileID, S_path, S_fileName)
-			endif
-			if(!OpenMultipleFiles)
-				return 0
-			endif
-		endif
-	endfor
-end
+//
+//Function IN3_FSSelectDeselectAll(SetNumber)
+//		variable setNumber
+//		
+//		Wave WaveOfSelections=root:Packages:USAXS_FlyScanImport:WaveOfSelections
+//
+//		WaveOfSelections = SetNumber
+//end
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+//Function IN3_FlyScanOpenHdf5File()
+//	
+//	Wave/T WaveOfFiles      = root:Packages:USAXS_FlyScanImport:WaveOfFiles
+//	Wave WaveOfSelections = root:Packages:USAXS_FlyScanImport:WaveOfSelections
+//	
+//	variable NumSelFiles=sum(WaveOfSelections)	
+//	variable OpenMultipleFiles=0
+//	if(NumSelFiles==0)
+//		return 0
+//	endif
+//	if(NumSelFiles>1)
+//		DoAlert /T="Choose what to do:" 2, "You have selected multiple files, do you want to open the first one [Yes], all [No], or cancel?" 
+//		if(V_Flag==0)
+//			return 0
+//		elseif(V_Flag==2)
+//			OpenMultipleFiles=1
+//		endif
+//	endif
+//
+//	variable i
+//	string FileName
+//	String browserName
+//	Variable locFileID
+//	For(i=0;i<numpnts(WaveOfSelections);i+=1)
+//		if(WaveOfSelections[i])
+//			FileName= WaveOfFiles[i]
+//			HDf5Browser#CreateNewHDF5Browser()
+//		 	browserName = WinName(0, 64)
+//			HDF5OpenFile/R /P=USAXSHDFPath locFileID as FileName
+//			if (V_flag == 0)					// Open OK?
+//				HDf5Browser#UpdateAfterFileCreateOrOpen(0, browserName, locFileID, S_path, S_fileName)
+//			endif
+//			if(!OpenMultipleFiles)
+//				return 0
+//			endif
+//		endif
+//	endfor
+//end
 
 //************************************************************************************************************
 //************************************************************************************************************
@@ -824,7 +825,7 @@ print "Function IN3_StepScanConvertToUSAXS is not finished yet!"
 	//Wave/T SpecFileNameWv=:entry:metadata:SPEC_data_file
 	//SpecFileName=SpecFileNameWv[0]
 	//SpecFileName=stringFromList(0,SpecFileName,".")
-	Wave/T SpecSourceFilenameW=:entry:SPEC_data_file			//TODO: this needs to be added to metadata
+	Wave/T/Z SpecSourceFilenameW=:entry:SPEC_data_file			//TODO: this needs to be added to metadata
 
 	NVAR HdfWriterVersion = HdfWriterVersion
 	Wave/T UserSampleNameWv = :entry:title
@@ -966,7 +967,11 @@ print "Function IN3_StepScanConvertToUSAXS is not finished yet!"
 	PathToRawData=RawFolderWithData
 	string/g SpecComment
 	string/g SpecSourceFileName
-	SpecSourceFileName=SpecSourceFilenameW[0]
+	if(WaveExists(SpecSourceFilenameW))
+		SpecSourceFileName=SpecSourceFilenameW[0]
+	else
+		SpecSourceFileName="not defined"
+	endif
 	SpecComment = SampleNameW[0]
 	string/g UPDParameters
 	UPDParameters="Vfc=100000;Gain1="+num2str(updG1[0])+";Gain2="+num2str(updG2[0])+";Gain3="+num2str(updG3[0])+";Gain4="+num2str(updG4[0])+";Gain5="+num2str(updG5[0])
@@ -1610,51 +1615,51 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
-Function IN3_FlyScanConfigureFnct()
-
-	IN3_FlyScanConfigurePnlF()
-	PauseForUser IN3_FlyScanConfigurePnl 
-
-end
-
+//Function IN3_FlyScanConfigureFnct()
+//
+//	IN3_FlyScanConfigurePnlF()
+//	PauseForUser IN3_FlyScanConfigurePnl 
+//
+//end
+//
+////************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+//
+//
+//Function IN3_FlyScanConfigurePnlF()
+//
+//	NewPanel /K=1/W=(322,85,667,305) as "Configure FlyScan Import"
+//	DoWindow/C IN3_FlyScanConfigurePnl
+//	TitleBox MainTitle,pos={5,5},size={360,24},title="Configure FlyScan import params"
+//	TitleBox MainTitle,font="Times New Roman",fSize=22,frame=0,fStyle=3
+//	TitleBox MainTitle,fColor=(0,0,52224),fixedSize=1
+//	CheckBox DoubleClickImports,pos={15,40},size={16,14},proc=IN3_FlyScanCheckProc,title="Import on DblClick",variable= root:Packages:USAXS_FlyScanImport:DoubleClickImports, help={"Import when double clicked"}
+//	CheckBox DoubleClickOpensInBrowser,pos={15,65},size={16,14},proc=IN3_FlyScanCheckProc,title="Browse on DblClick",variable= root:Packages:USAXS_FlyScanImport:DoubleClickOpensInBrowser, help={"Open in Browser on Double click"}
+//
+//	NVAR NumberOfTempPoints = root:Packages:USAXS_FlyScanImport:NumberOfTempPoints
+//	PopupMenu SelectTempNumPoints,pos={15,90},size={250,21},proc=IN3_FlyScanPopMenuProc,title="Temp Number of points", help={"For slower computers select smaller number"}
+//	PopupMenu SelectTempNumPoints,mode=(1+WhichListItem(num2str(NumberOfTempPoints), "5000;10000;20000;")),value= "5000;10000;20000;"
+//
+//end
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
-
-
-Function IN3_FlyScanConfigurePnlF()
-
-	NewPanel /K=1/W=(322,85,667,305) as "Configure FlyScan Import"
-	DoWindow/C IN3_FlyScanConfigurePnl
-	TitleBox MainTitle,pos={5,5},size={360,24},title="Configure FlyScan import params"
-	TitleBox MainTitle,font="Times New Roman",fSize=22,frame=0,fStyle=3
-	TitleBox MainTitle,fColor=(0,0,52224),fixedSize=1
-	CheckBox DoubleClickImports,pos={15,40},size={16,14},proc=IN3_FlyScanCheckProc,title="Import on DblClick",variable= root:Packages:USAXS_FlyScanImport:DoubleClickImports, help={"Import when double clicked"}
-	CheckBox DoubleClickOpensInBrowser,pos={15,65},size={16,14},proc=IN3_FlyScanCheckProc,title="Browse on DblClick",variable= root:Packages:USAXS_FlyScanImport:DoubleClickOpensInBrowser, help={"Open in Browser on Double click"}
-
-	NVAR NumberOfTempPoints = root:Packages:USAXS_FlyScanImport:NumberOfTempPoints
-	PopupMenu SelectTempNumPoints,pos={15,90},size={250,21},proc=IN3_FlyScanPopMenuProc,title="Temp Number of points", help={"For slower computers select smaller number"}
-	PopupMenu SelectTempNumPoints,mode=(1+WhichListItem(num2str(NumberOfTempPoints), "5000;10000;20000;")),value= "5000;10000;20000;"
-
-end
-//************************************************************************************************************
-//************************************************************************************************************
-//************************************************************************************************************
-//************************************************************************************************************
-
-
-Function IN3_FlyScanPopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
-	String ctrlName
-	Variable popNum
-	String popStr
-
-	if (Cmpstr(ctrlName,"SelectTempNumPoints")==0)
-		NVAR NumberOfTempPoints = root:Packages:USAXS_FlyScanImport:NumberOfTempPoints
-		NumberOfTempPoints = str2num(popStr)
-	endif
-End
-
+//
+//
+//Function IN3_FlyScanPopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
+//	String ctrlName
+//	Variable popNum
+//	String popStr
+//
+//	if (Cmpstr(ctrlName,"SelectTempNumPoints")==0)
+//		NVAR NumberOfTempPoints = root:Packages:USAXS_FlyScanImport:NumberOfTempPoints
+//		NumberOfTempPoints = str2num(popStr)
+//	endif
+//End
+//
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
@@ -1664,92 +1669,92 @@ End
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
-Function IN3_FlyScanButtonProc(ctrlName) : ButtonControl
-	String ctrlName
-	
-	if(cmpstr(ctrlName,"SelectDataPath")==0)
-		IN3_FlyScanSelectDataPath()	
-		IN3_FSUpdateListOfFilesInWvs()
-	endif
-	if(cmpstr(ctrlName,"OpenFileInBrowser")==0)
-		IN3_FlyScanOpenHdf5File()
-	endif
-	if(cmpstr(ctrlName,"RefreshHDF5Data")==0)
-		IN3_FSUpdateListOfFilesInWvs()
-	endif
-	if(cmpstr(ctrlName,"SelectAll")==0)
-		IN3_FSSelectDeselectAll(1)
-	endif
-	if(cmpstr(ctrlName,"DeselectAll")==0)
-		IN3_FSSelectDeselectAll(0)
-	endif
-	if(cmpstr(ctrlName,"ImportData")==0)
-		print "Loading XPCS data is disabled for now, if needed, we need to make changes to the code"
-		IN3_USAXSScanLoadHdf5File2(1)
-	endif
-	if(cmpstr(ctrlName,"ConfigureBehavior")==0)
-		IN3_FlyScanConfigureFnct()
-	endif
-End
+//Function IN3_FlyScanButtonProc(ctrlName) : ButtonControl
+//	String ctrlName
+//	
+//	if(cmpstr(ctrlName,"SelectDataPath")==0)
+//		IN3_FlyScanSelectDataPath()	
+//		IN3_FSUpdateListOfFilesInWvs()
+//	endif
+//	if(cmpstr(ctrlName,"OpenFileInBrowser")==0)
+//		IN3_FlyScanOpenHdf5File()
+//	endif
+//	if(cmpstr(ctrlName,"RefreshHDF5Data")==0)
+//		IN3_FSUpdateListOfFilesInWvs()
+//	endif
+//	if(cmpstr(ctrlName,"SelectAll")==0)
+//		IN3_FSSelectDeselectAll(1)
+//	endif
+//	if(cmpstr(ctrlName,"DeselectAll")==0)
+//		IN3_FSSelectDeselectAll(0)
+//	endif
+//	if(cmpstr(ctrlName,"ImportData")==0)
+//		print "Loading XPCS data is disabled for now, if needed, we need to make changes to the code"
+//		IN3_USAXSScanLoadHdf5File2(1)
+//	endif
+//	if(cmpstr(ctrlName,"ConfigureBehavior")==0)
+//		IN3_FlyScanConfigureFnct()
+//	endif
+//End
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
+//
+//Function IN3_FlyScanSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
+//	String ctrlName
+//	Variable varNum
+//	String varStr
+//	String varName
+//
+//	if (cmpstr(ctrlName,"DataExtensionString")==0)
+//		IN3_FSUpdateListOfFilesInWvs()
+//	endif
+//	if (cmpstr(ctrlName,"NameMatchString")==0)
+//		IN3_FSUpdateListOfFilesInWvs()
+//	endif
+//	
+//End
 
-Function IN3_FlyScanSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
-	String ctrlName
-	Variable varNum
-	String varStr
-	String varName
-
-	if (cmpstr(ctrlName,"DataExtensionString")==0)
-		IN3_FSUpdateListOfFilesInWvs()
-	endif
-	if (cmpstr(ctrlName,"NameMatchString")==0)
-		IN3_FSUpdateListOfFilesInWvs()
-	endif
-	
-End
-
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
-//************************************************************************************************************
-Function IN3_FlyScanImportListBoxProc(lba) : ListBoxControl
-	STRUCT WMListboxAction &lba
-
-	Variable row = lba.row
-	Variable col = lba.col
-	WAVE/T/Z listWave = lba.listWave
-	WAVE/Z selWave = lba.selWave
-	NVAR DoubleClickImports=root:Packages:USAXS_FlyScanImport:DoubleClickImports
-	NVAR DoubleClickOpensInBrowser=root:Packages:USAXS_FlyScanImport:DoubleClickOpensInBrowser
-
-	switch( lba.eventCode )
-		case -1: // control being killed
-			break
-		case 1: // mouse down
-			break
-		case 3: // double click
-			if(DoubleClickImports)
-				IN3_USAXSScanLoadHdf5File2(0)
-			else
-				IN3_FlyScanOpenHdf5File()
-			endif
-			break
-		case 4: // cell selection
-		case 5: // cell selection plus shift key
-			break
-		case 6: // begin edit
-			break
-		case 7: // finish edit
-			break
-		case 13: // checkbox clicked (Igor 6.2 or later)
-			break
-	endswitch
-
-	return 0
-End
+////************************************************************************************************************
+//Function IN3_FlyScanImportListBoxProc(lba) : ListBoxControl
+//	STRUCT WMListboxAction &lba
+//
+//	Variable row = lba.row
+//	Variable col = lba.col
+//	WAVE/T/Z listWave = lba.listWave
+//	WAVE/Z selWave = lba.selWave
+//	NVAR DoubleClickImports=root:Packages:USAXS_FlyScanImport:DoubleClickImports
+//	NVAR DoubleClickOpensInBrowser=root:Packages:USAXS_FlyScanImport:DoubleClickOpensInBrowser
+//
+//	switch( lba.eventCode )
+//		case -1: // control being killed
+//			break
+//		case 1: // mouse down
+//			break
+//		case 3: // double click
+//			if(DoubleClickImports)
+//				IN3_USAXSScanLoadHdf5File2(0)
+//			else
+//				IN3_FlyScanOpenHdf5File()
+//			endif
+//			break
+//		case 4: // cell selection
+//		case 5: // cell selection plus shift key
+//			break
+//		case 6: // begin edit
+//			break
+//		case 7: // finish edit
+//			break
+//		case 13: // checkbox clicked (Igor 6.2 or later)
+//			break
+//	endswitch
+//
+//	return 0
+//End
 
 //************************************************************************************************************
 //************************************************************************************************************
