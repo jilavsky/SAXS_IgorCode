@@ -3,11 +3,16 @@
 #pragma version = 1.15
 #include "HDF5Gateway"
 
+#if(IgorVersion()<9)  	//no need to include, Igor 9 has this by default.  
+#include <HDF5 Browser>
+#endif
+
+
 constant NexusVersionNumber=1.05
 
 // support of Nexus files
 
-//1.15 fix for NDF5 changes in IP9
+//1.15 fix for HDF5 changes in IP9
 //1.14 added NEXUS_Read_Metadata, NEXUS_Read_Sample, NEXUS_Read_User, NEXUS_Read_Instrument, NEXUS_Read_CreateLocalList - used to store lists with teh values from these metadata locations. 
 //1.13 added skip for printing stuff in history in Nika batch mode. 
 //1,12 fix typo in Nexus attribute name dQI - capital i, instead of correct dQl - lower case l as slit length
@@ -572,12 +577,17 @@ Function Nexus_NexusOpenHdf5File()
 	For(i=0;i<numpnts(WaveOfSelections);i+=1)
 		if(WaveOfSelections[i])
 			FileName= WaveOfFiles[i]
+#if(IgorVersion()<9)
 			HDf5Browser#CreateNewHDF5Browser()
 		 	browserName = WinName(0, 64)
 			HDF5OpenFile/R /P=Convert2Dto1DDataPath locFileID as FileName
 			if (V_flag == 0)					// Open OK?
 				HDf5Browser#UpdateAfterFileCreateOrOpen(0, browserName, locFileID, S_path, S_fileName)
 			endif
+#else
+			HDf5Browser#CreateNewHDF5Browser("Convert2Dto1DDataPath", FileName, 1, browserName)
+			//these are two supported functions CreateNewHDF5Browser and KillHDF5Browser
+#endif
 			if(!OpenMultipleFiles)
 				return 0
 			endif

@@ -1209,14 +1209,16 @@ Function NI1A_CreateLUT(orientation)
 	SVAR CurrentMaskFileName=root:Packages:Convert2Dto1D:CurrentMaskFileName
 	variable centerAngleRad, WidthAngleRad, startAngleFIxed, endAgleFixed
 	//apply mask, if selected
-	MatrixOp/O/NTHR=0 MaskedQ2DWave=Q2DWave
-	redimension/S MaskedQ2DWave
 	if(UseMask)
 		wave M_ROIMask=root:Packages:Convert2Dto1D:M_ROIMask
-		MatrixOp/O/NTHR=0 MaskedQ2DWave = Q2DWave * M_ROIMask
+		MatrixOp/Free/NTHR=0 MaskedQ2DWave = Q2DWave * M_ROIMask
+	else
+		MatrixOp/Free/NTHR=0 MaskedQ2DWave = Q2DWave
 	endif
+	//this is likely not worhth the time now. 
+	//redimension/S MaskedQ2DWave
 	if(cmpstr(orientation,"C")!=0)
-		MatrixOp/O/NTHR=0  tempAnglesMask = AnglesWave
+		MatrixOp/FREE/NTHR=0  tempAnglesMask = AnglesWave
 		centerAngleRad= (pi/180)*str2num(StringFromList(0, orientation,  "_"))
 		WidthAngleRad= (pi/180)*str2num(StringFromList(1, orientation,  "_"))
 		
@@ -1232,15 +1234,16 @@ Function NI1A_CreateLUT(orientation)
 		endif
 		
 		MatrixOp/O/NTHR=0 MaskedQ2DWave = MaskedQ2DWave * tempAnglesMask
-		killwaves tempAnglesMask
+		//killwaves tempAnglesMask
 	endif
 	//radius data are masked now 
-
-	wavestats/Q MaskedQ2DWave
-	make/O/N=(V_npnts)  $("Qdistribution1D_"+orientation), $("LUT_"+orientation)
+	//wavestats/Q MaskedQ2DWave
+	//this should be faster
+	variable Npnts = DimSize(MaskedQ2DWave, 0)*DimSize(MaskedQ2DWave, 1)
+	make/O/N=(Npnts)  $("Qdistribution1D_"+orientation), $("LUT_"+orientation)
 	wave LUT=$("LUT_"+orientation)
 	wave Qdistribution1D=$("Qdistribution1D_"+orientation)
-	redimension/S Qdistribution1D
+	///redimension/S Qdistribution1D	//probably not needed anymore. Waste of time. 
 	Qdistribution1D = MaskedQ2DWave
 	LUT=p
 	MakeIndex Qdistribution1D, LUT
@@ -1249,7 +1252,7 @@ Function NI1A_CreateLUT(orientation)
 	NoteStr+="CurrentMaskFileName="+CurrentMaskFileName+";"
 	note Qdistribution1D, NoteStr
 	note LUT, NoteStr
-	KillWaves/Z MaskedQ2DWave
+	//KillWaves/Z MaskedQ2DWave
 	setDataFolder OldDf
 end
 
@@ -1293,18 +1296,40 @@ Function NI1A_Create2DQWave(DataWave)
 			NI2T_Calculate2DThetaWithTilts(Theta2DWave)		
 			print "Both tilts used, time was = "+num2str((ticks-ts)/60)
 		else			//no tilts... 
+			//			variable timerRefNum, microSeconds
+			//			timerRefNum = StartMSTimer
+			//			Theta2DWave = sqrt(((p-BeamCenterX)*PixelSizeX)^2 + ((q-BeamCenterY)*PixelSizeY)^2)
+			//			microSeconds = StopMSTimer(timerRefNum)
+			//			print microSeconds/10000, "Direct calculation"
+			//			timerRefNum = StartMSTimer
 			Multithread Theta2DWave = sqrt(((p-BeamCenterX)*PixelSizeX)^2 + ((q-BeamCenterY)*PixelSizeY)^2)
+			//			microSeconds = StopMSTimer(timerRefNum)
+			//			print microSeconds/10000, "Multithread"
 			//the QsDWave now contains the distance from beam center  Results should be in mm.... 
 			//added to calculate the theta values...
-			 Multithread Theta2DWave = atan(Theta2DWave/SampleToCCDDistance)/2
-			// MatrixOp/O/NTHR=0 Theta2DWave = atan(Theta2DWave/SampleToCCDDistance)/2
+			// Multithread Theta2DWave = atan(Theta2DWave/SampleToCCDDistance)/2
+			//this shoudl be faster... 
+			 MatrixOp/O/NTHR=0 Theta2DWave = atan(Theta2DWave/SampleToCCDDistance)/2
 			print "No tilts used, time was = "+num2str((ticks-ts)/60)
 		endif
 		if( (beamCenterX>=0 && beamCenterX<dimsize(Theta2DWave,0))&&(beamCenterY>=0 && beamCenterY<dimsize(Theta2DWave,1)))
 			Theta2DWave[beamCenterX][beamCenterY] = NaN
 		endif
 		//theta values exist by now... Now convert to real Q. Theta2D may be neededc later... 
-		Multithread Q2DWave = ((4*pi)/Wavelength)*sin(Theta2DWave)
+		variable timerRefNum, microSeconds
+		timerRefNum = StartMSTimer
+			Q2DWave = ((4*pi)/Wavelength)*sin(Theta2DWave)
+		microSeconds = StopMSTimer(timerRefNum)
+		print microSeconds/10000, "Direct calculation"
+		timerRefNum = StartMSTimer	
+			Multithread Q2DWave = ((4*pi)/Wavelength)*sin(Theta2DWave)
+		microSeconds = StopMSTimer(timerRefNum)
+		print microSeconds/10000, "Multithread"
+		timerRefNum = StartMSTimer	
+		// 2-1-2021 this seems 5x faster than Multithread and 10x faster than direct calculation. 
+		MatrixOp/O/NTHR=0 Q2DWave = ((4*pi)/Wavelength)*sin(Theta2DWave)
+		microSeconds = StopMSTimer(timerRefNum)
+		print microSeconds/10000, "MatrixOP"
 		//record for which geometry this Radius vector wave was created
 	else
 		Theta2DWave[beamCenterX][beamCenterY] = NaN
@@ -6653,20 +6678,19 @@ end
 Function NI1A_DezingerImage(image)
         Wave image
  	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-       string OldDf=GetDataFOlder(1)
-        setDataFolder root:Packages:Convert2Dto1D
+ 	 string OldDf=GetDataFOlder(1)
+    setDataFolder root:Packages:Convert2Dto1D
  	 NVAR DezingerRatio =root:Packages:Convert2Dto1D:DezingerRatio
  	 string OldNote=note(image)
-        Duplicate/O image, dup, DiffWave, FilteredDiffWave
-        Redimension/S DiffWave, FilteredDiffWave    	    // make single precision
-        MatrixFilter /N=3 median image				    // 3x3 median filter (integer result if image integer, fp if fp)
-        MatrixOp/O/NTHR=0 DiffWave = dup / (abs(image))          	  	    // difference between raw and filtered, high values (>35) are cosmics and high signals
+    Duplicate/Free image, dup
+    MatrixFilter /N=3 median image				    			 // 3x3 median filter (integer result if image integer, fp if fp)
+    MatrixOp/Free/NTHR=0 DiffWave = dup / (abs(image))      // difference between raw and filtered, high values (>35) are cosmics and high signals
        //image = SelectNumber(DiffWave>DezingerRatio,dup,image)    // choose filtered (image) if difference is great
-   	MatrixOp/O/NTHR=0 image = dup * (-1)*(greater(Diffwave,DezingerRatio)-1) + image*(greater(Diffwave,DezingerRatio))
-	//the MatrxiOp is 3x faster than the original line.... 
-	note image, OldNote
-        KillWaves/Z DiffWave, FilteredDiffWave, dup
-        setDataFolder OldDf
+    MatrixOp/O/NTHR=0 image = dup * (-1)*(greater(Diffwave,DezingerRatio)-1) + image*(greater(Diffwave,DezingerRatio))
+	     //the MatrxiOp is 3x faster than the original line.... 
+	 note image, OldNote
+    //KillWaves/Z DiffWave, FilteredDiffWave, dup
+    setDataFolder OldDf
 End
 
 

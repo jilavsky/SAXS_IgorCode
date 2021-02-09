@@ -1,6 +1,5 @@
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
-//#pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.40
+#pragma version=2.41
 
 #if(IgorVersion()<9)  	//no need to include, Igor 9 has this by default.  
 #include <HDF5 Browser>
@@ -19,6 +18,7 @@ Constant IR1TrimNameLength = 28
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.41 fix for HDF5 changes in IP9
 //2.40 minor fixes for importing Slit smeared data. 
 //2.39 made long names capable for Igor 8 when user chooses. 
 //2.38 Modified Screen Size check to match the needs
@@ -3174,12 +3174,23 @@ Function IR1I_NexusOpenHdf5File()
 	For(i=0;i<numpnts(WaveOfSelections);i+=1)
 		if(WaveOfSelections[i])
 			FileName= WaveOfFiles[i]
+//			HDf5Browser#CreateNewHDF5Browser()
+//		 	browserName = WinName(0, 64)
+//			HDF5OpenFile/R /P=ImportDataPath locFileID as FileName
+//			if (V_flag == 0)					// Open OK?
+//				HDf5Browser#UpdateAfterFileCreateOrOpen(0, browserName, locFileID, S_path, S_fileName)
+//			endif
+#if(IgorVersion()<9)
 			HDf5Browser#CreateNewHDF5Browser()
 		 	browserName = WinName(0, 64)
-			HDF5OpenFile/R /P=ImportDataPath locFileID as FileName
+			HDF5OpenFile/R /P=Convert2Dto1DDataPath locFileID as FileName
 			if (V_flag == 0)					// Open OK?
 				HDf5Browser#UpdateAfterFileCreateOrOpen(0, browserName, locFileID, S_path, S_fileName)
 			endif
+#else
+			HDf5Browser#CreateNewHDF5Browser("Convert2Dto1DDataPath", FileName, 1, browserName)
+#endif
+
 			if(!OpenMultipleFiles)
 				return 0
 			endif

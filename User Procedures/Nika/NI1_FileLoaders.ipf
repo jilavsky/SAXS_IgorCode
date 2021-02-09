@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=2.52
+#pragma version=2.53
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2021, Argonne National Laboratory
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.53 added FLOAT as Pilatus EDF file format option. Seems like we now have float values in there. 
 //2.52 added 12ID-B tiff files, these are tiff files with associated metadata file. Location based on folder structure. 
 //2.51 added passing through NXMetadata, NXSample, NXInstrument, NXUser
 //2.50 removed mar345 support. Let's see if someone complains. 
@@ -750,21 +751,27 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 			testLine = NI1_ReduceSpaceRunsInString(testLine,1)
 		endif
 		//read the Pilatus file itself
-		variable PilatusColorDepthVar=str2num(PilatusColorDepth)
-		//color depth can be 8, 16, or 32 signed integers or unsigned integer 64, but that is not supported by Igor, to denote them in Igor as unnsigned, need to add 64 ...
-		if(PilatusColorDepthVar<64 && PilatusSignedData)   //PilatusSignedData=1 when unsigned integers, default signed integers
-			PilatusColorDepthVar+=64		//now we have proper 8, 16, or 32 unsigned integers for Igor... 
-		endif
-              killwaves/Z Loadedwave0,Loadedwave1
-              if(stringMatch(PilatusFileType,"edf"))
-       	       GBLoadWave/B/T={PilatusColorDepthVar,PilatusColorDepthVar}/S=(PilskipBytes)/W=1 /P=$(PathName)/N=Loadedwave FileNameToLoad
-              elseif(stringMatch(PilatusFileType,"cbf"))
-              	//check if the cbf conforms to what we expect...
-              	if(StringMatch(testLine , "*LITTLE_ENDIAN*") && StringMatch(testLine, "*x-CBF_BYTE_OFFSET*"))
-				NI1A_LoadCbfCompresedImage(PathName,FileNameToLoad, "Loadedwave0")
-			else
-				abort "Unknown cbf file"
+		//2021-02 we have FLOAT which seem to be now also possible. Most likely single FLOAT? 	
+		variable PilatusColorDepthVar
+		if(StringMatch(PilatusColorDepth, "FLOAT"))
+			PilatusColorDepthVar=2
+		else
+			PilatusColorDepthVar=str2num(PilatusColorDepth)
+			//color depth can be 8, 16, or 32 signed integers or unsigned integer 64, but that is not supported by Igor, to denote them in Igor as unnsigned, need to add 64 ...
+			if(PilatusColorDepthVar<64 && PilatusSignedData)   //PilatusSignedData=1 when unsigned integers, default signed integers
+				PilatusColorDepthVar+=64		//now we have proper 8, 16, or 32 unsigned integers for Igor... 
 			endif
+		endif
+          killwaves/Z Loadedwave0,Loadedwave1
+          if(stringMatch(PilatusFileType,"edf"))
+       	       GBLoadWave/B/T={PilatusColorDepthVar,PilatusColorDepthVar}/S=(PilskipBytes)/W=1 /P=$(PathName)/N=Loadedwave FileNameToLoad
+          elseif(stringMatch(PilatusFileType,"cbf"))
+              	//check if the cbf conforms to what we expect...
+        	 	if(StringMatch(testLine , "*LITTLE_ENDIAN*") && StringMatch(testLine, "*x-CBF_BYTE_OFFSET*"))
+					NI1A_LoadCbfCompresedImage(PathName,FileNameToLoad, "Loadedwave0")
+				else
+					abort "Unknown cbf file"
+				endif
        	 elseif(stringMatch(PilatusFileType,"tiff")||stringMatch(PilatusFileType,"tif"))
        	       GBLoadWave/B=(1)/T={PilatusColorDepthVar,PilatusColorDepthVar}/S=(PilskipBytes)/W=1 /P=$(PathName)/N=Loadedwave FileNameToLoad
        	 elseif(stringMatch(PilatusFileType,"float-tiff"))
@@ -1563,7 +1570,7 @@ Function NI1_PilatusLoaderPanelFnct() : Panel
 
 		PopupMenu PilatusColorDepth,pos={15,130},size={122,21},proc=NI1_PilatusPopMenuProc,title="Color depth :  "
 		PopupMenu PilatusColorDepth,help={"Color depth (likely 32) :"}
-		PopupMenu PilatusColorDepth,mode=1,popvalue=PilatusColorDepth,value= #"\"8;16;32;64;\""
+		PopupMenu PilatusColorDepth,mode=1,popvalue=PilatusColorDepth,value= #"\"8;16;32;64;FLOAT;\""
 		
 		Button PilatusSetDefaultPars, pos={15,160}, size={250,20}, title="Set default device values", proc=NI1_Pilatus_ButtonProc
 		Button PilatusSetDefaultPars, help={"Use this to set default pixel size"}
