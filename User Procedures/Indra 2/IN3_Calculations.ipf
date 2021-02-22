@@ -411,8 +411,9 @@ static Function IN3_ReturnCursorBack(QminDefaultForProcessing)
 			Duplicate/Free R_Int, IntRatio
 			Duplicate/Free R_Qvec, QCorrection	//this is per point correction, we need bigger difference at low-q than high-q
 			//need to find function which is q dependent and varies from Max correction to 1 over our range of Qs. 
-			variable MaxCorrection = 2
-			variable PowerCorrection=4
+			//02-10-2021 changed values (was 2 and 4) below to tweak the behavior. 
+			variable MaxCorrection = 0.5
+			variable PowerCorrection=3
 			QCorrection =  1 + MaxCorrection*(abs(QminTheoreticalBlank/R_Qvec))^PowerCorrection
 			QCorrection = (QCorrection<(MaxCorrection+1)) ? QCorrection : (MaxCorrection+1)
 			//the above should peak at Q=0 with max correction of "MaxCorrection"+1 and drop off as function of q resolution. 
@@ -1530,8 +1531,8 @@ Function IN3_FitModGaussTop(ctrlname, DoNOtChangeLimits) : Buttoncontrol			// ca
 	T_Constraints[1] = {"K3<3"}
 	T_Constraints[2] = {"K2<0.0006"}
 	variable V_FitError=0
-	FuncFit/NTHR=0/Q/N  IN3_ModifiedGauss W_coef PD_Intensity [PeakCenterFitStartPoint,PeakCenterFitEndPoint]  /X=Ar_encoder /D /W=PD_error /I=1 /C=T_Constraints 	//Gauss
-	//FuncFit/Q/NTHR=0/L=50  IN3_ModifiedGauss W_coef PD_Intensity [startPointL,endPointL]  /X=Ar_encoder /D /W=PD_error /I=1 /C=T_Constraints 	//Gauss
+	FuncFit/Q/N  IN3_ModifiedGauss W_coef PD_Intensity [PeakCenterFitStartPoint,PeakCenterFitEndPoint]  /X=Ar_encoder /D /W=PD_error /I=1 /C=T_Constraints 	//Gauss
+	//FuncFit/Q/L=50  IN3_ModifiedGauss W_coef PD_Intensity [startPointL,endPointL]  /X=Ar_encoder /D /W=PD_error /I=1 /C=T_Constraints 	//Gauss
 	if(V_FitError>0)
 		abort "Peak profile fitting function error. Please select wider range of data or change fitting function (Gauss is good choice)"
 	endif

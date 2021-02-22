@@ -121,8 +121,7 @@ Function IR2S_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 		SVAR SelectedResultsTool=root:Packages:Irena:ScriptingTool:SelectedResultsTool
 		SelectedResultsTool = popStr
 		string ListOfAvailableResults=IR2C_ReturnKnownToolResults(popStr,"")
-		//execute("PopupMenu ResultsTypeSelector, win=IR2S_ScriptingToolPnl, popvalue="+StringFromList(0,ListOfAvailableResults)+", value=IR2C_ReturnKnownToolResults(\""+popStr+"\")")
-		execute("PopupMenu ResultsTypeSelector, win=IR2S_ScriptingToolPnl, mode=1, value=IR2C_ReturnKnownToolResults(\""+popStr+"\")")
+		execute("PopupMenu ResultsTypeSelector, win=IR2S_ScriptingToolPnl, mode=1, value=IR2C_ReturnKnownToolResults(\""+popStr+"\",\"\")")
 		SVAR SelectedResultsType=root:Packages:Irena:ScriptingTool:SelectedResultsType
 		SelectedResultsType = stringFromList(0,ListOfAvailableResults)
 		IR2S_UpdateListOfAvailFiles()
@@ -381,7 +380,7 @@ Window IR2S_ScriptingToolPnl()
 	PopupMenu ToolResultsSelector,mode=1,popvalue=root:Packages:Irena:ScriptingTool:SelectedResultsTool,value= #"root:Packages:IrenaControlProcs:AllKnownToolsResults"//, bodyWidth=170
 
 	PopupMenu ResultsTypeSelector,pos={10,90},size={230,15},fStyle=2,proc=IR2S_PopMenuProc,title="Which results?          ", disable=!(root:Packages:Irena:ScriptingTool:UseResults)
-	PopupMenu ResultsTypeSelector,mode=1,popvalue=root:Packages:Irena:ScriptingTool:SelectedResultsType,value= IR2C_ReturnKnownToolResults(root:Packages:IrenaControlProcs:AllKnownToolsResults)//, bodyWidth=170
+	PopupMenu ResultsTypeSelector,mode=1,popvalue=root:Packages:Irena:ScriptingTool:SelectedResultsType,value= IR2C_ReturnKnownToolResults(root:Packages:IrenaControlProcs:AllKnownToolsResults,"")//, bodyWidth=170
 
 	PopupMenu ResultsGenerationToUse,pos={10,115},size={230,15},fStyle=2,proc=IR2S_PopMenuProc,title="Results Generation?           ", disable=!(root:Packages:Irena:ScriptingTool:UseResults)
 	PopupMenu ResultsGenerationToUse,mode=1,popvalue=root:Packages:Irena:ScriptingTool:ResultsGenerationToUse,value= "Latest;_0;_1;_2;_3;_4;_5;_6;_7;_8;_9;_10;"

@@ -2350,7 +2350,7 @@ Function NEXUS_NikaSave2DData()
 			Duplicate/O Mask, MaskExp2DData
 			//Igor Mask has 0 where masked, 1 where used. This is opposite (of course) to what Nexus/CanSAS uses:
 			//Pete:   mask is 1 when the point is removed, 0 when is used. 
-			//MatrixOp/O/NTHR=0 MaskExp2DData = abs(MaskExp2DData-1)
+			//MatrixOp/O MaskExp2DData = abs(MaskExp2DData-1)
 			MaskExp2DData = !MaskExp2DData
 		else
 			Duplicate/Free Q2DWave, MaskExp2DData		//fake for possible rebinning...

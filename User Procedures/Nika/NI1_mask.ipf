@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version =1.29
+#pragma version =1.30
 
 
 //*************************************************************************\
@@ -10,6 +10,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.30 Remove for MatrixOP /NTHR=0 since it is applicable to 3D matrices only 
 //1.29 Fixed to accept tiff as tif extension.
 //1.28 fixed masking of first/last N rows/columns which was not working right. 
 //1.27 Modified Screen Size check to match the needs
@@ -311,9 +312,9 @@ Function NI1M_saveRoiCopyProc(ctrlName) : ButtonControl
 	endif
 	if(MaskOffLowIntPoints)
 		wave MaskCCDImage
-	//	MatrixOP/O/NTHR=1 LowIntPointmask = greater(MaskCCDImage -LowIntToMaskOff, 0)		
-	//	MatrixOP/O/NTHR=1 M_ROIMask =M_ROIMask * greater(MaskCCDImage, LowIntToMaskOff)		
-		MatrixOP/O/NTHR=0 M_ROIMask =M_ROIMask * greater(MaskCCDImage -TempLowIntToMsk,0)
+	//	MatrixOP/O  LowIntPointmask = greater(MaskCCDImage -LowIntToMaskOff, 0)		
+	//	MatrixOP/O  M_ROIMask =M_ROIMask * greater(MaskCCDImage, LowIntToMaskOff)		
+		MatrixOP/O  M_ROIMask =M_ROIMask * greater(MaskCCDImage -TempLowIntToMsk,0)
 	endif
 	redimension/B/U M_ROIMask
 
@@ -780,7 +781,7 @@ Function NI1M_MaskUpdateColors()
 		removeimage/Z/W=CCDImageForMask UnderLevelImage
 
 		if(MaskOffLowIntPoints)
-			MatrixOp/O/NTHR=0 UnderLevelImage= MaskCCDImage
+			MatrixOp/O  UnderLevelImage= MaskCCDImage
 			AppendImage/T/W=CCDImageForMask UnderLevelImage
 			variable tempLimit=LowIntToMaskOff
 			if(tempLimit<1e-10)

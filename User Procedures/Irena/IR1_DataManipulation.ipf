@@ -1637,6 +1637,7 @@ static Function IR1D_SmoothData()
 				tempN = tempWv[pcsr(A, "IR1D_DataManipulationGraph")]
 				startPoint= binarysearch(ResultsQ,tempN)
 				//startPoint= pcsr(A, "IR1D_DataManipulationGraph")-1
+				startPoint = (startPoint>0) ? startPoint : 0
 			else
 				startPoint=0
 			endif
@@ -1645,6 +1646,7 @@ static Function IR1D_SmoothData()
 				tempN = tempWv[pcsr(B, "IR1D_DataManipulationGraph")]
 				endPoint= binarysearch(ResultsQ,tempN)
 				//endPoint= pcsr(B, "IR1D_DataManipulationGraph")+1
+				endPoint = (endPoint>0) ? endPoint : numpnts(ResultsInt_log)-1
 			else
 				endPoint=numpnts(ResultsInt_log)-1
 			endif

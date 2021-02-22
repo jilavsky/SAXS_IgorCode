@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.07
+#pragma version=2.08
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2021, Argonne National Laboratory
@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.08 Remove for MatrixOP /NTHR=0 since it is applicable to 3D matrices only 
 //2.07 Added Batch processing
 //2.06 fixes for rtGLobal=3
 //2.05 merged with NI1_LineProfCalcs.ipf
@@ -1731,9 +1732,9 @@ Function NI1A_LineProf_CreateLP()
 		//first check if our mask is OK here...
 		if(UseMask)
 			wave M_ROIMask=root:Packages:Convert2Dto1D:M_ROIMask
-			MatrixOp/O/NTHR=0 MaskedQ2DWave = CCDImageToConvert *( M_ROIMask/M_ROIMask)
+			MatrixOp/O MaskedQ2DWave = CCDImageToConvert *( M_ROIMask/M_ROIMask)
 		else
-			MatrixOp/O/NTHR=0 MaskedQ2DWave = CCDImageToConvert
+			MatrixOp/O MaskedQ2DWave = CCDImageToConvert
 		endif
 		//first create xwave and ywave for the ImageLineProfile...
 		variable length

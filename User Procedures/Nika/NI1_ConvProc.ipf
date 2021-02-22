@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.71
+#pragma version=2.72
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -10,6 +10,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.72 Remove for MatrixOP /NTHR=0 since it is applicable to 3D matrices only 
 //2.71 Added NI1A_ImportThisJPGFile which adds functionality ONLY for 9IDC USAXS/SAXS/WAXS instrument. Should never run else. 
 //2.70 fixed NI1A_FindeOrderNumber to utilize for sorting in "_001" option the last number, ignores any string, even if at the end of name. 
 //			can sort nases as "name_With_Order_0001344_waxs.tif" based on teh 0001344 
@@ -53,7 +54,7 @@
 //2.32 fixed case, when user wanted to display processed data, but the images were created/updated before the processed data were even created. 
 //2.31 added hook functions, required change in main panel function from macro to function and therefore also renaming it. 
 //2.30 Added right click "Refresh content" to Listbox and other functionality
-//2.29 fixed /NTHR=1 to /NTHR=0
+//2.29 fixed /NTHR=1 to  
 //2.28 add ability to load and use 2D calibrated data (from EQSANS for now)
 //2.27 adds DataCalibrationString to GUI and Intensity/q/theta/d/distance data 
 //2.26 added double clicks to Mask listbox and to Empty/Dark listboxes. 
@@ -189,12 +190,12 @@ Function NI1A_AverageDataPerUserReq(orientation)
 	Intensity=0
 	Error=0
 	//variable i, j, counter, numbins, start1, end1
-	MatrixOp/Free/NTHR=0 tempInt = LUT
+	MatrixOp/Free  tempInt = LUT
 	tempInt = Calibrated2DDataSet
 	//following si probably slow, but IndexSort cannot be multithreaded... 
 	IndexSort LUT, tempInt
 	//Duplicate/O tempInt, TempIntSqt
-	MatrixOp/Free/NTHR=0 TempIntSqt = tempInt* tempInt
+	MatrixOp/Free  TempIntSqt = tempInt* tempInt
 	//variable timerRefNum
 	//timerRefNum = StartMSTimer
 	//counter = HistogramWv[0]
@@ -211,13 +212,13 @@ Function NI1A_AverageDataPerUserReq(orientation)
 	//	endfor
 
 	//2017-06-27 new, faster method for larger number of destination points... Few times faster for large number of points. 
-	MatrixOp/Free/NTHR=0 HistogramWvTemp = HistogramWv
-	MatrixOp/Free/NTHR=0 TempHistSum = HistogramWv
+	MatrixOp/Free  HistogramWvTemp = HistogramWv
+	MatrixOp/Free  TempHistSum = HistogramWv
 	SetScale/I x 0,numpnts(TempHistSum)-1,"", TempHistSum, HistogramWvTemp
 	Multithread TempHistSum = sum(HistogramWvTemp,0,p)
 	//this is 2018-03-1 old method which seems to fail and has error in normalization by nuber of bins. 
 	//Multithread Intensity[1,numpnts(Intensity)-1] = sum(tempInt,TempHistSum[p-1],TempHistSum[p])
-	//MatrixOp/O/NTHR=0 Intensity=Intensity/HistogramWv			//This is average intensity....
+	//MatrixOp/O  Intensity=Intensity/HistogramWv			//This is average intensity....
 	//basially, the above has problem, that the binning has always 1 more point included, so this does not work for 1 bin large bins here
 	
 	Multithread Intensity[1,numpnts(Intensity)-1] = (TempHistSum[p] - TempHistSum[p-1] )>0 ? sum(tempInt,TempHistSum[p-1],TempHistSum[p]) : 0
@@ -231,15 +232,15 @@ Function NI1A_AverageDataPerUserReq(orientation)
 //		//In each row set to 1 the index of the elements that you want to sum.  The result is simply
 //		//MatrixOP/o result=indexMatrix x sourceWave
 //		make/Free/N=(numpnts(HistogramWv),numpnts(Intensity)) indexWaveM 
-//		MatrixOp/NTHR=0 indexWaveM = 0
+//		MatrixOp  indexWaveM = 0
 //		
 	
 	//print StopMSTimer(timerRefNum)	
-	MatrixOp/Free/NTHR=0 TempSumXi=Intensity				//OK, now we have sumXi saved
-	MatrixOp/O/NTHR=0 Intensity=Intensity/(HistogramWv+1)			//This is average intensity...., for +1 see above notes. 
-	//MatrixOp/O/NTHR=0 Intensity=Intensity/(HistogramWv)			//This is average intensity...., for +1 see above notes. 
+	MatrixOp/Free  TempSumXi=Intensity				//OK, now we have sumXi saved
+	MatrixOp/O  Intensity=Intensity/(HistogramWv+1)			//This is average intensity...., for +1 see above notes. 
+	//MatrixOp/O  Intensity=Intensity/(HistogramWv)			//This is average intensity...., for +1 see above notes. 
 	Intensity = (HistogramWv>0) ? Intensity[p] : NaN
-	MatrixOp/O/NTHR=0 Intensity = replace(Intensity,inf,nan)
+	MatrixOp/O  Intensity = replace(Intensity,inf,nan)
 
 	//version 1.43 December 2009, changed uncertainity estimates. Three new methods now available. Old method which has weird formula, standard deviation and standard error fof mean ...
 	NVAR ErrorCalculationsUseOld=root:Packages:Convert2Dto1D:ErrorCalculationsUseOld
@@ -247,15 +248,15 @@ Function NI1A_AverageDataPerUserReq(orientation)
 	NVAR ErrorCalculationsUseSEM=root:Packages:Convert2Dto1D:ErrorCalculationsUseSEM
 	//change in the Configuration panel. 	
 	if(ErrorCalculationsUseOld)	//this is the old code... Hopefully I did not screw up. 
-		MatrixOp/O/NTHR=0 Error=sqrt(abs(Error - (TempSumXi*TempSumXi))/(HistogramWv - 1))	
-		MatrixOp/O/NTHR=0 Error=Error/HistogramWv
+		MatrixOp/O  Error=sqrt(abs(Error - (TempSumXi*TempSumXi))/(HistogramWv - 1))	
+		MatrixOp/O  Error=Error/HistogramWv
 	else //now new code. Need to calculate standard deviation anyway... 
 		//variance  = (Error - (Intensity^2 / Histogram)) / (Histogram - 1)
 		//st deviation = sqrt(variance)
-		MatrixOp/O/NTHR=0 Error = sqrt(abs(Error - (TempSumXi*TempSumXi / HistogramWv)) / (HistogramWv - 1))
+		MatrixOp/O  Error = sqrt(abs(Error - (TempSumXi*TempSumXi / HistogramWv)) / (HistogramWv - 1))
 		if(ErrorCalculationsUseSEM)
 			//error_mean=stdDev/sqrt(Histogram)			use Standard error of mean...
-			MatrixOp/O/NTHR=0 Error = Error /sqrt(HistogramWv)
+			MatrixOp/O  Error = Error /sqrt(HistogramWv)
 		endif
 	endif
 	//need to add comments to wave note...
@@ -465,31 +466,31 @@ Function NI1A_CorrectDataPerUserReq(orientation)
 		redimension/S tempDataWv, tempEmptyField
 		
 		if(UsePixelSensitivity)
-			MatrixOP/O/NTHR=0 tempDataWv=tempDataWv/Pix2DSensitivity
+			MatrixOP/O  tempDataWv=tempDataWv/Pix2DSensitivity
 		endif
 		if(UseDarkField)
 			if(UseSampleMeasTime && UseDarkMeasTime)
 				if(UsePixelSensitivity)
 					tempVal = SampleMeasurementTime/BackgroundMeasTime
-					MatrixOP/O/NTHR=0 tempDataWv = tempDataWv - (tempVal*DarkCurrentWave/Pix2DSensitivity)
+					MatrixOP/O  tempDataWv = tempDataWv - (tempVal*DarkCurrentWave/Pix2DSensitivity)
 				else
 					tempVal = SampleMeasurementTime/BackgroundMeasTime
-					MatrixOP/O/NTHR=0 tempDataWv = tempDataWv - (tempVal*DarkCurrentWave)
+					MatrixOP/O  tempDataWv = tempDataWv - (tempVal*DarkCurrentWave)
 				endif
 			else
 				if(UsePixelSensitivity)
-					MatrixOP/O/NTHR=0 tempDataWv = tempDataWv - (DarkCurrentWave/Pix2DSensitivity)
+					MatrixOP/O  tempDataWv = tempDataWv - (DarkCurrentWave/Pix2DSensitivity)
 				else
-					MatrixOP/O/NTHR=0 tempDataWv = tempDataWv - DarkCurrentWave
+					MatrixOP/O  tempDataWv = tempDataWv - DarkCurrentWave
 				endif
 			endif
 		endif
 		if(UseSubtractFixedOffset)
-			MatrixOP/O/NTHR=0 tempDataWv = tempDataWv - SubtractFixedOffset
+			MatrixOP/O  tempDataWv = tempDataWv - SubtractFixedOffset
 		endif
 		if(UseSampleTransmission)
 			//this is normal correcting by one transmission. 
-			MatrixOP/O/NTHR=0 tempDataWv=tempDataWv/SampleTransmission
+			MatrixOP/O  tempDataWv=tempDataWv/SampleTransmission
 			if(CorrectSelfAbsorption && SampleTransmission<1)
 				variable MuCalc=-1*ln(SampleTransmission)/SampleThickness
 				variable muD = MuCalc*SampleThickness
@@ -498,17 +499,17 @@ Function NI1A_CorrectDataPerUserReq(orientation)
 					NI1A_Create2DQWave(tempDataWv)				//creates 2-D Q wave does not need to be run always...
 					NI1A_Create2DAngleWave(tempDataWv)			//creates 2-D Azimuth Angle wave does not need to be run always...
 				endif 	
-				MatrixOP/free/NTHR=0 SelfAbsorption2D=tempDataWv
+				MatrixOP/free  SelfAbsorption2D=tempDataWv
 				//next is formula 29, chapter 3.4.7 Brain Pauw paper
-				MatrixOp/Free/NTHR=0 MuDdivCos2TH=MuD*rec(cos(2*Theta2DWave))
-				MatrixOp/Free/NTHR=0 OneOverBottomPart = rec( -1*MuDdivCos2TH + MuD)
+				MatrixOp/Free  MuDdivCos2TH=MuD*rec(cos(2*Theta2DWave))
+				MatrixOp/Free  OneOverBottomPart = rec( -1*MuDdivCos2TH + MuD)
 				variable expmud=exp(muD)
 				variable expNmud=exp(-1*MuD)
-				MatrixOP/O/NTHR=0 SelfAbsorption2D=expmud * (exp(-MuDdivCos2TH) - expNmud) * OneOverBottomPart
+				MatrixOP/O  SelfAbsorption2D=expmud * (exp(-MuDdivCos2TH) - expNmud) * OneOverBottomPart
 				//replace nans around center... 
-				MatrixOP/O/NTHR=0 SelfAbsorption2D=replaceNaNs(SelfAbsorption2D,1)
+				MatrixOP/O  SelfAbsorption2D=replaceNaNs(SelfAbsorption2D,1)
 				//and now correct... 
-				MatrixOP/O/NTHR=0 tempDataWv=tempDataWv / SelfAbsorption2D
+				MatrixOP/O  tempDataWv=tempDataWv / SelfAbsorption2D
 				if(IrenaDebugLevel>1)
 					variable MaxCorrection
 					wavestats SelfAbsorption2D
@@ -525,10 +526,10 @@ Function NI1A_CorrectDataPerUserReq(orientation)
 		if(UseEmptyField)
 			tempEmptyField = EmptyRunWave
 			if(UsePixelSensitivity)
-				MatrixOP/O/NTHR=0 tempEmptyField = tempEmptyField/Pix2DSensitivity
+				MatrixOP/O  tempEmptyField = tempEmptyField/Pix2DSensitivity
 			endif
 			if(UseSubtractFixedOffset)
-				MatrixOP/O/NTHR=0 tempEmptyField = tempEmptyField - SubtractFixedOffset
+				MatrixOP/O  tempEmptyField = tempEmptyField - SubtractFixedOffset
 			endif
 		
 			if(UseMonitorForEF)
@@ -541,33 +542,33 @@ Function NI1A_CorrectDataPerUserReq(orientation)
 				if(UseSampleMeasTime && UseEmptyMeasTime)
 					if(UsePixelSensitivity)
 						tempVal = EmptyMeasurementTime/BackgroundMeasTime
-						MatrixOP/O/NTHR=0 tempEmptyField=tempEmptyField - (tempVal*(DarkCurrentWave/Pix2DSensitivity))
+						MatrixOP/O  tempEmptyField=tempEmptyField - (tempVal*(DarkCurrentWave/Pix2DSensitivity))
 					else
 						tempVal = EmptyMeasurementTime/BackgroundMeasTime
-						MatrixOP/O/NTHR=0 tempEmptyField=tempEmptyField - (tempVal*DarkCurrentWave)
+						MatrixOP/O  tempEmptyField=tempEmptyField - (tempVal*DarkCurrentWave)
 					endif
 				else
 					if(UsePixelSensitivity)
-						MatrixOP/O/NTHR=0 tempEmptyField=tempEmptyField - (DarkCurrentWave/Pix2DSensitivity)
+						MatrixOP/O  tempEmptyField=tempEmptyField - (DarkCurrentWave/Pix2DSensitivity)
 					else
-						MatrixOP/O/NTHR=0 tempEmptyField=tempEmptyField - DarkCurrentWave
+						MatrixOP/O  tempEmptyField=tempEmptyField - DarkCurrentWave
 					endif
 				endif
 			endif
 	
 		endif
 	
-		MatrixOP/O/NTHR=0 Calibrated2DDataSet = CalibrationPrefactor * (tempDataWv - ScalingConstEF * tempEmptyField)
+		MatrixOP/O  Calibrated2DDataSet = CalibrationPrefactor * (tempDataWv - ScalingConstEF * tempEmptyField)
 		
 		if(DoGeometryCorrection)  		//geometry correction (= cos(angle)^3) for solid angle projection, added 6/24/2006 to do in 2D data, not in 1D as done (incorrectly also) before using Dales routine.
 			NI1A_GenerateGeometryCorr2DWave()
 			Wave GeometryCorrection
-			MatrixOp/O/NTHR=0 Calibrated2DDataSet = Calibrated2DDataSet / GeometryCorrection
+			MatrixOp/O  Calibrated2DDataSet = Calibrated2DDataSet / GeometryCorrection
 		endif
 		if(DoPolarizationCorrection)		//added 8/31/09 to enable 2D corection for polarization
 			NI1A_Generate2DPolCorrWv()
 			Wave polar2DWave
-			MatrixOp/O/NTHR=0 Calibrated2DDataSet = Calibrated2DDataSet / polar2DWave 		//changed to "/" on October 12 2009 since due to use MatrixOp in new formula the calculate values are less than 1 and this is now correct. 
+			MatrixOp/O  Calibrated2DDataSet = Calibrated2DDataSet / polar2DWave 		//changed to "/" on October 12 2009 since due to use MatrixOp in new formula the calculate values are less than 1 and this is now correct. 
 		endif
 		
 		//Add to note:
@@ -714,13 +715,13 @@ Function NI1A_Generate2DPolCorrWv()
 	if(NeedToUpdate)
 		print "Updated Polarization correction 2D wave" 
 		variable OffsetInRadians=StartAngle2DPolCor *pi/180
-		MatrixOp/O/NTHR=0   A2Theta2DWave =  2 * Theta2DWave
+		MatrixOp/O    A2Theta2DWave =  2 * Theta2DWave
 		if(Use1DPolarizationCor)
 			//	Int=Int/( (1+cos((2theta))^2)/2	)
-		    	MatrixOP/O/NTHR=0 polar2DWave = (1+cos(A2Theta2DWave))/2
+		    	MatrixOP/O  polar2DWave = (1+cos(A2Theta2DWave))/2
 		else			//at least partially polarized radiation
 			if(abs(StartAngle2DPolCor)<1)
-			     	MatrixOP/O/NTHR=0 polar2DWave = (TwoDPolarizFract*(powR(cos(A2Theta2DWave),2) * powR(cos(AnglesWave),2)+powR(sin(AnglesWave),2)) +(1-TwoDPolarizFract)*(powR(cos(A2Theta2DWave),2)*powR(sin(AnglesWave),2)+powR(cos(AnglesWave),2)))
+			     	MatrixOP/O  polar2DWave = (TwoDPolarizFract*(powR(cos(A2Theta2DWave),2) * powR(cos(AnglesWave),2)+powR(sin(AnglesWave),2)) +(1-TwoDPolarizFract)*(powR(cos(A2Theta2DWave),2)*powR(sin(AnglesWave),2)+powR(cos(AnglesWave),2)))
 			//note, matrixOp cannot do 1/ therefore changed to use 1/ in calling function....
 			else
 				Duplicate/O AnglesWave, TempAnglesWave
@@ -728,7 +729,7 @@ Function NI1A_Generate2DPolCorrWv()
 				NVAR beamCenterY=root:Packages:Convert2Dto1D:beamCenterY
 				//Now angle from 0 degrees, so we can do sectors if necessary
 				TempAnglesWave = abs(atan2((BeamCenterY-q),(BeamCenterX-p))-pi+OffsetInRadians)			
-			       MatrixOP/O/NTHR=0 polar2DWave = (TwoDPolarizFract*(powR(cos(A2Theta2DWave),2) * powR(cos(TempAnglesWave),2)+powR(sin(TempAnglesWave),2)) +(1-TwoDPolarizFract)*(powR(cos(A2Theta2DWave),2)*powR(sin(TempAnglesWave),2)+powR(cos(TempAnglesWave),2)))
+			       MatrixOP/O  polar2DWave = (TwoDPolarizFract*(powR(cos(A2Theta2DWave),2) * powR(cos(TempAnglesWave),2)+powR(sin(TempAnglesWave),2)) +(1-TwoDPolarizFract)*(powR(cos(A2Theta2DWave),2)*powR(sin(TempAnglesWave),2)+powR(cos(TempAnglesWave),2)))
 				KillWaves TempAnglesWave
 			endif
 		endif
@@ -799,8 +800,8 @@ Function  NI1A_GenerateGeometryCorr2DWave()
 	variable Ltemp = Wavelength / (4 * pi)
 	//NI1A_Create2DQWave(DataWave)			//creates 2-D Q wave - this must extsting by now... 
 	wave Q2DWave = root:Packages:Convert2Dto1D:Q2DWave
-	MatrixOp/O/NTHR=0 GeometryCorrection =  2 * asin(Q2DWave * Ltemp))
-	MatrixOp/O/NTHR=0 GeometryCorrection = powR(cos(GeometryCorrection),3)
+	MatrixOp/O  GeometryCorrection =  2 * asin(Q2DWave * Ltemp))
+	MatrixOp/O  GeometryCorrection = powR(cos(GeometryCorrection),3)
 	Wave GeometryCorrection
 	Redimension/S GeometryCorrection
 	
@@ -1211,14 +1212,14 @@ Function NI1A_CreateLUT(orientation)
 	//apply mask, if selected
 	if(UseMask)
 		wave M_ROIMask=root:Packages:Convert2Dto1D:M_ROIMask
-		MatrixOp/Free/NTHR=0 MaskedQ2DWave = Q2DWave * M_ROIMask
+		MatrixOp/Free  MaskedQ2DWave = Q2DWave * M_ROIMask
 	else
-		MatrixOp/Free/NTHR=0 MaskedQ2DWave = Q2DWave
+		MatrixOp/Free  MaskedQ2DWave = Q2DWave
 	endif
 	//this is likely not worhth the time now. 
 	//redimension/S MaskedQ2DWave
 	if(cmpstr(orientation,"C")!=0)
-		MatrixOp/FREE/NTHR=0  tempAnglesMask = AnglesWave
+		MatrixOp/FREE   tempAnglesMask = AnglesWave
 		centerAngleRad= (pi/180)*str2num(StringFromList(0, orientation,  "_"))
 		WidthAngleRad= (pi/180)*str2num(StringFromList(1, orientation,  "_"))
 		
@@ -1233,7 +1234,7 @@ Function NI1A_CreateLUT(orientation)
 			Multithread tempAnglesMask = (AnglesWave[p][q] > startAngleFixed && AnglesWave[p][q] <endAgleFixed)? 1 : 0
 		endif
 		
-		MatrixOp/O/NTHR=0 MaskedQ2DWave = MaskedQ2DWave * tempAnglesMask
+		MatrixOp/O  MaskedQ2DWave = MaskedQ2DWave * tempAnglesMask
 		//killwaves tempAnglesMask
 	endif
 	//radius data are masked now 
@@ -1287,8 +1288,8 @@ Function NI1A_Create2DQWave(DataWave)
 		//OK, existing radius wave was not correct or did not exist, make the right one... 
 		print "Creating 2D Q wave"
 		//Create wave for q distribution
-		MatrixOp/O/NTHR=0 Q2DWave=DataWave
-		MatrixOp/O/NTHR=0 Theta2DWave=DataWave
+		MatrixOp/O  Q2DWave=DataWave
+		MatrixOp/O  Theta2DWave=DataWave
 		Redimension/S Q2DWave
 		Redimension/S Theta2DWave
 		variable ts=ticks
@@ -1309,7 +1310,7 @@ Function NI1A_Create2DQWave(DataWave)
 			//added to calculate the theta values...
 			// Multithread Theta2DWave = atan(Theta2DWave/SampleToCCDDistance)/2
 			//this shoudl be faster... 
-			 MatrixOp/O/NTHR=0 Theta2DWave = atan(Theta2DWave/SampleToCCDDistance)/2
+			 MatrixOp/O  Theta2DWave = atan(Theta2DWave/SampleToCCDDistance)/2
 			print "No tilts used, time was = "+num2str((ticks-ts)/60)
 		endif
 		if( (beamCenterX>=0 && beamCenterX<dimsize(Theta2DWave,0))&&(beamCenterY>=0 && beamCenterY<dimsize(Theta2DWave,1)))
@@ -1327,7 +1328,7 @@ Function NI1A_Create2DQWave(DataWave)
 		print microSeconds/10000, "Multithread"
 		timerRefNum = StartMSTimer	
 		// 2-1-2021 this seems 5x faster than Multithread and 10x faster than direct calculation. 
-		MatrixOp/O/NTHR=0 Q2DWave = ((4*pi)/Wavelength)*sin(Theta2DWave)
+		MatrixOp/O  Q2DWave = ((4*pi)/Wavelength)*sin(Theta2DWave)
 		microSeconds = StopMSTimer(timerRefNum)
 		print microSeconds/10000, "MatrixOP"
 		//record for which geometry this Radius vector wave was created
@@ -2086,7 +2087,7 @@ Function NI1A_ImportThisOneFile(SelectedFileToLoad)
 	NewNote +="Processed on="+date()+","+time()+";"
 	Note/K CCDImageToConvert 
 	Note CCDImageToConvert, NewNote 
-	MatrixOp/O/NTHR=0   CCDImageToConvert_dis=CCDImageToConvert
+	MatrixOp/O    CCDImageToConvert_dis=CCDImageToConvert
 	Note CCDImageToConvert_dis, NewNote
 	setDataFolder OldDf
 	//import jpg file (9IDC USAXS stuff)
@@ -2149,9 +2150,9 @@ Function NI1A_DisplayTheRight2DWave()
 			Redimension/S CCDImageToConvert_dis
 			Redimension/S waveToDisplay
 			if(ImageDisplayLogScaled)
-				MatrixOp/O/NTHR=0 CCDImageToConvert_dis = log(waveToDisplay)
+				MatrixOp/O  CCDImageToConvert_dis = log(waveToDisplay)
 			else
-				MatrixOp/O/NTHR=0 CCDImageToConvert_dis = waveToDisplay
+				MatrixOp/O  CCDImageToConvert_dis = waveToDisplay
 			endif
 		
 		//fix the sliders
@@ -2233,7 +2234,7 @@ Function NI1A_DisplayOneDataSet()
 				OldNote+="DataFileName"+num2str(numLoadedImages)+"="+StringByKey("DataFileName", TempNote , "=", ";")+";"
 			else
 				TempNote=note(CCDImageToConvert)
-				MatrixOp/O/NTHR=0  tempWave=CCDImageToConvert+tempWave
+				MatrixOp/O   tempWave=CCDImageToConvert+tempWave
 				numLoadedImages+=1
 				OldNote+="DataFileName"+num2str(numLoadedImages)+"="+StringByKey("DataFileName", TempNote , "=", ";")+";"
 			endif
@@ -2242,7 +2243,7 @@ Function NI1A_DisplayOneDataSet()
 	OldNote+="NumberOfAveragedFiles="+num2str(numLoadedImages)+";"
 	Wave tempWave=root:Packages:Convert2Dto1D:CCDImageToConvertTemp
 	redimension/D tempWave
-	MatrixOp/O/NTHR=0   CCDImageToConvert=tempWave/numLoadedImages
+	MatrixOp/O    CCDImageToConvert=tempWave/numLoadedImages
 	KillWaves/Z tempWave
 	note/K CCDImageToConvert
 	note CCDImageToConvert, OldNote
@@ -2837,7 +2838,7 @@ Function NI1A_AveLoadNDataSetsForConv()
 							OldNote+="DataFileName"+num2str(numLoadedImages)+"="+StringByKey("DataFileName", TempNote , "=", ";")+";"
 						else
 							TempNote=note(CCDImageToConvert)
-							MatrixOp/O/NTHR=0 tempWave=CCDImageToConvert+tempWave
+							MatrixOp/O  tempWave=CCDImageToConvert+tempWave
 							numLoadedImages+=1
 							OldNote+="DataFileName"+num2str(numLoadedImages)+"="+StringByKey("DataFileName", TempNote , "=", ";")+";"
 						endif
@@ -2856,7 +2857,7 @@ Function NI1A_AveLoadNDataSetsForConv()
 					SampleI0= LocSampleI0/numLoadedImages
 				OldNote+=NI1A_CalibrationNote()
 			
-				MatrixOp/O/NTHR=0 CCDImageToConvert=tempWave/numLoadedImages
+				MatrixOp/O  CCDImageToConvert=tempWave/numLoadedImages
 				KillWaves/Z tempWave
 				note/K CCDImageToConvert
 				note CCDImageToConvert, OldNote
@@ -2963,7 +2964,7 @@ Function NI1A_AveLoadManyDataSetsForConv()
 					OldNote+="DataFileName"+num2str(numLoadedImages)+"="+StringByKey("DataFileName", TempNote , "=", ";")+";"
 				else
 					TempNote=note(CCDImageToConvert)
-					MatrixOp/O/NTHR=0 tempWave=CCDImageToConvert+tempWave
+					MatrixOp/O  tempWave=CCDImageToConvert+tempWave
 					numLoadedImages+=1
 					OldNote+="DataFileName"+num2str(numLoadedImages)+"="+StringByKey("DataFileName", TempNote , "=", ";")+";"
 				endif
@@ -2979,7 +2980,7 @@ Function NI1A_AveLoadManyDataSetsForConv()
 		SampleI0= LocSampleI0/numLoadedImages
 	OldNote+=NI1A_CalibrationNote()
 
-	MatrixOp/O/NTHR=0 CCDImageToConvert=tempWave/numLoadedImages
+	MatrixOp/O  CCDImageToConvert=tempWave/numLoadedImages
 	KillWaves/Z tempWave
 	note/K CCDImageToConvert
 	note CCDImageToConvert, OldNote
@@ -3338,9 +3339,9 @@ Function NI1A_PrepareLogDataIfWanted(DataWaveName)
 	Redimension/S waveToDisplayDis
 	NVAR ImageDisplayLogScaled=root:Packages:Convert2Dto1D:ImageDisplayLogScaled
 		if(ImageDisplayLogScaled)
-			MatrixOp/O/NTHR=0 waveToDisplayDis = log(waveToDisplay)
+			MatrixOp/O  waveToDisplayDis = log(waveToDisplay)
 		else
-			MatrixOp/O/NTHR=0 waveToDisplayDis = waveToDisplay
+			MatrixOp/O  waveToDisplayDis = waveToDisplay
 		endif
 	setDataFolder OldDF
 end
@@ -3418,9 +3419,9 @@ Function NI1A_LoadEmptyOrDark(EmptyOrDark)
 	redimension/S NewCCDDataDis
 	NVAR ImageDisplayLogScaled=root:Packages:Convert2Dto1D:ImageDisplayLogScaled
 	if(ImageDisplayLogScaled)
-		MatrixOp/O/NTHR=0 NewCCDDataDis=log(NewCCDData)
+		MatrixOp/O  NewCCDDataDis=log(NewCCDData)
 	else
-		MatrixOp/O/NTHR=0 NewCCDDataDis=NewCCDData
+		MatrixOp/O  NewCCDDataDis=NewCCDData
 	endif
 	NVAR InvertImages=root:Packages:Convert2Dto1D:InvertImages
 	if(InvertImages)
@@ -5852,9 +5853,9 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 			endif
 			Redimension/S waveToDisplayDis
 			if(checked)
-				MatrixOp/O/NTHR=0 waveToDisplayDis = log(waveToDisplay)
+				MatrixOp/O  waveToDisplayDis = log(waveToDisplay)
 			else
-				MatrixOp/O/NTHR=0 waveToDisplayDis = waveToDisplay
+				MatrixOp/O  waveToDisplayDis = waveToDisplay
 			endif
 		endif
 		NVAR UseUserDefMinMax = root:Packages:Convert2Dto1D:UseUserDefMinMax
@@ -6684,9 +6685,9 @@ Function NI1A_DezingerImage(image)
  	 string OldNote=note(image)
     Duplicate/Free image, dup
     MatrixFilter /N=3 median image				    			 // 3x3 median filter (integer result if image integer, fp if fp)
-    MatrixOp/Free/NTHR=0 DiffWave = dup / (abs(image))      // difference between raw and filtered, high values (>35) are cosmics and high signals
+    MatrixOp/Free  DiffWave = dup / (abs(image))      // difference between raw and filtered, high values (>35) are cosmics and high signals
        //image = SelectNumber(DiffWave>DezingerRatio,dup,image)    // choose filtered (image) if difference is great
-    MatrixOp/O/NTHR=0 image = dup * (-1)*(greater(Diffwave,DezingerRatio)-1) + image*(greater(Diffwave,DezingerRatio))
+    MatrixOp/O  image = dup * (-1)*(greater(Diffwave,DezingerRatio)-1) + image*(greater(Diffwave,DezingerRatio))
 	     //the MatrxiOp is 3x faster than the original line.... 
 	 note image, OldNote
     //KillWaves/Z DiffWave, FilteredDiffWave, dup
@@ -7926,7 +7927,7 @@ End
 //		Duplicate/O Mask, MaskExp2DData
 //		//Igor Mask has 0 where masked, 1 where used. This is opposite (of course) to what Nexus/CanSAS uses:
 //		//Pete:   mask is 1 when the point is removed, 0 when is used. 
-//		//MatrixOp/O/NTHR=0 MaskExp2DData = abs(MaskExp2DData-1)
+//		//MatrixOp/O  MaskExp2DData = abs(MaskExp2DData-1)
 //		MaskExp2DData = !MaskExp2DData
 //	else
 //		Duplicate/Free Q2DWave, MaskExp2DData		//fake for possible rebinning...

@@ -620,7 +620,7 @@ end
 //	wave GammaVal,Radius	
 //	Make/Free/N=(numpnts(GammaVal))/D QRWave
 //	QRWave=sinc(Qvalue*Radius[p])			//(sin(Qvec[p]*Radius))/(Qvec[p]*Radius)		
-//	matrixOP/Nthr=0/Free tempWave = powR(Radius, 2) * GammaVal * QRWave
+//	matrixOP/Free tempWave = powR(Radius, 2) * GammaVal * QRWave
 //	return 4*pi*areaXY(Radius, TempWave)
 //end
 //******************************************************************************************************************************************************

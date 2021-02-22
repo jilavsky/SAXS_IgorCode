@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.27
+#pragma version = 2.28
 #pragma IgorVersion = 8.03
 
 //control constants
@@ -37,6 +37,7 @@ strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
+//2.28 Added tto IP9 right click browser option to duplicate folder or wave
 //2.27 added IN2G_ReturnLabelForAxis(WindowName, "bottom|top")
 //2.26 disabled IN2G_CheckScreenSize for IP9
 //2.25 added IN2G_AddWaveStatistics() to right click TopTrace menu. Adds wave stats results and lines with average, ave+sdev, ave-Sdev
@@ -558,8 +559,70 @@ end
 				IN2G_Display1vs2MenuString(0),/Q,IN2G_PlotBrowserSelectionXY(0)
 				IN2G_Display1vs2MenuString(1),/Q,IN2G_PlotBrowserSelectionXY(1)
 				IN2G_ShowTextWaveInfoMenuString(), /Q, IN2G_ExtractInfoFromFldrname()
+				IN2G_DisplayDuplicateItemStr(), /Q, IN2G_BrowserDuplicateItem()
 				"--"		
 			End
+
+			//************************************************************************************************
+			FUnction/S IN2G_DisplayDuplicateItemStr()
+				String menuText = ""
+				String BrowserSelStr = GetBrowserSelection(0)
+				string LastFldr
+				if(strlen(BrowserSelStr)>0)	
+					Wave/Z w=$(BrowserSelStr)
+					if(DataFolderExists(BrowserSelStr)||WaveExists(w))
+						LastFldr = StringFromList(ItemsInList(BrowserSelStr,":")-1,BrowserSelStr,":")
+						sprintf menuText, "Duplicate %s", LastFldr
+					endif
+				endif
+				return menuText			
+			end
+			//************************************************************************************************
+			Function IN2G_BrowserDuplicateItem()
+				String BrowserSelStr = GetBrowserSelection(0)
+				string NewItemNameStr, LastNameStr, OldItemStr, tempStr
+				variable OrderNum
+				if(strlen(BrowserSelStr)>0)
+					Wave/Z w=$(BrowserSelStr)
+					if(DataFolderExists(BrowserSelStr))	
+						LastNameStr = StringFromList(ItemsInList(BrowserSelStr,":")-1,BrowserSelStr,":")
+						NewItemNameStr = RemoveFromList(LastNameStr, BrowserSelStr, ":")+LastNameStr+"_dup"
+						if(DataFolderExists(NewItemNameStr))
+							OrderNum=0
+							Do
+								tempStr=NewItemNameStr+num2str(OrderNum)
+								OrderNum+=1
+							while(DataFolderExists(tempStr)&&OrderNum<20)
+							if(OrderNum>19)
+								DoAlert /T="Cannot duplicate folder" 0, "Cannot duplicate folder, all allowed duplicates exist"
+							else
+								NewItemNameStr=tempStr
+							endif
+						endif
+						OldItemStr = RemoveEnding(BrowserSelStr, ":")
+						DuplicateDataFolder $(OldItemStr), $(NewItemNameStr)
+					elseif(WaveExists(w))
+						LastNameStr = StringFromList(ItemsInList(BrowserSelStr,":")-1,BrowserSelStr,":")
+						NewItemNameStr = RemoveFromList(LastNameStr, BrowserSelStr, ":")+LastNameStr+"_dup"
+						Wave/Z oldWv=$(NewItemNameStr)
+						if(WaveExists(oldWv))
+							OrderNum=0
+							Do
+								tempStr=NewItemNameStr+num2str(OrderNum)
+								OrderNum+=1
+								Wave/Z oldWv=$(NewItemNameStr)
+							while(WaveExists(oldWv)&&OrderNum<20)
+							if(OrderNum>19)
+								DoAlert /T="Cannot duplicate wave" 0, "Cannot duplicate wave, all allowed duplicates exist"
+							else
+								NewItemNameStr=tempStr
+							endif
+						endif
+						OldItemStr = RemoveEnding(BrowserSelStr, ":")
+						Duplicate $(OldItemStr), $(NewItemNameStr)
+					endif
+				endif
+			end
 			//************************************************************************************************
 			Function/S IN2G_ShowTextWaveInfoMenuString()
 				WAVE/Z w1
@@ -673,7 +736,8 @@ Function IN2G_SaveTopGraphPXP()
 			Abort "This function does not work for subwindows in panels"
 		endif
 #if(IgorVersion()>8.99)
-		SaveGraphCopy /I/T=1 /W=$(topWindow)	  			//this is h5xp
+		//SaveGraphCopy /I/T=1 /W=$(topWindow)	  			//this is h5xp
+		SaveGraphCopy /I /W=$(topWindow)	  			//this is pxp
 #else
 		SaveGraphCopy /I /W=$(topWindow)	  				//this is pxp
 #endif

@@ -2566,7 +2566,7 @@ Function/S IR2C_ReturnKnownToolResults(ToolName, TopPanel)
 
 	SVAR AllKnownToolsResults= root:Packages:IrenaControlProcs:AllKnownToolsResults
 	string LocallyAllowedResultsData
-	if(strlen(TopPanel)>0)		//this is called from IR2_ControlsCntrlProc [paclkage and not form old code
+	if(strlen(TopPanel)>0)		//this is called from IR2_ControlsCntrlProc [package and not form old code]
 		SVAR ControlAllowedResultsTypes=root:Packages:IrenaControlProcs:ControlAllowedResultsTypes
 		LocallyAllowedResultsData=StringByKey(TopPanel, ControlAllowedResultsTypes,"=",">")
 	else

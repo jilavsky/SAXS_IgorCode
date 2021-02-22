@@ -918,7 +918,7 @@ Function NI1A_FixNumPntsIfNeeded(CurOrient)
 		redimension/S MaskedRadius2DWave
 		if(UseMask)
 			wave M_ROIMask=root:Packages:Convert2Dto1D:M_ROIMask
-			MatrixOp/O/NTHR=0 MaskedRadius2DWave = PixRadius2DWave * M_ROIMask
+			MatrixOp/O MaskedRadius2DWave = PixRadius2DWave * M_ROIMask
 		endif
 		if(cmpstr(CurOrient,"C")!=0)
 			duplicate/O AnglesWave,tempAnglesMask
@@ -936,7 +936,7 @@ Function NI1A_FixNumPntsIfNeeded(CurOrient)
 				MultiThread tempAnglesMask = (AnglesWave[p][q] > startAngleFixed && AnglesWave[p][q] <endAgleFixed)? 1 : 0
 			endif
 			
-			MatrixOp/O/NTHR=0 MaskedRadius2DWave = MaskedRadius2DWave * tempAnglesMask
+			MatrixOp/O MaskedRadius2DWave = MaskedRadius2DWave * tempAnglesMask
 			killwaves tempAnglesMask
 		endif
 		//radius data are masked now 

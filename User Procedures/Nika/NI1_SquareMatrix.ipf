@@ -10,7 +10,7 @@
 //*************************************************************************/
 
 //1.05 fixes for ImageLineProfile which seems to produce sometimes points at non expected location. This is actually documented feature.  
-//1.04 fixed /NTHR=1 to /NTHR=0
+//1.04 fixed /NTHR=1 to  
 //1.03 fixed masking which was failing due to bug. 
 //1.02 added mutlithread and MatrixOp/NTHR=1 where seemed possible to use multile cores
 //1.01 added license for ANL
@@ -46,9 +46,9 @@ Function NI1_MakeSectorGraph(withTilts)
 	
 	Duplicate/O SquareMap, SquareMap_dis
 	if(A2DLineoutDisplayLogInt)
-		MatrixOP/O/NTHR=0 SquareMap_dis=log(SquareMap)
+		MatrixOP/O  SquareMap_dis=log(SquareMap)
 	else
-		MatrixOP/O/NTHR=0 SquareMap_dis=SquareMap
+		MatrixOP/O  SquareMap_dis=SquareMap
 	endif
 	
 	wavestats/Q   SquareMap_dis
@@ -191,7 +191,7 @@ Function NI1_MakeSqMatrixOfLineouts(SectorsNumSect,AngleWidth,SectorsGraphStartA
 		Note MaskSquareImage, NewNote
 	endif
 	if(A2DmaskImage)
-		MatrixOP/O/NTHR=0 SquareMap=SquareMap*(MaskSquareImage/MaskSquareImage)
+		MatrixOP/O  SquareMap=SquareMap*(MaskSquareImage/MaskSquareImage)
 	endif
 	SetScale/P y SectorsGraphStartAngle,AngleStep,"", SquareMap
 	KillWaves/Z MaskedImage
@@ -343,7 +343,7 @@ Function NI1_MakeSqMtxOfLinswtilts(SectorsNumSect,AngleWidth,SectorsGraphStartAn
 		Note MaskSquareImage, NewNote
 	endif
 	if(A2DmaskImage)
-		MatrixOP/O/NTHR=0 SquareMap=SquareMap*(MaskSquareImage/MaskSquareImage)
+		MatrixOP/O  SquareMap=SquareMap*(MaskSquareImage/MaskSquareImage)
 	endif
 	SetScale/P y SectorsGraphStartAngle,AngleStep,"", SquareMap
 	//josh add:  now create square map for q points and not pixels

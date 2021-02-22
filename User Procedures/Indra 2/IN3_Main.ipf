@@ -460,7 +460,7 @@ Function IN3_MainPanelNew()
 	CheckBox FindMinQForData,pos={230,773},size={150,14},title="Find MinQ automatically?", noproc
 	CheckBox FindMinQForData,variable= root:Packages:Indra3:FindMinQForData, help={"Check, if you want to locate min-q for data start"}
 	SetVariable MinQMinFindRatio,pos={220,795},size={170,22},title="I_S/I_Bl ratio =  ", frame=1
-	SetVariable MinQMinFindRatio,limits={0.1,10,0.1},variable= root:Packages:Indra3:MinQMinFindRatio, noproc
+	SetVariable MinQMinFindRatio,limits={0.1,10,0.01},variable= root:Packages:Indra3:MinQMinFindRatio, noproc
 
 
 
@@ -1032,7 +1032,7 @@ Function IN3_Initialize()
 	endif
 	
 	NVAR MinQMinFindRatio
-	if(MinQMinFindRatio<1.03)
+	if(MinQMinFindRatio<1.01)
 		MinQMinFindRatio=1.05
 	endif
 	NVAR FindMinQForData

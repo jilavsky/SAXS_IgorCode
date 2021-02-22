@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1
+#pragma version=1.04
 constant IR3LversionNumber = 1.03			//MultiDataplotting tool version number. 
 
 //*************************************************************************\
@@ -9,7 +9,7 @@ constant IR3LversionNumber = 1.03			//MultiDataplotting tool version number.
 //*************************************************************************/
 
 
-
+//1.04 	fix bug for same name waves (USAXS, results) which run into wave/trace name issues as appending error bars.  
 //1.03 	Added more graph controls. Reverse traces, added ability to create contour plot. 
 //1.02 	Added Two more versionf of Porod plot - IQ4 vs Q and IQ3 vs Q. 
 //1.01		Changed working folder name.  
@@ -889,12 +889,22 @@ static Function IR3L_AppendData(FolderNameStr)
 			default:										// optional default expression executed, this is basically X-Y case again
 															// when no case matches
 		endswitch
+
+		//handle meanigless trace names here
+		string NewTraceName
+		if(UseIndra2Data ||useResults) 	//here we should name these by folder
+			NewTraceName= GetWavesDataFolder(SourceIntWv, 0)
+		else				//this is QRS, data shoudl already be named by folder, more or less... 
+			NewTraceName=NameOfWave(SourceIntWv)
+		endif
 		
 		CheckDisplayed /W=$(GraphWindowName) SourceIntWv
 		if(V_Flag==0)
-			AppendToGraph /W=$(GraphWindowName) SourceIntWv vs  SourceQWv
+			AppendToGraph /W=$(GraphWindowName) SourceIntWv/TN=$(NewTraceName) vs  SourceQWv
+			//AppendToGraph /W=$(GraphWindowName) SourceIntWv vs  SourceQWv
 			if(WaveExists(SourceErrorWv))
-				ErrorBars /W=$(GraphWindowName)  $(NameOfWave(SourceIntWv)) Y,wave=(SourceErrorWv,SourceErrorWv)
+				//ErrorBars /W=$(GraphWindowName)  $(NameOfWave(SourceIntWv)) Y,wave=(SourceErrorWv,SourceErrorWv)
+				ErrorBars /W=$(GraphWindowName)  $(NewTraceName) Y,wave=(SourceErrorWv,SourceErrorWv)
 			endif
 			print "Appended : "+DataFolderName+IntensityWaveName +" top the graph : "+GraphWindowName
 		else

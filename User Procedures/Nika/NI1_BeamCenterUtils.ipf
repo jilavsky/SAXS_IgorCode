@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.29
+#pragma version=2.30
 Constant NI1BCversionNumber = 2.25
 //*************************************************************************\
 //* Copyright (c) 2005 - 2021, Argonne National Laboratory
@@ -9,6 +9,7 @@ Constant NI1BCversionNumber = 2.25
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.30 Remove for MatrixOP /NTHR=0 since it is applicable to 3D matrices only 
 //2.29 Fixed to accept tiff as tif extension.
 //2.28 fix autoscaling panel components. 
 //2.27  removed unused functions
@@ -22,7 +23,7 @@ Constant NI1BCversionNumber = 2.25
 //2.19 addressed new ADSC_A file type
 //2.18 modified call to hook function
 //2.17 Added right click "Refresh content" to Listbox
-//2.16 fixed /NTHR=0, 1 is simply wrong... 
+//2.16 fixed  , 1 is simply wrong... 
 //2.15 add avoidace in case user is using Calibrated 2D data. 
 //2.14 minor fix
 //2.13 added many more lines for Lab6, Si, and Ce standards. Modified to disable fitting both SDD and Wavelength, very unlikely this would be possible with most data. 
@@ -1299,14 +1300,14 @@ Function NI1BC_BmCntrCheckProc(ctrlName,checked) : CheckBoxControl
 			redimension/S BmCntrCCDImg
 			ImageStats BmCntrCCDImg
 			if(BmCntrDisplayLogImage)
-				MatrixOp/O/NTHR=0 BmCntrDisplayImage=log(BmCntrCCDImg)
+				MatrixOp/O BmCntrDisplayImage=log(BmCntrCCDImg)
 				V_min=log(V_min)
 				V_max=log(V_max)
 				if(numType(V_min)!=0)
 					V_min=0
 				endif
 			else
-				MatrixOp/O/NTHR=0 BmCntrDisplayImage=BmCntrCCDImg
+				MatrixOp/O  BmCntrDisplayImage=BmCntrCCDImg
 			endif
 			NVAR ImageRangeMin= root:Packages:Convert2Dto1D:BMImageRangeMin
 			NVAR ImageRangeMax = root:Packages:Convert2Dto1D:BMImageRangeMax
@@ -1828,7 +1829,7 @@ Function NI1BC_BmCntrCreateImage()
 	NVAR BMStandardTransmission=root:Packages:Convert2Dto1D:BMStandardTransmission
 	if(BMSubtractBlank)
 		Wave Empty=  root:Packages:Convert2Dto1D:EmptyData
-		MatrixOP /NTHR=0  /O  BmCntrDisplayImage = BmCntrCCDImg - Empty * BMStandardTransmission
+		MatrixOP    /O  BmCntrDisplayImage = BmCntrCCDImg - Empty * BMStandardTransmission
 		MatrixOp /O BmCntrCCDImg = BmCntrDisplayImage
 	else
 		MatrixOp /O BmCntrDisplayImage = BmCntrCCDImg	
@@ -1839,14 +1840,14 @@ Function NI1BC_BmCntrCreateImage()
 
 	ImageStats BmCntrCCDImg
 	if(BmCntrDisplayLogImage)
-		MatrixOp/O/NTHR=0 BmCntrDisplayImage=log(BmCntrCCDImg)
+		MatrixOp/O  BmCntrDisplayImage=log(BmCntrCCDImg)
 		V_min=log(V_min)
 		V_max=log(V_max)
 		if(numType(V_min)!=0)
 			V_min=0
 		endif
 	else
-		MatrixOp/O/NTHR=0 BmCntrDisplayImage=BmCntrCCDImg
+		MatrixOp/O  BmCntrDisplayImage=BmCntrCCDImg
 	endif
 	NVAR InvertImages=root:Packages:Convert2Dto1D:InvertImages
 	if(InvertImages)
@@ -2382,9 +2383,9 @@ Function NI1BC_GetEvaluationPaths(CalibrantLine,numberOfSectors)
 
 	Wave BmCntrImage=root:Packages:Convert2Dto1D:BmCntrCCDImg
 	if(BMUseMask && WaveExists(M_ROIMask))
-		MatrixOp/O/NTHR=0 BmCntrImageMsk=BmCntrImage / M_ROIMask
+		MatrixOp/O  BmCntrImageMsk=BmCntrImage / M_ROIMask
 	else	
-		MatrixOp/O/NTHR=0 BmCntrImageMsk=BmCntrImage 
+		MatrixOp/O  BmCntrImageMsk=BmCntrImage 
 	endif
 	Wave BmCntrImageMsk=root:Packages:Convert2Dto1D:BmCntrImageMsk
 	//we need to get path for each direction, pick 30 directions, each therefore 6 degrees appart
@@ -2475,9 +2476,9 @@ Function NI1BC_GetEvaluationPaths(CalibrantLine,numberOfSectors)
 						DoWindow/F LineFitWindow
 						V_FitError=0
 						if(cmpstr(BMFunctionName,"Gauss")==0)
-							CurveFit/Q/N/NTHR=0 gauss  W_ImageLineProfile /D 
+							CurveFit/Q/N  gauss  W_ImageLineProfile /D 
 						elseif(cmpstr(BMFunctionName,"GaussWithSlopedBckg")==0)	
-							CurveFit/Q/O/N/NTHR=0 gauss  W_ImageLineProfile /D 
+							CurveFit/Q/O/N  gauss  W_ImageLineProfile /D 
 							Wave W_coef
 							//fix bad estimate in case of K1<0, this indicates failure of Gauss to estimate the right position... 
 							//lets do estimate by having K1 (A) =max value for W_ImageLineProfile, and K2 (position) = mid point and K3 (width) = 0.2*number of points
@@ -2493,10 +2494,10 @@ Function NI1BC_GetEvaluationPaths(CalibrantLine,numberOfSectors)
 							redimension/N=5 W_startVals
 							W_startVals[4] = (W_ImageLineProfile[inf] - W_ImageLineProfile[0])/numpnts(W_ImageLineProfile)
 							W_startVals[0] = W_startVals[0] - W_startVals[4]*numpnts(W_ImageLineProfile)/2
-							FuncFit/Q/N/NTHR=0 NI2BC_GaussWithSlopeBckg W_startVals  W_ImageLineProfile /D /C=T_Constraints 
+							FuncFit/Q/N  NI2BC_GaussWithSlopeBckg W_startVals  W_ImageLineProfile /D /C=T_Constraints 
 							Duplicate/O W_startVals, W_Coef
 		 				else
-							CurveFit/Q/N/NTHR=0 Lor  W_ImageLineProfile /D 
+							CurveFit/Q/N  Lor  W_ImageLineProfile /D 
 						endif
 						Wave W_sigma
 						ModifyGraph/W=LineFitWindow mode(W_ImageLineProfile)=3,marker(W_ImageLineProfile)=19

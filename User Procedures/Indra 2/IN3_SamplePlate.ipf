@@ -1,7 +1,7 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version = 1.02
+#pragma version = 1.03
 #pragma IgorVersion=8.03
 
 
@@ -13,6 +13,7 @@
 
 //this is tool to setup Sample Plates for USAXS, survey sample positions, and generate Command files. 
 
+//1.03 Remove for MatrixOP /NTHR=0 since it is applicable to 3D matrices only 
 //1.02 Added checking if existing sate is saved to reduce number of dialogs user needs to deal with. 
 //1.01 Added NMRAcrylicPlate
 //1.0 September2020, first release. 
@@ -2506,14 +2507,14 @@ static Function IN3S_CreateCircles(PlateImage, Centers, Radius,Scaling)
 	Circle[0,ceil(2*Radius/Scaling+2)][0,ceil(2*Radius/Scaling+2)] = (sqrt((p*Scaling-Radius)^2+(q*Scaling-Radius)^2)<Radius) ? 1 : 0
 	//now use fft. MatrixOp should be bit faster. 
 	//fft/DEST=CircleFFT/Free Circle
-	MatrixOp/FREE/NTHR=0 CircleFFT=fft(Circle,0)
+	MatrixOp/FREE CircleFFT=fft(Circle,0)
 	//fft/DEST=Wave2DInFFT/Free WaveToWorkOn
-	MatrixOp/FREE/NTHR=0 Wave2DInFFT=fft(WaveToWorkOn,0)
+	MatrixOp/FREE Wave2DInFFT=fft(WaveToWorkOn,0)
 	//convolute together
-	MatrixOp/FREE/NTHR=0 MultipliedFFT = Wave2DInFFT * CircleFFT
+	MatrixOp/FREE MultipliedFFT = Wave2DInFFT * CircleFFT
 	//IFFT, force real result
 	//IFFT/Dest=Wave2DOutIFFT/Free MultipliedFFT
-	MatrixOp/FREE/NTHR=0 Wave2DOutIFFT=ifft(MultipliedFFT,1)
+	MatrixOp/FREE Wave2DOutIFFT=ifft(MultipliedFFT,1)
 	//this depends on what is used for convolution. If sharp sphere, this is what you need... thresholds are  much smaller for gauss... 
 	imageThreshold/T=(0.5)  Wave2DOutIFFT
 	wave M_ImageThresh
@@ -2554,14 +2555,14 @@ static Function IN3S_CreateNMRTubes(PlateImage, Centers, Scaling)
 	NMRTube[0,ceil(2*NMRTubeHeight+2)][0,ceil(2*NMRTubeHeight+2)] = ((abs(p-CenterP)<NMRTubeRadius)&& (abs(q-CenterQ)<NMRTubeHeight)) ? 1 : 0
 	//now use fft. MatrixOp should be bit faster. 
 	//fft/DEST=CircleFFT/Free Circle
-	MatrixOp/FREE/NTHR=0 NMRTubeFFT=fft(NMRTube,0)
+	MatrixOp/FREE NMRTubeFFT=fft(NMRTube,0)
 	//fft/DEST=Wave2DInFFT/Free WaveToWorkOn
-	MatrixOp/FREE/NTHR=0 Wave2DInFFT=fft(WaveToWorkOn,0)
+	MatrixOp/FREE Wave2DInFFT=fft(WaveToWorkOn,0)
 	//convolute together
-	MatrixOp/FREE/NTHR=0 MultipliedFFT = Wave2DInFFT * NMRTubeFFT
+	MatrixOp/FREE MultipliedFFT = Wave2DInFFT * NMRTubeFFT
 	//IFFT, force real result
 	//IFFT/Dest=Wave2DOutIFFT/Free MultipliedFFT
-	MatrixOp/FREE/NTHR=0 Wave2DOutIFFT=ifft(MultipliedFFT,1)
+	MatrixOp/FREE Wave2DOutIFFT=ifft(MultipliedFFT,1)
 	//this depends on what is used for convolution. If sharp sphere, this is what you need... thresholds are  much smaller for gauss... 
 	imageThreshold/T=(0.5)  Wave2DOutIFFT
 	wave M_ImageThresh

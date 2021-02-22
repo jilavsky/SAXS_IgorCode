@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=2.53
+#pragma version=2.54
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2021, Argonne National Laboratory
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.54 Remove for MatrixOP /NTHR=0 since it is applicable to 3D matrices only 
 //2.53 added FLOAT as Pilatus EDF file format option. Seems like we now have float values in there. 
 //2.52 added 12ID-B tiff files, these are tiff files with associated metadata file. Location based on folder structure. 
 //2.51 added passing through NXMetadata, NXSample, NXInstrument, NXUser
@@ -611,7 +612,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 			Multithread tempWvForLoad += Loadedwave0[p+iii*2048*2048]
 		endfor
 		if(NumImages>1)
-			MatrixOp/O/NTHR=0 tempWvForLoad = tempWvForLoad/NumImages
+			MatrixOp/O tempWvForLoad = tempWvForLoad/NumImages
 		endif
 		Redimension/N=(2048,2048) tempWvForLoad
 		duplicate/O tempWvForLoad, $(NewWaveName)
@@ -3248,7 +3249,7 @@ static Function NI1_ReadFujiImgFile(PathName, filename, FujiFileHeader)
 		//scale data to max sensitivity of the reader, so data from same instrument with different sensitivity can be compared... 
 		variable tempVar = (MaxSensitivity/Sensitivity)/FudgeToFit2D
 		//Loadedwave0 =  tempVar *10^(Latitude*(Loadedwave0[p]/Gval) - 0.5)
-		MatrixOp/O/NTHR=0 Loadedwave0 =  tempVar *powR(10,(Latitude*(Loadedwave0/Gval) - 0.5))
+		MatrixOp/O Loadedwave0 =  tempVar *powR(10,(Latitude*(Loadedwave0/Gval) - 0.5))
 
 		//Now, Heinz has this normalized somehow by area of pixel... Weird, I would assume I need to divide by area, not multiply. Leave it out for now... 
 	//	variable pixelSizeX = NumberByKey("PixelSizeX", FujiFileHeader , ":", ";")
