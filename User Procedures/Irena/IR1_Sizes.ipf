@@ -269,6 +269,7 @@ Function IR1R_SizesFitting(ctrlName) : ButtonControl			//this function is called
 	setDataFolder root:Packages:Sizes
 	
 	DoWindow/F IR1R_SizesInputGraph				//pulls the control graph, in case it is not the top...
+	DoUpdate/W=IR1R_SizesInputGraph
 	if ( ((strlen(CsrWave(A))!=0) && (strlen(CsrWave(B))!=0) ) && (pcsr (A)!=pcsr (B)) )	//this should make sure, that both cursors are in the graph and not on the same point
 		//make sure the cursors are on the right waves..
 		if (stringmatch(CsrWave(A, "IR1R_SizesInputGraph"),"CurrentResultSizeDistribution") || stringmatch(CsrWave(B, "IR1R_SizesInputGraph"),"CurrentResultSizeDistribution"))

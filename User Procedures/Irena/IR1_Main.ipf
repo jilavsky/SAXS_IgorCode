@@ -511,54 +511,58 @@ end
 //***********************************************************
 //***********************************************************
 ///////////////////////////////////////////
-
-Proc IR2P_FitLineWithCursors()
-
+//line fit to data, requires X-Y data on lin or log scales. 
+Function IR2P_FitLineWithCursors()
+	string oldDf= GetDataFolder(1)
+	NewDataFolder/O/S root:Packages:FittingData
 	string destwavename="fit_"+CsrWave(A)
-	CurveFit line CsrWaveRef(A)(xcsr(A),xcsr(B)) /X=CsrXWaveRef(A) /D
-	Tag/C/N=Curvefitres/F=0/A=MC $destwavename, 0.5*numpnts($destwavename), "\Z"+IN2G_LkUpDfltVar("LegendSize")+"Linear fit parameters are: \ry="+num2str(W_coef[0])+"+ x *"+num2str(W_coef[1])
+	CurveFit/Q/L=200 line CsrWaveRef(A)(xcsr(A),xcsr(B)) /X=CsrXWaveRef(A) /D 
+	Wave W_coef
+	Wave DestWave=$destwavename
+	Wave OrigXWave=CsrXWaveRef(A)
+	variable AttPoint
+	AttPoint = (OrigXWave[xcsr(A)]+OrigXWave[xcsr(B)])/2
+	Tag/C/N=Curvefitres/F=0/A=MC $destwavename, AttPoint, "\Z"+IN2G_LkUpDfltVar("LegendSize")+"Linear fit parameters are: \ry="+num2str(W_coef[0])+"+ x *"+num2str(W_coef[1])
+	SetDataFolder $olddf
 end
 //*****************************************
 //*****************************************
 //*****************************************
+//Power law fit, requires X-Y data. 
+Function IR2P_FitPowerLawWithCursors()
 
-Proc IR2P_FitPowerLawWithCursors()
-
-	
 	string oldDf= GetDataFolder(1)
-
 	NewDataFolder/O/S root:Packages:FittingData
-	
 	string name="MyFitWave"
 	string LegendName="Curvefitres"
-	
 	variable freeDestNum=IR2P_FindFreeDestWaveNumber(name)
 	name=name +num2istr(freeDestNum)
 	LegendName=LegendName+num2istr(freeDestNum)
-	Make/D/O/N=(numpnts($(getWavesDataFolder(CsrWaveRef(A),2)))) LogYFitData, $name
-	$name=NaN
-	Make/D/O/N=(numpnts($(getWavesDataFolder(CsrXWaveRef(A),2)))) LogXFitData
-	LogXFitData=log($(getWavesDataFolder(CsrXWaveRef(A),2)))
-	LogYFitData=log($(getWavesDataFolder(CsrWaveRef(A),2)))
-	CurveFit line LogYFitData(xcsr(A),xcsr(B)) /X=LogXFitData /D=$name
-		
-	IR2P_LogPowerWithNaNsRetained($name)
-	
+	Wave Xwave=$(getWavesDataFolder(CsrXWaveRef(A),2))
+	Wave Ywave=$(getWavesDataFolder(CsrWaveRef(A),2))
+	Duplicate/Free Ywave, LogYFitData
+	Duplicate/O Ywave, $name
+	Duplicate/Free Xwave, LogXFitData
+	Wave DestWv = $name
+	DestWv = NaN
+	LogXFitData=log(Xwave)
+	LogYFitData=log(Ywave)
+	CurveFit/Q line LogYFitData(xcsr(A),xcsr(B)) /X=LogXFitData /D=$name
+	//create power law wave here.. 
+	DestWv = 10^DestWv
 	//here we will try to figure out, if the data are plotted wrt to left or right axis...
 	string YwvName=CsrWave(A)
 	string AxType=StringByKey("AXISFLAGS", TraceInfo("",YwvName,0) )//this checks only for first occurence of the wave with this name
 	//this needs to be made more clever, other axis and other occurences of the wave with the name...
 	if (cmpstr(AxType,"/R")==0)
-		Append/R $name vs CsrXWaveRef(A)
+		AppendToGraph/R $name vs CsrXWaveRef(A)
 	else
-		Append $name vs CsrXWaveRef(A)
+		AppendToGraph $name vs CsrXWaveRef(A)
 	endif
-	Modify lsize($name)=2
+	Execute("Modify lsize("+name+")=2")
 	String pw=num2str(K1),pr=num2str(10^K0),DIN=num2str((V_siga*10^K0)/2.3026),ca=num2str(pcsr(A)),cb=num2str(pcsr(B)),gf=num2str(V_Pr),DP=num2str(V_sigb)
 	string LSs=IN2G_LkUpDfltVar("LegendSize")
 	Tag/C/N=$LegendName/F=0/A=MC  $name, (pcsr(A)+pcsr(B))/2, "\Z"+LSs+"Power Law Slope= "+pw+"\Z"+LSs+" ± "+DP+"\Z"+LSs+"\rPrefactor= "+pr+"\Z"+LSs+" ± "+DIN+"\Z"+LSs+"\rx Cursor A::B= "+ca+"\Z"+LSs+" :: "+cb+"\Z"+LSs+"\rGoodness of fit= "+gf
-
-	KillWaves/Z LogYFitData, LogXFitData
 
 	SetDataFolder $olddf
 end
@@ -580,19 +584,6 @@ end
 //*****************************************
 //*****************************************
 //*****************************************
-
-Function IR2P_LogPowerWithNaNsRetained(MyFitWave)
-	wave MyFitWave
-	
-	variable PointsNumber=numpnts(MyFitWave)
-	variable i=0
-	Do
-		if (numtype(MyFitWave[i])==0)
-			MyFitWave[i]=10^(MyFitWave[i])
-		endif
-	i+=1
-	while (i<PointsNumber)
-end
 //*****************************************
 //*****************************************
 //*****************************************
