@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.21
+#pragma version=1.22
 constant IR3DversionNumber = 1.21			//Data merging panel version number
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ constant IR3DversionNumber = 1.21			//Data merging panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.22 Fixed emberrassing errror when if both data sets were QRS, output waves were completely wrong named. 
 //1.21 Fixed IR3D_PresetOutputStrings to use long names setting in IP8 and higher, was limited to 26 characters + _mrg. 
 //		 Added Optimization method: "Optimize Overlap, trim Data1" when data1 are trimmed at the very start of overlap region, removing data 1 from the overlap region. 
 //1.20 fix problems with dQ waves which could become stale and bomb on users under specific conditions. 
@@ -1676,11 +1677,11 @@ Function IR3D_PresetOutputStrings()
 		NewIntensityWaveName = NewIntensityWaveName+NewExtLoc
 		//Q vector
 		NewQWavename = IN2G_RemoveExtraQuote(NewQWavename,1,1)
-		NewQWavename = IN2G_CreateUserName(NewErrorWaveName,26, 0, 11) // NewQWavename[0,26]
+		NewQWavename = IN2G_CreateUserName(NewQWavename,26, 0, 11) // NewQWavename[0,26]
 		NewQWavename = NewQWavename+"_"+NewDataExtension
 		//error
 		NewErrorWaveName = IN2G_RemoveExtraQuote(NewErrorWaveName,1,1)
-		NewErrorWaveName = IN2G_CreateUserName(NewIntensityWaveName,26, 0, 11) //NewErrorWaveName[0,26]
+		NewErrorWaveName = IN2G_CreateUserName(NewErrorWaveName,26, 0, 11) //NewErrorWaveName[0,26]
 		NewErrorWaveName = NewErrorWaveName+NewExtLoc
 		//DQ
 		NewdQWavename = IN2G_RemoveExtraQuote(NewdQWavename,1,1)
