@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.52
+#pragma version=1.53
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2021, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.53 Added Dexela HDF5 support for WAXS
 //1.52 Added mask which can mask off low sensitivity pixels between tiles. 
 //1.51 added passing through NXMetadata, NXSample, NXInstrument, NXUser
 //1.50 Added Batch processing
@@ -80,7 +81,7 @@ Function NI1_9IDCConfigureNika()
 	setDataFOlder root:Packages:Convert2Dto1D:
 	
 	string ListOfVariables="USAXSSlitLength;SAXSGenSmearedPinData;SAXSDeleteTempPinData;USAXSForceTransmissionDialog;"
-	ListOfVariables +="USAXSSAXSselector;USAXSWAXSselector;USAXSBigSAXSselector;USAXSCheckForRIghtEmpty;USAXSCheckForRIghtDark;USAXSForceTransRecalculation;"
+	ListOfVariables +="USAXSSAXSselector;USAXSWAXSselector;USAXSWAXSDexselector;USAXSCheckForRIghtEmpty;USAXSCheckForRIghtDark;USAXSForceTransRecalculation;"
 	ListOfVariables +="USAXSLoadListedEmpDark;USAXSForceUSAXSTransmission;ReadParametersFromEachFile;WAXSSubtractBlank;"
 	ListOfVariables +="UsePixSensitiveMask;DisplayJPGFile;"
 	string ListOfStrings="USAXSSampleName;"
@@ -101,11 +102,11 @@ Function NI1_9IDCConfigureNika()
 	NVAR SAXSGenSmearedPinData=root:Packages:Convert2Dto1D:SAXSGenSmearedPinData
 	SAXSGenSmearedPinData=1
 	NVAR USAXSSAXSselector = root:Packages:Convert2Dto1D:USAXSSAXSselector
-	NVAR USAXSBigSAXSselector = root:Packages:Convert2Dto1D:USAXSBigSAXSselector
+	NVAR USAXSWAXSDexselector = root:Packages:Convert2Dto1D:USAXSWAXSDexselector
 	NVAR USAXSWAXSselector = root:Packages:Convert2Dto1D:USAXSWAXSselector
-	if((USAXSWAXSselector+USAXSSAXSselector+USAXSBigSAXSselector)!=1)
+	if((USAXSWAXSselector+USAXSSAXSselector+USAXSWAXSDexselector)!=1)
 		USAXSSAXSselector = 1
-		USAXSBigSAXSselector = 0
+		USAXSWAXSDexselector = 0
 		USAXSWAXSselector = 0
 	endif
 	
@@ -151,8 +152,10 @@ Function NI1_9IDCConfigPanelFunction() : Panel
 	///DrawText 10, 77, "SAXS     : large SAXS camera in the 15ID-D (only SAXS, no USAXS)"
 	Checkbox SAXSSelection,pos={10,90},size={100,20}, variable=root:Packages:Convert2Dto1D:USAXSSAXSselector, proc=NI1_9IDCCheckProc
 	Checkbox SAXSSelection, title ="SAXS", help={"Use to configure Nika for SAXS"}
-	Checkbox USAXSWAXSselector,pos={150,90},size={100,20}, variable=root:Packages:Convert2Dto1D:USAXSWAXSselector, proc=NI1_9IDCCheckProc
-	Checkbox USAXSWAXSselector, title ="WAXS", help={"Use to configure Nika for WAXS"}
+	Checkbox USAXSWAXSselector,pos={120,90},size={100,20}, variable=root:Packages:Convert2Dto1D:USAXSWAXSselector, proc=NI1_9IDCCheckProc
+	Checkbox USAXSWAXSselector, title ="WAXS-Pilatus", help={"Use to configure Nika for WAXS using Pilatus"}
+	Checkbox USAXSWAXSDexselector,pos={230,90},size={100,20}, variable=root:Packages:Convert2Dto1D:USAXSWAXSDexselector, proc=NI1_9IDCCheckProc
+	Checkbox USAXSWAXSDexselector, title ="WAXS-Dexela", help={"Use to configure Nika for WAXS using Dexela"}
 
 	Checkbox DisplayJPGFile,pos={370,90},size={100,20}, variable=root:Packages:Convert2Dto1D:DisplayJPGFile, noproc
 	Checkbox DisplayJPGFile, title ="Display JPG File", help={"Display jpg file if it was collected... "}
@@ -244,16 +247,16 @@ Function NI1_9IDCDisplayAndHideControls()
 
 	NVAR USAXSSAXSselector = root:Packages:Convert2Dto1D:USAXSSAXSselector
 	NVAR USAXSWAXSselector = root:Packages:Convert2Dto1D:USAXSWAXSselector
-	NVAR USAXSBigSAXSselector = root:Packages:Convert2Dto1D:USAXSBigSAXSselector
+	NVAR USAXSWAXSDexselector = root:Packages:Convert2Dto1D:USAXSWAXSDexselector
 	NVAR ReadVals=root:Packages:Convert2Dto1D:ReadParametersFromEachFile
-	variable DisplayPinCntrls=USAXSBigSAXSselector || USAXSWAXSselector
-	variable DisplayWAXSCntrls=USAXSSAXSselector || USAXSWAXSselector
+	variable DisplayPinCntrls=USAXSWAXSDexselector || USAXSWAXSselector
+	variable DisplayWAXSCntrls=USAXSSAXSselector || USAXSWAXSselector || USAXSWAXSDexselector
 
 	Checkbox SAXSGenSmearedPinData, win= NI1_9IDCConfigPanel, disable = DisplayPinCntrls
 	Checkbox SAXSDeleteTempPinData,  win= NI1_9IDCConfigPanel, disable = DisplayPinCntrls
 
 	Button ConfigureWaveNoteParameters,  win= NI1_9IDCConfigPanel, disable = ReadVals
-	Checkbox WAXSUseBlank,win= NI1_9IDCConfigPanel, disable = !USAXSWAXSselector
+	Checkbox WAXSUseBlank,win= NI1_9IDCConfigPanel, disable = !(USAXSWAXSselector&&USAXSWAXSDexselector)
 //	Button CreateBadPIXMASK,win= NI1_9IDCConfigPanel, disable = USAXSBigSAXSselector
 	Button SetUSAXSSlitLength, win= NI1_9IDCConfigPanel, disable = DisplayPinCntrls
 	SetVariable USAXSSlitLength, win= NI1_9IDCConfigPanel, disable = DisplayPinCntrls
@@ -262,9 +265,9 @@ Function NI1_9IDCDisplayAndHideControls()
 	CheckBox QvectorMaxNumPnts, win= NI1_9IDCConfigPanel, disable = (DisplayPinCntrls)
 	SetVariable QbinPoints, win= NI1_9IDCConfigPanel, disable = (DisplayPinCntrls || QvectorMaxNumPnts)
 	//This is for WAXS
-	CheckBox UseQvector,win= NI1_9IDCConfigPanel, disable = !USAXSWAXSselector
-	CheckBox UseDspacing,win= NI1_9IDCConfigPanel, disable = !USAXSWAXSselector
-	CheckBox UseTheta,win= NI1_9IDCConfigPanel, disable = !USAXSWAXSselector
+	CheckBox UseQvector,win= NI1_9IDCConfigPanel, disable = !(USAXSWAXSselector||USAXSWAXSDexselector)
+	CheckBox UseDspacing,win= NI1_9IDCConfigPanel, disable = !(USAXSWAXSselector||USAXSWAXSDexselector)
+	CheckBox UseTheta,win= NI1_9IDCConfigPanel, disable = !(USAXSWAXSselector||USAXSWAXSDexselector)
 
 //	Checkbox USAXSForceUSAXSTransmission, win= NI1_9IDCConfigPanel, disable = DisplayPinCntrls
 
@@ -285,7 +288,7 @@ Function NI1_9IDCCheckProc(cba) : CheckBoxControl
 			Variable checked = cba.checked
 			NVAR USAXSWAXSselector = root:Packages:Convert2Dto1D:USAXSWAXSselector
 			NVAR USAXSSAXSselector = root:Packages:Convert2Dto1D:USAXSSAXSselector
-			NVAR USAXSBigSAXSselector = root:Packages:Convert2Dto1D:USAXSBigSAXSselector
+			NVAR USAXSWAXSDexselector = root:Packages:Convert2Dto1D:USAXSWAXSDexselector
 			NVAR readVals=root:Packages:Convert2Dto1D:ReadParametersFromEachFile
 			if(stringmatch(cba.ctrlName,"ReadParametersFromEachFile"))
 				NVAR NX_ReadParametersOnLoad = root:Packages:Irena_Nexus:NX_ReadParametersOnLoad
@@ -295,18 +298,27 @@ Function NI1_9IDCCheckProc(cba) : CheckBoxControl
 			if(stringmatch(cba.ctrlName,"USAXSWAXSselector"))
 				TitleBox LoadBlankWarning win=NI1_9IDCConfigPanel, title="\\Zr150>>>>    Push \"Set default settings\" button now     <<<<"
 				if(checked)
-					USAXSBigSAXSselector =0
+					USAXSWAXSDexselector =0
 					USAXSSAXSselector=0
-					//USAXSWAXSselector=0
+					//USAXSWAXSDexselector=0
 				endif
 				NI1_9IDCDisplayAndHideControls()
 			endif
 			if(stringmatch(cba.ctrlName,"SAXSSelection"))
 				TitleBox LoadBlankWarning win=NI1_9IDCConfigPanel, title="\\Zr150>>>>    Push \"Set default settings\" button now     <<<<"
 				if(checked)
-					USAXSBigSAXSselector =0
+					USAXSWAXSselector =0
 					USAXSSAXSselector=1
-					//USAXSWAXSselector=0
+					USAXSWAXSDexselector=0
+				endif
+				NI1_9IDCDisplayAndHideControls()
+			endif
+			if(stringmatch(cba.ctrlName,"USAXSWAXSDexselector"))
+				TitleBox LoadBlankWarning win=NI1_9IDCConfigPanel, title="\\Zr150>>>>    Push \"Set default settings\" button now     <<<<"
+				if(checked)
+					USAXSWAXSDexselector =1
+					USAXSSAXSselector=0
+					USAXSWAXSselector=0
 				endif
 				NI1_9IDCDisplayAndHideControls()
 			endif
@@ -314,20 +326,20 @@ Function NI1_9IDCCheckProc(cba) : CheckBoxControl
 			if(stringmatch(cba.ctrlName,"UsePixSensitiveMask"))
 				NI1_Cleanup2Dto1DFolder()
 			endif
-			if(stringmatch(cba.ctrlName,"BigSAXSSelection"))
-				if(checked)
-					//USAXSBigSAXSselector =0
-					USAXSSAXSselector=0
-					USAXSWAXSselector=0
-				endif
-				NI1_9IDCDisplayAndHideControls()
-			endif
+//			if(stringmatch(cba.ctrlName,"BigSAXSSelection"))
+//				if(checked)
+//					//USAXSBigSAXSselector =0
+//					USAXSSAXSselector=0
+//					USAXSWAXSselector=0
+//				endif
+//				NI1_9IDCDisplayAndHideControls()
+//			endif
 			if(stringmatch(cba.ctrlName,"WAXSUseBlank"))
 				NI1_9IDCWAXSBlankSUbtraction(checked)				
 			endif
-			if(USAXSBigSAXSselector+USAXSSAXSselector+USAXSWAXSselector!=1)
+			if(USAXSWAXSDexselector+USAXSSAXSselector+USAXSWAXSselector!=1)
 				TitleBox LoadBlankWarning win=NI1_9IDCConfigPanel, title="\\Zr150>>>>    Push \"Set default settings\" button now     <<<<"
-				USAXSBigSAXSselector =0
+				USAXSWAXSDexselector =0
 				USAXSSAXSselector=1
 				USAXSWAXSselector=0
 				NI1_9IDCDisplayAndHideControls()
