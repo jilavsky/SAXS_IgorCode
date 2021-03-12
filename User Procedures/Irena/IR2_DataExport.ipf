@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.14
-Constant IR2EversionNumber = 1.15
+#pragma version=1.16
+Constant IR2EversionNumber = 1.16
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2021, Argonne National Laboratory
@@ -8,6 +8,8 @@ Constant IR2EversionNumber = 1.15
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+
+//1.16 add option to export ASCII with d, two theta or Q. Tested against Nika TTH, Q, and D data and works fine within precision errors. 
 //1.15 add option to reduce output to single precision output (requested) 
 //1.14 fix missign wwavelength if dsata are imported as ASII from Irena and exported again. 
 //1.13 fix naming bug for Nexus which caused the names not being changed as needed, when Nexus was used. 
@@ -16,7 +18,7 @@ Constant IR2EversionNumber = 1.15
 //1.10 added export of xye data file for GSAS-II
 //1.09 added getHelp button calling to www manual
 //1.08 changes for panel scaling
-//1.07 fixed multiple data erxport with QRS
+//1.07 fixed multiple data export with QRS
 //1.06 modified GUI to disable Export Data & notes on main panel, when Multiple data selection panel is opened. Confused users. Changeds call to pull up without initialization, if exists. 
 //		changed mode for Listbox to enable shift-click selection of range of data, use ctrl/cmd for one-by-one data selection
 //1.05 added in panel version control and added vertical scrolling 
@@ -29,7 +31,7 @@ Constant IR2EversionNumber = 1.15
 //This is tool to export any type of 2 -3 column data we have (x, y, and error (if exists)
 
 Function IR2E_UniversalDataExport()
-
+  
 	//check for panel if exists - pull up, if not create
 	DoWindow UnivDataExportPanel
 	if(V_Flag)
@@ -42,12 +44,12 @@ Function IR2E_UniversalDataExport()
 		//initialize, as usually
 		IR2E_InitUnivDataExport()
 		NVAR ExportMultipleDataSets = root:Packages:IR2_UniversalDataExport:ExportMultipleDataSets
-		ExportMultipleDataSets=0		//do nto start in multiple data export, it does not set parameters well...  
+		ExportMultipleDataSets=0		//do not start in multiple data export, it does not set parameters well...  
 		IR2E_UnivDataExportPanel()
 		ING2_AddScrollControl()
 		IR1_UpdatePanelVersionNumber("UnivDataExportPanel", IR2EversionNumber,1)
 	endif
-
+ 
 end
 //************************************************************************************************************
 //************************************************************************************************************
@@ -60,6 +62,7 @@ Function IR2E_MainCheckVersion()
 		if(!IR1_CheckPanelVersionNumber("UnivDataExportPanel", IR2EversionNumber))
 			DoAlert /T="The ASCII Export panel was created by incorrect version of Irena " 1, "Export ASCII may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
+				KillWindow UnivDataExportPanel
 				IR2E_UniversalDataExport()
 			else		//at least reinitialize the variables so we avoid major crashes...
 				IR2E_InitUnivDataExport()
@@ -79,6 +82,9 @@ Function IR2E_UnivDataExportPanel()
 	
 	string AllowedIrenaTypes="DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;R_Int;"
 	IR2C_AddDataControls("IR2_UniversalDataExport","UnivDataExportPanel",AllowedIrenaTypes,"AllCurrentlyAllowedTypes","","","","", 0,0)
+	CheckBox UseQRSdata proc=IR2E_InputPanelCheckboxProc
+	CheckBox UseIndra2Data proc=IR2E_InputPanelCheckboxProc
+	CheckBox UseResults proc=IR2E_InputPanelCheckboxProc
 	TitleBox MainTitle title="\Zr220Universal data export panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={350,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,181},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox Info1 title="\Zr160Data input",pos={10,27},frame=0,fstyle=1, fixedSize=1,size={80,20},fColor=(0,0,52224)
@@ -106,10 +112,18 @@ Function IR2E_UnivDataExportPanel()
 	
 	CheckBox ExportSingleCanSASFile,pos={15,360},size={190,14},proc=IR2E_UnivExportCheckProc,title="Export Single canSAS NEXUS (with multiple data)?"
 	CheckBox ExportSingleCanSASFile,variable= root:Packages:IR2_UniversalDataExport:ExportSingleCanSASFile, help={"When checked Nexus (canSAS for data) files will be created"}
+
+	CheckBox ASCIIExportQ,pos={10,360},size={190,14},proc=IR2E_UnivExportCheckProc,title="Use Q?", mode=1
+	CheckBox ASCIIExportQ,variable= root:Packages:IR2_UniversalDataExport:ASCIIExportQ, help={"When checked ASCII files will be exported with Q"}
+	CheckBox ASCIIExportD,pos={130,360},size={190,14},proc=IR2E_UnivExportCheckProc,title="Use d?", mode=1
+	CheckBox ASCIIExportD,variable= root:Packages:IR2_UniversalDataExport:ASCIIExportD, help={"When checked ASCII files will be exported with d"}
+	CheckBox ASCIIExportTTH,pos={260,360},size={190,14},proc=IR2E_UnivExportCheckProc,title="Use Two Theta?", mode=1
+	CheckBox ASCIIExportTTH,variable= root:Packages:IR2_UniversalDataExport:ASCIIExportTTH, help={"When checked  ASCII files will be created with two theta"}
+
 	
-	CheckBox AttachWaveNote,pos={10,375},size={190,14},noproc,title="Attach notes about data?"
+	CheckBox AttachWaveNote,pos={10,378},size={190,14},noproc,title="Attach notes about data?"
 	CheckBox AttachWaveNote,variable= root:Packages:IR2_UniversalDataExport:AttachWaveNote, help={"When checked block of text with notes about data history will be attached before the data itself"}
-	CheckBox reduceOutputPrecision,pos={220,375},size={190,14},noproc,title="Reduce precision?"
+	CheckBox reduceOutputPrecision,pos={220,378},size={190,14},noproc,title="Reduce precision?"
 	CheckBox reduceOutputPrecision,variable= root:Packages:IR2_UniversalDataExport:reduceOutputPrecision, help={"When checked, data are converted to single precision (default is double precision)"}
 
 
@@ -138,6 +152,14 @@ Function IR2E_UnivDataExportPanel()
 	IR2E_FixMainGUI()
 end
 //*******************************************************************************************************************************
+//this is override or IR2C procedure so it also updates GUI... 
+Function IR2E_InputPanelCheckboxProc(CB_Struct)
+	STRUCT WMCheckboxAction &CB_Struct
+
+	IR2C_InputPanelCheckboxProc(CB_Struct)
+	IR2E_FixMainGUI()
+end
+
 //*******************************************************************************************************************************
 Function IR2E_FixMainGUI()
 	
@@ -148,6 +170,9 @@ Function IR2E_FixMainGUI()
 		NVAR ExportASCII = root:Packages:IR2_UniversalDataExport:ExportASCII
 		NVAR ExportGSASxye = root:Packages:IR2_UniversalDataExport:ExportGSASxye
 		NVAR ExportSingleCanSASFile = root:Packages:IR2_UniversalDataExport:ExportSingleCanSASFile
+		NVAR UseIndra2Data = root:Packages:IR2_UniversalDataExport:UseIndra2Data
+		NVAR UseQRSdata = root:Packages:IR2_UniversalDataExport:UseQRSdata
+		NVAR UseResults = root:Packages:IR2_UniversalDataExport:UseResults
 
 		Button ExportData, win=UnivDataExportPanel, disable=2*MultipleData
 		CheckBox AttachWaveNote,win=UnivDataExportPanel, disable=(ExportCanSASNexus || ExportGSASxye)
@@ -156,6 +181,9 @@ Function IR2E_FixMainGUI()
 		CheckBox UseFolderNameForOutput, win=UnivDataExportPanel, disable=(ExportCanSASNexus&&ExportSingleCanSASFile)
 		CheckBox ExportSingleCanSASFile, win=UnivDataExportPanel, disable=(ExportASCII || ExportGSASxye)
 		CheckBox reduceOutputPrecision, win=UnivDataExportPanel, disable=(ExportCanSASNexus || ExportGSASxye)
+		CheckBox ASCIIExportQ, win=UnivDataExportPanel, disable=!(ExportASCII&&(UseIndra2Data||UseQRSdata))
+		CheckBox ASCIIExportD, win=UnivDataExportPanel, disable=!(ExportASCII&&(UseIndra2Data||UseQRSdata))
+		CheckBox ASCIIExportTTH, win=UnivDataExportPanel, disable=!(ExportASCII&&(UseIndra2Data||UseQRSdata))
 	endif
 end
 
@@ -452,11 +480,37 @@ Function IR2E_UnivExportCheckProc(ctrlName,checked) : CheckBoxControl
 	SVAR CurrentlyLoadedDataName
 	SVAR CurrentlySetOutputPath
 	SVAR NewFileOutputName
-		NVAR ExportCanSASNexus = root:Packages:IR2_UniversalDataExport:ExportCanSASNexus
-		NVAR ExportASCII = root:Packages:IR2_UniversalDataExport:ExportASCII
-		NVAR ExportGSASxye = root:Packages:IR2_UniversalDataExport:ExportGSASxye
+	NVAR ExportCanSASNexus = root:Packages:IR2_UniversalDataExport:ExportCanSASNexus
+	NVAR ExportASCII = root:Packages:IR2_UniversalDataExport:ExportASCII
+	NVAR ExportGSASxye = root:Packages:IR2_UniversalDataExport:ExportGSASxye
+	NVAR ASCIIExportQ = root:Packages:IR2_UniversalDataExport:ASCIIExportQ
+	NVAR ASCIIExportD = root:Packages:IR2_UniversalDataExport:ASCIIExportD
+	NVAR ASCIIExportTTH = root:Packages:IR2_UniversalDataExport:ASCIIExportTTH
 			
 		SVAR OutputNameExtension = root:Packages:IR2_UniversalDataExport:OutputNameExtension
+		if(stringMatch(ctrlName,"ASCIIExportQ"))
+			if(checked)
+				ASCIIExportQ = 1
+				ASCIIExportD = 0
+				ASCIIExportTTH = 0
+			endif
+		endif
+		if(stringMatch(ctrlName,"ASCIIExportD"))
+			if(checked)
+				ASCIIExportQ = 0
+				ASCIIExportD = 1
+				ASCIIExportTTH = 0
+			endif
+		endif
+		if(stringMatch(ctrlName,"ASCIIExportTTH"))
+			if(checked)
+				ASCIIExportQ = 0
+				ASCIIExportD = 0
+				ASCIIExportTTH = 1
+			endif
+		endif
+
+
 		if(stringMatch(ctrlName,"ExportASCII"))
 			if(checked)
 				ExportASCII = 1
@@ -606,6 +660,11 @@ Function IR2E_ExportTheData()
 	NVAR UseQRSdata=root:Packages:IR2_UniversalDataExport:UseQRSdata
 	NVAR UseResults=root:Packages:IR2_UniversalDataExport:UseResults
 	NVAR UseSMRData=root:Packages:IR2_UniversalDataExport:UseSMRData
+
+	NVAR ASCIIExportQ=root:Packages:IR2_UniversalDataExport:ASCIIExportQ
+	NVAR ASCIIExportD=root:Packages:IR2_UniversalDataExport:ASCIIExportD
+	NVAR ASCIIExportTTH=root:Packages:IR2_UniversalDataExport:ASCIIExportTTH
+
 	
 	Wave/Z TempY=$(DataFolderName+possiblyquoteName(IntensityWaveName))
 	Wave/Z TempX=$(DataFolderName+possiblyquoteName(QWavename))
@@ -638,7 +697,8 @@ Function IR2E_ExportTheData()
 		abort "Create output file name first, please"
 	endif
 	variable refnum
-	string FinalOutputName, oldNote
+	string FinalOutputName, oldNote, OldNoteT1
+	variable wvlgth
 	
 	
 	if(ExportASCII)			//this is old ASCII method...
@@ -659,19 +719,18 @@ Function IR2E_ExportTheData()
 			OpenNotebook/V=0/P=IR2E_ExportPath/N=JunkNbk  FinalOutputName
 			DoWindow/D /K JunkNbk
 		endif
-			close/A
+		close/A
 		Duplicate TempY, NoteTempY
 		string OldNoteT=note(TempY)
 		note/K NoteTempY
 		note NoteTempY, OldNoteT+"Exported="+date()+" "+time()+";"
 		make/T/O WaveNoteWave
-		if (AttachWaveNote)
+		if (AttachWaveNote ||(ASCIIExportTTH&&(UseIndra2Data || UseQRSdata)))
 			IN2G_PasteWnoteToWave("NoteTempY", WaveNoteWave,HeaderSeparator)
 			Save/G/M="\r\n"/P=IR2E_ExportPath WaveNoteWave as FinalOutputName
 		endif
 		if( UseIndra2Data || UseQRSdata)	//scattering data
 			//lower precision if needed
-			Duplicate/O TempX,Qvector_A
 			Duplicate/O TempY,Intensity
 			if(HaveErrors)
 				Duplicate/O TempE, Uncertainty
@@ -682,12 +741,75 @@ Function IR2E_ExportTheData()
 					Redimension/S Uncertainty
 				endif
 			endif
-			if(HaveErrors)
-				Save/A=2/G/W/M="\r\n"/P=IR2E_ExportPath Qvector_A,Intensity,Uncertainty as FinalOutputName			
-			else
-				Save/A=2/G/W/M="\r\n"/P=IR2E_ExportPath Qvector_A,Intensity as FinalOutputName		
+
+			OldNoteT1=note(Intensity)
+			wvlgth = NumberByKey("Nika_Wavelength", OldNoteT1 , "=", ";")
+			if(numtype(wvlgth)!=0)
+				wvlgth = NumberByKey("Wavelength", OldNoteT1 , "=", ";")
+				if(numtype(wvlgth)!=0)
+					Prompt wvlgth, "Wavelength not found, please, provide"
+					DoPrompt "Provide wavelength is A", wvlgth
+					if (V_Flag || numtype(wvlgth)!=0 || wvlgth<0.01)
+						return -1								// User canceled
+					endif	
+				endif
 			endif
-			KillWaves/Z WaveNoteWave, NoteTempY, Qvector_A,Intensity,Uncertainty
+
+			//convert q tth or d into what is asked for... 
+			Duplicate/Free tempX, TempXConverted 
+			if(ASCIIExportQ)		//user wants Q
+				if(StringMatch(QWavename, "q_*") || StringMatch(QWavename, "'q_*"))		//q wave
+					TempXConverted = tempX
+				elseif(StringMatch(QWavename, "d_*") || StringMatch(QWavename, "'d_*"))		//d wave
+					//q = 2pi/d
+					TempXCOnverted = 2*pi / TempX
+				else		//Two theta wave, convert to Q
+					//q = 4pi sin(theta)/lambda
+					TempXConverted = 4*pi*sin(TempX/(2 * 180/pi)) / wvlgth
+				endif
+				Duplicate/O TempXConverted,Qvector_A
+				if(HaveErrors)
+					Save/A=2/G/W/M="\r\n"/P=IR2E_ExportPath Qvector_A,Intensity,Uncertainty as FinalOutputName			
+				else
+					Save/A=2/G/W/M="\r\n"/P=IR2E_ExportPath Qvector_A,Intensity as FinalOutputName		
+				endif
+			elseif(ASCIIExportD)		//user wants d
+				if(StringMatch(QWavename, "q_*") || StringMatch(QWavename, "'q_*"))		//q wave
+					//d = 2pi/q
+					TempXConverted = 2*pi / TempX
+				elseif(StringMatch(QWavename, "d_*") || StringMatch(QWavename, "'d_*"))		//d wave
+					TempXConverted = tempX
+				else		//Two theta wave, convert to d
+					//q = 4pi sin(theta)/lambda
+					//d = 2*pi/Q : 2pi/(4pi*sin(theta)/lambda)
+					//TTH = 114.592 * asin((2*pi/D) * wvlgth /(4*pi))	
+					//D = 2*pi/(4*pi)*sin(TTH/114.592)/wvlgth  
+					TempXConverted = 1/(2*sin(TempX/(2 * 180/pi))/ wvlgth)
+				endif
+				Duplicate/O TempXConverted,Dspacing_A
+				if(HaveErrors)
+					Save/A=2/G/W/M="\r\n"/P=IR2E_ExportPath Dspacing_A,Intensity,Uncertainty as FinalOutputName			
+				else 
+					Save/A=2/G/W/M="\r\n"/P=IR2E_ExportPath Dspacing_A,Intensity as FinalOutputName		
+				endif
+			elseif(ASCIIExportTTH)	//user wants Two Theta
+				if(StringMatch(QWavename, "q_*") || StringMatch(QWavename, "'q_*"))		//q wave
+					//TwoTheta = 2* asin(q * lambda /4pi)
+					TempXCOnverted = 114.592 * asin(TempX * wvlgth /(4*pi))		
+				elseif(StringMatch(QWavename, "d_*") || StringMatch(QWavename, "'d_*"))		//d wave
+					//TwoTheta = 2* asin(q * lambda /4pi), Q = 2*pi/D
+					TempXCOnverted = 114.592 * asin((2*pi/TempX) * wvlgth /(4*pi))		
+				else		//Two theta wave, convert to d
+					TempXConverted = tempX
+				endif
+				Duplicate/O TempXConverted,TwoTheta_Deg
+				if(HaveErrors)
+					Save/A=2/G/W/M="\r\n"/P=IR2E_ExportPath TwoTheta_Deg,Intensity,Uncertainty as FinalOutputName			
+				else
+					Save/A=2/G/W/M="\r\n"/P=IR2E_ExportPath TwoTheta_Deg,Intensity as FinalOutputName		
+				endif
+			endif	
+			KillWaves/Z WaveNoteWave, NoteTempY, Qvector_A,Intensity,Uncertainty, Dspacing_A, TwoTheta_Deg
 		else		//results or other, no idea what x, y, e is... 
 			//lower precision if needed
 			Duplicate/O TempX,Xdata
@@ -730,10 +852,10 @@ Function IR2E_ExportTheData()
 		endif
 		close/A
 		Duplicate TempY, NoteTempY
-		string OldNoteT1=note(TempY)
+		OldNoteT1=note(TempY)
 		note/K NoteTempY
 		note NoteTempY, OldNoteT1+"Exported="+date()+" "+time()+";"
-		variable wvlgth = NumberByKey("Nika_Wavelength", OldNoteT1 , "=", ";")
+		wvlgth = NumberByKey("Nika_Wavelength", OldNoteT1 , "=", ";")
 		if(numtype(wvlgth)!=0)
 			wvlgth = NumberByKey("Wavelength", OldNoteT1 , "=", ";")
 			if(numtype(wvlgth)!=0)
@@ -750,7 +872,7 @@ Function IR2E_ExportTheData()
 			TempXCOnverted = 2 * 180/pi * asin(TempX * wvlgth /(4*pi))		
 		elseif(StringMatch(QWavename, "d_*") || StringMatch(QWavename, "'d_*"))		//d wave
 			TempXCOnverted = 2 * 180/pi * (wvlgth / (2*TempX))
-		else		//Two theta qweve nothing needed...
+		else		//Two theta wave nothing needed...
 
 		endif
 		
@@ -930,7 +1052,7 @@ Function IR2E_InitUnivDataExport()
 	
 	ListOfVariables="UseIndra2Data;UseQRSdata;UseResults;UseSMRData;UseUserDefinedData;"
 	ListOfVariables+="AttachWaveNote;GraphData;DisplayWaveNote;UseFolderNameForOutput;UseYWaveNameForOutput;"
-	ListOfVariables+="ExportMultipleDataSets;"
+	ListOfVariables+="ExportMultipleDataSets;ASCIIExportQ;ASCIIExportD;ASCIIExportTTH;"
 	ListOfVariables+="ExportCanSASNexus;ExportASCII;ExportGSASxye;"
 	ListOfVariables+="ExportMultipleCanSASFiles;ExportSingleCanSASFile;reduceOutputPrecision;"
 
@@ -998,7 +1120,14 @@ Function IR2E_InitUnivDataExport()
 		ExportCanSASNexus= 0
 		ExportGSASxye = 0
 	endif
-
+	NVAR ASCIIExportQ
+	NVAR ASCIIExportD
+	NVAR ASCIIExportTTH
+	if(ASCIIExportQ+ASCIIExportD+ASCIIExportTTH !=1)
+		ASCIIExportQ =1
+		ASCIIExportD = 0
+		ASCIIExportTTH = 0
+	endif
 	setDataFolder OldDf
 
 end

@@ -16,7 +16,7 @@ constant IR3BversionNumber = 0.1			//MetadataBrowser tool version number.
 //1.11 fixes for panel scaling
 //1.10 removed wave/d, Function/d and variable/d. Obsolete
 //1.09 bug fixes, bug found by igor 7. 
-//1.08 fixed IR2M_CreateWaveName(WaveNameStr,ItemNameStr) for Modeling II waves
+//1.08 fixed IR2M_CreateWaveName(WaveNameStr,ItemNameStr) for Modeling waves
 //        removed all font and font size from panel definitions to enable user control
 //1.07 who knows?
 //1.06 modified to enable multiple selections. Shift select range, cmd/ctrl selected disjoint cells. 

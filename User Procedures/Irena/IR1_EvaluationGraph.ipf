@@ -9,7 +9,7 @@
 //*************************************************************************/
 
 //2.11 fixed some bugs in find FWHM IR1G_FindFWHM(IntProbWave,DiaWave, StartP, EndP)
-//2.10 fixed operations for case when user uses Modeling II (now MOdeling) cdata and used not first, but later pop for Size distribution. Needed to build in skipping of non-size distribution cases...
+//2.10 fixed operations for case when user uses Modeling (now MOdeling) cdata and used not first, but later pop for Size distribution. Needed to build in skipping of non-size distribution cases...
 //2.09  removed unused functions
 //2.08 added getHelp button calling to www manual
 //2.07 minor fix for parameter6 of form factor parameter. 
@@ -17,7 +17,7 @@
 //2.05 modified IR1G_CreateAveVolSfcWvUsingNote by cleaning up unneeded code. 
 //2.04 some improvements to handle radii and diameters. 
 //2.03  Modified all controls not to define font and font size to enable proper control by user 
-//2.02 modified display to show "size" instead of diameter, Modeling II is using radii, so the results are in readii. Also, need to fix the absolute calibrations sometimes...
+//2.02 modified display to show "size" instead of diameter, Modeling is using radii, so the results are in readii. Also, need to fix the absolute calibrations sometimes...
 //2.01 added license for ANL
 
 //part of Irena macros.
@@ -399,22 +399,23 @@ Function IR1G_CreateCumulativeCurves(DistributionWv,diametersWv, StartP, EndP, D
 	SetDataFolder root:Packages:SASDataEvaluation
 	Duplicate/O/R=(StartP, EndP) DistributionWv, CumulativeSizeDist, CumulativeSfcArea, ParticleVolumes, ParticleSurfaces
 	Duplicate/O/R=(StartP, EndP) diametersWv, CumulativeDistDiameters
-	//fix for use of radius in Modeling II
+	//fix for use of radius in Modeling
 	//12/31/2011
 	variable scaleDueToDiaRadChange=1
 	String XwaveNm = nameofWave(diametersWv)
 	NVAR InvertCumulativeDists=root:Packages:SASDataEvaluation:InvertCumulativeDists
+	NVAR EvaluatePopulationNumber=root:Packages:SASDataEvaluation:EvaluatePopulationNumber
 	
 	variable surface
 	if (stringmatch(DistWaveName,"*Number*"))
-		IR1G_CreateAveVolSfcWvUsingNote(ParticleVolumes,CumulativeDistDiameters,Note(DistributionWv),"Volume")
+		IR1G_CreateAveVolSfcWvUsingNote(ParticleVolumes,CumulativeDistDiameters,Note(DistributionWv),"Volume", EvaluatePopulationNumber)
 		CumulativeSizeDist = DistributionWv * ParticleVolumes				//this is volume distribution
-		IR1G_CreateAveVolSfcWvUsingNote(ParticleSurfaces,CumulativeDistDiameters,Note(DistributionWv),"Surface")
+		IR1G_CreateAveVolSfcWvUsingNote(ParticleSurfaces,CumulativeDistDiameters,Note(DistributionWv),"Surface", EvaluatePopulationNumber)
 		CumulativeSfcArea = DistributionWv * ParticleSurfaces				//this is volume distribution
 	endif
 	if (stringmatch(DistWaveName,"*Volume*"))
-		IR1G_CreateAveVolSfcWvUsingNote(ParticleVolumes,CumulativeDistDiameters,Note(DistributionWv),"Volume")
-		IR1G_CreateAveVolSfcWvUsingNote(ParticleSurfaces,CumulativeDistDiameters,Note(DistributionWv),"Surface")
+		IR1G_CreateAveVolSfcWvUsingNote(ParticleVolumes,CumulativeDistDiameters,Note(DistributionWv),"Volume",EvaluatePopulationNumber)
+		IR1G_CreateAveVolSfcWvUsingNote(ParticleSurfaces,CumulativeDistDiameters,Note(DistributionWv),"Surface",EvaluatePopulationNumber)
 		CumulativeSfcArea = (DistributionWv/ParticleVolumes) * ParticleSurfaces				//this is volume distribution
 	endif
 	variable curPnts= numpnts(CumulativeDistDiameters)
@@ -479,14 +480,14 @@ Function IR1G_CreateMIPCurve(DistributionWv,diametersWv, StartP, EndP, DistWaveN
 	
 	NVAR MIPUserSigma=root:Packages:SASDataEvaluation:MIPUserSigma
 	NVAR MIPUserCosTheta=root:Packages:SASDataEvaluation:MIPUserCosTheta
-	
+	NVAR EvaluatePopulationNumber = root:Packages:SASDataEvaluation:EvaluatePopulationNumber
 //	variable surface
 	if (stringmatch(DistWaveName,"*Number*"))
-		IR1G_CreateAveVolSfcWvUsingNote(ParticleVolumes,MIPDistDiameters,Note(DistributionWv),"Volume")
+		IR1G_CreateAveVolSfcWvUsingNote(ParticleVolumes,MIPDistDiameters,Note(DistributionWv),"Volume",EvaluatePopulationNumber)
 		MIPVolume = DistributionWv * ParticleVolumes				//this is volume distribution
 	endif
 	if (stringmatch(DistWaveName,"*Volume*"))
-		IR1G_CreateAveVolSfcWvUsingNote(ParticleVolumes,MIPDistDiameters,Note(DistributionWv),"Volume")
+		IR1G_CreateAveVolSfcWvUsingNote(ParticleVolumes,MIPDistDiameters,Note(DistributionWv),"Volume",EvaluatePopulationNumber)
 	endif
 
 	variable curPnts= numpnts(MIPDistDiameters)
@@ -573,7 +574,8 @@ Function IR1G_CalculateSurfaceArea(DistributionWv,diametersWv, StartP, EndP, Dis
 	if(stringMatch(XWvName,"*Radi*"))		//this is really radius wave...
 		Dia_temp =  2 * Dia_temp		//convert to diameters for next calculations
 	endif
-	IR1G_CreateAveVolSfcWvUsingNote(ParticleSurface,Dia_temp,Note(DistributionWv),"Surface")
+	NVAR EvaluatePopulationNumber = root:Packages:SASDataEvaluation:EvaluatePopulationNumber
+	IR1G_CreateAveVolSfcWvUsingNote(ParticleSurface,Dia_temp,Note(DistributionWv),"Surface",EvaluatePopulationNumber)
 
 	if (stringmatch(DistWaveName,"*Number*") || stringmatch(DistWaveName,"*NumDist*"))
 		//this is easy, just integrate
@@ -581,7 +583,7 @@ Function IR1G_CalculateSurfaceArea(DistributionWv,diametersWv, StartP, EndP, Dis
 		number=areaXY(Dia_tempOrig, Dist_temp, 0, inf)
 	endif
 	if (stringmatch(DistWaveName,"*Volume*") || stringmatch(DistWaveName,"*VolDist*"))
-		IR1G_CreateAveVolSfcWvUsingNote(ParticleVolumes,Dia_temp,Note(DistributionWv),"Volume")
+		IR1G_CreateAveVolSfcWvUsingNote(ParticleVolumes,Dia_temp,Note(DistributionWv),"Volume",EvaluatePopulationNumber)
 		Dist_temp = Dist_temp / ParticleVolumes			//this is now number distribution
 		Dist_temp = Dist_temp * ParticleSurface			//this is now specific surface area
 		number=areaXY(Dia_tempOrig, Dist_temp, 0, inf)
@@ -618,7 +620,8 @@ Function IR1G_CalculateNumber(DistributionWv,diametersWv, StartP, EndP, DistWave
 		number=areaXY(Dia_tempOrig, Dist_temp, 0, inf)
 	endif
 	if (stringmatch(DistWaveName,"*Volume*") || stringmatch(DistWaveName,"*VolDist*"))
-		IR1G_CreateAveVolSfcWvUsingNote(ParticleVolumes,Dia_temp,Note(DistributionWv),"Volume")
+		NVAR EvaluatePopulationNumber = root:Packages:SASDataEvaluation:EvaluatePopulationNumber
+		IR1G_CreateAveVolSfcWvUsingNote(ParticleVolumes,Dia_temp,Note(DistributionWv),"Volume",EvaluatePopulationNumber)
 		Dist_temp = Dist_temp / ParticleVolumes			//this is now number distribution
 		number=areaXY(Dia_tempOrig, Dist_temp, 0, inf)
 	endif
@@ -646,13 +649,14 @@ Function IR1G_CalculateVolume(DistributionWv,diametersWv, StartP, EndP, DistWave
 	SetDataFolder root:Packages:SASDataEvaluation
 	Duplicate/O/R=(StartP, EndP) DistributionWv, Dist_temp, ParticleVolumes
 	Duplicate/O/R=(StartP, EndP) diametersWv, Dia_temp
+	NVAR EvaluatePopulationNumber = root:Packages:SASDataEvaluation:EvaluatePopulationNumber
 	variable volume
 	if (stringmatch(DistWaveName,"*Volume*") || stringmatch(DistWaveName,"*VolDist*"))
 		//this is easy, just integrate
 		volume=areaXY(Dia_temp, Dist_temp, 0, inf)
 	endif
 	if (stringmatch(DistWaveName,"*Number*") || stringmatch(DistWaveName,"*NumDist*"))
-		IR1G_CreateAveVolSfcWvUsingNote(ParticleVolumes,Dia_temp,Note(DistributionWv),"Volume")
+		IR1G_CreateAveVolSfcWvUsingNote(ParticleVolumes,Dia_temp,Note(DistributionWv),"Volume",EvaluatePopulationNumber)
 		Dist_temp = Dist_temp * ParticleVolumes				//this is volume distribution
 		volume=areaXY(Dia_temp, Dist_temp, 0, inf)
 	endif
@@ -1520,17 +1524,20 @@ EndMacro
 //*****************************************************************************************************************
 
 
-Function IR1G_CreateAveVolSfcWvUsingNote(AveDataWave,DiameterWave,NoteStr,VolOrSfc)
+Function IR1G_CreateAveVolSfcWvUsingNote(AveDataWave,DiameterWave,NoteStr,VolOrSfc, popNumber)
 	wave AveDataWave,DiameterWave
 	string NoteStr, VolOrSfc
+	variable popNumber
 	// set VolOrSfc to either "Volume" or "Surface"
 
-	DFref oldDf= GetDataFolderDFR()
+	//DFref oldDf= GetDataFolderDFR()
 
-	SetDataFolder  root:Packages:SASDataEvaluation
+	//SetDataFolder  root:Packages:SASDataEvaluation
 	variable Par1, Par2, Par3, Par4, Par5, Par6
 	variable UPar1, UPar2, UPar3, UPar4, UPar5
 	string UserVolFunct="", ShapeType=""
+	
+	variable EvaluatePopulationNumber= numtype(popNumber)==0 ? popNumber : 1 
 	
 	
 	if(stringmatch(NoteStr,"*SizesDataFrom*"))		//data from Size dsistributioon package
@@ -1555,7 +1562,6 @@ Function IR1G_CreateAveVolSfcWvUsingNote(AveDataWave,DiameterWave,NoteStr,VolOrS
 		endif
 	elseif(stringmatch(NoteStr,"*DistributionTypeModelled*"))		//date from Modeling I package, total of size distribution..
 		print "These data may contain mixture of shapes for different populations. Please select the right population number to evaluate"
-		NVAR EvaluatePopulationNumber=root:Packages:SASDataEvaluation:EvaluatePopulationNumber
 		shapeType= StringByKey("Dist"+num2str(EvaluatePopulationNumber)+"ShapeModel", NoteStr , "=" ,";")
 			Par1 = numberByKey("Dist"+num2str(EvaluatePopulationNumber)+"ScatShapeParam1", NoteStr , "=" ,";")
 			Par2 = numberByKey("Dist"+num2str(EvaluatePopulationNumber)+"ScatShapeParam2", NoteStr , "=" ,";")
@@ -1569,9 +1575,8 @@ Function IR1G_CreateAveVolSfcWvUsingNote(AveDataWave,DiameterWave,NoteStr,VolOrS
 			Par3 = numberByKey("DistScatShapeParam3", NoteStr , ":" ,";")
 			Par4 = 0
 			Par5 = 0
-	elseif(stringmatch(NoteStr,"*FormFactor_pop*"))		//date from Modeling II package, total of size distribution..
+	elseif(stringmatch(NoteStr,"*FormFactor_pop*"))		//date from Modeling package, total of size distribution..
 		print "These data may contain mixture of shapes for different populations. Please select the right population number to evaluate"
-		NVAR EvaluatePopulationNumber=root:Packages:SASDataEvaluation:EvaluatePopulationNumber
 		shapeType= StringByKey("FormFactor_pop"+num2str(EvaluatePopulationNumber), NoteStr , "=" ,";")
 			Par1 = numberByKey("FormFactor_Param1_pop"+num2str(EvaluatePopulationNumber), NoteStr , "=" ,";")
 			Par2 = numberByKey("FormFactor_Param2_pop"+num2str(EvaluatePopulationNumber), NoteStr , "=" ,";")
@@ -1600,7 +1605,7 @@ Function IR1G_CreateAveVolSfcWvUsingNote(AveDataWave,DiameterWave,NoteStr,VolOrS
 	
 
 
-	setDataFolder OldDf
+	//setDataFolder OldDf
 end
 
 //*****************************************************************************************************************
@@ -1632,7 +1637,7 @@ Function IR1G_FindNumOfPopsUsed(WaveWithWv)	//return number of populations (1..5
 				numOfPops=i
 			endif
 		endfor
-	elseif (stringMatch(WvName, "VolumeDistModelLSQF2_*") || stringMatch(WvName,"NumberDistModelLSQF2_*")) //Modeling II results
+	elseif (stringMatch(WvName, "VolumeDistModelLSQF2_*") || stringMatch(WvName,"NumberDistModelLSQF2_*")) //Modeling results
 		//need to fix...
 		//For(i=1;i<=6;i+=1)
 			//if(stringmatch(WvNote, "*;Dist"+num2str(i)+"DistributionType=*" ))

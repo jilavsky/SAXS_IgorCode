@@ -1,7 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
-//#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.69
+#pragma version=2.70
 Constant NI1AversionNumber = 2.70
 
 //*************************************************************************\
@@ -10,6 +9,7 @@ Constant NI1AversionNumber = 2.70
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.70 fixed Max number of points selection which did nto account for Qmin and Qmax and was therefore producing too many points
 //2.70 added correction for self absorption. 
 //2.69 added 12ID-B tiff file which is tiff file combined with metadata log file. 
 //2.68 added passing through NXMetadata, NXSample, NXInstrument, NXUser
@@ -89,7 +89,7 @@ Constant NI1AversionNumber = 2.70
 //
 //	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 //	//these are tools which have been upgraded to this functionality
-//	//Modeling II = LSQF2_MainPanel
+//	//Modeling = LSQF2_MainPanel
 //	string WindowProcNames="NI1A_Convert2Dto1DPanel=NI1A_MainCheckVersion;NI1_CreateBmCntrFieldPanel=NIBC_MainCheckVersion;NEXUS_ConfigurationPanel=Nexus_MainCheckVersion;"
 //	
 //	NI1A_CheckWIndowsProcVersions(WindowProcNames)
@@ -833,6 +833,8 @@ Function NI1A_FixNumPntsIfNeeded(CurOrient)
 	NVAR QvectorNumberPoints=root:Packages:Convert2Dto1D:QvectorNumberPoints
 	NVAR QvectorMaxNumPnts=root:Packages:Convert2Dto1D:QvectorMaxNumPnts
 	NVAR QbinningLogarithmic=root:Packages:Convert2Dto1D:QbinningLogarithmic
+	NVAR Qmin=root:Packages:Convert2Dto1D:UserQMin
+	NVAR Qmax=root:Packages:Convert2Dto1D:UserQMax
 	
 	if(QvectorMaxNumPnts)	//user wants 1 point = 1 pixel (max num points)... Need to fix the num pnts....
 		QbinningLogarithmic=0		//cannot be log binning... 
@@ -852,17 +854,22 @@ Function NI1A_FixNumPntsIfNeeded(CurOrient)
 		NVAR UseMask=root:Packages:Convert2Dto1D:UseMask
 		string OldCntrX, OldCntrY
 		variable MaskNameNotSame, OldUseMask, OldDim0, OldDim1
+		variable OldQmin, OldQmax
 		OldCntrX=StringByKey("BeamCenterX", OldNote  , "=")
 		OldCntrY=StringByKey("BeamCenterY", OldNote  , "=")
 		OldDim0=NumberByKey("WvDimension0", OldNote  , "=")
 		OldDim1=NumberByKey("WvDimension1", OldNote  , "=")
 		OldUseMask=NumberByKey("UseMask", OldNote  , "=")
+		OldQmin=NumberByKey("Qmin", OldNote  , "=")
+		OldQmax=NumberByKey("Qmax", OldNote  , "=")
 		if(UseMask)
 			MaskNameNotSame= abs(cmpstr(CurrentMaskFileName,stringByKey("MaskName", OldNote,"=")))
 		else
 			MaskNameNotSame=0
 		endif
-		if(cmpstr(OldCntrX,num2str(BeamCenterX))!=0 || cmpstr(OldCntrY, num2str(BeamCenterY))!=0 || OldDim0!=DimSize(CCDImageToConvert, 0 ) || OldDim1!=DimSize(CCDImageToConvert, 1) || MaskNameNotSame || OldUseMask!=UseMask)
+		variable SomeStuffChanged=0
+		SomeStuffChanged = MaskNameNotSame || (OldUseMask!=UseMask) || abs(OldQmin-Qmin)>0.001 || abs(OldQmax-Qmax)>0.001 || numtype(Qmin)!=0 || numtype(Qmax)!=0
+		if(cmpstr(OldCntrX,num2str(BeamCenterX))!=0 || cmpstr(OldCntrY, num2str(BeamCenterY))!=0 || OldDim0!=DimSize(CCDImageToConvert, 0 ) || OldDim1!=DimSize(CCDImageToConvert, 1) || SomeStuffChanged)
 			redimension/N=0 MaxNumPntsLookupWv
 			redimension/N=0 MaxNumPntsLookupWvLBL
 		endif
@@ -883,6 +890,8 @@ Function NI1A_FixNumPntsIfNeeded(CurOrient)
 		newNote+="WvDimension1="+num2str(DimSize(CCDImageToConvert, 1))+";"
 		newNote+="UseMask="+num2str(UseMask)+";"
 		newNote+="MaskName="+CurrentMaskFileName+";"
+		newNote+="Qmin="+num2str(Qmin)+";"
+		newNote+="Qmax="+num2str(Qmax)+";"
 		note MaxNumPntsLookupWv, newNote
 		//and now find the right number... This is the most difficult part...
 		NVAR PixelSizeX = root:Packages:Convert2Dto1D:PixelSizeX								//in millimeters
@@ -914,7 +923,7 @@ Function NI1A_FixNumPntsIfNeeded(CurOrient)
 		NVAR DoSectorAverages=root:Packages:Convert2Dto1D:DoSectorAverages
 		variable centerAngleRad, WidthAngleRad, startAngleFIxed, endAgleFixed
 		//apply mask, if selected
-		duplicate/O PixRadius2DWave, MaskedRadius2DWave
+		duplicate/Free PixRadius2DWave, MaskedRadius2DWave
 		redimension/S MaskedRadius2DWave
 		if(UseMask)
 			wave M_ROIMask=root:Packages:Convert2Dto1D:M_ROIMask
@@ -940,16 +949,30 @@ Function NI1A_FixNumPntsIfNeeded(CurOrient)
 			killwaves tempAnglesMask
 		endif
 		//radius data are masked now 
-
 		wavestats/Q MaskedRadius2DWave
-		killwaves MaskedRadius2DWave
-		QvectorNumberPoints=floor((V_max-V_min))
+		if(Qmin<1e-10 && Qmax<1e-10)							//this is without Qmin and Qmax set... 
+			QvectorNumberPoints=floor((V_max-V_min))
+		else														//this is when user uses also Qmin and Qmax, need to find how those impact the result
+			//need to calculate Qmin and Qmax in pixels from center.  
+			NVAR SampleToCCDDistance=root:Packages:Convert2Dto1D:SampleToCCDDistance		//in millimeters
+			NVAR Wavelength = root:Packages:Convert2Dto1D:Wavelength							//in A
+			NVAR PixelSizeX = root:Packages:Convert2Dto1D:PixelSizeX								//in millimeters
+			NVAR PixelSizeY = root:Packages:Convert2Dto1D:PixelSizeY								//in millimeters
+			variable Pixmin = SampleToCCDDistance*TAN(2*ASIN(Wavelength*qmin/4/pi))/((PixelSizeX+PixelSizeY)/2)		//approximate distacne, in pixels of Qmin from center
+			variable Pixmax = SampleToCCDDistance*TAN(2*ASIN(Wavelength*qmax/4/pi))/((PixelSizeX+PixelSizeY)/2)		//approximate distacne, in pixels of Qmax from center
+			Pixmax = (numtype(Pixmax)==0)? Pixmax : V_max
+			Pixmin = (numtype(Pixmin)==0)? Pixmin : V_min
+			variable RealMin = max(V_min, Pixmin)
+			variable RealMax = min(V_max,PixMax)
+			QvectorNumberPoints=ceil((RealMax-RealMin))
+		endif
 		redimension/N=(numpnts(MaxNumPntsLookupWv)+1) MaxNumPntsLookupWvLBL, MaxNumPntsLookupWv
 		
 		MaxNumPntsLookupWvLBL[numpnts(MaxNumPntsLookupWv)-1]= CurOrient
 		MaxNumPntsLookupWv[numpnts(MaxNumPntsLookupWv)-1]= QvectorNumberPoints
 		
 		print "Recalculated the right number of points LUT"
+		//killwaves/Z MaskedRadius2DWave
 
 		return 2
 	endif

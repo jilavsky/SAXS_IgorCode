@@ -13,7 +13,7 @@
 //2.12  removed unused functions
 //2.11 Modified Screen Size check to match the needs
 //2.10 added getHelp button calling to www manual
-//2.09 sped up about 6x the smearing routine in IR1B_SmearData. May need to be checked, seems to work in Unified, Modeling II and Desmearing.
+//2.09 sped up about 6x the smearing routine in IR1B_SmearData. May need to be checked, seems to work in Unified, Modeling and Desmearing.
 //2.08 propagate dQ if exists in slit smeared data, if does not exist, fake one from distance between points. 
 //2.07 fixed Next sample button where there was weird bug when one was goign between use of manual selection and next sample buttons. 
 //2.06 changed back to rtGlobals=2, need to check code much more to make it 3

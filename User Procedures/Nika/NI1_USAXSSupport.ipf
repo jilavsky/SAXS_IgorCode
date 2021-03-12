@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.52
+#pragma version=1.53
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2021, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.53 Added Dexela HDF5 support for WAXS, Fixed offset is read and set in NI1_9IDWFindI0, there is no function in Nika to set thsi dynamically. 
 //1.52 Added mask which can mask off low sensitivity pixels between tiles. 
 //1.51 added passing through NXMetadata, NXSample, NXInstrument, NXUser
 //1.50 Added Batch processing
@@ -80,9 +81,9 @@ Function NI1_9IDCConfigureNika()
 	setDataFOlder root:Packages:Convert2Dto1D:
 	
 	string ListOfVariables="USAXSSlitLength;SAXSGenSmearedPinData;SAXSDeleteTempPinData;USAXSForceTransmissionDialog;"
-	ListOfVariables +="USAXSSAXSselector;USAXSWAXSselector;USAXSBigSAXSselector;USAXSCheckForRIghtEmpty;USAXSCheckForRIghtDark;USAXSForceTransRecalculation;"
+	ListOfVariables +="USAXSSAXSselector;USAXSWAXSselector;USAXSWAXSDexselector;USAXSCheckForRIghtEmpty;USAXSCheckForRIghtDark;USAXSForceTransRecalculation;"
 	ListOfVariables +="USAXSLoadListedEmpDark;USAXSForceUSAXSTransmission;ReadParametersFromEachFile;WAXSSubtractBlank;"
-	ListOfVariables +="UsePixSensitiveMask;DisplayJPGFile;"
+	ListOfVariables +="UsePixSensitiveMask;DisplayJPGFile;DexelaOffsetScale;"
 	string ListOfStrings="USAXSSampleName;"
 
 	variable i
@@ -101,11 +102,11 @@ Function NI1_9IDCConfigureNika()
 	NVAR SAXSGenSmearedPinData=root:Packages:Convert2Dto1D:SAXSGenSmearedPinData
 	SAXSGenSmearedPinData=1
 	NVAR USAXSSAXSselector = root:Packages:Convert2Dto1D:USAXSSAXSselector
-	NVAR USAXSBigSAXSselector = root:Packages:Convert2Dto1D:USAXSBigSAXSselector
+	NVAR USAXSWAXSDexselector = root:Packages:Convert2Dto1D:USAXSWAXSDexselector
 	NVAR USAXSWAXSselector = root:Packages:Convert2Dto1D:USAXSWAXSselector
-	if((USAXSWAXSselector+USAXSSAXSselector+USAXSBigSAXSselector)!=1)
+	if((USAXSWAXSselector+USAXSSAXSselector+USAXSWAXSDexselector)!=1)
 		USAXSSAXSselector = 1
-		USAXSBigSAXSselector = 0
+		USAXSWAXSDexselector = 0
 		USAXSWAXSselector = 0
 	endif
 	
@@ -117,6 +118,10 @@ Function NI1_9IDCConfigureNika()
 	NVAR WAXSSubtractBlank = root:Packages:Convert2Dto1D:WAXSSubtractBlank
 	WAXSSubtractBlank=1
 	
+	NVAR DexelaOffsetScale
+	if(DexelaOffsetScale<=0 || DexelaOffsetScale>1)
+		DexelaOffsetScale = 0.9
+	endif
 	//update main panel... 
 	DoWIndow NI1A_Convert2Dto1DPanel
 	if(V_Flag)
@@ -151,8 +156,10 @@ Function NI1_9IDCConfigPanelFunction() : Panel
 	///DrawText 10, 77, "SAXS     : large SAXS camera in the 15ID-D (only SAXS, no USAXS)"
 	Checkbox SAXSSelection,pos={10,90},size={100,20}, variable=root:Packages:Convert2Dto1D:USAXSSAXSselector, proc=NI1_9IDCCheckProc
 	Checkbox SAXSSelection, title ="SAXS", help={"Use to configure Nika for SAXS"}
-	Checkbox USAXSWAXSselector,pos={150,90},size={100,20}, variable=root:Packages:Convert2Dto1D:USAXSWAXSselector, proc=NI1_9IDCCheckProc
-	Checkbox USAXSWAXSselector, title ="WAXS", help={"Use to configure Nika for WAXS"}
+	Checkbox USAXSWAXSselector,pos={120,90},size={100,20}, variable=root:Packages:Convert2Dto1D:USAXSWAXSselector, proc=NI1_9IDCCheckProc
+	Checkbox USAXSWAXSselector, title ="WAXS-Pilatus", help={"Use to configure Nika for WAXS using Pilatus"}
+	Checkbox USAXSWAXSDexselector,pos={230,90},size={100,20}, variable=root:Packages:Convert2Dto1D:USAXSWAXSDexselector, proc=NI1_9IDCCheckProc
+	Checkbox USAXSWAXSDexselector, title ="WAXS-Dexela", help={"Use to configure Nika for WAXS using Dexela"}
 
 	Checkbox DisplayJPGFile,pos={370,90},size={100,20}, variable=root:Packages:Convert2Dto1D:DisplayJPGFile, noproc
 	Checkbox DisplayJPGFile, title ="Display JPG File", help={"Display jpg file if it was collected... "}
@@ -185,6 +192,11 @@ Function NI1_9IDCConfigPanelFunction() : Panel
 	Button SetUSAXSSlitLength,help={"Locate USAXS data from which to get the Slit length"}
 	Checkbox WAXSUseBlank,pos={229,167},size={100,20}, variable=root:Packages:Convert2Dto1D:WAXSSubtractBlank, proc=NI1_9IDCCheckProc
 	Checkbox WAXSUseBlank, title ="WAXS use Blank", help={"Controls if WAXS will subtacrt Empty/Blank image"}
+
+	SetVariable DexelaOffsetScale,pos={229,175},size={200,16},title="Scale offset"
+	SetVariable DexelaOffsetScale,help={"How much to scale offset, used to preven negative intensities"}
+	SetVariable DexelaOffsetScale,limits={0,1,0.01},value= root:Packages:Convert2Dto1D:DexelaOffsetScale
+
 
 //	Button WAXSUseBlank,pos={229,160},size={200,20},proc=NI1_9IDCButtonProc,title="WAXS Do NOT use Blank"
 //	Button WAXSUseBlank,help={"Push NOT to use blank with 200kw WAXS"}, fColor=(30583,30583,30583)
@@ -244,35 +256,28 @@ Function NI1_9IDCDisplayAndHideControls()
 
 	NVAR USAXSSAXSselector = root:Packages:Convert2Dto1D:USAXSSAXSselector
 	NVAR USAXSWAXSselector = root:Packages:Convert2Dto1D:USAXSWAXSselector
-	NVAR USAXSBigSAXSselector = root:Packages:Convert2Dto1D:USAXSBigSAXSselector
+	NVAR USAXSWAXSDexselector = root:Packages:Convert2Dto1D:USAXSWAXSDexselector
 	NVAR ReadVals=root:Packages:Convert2Dto1D:ReadParametersFromEachFile
-	variable DisplayPinCntrls=USAXSBigSAXSselector || USAXSWAXSselector
-	variable DisplayWAXSCntrls=USAXSSAXSselector || USAXSWAXSselector
+	variable DisplayPinCntrls=USAXSWAXSDexselector || USAXSWAXSselector
+	variable DisplayWAXSCntrls=USAXSSAXSselector || USAXSWAXSselector || USAXSWAXSDexselector
+	NVAR QvectorMaxNumPnts=root:Packages:Convert2Dto1D:QvectorMaxNumPnts
 
 	Checkbox SAXSGenSmearedPinData, win= NI1_9IDCConfigPanel, disable = DisplayPinCntrls
 	Checkbox SAXSDeleteTempPinData,  win= NI1_9IDCConfigPanel, disable = DisplayPinCntrls
 
 	Button ConfigureWaveNoteParameters,  win= NI1_9IDCConfigPanel, disable = ReadVals
-	Checkbox WAXSUseBlank,win= NI1_9IDCConfigPanel, disable = !USAXSWAXSselector
-//	Button CreateBadPIXMASK,win= NI1_9IDCConfigPanel, disable = USAXSBigSAXSselector
+	Checkbox WAXSUseBlank,win= NI1_9IDCConfigPanel, disable = !(USAXSWAXSselector&&USAXSWAXSDexselector)
+	SetVariable DexelaOffsetScale,win= NI1_9IDCConfigPanel, disable = !(USAXSWAXSDexselector)
+	//	Button CreateBadPIXMASK,win= NI1_9IDCConfigPanel, disable = USAXSBigSAXSselector
 	Button SetUSAXSSlitLength, win= NI1_9IDCConfigPanel, disable = DisplayPinCntrls
 	SetVariable USAXSSlitLength, win= NI1_9IDCConfigPanel, disable = DisplayPinCntrls
-
-	NVAR QvectorMaxNumPnts=root:Packages:Convert2Dto1D:QvectorMaxNumPnts
+	
 	CheckBox QvectorMaxNumPnts, win= NI1_9IDCConfigPanel, disable = (DisplayPinCntrls)
 	SetVariable QbinPoints, win= NI1_9IDCConfigPanel, disable = (DisplayPinCntrls || QvectorMaxNumPnts)
 	//This is for WAXS
-	CheckBox UseQvector,win= NI1_9IDCConfigPanel, disable = !USAXSWAXSselector
-	CheckBox UseDspacing,win= NI1_9IDCConfigPanel, disable = !USAXSWAXSselector
-	CheckBox UseTheta,win= NI1_9IDCConfigPanel, disable = !USAXSWAXSselector
-
-//	Checkbox USAXSForceUSAXSTransmission, win= NI1_9IDCConfigPanel, disable = DisplayPinCntrls
-
-//	Checkbox USAXSCheckForRIghtEmpty, win= NI1_9IDCConfigPanel, disable = DisplayWAXSCntrls
-//	Checkbox USAXSCheckForRIghtDark, win= NI1_9IDCConfigPanel, disable = DisplayWAXSCntrls
-//	Checkbox USAXSForceTransRecalculation, win= NI1_9IDCConfigPanel, disable = DisplayWAXSCntrls
-//	Checkbox USAXSLoadListedEmpDark, win= NI1_9IDCConfigPanel, disable = DisplayWAXSCntrls
-//	Checkbox ForceTransmissionDialog, win= NI1_9IDCConfigPanel, disable = USAXSWAXSselector
+	CheckBox UseQvector,win= NI1_9IDCConfigPanel, disable = !(USAXSWAXSselector||USAXSWAXSDexselector)
+	CheckBox UseDspacing,win= NI1_9IDCConfigPanel, disable = !(USAXSWAXSselector||USAXSWAXSDexselector)
+	CheckBox UseTheta,win= NI1_9IDCConfigPanel, disable = !(USAXSWAXSselector||USAXSWAXSDexselector)
 end
 //************************************************************************************************************
 //************************************************************************************************************
@@ -285,7 +290,7 @@ Function NI1_9IDCCheckProc(cba) : CheckBoxControl
 			Variable checked = cba.checked
 			NVAR USAXSWAXSselector = root:Packages:Convert2Dto1D:USAXSWAXSselector
 			NVAR USAXSSAXSselector = root:Packages:Convert2Dto1D:USAXSSAXSselector
-			NVAR USAXSBigSAXSselector = root:Packages:Convert2Dto1D:USAXSBigSAXSselector
+			NVAR USAXSWAXSDexselector = root:Packages:Convert2Dto1D:USAXSWAXSDexselector
 			NVAR readVals=root:Packages:Convert2Dto1D:ReadParametersFromEachFile
 			if(stringmatch(cba.ctrlName,"ReadParametersFromEachFile"))
 				NVAR NX_ReadParametersOnLoad = root:Packages:Irena_Nexus:NX_ReadParametersOnLoad
@@ -295,18 +300,27 @@ Function NI1_9IDCCheckProc(cba) : CheckBoxControl
 			if(stringmatch(cba.ctrlName,"USAXSWAXSselector"))
 				TitleBox LoadBlankWarning win=NI1_9IDCConfigPanel, title="\\Zr150>>>>    Push \"Set default settings\" button now     <<<<"
 				if(checked)
-					USAXSBigSAXSselector =0
+					USAXSWAXSDexselector =0
 					USAXSSAXSselector=0
-					//USAXSWAXSselector=0
+					//USAXSWAXSDexselector=0
 				endif
 				NI1_9IDCDisplayAndHideControls()
 			endif
 			if(stringmatch(cba.ctrlName,"SAXSSelection"))
 				TitleBox LoadBlankWarning win=NI1_9IDCConfigPanel, title="\\Zr150>>>>    Push \"Set default settings\" button now     <<<<"
 				if(checked)
-					USAXSBigSAXSselector =0
+					USAXSWAXSselector =0
 					USAXSSAXSselector=1
-					//USAXSWAXSselector=0
+					USAXSWAXSDexselector=0
+				endif
+				NI1_9IDCDisplayAndHideControls()
+			endif
+			if(stringmatch(cba.ctrlName,"USAXSWAXSDexselector"))
+				TitleBox LoadBlankWarning win=NI1_9IDCConfigPanel, title="\\Zr150>>>>    Push \"Set default settings\" button now     <<<<"
+				if(checked)
+					USAXSWAXSDexselector =1
+					USAXSSAXSselector=0
+					USAXSWAXSselector=0
 				endif
 				NI1_9IDCDisplayAndHideControls()
 			endif
@@ -314,20 +328,20 @@ Function NI1_9IDCCheckProc(cba) : CheckBoxControl
 			if(stringmatch(cba.ctrlName,"UsePixSensitiveMask"))
 				NI1_Cleanup2Dto1DFolder()
 			endif
-			if(stringmatch(cba.ctrlName,"BigSAXSSelection"))
-				if(checked)
-					//USAXSBigSAXSselector =0
-					USAXSSAXSselector=0
-					USAXSWAXSselector=0
-				endif
-				NI1_9IDCDisplayAndHideControls()
-			endif
+//			if(stringmatch(cba.ctrlName,"BigSAXSSelection"))
+//				if(checked)
+//					//USAXSBigSAXSselector =0
+//					USAXSSAXSselector=0
+//					USAXSWAXSselector=0
+//				endif
+//				NI1_9IDCDisplayAndHideControls()
+//			endif
 			if(stringmatch(cba.ctrlName,"WAXSUseBlank"))
 				NI1_9IDCWAXSBlankSUbtraction(checked)				
 			endif
-			if(USAXSBigSAXSselector+USAXSSAXSselector+USAXSWAXSselector!=1)
+			if(USAXSWAXSDexselector+USAXSSAXSselector+USAXSWAXSselector!=1)
 				TitleBox LoadBlankWarning win=NI1_9IDCConfigPanel, title="\\Zr150>>>>    Push \"Set default settings\" button now     <<<<"
-				USAXSBigSAXSselector =0
+				USAXSWAXSDexselector =0
 				USAXSSAXSselector=1
 				USAXSWAXSselector=0
 				NI1_9IDCDisplayAndHideControls()
@@ -551,7 +565,8 @@ Function NI1_9IDCConfigNexus()
 
 	NVAR useWAXS = root:Packages:Convert2Dto1D:USAXSWAXSselector
 	NVAR useSAXS = root:Packages:Convert2Dto1D:USAXSSAXSselector
-	NVAR useBigSAXS = root:Packages:Convert2Dto1D:USAXSBigSAXSselector
+//	NVAR useBigSAXS = root:Packages:Convert2Dto1D:USAXSBigSAXSselector
+	NVAR useWAXSDexela = root:Packages:Convert2Dto1D:USAXSWAXSDexselector
 
 	Wave/Z w2D = root:Packages:Convert2Dto1D:CCDImageToConvert
 	if(!WaveExists(w2D))
@@ -561,6 +576,8 @@ Function NI1_9IDCConfigNexus()
 	SVAR Current2DFileName = root:Packages:Convert2Dto1D:FileNameToLoad
 	variable beamline_support_version
 
+print StringByKey("data:model", OldNOte  , "=" , ";")
+print OldNOte
 	if(stringMatch("9ID", StringByKey("instrument:source:facility_beamline", OldNOte  , "=" , ";")) && stringMatch("Pilatus", StringByKey("data:model", OldNOte  , "=" , ";")))	
 //		//9ID data from 2015 onwards... 
 //		Wavelength = NumberByKey(NI1_9IDCFindKeyStr("monochromator:wavelength=", OldNote), OldNote  , "=" , ";")
@@ -577,7 +594,7 @@ Function NI1_9IDCConfigNexus()
 //			SampleToCCDdistance = NumberByKey(NI1_9IDCFindKeyStr("detector:distance=", OldNote), OldNote  , "=" , ";")
 //			BeamSizeX = NumberByKey(NI1_9IDCFindKeyStr("shape:xsize=", OldNote), OldNote  , "=" , ";")
 //			BeamSizeY = NumberByKey(NI1_9IDCFindKeyStr("shape:ysize=", OldNote), OldNote  , "=" , ";")
-	elseif(useWAXS)
+		elseif(useWAXS)
 			ListOfParamsAndPaths[0][0]="UserSampleName"
 			ListOfParamsAndPaths[0][1]=	""
 			//ListOfParamsAndPaths[0][1]=	":entry:title"
@@ -609,28 +626,50 @@ Function NI1_9IDCConfigNexus()
 			ListOfParamsAndPaths[14][1]=	":entry:"+NI1_9IDCFindKeyStr("waxs_ccd_tilt_x=", OldNote)	
 			ListOfParamsAndPaths[15][0]="VerticalTilt"
 			ListOfParamsAndPaths[15][1]=	":entry:"+NI1_9IDCFindKeyStr("waxs_ccd_tilt_y=", OldNote)
-
-//			PixelSizeX = NumberByKey(NI1_9IDCFindKeyStr("waxs_detector:x_pixel_size=", OldNote), OldNote  , "=" , ";")
-//			PixelSizeY = NumberByKey(NI1_9IDCFindKeyStr("waxs_detector:y_pixel_size=", OldNote), OldNote  , "=" , ";")
-//			HorizontalTilt = NumberByKey(NI1_9IDCFindKeyStr("waxs_ccd_tilt_x=", OldNote), OldNote  , "=" , ";")
-//			VerticalTilt = NumberByKey(NI1_9IDCFindKeyStr("waxs_ccd_tilt_y=", OldNote), OldNote  , "=" , ";")
- 
-//			BeamCenterX = NumberByKey(NI1_9IDCFindKeyStr("waxs_ccd_center_x_pixel=", OldNote), OldNote  , "=" , ";")
-//			BeamCenterY = NumberByKey(NI1_9IDCFindKeyStr("waxs_ccd_center_y_pixel=", OldNote), OldNote  , "=" , ";")
-//			SampleToCCDdistance = NumberByKey(NI1_9IDCFindKeyStr("waxs_detector:distance=", OldNote), OldNote  , "=" , ";")
-//			BeamSizeX = NumberByKey(NI1_9IDCFindKeyStr("shape:xsize=", OldNote), OldNote  , "=" , ";")
-//			BeamSizeY = NumberByKey(NI1_9IDCFindKeyStr("shape:ysize=", OldNote), OldNote  , "=" , ";")
+				//			PixelSizeX = NumberByKey(NI1_9IDCFindKeyStr("waxs_detector:x_pixel_size=", OldNote), OldNote  , "=" , ";")
+				//			PixelSizeY = NumberByKey(NI1_9IDCFindKeyStr("waxs_detector:y_pixel_size=", OldNote), OldNote  , "=" , ";")
+				//			HorizontalTilt = NumberByKey(NI1_9IDCFindKeyStr("waxs_ccd_tilt_x=", OldNote), OldNote  , "=" , ";")
+				//			VerticalTilt = NumberByKey(NI1_9IDCFindKeyStr("waxs_ccd_tilt_y=", OldNote), OldNote  , "=" , ";")
+				 
+				//			BeamCenterX = NumberByKey(NI1_9IDCFindKeyStr("waxs_ccd_center_x_pixel=", OldNote), OldNote  , "=" , ";")
+				//			BeamCenterY = NumberByKey(NI1_9IDCFindKeyStr("waxs_ccd_center_y_pixel=", OldNote), OldNote  , "=" , ";")
+				//			SampleToCCDdistance = NumberByKey(NI1_9IDCFindKeyStr("waxs_detector:distance=", OldNote), OldNote  , "=" , ";")
+				//			BeamSizeX = NumberByKey(NI1_9IDCFindKeyStr("shape:xsize=", OldNote), OldNote  , "=" , ";")
+				//			BeamSizeY = NumberByKey(NI1_9IDCFindKeyStr("shape:ysize=", OldNote), OldNote  , "=" , ";")
 		endif		
-//		print "Set experimental settinsg and geometry from file :"+Current2DFileName
-//		print "Wavelength = "+num2str(Wavelength)
-//		print "XRayEnergy = "+num2str(12.3984/Wavelength)
-//		print "PixelSizeX = "+num2str(PixelSizeX)
-//		print "PixelSizeY = "+num2str(PixelSizeY)
-//		print "BeamCenterX = "+num2str(BeamCenterX)
-//		print "BeamCenterY = "+num2str(BeamCenterY)
-//		print "SampleToCCDdistance = "+num2str(SampleToCCDdistance)
-//		print "BeamSizeX = "+num2str(BeamSizeX)
-//		print "BeamSizeY = "+num2str(BeamSizeY)
+	elseif(stringMatch("9ID", StringByKey("instrument:source:facility_beamline", OldNOte  , "=" , ";")) && stringMatch("Dexela 2315", StringByKey("Metadata:Model", OldNOte  , "=" , ";")))	
+			//this is Dexela WAXS = useWAXSDexela - same as Pilatus WAXS, except this one has offset for each frame. 
+			ListOfParamsAndPaths[0][0]="UserSampleName"
+			ListOfParamsAndPaths[0][1]=	""
+			//ListOfParamsAndPaths[0][1]=	":entry:title"
+
+			ListOfParamsAndPaths[1][0]="SampleThickness"
+			ListOfParamsAndPaths[1][1]=	":entry:sample:thickness"
+
+			ListOfParamsAndPaths[5][0]="SampleToCCDDistance"
+			ListOfParamsAndPaths[5][1]=":entry:"+NI1_9IDCFindKeyStr("detector:distance=", OldNote)
+
+			ListOfParamsAndPaths[8][0]="BeamCenterX"
+			ListOfParamsAndPaths[8][1]=":entry:"+NI1_9IDCFindKeyStr("waxs_ccd_center_x_pixel=", OldNote)
+
+			ListOfParamsAndPaths[9][0]="BeamCenterY"
+			ListOfParamsAndPaths[9][1]=":entry:"+NI1_9IDCFindKeyStr("waxs_ccd_center_y_pixel=", OldNote)
+
+			ListOfParamsAndPaths[10][0]="BeamSizeX"
+			ListOfParamsAndPaths[10][1]=	":entry:"+NI1_9IDCFindKeyStr("shape:xsize=", OldNote)	
+			ListOfParamsAndPaths[11][0]="BeamSizeY"
+			ListOfParamsAndPaths[11][1]=	":entry:"+NI1_9IDCFindKeyStr("shape:ysize=", OldNote)
+
+			ListOfParamsAndPaths[12][0]="PixelSizeX"
+			ListOfParamsAndPaths[12][1]=":entry:"+NI1_9IDCFindKeyStr("x_pixel_size=", OldNote)	
+			ListOfParamsAndPaths[13][0]="PixelSizeY"
+			ListOfParamsAndPaths[13][1]=	":entry:"+NI1_9IDCFindKeyStr("y_pixel_size=", OldNote)
+
+
+			ListOfParamsAndPaths[14][0]="HorizontalTilt"
+			ListOfParamsAndPaths[14][1]=	":entry:"+NI1_9IDCFindKeyStr("waxs_ccd_tilt_x=", OldNote)	
+			ListOfParamsAndPaths[15][0]="VerticalTilt"
+			ListOfParamsAndPaths[15][1]=	":entry:"+NI1_9IDCFindKeyStr("waxs_ccd_tilt_y=", OldNote)
 	else
 			NVAR ReadVals=root:Packages:Convert2Dto1D:ReadParametersFromEachFile
 			ReadVals = 0
@@ -733,7 +772,8 @@ Function NI1_9IDCCreateWAXSPixMask()
 		variable/g UsePixSensitiveMask=0
 	endif
 	M_ROIMask =1
-	if(DimSize(M_ROIMask, 1)>500)	//Pilatus 200kW
+	string notestr
+	if(DimSize(M_ROIMask, 1)>500 && DimSize(M_ROIMask, 1)<1500)	//Pilatus 200kW
 		M_ROIMask[0,194][486,494]=0
 		M_ROIMask[0,3][0,980]=0
 		M_ROIMask[193,194][0,980]=0
@@ -766,7 +806,7 @@ Function NI1_9IDCCreateWAXSPixMask()
 	
 		endif
 	
-		string notestr="MaskOffLowIntPoints:0;LowIntToMaskOff:0>// ;ITEMNO:0;\r"
+		notestr="MaskOffLowIntPoints:0;LowIntToMaskOff:0>// ;ITEMNO:0;\r"
 		notestr+="	SetDrawEnv xcoord= top,ycoord= left\r"
 		notestr+="// ;ITEMNO:1;\r"
 		notestr+="SetDrawEnv linefgc= (3,52428,1)\r"
@@ -777,6 +817,37 @@ Function NI1_9IDCCreateWAXSPixMask()
 		notestr+="// ;ITEMNO:4;\r"
 		notestr+="DrawRect -1,485,196,495\r"	
 		note M_ROIMask, notestr
+	elseif(DimSize(M_ROIMask, 1)>1500)	//Dexela N2315
+					//hor 		vert
+		M_ROIMask[0,1943][0,3]=0
+		M_ROIMask[0,1943][9,9]=0
+		M_ROIMask[0,1943][3068,3071]=0
+		M_ROIMask[0,1943][1535,1536]=0
+		//vertical
+		M_ROIMask[0,3][0,3071]=0
+		M_ROIMask[1940,1943][0,3071]=0
+		//boxes...
+		M_ROIMask[64,68][335,343]=0
+		M_ROIMask[112,120][36,45]=0
+		if(UsePixSensitiveMask)
+			//these are horizontal lines (in Nika)
+			M_ROIMask[0,1943][810,810]=0
+			M_ROIMask[0,1943][1546,1546]=0
+			//these are vertical lines in Nika
+			M_ROIMask[781,781][0,1536]=0
+		endif
+//	
+//		string notestr="MaskOffLowIntPoints:0;LowIntToMaskOff:0>// ;ITEMNO:0;\r"
+//		notestr+="	SetDrawEnv xcoord= top,ycoord= left\r"
+//		notestr+="// ;ITEMNO:1;\r"
+//		notestr+="SetDrawEnv linefgc= (3,52428,1)\r"
+//		notestr+="// ;ITEMNO:2;\r"
+//		notestr+="SetDrawEnv fillpat= 5,fillfgc= (0,0,0)\r"
+//		notestr+="// ;ITEMNO:3;\r"
+//		notestr+="SetDrawEnv save\r"
+//		notestr+="// ;ITEMNO:4;\r"
+//		notestr+="DrawRect -1,485,196,495\r"	
+//		note M_ROIMask, notestr
 	endif		
 	SVAR CurrentMaskFileName = root:Packages:Convert2Dto1D:CurrentMaskFileName
 	CurrentMaskFileName="9IDC default WAXS mask"
@@ -900,9 +971,20 @@ Function/S NI1_9IDCSetDefaultConfiguration()
 	Proc3 = 0
 
 	NVAR SAXSSelected=root:Packages:Convert2Dto1D:USAXSSAXSselector
-	NVAR bigSAXSSelected=root:Packages:Convert2Dto1D:USAXSBigSAXSselector
+	NVAR WAXSDexelaSelected = root:Packages:Convert2Dto1D:USAXSWAXSDexselector
 	NVAR WAXSSelected = root:Packages:Convert2Dto1D:USAXSWAXSselector
-		if(WAXSSelected)
+
+	if(WAXSDexelaSelected)	//Dexela special case
+		NVAR UseSubtractFixedOffset = root:Packages:Convert2Dto1D:UseSubtractFixedOffset
+		NVAR DEZINGERDATA=root:Packages:Convert2Dto1D:DezingerCCDData
+		NVAR DezingRatio=root:Packages:Convert2Dto1D:DezingerRatio
+		NVAR DezingNumTimes=root:Packages:Convert2Dto1D:DezingerHowManyTimes
+		UseSubtractFixedOffset = 1
+		DEZINGERDATA = 1
+		DezingRatio = 25
+		DezingNumTimes = 1
+	endif
+	if(WAXSSelected || WAXSDexelaSelected)
 				NVAR UseSectors = root:Packages:Convert2Dto1D:UseSectors
 				UseSectors = 1
 				NVAR QvectormaxNumPnts = root:Packages:Convert2Dto1D:QvectormaxNumPnts
@@ -1277,123 +1359,123 @@ Function/S NI1_9IDCSetDefaultConfiguration()
 				BMCntrDisplayLogImage = 1
 				NVAR SAXSDeleteTempPinData= root:Packages:Convert2Dto1D:SAXSDeleteTempPinData
 				SAXSDeleteTempPinData = 1
-	else		//end of SAXS selection, bellow starts bigSAXS specifics...
-				NVAR UseSectors = root:Packages:Convert2Dto1D:UseSectors
-				UseSectors = 1
-				NVAR QvectormaxNumPnts = root:Packages:Convert2Dto1D:QvectormaxNumPnts
-				NVAR QBinningLogarithmic = root:Packages:Convert2Dto1D:QBinningLogarithmic
-				NVAR DoSectorAverages = root:Packages:Convert2Dto1D:DoSectorAverages
-				NVAR NumberOfSectors = root:Packages:Convert2Dto1D:NumberOfSectors
-				NVAR SectorsStartAngle = root:Packages:Convert2Dto1D:SectorsStartAngle
-				NVAR SectorsHalfWidth = root:Packages:Convert2Dto1D:SectorsHalfWidth
-				NVAR DisplayDataAfterProcessing = root:Packages:Convert2Dto1D:DisplayDataAfterProcessing
-				NVAR StoreDataInIgor = root:Packages:Convert2Dto1D:StoreDataInIgor
-				NVAR OverwriteDataIfExists = root:Packages:Convert2Dto1D:OverwriteDataIfExists
-				NVAR Use2Ddataname = root:Packages:Convert2Dto1D:Use2Ddataname
-				NVAR QvectorNumberPoints = root:Packages:Convert2Dto1D:QvectorNumberPoints
-				NVAR DoCircularAverage = root:Packages:Convert2Dto1D:DoCircularAverage
-				DoCircularAverage = 1
-				QvectorNumberPoints=220
-				QBinningLogarithmic=1
-				QvectormaxNumPnts = 0
-				DisplayDataAfterProcessing = 1
-				StoreDataInIgor = 1
-				OverwriteDataIfExists = 1
-				Use2Ddataname = 1
-			
-				NVAR UseLineProfile = root:Packages:Convert2Dto1D:UseLineProfile
-				NVAR LineProfileUseRAW = root:Packages:Convert2Dto1D:LineProfileUseRAW
-				NVAR LineProfileUseCorrData = root:Packages:Convert2Dto1D:LineProfileUseCorrData
-				SVAR LineProf_CurveType=root:Packages:Convert2Dto1D:LineProf_CurveType
-					
-				UseLineProfile=0
-				LineProfileUseCorrData=1
-				LineProfileUseRAW =0
-			
-				NVAR UseSampleTransmission = root:Packages:Convert2Dto1D:UseSampleTransmission
-				NVAR UseEmptyField = root:Packages:Convert2Dto1D:UseEmptyField
-				NVAR UseDarkField = root:Packages:Convert2Dto1D:UseDarkField
-				NVAR UseI0ToCalibrate = root:Packages:Convert2Dto1D:UseI0ToCalibrate
-				NVAR DoGeometryCorrection = root:Packages:Convert2Dto1D:DoGeometryCorrection
-				NVAR UseMonitorForEf = root:Packages:Convert2Dto1D:UseMonitorForEf
-				NVAR UseSampleTransmFnct = root:Packages:Convert2Dto1D:UseSampleTransmFnct
-				NVAR UseSampleMonitorFnct = root:Packages:Convert2Dto1D:UseSampleMonitorFnct
-				NVAR UseEmptyMonitorFnct = root:Packages:Convert2Dto1D:UseEmptyMonitorFnct
-				NVAR UseSampleThicknFnct = root:Packages:Convert2Dto1D:UseSampleThicknFnct
-				UseSampleTransmission = 1
-				UseEmptyField = 1
-				UseDarkField = 1
-				UseI0ToCalibrate = 1
-				DoGeometryCorrection = 1
-				UseMonitorForEf = 1
-				UseSampleTransmFnct = 1
-				UseSampleMonitorFnct = 1
-				UseEmptyMonitorFnct = 1
-				UseSampleThicknFnct = 1
-				
-				NVAR ErrorCalculationsUseOld=root:Packages:Convert2Dto1D:ErrorCalculationsUseOld
-				NVAR ErrorCalculationsUseStdDev=root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev
-				NVAR ErrorCalculationsUseSEM=root:Packages:Convert2Dto1D:ErrorCalculationsUseSEM
-				ErrorCalculationsUseOld=1
-				ErrorCalculationsUseStdDev=0
-				ErrorCalculationsUseSEM=0			//which one is correct here???
-				if(ErrorCalculationsUseOld)
-					print "Uncertainty calculation method is set to \"Old method (see manual for description)\""
-				elseif(ErrorCalculationsUseStdDev)
-					print "Uncertainty calculation method is set to \"Standard deviation (see manual for description)\""
-				else
-					print "Uncertainty calculation method is set to \"Standard error of mean (see manual for description)\""
-				endif
-				
-				SVAR SampleTransmFnct = root:Packages:Convert2Dto1D:SampleTransmFnct
-				SVAR SampleMonitorFnct = root:Packages:Convert2Dto1D:SampleMonitorFnct
-				SVAR EmptyMonitorFnct = root:Packages:Convert2Dto1D:EmptyMonitorFnct
-				SVAR SampleThicknFnct = root:Packages:Convert2Dto1D:SampleThicknFnct
-				
-				SampleTransmFnct = "NI1_9IDCSFIndTransmission"
-				SampleMonitorFnct = "NI1_9IDCSFindI0"
-				EmptyMonitorFnct = "NI1_9IDCSFindEfI0"
-				SampleThicknFnct = "NI1_9IDCSFindThickness"
-			
-				NI1A_SetCalibrationFormula()
-				
-				NVAR BMCalibrantD1LineWidth = root:Packages:Convert2Dto1D:BMCalibrantD1LineWidth
-				NVAR BMCalibrantD2LineWidth = root:Packages:Convert2Dto1D:BMCalibrantD2LineWidth
-				NVAR BMCalibrantD3LineWidth = root:Packages:Convert2Dto1D:BMCalibrantD3LineWidth
-				NVAR BMCalibrantD4LineWidth = root:Packages:Convert2Dto1D:BMCalibrantD4LineWidth
-				NVAR BMCalibrantD5LineWidth = root:Packages:Convert2Dto1D:BMCalibrantD5LineWidth
-				BMCalibrantD1LineWidth = 25
-				BMCalibrantD2LineWidth = 25
-				BMCalibrantD3LineWidth = 25
-				BMCalibrantD4LineWidth = 25
-				BMCalibrantD5LineWidth = 25
-			
-				NVAR BMCalibrantD1=root:Packages:Convert2Dto1D:BMCalibrantD1
-				NVAR BMCalibrantD2=root:Packages:Convert2Dto1D:BMCalibrantD2
-				NVAR BMCalibrantD3=root:Packages:Convert2Dto1D:BMCalibrantD3
-				NVAR BMCalibrantD4=root:Packages:Convert2Dto1D:BMCalibrantD4
-				NVAR BMCalibrantD5=root:Packages:Convert2Dto1D:BMCalibrantD5
-				NVAR BMUseCalibrantD1=root:Packages:Convert2Dto1D:BMUseCalibrantD1
-				NVAR BMUseCalibrantD2=root:Packages:Convert2Dto1D:BMUseCalibrantD2
-				NVAR BMUseCalibrantD3=root:Packages:Convert2Dto1D:BMUseCalibrantD3
-				NVAR BMUseCalibrantD4=root:Packages:Convert2Dto1D:BMUseCalibrantD4
-				NVAR BMUseCalibrantD5=root:Packages:Convert2Dto1D:BMUseCalibrantD5
-					//The number I use is q = 0.1076 (1/Angstrom), d = 58.380 Angstroms.  The
-					//reference is T.C. Huang et al, J. Appl. Cryst. (1993), 26, 180-184.
-					BMCalibrantD1=58.380
-					BMCalibrantD2=29.185
-					BMCalibrantD3=19.46
-					BMCalibrantD4=14.595
-					BMCalibrantD5=11.767
-					BMUseCalibrantD1=1
-					BMUseCalibrantD2=1
-					BMUseCalibrantD3=1
-					BMUseCalibrantD4=0
-					BMUseCalibrantD5=0
-				NVAR BMRefNumberOfSectors = root:Packages:Convert2Dto1D:BMRefNumberOfSectors
-				BMRefNumberOfSectors = 120
-				SVAR BmCalibrantName = root:Packages:Convert2Dto1D:BmCalibrantName
-				BmCalibrantName="Ag behenate"
+//	else		//end of SAXS selection, bellow starts bigSAXS specifics...
+//				NVAR UseSectors = root:Packages:Convert2Dto1D:UseSectors
+//				UseSectors = 1
+//				NVAR QvectormaxNumPnts = root:Packages:Convert2Dto1D:QvectormaxNumPnts
+//				NVAR QBinningLogarithmic = root:Packages:Convert2Dto1D:QBinningLogarithmic
+//				NVAR DoSectorAverages = root:Packages:Convert2Dto1D:DoSectorAverages
+//				NVAR NumberOfSectors = root:Packages:Convert2Dto1D:NumberOfSectors
+//				NVAR SectorsStartAngle = root:Packages:Convert2Dto1D:SectorsStartAngle
+//				NVAR SectorsHalfWidth = root:Packages:Convert2Dto1D:SectorsHalfWidth
+//				NVAR DisplayDataAfterProcessing = root:Packages:Convert2Dto1D:DisplayDataAfterProcessing
+//				NVAR StoreDataInIgor = root:Packages:Convert2Dto1D:StoreDataInIgor
+//				NVAR OverwriteDataIfExists = root:Packages:Convert2Dto1D:OverwriteDataIfExists
+//				NVAR Use2Ddataname = root:Packages:Convert2Dto1D:Use2Ddataname
+//				NVAR QvectorNumberPoints = root:Packages:Convert2Dto1D:QvectorNumberPoints
+//				NVAR DoCircularAverage = root:Packages:Convert2Dto1D:DoCircularAverage
+//				DoCircularAverage = 1
+//				QvectorNumberPoints=220
+//				QBinningLogarithmic=1
+//				QvectormaxNumPnts = 0
+//				DisplayDataAfterProcessing = 1
+//				StoreDataInIgor = 1
+//				OverwriteDataIfExists = 1
+//				Use2Ddataname = 1
+//			
+//				NVAR UseLineProfile = root:Packages:Convert2Dto1D:UseLineProfile
+//				NVAR LineProfileUseRAW = root:Packages:Convert2Dto1D:LineProfileUseRAW
+//				NVAR LineProfileUseCorrData = root:Packages:Convert2Dto1D:LineProfileUseCorrData
+//				SVAR LineProf_CurveType=root:Packages:Convert2Dto1D:LineProf_CurveType
+//					
+//				UseLineProfile=0
+//				LineProfileUseCorrData=1
+//				LineProfileUseRAW =0
+//			
+//				NVAR UseSampleTransmission = root:Packages:Convert2Dto1D:UseSampleTransmission
+//				NVAR UseEmptyField = root:Packages:Convert2Dto1D:UseEmptyField
+//				NVAR UseDarkField = root:Packages:Convert2Dto1D:UseDarkField
+//				NVAR UseI0ToCalibrate = root:Packages:Convert2Dto1D:UseI0ToCalibrate
+//				NVAR DoGeometryCorrection = root:Packages:Convert2Dto1D:DoGeometryCorrection
+//				NVAR UseMonitorForEf = root:Packages:Convert2Dto1D:UseMonitorForEf
+//				NVAR UseSampleTransmFnct = root:Packages:Convert2Dto1D:UseSampleTransmFnct
+//				NVAR UseSampleMonitorFnct = root:Packages:Convert2Dto1D:UseSampleMonitorFnct
+//				NVAR UseEmptyMonitorFnct = root:Packages:Convert2Dto1D:UseEmptyMonitorFnct
+//				NVAR UseSampleThicknFnct = root:Packages:Convert2Dto1D:UseSampleThicknFnct
+//				UseSampleTransmission = 1
+//				UseEmptyField = 1
+//				UseDarkField = 1
+//				UseI0ToCalibrate = 1
+//				DoGeometryCorrection = 1
+//				UseMonitorForEf = 1
+//				UseSampleTransmFnct = 1
+//				UseSampleMonitorFnct = 1
+//				UseEmptyMonitorFnct = 1
+//				UseSampleThicknFnct = 1
+//				
+//				NVAR ErrorCalculationsUseOld=root:Packages:Convert2Dto1D:ErrorCalculationsUseOld
+//				NVAR ErrorCalculationsUseStdDev=root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev
+//				NVAR ErrorCalculationsUseSEM=root:Packages:Convert2Dto1D:ErrorCalculationsUseSEM
+//				ErrorCalculationsUseOld=1
+//				ErrorCalculationsUseStdDev=0
+//				ErrorCalculationsUseSEM=0			//which one is correct here???
+//				if(ErrorCalculationsUseOld)
+//					print "Uncertainty calculation method is set to \"Old method (see manual for description)\""
+//				elseif(ErrorCalculationsUseStdDev)
+//					print "Uncertainty calculation method is set to \"Standard deviation (see manual for description)\""
+//				else
+//					print "Uncertainty calculation method is set to \"Standard error of mean (see manual for description)\""
+//				endif
+//				
+//				SVAR SampleTransmFnct = root:Packages:Convert2Dto1D:SampleTransmFnct
+//				SVAR SampleMonitorFnct = root:Packages:Convert2Dto1D:SampleMonitorFnct
+//				SVAR EmptyMonitorFnct = root:Packages:Convert2Dto1D:EmptyMonitorFnct
+//				SVAR SampleThicknFnct = root:Packages:Convert2Dto1D:SampleThicknFnct
+//				
+//				SampleTransmFnct = "NI1_9IDCSFIndTransmission"
+//				SampleMonitorFnct = "NI1_9IDCSFindI0"
+//				EmptyMonitorFnct = "NI1_9IDCSFindEfI0"
+//				SampleThicknFnct = "NI1_9IDCSFindThickness"
+//			
+//				NI1A_SetCalibrationFormula()
+//				
+//				NVAR BMCalibrantD1LineWidth = root:Packages:Convert2Dto1D:BMCalibrantD1LineWidth
+//				NVAR BMCalibrantD2LineWidth = root:Packages:Convert2Dto1D:BMCalibrantD2LineWidth
+//				NVAR BMCalibrantD3LineWidth = root:Packages:Convert2Dto1D:BMCalibrantD3LineWidth
+//				NVAR BMCalibrantD4LineWidth = root:Packages:Convert2Dto1D:BMCalibrantD4LineWidth
+//				NVAR BMCalibrantD5LineWidth = root:Packages:Convert2Dto1D:BMCalibrantD5LineWidth
+//				BMCalibrantD1LineWidth = 25
+//				BMCalibrantD2LineWidth = 25
+//				BMCalibrantD3LineWidth = 25
+//				BMCalibrantD4LineWidth = 25
+//				BMCalibrantD5LineWidth = 25
+//			
+//				NVAR BMCalibrantD1=root:Packages:Convert2Dto1D:BMCalibrantD1
+//				NVAR BMCalibrantD2=root:Packages:Convert2Dto1D:BMCalibrantD2
+//				NVAR BMCalibrantD3=root:Packages:Convert2Dto1D:BMCalibrantD3
+//				NVAR BMCalibrantD4=root:Packages:Convert2Dto1D:BMCalibrantD4
+//				NVAR BMCalibrantD5=root:Packages:Convert2Dto1D:BMCalibrantD5
+//				NVAR BMUseCalibrantD1=root:Packages:Convert2Dto1D:BMUseCalibrantD1
+//				NVAR BMUseCalibrantD2=root:Packages:Convert2Dto1D:BMUseCalibrantD2
+//				NVAR BMUseCalibrantD3=root:Packages:Convert2Dto1D:BMUseCalibrantD3
+//				NVAR BMUseCalibrantD4=root:Packages:Convert2Dto1D:BMUseCalibrantD4
+//				NVAR BMUseCalibrantD5=root:Packages:Convert2Dto1D:BMUseCalibrantD5
+//					//The number I use is q = 0.1076 (1/Angstrom), d = 58.380 Angstroms.  The
+//					//reference is T.C. Huang et al, J. Appl. Cryst. (1993), 26, 180-184.
+//					BMCalibrantD1=58.380
+//					BMCalibrantD2=29.185
+//					BMCalibrantD3=19.46
+//					BMCalibrantD4=14.595
+//					BMCalibrantD5=11.767
+//					BMUseCalibrantD1=1
+//					BMUseCalibrantD2=1
+//					BMUseCalibrantD3=1
+//					BMUseCalibrantD4=0
+//					BMUseCalibrantD5=0
+//				NVAR BMRefNumberOfSectors = root:Packages:Convert2Dto1D:BMRefNumberOfSectors
+//				BMRefNumberOfSectors = 120
+//				SVAR BmCalibrantName = root:Packages:Convert2Dto1D:BmCalibrantName
+//				BmCalibrantName="Ag behenate"
 	endif
 	//common
 				SVAR BlankFileExtension=root:Packages:Convert2Dto1D:BlankFileExtension
@@ -1533,7 +1615,7 @@ Function NI1_9IDCWaveNoteValuesNx()
 	variable beamline_support_version
 	NVAR useWAXS = root:Packages:Convert2Dto1D:USAXSWAXSselector
 	NVAR useSAXS = root:Packages:Convert2Dto1D:USAXSSAXSselector
-	NVAR useBigSAXS = root:Packages:Convert2Dto1D:USAXSBigSAXSselector
+	//NVAR useBigSAXS = root:Packages:Convert2Dto1D:USAXSBigSAXSselector
 	NVAR Wavelength= root:Packages:Convert2Dto1D:Wavelength
 	NVAR XRayEnergy= root:Packages:Convert2Dto1D:XRayEnergy
 	NVAR PixelSizeX = root:Packages:Convert2Dto1D:PixelSizeX
@@ -2109,6 +2191,8 @@ Function NI1_15IDWFindI0(SampleName)
 	abort "Please, rerun configuration to update function names"
 end
 
+//this will be abused for writing also Dexela offset in the proper field... 
+
 Function NI1_9IDWFindI0(SampleName)
 	string sampleName
 
@@ -2127,6 +2211,20 @@ Function NI1_9IDWFindI0(SampleName)
 	if(numtype(I000)!=0)
 		Print "I0 value not found in the wave note of the sample file, setting to 1"
 		I000=1 
+	endif
+	//here we will write also offset value in the field. 
+	NVAR useDexela = root:Packages:Convert2Dto1D:USAXSWAXSDexselector
+	NVAR DexelaOffsetScale = root:Packages:Convert2Dto1D:DexelaOffsetScale
+	if(useDexela)
+		//need to write in: root:Packages:Convert2Dto1D:SubtractFixedOffset
+		// instrument:detector:process1:frames_summed=5 
+		// instrument:detector:process1:int_frame_offset=1000 
+		NVAR DexOffset=root:Packages:Convert2Dto1D:SubtractFixedOffset
+		variable NumImages, OffsetPerImage
+		NumImages = NumberByKey("instrument:detector:process1:frames_summed", OldNote  , "=" , ";")
+		OffsetPerImage = NumberByKey("instrument:detector:process1:int_frame_offset", OldNote  , "=" , ";")
+		DexOffset = NumImages * OffsetPerImage* DexelaOffsetScale
+		print "Read Fixed offfset for this Dexela image in metadata = "+num2str(DexOffset)
 	endif
 	return I000
 end

@@ -47,7 +47,7 @@
 //1.30 Data manipulation I, fixed Flrd match for Test data folder...
 //1.29 hopefully fixed problem, when parent folder appeared, when subfolders were masked off by Wv grep string  
 //1.28 modifed and changed handling of Results wave names, mainly Y wave name. It is a mess - need to check this in details... 
-//1.27 added Diameters waves for Modeling II
+//1.27 added Diameters waves for Modeling
 //1.26 work around user names for folder with [] in the name. 
 //1.25 changed "Indra 2" to "USAXS" to make bit more sense for human beings. 
 //1.24 added Guinier-Porod data type
@@ -63,7 +63,7 @@
 //1.15 tried to speed up the qrs data serch, speed increased by factor of 10 or so. 
 //1.14 fixed problems with user defined wave pairs and with qrs data structure. Hopefully fixed problems with QIS data structure.
 //1.13 added azimuthal data to qrs
-//1.12 added display of separate polulations data from Modeling II.
+//1.12 added display of separate polulations data from Modeling.
 //1.11 fixed bug which prevented any folders be displayed when no checbox was selected and no match string was used
 //1.10 optimization for speed. Just too slow to get anythign done in some major user experiments...  changed following functions:
 //1.09 added license for ANL
@@ -263,7 +263,7 @@ Function IR2C_InitControls(PckgDataFolder,PanelWindowName,AllowedIrenaTypes, All
 	AllCurrentlyAllowedTypes+="SimFitGuinierI;SimFitGuinierRI;SimFitGuinierSII;SimFitSphereI;SimFitSpheroidI;SimFitPorodI;"
 
 	string/g AllKnownToolsResults
-	AllKnownToolsResults = "Unified Fit;Size Distribution;Modeling II;Modeling I;Small-angle diffraction;Analytical models;Fractals;PDDF;Reflectivity;Guinier-Porod;Simple Fits;Evaluate Size Dist;System Specific Models;"
+	AllKnownToolsResults = "Unified Fit;Size Distribution;Modeling;Small-angle diffraction;Analytical models;Fractals;PDDF;Reflectivity;Guinier-Porod;Simple Fits;Evaluate Size Dist;System Specific Models;"
 
 	if(cmpstr(AllowedResultsTypes,"AllCurrentlyAllowedTypes")==0)
 		AllowedResultsTypes=AllCurrentlyAllowedTypes
@@ -2572,7 +2572,7 @@ Function/S IR2C_ReturnKnownToolResults(ToolName, TopPanel)
 	else
 		LocallyAllowedResultsData=""
 	endif
-	// "Unified Fit;Size Distribution;Modeling II;Modeling I;Small-angle diffraction;Analytical models;Fractals;PDDF;Reflectivity;"
+	// "Unified Fit;Size Distribution;Modeling;Small-angle diffraction;Analytical models;Fractals;PDDF;Reflectivity;"
 	SVAR ResultsDataTypesLookup= root:Packages:IrenaControlProcs:ResultsDataTypesLookup
 	string ListOfLookups=""
 	if(stringmatch(ToolName,"Size Distribution"))
@@ -2591,7 +2591,7 @@ Function/S IR2C_ReturnKnownToolResults(ToolName, TopPanel)
 		ListOfLookups = GrepList(ResultsDataTypesLookup, "^PDDF",0, ";" )
 	elseif(stringmatch(ToolName,"Reflectivity"))
 		ListOfLookups = GrepList(ResultsDataTypesLookup, "^(Refl|SLD)",0, ";" )
-	elseif(stringmatch(ToolName,"Modeling II"))
+	elseif(stringmatch(ToolName,"Modeling"))
 		ListOfLookups = GrepList(ResultsDataTypesLookup, "ModelLSQF",0, ";" )
 	elseif(stringmatch(ToolName,"System Specific Models"))
 		ListOfLookups = GrepList(ResultsDataTypesLookup, "^SysSpecModel",0, ";" )
@@ -3411,7 +3411,7 @@ Function IR3C_SelectWaveNamesData(CntrlLocationG, SelectedDataFolderName)
 					endfor
 					IntensityWaveName = result				//this is intensity wave name
 					tempStr2 = removeending(result, "_"+StringFromList(ItemsInList(result,"_")-1, result, "_"))
-					//for some (Modeling II there are two x-wave options, need to figure out which one is present...
+					//for some (Modeling there are two x-wave options, need to figure out which one is present...
 					TempXName=StringByKey(tempStr2, ResultsDataTypesLookup  , ":", ";")
 					TempXName=RemoveEnding(TempXName , ",")+","
 					if(ItemsInList(TempXName,",")>1)

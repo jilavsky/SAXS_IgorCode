@@ -35,7 +35,7 @@ constant IR1DversionNumber = 2.61			//Data manipulation I panel version number
 //2.49 improvements for Data Manipulation II in handling cursors. 
 //2.48 disabled Q shift in Modeling I, let's see if anyone complains... 
 //2.47 fixed step for Modeling I Data 2
-//2.46 slight modification of IR1D_rebinData for use by Modeling II, Size Distribution and Unified fit. 
+//2.46 slight modification of IR1D_rebinData for use by Modeling, Size Distribution and Unified fit. 
 //2.45 Data Manipulation I - added Merge data feature and preserve cursor position through data adding. Changed steps in GUI for Int multipliers and background.
 //2.44 DM1 - fix rebinning on log scale to handle data with first Q=0
 //2.43 DM II - Fixed problems with Subtract data selection (stale values, controls misbehave). 

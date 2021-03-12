@@ -3744,7 +3744,7 @@ Function IR3GP_ConfEvHelp()
 		Notebook $nb text="is used to estimate uncertainity. User needs to pick method of analysis as described below. User can analyze one parameter or create list of parameters and analyze them sequentially. \r"
 		Notebook $nb text="\r"
 		Notebook $nb text="All parameters which are supposed to be varied during analysis must have \"Fit?\" checkbox checked before the tool si started. Correct fitting limits may be set or use \"Fix fit limits\" checkbox. "
-		Notebook $nb text="Range of data for fitting must be selected correctly with cursors (Unified fit) or set for data with controls (Modeling II). The code does not mo"
+		Notebook $nb text="Range of data for fitting must be selected correctly with cursors (Unified fit) or set for data with controls (Modeling). The code does not mo"
 		Notebook $nb text="dify fitting range. \r"
 		Notebook $nb text="\r"
 		Notebook $nb text="for \"Uncertainity effect\" but for the single parameter tests the results are untested. It may work, but if not - let me know... \r"

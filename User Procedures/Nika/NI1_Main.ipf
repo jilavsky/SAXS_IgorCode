@@ -1,11 +1,11 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.831
+#pragma version=1.833
 #pragma IgorVersion=8.03
 
 //DO NOT renumber Main files every time, these are main release numbers...
 
-constant CurrentNikaVersionNumber = 1.831
+constant CurrentNikaVersionNumber = 1.833
 constant FixBackgroundOversubScale=1.05			//this is used to fix oversubtracted background. Adds FixBackgroundOversubScale*abs(V_min) to all intensity value. 
 constant NikaNumberOfQCirclesDisp=15
 //*************************************************************************\
@@ -113,7 +113,7 @@ Menu "SAS 2D"
 		help={"Support for data TPA  XML (SANS)"}
 	end
 	Submenu "Helpful tools"
-		"Set all paths to the same place", NI1_SetAllPathsInNIka()
+		"Set same paths and Image types", NI1_SetAllPathsInNIka()
 		help={"Sets the paths for Sample, Empty, Mask, Calibrant to the same place."}
 	end
 	"HouseKeeping", NI1_Cleanup2Dto1DFolder()
@@ -191,7 +191,41 @@ Function NI1_SetAllPathsInNIka()
 		//PathInfo Convert2Dto1DBmCntrPath
 		BCPathInfoStr=S_Path
 		NewPath/O/Q Convert2Dto1DMaskPath, pathInforStrL
-		//and refresh the listboxes for new paths...
+		//now also let users set the correct image type 
+		String SelectedImageType=".tif"
+		SVAR ListOfKnownExtensions = root:Packages:Convert2Dto1D:ListOfKnownExtensions
+		Prompt SelectedImageType, "Image type", popup, ListOfKnownExtensions 
+		DoPrompt /HELP="Select proper image type" "Select Image type for all images", SelectedImageType
+		if(V_Flag==0)
+			//here we need to set all types. 
+			print SelectedImageType
+			SVAR DataFileExtension=root:Packages:Convert2Dto1D:DataFileExtension
+			DataFileExtension = SelectedImageType
+			if(cmpstr(DataFileExtension,"GeneralBinary")==0)
+				NI1_GBLoaderPanelFnct()
+			endif
+			if(cmpstr(DataFileExtension,"Pilatus")==0)
+				NI1_PilatusLoaderPanelFnct()
+			endif
+			if(cmpstr(DataFileExtension,"ESRFedf")==0)
+				NI1_ESRFEdfLoaderPanelFnct()
+			endif	
+			if(cmpstr(DataFileExtension,"Nexus")==0)
+				NEXUS_NikaCall(1)
+				NVAR NX_InputFileIsNexus=root:Packages:Irena_Nexus:NX_InputFileIsNexus
+				NX_InputFileIsNexus = 1
+			else
+				NVAR/Z NX_InputFileIsNexus=root:Packages:Irena_Nexus:NX_InputFileIsNexus
+				if(NVAR_Exists(NX_InputFileIsNexus))
+					NX_InputFileIsNexus = 0
+				endif
+			endif	
+			NEXUS_NikaCall(0)
+			SVAR BlankFileExtension=root:Packages:Convert2Dto1D:BlankFileExtension
+			BlankFileExtension = SelectedImageType
+			SVAR BMFunctionName=root:Packages:Convert2Dto1D:BMFunctionName
+			BMFunctionName = SelectedImageType
+		endif
 		NI1BC_UpdateBmCntrListBox()	
 		NI1A_UpdateDataListBox()	
 		NI1A_UpdateEmptyDarkListBox()	

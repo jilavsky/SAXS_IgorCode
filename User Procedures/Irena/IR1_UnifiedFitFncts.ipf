@@ -5610,14 +5610,14 @@ Function IR1A_ConfEvHelp()
 		Notebook $nb defaultTab=36, statusWidth=252
 		Notebook $nb showRuler=1, rulerUnits=1, updating={1, 3600}
 		Notebook $nb newRuler=Normal, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Geneva",10,0,(0,0,0)}
-		Notebook $nb ruler=Normal, fSize=14, fStyle=1, textRGB=(52428,1,1), text="Uncertainity evaluation for UF/Modeling II parameters\r"
+		Notebook $nb ruler=Normal, fSize=14, fStyle=1, textRGB=(52428,1,1), text="Uncertainity evaluation for UF/Modeling parameters\r"
 		Notebook $nb fSize=-1, fStyle=1, textRGB=(0,1,3), text="\r"
 		Notebook $nb text="This tool is used to estimate uncertainities for the fitted parameters. "
 		Notebook $nb text="It is likely that the right uncertainity is some combination of the two implemented methods - or the larger one...", fStyle=-1, text="\r"
 		Notebook $nb fStyle=1, text="\r"
 		Notebook $nb text="1. \"Uncertainity effect\" \r", fStyle=-1
 		//Notebook $nb text="1. Sequential, fix param", fStyle=-1
-		Notebook $nb text="Evaluates the influence of DATA uncertainities on uncertainity of Unified fit or Modeling II parameter(s). "
+		Notebook $nb text="Evaluates the influence of DATA uncertainities on uncertainity of Unified fit or Modeling parameter(s). "
 		Notebook $nb text="Code varies Intensity data within user provided uncertainities (\"errors\"). All parameters currently selected for fitting are evaluted at once.\r"
 		Notebook $nb fStyle=1, text="2. Uncertainity for individual parameters \r", fStyle=-1
 		Notebook $nb text="Analysis of quality of fits achievable with tested parameter variation.  "
@@ -5628,10 +5628,10 @@ Function IR1A_ConfEvHelp()
 		Notebook $nb text="in this book and approximating them with polynomial function for ease of calculation. Special thanks goes to Mateus Cardoso from LLNL (Brazil) who proposed this method. \r"
 		Notebook $nb text="\r"
 		Notebook $nb text="All parameters which are supposed to be varied during analysis must have \"Fit?\" checkbox checked before the tool si started. Correct fitting limits may be set or use \"Fix fit limits\" checkbox. "
-		Notebook $nb text="Range of data for fitting must be selected correctly with cursors (Unified fit) or set for data with controls (Modeling II). The code does not mo"
+		Notebook $nb text="Range of data for fitting must be selected correctly with cursors (Unified fit) or set for data with controls (Modeling). The code does not mo"
 		Notebook $nb text="dify fitting range. \r"
 		Notebook $nb text="\r"
-		Notebook $nb text="For Modeling II : note, that at this time the only offically supported mode is for using Single input data set. The logic for multiple data sets should work "
+		Notebook $nb text="For Modeling : note, that at this time the only offically supported mode is for using Single input data set. The logic for multiple data sets should work "
 		Notebook $nb text="for \"Uncertainity effect\" but for the single parameter tests the results are untested. It may work, but if not - let me know... \r"
 		Notebook $nb text="\r"
 		Notebook $nb text="For each evaluated parameter the input is its name, range of values (Min/Max) to be stepped through and number "

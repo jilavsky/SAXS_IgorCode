@@ -1368,7 +1368,7 @@ static Function IR3L_SetPlotLegends()				//this function will set axis legends a
 				CanDoLinearization = 1
 				InputDataType="QRS data"
 		elseif(UseResults)
-			//	AllKnownToolsResults = "Unified Fit;Size Distribution;Modeling II;Modeling I;Small-angle diffraction;Analytical models;Fractals;PDDF;Reflectivity;Guinier-Porod;Evaluate Size Dist;"
+			//	AllKnownToolsResults = "Unified Fit;Size Distribution;Modeling;Modeling I;Small-angle diffraction;Analytical models;Fractals;PDDF;Reflectivity;Guinier-Porod;Evaluate Size Dist;"
 			if(StringMatch(SelectedResultsTool, "Unified Fit" ))
 				GraphUserTitle = "Unified Fit results"
 				if(StringMatch(SelectedResultsType, "*SizeDistVol*" ))
@@ -1391,7 +1391,7 @@ static Function IR3L_SetPlotLegends()				//this function will set axis legends a
 					YAxislegend = "Number Fraction [1/(Acm\S3\M)]"
 				endif
 				InputDataType="Size distribution results"
-			elseif(StringMatch(SelectedResultsTool, "Modeling II" ))
+			elseif(StringMatch(SelectedResultsTool, "Modeling" ))
 				GraphUserTitle = "Modeling results"
 				XAxisLegend = "Q [A\S-1\M]"
 				YAxislegend = "Intensity [arb]"

@@ -58,7 +58,7 @@ constant CurrentIrenaVersionNumber = 2.703		//change version of Boot Irena1 mode
 //2.59 to be done... Added development version of Simple fits - new well structured tool for simplistic fits on SAS data.
 //2.58 Added MergeData tool.  
 //2.58 Added YouTube movies page. 
-//2.57 Many fixes to Modeling II mainly. 
+//2.57 Many fixes to Modeling mainly. 
 //2.56 fixed ListProRoutine which had troubles with links, 2.55 never released. 
 //2.55 changed FIt Power law with cursors - follows now the user font size and does not have units (would depend on calibration). Linear fit now also sues User fonts. 
 //2.55 moved Zoom and set limits to GraphMarquee menu, changed the ZoomAndSetLimits to be dynamic menu item
@@ -69,13 +69,13 @@ constant CurrentIrenaVersionNumber = 2.703		//change version of Boot Irena1 mode
 //		changed all web addresses to new (xray.aps.anl.gov)
 //2.51 added check for update to run every 30 days and remind users about proper citations.
 //2.51 added Guinier-Porod model (beta version of the tool)
-//2.50 major update, added uncertainity estimation to Sizes and Modeling II. Reflectivity changes. 
+//2.50 major update, added uncertainity estimation to Sizes and Modeling. Reflectivity changes. 
 //2.49 Minor fixes
 //2.48 Fixed GUI font/size issues on WIndows 7, Plotting tool I 3D upgrades, moved Modeling I to "Other tools"
 //2.47 New mailing list, movie & 3D graphs in Plotting tool I and other many fixes.
 //2.46 lots of small fixes, added easy access to scripting tool and few other changes. 
 //2.45 Added features to Data manipulation II and Reflectivity. Updated manual. 
-//2.44 minor fix Modeling II, Addition of controls of Modeling II to Scripting tool, other fixes. 
+//2.44 minor fix Modeling, Addition of controls of Modeling to Scripting tool, other fixes. 
 //2.43 add functions to handle modified panels between updates. 
 //2.41 and 2.42, minor updates
 //2.40 added Unified level as Form factor and other fixes and improvements

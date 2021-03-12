@@ -15,11 +15,11 @@ Constant IR2SversionNumber=1.30
 //1.26 added in popup grandparent folder to the parent folder to reduce scope. 
 //1.25 added ability to sort data by minutes (_xyzmin), pct (_xyzpct), and  temperature (_xyzC). 
 //1.24 fixed bug in Scripting tool which caused qrs start folder return only ones with qrs, but not qds, and other "semi" qrs data 
-//1.23 Modeling II - fixed the preservation of user choices on error settings and Intensity scaling. 
-//1.22 added AfterDataLoaded_Hook() to Modeling II call function to enable user modify something after the data set is loaded. 
+//1.23 Modeling - fixed the preservation of user choices on error settings and Intensity scaling. 
+//1.22 added AfterDataLoaded_Hook() to Modeling call function to enable user modify something after the data set is loaded. 
 //1.21 added for QRS data wave name match string. 
 //1.20 Plotting tool now - if not opened will open now, not abort. Fixed Buttons for Guinier-Porod and Size Dist with uncertainities appering in wrong time. 
-//1.19 fix for Diameters/Radii option in Modeling II - it was failing to add such data in Plotting tool. 
+//1.19 fix for Diameters/Radii option in Modeling - it was failing to add such data in Plotting tool. 
 //1.18 will set cursors for first and last point of data, if not set by user ahead of fitting. Sync FolderNameStr and set WavenameStr=""
 //1.17 minor fix when list fo folders contained ;; somehow and we got stale content in the listbox. 
 //1.16 fix to make compatible with changes in Controls procedures. 
@@ -35,7 +35,7 @@ Constant IR2SversionNumber=1.30
 //1.06 added sorting order controls and added functionality for the plotting tool I 
 //1.05 fixed bug in scripting Unified fit, eventcode was not set correctly.  Added match string (using grep, no * needed), added check versions. 
 //1.04 fixed bug where the tool was missign the one before last folder (wrong wave length)... 
-//1.03 support for single data set Modeling II
+//1.03 support for single data set Modeling
 //1.02 FIxed Scripting of Size distribution where we wer emissing eventcode=2  which caused the data not to be updated beteen fits.
 //1.01 added license for ANL
 
@@ -305,7 +305,7 @@ Function IR2S_HelpPanel()
 		Notebook $nb text="\r"
 		Notebook $nb text="1. Unified fit\r"
 		Notebook $nb text="2. Size distribution\r"
-		Notebook $nb text="3. Modeling II (NOTE: supported only with one input data set, not \"Multiple Input data sets\" selected!)\r"
+		Notebook $nb text="3. Modeling (NOTE: supported only with one input data set, not \"Multiple Input data sets\" selected!)\r"
 		Notebook $nb text="\r"
 		Notebook $nb text="Setup the tool with fittign parameters on representative case (cases) and make sure the data selection w"
 		Notebook $nb text="ith cursors (Unified/Size dist) or with Qmin/Qmax is appropriate for all data you intend to analyze. Mak"
@@ -322,7 +322,7 @@ Function IR2S_HelpPanel()
 		Notebook $nb text="\r"
 		Notebook $nb text="Select output options. Note that some options may not be applicablefor specific tool. \r"
 		Notebook $nb text="\r"
-		Notebook $nb text="If you are running Unified fit or Modeling II you can reset parameters between the fits. This option is "
+		Notebook $nb text="If you are running Unified fit or Modeling you can reset parameters between the fits. This option is "
 		Notebook $nb text="not applicable for Size distribution. \r"
 		Notebook $nb text="\r"
 		Notebook $nb text="NOTE: If the fit fails, nothing is recorded in the folder/waves and some notes are commented into the no"
@@ -414,7 +414,7 @@ Window IR2S_ScriptingToolPnl()
 	Button FitWithSizes,fSize=10,fStyle=2, disable=(root:Packages:Irena:ScriptingTool:UseResults)
 	Button FitWithSizesU,pos={210,415},size={160,15},proc=IR2S_ButtonProc,title="Run Size distr. w/uncert."
 	Button FitWithSizesU,fSize=10,fStyle=2, disable=(root:Packages:Irena:ScriptingTool:UseResults)
-	Button FitWithMoldelingII,pos={90,435},size={200,15},proc=IR2S_ButtonProc,title="Run Modeling II on selected data"
+	Button FitWithMoldelingII,pos={90,435},size={200,15},proc=IR2S_ButtonProc,title="Run Modeling on selected data"
 	Button FitWithMoldelingII,fSize=10,fStyle=2, disable=(root:Packages:Irena:ScriptingTool:UseResults)
 	Button CallPlottingToolII,pos={20,455},size={160,15},proc=IR2S_ButtonProc,title="Run (w/reset) Plotting tool"
 	Button CallPlottingToolII,fSize=10,fStyle=2
@@ -939,7 +939,7 @@ Function IR2S_CallWithPlottingToolII(reset)
 					endfor
 					TempYName=result
 					tempStr2 = removeending(result, "_"+StringFromList(ItemsInList(result,"_")-1, result, "_"))
-					//for some (Modeling II there are two x-wave options, need to figure out which one is present...
+					//for some (Modeling there are two x-wave options, need to figure out which one is present...
 					TempXName=StringByKey(tempStr2, ResultsDataTypesLookup  , ":", ";")
 					TempXName=RemoveEnding(TempXName , ",")+","
 					if(ItemsInList(TempXName,",")>1)
@@ -1030,14 +1030,14 @@ Function IR2S_FItWithModelingII()
 
 	DoWindow LSQF2_MainPanel
 	if(!V_Flag)
-		Abort  "The Modeling II panel and graph must be opened"
+		Abort  "The Modeling panel and graph must be opened"
 	else
 		DoWIndow/F LSQF2_MainPanel 
 	endif
 	
 	DoWindow LSQF_MainGraph
 	if(!V_Flag)
-		Abort  "The Modeling II panel and graph must be opened"
+		Abort  "The Modeling panel and graph must be opened"
 	else
 		DoWIndow/F LSQF_MainGraph 
 	endif

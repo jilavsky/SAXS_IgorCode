@@ -32,7 +32,7 @@ constant ChangeFromGaussToSlit=2
 //1.26 changed in Unicertainity analysis length of paramName to 20 characters. 
 //1.25 fixed Notebook recording of Shulz-Zimm distribution type
 //1.24 minor fix in Uncertainity evaluation. 
-//1.23 Propagated through Modeling II Intensity units. Removed option to combine SphereWithLocallyMonodispersedSq with any structrue factor. 
+//1.23 Propagated through Modeling Intensity units. Removed option to combine SphereWithLocallyMonodispersedSq with any structrue factor. 
 //1.22 fixed bug when Analyze uncertainities would not get number of fitted points due to changed folder. 
 //1.21 fixed Background GUI which has step set to 0 after chanigng the tabs.
 //1.20 added to Unified level ability to link B to G/Rg/P based on Guinier/Porod theory. Remoeved abuility to fit RgCO at all. 
@@ -40,7 +40,7 @@ constant ChangeFromGaussToSlit=2
 //		support for changet the tab of used tabs names.. 
 //1.18 fixed bug when reinitialization of Unified levels would add G=100 even when Rg=1e10. Fix GUI issue when adding new data set and recovering the stored result. 
 //		Fixes for too long ParamNames in Analysis of uncertainities.
-//1.17 fixed bug when scripting tool got out of sync with main Modeling II panel. 
+//1.17 fixed bug when scripting tool got out of sync with main Modeling panel. 
 //1.16 fixed fix limits check so if the value is negative, it sorts out limits correctly. Needed for core shell systems with negative SLD
 //1.15 added Form and Structrue factor description as Igor help file. Added buttons to call the help file from GUI. 
 //1.14 Modified to handle Janus CoreShell Micelle FF
@@ -154,7 +154,7 @@ Function IR2L_RemovePntCsrA(DataTabNumber)
 	
 	DoWIndow LSQF_MainGraph
 	if(!V_flag)
-		print "Modeling II main graph does not exist"
+		print "Modeling main graph does not exist"
 		return 0
 	endif
 	if (strlen(csrInfo(A,"LSQF_MainGraph"))<1)
@@ -566,9 +566,9 @@ Function IR2L_CheckForTooManyUniflevels()
 	if(numberOfUFs>1)	//raise allert, but only sometimes
 		NVAR/Z LastChecked
 		if(NVAR_Exists(LastChecked)&& (DateTime - LastChecked)<60*60*24)
-			print "NOTE: Only one Unified level should be used at once in Modeling II. For more levels use Unified Fit tool"
+			print "NOTE: Only one Unified level should be used at once in Modeling. For more levels use Unified Fit tool"
 		else
-			DoAlert 0, "NOTE: Only one Unified level should be used at once in Modeling II. For more levels use Unified Fit tool"
+			DoAlert 0, "NOTE: Only one Unified level should be used at once in Modeling. For more levels use Unified Fit tool"
 		endif
 		variable/g LastChecked
 		LastChecked = DateTime
@@ -3659,13 +3659,13 @@ Function IR2L_SvNbk_CreateNbk()
 	if (strsearch(WinList("*",";","WIN:16"),nbL,0)!=-1) 		///Logbook exists
 		DoWindow/F $nbl
 	else
-		NewNotebook/K=3/N=$nbl/F=1/V=1/W=(235.5,44.75,817.5,592.25) as nbl +": Modeling II Output"
+		NewNotebook/K=3/N=$nbl/F=1/V=1/W=(235.5,44.75,817.5,592.25) as nbl +": Modeling Output"
 		Notebook $nbl defaultTab=144, statusWidth=238, pageMargins={72,72,72,72}
 		Notebook $nbl showRuler=1, rulerUnits=1, updating={1, 60}
 		Notebook $nbl newRuler=Normal, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={2.5*72, 3.5*72 + 8192, 5*72 + 3*8192}, rulerDefaults={"Arial",10,0,(0,0,0)}
 		Notebook $nbl ruler=Normal
 		Notebook $nbl  justification=1, rulerDefaults={"Arial",14,1,(0,0,0)}
-		Notebook $nbl text="This is output of results from Modeling II of Irena package.\r"
+		Notebook $nbl text="This is output of results from Modeling of Irena package.\r"
 		Notebook $nbl text="\r"
 		Notebook $nbl ruler=Normal
 		IR1_InsertDateAndTime(nbl)
@@ -3836,7 +3836,7 @@ end
 
 Function IR2L_ConfEvaluationPanelF() 
 	PauseUpdate    		// building window...
-	NewPanel /K=1/W=(405,136,793,600) as "Modeling II uncertainitiy evaluation"
+	NewPanel /K=1/W=(405,136,793,600) as "Modeling uncertainitiy evaluation"
 	DoWIndow/C IR2L_ConfEvaluationPanel
 	//ShowTools/A
 	SetDrawLayer UserBack
@@ -4471,7 +4471,7 @@ static Function IR2L_ConEvAnalyzeEvalResults(ParamName,SortForAnalysis,FittedPar
 
 		IR1_CreateResultsNbk()
 //		IR1_AppendAnyText("Analyzed sample "+SampleFullName, 1)	
-		IR1_AppendAnyText("Modeling II uncertainity of parameter "+ParamName, 2)
+		IR1_AppendAnyText("Modeling uncertainity of parameter "+ParamName, 2)
 		IR1_AppendAnyText("  ", 0)
 		IR1_AppendAnyText("Method used to evaluate parameter reproducibility: "+Method, 0)	
 		IR1_AppendAnyGraph("ChisquaredAnalysis")
@@ -4493,7 +4493,7 @@ static Function IR2L_ConEvAnalyzeEvalResults(ParamName,SortForAnalysis,FittedPar
 			print  "The range of parameters analyzed for "+ParamName +" was not sufficiently large, code did not find large enough values for chi-squared"
 			IR1_CreateResultsNbk()
 //			IR1_AppendAnyText("Analyzed sample "+SampleFullName, 1)	
-			IR1_AppendAnyText("Modeling II evaluation of parameter "+ParamName+" failed", 2)
+			IR1_AppendAnyText("Modeling evaluation of parameter "+ParamName+" failed", 2)
 			IR1_AppendAnyText("  ", 0)
 			IR1_AppendAnyText("Method used to evaluate parameter stability: "+Method, 0)	
 			IR1_AppendAnyText("Minimum chi-squared found = "+num2str(V_min)+" for "+ParamName+"  = "+ num2str(EndValues[V_minLoc]), 0)
@@ -4510,7 +4510,7 @@ static Function IR2L_ConEvAnalyzeEvalResults(ParamName,SortForAnalysis,FittedPar
 			Tag/C/N=MinTag/F=0/L=2/TL=0/X=0.00/Y=50.00 $(nameofwave(ChiSquareValues)), V_minLoc,"Minimum chi-squared = "+num2str(V_min)+"\rat "+ParamName+" = "+num2str(EndValues[V_minLoc])//+"\rRange : "+num2str(levellow)+" to "+num2str(levelhigh)
 			AutoPositionWindow/M=0/R=LSQF2_MainPanel ChisquaredAnalysis
 			IR1_CreateResultsNbk()
-			IR1_AppendAnyText("Modeling II Evaluation of parameter "+ParamName, 2)
+			IR1_AppendAnyText("Modeling Evaluation of parameter "+ParamName, 2)
 			IR1_AppendAnyText("  ", 0)
 			IR1_AppendAnyText("Method used to evaluate parameter stability: "+Method, 0)	
 			IR1_AppendAnyText("Minimum chi-squared found = "+num2str(V_min)+" for "+ParamName+"  = "+ num2str(EndValues[V_minLoc]), 0)

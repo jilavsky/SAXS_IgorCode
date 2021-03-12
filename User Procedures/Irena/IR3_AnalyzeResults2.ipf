@@ -75,7 +75,10 @@ Function IR3E_AnalyzeResultsPanelFnct()
 	string UserNameString=""
 	string XUserLookup=""
 	string EUserLookup=""
-	string ResultsAllowed="SizesVolumeDistribution;SizesNumberDistribution;ModelingNumberDistribution;ModelingVolumeDistribution;"
+	string ResultsAllowed="SizesVolumeDistribution;SizesNumberDistribution;NumberDistModelLSQF2;VolumeDistModelLSQF2;"
+	ResultsAllowed+="NumberDistModelLSQF2pop1;VolumeDistModelLSQF2pop1;NumberDistModelLSQF2pop2;VolumeDistModelLSQF2pop2;"
+	ResultsAllowed+="NumberDistModelLSQF2pop3;VolumeDistModelLSQF2pop3;NumberDistModelLSQF2pop4;VolumeDistModelLSQF2pop4;"
+	ResultsAllowed+="NumberDistModelLSQF2pop5;VolumeDistModelLSQF2pop5;NumberDistModelLSQF2pop6;VolumeDistModelLSQF2pop6;"
 	IR2C_AddDataControls("Irena:AnalyzeResults","IR3E_AnalyzeResultsPanel","",ResultsAllowed,UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
 	IR3C_MultiAppendControls("Irena:AnalyzeResults","IR3E_AnalyzeResultsPanel", "IR3E_CopyAndAppendData","",1,0)
 	//hide what is not needed
@@ -1035,6 +1038,8 @@ Function IR3E_SDCalculateStatistics()
 	
 	SVAR XwvName = root:Packages:Irena:AnalyzeResults:QWavename
 	SVAR YwvName = root:Packages:Irena:AnalyzeResults:IntensityWaveName
+
+	variable popNumber=str2num(YwvName[strsearch(YwvName, "pop", 0)+3])
 	
 	//	wave w = CsrWaveRef(A,"IR1G_OneSampleEvaluationGraph" )
 	//	string curNote = note(w)
@@ -1045,11 +1050,18 @@ Function IR3E_SDCalculateStatistics()
 	//	GR1_Mean=IR1G_CalculateMean(CsrWaveRef(A),CsrXWaveRef(A), pcsr(A),pcsr(B))
 	SDMean = areaXY(DimensionShort, DistDimShort,0,inf)/areaXY(DimensionShort, DistShort,0,inf)		//Sum P(R)*R*deltaR
 	//	GR1_Mode=IR1G_CalculateMode(CsrWaveRef(A),CsrXWaveRef(A), pcsr(A),pcsr(B))
+	duplicate/O DistShort, root:DistShort
+	duplicate/O DimensionShort, root:DimensionShort
 	FindPeak/P/Q DistShort
 	if (V_Flag)		//peak not found
 		SDMode=NaN
 	else
-		SDMode=DimensionShort[V_PeakLoc]								//location of maximum on the P(R)
+		//print DimensionShort[13]
+		//print DimensionShort[14]
+		//print DimensionShort[13.9434755694068]
+		//print DimensionShort[V_PeakLoc]
+		//SDMode=DimensionShort[V_PeakLoc]								//location of maximum on the P(R)
+		SDMode=DimensionShort[0.01*round(V_PeakLoc*100)]								//location of maximum on the P(R)
 	endif
 	//	GR1_Median=IR1G_CalculateMedian(CsrWaveRef(A),CsrXWaveRef(A), pcsr(A),pcsr(B))
 	IN2G_IntegrateXY(DimensionShort, DistShort2)
@@ -1062,7 +1074,7 @@ Function IR3E_SDCalculateStatistics()
 		SDVolumeInRange=areaXY(DimensionShort, DistShort, 0, inf)
 	endif
 	if (stringmatch(YwvName,"*Number*") || stringmatch(YwvName,"*NumDist*"))
-		IR1G_CreateAveVolSfcWvUsingNote(ParticleVolumes,DimensionShort,Note(ParticleVolumes),"Volume")
+		IR1G_CreateAveVolSfcWvUsingNote(ParticleVolumes,DimensionShort,Note(ParticleVolumes),"Volume", popNumber)
 		DistShort2 = DistShort * ParticleVolumes				//this is volume distribution
 		SDVolumeInRange=areaXY(DimensionShort, DistShort2, 0, inf)
 	endif
@@ -1072,7 +1084,8 @@ Function IR3E_SDCalculateStatistics()
 		SDNumberDensity=areaXY(DimensionShort, DistShort, 0, inf)
 	endif
 	if (stringmatch(YwvName,"*Volume*") || stringmatch(YwvName,"*VolDist*"))
-		IR1G_CreateAveVolSfcWvUsingNote(ParticleVolumes,DimensionShort,Note(DistributionWv),"Volume")
+		//print YwvName[strsearch(YwvName, "pop", 0)+3]
+		IR1G_CreateAveVolSfcWvUsingNote(ParticleVolumes,DimensionShort,Note(DistributionWv),"Volume", popNumber)
 		DistShort2 = DistShort / ParticleVolumes			//this is now number distribution
 		SDNumberDensity=areaXY(DimensionShort, DistShort2, 0, inf)
 	endif
@@ -1080,7 +1093,7 @@ Function IR3E_SDCalculateStatistics()
 	if(stringMatch(XwvName,"*Radi*"))				//this is really radius wave...
 		DimensionShort2 =  2 * DimensionShort		//convert to diameters for next calculations
 	endif
-	IR1G_CreateAveVolSfcWvUsingNote(ParticleSurface,DimensionShort2,Note(DistributionWv),"Surface")
+	IR1G_CreateAveVolSfcWvUsingNote(ParticleSurface,DimensionShort2,Note(DistributionWv),"Surface", popNumber)
 
 	if (stringmatch(YwvName,"*Number*") || stringmatch(YwvName,"*NumDist*"))
 		//this is easy, just integrate
@@ -1088,9 +1101,12 @@ Function IR3E_SDCalculateStatistics()
 		variable MinDecSurfaceArea=areaXY(DimensionShort, DistShort2, 0, inf)
 	endif
 	if (stringmatch(YwvName,"*Volume*") || stringmatch(YwvName,"*VolDist*"))
-		IR1G_CreateAveVolSfcWvUsingNote(ParticleVolumes,DimensionShort2,Note(DistributionWv),"Volume")
+		IR1G_CreateAveVolSfcWvUsingNote(ParticleVolumes,DimensionShort2,Note(DistributionWv),"Volume", popNumber)
 		DistShort2 = DistShort / ParticleVolumes			//this is now number distribution
 		DistShort2 = DistShort2 * ParticleSurface			//this is now specific surface area
+		SDSpecSurfaceArea=areaXY(DimensionShort, DistShort2, 0, inf)
+	elseif (stringmatch(YwvName,"*Number*") || stringmatch(YwvName,"*NumDist*"))
+		DistShort2 = DistShort * ParticleSurface			//this is now specific surface area
 		SDSpecSurfaceArea=areaXY(DimensionShort, DistShort2, 0, inf)
 	endif
 	//	GR1_FWHM=IR1G_FindFWHM(CsrWaveRef(A),CsrXWaveRef(A), pcsr(A),pcsr(B))
@@ -1208,6 +1224,7 @@ Function IR3E_SDCreateMIPCurve()
 		NVAR MIPUserCosTheta=root:Packages:Irena:AnalyzeResults:SDMIPcosTheta
 		SVAR XwvName 			= root:Packages:Irena:AnalyzeResults:QWavename
 		SVAR YwvName 			= root:Packages:Irena:AnalyzeResults:IntensityWaveName
+		variable popNumber=str2num(YwvName[strsearch(YwvName, "pop", 0)+3])
 	
 		Wave/Z DistributionWV	= root:Packages:Irena:AnalyzeResults:OriginalYDataWave
 		Wave/Z DimensionWV		= root:Packages:Irena:AnalyzeResults:OriginalXDataWave
@@ -1226,11 +1243,11 @@ Function IR3E_SDCreateMIPCurve()
 		
 	//	variable surface
 		if (stringmatch(YwvName,"*Number*"))
-			IR1G_CreateAveVolSfcWvUsingNote(ParticleVolumes,MIPDistDiameters,Note(DistributionWv),"Volume")
+			IR1G_CreateAveVolSfcWvUsingNote(ParticleVolumes,MIPDistDiameters,Note(DistributionWv),"Volume",popNumber)
 			MIPVolume = DistributionWv * ParticleVolumes				//this is volume distribution
 		endif
 		if (stringmatch(YwvName,"*Volume*"))
-			IR1G_CreateAveVolSfcWvUsingNote(ParticleVolumes,MIPDistDiameters,Note(DistributionWv),"Volume")
+			IR1G_CreateAveVolSfcWvUsingNote(ParticleVolumes,MIPDistDiameters,Note(DistributionWv),"Volume", popNumber)
 		endif
 	
 		variable curPnts= numpnts(MIPDistDiameters)
@@ -1361,6 +1378,7 @@ Function IR3E_SDCreateCumulativeCurves()
 	NVAR StartP 		= root:Packages:Irena:AnalyzeResults:DataQstartPoint
 	SVAR XwvName 			= root:Packages:Irena:AnalyzeResults:QWavename
 	SVAR YwvName 			= root:Packages:Irena:AnalyzeResults:IntensityWaveName
+	variable popNumber=str2num(YwvName[strsearch(YwvName, "pop", 0)+3])
 	Wave/Z DistributionWV	= root:Packages:Irena:AnalyzeResults:OriginalYDataWave
 	Wave/Z DimensionWV		= root:Packages:Irena:AnalyzeResults:OriginalXDataWave
 	if(!WaveExists(DistributionWV) || !WaveExists(DimensionWV) || strlen(XwvName)<1 || strlen(YwvName)<1)
@@ -1381,14 +1399,14 @@ Function IR3E_SDCreateCumulativeCurves()
 	
 	variable surface
 	if (stringmatch(YwvName,"*Number*"))
-		IR1G_CreateAveVolSfcWvUsingNote(ParticleVolumes,CumulativeDistDiameters,Note(DistributionWv),"Volume")
+		IR1G_CreateAveVolSfcWvUsingNote(ParticleVolumes,CumulativeDistDiameters,Note(DistributionWv),"Volume", popNumber)
 		CumulativeSizeDist = DistributionWv * ParticleVolumes						//this is volume distribution
-		IR1G_CreateAveVolSfcWvUsingNote(ParticleSurfaces,CumulativeDistDiameters,Note(DistributionWv),"Surface")
+		IR1G_CreateAveVolSfcWvUsingNote(ParticleSurfaces,CumulativeDistDiameters,Note(DistributionWv),"Surface", popNumber)
 		CumulativeSfcArea = DistributionWv * ParticleSurfaces						//this is volume distribution
 	endif
 	if (stringmatch(YwvName,"*Volume*"))
-		IR1G_CreateAveVolSfcWvUsingNote(ParticleVolumes,CumulativeDistDiameters,Note(DistributionWv),"Volume")
-		IR1G_CreateAveVolSfcWvUsingNote(ParticleSurfaces,CumulativeDistDiameters,Note(DistributionWv),"Surface")
+		IR1G_CreateAveVolSfcWvUsingNote(ParticleVolumes,CumulativeDistDiameters,Note(DistributionWv),"Volume", popNumber)
+		IR1G_CreateAveVolSfcWvUsingNote(ParticleSurfaces,CumulativeDistDiameters,Note(DistributionWv),"Surface", popNumber)
 		CumulativeSfcArea = (DistributionWv/ParticleVolumes) * ParticleSurfaces		//this is volume distribution
 	endif
 	variable curPnts= numpnts(CumulativeDistDiameters)

@@ -100,7 +100,7 @@ Function IR2L_MainCheckVersion()
 	DoWindow LSQF2_MainPanel
 	if(V_Flag)
 		if(!IR1_CheckPanelVersionNumber("LSQF2_MainPanel", IR2LversionNumber))
-			DoAlert /T="The Modeling II panel was created by incorrect version of Irena " 1, "Modeling II may need to be restarted to work properly. Restart now?"
+			DoAlert /T="The Modeling panel was created by incorrect version of Irena " 1, "Modeling may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				KillWIndow/Z LSQF2_MainPanel
 				IR2L_Main()
@@ -121,14 +121,14 @@ end
 
 Function IR2L_MainPanel()
 	//PauseUpdate    		// building window...
-	NewPanel /K=1 /W=(3,42,410,730) as "Modeling II main panel"
+	NewPanel /K=1 /W=(3,42,410,730) as "Modeling main panel"
 	DoWindow/C LSQF2_MainPanel
 	//DefaultGUIControls /W=LSQF2_MainPanel /Mac native
 	
 	string AllowedIrenaTypes="DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;"
 	IR2C_AddDataControls("IR2L_NLSQF","LSQF2_MainPanel",AllowedIrenaTypes,"","","","","", 0,1)
 	CheckBox QLogScale pos={100,131}
-	TitleBox MainTitle title="\Zr190Modeling II",pos={100,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={200,24},anchor=MC,fColor=(0,0,52224)
+	TitleBox MainTitle title="\Zr190Modeling",pos={100,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={200,24},anchor=MC,fColor=(0,0,52224)
 
 
 	SetVariable RebinDataTo,limits={0,1000,0},variable= root:Packages:IR2L_NLSQF:RebinDataTo, noproc
@@ -646,7 +646,7 @@ end
 
 Function LSQF2_ModelingII_MoreDetailsF() : Panel
 	PauseUpdate    		// building window...
-	NewPanel /K=1 /W=(188,240,613,383) as "Modeling II more parameters"
+	NewPanel /K=1 /W=(188,240,613,383) as "Modeling more parameters"
 	DoWindow/C LSQF2_ModelingII_MoreDetails
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 16,fstyle= 3,textrgb= (0,0,65535)
@@ -2214,11 +2214,11 @@ Function IR2L_RecordResults(CalledFromWere)
 		IR1L_AppendAnyText("***********************************************")
 		IR1L_AppendAnyText("***********************************************")
 		IR1L_AppendAnyText("***********************************************")
-		IR1L_AppendAnyText("Parameters before starting Modeling II Fitting on the data from: ")
+		IR1L_AppendAnyText("Parameters before starting Modeling Fitting on the data from: ")
 		IR1_InsertDateAndTime(nbl)
 	else			//after
 		IR1L_AppendAnyText("***********************************************")
-		IR1L_AppendAnyText("Results of the Modeling II Fitting on the data from: ")	
+		IR1L_AppendAnyText("Results of the Modeling Fitting on the data from: ")	
 		IR1_InsertDateAndTime(nbl)
 	endif
 	NVAR MultipleInputData=root:Packages:IR2L_NLSQF:MultipleInputData

@@ -1317,20 +1317,20 @@ Function NI1A_Create2DQWave(DataWave)
 			Theta2DWave[beamCenterX][beamCenterY] = NaN
 		endif
 		//theta values exist by now... Now convert to real Q. Theta2D may be neededc later... 
-		variable timerRefNum, microSeconds
-		timerRefNum = StartMSTimer
-			Q2DWave = ((4*pi)/Wavelength)*sin(Theta2DWave)
-		microSeconds = StopMSTimer(timerRefNum)
-		print microSeconds/10000, "Direct calculation"
-		timerRefNum = StartMSTimer	
-			Multithread Q2DWave = ((4*pi)/Wavelength)*sin(Theta2DWave)
-		microSeconds = StopMSTimer(timerRefNum)
-		print microSeconds/10000, "Multithread"
-		timerRefNum = StartMSTimer	
+		//variable timerRefNum, microSeconds
+		//timerRefNum = StartMSTimer
+		//	Q2DWave = ((4*pi)/Wavelength)*sin(Theta2DWave)
+		//microSeconds = StopMSTimer(timerRefNum)
+		//print microSeconds/10000, "Direct calculation"
+		//timerRefNum = StartMSTimer	
+		//	Multithread Q2DWave = ((4*pi)/Wavelength)*sin(Theta2DWave)
+		//microSeconds = StopMSTimer(timerRefNum)
+		//print microSeconds/10000, "Multithread"
+		//timerRefNum = StartMSTimer	
 		// 2-1-2021 this seems 5x faster than Multithread and 10x faster than direct calculation. 
 		MatrixOp/O  Q2DWave = ((4*pi)/Wavelength)*sin(Theta2DWave)
-		microSeconds = StopMSTimer(timerRefNum)
-		print microSeconds/10000, "MatrixOP"
+		//microSeconds = StopMSTimer(timerRefNum)
+		//print microSeconds/10000, "MatrixOP"
 		//record for which geometry this Radius vector wave was created
 	else
 		Theta2DWave[beamCenterX][beamCenterY] = NaN
@@ -6677,8 +6677,8 @@ end
 //*******************************************************************************************************************************************
 
 Function NI1A_DezingerImage(image)
-        Wave image
- 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+    Wave image
+ 	 IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
  	 string OldDf=GetDataFOlder(1)
     setDataFolder root:Packages:Convert2Dto1D
  	 NVAR DezingerRatio =root:Packages:Convert2Dto1D:DezingerRatio
@@ -6688,7 +6688,7 @@ Function NI1A_DezingerImage(image)
     MatrixOp/Free  DiffWave = dup / (abs(image))      // difference between raw and filtered, high values (>35) are cosmics and high signals
        //image = SelectNumber(DiffWave>DezingerRatio,dup,image)    // choose filtered (image) if difference is great
     MatrixOp/O  image = dup * (-1)*(greater(Diffwave,DezingerRatio)-1) + image*(greater(Diffwave,DezingerRatio))
-	     //the MatrxiOp is 3x faster than the original line.... 
+	     //the MatrixOp is 3x faster than the original line.... 
 	 note image, OldNote
     //KillWaves/Z DiffWave, FilteredDiffWave, dup
     setDataFolder OldDf

@@ -21,7 +21,7 @@ Merge data tool - fix use of long folder names. It was not following user choice
 Merge data tool - Added Optimization method: "Optimize Overlap, trim Data1" when data122 are trimmed at the very start of overlap, removing noise at overlap. 
 Unified fit - fixed fitting problem when "Link B to G/Rg/P?" was selected, code was not refreshing calculated B during fitting. Caused misfits.  
 Multi data plotting tool - added Contour plot and Waterfall plot. 
-
+Export data tool - add option to export SAXS/WAXS data against Q, d, or Two theta. 
 
 
 2.70  9/3/2020
