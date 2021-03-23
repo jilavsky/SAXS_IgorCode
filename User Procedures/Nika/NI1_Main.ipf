@@ -171,7 +171,7 @@ end
 Function NI1_SetAllPathsInNIka()
 		DoWindow NI1A_Convert2Dto1DPanel
 		if(!V_Flag)		//does nto exists, quit
-			Abort "Main Nika windows does not exist, open it first"
+			NI1A_Convert2Dto1DMainPanel()
 		else
 			DoWIndow/F NI1A_Convert2Dto1DPanel
 		endif
@@ -221,10 +221,32 @@ Function NI1_SetAllPathsInNIka()
 				endif
 			endif	
 			NEXUS_NikaCall(0)
+			//update main pane
+			DoWIndow NI1A_Convert2Dto1DPanel
+			if(V_Flag)
+				PopupMenu Select2DDataType   win=NI1A_Convert2Dto1DPanel, popmatch=SelectedImageType
+			PopupMenu SelectBlank2DDataType  win=NI1A_Convert2Dto1DPanel, popmatch=SelectedImageType
+			endif
+			
 			SVAR BlankFileExtension=root:Packages:Convert2Dto1D:BlankFileExtension
 			BlankFileExtension = SelectedImageType
 			SVAR BMFunctionName=root:Packages:Convert2Dto1D:BMFunctionName
 			BMFunctionName = SelectedImageType
+			SVAR BmCntrFileType=root:Packages:Convert2Dto1D:BmCntrFileType
+			BmCntrFileType = SelectedImageType
+			DoWIndow NI1_CreateBmCntrFieldPanel
+			if(V_Flag)
+				PopupMenu BmCntrFileType win=NI1_CreateBmCntrFieldPanel, popmatch=SelectedImageType
+			endif
+			
+			
+			SVAR CCDFileExtension = root:Packages:Convert2Dto1D:CCDFileExtension
+			CCDFileExtension = SelectedImageType
+			DoWIndow NI1M_ImageROIPanel
+			if(V_Flag)
+				PopupMenu CCDFileExtension win=NI1M_ImageROIPanel, popmatch=SelectedImageType
+			endif
+			
 		endif
 		NI1BC_UpdateBmCntrListBox()	
 		NI1A_UpdateDataListBox()	

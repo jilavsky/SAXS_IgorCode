@@ -3724,8 +3724,8 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	Button Select2DDataPath,help={"Select Data path where 2D data are"}
 	TitleBox PathInfoStr, pos={3,55}, size={350,20}, variable=root:Packages:Convert2Dto1D:MainPathInfoStr, frame=0, fstyle=2, fColor=(0,12800,32000)//,fSize=1.3
 	PopupMenu Select2DDataType,pos={290,30},size={111,21},proc=NI1A_PopMenuProc,title="Image type"
-	PopupMenu Select2DDataType,help={"Select type of 2D images being loaded"}
-	PopupMenu Select2DDataType,mode=2,popvalue=DataFileExtension,value= #"root:Packages:Convert2Dto1D:ListOfKnownExtensions"
+	PopupMenu Select2DDataType,help={"Select type of 2D images being loaded"},value= #"root:Packages:Convert2Dto1D:ListOfKnownExtensions"
+	PopupMenu Select2DDataType,popmatch=DataFileExtension
 	CheckBox UseCalib2DData,pos={165,33},size={146,14},proc=NI1A_CheckProc,title="Calibrated 2D data?"
 	CheckBox UseCalib2DData,help={"Import 2D calibrated data, not raw image data"}
 	CheckBox UseCalib2DData,variable= root:Packages:Convert2Dto1D:UseCalib2DData
@@ -4005,9 +4005,11 @@ Function NI1A_Convert2Dto1DPanelFnct()
 //tab 4 Empty, dark and pixel sensitivity
 	Button SelectMaskDarkPath,pos={10,310},size={240,20},proc=NI1A_ButtonProc,title="Select path to mask, dark & pix sens. files"
 	Button SelectMaskDarkPath,help={"Select Data path where Empty and Dark files are"}
+	SVAR DataFileExtension = root:Packages:Convert2Dto1D:DataFileExtension
+	PopupMenu SelectBlank2DDataType,value= #"root:Packages:Convert2Dto1D:ListOfKnownExtensions"
 	PopupMenu SelectBlank2DDataType,pos={270,310},size={111,21},proc=NI1A_PopMenuProc,title="Image type"
 	PopupMenu SelectBlank2DDataType,help={"Select type of 2D images being loaded"}
-
+	PopupMenu SelectBlank2DDataType,popmatch=DataFileExtension
 	ListBox Select2DMaskDarkWave,pos={23,335},size={351,120},disable=1, row=0, special={0,0,1 }		//this will scale the width of column, users may need to slide right using slider at the bottom. 
 	ListBox Select2DMaskDarkWave,help={"Select data file to be used as empty beam or dark field"}
 	ListBox Select2DMaskDarkWave,listWave=root:Packages:Convert2Dto1D:ListOf2DEmptyData
@@ -4022,8 +4024,6 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	CheckBox DezingerDark,pos={255,485},size={95,14},title="Dezinger Dark"
 	CheckBox DezingerDark,help={"Remove speckles from dark field"}, proc=NI1A_CheckProc
 	CheckBox DezingerDark,variable= root:Packages:Convert2Dto1D:DezingerDarkField
-	SVAR DataFileExtension = root:Packages:Convert2Dto1D:DataFileExtension
-	PopupMenu SelectBlank2DDataType,mode=2,popvalue=DataFileExtension,value= #"root:Packages:Convert2Dto1D:ListOfKnownExtensions"
 	SetVariable CurrentEmptyName,pos={19,533},size={350,16},title="Empty file:"
 	SetVariable CurrentEmptyName,help={"Name of file currently used as empty beam"}
 	SetVariable CurrentEmptyName,frame=0, noedit=1

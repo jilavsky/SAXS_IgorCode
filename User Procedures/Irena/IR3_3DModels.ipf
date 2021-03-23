@@ -1479,16 +1479,19 @@ End
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
-
+// 3-16-2021 verification - yields same numbers as original code. 
 static Function IR3A_Reted(endpoints)
 	wave endpoints
 	// calculate longest end-to-end distance for each combination of endpoints and its square for weight-averaged end-to-end distance	
 	DFref oldDf= GetDataFolderDFR()
 
 	SetDataFolder root:Packages:AggregateModeling
-	NVAR DegreeOfAggregation
-	NVAR RValue
-	NVAR dfValue
+	NVAR DegreeOfAggregation=root:Packages:AggregateModeling:DegreeOfAggregation
+	NVAR RValue=root:Packages:AggregateModeling:RValue
+	NVAR dfValue=root:Packages:AggregateModeling:dfValue
+	NVAR RgPrimary=root:Packages:AggregateModeling:RgPrimary
+	NVAR RxRgPrimaryValue=root:Packages:AggregateModeling:RxRgPrimaryValue
+
 	variable endnum=DimSize(endpoints,0), numcomb=binomial(endnum,2), cnt=0,endadd=0,ecnt=1,REnd=0,Rsum=0,Retend=0,RAve=0,rem=endnum
 	Make/n=(numcomb,1)/o enddist=0
 	Make/n=(endnum-3,7)/o Rlarge=0
@@ -1518,10 +1521,8 @@ static Function IR3A_Reted(endpoints)
 	REnd/=RSum
 	cnt=0
 	// Print and record R, df
-	NVAR RgPrimary=root:Packages:AggregateModeling:RgPrimary
-	NVAR RxRgPrimaryValue=root:Packages:AggregateModeling:RxRgPrimaryValue
 	
-	Print "R = "+num2str(REnd*RgPrimary)
+	Print "R = "+num2str(REnd)
 	Print "df= "+num2str(log(DegreeOfAggregation)/log(REnd))
 	RValue=Rend
 	dfValue=log(DegreeOfAggregation)/log(REnd)
@@ -1546,10 +1547,10 @@ static Function IR3A_Path(NumberOfTestPaths)
 	NVAR DegreeOfAggregation
 	NVAR AttemptValue
 	variable minPathLengthAccepted
-	minPathLengthAccepted = floor(min(DegreeOfAggregation^(1/2), 20))		//minimum length opf path accpeted as evaluation path, for large particles original value is crazily large. 
+	minPathLengthAccepted = floor(min(DegreeOfAggregation^(1/2), 20))		//minimum length of path accpeted as evaluation path, for large particles original value is crazily large. 
 	Make/n=(26,3)/Free nghbr
 	Wave/Z nghbrOfsetList
-	if(!WaveExists(nghbrOfsetList ))
+	if(!WaveExists(nghbrOfsetList))
 		IR3A_MakeNBROffsetList()
 	endif
 	Make /n=(DegreeOfAggregation,26)/O NeighborList=nan
@@ -1667,7 +1668,8 @@ static Function IR3A_Path(NumberOfTestPaths)
 	NVAR RxRgPrimaryValue=root:Packages:AggregateModeling:RxRgPrimaryValue
 	variable PrimaryDiameter = 2*sqrt(5/3)*RgPrimary
 	RxRgPrimaryValue = RValue*PrimaryDiameter
-	Print "R = "+num2str(RValue*PrimaryDiameter)
+	Print "R [primary particles]= "+num2str(RValue)
+	Print "R [Angstroms] = "+num2str(RValue*PrimaryDiameter)
 	Print "z = "+num2str(DegreeOfAggregation)
 	Print "p = "+num2str(pValue)
 	Print "s = "+num2str(sValue)

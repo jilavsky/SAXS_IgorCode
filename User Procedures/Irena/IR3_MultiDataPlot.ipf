@@ -897,7 +897,7 @@ static Function IR3L_AppendData(FolderNameStr)
 		else				//this is QRS, data shoudl already be named by folder, more or less... 
 			NewTraceName=NameOfWave(SourceIntWv)
 		endif
-		
+		NewTraceName = ReplaceString("'", NewTraceName, "")
 		CheckDisplayed /W=$(GraphWindowName) SourceIntWv
 		if(V_Flag==0)
 			AppendToGraph /W=$(GraphWindowName) SourceIntWv/TN=$(NewTraceName) vs  SourceQWv
