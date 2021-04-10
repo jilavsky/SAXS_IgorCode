@@ -362,7 +362,11 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 	string WinNameStr=lba.win
 	string items
 	variable i
-	NVAR TableIsSaved = root:Packages:SamplePlateSetup:TableIsSaved
+	NVAR/Z TableIsSaved = root:Packages:SamplePlateSetup:TableIsSaved
+	if(!NVAR_Exists(TableIsSaved))
+		variable/g root:Packages:SamplePlateSetup:TableIsSaved
+		NVAR TableIsSaved = root:Packages:SamplePlateSetup:TableIsSaved
+	endif
 	string ListOfSelRows
 	variable tempRow, j, firstSelectedRow, NoSelectedRows
 	SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser

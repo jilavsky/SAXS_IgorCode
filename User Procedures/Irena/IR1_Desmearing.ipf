@@ -524,7 +524,12 @@ Function IR1B_OneDesmearIteration()
 
 	//	numOfPoints=numpnts(FitIntensity)
 	
-		IR1B_ExtendData(DesmearedIntWave, DesmearedQWave, ExtrapErrWave, slitLength, BckgStartQ, BackgroundFunction,1) 			//extend data to 2xnumOfPoints to Qmax+2.1xSlitLength
+	IR1B_ExtendData(DesmearedIntWave, DesmearedQWave, ExtrapErrWave, slitLength, BckgStartQ, BackgroundFunction,1) 			//extend data to 2xnumOfPoints to Qmax+2.1xSlitLength
+	if(0)	//test smearing manually...
+		Wave OrgdQwave = root:Packages:Irena_desmearing:OrgdQwave
+		IR1B_ExtendData(DesmearedIntWave, DesmearedQWave, ExtrapErrWave, 0.1, BckgStartQ, BackgroundFunction,1) 			//extend data to 2xnumOfPoints to Qmax+2.1xSlitLength
+		SmFitIntensity = IR2L_SmearByFunction(DesmearedIntWave,DesmearedQWave, OrgdQwave, DesmearedQWave[p],OrgdQwave[p], 0.01, "Gauss Sigma ")
+	else
 		if(slitlength>0)
 			if(SlitLengthL<1e-9)
 				IR1B_SmearData(DesmearedIntWave, DesmearedQWave, slitLength, SmFitIntensity)						//smear the data, output is SmFitIntensity
@@ -539,15 +544,16 @@ Function IR1B_OneDesmearIteration()
 				IR1B_SmearDataTrapeziod(DesmearedIntWave, DesmearedQWave, slitwidth,slitwidthL, SmFitIntensity)	
 			endif
 		endif
-		Redimension/N=(numOfPoints) SmFitIntensity, DesmearedIntWave, DesmearedQWave, NormalizedError		//cut the data back to original length (Qmax, numOfPoints)
-		
-		NormalizedError=(OrgIntwave-SmFitIntensity)/SmErrors			//NormalizedError (input-my Smeared data)/input errors
-		Wave FitIntensity
-		duplicate/O FitIntensity, FastFitIntensity, SlowFitIntensity
-		//fast convergence
-		FastFitIntensity=DesmearedIntWave*(OrgIntwave/SmFitIntensity)								//Here we apply the correction on input data, FitIntensity is our best estimate for desmeared data
-		//slow convergence
-		SlowFitIntensity=DesmearedIntWave+ (OrgIntwave-SmFitIntensity)								//Here we apply the correction on input data, FitIntensity is our best estimate for desmeared data
+	endif
+	Redimension/N=(numOfPoints) SmFitIntensity, DesmearedIntWave, DesmearedQWave, NormalizedError		//cut the data back to original length (Qmax, numOfPoints)
+	
+	NormalizedError=(OrgIntwave-SmFitIntensity)/SmErrors			//NormalizedError (input-my Smeared data)/input errors
+	Wave FitIntensity
+	duplicate/O FitIntensity, FastFitIntensity, SlowFitIntensity
+	//fast convergence
+	FastFitIntensity=DesmearedIntWave*(OrgIntwave/SmFitIntensity)								//Here we apply the correction on input data, FitIntensity is our best estimate for desmeared data
+	//slow convergence
+	SlowFitIntensity=DesmearedIntWave+ (OrgIntwave-SmFitIntensity)								//Here we apply the correction on input data, FitIntensity is our best estimate for desmeared data
 		
 	variable i
 	if(DesmearFastOnly)
@@ -621,7 +627,7 @@ Function IR1B_SmearData(Int_to_smear, Q_vec_sm, slitLength, Smeared_int)
 	Smear_Q=2*slitLength*(Q_vec_sm[p]-Q_vec_sm[0])/(Q_vec_sm[DataLengths-1]-Q_vec_sm[0])		//create distribution of points in the l's which mimics the original distribution of points
 	//the 2* added later, because without it I did not  cover the whole slit length range... 
 	variable i=0
-	DataLengths=numpnts(Smeared_int)
+	//DataLengths=numpnts(Smeared_int)
 	
 	//		For(i=0;i<DataLengths;i+=1) 
 	//			multithread Smear_Int=interp(sqrt((Q_vec_sm[i])^2+(Smear_Q[p])^2), tempQ_vec_sm, tempInt_to_smear)		//put the distribution of intensities in the slit for each point 
@@ -769,53 +775,53 @@ Function IR1B_DoDesmearing()
 	string UserSampleName=StringByKey("UserSampleName", note(OrgIntWave) , "=", ";")
 	SVAR BackgroundFunction=root:Packages:Irena_desmearing:BackgroundFunction	
 			
-			//***************graph
-				Display/K=1 /W=(300,60,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height"))/N=DesmearingProcess OrgIntWave vs OrgQwave as "Intensity vs Q plot"
-				AutoPositionWindow/M=0/R=IR1B_DesmearingControlPanel  DesmearingProcess	
-				ModifyGraph mode=4,	margin(top)=100, mirror=1, minor=1
-				showinfo										//shows info
-				ShowTools/A										//show tools
-				ModifyGraph fSize=12,font="Times New Roman"				//modifies size and font of labels
-				Button KillThisWindow pos={10,10}, size={100,25},  title="Kill window", proc=IN2G_KillGraphsTablesEnd
-				Button ResetWindow pos={10,40}, size={100,25},  title="Reset window", proc=IN2G_ResetGraph
-				AppendToGraph DesmearedIntWave vs DesmearedQWave
-				AppendToGraph /R UpErr vs DesmearedQWave 
-				AppendToGraph /R DownErr vs DesmearedQWave 
-				AppendToGraph /R NormalizedError vs DesmearedQWave 
-				SVAR DataFolderName=root:Packages:Irena_desmearing:DataFolderName
-				SVAR IntensityWaveName=root:Packages:Irena_desmearing:IntensityWaveName
-				TextBox/W=DesmearingProcess/C/N=DateTimeTag/F=0/A=RB/E=2/X=2.00/Y=1.00 "\\Z07"+date()+", "+time()	
-				TextBox/W=DesmearingProcess/C/N=SampleNameTag/F=0/A=LB/E=2/X=2.00/Y=1.00 "\\Z07"+DataFolderName+IntensityWaveName	
-				ModifyGraph mode=3
-				ModifyGraph log=1, log(right)=0
-				Label left "Intensity"
-				Label bottom "Q"	
-				if(WaveExists(fit_ExtrapIntWave))
-					AppendToGraph fit_ExtrapIntWave
-					ModifyGraph mode(fit_ExtrapIntwave)=0,lstyle(fit_ExtrapIntwave)=3
-					ModifyGraph rgb(fit_ExtrapIntwave)=(0,15872,65280)
-					ModifyGraph lsize(fit_ExtrapIntwave)=2
-				endif
-				ModifyGraph marker(NormalizedError)=8,mrkThick(NormalizedError)=0.1;
-				ModifyGraph lstyle(UpErr)=3,rgb(UpErr)=(0,0,0),lstyle(DownErr)=3
-				ModifyGraph rgb(DownErr)=(0,0,0),rgb(SmoothIntwave)=(0,8704,13056)
-				ModifyGraph rgb(NormalizedError)=(0,0,0)
-				ModifyGraph zero(right)=3
-				ModifyGraph mode(UpErr)=0, mode(DownErr)=0
-				SetAxis/A/E=2 right
-				Label right "Normalized residuals"	
-				if(WaveExists(ColorWave))
-					ModifyGraph zColor(DesmearedIntWave)={ColorWave,0,2,Rainbow}
-				endif
-				Legend/N=text0/J/F=0/A=LB/B=1 "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"\\s(SmoothIntWave) Smeared data\r\\s(DesmearedIntWave) Current desmeared fit"
-				AppendText "\\s(NormalizedError) Standardized residual\r"
-				AppendText "User sample name:  "+UserSampleName
-				AppendText "Used extrapolation function:  "+BackgroundFunction
-				AppendText "Extrapolation starts at Q =  "+num2str(BckgStartQ)
-				ResumeUpdate
-				ModifyGraph width=0, height=0		
-				IN2G_AutoAlignPanelAndGraph()
-				//***************graph end	
+	//***************graph
+	Display/K=1 /W=(300,60,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height"))/N=DesmearingProcess OrgIntWave vs OrgQwave as "Intensity vs Q plot"
+	AutoPositionWindow/M=0/R=IR1B_DesmearingControlPanel  DesmearingProcess	
+	ModifyGraph mode=4,	margin(top)=100, mirror=1, minor=1
+	showinfo										//shows info
+	ShowTools/A										//show tools
+	ModifyGraph fSize=12,font="Times New Roman"				//modifies size and font of labels
+	Button KillThisWindow pos={10,10}, size={100,25},  title="Kill window", proc=IN2G_KillGraphsTablesEnd
+	Button ResetWindow pos={10,40}, size={100,25},  title="Reset window", proc=IN2G_ResetGraph
+	AppendToGraph DesmearedIntWave vs DesmearedQWave
+	AppendToGraph /R UpErr vs DesmearedQWave 
+	AppendToGraph /R DownErr vs DesmearedQWave 
+	AppendToGraph /R NormalizedError vs DesmearedQWave 
+	SVAR DataFolderName=root:Packages:Irena_desmearing:DataFolderName
+	SVAR IntensityWaveName=root:Packages:Irena_desmearing:IntensityWaveName
+	TextBox/W=DesmearingProcess/C/N=DateTimeTag/F=0/A=RB/E=2/X=2.00/Y=1.00 "\\Z07"+date()+", "+time()	
+	TextBox/W=DesmearingProcess/C/N=SampleNameTag/F=0/A=LB/E=2/X=2.00/Y=1.00 "\\Z07"+DataFolderName+IntensityWaveName	
+	ModifyGraph mode=3
+	ModifyGraph log=1, log(right)=0
+	Label left "Intensity"
+	Label bottom "Q"	
+	if(WaveExists(fit_ExtrapIntWave))
+		AppendToGraph fit_ExtrapIntWave
+		ModifyGraph mode(fit_ExtrapIntwave)=0,lstyle(fit_ExtrapIntwave)=3
+		ModifyGraph rgb(fit_ExtrapIntwave)=(0,15872,65280)
+		ModifyGraph lsize(fit_ExtrapIntwave)=2
+	endif
+	ModifyGraph marker(NormalizedError)=8,mrkThick(NormalizedError)=0.1;
+	ModifyGraph lstyle(UpErr)=3,rgb(UpErr)=(0,0,0),lstyle(DownErr)=3
+	ModifyGraph rgb(DownErr)=(0,0,0),rgb(SmoothIntwave)=(0,8704,13056)
+	ModifyGraph rgb(NormalizedError)=(0,0,0)
+	ModifyGraph zero(right)=3
+	ModifyGraph mode(UpErr)=0, mode(DownErr)=0
+	SetAxis/A/E=2 right
+	Label right "Normalized residuals"	
+	if(WaveExists(ColorWave))
+		ModifyGraph zColor(DesmearedIntWave)={ColorWave,0,2,Rainbow}
+	endif
+	Legend/N=text0/J/F=0/A=LB/B=1 "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"\\s(SmoothIntWave) Smeared data\r\\s(DesmearedIntWave) Current desmeared fit"
+	AppendText "\\s(NormalizedError) Standardized residual\r"
+	AppendText "User sample name:  "+UserSampleName
+	AppendText "Used extrapolation function:  "+BackgroundFunction
+	AppendText "Extrapolation starts at Q =  "+num2str(BckgStartQ)
+	ResumeUpdate
+	ModifyGraph width=0, height=0		
+	IN2G_AutoAlignPanelAndGraph()
+	//***************graph end	
 	setDataFolder OldDf
 end
 

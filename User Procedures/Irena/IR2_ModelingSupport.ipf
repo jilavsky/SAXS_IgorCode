@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.51
+#pragma version=1.52
 
 
 constant ChangeFromGaussToSlit=2
@@ -9,7 +9,7 @@ constant ChangeFromGaussToSlit=2
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-
+//1.52 reviewed pixel smearing (still think it is working correctly) and modified IR2L_FinishSmearingOfData() to use multiple threads. 
 //1.51 added option to save population results from scripting tool. 
 //1.50 merged togetehr with IR2L_NLSQFCalc.ipf
 //1.42 added Ardell distributions support
@@ -5432,11 +5432,11 @@ Function IRL2_SmearingPopMenuProc(pa) : PopupMenuControl
 				PixelSmearing= StringMatch(SMType, "None" )
 				FixedSmearing= StringMatch(SMSrc, "Fixed *")
 				UsingLogQBinning= stringmatch(SMType,"Log-Q binning (Nika, USAXS)")
-				PopupMenu SmearingSource, disable = PixelSmearing
-				PopupMenu SmearingMaxNumPnts, disable = PixelSmearing
-				SetVariable SmearingGaussWidth,disable = (PixelSmearing||!FixedSmearing||UsingLogQBinning)
-				SetVariable SmearingIgnoreSmalldQ,disable = (PixelSmearing||!FixedSmearing)
-				PopupMenu SmearingMaxNumPnts,disable = (PixelSmearing||!FixedSmearing)
+				PopupMenu SmearingSource,win=IR2L_ResSmearingPanel, disable = PixelSmearing
+				PopupMenu SmearingMaxNumPnts,win=IR2L_ResSmearingPanel, disable = PixelSmearing
+				SetVariable SmearingGaussWidth,win=IR2L_ResSmearingPanel,disable = (PixelSmearing||!FixedSmearing||UsingLogQBinning)
+				SetVariable SmearingIgnoreSmalldQ,win=IR2L_ResSmearingPanel,disable = (PixelSmearing||!FixedSmearing)
+				PopupMenu SmearingMaxNumPnts,win=IR2L_ResSmearingPanel, disable = (PixelSmearing||!FixedSmearing)
 				if(!PixelSmearing || SLitSmeared)
 					UseSmearing_set = 1
 				else
@@ -5448,7 +5448,7 @@ Function IRL2_SmearingPopMenuProc(pa) : PopupMenuControl
 				PixelSmearing= StringMatch(SMType, "None" )
 				FixedSmearing= StringMatch(SMSrc, "Fixed *")
 				UsingLogQBinning= stringmatch(SMType,"Log-Q binning (Nika, USAXS)")
-				SetVariable SmearingGaussWidth,disable = (PixelSmearing||!FixedSmearing||UsingLogQBinning)
+				SetVariable SmearingGaussWidth,win=IR2L_ResSmearingPanel,disable = (PixelSmearing||!FixedSmearing||UsingLogQBinning)
 			endif
 			if(stringmatch(pa.ctrlName,"SmearingMaxNumPnts"))
 				SmPnts = str2num(popStr)
@@ -5546,60 +5546,15 @@ Function IR2L_FinishSmearingOfData()
 					// With Width we are using rectangular "slit" - 
 					//print "finish smearing using Bin Width [1/A]"
 					//we will need to get the resolutions - for now handle fixed one
+					variable timerRefNum, microSeconds
+					timerRefNum = StartMSTimer
 				   Duplicate/O/Free OrigModelQ, ModelIntPixelSmeared
 				   Duplicate/O/Free OrigModelQ, ModelQPixelSmeared
-					make/Free/N=20 tmpModelInt, tmpSmFnct
-					For(j=0;j<numpnts(OrigModelQ);j+=1)
-							Qval = OrigModelQ[j]
-							dQval = ResolutionsWave[j]
-							if(dQval/Qval > (0.01 * SmearingIgnoreSmalldQ))
-								if(StringMatch(SmearingType, "Bin Width *" ))
-									//bin width is average of -dQ/2 to +dQ/2 around Q
-									SetScale /I x, Qval-(dQval/2), Qval+(dQval/2), tmpModelInt, tmpSmFnct
-									tmpModelInt = ModelIntensity[BinarySearchInterp(ModelQ,x)]
-									tmpSmFnct = 1
-									ModelIntPixelSmeared[j] = area(tmpModelInt)/area(tmpSmFnct)
-									//print j, area(tmpModelInt), area(tmpSmFnct)
-								elseif(StringMatch(SmearingType, "Gauss FWHM *" ))
-									//Gaus is average over -FWHM to +FWHM around Q avfetr weighing by Gauss distribution with FWHM
-									SetScale /I x, Qval-dQval, Qval+dQval, tmpModelInt, tmpSmFnct
-									tmpModelInt = ModelIntensity[BinarySearchInterp(ModelQ,x)]
-									GaussSdev = dQval/2.355	//convert Gauss FWHM to sigma 
-									tmpSmFnct = Gauss(x,Qval,GaussSdev)
-									tmpModelInt = tmpModelInt * tmpSmFnct
-									ModelIntPixelSmeared[j] = area(tmpModelInt)/area(tmpSmFnct)
-									//print j, area(tmpModelInt), area(tmpSmFnct)
-								elseif(StringMatch(SmearingType, "Gauss Sigma *" ))
-									//Gaus is average over -FWHM to +FWHM around Q avfetr weighing by Gauss distribution with FWHM
-									SetScale /I x, Qval-dQval, Qval+dQval, tmpModelInt, tmpSmFnct
-									tmpModelInt = ModelIntensity[BinarySearchInterp(ModelQ,x)]
-									GaussSdev = dQval		//this is directly the Gauss sigma needed... 
-									tmpSmFnct = Gauss(x,Qval,GaussSdev)
-									tmpModelInt = tmpModelInt * tmpSmFnct
-									ModelIntPixelSmeared[j] = area(tmpModelInt)/area(tmpSmFnct)
-									//print j, area(tmpModelInt), area(tmpSmFnct)
-								elseif(StringMatch(SmearingType, "Log-Q binning *" ))		//this is NIka log-Q binning of USAXS flyscan log-q binning. Need to transition from Gauss at low q to rectangle at high q
-									if(dQval<(ResolutionsWave[0]*ChangeFromGaussToSlit))		//low-q range, dQ is similar to the first one, assume Gauss dist. 
-										//Gaus is average over -FWHM to +FWHM around Q avfetr weighing by Gauss distribution with FWHM
-										SetScale /I x, Qval-dQval, Qval+dQval, tmpModelInt, tmpSmFnct
-										tmpModelInt = ModelIntensity[BinarySearchInterp(ModelQ,x)]
-										GaussSdev = dQval/2.355
-										tmpSmFnct = Gauss(x,Qval,GaussSdev)
-										tmpModelInt = tmpModelInt * tmpSmFnct
-										ModelIntPixelSmeared[j] = area(tmpModelInt)/area(tmpSmFnct)
-									else															//dQ > ChangeFromGaussToSlit * dQ[0], which means we are more in range where rectangular smearing is appropriate. 
-										//bin width is average of -dQ/2 to +dQ/2 around Q
-										SetScale /I x, Qval-(dQval/2), Qval+(dQval/2), tmpModelInt, tmpSmFnct
-										tmpModelInt = ModelIntensity[BinarySearchInterp(ModelQ,x)]
-										tmpSmFnct = 1
-										ModelIntPixelSmeared[j] = area(tmpModelInt)/area(tmpSmFnct)
-									endif
-								endif
-							else
-								ModelIntPixelSmeared[j] = ModelIntensity[BinarySearchInterp(ModelQ,Qval)]
-								//print "Skipped smearing for point number : "+num2str(j)
-							endif
-					endfor
+					//timerRefNum = StartMSTimer
+					// this should use multiple cores, should be faster... 
+					multithread ModelIntPixelSmeared = IR2L_SmearByFunction(ModelIntensity,ModelQ, ResolutionsWave, OrigModelQ[p],ResolutionsWave[p], SmearingIgnoreSmalldQ, SmearingType)
+					//microSeconds = StopMSTimer(timerRefNum)
+					//Print microSeconds/10000, "microseconds new method"
 				endif
 		
 				//note, we need to end with Int vs Q using original Q points - except may be extended for slit smearing...
@@ -5610,8 +5565,9 @@ Function IR2L_FinishSmearingOfData()
 				//now need to make this properly moved to use Qmodel_set and delete the original
 				//Assume that we have only original q points by now and the extension to higher then slit length...  
 				//Ideally, all we need is just delete all points beyond the needed range 
-				ModelIntensity = ModelIntPixelSmeared
-				DeletePoints (numpnts(OrigModelQ)), (numpnts(ModelIntensity) - numpnts(OrigModelQ)), ModelIntensity 
+				Duplicate/O ModelIntPixelSmeared, $("root:Packages:IR2L_NLSQF:IntensityModel_set"+num2str(i))
+				//ModelIntensity = ModelIntPixelSmeared
+				//DeletePoints (numpnts(OrigModelQ)), (numpnts(ModelIntensity) - numpnts(OrigModelQ)), ModelIntensity 
 				Duplicate/O OrigModelQ, $("root:Packages:IR2L_NLSQF:Qmodel_set"+num2str(i)) 
 				KillWaves OrigModelQ
 			else	//just cleanup not to confuse anyone :-)
@@ -5622,6 +5578,65 @@ Function IR2L_FinishSmearingOfData()
 	endfor
 end
 //**************************************************************************************************************************************************************************************
+///
+// 
+threadsafe Function IR2L_SmearByFunction(ModelIntensity,ModelQ,ResolutionsWave, Qval,dQval, IgSmalldQ, SmearingType)
+		Wave ModelIntensity, ModelQ, ResolutionsWave
+		variable Qval, dQval, IgSmalldQ
+		string SmearingType
+		
+		Variable SmearedIntValue, GaussSdev
+		
+		make/Free/N=51 tmpModelInt, tmpSmFnct
+			if(dQval/Qval > (0.01 * IgSmalldQ))
+				if(StringMatch(SmearingType, "Bin Width *" ))
+					//bin width is average of -dQ/2 to +dQ/2 around Q
+					SetScale /I x, Qval-(dQval/2), Qval+(dQval/2), tmpModelInt, tmpSmFnct
+					tmpModelInt = ModelIntensity[BinarySearchInterp(ModelQ,x)]
+					tmpSmFnct = 1
+					SmearedIntValue = area(tmpModelInt)/area(tmpSmFnct)
+					//print j, area(tmpModelInt), area(tmpSmFnct)
+				elseif(StringMatch(SmearingType, "Gauss FWHM *" ))
+					//Gaus is average over -FWHM to +FWHM around Q avfetr weighing by Gauss distribution with FWHM
+					SetScale /I x, Qval-(2*dQval), Qval+(2*dQval), tmpModelInt, tmpSmFnct
+					tmpModelInt = ModelIntensity[BinarySearchInterp(ModelQ,x)]
+					GaussSdev = dQval/2.355	//convert Gauss FWHM to sigma 
+					tmpSmFnct = Gauss(x,Qval,GaussSdev)
+					tmpModelInt = tmpModelInt * tmpSmFnct
+					SmearedIntValue = area(tmpModelInt)/area(tmpSmFnct)
+					//print j, area(tmpModelInt), area(tmpSmFnct)
+				elseif(StringMatch(SmearingType, "Gauss Sigma *" ))
+					//Gaus is average over -FWHM to +FWHM around Q after weighing by Gauss distribution with FWHM
+					SetScale /I x, Qval-(3*dQval), Qval+(3*dQval), tmpModelInt, tmpSmFnct
+					tmpModelInt = ModelIntensity[BinarySearchInterp(ModelQ,x)]
+					GaussSdev = dQval		//this is directly the Gauss sigma needed... 
+					tmpSmFnct = Gauss(x,Qval,GaussSdev)
+					tmpModelInt = tmpModelInt * tmpSmFnct
+					SmearedIntValue = area(tmpModelInt)/area(tmpSmFnct)
+					//print j, area(tmpModelInt), area(tmpSmFnct)
+				elseif(StringMatch(SmearingType, "Log-Q binning *" ))		//this is NIka log-Q binning of USAXS flyscan log-q binning. Need to transition from Gauss at low q to rectangle at high q
+					if(dQval<(ResolutionsWave[0]*ChangeFromGaussToSlit))		//low-q range, dQ is similar to the first one, assume Gauss dist. 
+						//Gaus is average over -FWHM to +FWHM around Q after weighing by Gauss distribution with FWHM
+						SetScale /I x, Qval-dQval, Qval+dQval, tmpModelInt, tmpSmFnct
+						tmpModelInt = ModelIntensity[BinarySearchInterp(ModelQ,x)]
+						GaussSdev = dQval/2.355
+						tmpSmFnct = Gauss(x,Qval,GaussSdev)
+						tmpModelInt = tmpModelInt * tmpSmFnct
+						SmearedIntValue = area(tmpModelInt)/area(tmpSmFnct)
+					else															//dQ > ChangeFromGaussToSlit * dQ[0], which means we are more in range where rectangular smearing is appropriate. 
+						//bin width is average of -dQ/2 to +dQ/2 around Q
+						SetScale /I x, Qval-(dQval/2), Qval+(dQval/2), tmpModelInt, tmpSmFnct
+						tmpModelInt = ModelIntensity[BinarySearchInterp(ModelQ,x)]
+						tmpSmFnct = 1
+						SmearedIntValue = area(tmpModelInt)/area(tmpSmFnct)
+					endif
+				endif
+			else
+				SmearedIntValue = ModelIntensity[BinarySearchInterp(ModelQ,Qval)]
+				//print "Skipped smearing for point number : "+num2str(j)
+			endif
+	return SmearedIntValue
+end
 //**************************************************************************************************************************************************************************************
 //**************************************************************************************************************************************************************************************
 //**************************************************************************************************************************************************************************************
@@ -5752,7 +5767,7 @@ Function IR2L_PrepareSetsQvectors()
 					newIDX = 0
 					for(ik=0;ik<numpnts(OrigModelQ);ik+=1)
 							Qval = OrigModelQ[ik]
-							dQval = ResolutionsWave[ik]
+							dQval = 1.1*ResolutionsWave[ik]					//thsi needs to be larger Q range to prevent numerical failures in lookup later. 
 							FindLevel /P/Q OrigModelQ, (Qval-dQval)
 							if(V_Flag==0)
 								StartP = floor(V_LevelX)
@@ -5776,9 +5791,9 @@ Function IR2L_PrepareSetsQvectors()
 							endif
 							if((ExistQs<SmearingMaxNumPnts)&&((dQval/Qval)>(0.01*SmearingIgnoreSmalldQ)))		//found in the dQ less points then user wanted, so we need to rebin this
 								if(StringMatch(SmearingType, "* Width *" ))
-									Qstep = dQval/(SmearingMaxNumPnts-1)					//this is +/- width/2 assumtpiton with rectangular shape
+									Qstep = dQval/(SmearingMaxNumPnts-1)					//this is +/- width/2 assumptiton with rectangular shape
 									QOffset = dQval/2
-								elseif(StringMatch(SmearingType, "Log-Q binning *" ))		//this is NIka log-Q binning of USAXS flyscan log-q binning. Need to transition from Gauss at low q to rectangle at high q
+								elseif(StringMatch(SmearingType, "Log-Q binning *" ))		//this is Nika log-Q binning of USAXS flyscan log-q binning. Need to transition from Gauss at low q to rectangle at high q
 									if(dQval<(ResolutionsWave[0]*ChangeFromGaussToSlit))		//low-q range, dQ is similar to the first one, assume Gauss dist. 
 										Qstep = 2*dQval/(SmearingMaxNumPnts-1)				//this is Gauss with FWHM defined, so step could be +/- 0.5*FHWM, but to get the edge ones we will widen the step to twice...  
 										QOffset = dQval

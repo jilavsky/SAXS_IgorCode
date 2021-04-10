@@ -376,19 +376,19 @@ static Function IRB1_ImportDataFnct()
 			Wave wave1
 			Wave/Z wave2
 			KillWaves/Z $(PossiblyQuoteName("q_"+SelectedFileName)), $(PossiblyQuoteName("r_"+SelectedFileName)), $(PossiblyQuoteName("s_"+SelectedFileName))
-			Rename wave0, $(PossiblyQuoteName("q_"+SelectedFileName))
-			Rename wave1, $(PossiblyQuoteName("r_"+SelectedFileName))
+			Rename wave0, $("q_"+SelectedFileName)
+			Rename wave1, $("r_"+SelectedFileName)
 			if(WaveExists(wave2))	//this should be error data, but if they do not exist, we need to fake them. ATSAS assume 4% intensity...
-				Rename wave2, $(PossiblyQuoteName("s_"+SelectedFileName))
+				Rename wave2, $("s_"+SelectedFileName)
 			else
-				Duplicate/O wave1, $(PossiblyQuoteName("s_"+SelectedFileName))
-				Wave NewErrWv=$(PossiblyQuoteName("s_"+SelectedFileName))
+				Duplicate/O wave1, $("s_"+SelectedFileName)
+				Wave NewErrWv=$("s_"+SelectedFileName)
 				NewErrWv *=0.04
 			endif
 			//need to clean upimported waves, if Intensity is 0, point shoudl be removed... 
-			Wave Intensity = $(PossiblyQuoteName("r_"+SelectedFileName))
-			Wave Qvec = $(PossiblyQuoteName("q_"+SelectedFileName))
-			Wave Error = $(PossiblyQuoteName("s_"+SelectedFileName))
+			Wave Intensity = $("r_"+SelectedFileName)
+			Wave Qvec = $("q_"+SelectedFileName)
+			Wave Error = $("s_"+SelectedFileName)
 			Intensity = Intensity[p]>0 ? Intensity[p] : nan
 			IN2G_RemoveNaNsFrom3Waves(Qvec,Intensity,Error)
 			if(QvectorInnm)
@@ -854,13 +854,14 @@ static Function IRB1_DataManAverageDataSetsts()
 	//take first folder name, append the user appendix and create new strings here... 
 	string FirstFolderShortName=StringFromList(ItemsInList(FldrNamesTWv[0], ":")-1, FldrNamesTWv[0], ":")
 	string OutputWaveNameMain = RemoveListItem(ItemsInList(FirstFolderShortName,"_")-1, FirstFolderShortName, "_") +"avg"
+	OutputWaveNameMain=IN2G_removeExtraQuote(OutputWaveNameMain,1,1)
 	OutYWvNm = "r_"+OutputWaveNameMain
 	OutEWvNm = "s_"+OutputWaveNameMain
 	OutXWvNm = "q_"+OutputWaveNameMain
 	string FullPathToFirstFolder = FldrNamesTWv[numpnts(FldrNamesTWv)-1]
 	string OldFolderName = StringFromList(ItemsInList(FullPathToFirstFolder,":")-1, FullPathToFirstFolder, ":")
-	FullPathToFirstFolder  = ReplaceString(OldFOlderName, FullPathToFirstFolder, OutputWaveNameMain)
-	OutFldrNm = FullPathToFirstFolder	
+	FullPathToFirstFolder  = ReplaceString(OldFOlderName, FullPathToFirstFolder, possiblyquoteName(OutputWaveNameMain))
+	OutFldrNm = FullPathToFirstFolder //IN2G_removeExtraQuote(FullPathToFirstFolder,1,1) 	
 	Xtmplt = "(?i)q_"
 	Ytmplt = "(?i)r_"
 	Etmplt = "(?i)s_"
@@ -991,12 +992,18 @@ Function IRB1_DataManAppendOneDataSet(FolderNameStr)
 	if(Subtracting)		//subtracting buffer from ave data or scaling data, in each case, must remove the existing files. 
 		//preset for user output name for merged data
 		UserSourceDataFolderName = StringFromList(ItemsInList(FolderNameStr, ":")-1, FolderNameStr, ":")
-		if(StringMatch(UserSourceDataFolderName, "*_ave"))
+		if(StringMatch(UserSourceDataFolderName, "*_ave")|| StringMatch(UserSourceDataFolderName, "*_ave'"))
 			SubtractedOutputFldrName = ReplaceString("_ave", UserSourceDataFolderName, "_sub")
-		elseif(StringMatch(UserSourceDataFolderName, "*_avg"))
+		elseif(StringMatch(UserSourceDataFolderName, "*_avg")|| StringMatch(UserSourceDataFolderName, "*_avg'"))
 			SubtractedOutputFldrName = ReplaceString("_avg", UserSourceDataFolderName, "_sub")
 		else
-			SubtractedOutputFldrName = RemoveEnding(UserSourceDataFolderName, ":") +"_sub"	
+			//SubtractedOutputFldrName = RemoveEnding(UserSourceDataFolderName, ":") +"_sub"	
+			SubtractedOutputFldrName = RemoveEnding(UserSourceDataFolderName, ":")
+			if(StringMatch(UserSourceDataFolderName[strlen(SubtractedOutputFldrName)-1], "'"))			//this is liberal name...
+					SubtractedOutputFldrName = IN2G_removeExtraQuote(SubtractedOutputFldrName,1,1) +"_sub'"
+			else
+					SubtractedOutputFldrName = SubtractedOutputFldrName+"_sub'"
+			endif	
 		endif
 		//remove, if needed, all data from graph
 		IN2G_RemoveDataFromGraph(topGraphStr = "IRB1_DataManipulationPanel#LogLogDataDisplay")
@@ -1203,9 +1210,9 @@ static Function IRB1_DataManCopyAndScaleBuffer()
 	NVAR BufferScalingFraction = root:Packages:Irena:BioSAXSDataMan:BufferScalingFraction
 	SVAR UserBufferDataFolderName = root:Packages:Irena:BioSAXSDataMan:UserBufferDataFolderName
 	
-	string XwaveNameStr = SelectedBufferFolder+"q_"+StringFromList(ItemsInList(SelectedBufferFolder,":")-1, SelectedBufferFolder, ":")
-	string YwaveNameStr = SelectedBufferFolder+"r_"+StringFromList(ItemsInList(SelectedBufferFolder,":")-1, SelectedBufferFolder, ":")
-	string EwaveNameStr = SelectedBufferFolder+"s_"+StringFromList(ItemsInList(SelectedBufferFolder,":")-1, SelectedBufferFolder, ":")
+	string XwaveNameStr = SelectedBufferFolder+PossiblyQUoteName("q_"+IN2G_RemoveExtraQuote(StringFromList(ItemsInList(SelectedBufferFolder,":")-1, SelectedBufferFolder, ":"),1,1))
+	string YwaveNameStr = SelectedBufferFolder+PossiblyQUoteName("r_"+IN2G_RemoveExtraQuote(StringFromList(ItemsInList(SelectedBufferFolder,":")-1, SelectedBufferFolder, ":"),1,1))
+	string EwaveNameStr = SelectedBufferFolder+PossiblyQUoteName("s_"+IN2G_RemoveExtraQuote(StringFromList(ItemsInList(SelectedBufferFolder,":")-1, SelectedBufferFolder, ":"),1,1))
 	
 	Wave/Z Xwave = $(XwaveNameStr)
 	Wave/Z Ywave = $(YwaveNameStr)
@@ -1304,9 +1311,9 @@ static Function IRB1_DataManSubtractBufferOne()
 	SVAR SourceFolderName = root:Packages:Irena:BioSAXSDataMan:DataFolderName
 	NVAR Overwrite=root:Packages:Irena:BioSAXSDataMan:OverwriteExistingData
 
-	string XwaveNameStr = SourceFolderName+"q_"+StringFromList(ItemsInList(SourceFolderName,":")-1, SourceFolderName, ":")
-	string YwaveNameStr = SourceFolderName+"r_"+StringFromList(ItemsInList(SourceFolderName,":")-1, SourceFolderName, ":")
-	string EwaveNameStr = SourceFolderName+"s_"+StringFromList(ItemsInList(SourceFolderName,":")-1, SourceFolderName, ":")
+	string XwaveNameStr = SourceFolderName+PossiblyQUoteName("q_"+IN2G_RemoveExtraQuote(StringFromList(ItemsInList(SourceFolderName,":")-1, SourceFolderName, ":"),1,1))
+	string YwaveNameStr = SourceFolderName+PossiblyQUoteName("r_"+IN2G_RemoveExtraQuote(StringFromList(ItemsInList(SourceFolderName,":")-1, SourceFolderName, ":"),1,1))
+	string EwaveNameStr = SourceFolderName+PossiblyQUoteName("s_"+IN2G_RemoveExtraQuote(StringFromList(ItemsInList(SourceFolderName,":")-1, SourceFolderName, ":"),1,1))
 
 	Wave/Z Xwave = $(XwaveNameStr)
 	Wave/Z Ywave = $(YwaveNameStr)
@@ -1362,15 +1369,22 @@ static Function IRB1_DataManSubtractBufferOne()
 	IN2G_RemoveNaNsFrom3Waves(ResultsInt,ResultsQ,ResultsE)
 
 	String OutFldrNm, OutXWvNm, OutYWvNm,OutEWvNm
-	if(StringMatch(SourceFolderName, "*_ave:"))
+	if(StringMatch(SourceFolderName, "*_ave:") || StringMatch(SourceFolderName, "*_ave':"))
 		OutFldrNm = ReplaceString("_ave", SourceFolderName, "_sub")
-	elseif(StringMatch(SourceFolderName, "*_avg:"))
+	elseif(StringMatch(SourceFolderName, "*_avg:")||StringMatch(SourceFolderName, "*_avg':"))
 		OutFldrNm = ReplaceString("_avg", SourceFolderName, "_sub")
 	else
-		OutFldrNm = RemoveEnding(SourceFolderName, ":") +"_sub"	
+		OutFldrNm = RemoveEnding(SourceFolderName, ":")
+		if(StringMatch(OutFldrNm[strlen(OutFldrNm)-1], "'"))			//this is liberal name...
+				OutFldrNm = IN2G_removeExtraQuote(OutFldrNm,1,1) +"_sub'"
+		else
+				OutFldrNm = OutFldrNm+"_sub'"
+		endif	
 	endif
 	string FirstFolderShortName=StringFromList(ItemsInList(OutFldrNm, ":")-1, OutFldrNm, ":")
 	string OutputWaveNameMain = RemoveListItem(ItemsInList(FirstFolderShortName,"_")-1, FirstFolderShortName, "_") +"sub"
+	OutputWaveNameMain=IN2G_removeExtraQuote(OutputWaveNameMain,1,1)
+
 	OutYWvNm = "r_"+OutputWaveNameMain
 	OutEWvNm = "s_"+OutputWaveNameMain
 	OutXWvNm = "q_"+OutputWaveNameMain
@@ -1430,9 +1444,9 @@ static Function IRB1_DataManScaleDataOne()
 	NVAR ErrorScalingConstant=root:Packages:Irena:BioSAXSDataMan:ErrorScalingConstant
 	NVAR FlatBackgroundSubtract=root:Packages:Irena:BioSAXSDataMan:FlatBackgroundSubtract
 
-	string XwaveNameStr = SourceFolderName+"q_"+StringFromList(ItemsInList(SourceFolderName,":")-1, SourceFolderName, ":")
-	string YwaveNameStr = SourceFolderName+"r_"+StringFromList(ItemsInList(SourceFolderName,":")-1, SourceFolderName, ":")
-	string EwaveNameStr = SourceFolderName+"s_"+StringFromList(ItemsInList(SourceFolderName,":")-1, SourceFolderName, ":")
+	string XwaveNameStr = SourceFolderName+PossiblyQuoteName("q_"+IN2G_RemoveExtraQuote(StringFromList(ItemsInList(SourceFolderName,":")-1, SourceFolderName, ":"),1,1))
+	string YwaveNameStr = SourceFolderName+PossiblyQuoteName("r_"+IN2G_RemoveExtraQuote(StringFromList(ItemsInList(SourceFolderName,":")-1, SourceFolderName, ":"),1,1))
+	string EwaveNameStr = SourceFolderName+PossiblyQuoteName("s_"+IN2G_RemoveExtraQuote(StringFromList(ItemsInList(SourceFolderName,":")-1, SourceFolderName, ":"),1,1))
 
 	Wave/Z Xwave = $(XwaveNameStr)
 	Wave/Z Ywave = $(YwaveNameStr)
@@ -1460,8 +1474,16 @@ static Function IRB1_DataManScaleDataOne()
 	IN2G_RemoveNaNsFrom3Waves(ResultsInt,ResultsQ,ResultsE)
 
 	String OutFldrNm, OutXWvNm, OutYWvNm,OutEWvNm
-	OutFldrNm = removeEnding(SourceFolderName,":") + "_scaled"
-	string FirstFolderShortName=StringFromList(ItemsInList(OutFldrNm, ":")-1, OutFldrNm, ":")
+	OutFldrNm = removeEnding(SourceFolderName,":")
+
+	if(StringMatch(OutFldrNm[strlen(OutFldrNm)-1], "'"))			//this is liberal name...
+			OutFldrNm = IN2G_removeExtraQuote(OutFldrNm,1,1) +"_scaled'"
+	else
+			OutFldrNm = OutFldrNm+"_scaled'"
+	endif	
+
+
+	string FirstFolderShortName=IN2G_RemoveExtraQuote(StringFromList(ItemsInList(OutFldrNm, ":")-1, OutFldrNm, ":"),1,1)
 	string OutputWaveNameMain = RemoveListItem(ItemsInList(FirstFolderShortName,"_")-1, FirstFolderShortName, "_") +"scaled"
 	OutYWvNm = "r_"+OutputWaveNameMain
 	OutEWvNm = "s_"+OutputWaveNameMain

@@ -6529,7 +6529,10 @@ Function IN2G_ReplaceNegValsByNaNWaves(Wv1,wv2,wv3)			//replaces Negative values
 	variable i=0, imax=numpnts(Wv1)-1
 	for (i=imax;i>=0;i-=1)
 		if (Wv1[i]<0 || Wv2[i]<0 || Wv3[i]<0)
-			Deletepoints i, 1, Wv1, Wv2, Wv3
+			//Deletepoints i, 1, Wv1, Wv2, Wv3
+			Wv1[i]=NaN
+			Wv2[i]=NaN
+			Wv3[i]=NaN
 		endif
 	endfor
 end

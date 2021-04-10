@@ -1403,7 +1403,8 @@ end
 End
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
-static Function IR3A_IsPXYZNOTinList3DWave(A3DWaveList,px,py,pz, MaxPoints)
+//static
+Function IR3A_IsPXYZNOTinList3DWave(A3DWaveList,px,py,pz, MaxPoints)
 	wave A3DWaveList
 	variable px,py,pz, MaxPoints
 	variable i
