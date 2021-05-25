@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.16
-Constant IR2EversionNumber = 1.16
+#pragma version=1.17
+Constant IR2EversionNumber = 1.17
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2021, Argonne National Laboratory
@@ -8,7 +8,7 @@ Constant IR2EversionNumber = 1.16
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-
+//1.17 fixed dQ USAXS data Nexus export which exported always SMR dQ. 
 //1.16 add option to export ASCII with d, two theta or Q. Tested against Nika TTH, Q, and D data and works fine within precision errors. 
 //1.15 add option to reduce output to single precision output (requested) 
 //1.14 fix missign wwavelength if dsata are imported as ASII from Irena and exported again. 
@@ -674,11 +674,11 @@ Function IR2E_ExportTheData()
 		TempE = 0
 	endif
 	if(UseIndra2Data)
-		Wave/Z TempdX=$(DataFolderName+"SMR_dQ")
+		Wave/Z TempdX=$(DataFolderName+ReplaceString("Qvec", QWavename, "dQ"))
 	elseif(UseQRSdata)
 		Wave/Z TempdX=$(DataFolderName+possiblyquoteName(ReplaceString("s_", ErrorWaveName, "w_", 0,1)))
 	else
-	
+		//no such thing for other options
 	endif
 	if(!WaveExists(TempdX))
 		Duplicate/Free TempE, tempdX
@@ -720,7 +720,7 @@ Function IR2E_ExportTheData()
 			DoWindow/D /K JunkNbk
 		endif
 		close/A
-		Duplicate TempY, NoteTempY
+		Duplicate/O TempY, NoteTempY
 		string OldNoteT=note(TempY)
 		note/K NoteTempY
 		note NoteTempY, OldNoteT+"Exported="+date()+" "+time()+";"

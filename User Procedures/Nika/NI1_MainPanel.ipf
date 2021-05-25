@@ -9,7 +9,7 @@ Constant NI1AversionNumber = 2.70
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.70 fixed Max number of points selection which did nto account for Qmin and Qmax and was therefore producing too many points
+//2.70 fixed Max number of points selection which did not account for Qmin and Qmax and was therefore producing too many points
 //2.70 added correction for self absorption. 
 //2.69 added 12ID-B tiff file which is tiff file combined with metadata log file. 
 //2.68 added passing through NXMetadata, NXSample, NXInstrument, NXUser
@@ -869,7 +869,7 @@ Function NI1A_FixNumPntsIfNeeded(CurOrient)
 		endif
 		variable SomeStuffChanged=0
 		SomeStuffChanged = MaskNameNotSame || (OldUseMask!=UseMask) || abs(OldQmin-Qmin)>0.001 || abs(OldQmax-Qmax)>0.001 || numtype(Qmin)!=0 || numtype(Qmax)!=0
-		if(cmpstr(OldCntrX,num2str(BeamCenterX))!=0 || cmpstr(OldCntrY, num2str(BeamCenterY))!=0 || OldDim0!=DimSize(CCDImageToConvert, 0 ) || OldDim1!=DimSize(CCDImageToConvert, 1) || SomeStuffChanged)
+		if(cmpstr(OldCntrX,num2str(BeamCenterX))!=0 || cmpstr(OldCntrY, num2str(BeamCenterY))!=0 || OldDim0!=DimSize(CCDImageToConvert, 0 ) || OldDim1!=DimSize(CCDImageToConvert, 1) || SomeStuffChanged || QvectorNumberPoints<2)
 			redimension/N=0 MaxNumPntsLookupWv
 			redimension/N=0 MaxNumPntsLookupWvLBL
 		endif
@@ -960,8 +960,10 @@ Function NI1A_FixNumPntsIfNeeded(CurOrient)
 			NVAR PixelSizeY = root:Packages:Convert2Dto1D:PixelSizeY								//in millimeters
 			variable Pixmin = SampleToCCDDistance*TAN(2*ASIN(Wavelength*qmin/4/pi))/((PixelSizeX+PixelSizeY)/2)		//approximate distacne, in pixels of Qmin from center
 			variable Pixmax = SampleToCCDDistance*TAN(2*ASIN(Wavelength*qmax/4/pi))/((PixelSizeX+PixelSizeY)/2)		//approximate distacne, in pixels of Qmax from center
-			Pixmax = (numtype(Pixmax)==0)? Pixmax : V_max
+			Pixmax = (numtype(Pixmax)==0)? Pixmax : V_max			//this fixes case when PixMax>0
+			Pixmax = (Pixmax>1)? Pixmax : V_max						//this fixes case when Qmax=0 originaly. 
 			Pixmin = (numtype(Pixmin)==0)? Pixmin : V_min
+			Pixmin = (Pixmin>1)? Pixmin : V_min
 			variable RealMin = max(V_min, Pixmin)
 			variable RealMax = min(V_max,PixMax)
 			QvectorNumberPoints=ceil((RealMax-RealMin))
@@ -1289,15 +1291,16 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 	NVAR/Z USAXSWAXSselector = root:Packages:Convert2Dto1D:USAXSWAXSselector
 	NVAR/Z USAXSSAXSselector = root:Packages:Convert2Dto1D:USAXSSAXSselector
 	NVAR/Z USAXSBigSAXSselector = root:Packages:Convert2Dto1D:USAXSBigSAXSselector
+	NVAR/Z WAXSDexelaSelected = root:Packages:Convert2Dto1D:USAXSWAXSDexselector
 	SVAR DataType = root:Packages:Convert2Dto1D:DataFileExtension
 	String DataFolderNameL
 	if(NVAR_Exists(USAXSWAXSselector))
 		if(USAXSWAXSselector)
 			DataFolderNameL = "root:WAXS"
 			LongUseName="root:WAXS:"+possiblyQuoteName(UseName)
-		elseif(USAXSBigSAXSselector)
-			DataFolderNameL = "root:SAXS"
-			LongUseName="root:SAXS:"+possiblyQuoteName(UseName)
+		elseif(WAXSDexelaSelected)
+			DataFolderNameL = "root:WAXS"
+			LongUseName="root:WAXS:"+possiblyQuoteName(UseName)
 		else  //USAXSSAXSselector
 			DataFolderNameL = "root:SAXS"
 			LongUseName="root:SAXS:"+possiblyQuoteName(UseName)		

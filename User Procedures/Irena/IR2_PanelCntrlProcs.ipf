@@ -948,8 +948,9 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 
-Function/T IR2P_GenStringOfFolders([winNm])
+Function/T IR2P_GenStringOfFolders([winNm, returnListOfFolders, forceReset])
 	string winNm
+	variable returnListOfFolders, forceReset
 
 	//variable startTicks=ticks
 	//part to copy everywhere...	
@@ -963,6 +964,12 @@ Function/T IR2P_GenStringOfFolders([winNm])
 	else
 		TopPanel=winNm
 	endif
+	if( ParamIsDefault(returnListOfFolders))
+		returnListOfFolders = 0
+	endif
+	if( ParamIsDefault(returnListOfFolders))
+		forceReset = 0
+	endif	
 	SVAR ControlProcsLocations=root:Packages:IrenaControlProcs:ControlProcsLocations
 	SVAR ControlAllowedIrenaTypes=root:Packages:IrenaControlProcs:ControlAllowedIrenaTypes
 	SVAR ControlAllowedUserTypes=root:Packages:IrenaControlProcs:ControlAllowedUserTypes
@@ -1004,7 +1011,7 @@ Function/T IR2P_GenStringOfFolders([winNm])
 	if (UseIndra2Structure)
 		SVAR/Z ListOfIndraFolders = $(CntrlLocation+":ListOfIndraFolders")
 		NVAR/Z SetTimeOfIndraFoldersStr = $(CntrlLocation+":SetTimeOfIndraFoldersStr")
-		if(NVAR_Exists(SetTimeOfIndraFoldersStr) && SVAR_Exists(ListOfIndraFolders) && (datetime - SetTimeOfIndraFoldersStr)<10)
+		if(NVAR_Exists(SetTimeOfIndraFoldersStr) && SVAR_Exists(ListOfIndraFolders) && (datetime - SetTimeOfIndraFoldersStr)<10 && !forceReset)
 			result = ListOfIndraFolders
 			SVAR/Z DataFldrListOfFolder = $(CntrlLocation+":DataFldrListOfFolder")
 			if(SVAR_Exists(DataFldrListOfFolder))
@@ -1043,7 +1050,7 @@ Function/T IR2P_GenStringOfFolders([winNm])
 			//Wave/Z/T ResultingWave=$(CntrlLocation+":ResultingWave")
 			SVAR/Z  ListOfQFoldersLookup = $(CntrlLocation+":ListOfQFolders")
 			NVAR/Z SetTimeOfQFoldersStr = $(CntrlLocation+":SetTimeOfQFoldersStr")
-			if(SVAR_Exists(ListOfQFoldersLookup) && (datetime - SetTimeOfQFoldersStr) < 10)
+			if(SVAR_Exists(ListOfQFoldersLookup) && (datetime - SetTimeOfQFoldersStr) < 10 && !forceReset)
 				result=ListOfQFoldersLookup	
 				SVAR/Z DataFldrListOfFolder = $(CntrlLocation+":DataFldrListOfFolder")
 				if(SVAR_Exists(DataFldrListOfFolder))
@@ -1176,7 +1183,11 @@ Function/T IR2P_GenStringOfFolders([winNm])
 	 	SetTimeOfUserDefFoldersStr = datetime
 	endif
 	setDataFolder OldDf
-	return resultShort
+	if(returnListOfFolders)
+		return result
+	else
+		return resultShort
+	endif
 end
 //*****************************************************************************************************************
 //*****************************************************************************************************************

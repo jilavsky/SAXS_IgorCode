@@ -526,6 +526,7 @@ Function IR1B_OneDesmearIteration()
 	
 	IR1B_ExtendData(DesmearedIntWave, DesmearedQWave, ExtrapErrWave, slitLength, BckgStartQ, BackgroundFunction,1) 			//extend data to 2xnumOfPoints to Qmax+2.1xSlitLength
 	if(0)	//test smearing manually...
+		print "Testing mode, fix IR1B_OneDesmearIteration to change back to normal mode"
 		Wave OrgdQwave = root:Packages:Irena_desmearing:OrgdQwave
 		IR1B_ExtendData(DesmearedIntWave, DesmearedQWave, ExtrapErrWave, 0.1, BckgStartQ, BackgroundFunction,1) 			//extend data to 2xnumOfPoints to Qmax+2.1xSlitLength
 		SmFitIntensity = IR2L_SmearByFunction(DesmearedIntWave,DesmearedQWave, OrgdQwave, DesmearedQWave[p],OrgdQwave[p], 0.01, "Gauss Sigma ")
@@ -1063,16 +1064,30 @@ Function IR1B_ExtendData(Int_wave, Q_vct, Err_wave, slitLength, Qstart, Selected
 	variable slitLength, Qstart, RecordFitParam		//RecordFitParam=1 when we should record fit parameters in logbook
 	string SelectedFunction
 	
+	DFref oldDf= GetDataFolderDFR()
+
+	setDataFolder root:Packages:Irena_desmearing
+
 	if (numtype(slitLength)!=0)
 		abort "Slit length error"
 	endif
 	if (slitLength<0.0001 || slitLength>1)
-		DoALert 0, "Weird value for Slit length, please check"
+		NVAR/Z LastSlitLengthCheck
+	 	if(NVAR_Exists(LastSlitLengthCheck))
+	 		if((DateTime-LastSlitLengthCheck)>(15*60))		//15 minute check, repeat only every 15 minutes
+				DoALert 0, "Weird value for Slit length, please check"
+		 		LastSlitLengthCheck = DateTime
+	 		endif
+	 	else
+			DoALert 0, "Weird value for Slit length, please check"
+			variable /g LastSlitLengthCheck
+	 		NVAR LastSlitLengthCheck
+	 		LastSlitLengthCheck = DateTime
+	 	endif
+		
+		
 	endif
 	
-	DFref oldDf= GetDataFolderDFR()
-
-	setDataFolder root:Packages:Irena_desmearing
 
 	WAVE/Z ColorWave=root:Packages:Irena_desmearing:ColorWave
 	if(!WaveExists(ColorWave))

@@ -5552,7 +5552,8 @@ Function IR2L_FinishSmearingOfData()
 				   Duplicate/O/Free OrigModelQ, ModelQPixelSmeared
 					//timerRefNum = StartMSTimer
 					// this should use multiple cores, should be faster... 
-					multithread ModelIntPixelSmeared = IR2L_SmearByFunction(ModelIntensity,ModelQ, ResolutionsWave, OrigModelQ[p],ResolutionsWave[p], SmearingIgnoreSmalldQ, SmearingType)
+					//multithread ModelIntPixelSmeared = IR2L_SmearByFunction(ModelIntensity,ModelQ, ResolutionsWave, OrigModelQ[p],ResolutionsWave[p], SmearingIgnoreSmalldQ, SmearingType)
+					ModelIntPixelSmeared = IR2L_SmearByFunction(ModelIntensity,ModelQ, ResolutionsWave, OrigModelQ[p],ResolutionsWave[p], SmearingIgnoreSmalldQ, SmearingType)
 					//microSeconds = StopMSTimer(timerRefNum)
 					//Print microSeconds/10000, "microseconds new method"
 				endif
@@ -5580,14 +5581,15 @@ end
 //**************************************************************************************************************************************************************************************
 ///
 // 
-threadsafe Function IR2L_SmearByFunction(ModelIntensity,ModelQ,ResolutionsWave, Qval,dQval, IgSmalldQ, SmearingType)
+//threadsafe Function IR2L_SmearByFunction(ModelIntensity,ModelQ,ResolutionsWave, Qval,dQval, IgSmalldQ, SmearingType)
+Function IR2L_SmearByFunction(ModelIntensity,ModelQ,ResolutionsWave, Qval,dQval, IgSmalldQ, SmearingType)
 		Wave ModelIntensity, ModelQ, ResolutionsWave
 		variable Qval, dQval, IgSmalldQ
 		string SmearingType
 		
 		Variable SmearedIntValue, GaussSdev
 		
-		make/Free/N=51 tmpModelInt, tmpSmFnct
+		make/Free/N=51/D tmpModelInt, tmpSmFnct
 			if(dQval/Qval > (0.01 * IgSmalldQ))
 				if(StringMatch(SmearingType, "Bin Width *" ))
 					//bin width is average of -dQ/2 to +dQ/2 around Q
@@ -5597,7 +5599,7 @@ threadsafe Function IR2L_SmearByFunction(ModelIntensity,ModelQ,ResolutionsWave, 
 					SmearedIntValue = area(tmpModelInt)/area(tmpSmFnct)
 					//print j, area(tmpModelInt), area(tmpSmFnct)
 				elseif(StringMatch(SmearingType, "Gauss FWHM *" ))
-					//Gaus is average over -FWHM to +FWHM around Q avfetr weighing by Gauss distribution with FWHM
+					//Gaus is average over -FWHM to +FWHM around Q after weighing by Gauss distribution with FWHM
 					SetScale /I x, Qval-(2*dQval), Qval+(2*dQval), tmpModelInt, tmpSmFnct
 					tmpModelInt = ModelIntensity[BinarySearchInterp(ModelQ,x)]
 					GaussSdev = dQval/2.355	//convert Gauss FWHM to sigma 
@@ -5614,12 +5616,14 @@ threadsafe Function IR2L_SmearByFunction(ModelIntensity,ModelQ,ResolutionsWave, 
 					tmpModelInt = tmpModelInt * tmpSmFnct
 					SmearedIntValue = area(tmpModelInt)/area(tmpSmFnct)
 					//print j, area(tmpModelInt), area(tmpSmFnct)
-				elseif(StringMatch(SmearingType, "Log-Q binning *" ))		//this is NIka log-Q binning of USAXS flyscan log-q binning. Need to transition from Gauss at low q to rectangle at high q
+				elseif(StringMatch(SmearingType, "Log-Q binning *" ))		//this is Nika log-Q binning of USAXS flyscan log-q binning. Need to transition from Gauss at low q to rectangle at high q
 					if(dQval<(ResolutionsWave[0]*ChangeFromGaussToSlit))		//low-q range, dQ is similar to the first one, assume Gauss dist. 
-						//Gaus is average over -FWHM to +FWHM around Q after weighing by Gauss distribution with FWHM
+						//Gauss is average over -FWHM to +FWHM around Q after weighing by Gauss distribution with FWHM
+						//5-24-2021 changed USAXS to provide resolution as 1/2 FWHM which matches slit length, which is also 1/2 of the Q smearing range (effectively). 
+						//then this code should be correct... 
 						SetScale /I x, Qval-dQval, Qval+dQval, tmpModelInt, tmpSmFnct
 						tmpModelInt = ModelIntensity[BinarySearchInterp(ModelQ,x)]
-						GaussSdev = dQval/2.355
+						GaussSdev = dQval/2.355/2
 						tmpSmFnct = Gauss(x,Qval,GaussSdev)
 						tmpModelInt = tmpModelInt * tmpSmFnct
 						SmearedIntValue = area(tmpModelInt)/area(tmpSmFnct)
@@ -5748,8 +5752,8 @@ Function IR2L_PrepareSetsQvectors()
 						endif
 						Duplicate/O/R=[StartPoint,EndPoint] UserSelResWv, $("ResolutionsWave_set"+num2str(i))
 						Wave ResolutionsWave = $("root:Packages:IR2L_NLSQF:ResolutionsWave_set"+num2str(i))
-						if(StringMatch(SmearingType, "* [1/A]" ))
-							//resolutions wave is allready in Q units, nothign to do here... 
+						if(StringMatch(SmearingType, "* [1/A]" ) || StringMatch(SmearingType, "Log-Q binning (Nika, USAXS)" ))
+							//resolutions wave is allready in Q units, nothing to do here... 
 						else	// these are in %
 							ResolutionsWave = OrigModelQ[p]*0.01*ResolutionsWave[p]
 						endif
@@ -5818,6 +5822,11 @@ Function IR2L_PrepareSetsQvectors()
 										newIDX+=1
 									endif
 								endfor
+							 elseif(isEnd)													// need to add at least one mor epoint, Typical case is end 
+							 	 tempQwv[newIDX] = Qval
+								 newIDX +=1
+							 	 tempQwv[newIDX] = Qval+dQval
+								 newIDX +=1
 				 			 else		//no rebining needed, to next point now...
 							 	 tempQwv[newIDX] = Qval
 								 newIDX +=1
@@ -5830,7 +5839,7 @@ Function IR2L_PrepareSetsQvectors()
 					Wave ModelQ=	$("root:Packages:IR2L_NLSQF:Qmodel_set"+num2str(i))	
 					//OK, Qmodel_setX is now Q set which has been hopefully corrently densified to provide enough Q points for sensible smearing. 
 					//next is handling slit smearing. 
-					print "Original Q vector had : "+num2str(numpnts(OrigModelQ))+", oversampled Q vector now has : "+num2str(numpnts(ModelQ))
+					//print "Original Q vector had : "+num2str(numpnts(OrigModelQ))+", oversampled Q vector now has : "+num2str(numpnts(ModelQ))
 				else
 					Duplicate/O OrigModelQ, $("root:Packages:IR2L_NLSQF:Qmodel_set"+num2str(i))						
 					Wave ModelQ=	$("root:Packages:IR2L_NLSQF:Qmodel_set"+num2str(i))	

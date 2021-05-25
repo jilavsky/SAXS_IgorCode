@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version =1.13
+#pragma version =1.14
 
 
 //*************************************************************************\
@@ -10,6 +10,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.14 changed resolution function dQ to use FWHM/2, not FWHM. Later code downstream expects FHWM/2. 
 //1.13 minor fix for MSAXS correction graphing. 
 //1.12 fixed problem when PD_range used to create MyCOlorWave was getting out of sync with data as points were being removed. Flyscan only, added PD_RangeModified to fix this... 
 //1.11 modfiied IN3_RecalcSubtractSaAndBlank to avoid negative data.
@@ -368,7 +369,8 @@ Function IN3_RecalcSubtractSaAndBlank()
 		DeletePoints EndPointCut, inf, SMR_Int, SMR_Qvec, SMR_Error 
 		DeletePoints 0, StartPointCut, SMR_Int, SMR_Qvec, SMR_Error 
 		Duplicate/O SMR_Qvec, SMR_dQ		
-		SMR_dQ = InstrumentQresolution			//this same q resolution, given by instrument resolution, about 0.00008 for Si220. 
+		SMR_dQ = InstrumentQresolution/2			//this same q resolution, given by instrument resolution, about 0.00008 for Si220. 
+		//5-24-2021 this is not correct, we should use here FWHM/2, that is resolution of each point is about +/- 0.00004 for Si 220 
 		//end append data
 		DoWindow RcurvePlotGraph
 		if(V_Flag)
@@ -426,11 +428,11 @@ Function IN3_RecalcSubtractSaAndBlank()
 			tempMinStep=SMR_Qvec[1]-SMR_Qvec[0]
 			IN2G_RebinLogData(SMR_Qvec,SMR_Int,FlyScanRebinToPoints,tempMinStep,Wsdev=SMR_Error,Wxwidth=SMR_dQ)
 		else
-			SMR_dQ[1,numpnts(SMR_dQ)-2] = SMR_dQ[p+1]-SMR_dQ[p-1]
-			SMR_dQ[0]=2*(SMR_dQ[1]-SMR_dQ[0])
-			SMR_dQ[numpnts(SMR_dQ)-1] = 2*(SMR_dQ[numpnts(SMR_dQ)-1]-SMR_dQ[numpnts(SMR_dQ)-2])
+			SMR_dQ[1,numpnts(SMR_dQ)-2] = (SMR_dQ[p+1]-SMR_dQ[p-1])/4
+			SMR_dQ[0]=(SMR_dQ[1]-SMR_dQ[0])/2
+			SMR_dQ[numpnts(SMR_dQ)-1] = (SMR_dQ[numpnts(SMR_dQ)-1]-SMR_dQ[numpnts(SMR_dQ)-2])/2
 		endif
-		SMR_dQ = sqrt((SMR_dQ[p])^2 + InstrumentQresolution^2)		//convolute with SI220 InstrumentQresolution
+		SMR_dQ = sqrt((SMR_dQ[p])^2 + (InstrumentQresolution/2)^2)		//convolute with SI220 InstrumentQresolution
 	elseif (stringmatch(IsItSBUSAXS,"sbflySca"))			//if this is sbflyscan, creade DSM data
 		Duplicate /O R_Int, DSM_Int, logBlankInterp, BlankInterp
 		//Duplicate/O BL_R_Int, logBlankR
@@ -471,11 +473,11 @@ Function IN3_RecalcSubtractSaAndBlank()
 			tempMinStep=DSM_Qvec[1]-DSM_Qvec[0]
 			IN2G_RebinLogData(DSM_Qvec,DSM_Int,FlyScanRebinToPoints,tempMinStep,Wsdev=DSM_Error,Wxwidth=DSM_dQ)
 		else
-			DSM_dQ[1,numpnts(DSM_dQ)-2] = DSM_dQ[p+1]-DSM_dQ[p-1]
-			DSM_dQ[0]=2*(DSM_dQ[1]-DSM_dQ[0])
-			DSM_dQ[numpnts(DSM_dQ)-1] = 2*(DSM_dQ[numpnts(DSM_dQ)-1]-DSM_dQ[numpnts(DSM_dQ)-2])
+			DSM_dQ[1,numpnts(DSM_dQ)-2] = (DSM_dQ[p+1]-DSM_dQ[p-1])/4
+			DSM_dQ[0]=(DSM_dQ[1]-DSM_dQ[0])/2
+			DSM_dQ[numpnts(DSM_dQ)-1] = (DSM_dQ[numpnts(DSM_dQ)-1]-DSM_dQ[numpnts(DSM_dQ)-2])/2
 		endif
-		DSM_dQ = sqrt((DSM_dQ[p])^2 + InstrumentQresolution^2)			//convolute with SI220 InstrumentQresolution
+		DSM_dQ = sqrt((DSM_dQ[p])^2 + (InstrumentQresolution/2)^2)			//convolute with SI220 InstrumentQresolution
 	elseif (stringmatch(IsItSBUSAXS,"sbuascan"))			//if this is sbuascan, go to other part, otherwise create SMR data
 		Duplicate /O R_Int, DSM_Int, logBlankInterp, BlankInterp
 		Duplicate/O BL_R_Int, logBlankR
@@ -496,7 +498,7 @@ Function IN3_RecalcSubtractSaAndBlank()
 		DeletePoints EndPointCut, inf, DSM_Int, DSM_Qvec, DSM_Error 
 		DeletePoints 0, StartPointCut, DSM_Int, DSM_Qvec, DSM_Error 	//end append data
 		Duplicate/O DSM_Qvec, DSM_dQ		
-		DSM_dQ = InstrumentQresolution			//set to FWHM of the AR stage rocking curve... 
+		DSM_dQ = InstrumentQresolution/2			//set to FWHM of the AR stage rocking curve... 
 		DoWindow RcurvePlotGraph
 		if(V_Flag)
 			checkdisplayed /W=RcurvePlotGraph DSM_Int

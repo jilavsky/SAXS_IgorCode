@@ -537,7 +537,7 @@ End
 
 //DataBrowser  right click menu... 
 //here is add to DataBrowser buttons, it will be in after compile hooks. 
-//this is for Igor 8 and 7, in Igro 9 this is in Data browser right click menu...
+//this is for Igor 8 and 7, in Igor 9 this is in Data browser right click menu...
 
 
 Function IN2G_AddButtonsToBrowser()
@@ -565,17 +565,19 @@ end
 
 			//************************************************************************************************
 			FUnction/S IN2G_DisplayDuplicateItemStr()
-				String menuText = ""
-				String BrowserSelStr = GetBrowserSelection(0)
-				string LastFldr
-				if(strlen(BrowserSelStr)>0)	
-					Wave/Z w=$(BrowserSelStr)
-					if(DataFolderExists(BrowserSelStr)||WaveExists(w))
-						LastFldr = StringFromList(ItemsInList(BrowserSelStr,":")-1,BrowserSelStr,":")
-						sprintf menuText, "Duplicate %s", LastFldr
+				if(strlen(GetBrowserSelection(-1))>0)		//this is cumbersome way to check if DataBrowser exists... hm... 
+					String menuText = ""
+					String BrowserSelStr = GetBrowserSelection(0)
+					string LastFldr
+					if(strlen(BrowserSelStr)>0)	
+						Wave/Z w=$(BrowserSelStr)
+						if(DataFolderExists(BrowserSelStr)||WaveExists(w))
+							LastFldr = StringFromList(ItemsInList(BrowserSelStr,":")-1,BrowserSelStr,":")
+							sprintf menuText, "Duplicate %s", LastFldr
+						endif
 					endif
-				endif
-				return menuText			
+					return menuText	
+				endif		
 			end
 			//************************************************************************************************
 			Function IN2G_BrowserDuplicateItem()
@@ -1073,6 +1075,18 @@ Function IN2G_FindAVailableResultsGen(StringName, Foldername)
 	return ii	
 end
 
+//****************************************************************************************
+//****************************************************************************************
+//****************************************************************************************
+
+Function/S IN2G_MenuItemForGraph(menuItem, onlyForThisGraph)
+	String menuItem, onlyForThisGraph
+	String topGraph=WinName(0,1,1)
+	if( CmpStr(topGraph,onlyForThisGraph) == 0 )
+		return menuItem
+	endif
+	return "" 	// disappearing menu item
+End
 
 //************************************************************************************************
 //************************************************************************************************
@@ -4424,9 +4438,9 @@ Function IN2G_OffsetTopGrphTraces(LogXAxis, XOffset ,LogYAxis, YOffset)
 end
 ///******************************************************************************************
 ///******************************************************************************************
-Function IN2G_LegendTopGrphFldr(FontSize, MaxItems, UseFolderName, UseWavename, [topGraphStr])
+Function IN2G_LegendTopGrphFldr(FontSize, MaxItems, UseFolderName, UseWavename, [topGraphStr, WaveNoteNameKeyStr])
 	variable FontSize, MaxItems, UseFolderName, UseWavename
-	string topGraphStr
+	string topGraphStr, WaveNoteNameKeyStr
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	String topGraph
@@ -4435,6 +4449,16 @@ Function IN2G_LegendTopGrphFldr(FontSize, MaxItems, UseFolderName, UseWavename, 
 	else
 		topGraph=topGraphStr	
 	endif
+	variable UseWaveNote=0
+	string WaveNoteNameKey
+	if(ParamIsDefault(WaveNoteNameKeyStr))
+		UseWaveNote=0
+		WaveNoteNameKey=""
+	else
+		UseWaveNote=1
+		WaveNoteNameKey=WaveNoteNameKeyStr
+	endif
+	string TmpStr2
 	if(strlen(topGraph)>0)
 		string Traces=TraceNameList(topGraph, ";", 1 )
 		string legendStr="", tmpStr
@@ -4457,6 +4481,10 @@ Function IN2G_LegendTopGrphFldr(FontSize, MaxItems, UseFolderName, UseWavename, 
 				legendStr+="\\s("+tmpStr+") "+GetWavesDataFolder(TraceNameToWaveRef(topGraph, tmpStr),0)
 			elseif(!UseFolderName && UseWavename)
 				legendStr+="\\s("+tmpStr+") "+tmpStr
+			elseif(UseWaveNote)
+				Wave tempWv=TraceNameToWaveRef(topGraph, tmpStr)
+				TmpStr2 =  StringByKey(WaveNoteNameKey, Note(tempWv), "=",";") 
+				legendStr+="\\s("+TmpStr+") "+TmpStr2
 			endif
 			if (i<imax-stepI)
 				legendStr+="\r"
@@ -4472,6 +4500,10 @@ Function IN2G_LegendTopGrphFldr(FontSize, MaxItems, UseFolderName, UseWavename, 
 				legendStr+="\\s("+tmpStr+") "+GetWavesDataFolder(TraceNameToWaveRef(topGraph, tmpStr),0)
 			elseif(!UseFolderName && UseWavename)
 				legendStr+="\\s("+tmpStr+") "+tmpStr
+			elseif(UseWaveNote)
+				Wave tempWv=TraceNameToWaveRef(topGraph, tmpStr)
+				TmpStr2 =  StringByKey(WaveNoteNameKey, Note(tempWv), "=",";") 
+				legendStr+="\\s("+TmpStr+") "+tmpStr2
 			endif
 		endif	
 		Legend/C/N=text0/A=LB/W=$(topGraph) legendStr

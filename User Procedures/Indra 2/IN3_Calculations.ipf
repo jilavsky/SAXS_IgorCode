@@ -270,12 +270,13 @@ Function IN3_SmartBlankSelection(DataFolderName)
 	string DataFolderName
 
 	NVAR/Z SmartSelectBlank = root:Packages:Indra3:SmartSelectBlank
+	NVAR IsBlank = root:Packages:Indra3:IsBlank
 	if(!NVAR_Exists(SmartSelectBlank))
 		variable/g root:Packages:Indra3:SmartSelectBlank
 		NVAR SmartSelectBlank = root:Packages:Indra3:SmartSelectBlank
 		SmartSelectBlank = 0
 	endif
-	if(SmartSelectBlank)
+	if(SmartSelectBlank && !IsBlank)
 		variable DataOrderNum=IN2G_FindNumIndxForSort(DataFolderName)
 		if(DataOrderNum>0)			//found order number
 			string AllBlanks=IN3_GenStringOfFolders(1) 

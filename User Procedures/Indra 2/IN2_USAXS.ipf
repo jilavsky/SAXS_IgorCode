@@ -48,7 +48,7 @@ constant CurrentIndraVersionNumber = 1.982
 //1.25 release 1.73 of Indra package, 2/19/2012. Added new Xtal calculator.
 
 Menu "GraphMarquee", dynamic
-      IN2_MenuItemForGraph("Remove Points With Marquee","RcurvePlotGraph"),/Q, RemovePointsWithMarquee()
+      IN2G_MenuItemForGraph("Remove Points With Marquee","RcurvePlotGraph"),/Q, RemovePointsWithMarquee()
 
 	//"Remove Points with Marquee", RemovePointsWithMarquee()
 End
@@ -172,17 +172,17 @@ end
 
 //****************************************************************************************
 //****************************************************************************************
-//****************************************************************************************
-
-Function/S IN2_MenuItemForGraph(menuItem, onlyForThisGraph)
-	String menuItem, onlyForThisGraph
-	String topGraph=WinName(0,1,1)
-	if( CmpStr(topGraph,onlyForThisGraph) == 0 )
-		return menuItem
-	endif
-	return "" 	// disappearing menu item
-End
-
+////****************************************************************************************
+//
+//Function/S IN2_MenuItemForGraph(menuItem, onlyForThisGraph)
+//	String menuItem, onlyForThisGraph
+//	String topGraph=WinName(0,1,1)
+//	if( CmpStr(topGraph,onlyForThisGraph) == 0 )
+//		return menuItem
+//	endif
+//	return "" 	// disappearing menu item
+//End
+//
 
 //****************************************************************************************
 //****************************************************************************************

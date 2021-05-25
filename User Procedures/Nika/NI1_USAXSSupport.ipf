@@ -351,10 +351,12 @@ Function NI1_9IDCCheckProc(cba) : CheckBoxControl
 				NVAR UseLineProfile=root:Packages:Convert2Dto1D:UseLineProfile
 				if(Checked)
 					NVAR USAXSSlitLength = root:Packages:Convert2Dto1D:USAXSSlitLength
+					SVAR LineProf_CurveType=root:Packages:Convert2Dto1D:LineProf_CurveType	
 					if(USAXSSlitLength<0.001 || numtype(USAXSSlitLength)!=0)	//slit length not set, force user to find it...
 						USAXSSlitLength = NI1_9IDCFIndSlitLength()
 					endif
 					UseLineProfile=1
+					LineProf_CurveType="Vertical Line"
 				else
 					UseLineProfile=0
 				endif
@@ -437,6 +439,7 @@ Function NI1_9IDCButtonProc(ba) : ButtonControl
 
 			NVAR isSAXS=root:Packages:Convert2Dto1D:USAXSSAXSselector
 			NVAR isWAXS=root:Packages:Convert2Dto1D:USAXSWAXSselector
+			NVAR isDexelaWAXS = root:Packages:Convert2Dto1D:USAXSWAXSDexselector
 			variable i
 			if (stringmatch("Open9IDCManual",ba.CtrlName))
 				NI1_Open9IDCManual()
@@ -493,7 +496,7 @@ Function NI1_9IDCButtonProc(ba) : ButtonControl
 							USAXSSlitLength = NI1_9IDCFIndSlitLength()
 							NI1_9IDCSetLineWIdth()							
 					endif
-				elseif(isWAXS)	
+				elseif(isWAXS || isDexelaWAXS)	
 					NVAR UseLineProfile= root:Packages:Convert2Dto1D:UseLineProfile		//uncheck just in case leftover from SAXS
 					UseLineProfile=0
 					NVAR WAXSSubtractBlank = root:Packages:Convert2Dto1D:WAXSSubtractBlank
@@ -973,6 +976,10 @@ Function/S NI1_9IDCSetDefaultConfiguration()
 	NVAR SAXSSelected=root:Packages:Convert2Dto1D:USAXSSAXSselector
 	NVAR WAXSDexelaSelected = root:Packages:Convert2Dto1D:USAXSWAXSDexselector
 	NVAR WAXSSelected = root:Packages:Convert2Dto1D:USAXSWAXSselector
+	NVAR UserQMin = root:Packages:Convert2Dto1D:UserQMin
+	NVAR UserQMax =root:Packages:Convert2Dto1D:UserQMax
+	UserQMax = 0
+	UserQMin = 0
 
 	if(WAXSDexelaSelected)	//Dexela special case
 		NVAR UseSubtractFixedOffset = root:Packages:Convert2Dto1D:UseSubtractFixedOffset
@@ -2225,6 +2232,9 @@ Function NI1_9IDWFindI0(SampleName)
 		OffsetPerImage = NumberByKey("instrument:detector:process1:int_frame_offset", OldNote  , "=" , ";")
 		DexOffset = NumImages * OffsetPerImage* DexelaOffsetScale
 		print "Read Fixed offfset for this Dexela image in metadata = "+num2str(DexOffset)
+	else
+		NVAR DexOffset=root:Packages:Convert2Dto1D:SubtractFixedOffset
+		DexOffset=0
 	endif
 	return I000
 end

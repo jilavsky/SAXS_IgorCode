@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.72
+#pragma version=2.73
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -10,6 +10,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.73 5-24-2021 changed resolution to be FWHM/2, same as USAXS and as expected by Modeling package and sasView. 
+//		modifed NI1A_CalculateQresolution to return FWHM and use only Q steps and Beam size. Pixel size used before is wrong, that is accounted for in Q stepping already, Nika cannot oversample in Q points. 
 //2.72 Remove for MatrixOP /NTHR=0 since it is applicable to 3D matrices only 
 //2.71 Added NI1A_ImportThisJPGFile which adds functionality ONLY for 9IDC USAXS/SAXS/WAXS instrument. Should never run else. 
 //2.70 fixed NI1A_FindeOrderNumber to utilize for sorting in "_001" option the last number, ignores any string, even if at the end of name. 
@@ -303,10 +305,15 @@ Function NI1A_CalculateQresolution(Qvector,QvectorWidth,TwoThetaWidth, DistacneI
 	variable PixX,PixY,BeamX,BeamY, Wavelength,SampleToCCDdistance
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	//note the Qresolution already has accounted for bin width for integration.
+	
+	//as caulcated above... 
+	//QvectorWidth this is center to center distace of two Q points. This is equivalenth to FWHM estimate, it is rectangle
+	//QvectorWidth[0,numpnts(Qvector)-2] = Qvector[p+1] - Qvector[p]
+	//QvectorWidth[numpnts(Qvector)-1]=QvectorWidth[numpnts(Qvector)-2]
 	///////
 	//this function will caculate Q resolution for each q point given by pixel size and beam size
 	//for simplicity this is done in perpendicular detector approximation (no tilts)
-	//assume we can calculae width of the pixes/beam in 45 degrees (max dimension) and the 2/3 of that as FWHM
+	//assume we can calculate width of the pixes/beam in 45 degrees (max dimension) and the 2/3 of that as FWHM
 	//this is midlessly approximate, but seems acceptable
 	//then we will convolute this with Qresolution going in and these two values 
 	//this thing is called in NI1A_AverageDataPerUserReq
@@ -316,12 +323,12 @@ Function NI1A_CalculateQresolution(Qvector,QvectorWidth,TwoThetaWidth, DistacneI
 	PixDim = PixDim * 2/3							//assume this is FWHM of the pixel sensitivity, in mm - the 2/3 is there to convert this into FWHM somehow.
 	//However, the pixel size and integration width are quite similar in logic. So let's try to make some corrections here. If there was no integration width, we should see FWHM ~ 2/3 of the 
 	//total width of the bin to represent the FWHM. I tested this with case example, and either one can have square bin width (and then it is rectangle) or use FWHM, then the bin width s 2/3 of the square, approximately. 
-      // If we are going to convolute these together later, we should correct the QvectorWidth coming from binning to smaller numbers , BUT only for bins approximately wide as the pixel width
-      // this requires transition from 2/3 correction to use of full bin width as the bin width increases. This is bit cumbersome. 
-      //assume that if the bin width is less than 3*pixDim, we should use FWHM, at higher bin widths lets assume bin width and keep this. 
-      variable pixDiminQ
-      pixDiminQ = sin(atan(PixDim/SampleToCCDDistance)/2)/constVal
-      QvectorWidth = (QvectorWidth[p] < 1.5 * pixDiminQ) ? (2*QvectorWidth[p]/3) : QvectorWidth[p]
+   // If we are going to convolute these together later, we should correct the QvectorWidth coming from binning to smaller numbers, BUT only for bins approximately wide as the pixel width
+   // this requires transition from 2/3 correction to use of full bin width as the bin width increases. This is bit cumbersome. 
+   // assume that if the bin width is less than 3*pixDim, we should use FWHM, at higher bin widths lets assume bin width and keep this. 
+   variable pixDiminQ
+   pixDiminQ = sin(atan(PixDim/SampleToCCDDistance)/2)/constVal
+   QvectorWidth = (QvectorWidth[p] < 1.5 * pixDiminQ) ? (2*QvectorWidth[p]/3) : QvectorWidth[p]
 	//	
 	BeamDim = sqrt(BeamX^2 + BeamY^2)			//width of beam size in mm along diagonal direction
 	BeamDim = BeamDim * 2 /3						//assume this is estimated FWHM of the beam sensitivity, in mm - the 2/3 is there to convert this into FWHM somehow. 
@@ -352,11 +359,21 @@ Function NI1A_CalculateQresolution(Qvector,QvectorWidth,TwoThetaWidth, DistacneI
 	TmpQhigh = sin(atan(DistInmmHigh/SampleToCCDDistance)/2)/constVal			//and this qmax of the FWHM ofthe BeamDim
 	TempDBeam = (constVal/TmpQlow) - (constVal/TmpQhigh)						//this is FWHM of d distribution due to BeamDim size
 	TempBeamQres = TmpQhigh - TmpQlow
+	//now, QvectorWidth is larger of QvectorWidth and TempPixQres
+	QvectorWidth = QvectorWidth[p]>TempPixQres[p] ? QvectorWidth[p] : TempPixQres[p]
+	TwoThetaWidth = TwoThetaWidth[p]> tempTTPix[p] ? TwoThetaWidth[p] : tempTTPix[p]
+	DistacneInmmWidth = DistacneInmmWidth[p]>tempDistPix[p] ? DistacneInmmWidth[p] : tempDistPix[p]
+	DspacingWidth = DspacingWidth[p]>TempDPix[p] ? DspacingWidth[p] : TempDPix[p]
 	//now convolute this... 
-	QvectorWidth = sqrt(QvectorWidth[p]^2 + TempPixQres[p]^2 + TempBeamQres[p]^2)
-	TwoThetaWidth = sqrt(TwoThetaWidth[p]^2 + tempTTPix[p]^2 + tempTTBeam[p]^2)
-	DistacneInmmWidth = sqrt(DistacneInmmWidth[p]^2 + tempDistPix[p]^2 + tempDistBeam[p]^2)
-	DspacingWidth = sqrt(DspacingWidth[p]^2 + TempDPix[p]^2 + TempDBeam[p]^2)	
+	QvectorWidth = sqrt(QvectorWidth[p]^2 + TempBeamQres[p]^2)
+	TwoThetaWidth = sqrt(TwoThetaWidth[p]^2 + tempTTBeam[p]^2)
+	DistacneInmmWidth = sqrt(DistacneInmmWidth[p]^2 + tempDistBeam[p]^2)
+	DspacingWidth = sqrt(DspacingWidth[p]^2 + TempDBeam[p]^2)	
+	//convert all of these into 1/2 of FWHM, above are FWHM
+	QvectorWidth/=2
+	TwoThetaWidth/=2
+	DistacneInmmWidth/=2
+	DspacingWidth/=2
 end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -1089,6 +1106,8 @@ Function NI1A_CreateHistogram(orientation)
 			Histogram /B={MinQ, ((MaxQ-MinQ)/QvectorNumberPoints), QvectorNumberPoints } Qdistribution1D, HistogramWv 
 			Qvector = MinQ + 0.5*(MaxQ-MinQ)/QvectorNumberPoints+ p*(MaxQ-MinQ)/QvectorNumberPoints
 //		endif
+		//calculate width given by center to center distnce between Q points. 
+		//this is equivalent to FWHM
 		QvectorWidth[0,numpnts(Qvector)-2] = Qvector[p+1] - Qvector[p]
 		QvectorWidth[numpnts(Qvector)-1]=QvectorWidth[numpnts(Qvector)-2]
 		

@@ -1,8 +1,9 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=2.17
+#pragma version=2.18
 //#include <FITS Loader>
 #include <Autosize Images>
 
+//2.18 fixed bug when data in Extension 2 when corrected for offset and scaling run out of range of 16bin signed integers. How did this ever worked?   
 //2.17 fixed bug when data in Extension 2 of some FITS files with long and complicated bintable (Extension 1) were not read. 
 // version 2.16 JIL - modified for Nika needs
 // FITS Loader Version 2.15; For use with Igor Pro 4.0 or later
@@ -405,6 +406,7 @@ static Function NI1_LoadOneFITS(refnum,dfName,doHeader,doHistory,doComment,doAut
 						FSetPos refnum,min(V_filePos+gDataBytes,V_logEOF)
 					endif
 				else
+					//this loads data stored with one mthod.  
 					Wave data
 					FBinRead/B=2 refnum,data
 					//fix the data per standard
@@ -414,14 +416,12 @@ static Function NI1_LoadOneFITS(refnum,dfName,doHeader,doHistory,doComment,doAut
 						NVAR/Z BZERO
 						NVAR/Z BSCALE
 						if(NVAR_Exists(BZERO)&&NVAR_EXISTS(BSCALE))
+							//JIL: 5-24-2021 bug fixing for images from ALS RSoXS
+							//this will prevent data with too large dynamic range (above 32k) from overflowing 16 bit signed integer range. 
+							redimension/Y=32 data
 							data = BZERO + BSCALE*data[p][q]
 						endif
 					endif
-					//
-//					if( doAutoDisp )
-//						NI1_AutoDisplayData(data)
-//						GraphName= WinName(0, 1)		// for later kill
-//					endif
 				endif
 				NI1_SetFPosToNextRecord(refnum)		// ignore error
 			endif

@@ -5266,9 +5266,9 @@ Function IR3M_AverageMultipleWaves(FldrNamesTWv,SelFldrs,Xtmplt,Ytmplt,Etmplt,Us
 	String Xtmplt,Ytmplt,Etmplt
 	Variable UseStdDev,UseSEM, useMinMax, PropagateErrors
 	//for other uses, here is the parameters description:
-	//FldrNamesTWv is text wave pointing to existing folders with waves to be processed. One fodler per line... It can contain more lines, since only...
+	//FldrNamesTWv is text wave pointing to existing folders with waves to be processed. One folder per line... It can contain more lines, since only...
 	// lines which have 1 in wave  SelFldrs (has to have same number of points as the FldrNamesTWv) will be processed. This is to enable user selectiong throught listbox.
-	// Xtmplt,Ytmplt,Etmplt - striongs with templates to match wave names. Non-fatal error will be generated if data cannot be found and printed in history area. The folder will be then skipped.
+	// Xtmplt,Ytmplt,Etmplt - strings with templates to match wave names. Non-fatal error will be generated if data cannot be found and printed in history area. The folder will be then skipped.
 	// 2020-03-12 the saving is not working... So output strigns below are useless... 
 	// OutFldrNm,OutXWvNm, OutYWvNm,OutEWvNm - string for output data. Folder will be created, if it does not exist. User will be warned if data should be overwritten. 
 	// note: if Etmplt is empty, no error wave is expected and no error is generated. BUT, output error wave is produced
