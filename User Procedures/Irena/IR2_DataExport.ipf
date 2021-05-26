@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=1.17
-Constant IR2EversionNumber = 1.17
+Constant IR2EversionNumber = 1.18
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2021, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IR2EversionNumber = 1.17
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.18 added export of all data from current experiment using IR2E_ExportAllAsNexus()
 //1.17 fixed dQ USAXS data Nexus export which exported always SMR dQ. 
 //1.16 add option to export ASCII with d, two theta or Q. Tested against Nika TTH, Q, and D data and works fine within precision errors. 
 //1.15 add option to reduce output to single precision output (requested) 
@@ -1137,3 +1138,135 @@ end
 //*******************************************************************************************************************************
 //*******************************************************************************************************************************
 //*******************************************************************************************************************************
+
+
+
+Function IR2E_ExportAllAsNexus()
+	//this function exports all USAXS, SAXS, and WAXS data in current experiment
+	//use standard export tool, but hide it from user...
+	IR2E_UniversalDataExport()
+	DoWIndow/hide=1 UnivDataExportPanel
+	NVAR UseIndra2data = root:Packages:IR2_UniversalDataExport:UseIndra2data
+	NVAR UseQRSdata = root:Packages:IR2_UniversalDataExport:UseQRSdata
+	NVAR UseResults = root:Packages:IR2_UniversalDataExport:UseResults
+	SVAR DataFolderName = root:Packages:IR2_UniversalDataExport:DataFolderName
+	SVAR IntensityWaveName=root:Packages:IR2_UniversalDataExport:IntensityWaveName
+	SVAR QWavename=root:Packages:IR2_UniversalDataExport:QWavename
+	SVAR ErrorWaveName=root:Packages:IR2_UniversalDataExport:ErrorWaveName
+	UseResults = 0
+	UseQRSdata = 0
+	UseIndra2data = 1
+	string CurrentFoldersUSAXS=IR2P_GenStringOfFolders(winNm="UnivDataExportPanel", returnListOfFolders=1, forceReset=1)
+	CurrentFoldersUSAXS = GrepList(CurrentFoldersUSAXS, "---",1 , ";" )
+	//now we have all fodlers with data. These could be either USAXS SMR, USAXS DSM, and we have separate list for QRS data. 
+	//print CurrentFoldersUSAXS
+	//print CurrentFoldersQRS
+	//mneed to verify the file name and location are available, use name of current Igor experiment and its location, 
+	//add _nxcansas to it. 
+	string currentEXPName=IgorInfo(1)
+	PathInfo home
+	string FinalOutputName, oldNote, OldNoteT1, tempFldr
+	string UserSampleName
+	string HomePathStr=S_path
+	FinalOutputName = currentEXPName+"_nxcansas.h5"
+	//print HomePathStr
+	variable refnum, SlitLength
+	variable i
+	
+	Open/Z=1 /R/P=home refnum as FinalOutputName
+	if(V_Flag==0)
+		DoAlert 1, "The file with this name: "+FinalOutputName+ " already exists in "+HomePathStr+" , overwrite?"
+		if(V_Flag!=1)
+			abort
+		endif
+		close/A
+		//user wants to delete the file
+		DeleteFile /P=home  FinalOutputName
+	else
+		DoAlert 1, "New file with this name: "+FinalOutputName+ " will be created in "+HomePathStr+", continue?"
+		if(V_Flag!=1)
+			abort
+		endif
+		close/A
+	endif
+
+//	to preset the names, code is here: IR2E_ExportMultipleFiles()
+	//export USAXS data
+	STRUCT WMPopupAction PU_Struct
+	if(ItemsInList(CurrentFoldersUSAXS, ";")>0)
+		UseResults = 0
+		UseQRSdata = 0
+		UseIndra2data = 1
+		For(i=0;i<ItemsInList(CurrentFoldersUSAXS, ";");i+=1)
+			tempFldr = StringFromList(i, CurrentFoldersUSAXS, ";")
+			DataFolderName = StringFromList(i, CurrentFoldersUSAXS, ";")
+			PU_Struct.ctrlName = "SelectDataFolder"
+			PU_Struct.popNum=-1
+			PU_Struct.eventCode=2
+			PU_Struct.popStr=DataFolderName
+			PU_Struct.win = "UnivDataExportPanel"
+			PopupMenu SelectDataFolder win=UnivDataExportPanel, popmatch=StringFromList(ItemsInList(DataFolderName,":")-1,DataFolderName,":")
+			IR2C_PanelPopupControl(PU_Struct)
+			Wave/Z TempY=$(tempFldr+possiblyquoteName(IntensityWaveName))
+			Wave/Z TempX=$(tempFldr+possiblyquoteName(QWavename))
+			Wave/Z TempE=$(tempFldr+possiblyquoteName(ErrorWaveName))
+			Wave/Z TempdX=$(DataFolderName+ReplaceString("Qvec", QWavename, "dQ"))
+			if(!WaveExists(TempdX))
+				Duplicate/Free TempE, tempdX
+				tempdX = 0
+			endif
+			oldNote=note(TempY)
+			if(stringMatch(NameOfWave(TempX),"*SMR*"))
+				SlitLength = NumberByKey("SlitLength", oldNote, "=", ";")
+			else
+				SlitLength = 0
+				print "Did not export dQ data as this causes issues in sasView"
+				tempdX = 0 
+			endif
+			UserSampleName=IN2G_ReturnUserSampleName(DataFolderName)
+			NEXUS_WriteNx1DCanSASdata(UserSampleName, HomePathStr+FinalOutputName, TempY, TempE, TempX, TempdX, "", "Irena", oldNote, SlitLength)	
+		endfor
+	endif	
+
+	UseResults = 0
+	UseQRSdata = 1
+	UseIndra2data = 0
+	string CurrentFoldersQRS=IR2P_GenStringOfFolders(winNm="UnivDataExportPanel", returnListOfFolders=1, forceReset=1)
+	CurrentFoldersQRS = GrepList(CurrentFoldersQRS, "---",1 , ";" )
+	if(ItemsInList(CurrentFoldersQRS, ";")>0)
+		For(i=0;i<ItemsInList(CurrentFoldersQRS, ";");i+=1)
+			tempFldr = StringFromList(i, CurrentFoldersQRS, ";")
+			DataFolderName = StringFromList(i, CurrentFoldersQRS, ";")
+			PU_Struct.ctrlName = "SelectDataFolder"
+			PU_Struct.popNum=-1
+			PU_Struct.eventCode=2
+			PU_Struct.popStr=DataFolderName
+			PU_Struct.win = "UnivDataExportPanel"
+			PopupMenu SelectDataFolder win=UnivDataExportPanel, popmatch=StringFromList(ItemsInList(DataFolderName,":")-1,DataFolderName,":")
+			IR2C_PanelPopupControl(PU_Struct)
+			Wave/Z TempY=$(tempFldr+possiblyquoteName(IntensityWaveName))
+			Wave/Z TempX=$(tempFldr+possiblyquoteName(QWavename))
+			Wave/Z TempE=$(tempFldr+possiblyquoteName(ErrorWaveName))
+			Wave/Z TempdX=$(DataFolderName+ReplaceString("Qvec", QWavename, "dQ"))
+			if(!WaveExists(TempdX))
+				Duplicate/Free TempE, tempdX
+				tempdX = 0
+			endif
+			oldNote=note(TempY)
+			SlitLength = 0
+			UserSampleName=IN2G_ReturnUserSampleName(DataFolderName)
+			NEXUS_WriteNx1DCanSASdata(UserSampleName, HomePathStr+FinalOutputName, TempY, TempE, TempX, TempdX, "", "Irena", oldNote, SlitLength)	
+		endfor
+	endif	
+
+
+	DOwindow/K UnivDataExportPanel
+	print "Exported all data from current experiment in file:" +FinalOutputName
+end
+
+
+
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************

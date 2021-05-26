@@ -147,8 +147,10 @@ Menu "SAS"
 		"Import canSAS XML data", CS_XMLGUIImportDataMain(defaultType="QRS",defaultQUnits="1/A")
 		help={"Import data from XML CanSAS conforming data sets"}
 		"---"
-		"Export Nexus canSAS or ASCII data", IR2E_UniversalDataExport()
-		help = {"This is tool for export of any 2-3 column data sets as ASCII."}
+		"Export NxcanSAS or ASCII data", IR2E_UniversalDataExport()
+		help = {"This is tool for export of any 2-3 column data sets as ASCII or NxcanSAS."}
+		"Export all data as one NxcanSAS file", IR2E_ExportAllAsNexus()
+		help = {"This will export all Int-Q-Err data as one NxcanSAS file."}
 	End
 	"---"
 	Submenu "Data Manipulation"
