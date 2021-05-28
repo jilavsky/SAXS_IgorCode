@@ -3138,12 +3138,14 @@ Function IR1I_ImportDataFnctNexus()
 	for(i=0;i<imax;i+=1)
 		if (WaveOfSelections[i])
 			selectedfile = WaveOfFiles[i]
-			NEXUS_NXcanSASDataReader("ImportDataPath",selectedFile,1,0, UseFolder, UseEntry,UseTitle, NX_SasIns,NX_SASSam,NX_SASNote )	
+			NEXUS_NXcanSASDataReader("ImportDataPath",selectedFile,1,0, UseFolder, UseEntry,UseTitle, NX_SasIns,NX_SASSam,NX_SASNote)	
 			icount+=1
 		endif
 	endfor
 	print "Imported "+num2str(icount)+" data file(s) in total"
-	setDataFolder OldDf
+	setDataFolder root:Packages:ImportData
+	//clean up the experiment..
+	KillDataFolder/Z root:Packages:NexusImportTMP	
 end
 
 //************************************************************************************************************

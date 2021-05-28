@@ -511,11 +511,12 @@ End
 
 Menu "GraphMarquee"
        "Insert subwindow", IN2G_CreateSubwindowAtMarqee()
- //      "Clone this window with data", IN2G_CloneWindow()
 End
 
 Menu "TracePopup"
 		"Append WaveStats", IN2G_AddWaveStatistics()
+      "Save as jpg", IN2G_SaveTopGraphJpg()
+      "Save as pxp", IN2G_SaveTopGraphPXP()
 end
 
 #if(IgorVersion()>8.99)

@@ -2794,13 +2794,14 @@ Function NEXUS_NXcanSASDataReader(FilePathName,Filename,Read1D, Read2D, UseFileN
 			else
 				SASentryName=IN2G_CreateUserName((stringFromList(ItemsInList(tempSASEntryPath,":")-1,tempSASEntryPath,":")),28,0,11)
 			endif
-			FoundSasEntries = ItemsInList(AllSASdataData)*ItemsInList(AllSASentryData,";")
+			//FoundSasEntries = ItemsInList(AllSASdataData)*ItemsInList(AllSASentryData,";")		//why should we care about ItemsInList(AllSASentryData,";") here? 
+			FoundSasEntries = ItemsInList(AllSASdataData)													//each SASData needs unique name.. 
 			For(j=0;j<ItemsInList(AllSASdataData);j+=1)			//SASdata, sectors, segments,... 				
 				//need to load each indvidually...
 				tmpPath = stringfromlist(j,AllSASdataData)
 				//is it 1D or 2D data?
 				tempAttrStr = NEXUS_GetNXAttributeInIgor(tmpPath, "I_axes")
-				//iof this is old definition, we do not have I_axes, but "axes"
+				//if this is old definition, we do not have I_axes, but "axes"
 				if(strlen(tempAttrStr)<1)
 					tempAttrStr = NEXUS_GetNXAttributeInIgor(tmpPath, "axes")
 					if(strlen(tempAttrStr)>0)
@@ -2833,12 +2834,13 @@ static Function/T NEXUS_ReadOne1DcanSASDataset(PathToDataSet, DataTitleStr, sour
 	DFREF saveDFR = GetDataFolderDFR()		// Save
 	SetDataFolder root:
 	//now we are in the temp data place, we need to locate and copy these waves...
-	string IName, QName, QdevName, IdevName, tmpStr, tmpFldrName
-
+	string IName, QName, QdevName, IdevName, tmpStr, tmpFldrName, QdevName2
+	variable isSlitSmeared=0, SlitLength=0
+	
 	NewDataFolder/O/S root:ImportedData
 	//create place for data
-	string tmopFlrdName=IN2G_CreateUserName(IN2G_RemoveExtraQuote(DataTitleStr,1,1),28, 0, 11)
-	NewDataFolder/O/S $(tmopFlrdName)
+	string tmpFlrdName=IN2G_CreateUserName(IN2G_RemoveExtraQuote(DataTitleStr,1,1),28, 0, 11)
+	NewDataFolder/O/S $(tmpFlrdName)
 	//need to add one more layer and in this case, it is the last item in the path
 	string NewDataName = stringFromList(ItemsInList(PathToDataSet,":")-1,PathToDataSet, ":")
 	NewDataName = IN2G_RemoveExtraQuote(NewDataName,1,1)
@@ -2873,7 +2875,7 @@ static Function/T NEXUS_ReadOne1DcanSASDataset(PathToDataSet, DataTitleStr, sour
 		if(strlen(QName)>0)
 			print "This looks like obsolete NXcanSAS file. Loading anyway..." 
 		else
-			abort "Missing correct frefinition of I_axes or axes, cannot load this file. failed in : "+"NEXUS_ReadOne1DcanSASDataset function"
+			abort "Missing correct definition of I_axes or axes, cannot load this file. Failed in : "+"NEXUS_ReadOne1DcanSASDataset function"
 		endif
 	endif
 	Wave/Z Iwv = $(IName)
@@ -2907,12 +2909,44 @@ static Function/T NEXUS_ReadOne1DcanSASDataset(PathToDataSet, DataTitleStr, sour
 	//This is in attribute to Q
 	tmpStr = note(Qwv)
 	QdevName	= StringByKey("resolutions", tmpStr, "=", "\r")
-	Wave/Z QdevWv=$(QdevName)
+	if(ItemsInList(QdevName, ",")>1)
+		QdevName2 = StringFromList(1,QdevName,",")
+		QdevName = StringFromList(0,QdevName,",")
+		if(StringMatch(QdevName, "dQl"))			//QdevName this is Slit length
+			Wave/Z QdevWv=$(QdevName2)
+			Wave/Z QdevSL=$(QdevName)
+			if(WaveExists(QdevSL))
+				SlitLength = sum(QdevSL)/numpnts(QdevSL)			//should be the same, but this is just on case something is wrong here we use average
+				isSlitSmeared = 1
+			endif
+		elseif(StringMatch(QdevName2, "dQl"))			// QdevName2 is slit length
+			Wave/Z QdevWv=$(QdevName)
+			Wave/Z QdevSL=$(QdevName2)
+			if(WaveExists(QdevSL))
+				SlitLength = sum(QdevSL)/numpnts(QdevSL)			//should be the same, but this is just on case something is wrong here we use average
+				isSlitSmeared = 1
+			endif	
+		else
+			Abort "Cannot decipher resolutions for these data" 
+		endif
+	else
+		Wave/Z QdevWv=$(QdevName)
+	endif
+	//lets check if this is exported USAXS data... 
+	string PathToExportedName = PathToDataSet+"IGORWaveNote:Wname"
+	variable isUSAXS=0
+	Wave/Z/T OldExportedWavename=$(PathToExportedName)
+	if(WaveExists(OldExportedWavename))
+		if(StringMatch(OldExportedWavename[0], "*DSM_Int" ) || StringMatch(OldExportedWavename[0], "*SMR_Int" ))
+			isUSAXS=1
+		endif
+	endif
+	
 	//basic waves shoudl be located.
 	//copy them to new place using qrs naming system:
 	//new name is q_NewDataName  etc...
 	//string newNameShort=(DataTitleStr+NewDataName)
-	//now we need to deal with DAWN weird case wehre data are stacked in one data group - mutiple data for intensity and Idev, one Q and Qdev
+	//now we need to deal with DAWN weird case where data are stacked in one data group - mutiple data for intensity and Idev, one Q and Qdev
 	if(DimSize(Iwv, 1)>0)
 		print "*** WARNING: Found multiple data stored in one sasdata group. This is not strictly acording to NXcanSAS standard, but we can deal with it. ***"
 		variable ii
@@ -2935,10 +2969,19 @@ static Function/T NEXUS_ReadOne1DcanSASDataset(PathToDataSet, DataTitleStr, sour
 			SetDataFolder dataDFR		// and restore
 		endfor	
 	else	//classical, standard one data in one sasdata group, correct NXcanSAS file. 
-		if(WaveExists(QdevWv))	//presume also IdeWv exists...
+		if(WaveExists(QdevWv)&& isSlitSmeared)	//this is isSlitSmeared data, presume also IdeWv exists...
+			NEXUS_WriteOutNexusData(NewDataName, NewFolderFullPath, sourceFileName, PathToDataSet, InclNX_SasIns,InclNX_SASSam,InclNX_SASNote, Iwv, Qwv, IdevWv=IdevWv, QdevWv=QdevWv, SlitLength=SlitLength )
+			NEXUS_ConvertQRStoIrena(NewDataName, NewFolderFullPath, isSlitSmeared)
+		elseif(WaveExists(QdevWv))	//presume also IdeWv exists...
 			NEXUS_WriteOutNexusData(NewDataName, NewFolderFullPath, sourceFileName, PathToDataSet, InclNX_SasIns,InclNX_SASSam,InclNX_SASNote, Iwv, Qwv, IdevWv=IdevWv, QdevWv=QdevWv )
+			if(isUSAXS)
+				NEXUS_ConvertQRStoIrena(NewDataName, NewFolderFullPath, isSlitSmeared)		
+			endif
 		elseif(WaveExists(IdevWv))
 			NEXUS_WriteOutNexusData(NewDataName, NewFolderFullPath, sourceFileName, PathToDataSet, InclNX_SasIns,InclNX_SASSam,InclNX_SASNote, Iwv, Qwv, IdevWv=IdevWv )
+			if(isUSAXS)
+				NEXUS_ConvertQRStoIrena(NewDataName, NewFolderFullPath, isSlitSmeared)		
+			endif
 		else
 			NEXUS_WriteOutNexusData(NewDataName, NewFolderFullPath, sourceFileName, PathToDataSet, InclNX_SasIns,InclNX_SASSam,InclNX_SASNote, Iwv, Qwv )
 		endif
@@ -2950,17 +2993,67 @@ static Function/T NEXUS_ReadOne1DcanSASDataset(PathToDataSet, DataTitleStr, sour
 end
 
 
+////**********************************************************************************************
+////**********************************************************************************************
 
+static Function  NEXUS_ConvertQRStoIrena(NewDataName, NewFolderFullPath, isSlitSmeared)
+	string NewDataName, NewFolderFullPath
+	variable isSlitSmeared
+	
+	DFREF saveDFR = GetDataFolderDFR()		// Save
 
-static Function NEXUS_WriteOutNexusData(NewDataName, NewFolderFullPath, sourceFileName, PathToDataSet,InclNX_SasIns,InclNX_SASSam,InclNX_SASNote,  Iwv, Qwv, [IdevWv, QdevWv, indx] )
+	NewDataFOlder/O root:USAXS
+	MoveDataFolder /O=1 $(NewFolderFullPath), root:USAXS:
+
+	SetDataFolder $("root:USAXS:"+NewDataName)
+	string AllWaves= IN2G_CreateListOfItemsInFolder(GetDataFolder(1),2)	
+	string IntName = RemoveEnding(GrepList(AllWaves, "^r_"),";")
+	string QName = RemoveEnding(GrepList(AllWaves, "^q_"),";")
+	string EName = RemoveEnding(GrepList(AllWaves, "^s_"),";")
+	string dQName = RemoveEnding(GrepList(AllWaves, "^w_"),";")
+	Wave IntWv=$(IntName)
+	Wave QWv=$(QName)
+	Wave EWv=$(EName)
+	Wave/Z dQWv=$(dQName)
+	if(isSlitSmeared)
+		Rename IntWv, SMR_Int
+		Rename QWv, SMR_Qvec
+		Rename EWv, SMR_Error
+		if(WaveExists(dQWv))
+			Rename dQWv, SMR_dQ
+		endif
+		print "Renamed Slit smeared data from "+NewFolderFullPath+" from QRS names to USAXS names, new location is "+GetDataFolder(1)
+	else
+		Rename IntWv, DSM_Int
+		Rename QWv, DSM_Qvec
+		Rename EWv, DSM_Error
+		if(WaveExists(dQWv))
+			Rename dQWv, DSM_dQ
+		endif
+		print "Renamed USAXS data from "+NewFolderFullPath+" from QRS names to USAXS names, new location is "+GetDataFolder(1)
+	endif
+	//SlitLength="+num2str(SlitLength)+";"
+	SetDataFolder saveDFR		// and restore
+end
+////**********************************************************************************************
+////**********************************************************************************************
+
+static Function NEXUS_WriteOutNexusData(NewDataName, NewFolderFullPath, sourceFileName, PathToDataSet,InclNX_SasIns,InclNX_SASSam,InclNX_SASNote,  Iwv, Qwv, [IdevWv, QdevWv, indx, SlitLength] )
 	string NewDataName, NewFolderFullPath, sourceFileName, PathToDataSet
 	wave Iwv, Qwv, IdevWv, QdevWv
-	variable InclNX_SasIns,InclNX_SASSam,InclNX_SASNote, indx
+	variable InclNX_SasIns,InclNX_SASSam,InclNX_SASNote, indx, SlitLength
 
-	variable HaveIdev, HaveQdev, NewFLdrIndx
+	variable HaveIdev, HaveQdev, NewFLdrIndx, SlitSmearedData
 	HaveIdev= !ParamIsDefault(IdevWv) 
 	HaveQdev= !ParamIsDefault(QdevWv) 
 	NewFLdrIndx = ParamIsDefault(indx) ? -1 : indx
+	
+	if(ParamIsDefault(SlitLength))
+		SlitLength = 0
+		SlitSmearedData= 0
+	else
+		SlitSmearedData=1
+	endif
 
 	string AppendToName=""
 	if(NewFLdrIndx>=0)
@@ -3052,6 +3145,11 @@ static Function NEXUS_WriteOutNexusData(NewDataName, NewFolderFullPath, sourceFi
 	else
 		print "Did not find NexusDefinition in the file, this is non-standard"	
 	endif
+	
+	if(SlitSmearedData)
+		WaveNoteStr+="SlitLength="+num2str(SlitLength)+";"
+	endif
+
 	
 	
 	WaveNoteStr+=Intunits	

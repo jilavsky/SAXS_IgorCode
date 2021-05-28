@@ -1,11 +1,14 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.01
+#pragma version=1.03
 
 #if(IgorVersion()<9)  	//no need to include, Igor 9 has this by default.  
 #include <HDF5 Browser>
 #endif
 
-//1.01 rmoeved KillWaves/Z which took surprisngly long time. Not needed. 
+//1.03 modified H5GW__make_xref to ship IGORWAVENote which speeds up loading of Irena exprorted data by two order of magnitudes
+//			modified to import USAXS data as USAXS again. QRS data are all in ImportedData folder, but USAXS is back in USAXS folder.  
+//1.02 modified H5GW__HDF5AttributeDataToString which failed to read list (dQw,dQl) from resolution attribute. 
+//1.01 removed KillWaves/Z which took surprisngly long time. Not needed. 
 
 // requires the Wavemetrics "HDF5.xop" to be installed for IgorPro
 
@@ -425,6 +428,7 @@ Function/T H5GW_ReadHDF5(DataPathStr, parentFolder, fileName, [hdf5Path])
 		SetDataFolder $oldFolder
 		return fileName + ": problem while opening HDF5 file"
 	endif
+	//now we have all data in Igor, but Igor did not read attributes and attach them to the data. 
 	String/G objectPaths = S_objectPaths  // this gives a clue to renamed datasets (see below for attributes)
 	//   read the attributes
 	base_name = possiblyQuoteName(base_name)					//JIL fix, needed to handle liberal names. 
@@ -798,6 +802,9 @@ static Function H5GW__make_xref(parentFolder, objectPaths, group_name_list, ds_l
 	
 	String matchStr = parentFolder + base_name
 	String igorPaths = ReplaceString(matchStr, objectPaths, "")
+
+	igorPaths = GrepList(igorPaths, "IGORWaveNote" ,1 )
+	ds_list =  GrepList(ds_list, "IGORWaveNote" ,1 )
 	
 	Variable ii, length
 	String dataset, igorPath
@@ -842,14 +849,18 @@ static Function/T H5GW__addPathXref(parentFolder, base_name, hdf5Path, igorPath,
 	String result = xref
 	// look through xref to find each component of full hdf5Path, including the dataset
 	Variable ii, length = itemsInList(hdf5Path, "/")
-	String hdf5 = "", path = ""
+	String hdf5 = "", path = "", tmp
 	for (ii = 0; ii < length; ii = ii + 1)
 		hdf5 = H5GW__appendPathDelimiter(hdf5, "/") + StringFromList(ii, hdf5Path, "/")
 		path = H5GW__appendPathDelimiter(path, ":") + PossiblyQuoteName(StringFromList(ii, igorPath, ":"))
+		//print result
+		//print hdf5+keySep
+		//if ( !GrepString(result, hdf5+keySep ) )
 		if ( strlen(StringByKey(hdf5, result, keySep, listSep)) == 0 )
 			result = H5GW__addXref(hdf5, path, result, keySep, listSep)
 		endif
 	endfor
+	//print result
 	return result
 End
 
@@ -994,7 +1005,7 @@ Static Function H5GW__HDF5ReadAttributes(fileID, hdf5Path, baseName)
 	String S_HDF5ListGroup
 	HDF5ListGroup/F/R/TYPE=(group_attributes_type)  fileID, hdf5Path		//	TYPE=1 reads groups
 	String/G group_name_list = hdf5Path + ";" + S_HDF5ListGroup
- 
+
  	Variable length = ItemsInList(group_name_list)
 	Variable index, i_attr
 	String group_name
@@ -1022,7 +1033,9 @@ Static Function H5GW__HDF5ReadAttributes(fileID, hdf5Path, baseName)
 	// read and assign dataset attributes
 	HDF5ListGroup/F/R/TYPE=(dataset_attributes_type)  fileID, hdf5Path		//	TYPE=2 reads datasets
 	String/G dataset_name_list = S_HDF5ListGroup
-
+	//lets skip any dataset_name_list which contain IGORWaveNote - takes lots of time, these do not have meaningful notes.  
+	//dataset_name_list = GrepList(dataset_name_list, "IGORWaveNote" ,1 )
+	//group_name_list = GrepList(group_name_list, "IGORWaveNote" ,1 )
 	// build a table connecting objectPaths with group_name_list and dataset_name_list 
 	// using parentFolder and baseName
 	String parentFolder = GetDataFolder(1)
@@ -1162,13 +1175,20 @@ Static Function/T H5GW__HDF5AttributeDataToString(fileID, hdf5_Object, hdf5_Type
 	String attr_name
 	String itemDelimiter
 
+	//if(StringMatch(hdf5_Object, "*Q*"))
+	//	debugger 
+	//endif
 	String attr_str = "", temp_str
 	Variable index
 	HDF5LoadData/A=attr_name/TYPE=(hdf5_Type)/N=attr_wave/Z/O/Q   fileID, hdf5_Object
 	if ( V_Flag == 0 )
 		if ( 0 == cmpstr( "attr_wave,", WaveList("attr_wave", ",", "TEXT:1")) )
 			Wave/T attr_waveT=attr_wave
+			//there are cases, when we have list in attributes, qDw, dQl is typical example
 			attr_str = attr_waveT[0]
+			for (index=1; index < numpnts(attr_waveT); index=index+1)
+				attr_str = attr_str + itemDelimiter + attr_waveT[index]
+			endfor
 		else
 			Wave attr_waveN=attr_wave
 			attr_str = ""

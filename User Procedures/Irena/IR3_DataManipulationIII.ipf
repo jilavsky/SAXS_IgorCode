@@ -898,6 +898,11 @@ Function IR3DM_AppendProcessDataToGraphLogLog()
 	if(!WaveExists(OriginalDataIntWave))
 		return 0
 	endif
+	DoWIndow IR3DM_DataManIIIDataDisplay
+	if(V_Flag==0)
+		IR3DM_CreateDM3Graphs()
+	endif
+	
 	CheckDisplayed /W=IR3DM_DataManIIIDataDisplay OriginalDataIntWave
 	if(!V_flag)
 		AppendToGraph /W=IR3DM_DataManIIIDataDisplay  OriginalDataIntWave  vs OriginalDataQWave

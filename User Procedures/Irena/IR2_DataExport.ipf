@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.17
+#pragma version=1.18
 Constant IR2EversionNumber = 1.18
 
 //*************************************************************************\
@@ -8,7 +8,7 @@ Constant IR2EversionNumber = 1.18
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.18 added export of all data from current experiment using IR2E_ExportAllAsNexus()
+//1.18 added export of all data from current experiment using IR2E_ExportAllAsNexus(), for now sets dQ=0 for DSM data, sets dQl=slit length and dQw to dQ for SMR data. 
 //1.17 fixed dQ USAXS data Nexus export which exported always SMR dQ. 
 //1.16 add option to export ASCII with d, two theta or Q. Tested against Nika TTH, Q, and D data and works fine within precision errors. 
 //1.15 add option to reduce output to single precision output (requested) 
@@ -29,7 +29,7 @@ Constant IR2EversionNumber = 1.18
 //1.01 added license for ANL
  
 
-//This is tool to export any type of 2 -3 column data we have (x, y, and error (if exists)
+//This is tool to export any type of 2 -3 column data we have x, y, and error (if exists)
 
 Function IR2E_UniversalDataExport()
   
@@ -1212,8 +1212,10 @@ Function IR2E_ExportAllAsNexus()
 			Wave/Z TempE=$(tempFldr+possiblyquoteName(ErrorWaveName))
 			Wave/Z TempdX=$(DataFolderName+ReplaceString("Qvec", QWavename, "dQ"))
 			if(!WaveExists(TempdX))
-				Duplicate/Free TempE, tempdX
-				tempdX = 0
+				Duplicate/Free TempE, tempdXLoc
+				tempdXLoc = 0
+			else
+				Duplicate/Free TempdX, tempdXLoc
 			endif
 			oldNote=note(TempY)
 			if(stringMatch(NameOfWave(TempX),"*SMR*"))
@@ -1221,10 +1223,10 @@ Function IR2E_ExportAllAsNexus()
 			else
 				SlitLength = 0
 				print "Did not export dQ data as this causes issues in sasView"
-				tempdX = 0 
+				tempdXLoc = 0 
 			endif
 			UserSampleName=IN2G_ReturnUserSampleName(DataFolderName)
-			NEXUS_WriteNx1DCanSASdata(UserSampleName, HomePathStr+FinalOutputName, TempY, TempE, TempX, TempdX, "", "Irena", oldNote, SlitLength)	
+			NEXUS_WriteNx1DCanSASdata(UserSampleName, HomePathStr+FinalOutputName, TempY, TempE, TempX, tempdXLoc, "", "Irena", oldNote, SlitLength)	
 		endfor
 	endif	
 
