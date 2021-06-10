@@ -1,6 +1,6 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version = 1.15
+#pragma version = 1.17
 #include "HDF5Gateway"
 
 #if(IgorVersion()<9)  	//no need to include, Igor 9 has this by default.  
@@ -12,6 +12,8 @@ constant NexusVersionNumber=1.05
 
 // support of Nexus files
 
+//1.17 check that if we are reading Nexus file with multiple samples there that we will use sasEntry or sasTile as names. 
+//1.16 fixes for Nexus writer and reader to improve sasView and Irena itself compatibility. 
 //1.15 fix for HDF5 changes in IP9
 //1.14 added NEXUS_Read_Metadata, NEXUS_Read_Sample, NEXUS_Read_User, NEXUS_Read_Instrument, NEXUS_Read_CreateLocalList - used to store lists with teh values from these metadata locations. 
 //1.13 added skip for printing stuff in history in Nika batch mode. 
@@ -794,8 +796,11 @@ Function/T NEXUS_ImportAFile(FilePathName,Filename)		//imports any Nexus (HDF5) 
 	KilLDatafolder/Z root:Packages:NexusImportTMP
 	NewDataFolder/O root:Packages:NexusImportTMP
 	string Status
+	PathInfo $(FilePathName)	
+	print S_Path
 	//import the file
-	Status = H5GW_ReadHDF5(FilePathName, "root:Packages:NexusImportTMP", Filename)
+	//Status = H5GW_ReadHDF5(FilePathName, "root:Packages:NexusImportTMP", Filename)
+	Status = H5GW_ReadHDF5("root:Packages:NexusImportTMP", S_path+Filename)
 	if(strlen(Status)>0)
 		print "HDF5 import failed, message: "+Status		//if not "" then error ocured, Handle somehow!
 		return ""
@@ -2773,6 +2778,19 @@ Function NEXUS_NXcanSASDataReader(FilePathName,Filename,Read1D, Read2D, UseFileN
 			AllSASentryData = NEXUS_FindNXClassData(NewFileDataLocation, "NX_class=SASentry;")		//find path to all NXdata, but this can be 2D, 1D, 3D, or 4D data sets. 
 		endif
 		//these are all SAS entry - each is one data but possibly many SASdata of the same data
+		if(ItemsInList(AllSASentryData,";")>1)		//in this case we cannot use the File name for data, it would overwrite the data...
+			if(UseFileNameasFolder)		//users wants to use File name as Folder name, cannot be done. 
+				UseFileNameasFolder=0
+				UsesasEntryNameAsFolder=1
+				UseTileNameAsFolder=0
+				NVAR UseFolder = root:Packages:ImportData:UseFileNameasFolder
+				NVAR UseEntry = root:Packages:ImportData:UsesasEntryNameAsFolder
+				NVAR UseTitle = root:Packages:ImportData:UseTitleNameAsFolder
+				UseFolder = 0
+				UseEntry = 1
+				UseTitle = 0
+			endif
+		endif
 		string SASEntryNameOnly
 		variable i, j, k
 		string tempAttrStr
@@ -2959,12 +2977,15 @@ static Function/T NEXUS_ReadOne1DcanSASDataset(PathToDataSet, DataTitleStr, sour
 				Duplicate/Free/R=[ii][] IdevWv, IdevWvIwv
 				Redimension/N=(dimsize(IdevWvIwv,1)) IdevWvIwv
 				NEXUS_WriteOutNexusData(NewDataName, NewFolderFullPath, sourceFileName, PathToDataSet, InclNX_SasIns,InclNX_SASSam,InclNX_SASNote, tmpIwv, Qwv, IdevWv=IdevWvIwv, QdevWv=QdevWv, indx=ii )
+				NEXUS_MoveQRSperQrange(NewDataName, NewFolderFullPath)	
 			elseif(WaveExists(IdevWv))
 				Duplicate/Free/R=[ii][] IdevWv, IdevWvIwv
 				Redimension/N=(dimsize(IdevWvIwv,1)) IdevWvIwv
 				NEXUS_WriteOutNexusData(NewDataName, NewFolderFullPath, sourceFileName, PathToDataSet, InclNX_SasIns,InclNX_SASSam,InclNX_SASNote, tmpIwv, Qwv, IdevWv=IdevWvIwv, indx=ii)
+				NEXUS_MoveQRSperQrange(NewDataName, NewFolderFullPath)	
 			else
 				NEXUS_WriteOutNexusData(NewDataName, NewFolderFullPath, sourceFileName, PathToDataSet, InclNX_SasIns,InclNX_SASSam,InclNX_SASNote, tmpIwv, Qwv, indx=ii )
+				NEXUS_MoveQRSperQrange(NewDataName, NewFolderFullPath)	
 			endif
 			SetDataFolder dataDFR		// and restore
 		endfor	
@@ -2975,15 +2996,20 @@ static Function/T NEXUS_ReadOne1DcanSASDataset(PathToDataSet, DataTitleStr, sour
 		elseif(WaveExists(QdevWv))	//presume also IdeWv exists...
 			NEXUS_WriteOutNexusData(NewDataName, NewFolderFullPath, sourceFileName, PathToDataSet, InclNX_SasIns,InclNX_SASSam,InclNX_SASNote, Iwv, Qwv, IdevWv=IdevWv, QdevWv=QdevWv )
 			if(isUSAXS)
-				NEXUS_ConvertQRStoIrena(NewDataName, NewFolderFullPath, isSlitSmeared)		
+				NEXUS_ConvertQRStoIrena(NewDataName, NewFolderFullPath, isSlitSmeared)	
+			else
+				NEXUS_MoveQRSperQrange(NewDataName, NewFolderFullPath)	
 			endif
 		elseif(WaveExists(IdevWv))
 			NEXUS_WriteOutNexusData(NewDataName, NewFolderFullPath, sourceFileName, PathToDataSet, InclNX_SasIns,InclNX_SASSam,InclNX_SASNote, Iwv, Qwv, IdevWv=IdevWv )
 			if(isUSAXS)
 				NEXUS_ConvertQRStoIrena(NewDataName, NewFolderFullPath, isSlitSmeared)		
+			else
+				NEXUS_MoveQRSperQrange(NewDataName, NewFolderFullPath)	
 			endif
 		else
 			NEXUS_WriteOutNexusData(NewDataName, NewFolderFullPath, sourceFileName, PathToDataSet, InclNX_SasIns,InclNX_SASSam,InclNX_SASNote, Iwv, Qwv )
+			NEXUS_MoveQRSperQrange(NewDataName, NewFolderFullPath)	
 		endif
 	endif
 
@@ -2992,6 +3018,62 @@ static Function/T NEXUS_ReadOne1DcanSASDataset(PathToDataSet, DataTitleStr, sour
 	return NewDataName
 end
 
+////**********************************************************************************************
+////**********************************************************************************************
+
+static Function  NEXUS_MoveQRSperQrange(NewDataName, NewFolderFullPath)
+	string NewDataName, NewFolderFullPath
+	
+	DFREF saveDFR = GetDataFolderDFR()		// Save
+	//this should be QRS data in ImportedData Folder
+	SetDataFolder NewFolderFullPath
+	string AllWaves= IN2G_CreateListOfItemsInFolder(GetDataFolder(1),2)	
+	string QName = RemoveEnding(GrepList(AllWaves, "^q_"),";")
+	Wave QWv=$(QName)
+	if(WaveMin(QWv)>0.5)		//Qmin<0.5 means this must be WAXS
+		NewDataFOlder/O root:ImportedWAXS
+		MoveDataFolder /O=1 $(NewFolderFullPath), root:ImportedWAXS:
+		print "Moved QRS data from "+NewFolderFullPath+" to root:ImportedWAXS:"+NewDataName
+	else
+		NewDataFOlder/O root:ImportedSAS
+		MoveDataFolder /O=1 $(NewFolderFullPath), root:ImportedSAS:
+		print "Moved QRS data from "+NewFolderFullPath+" to root:ImportedSAS:"+NewDataName
+	endif
+	
+	
+
+	//	SetDataFolder $("root:USAXS:"+NewDataName)
+	//	string AllWaves= IN2G_CreateListOfItemsInFolder(GetDataFolder(1),2)	
+	//	string IntName = RemoveEnding(GrepList(AllWaves, "^r_"),";")
+	//	string QName = RemoveEnding(GrepList(AllWaves, "^q_"),";")
+	//	string EName = RemoveEnding(GrepList(AllWaves, "^s_"),";")
+	//	string dQName = RemoveEnding(GrepList(AllWaves, "^w_"),";")
+	//	Wave IntWv=$(IntName)
+	//	Wave QWv=$(QName)
+	//	Wave EWv=$(EName)
+	//	Wave/Z dQWv=$(dQName)
+	//	if(isSlitSmeared)
+	//		Rename IntWv, SMR_Int
+	//		Rename QWv, SMR_Qvec
+	//		Rename EWv, SMR_Error
+	//		if(WaveExists(dQWv))
+	//			Rename dQWv, SMR_dQ
+	//		endif
+	//		print "Renamed Slit smeared data from "+NewFolderFullPath+" from QRS names to USAXS names, new location is "+GetDataFolder(1)
+	//	else
+	//		Rename IntWv, DSM_Int
+	//		Rename QWv, DSM_Qvec
+	//		Rename EWv, DSM_Error
+	//		if(WaveExists(dQWv))
+	//			Rename dQWv, DSM_dQ
+	//		endif
+	//		print "Renamed USAXS data from "+NewFolderFullPath+" from QRS names to USAXS names, new location is "+GetDataFolder(1)
+	//	endif
+	//SlitLength="+num2str(SlitLength)+";"
+	SetDataFolder saveDFR		// and restore
+end
+////**********************************************************************************************
+////**********************************************************************************************
 
 ////**********************************************************************************************
 ////**********************************************************************************************
@@ -3005,7 +3087,7 @@ static Function  NEXUS_ConvertQRStoIrena(NewDataName, NewFolderFullPath, isSlitS
 	NewDataFOlder/O root:USAXS
 	MoveDataFolder /O=1 $(NewFolderFullPath), root:USAXS:
 
-	SetDataFolder $("root:USAXS:"+NewDataName)
+	SetDataFolder $("root:USAXS:"+PossiblyQuoteName(NewDataName))
 	string AllWaves= IN2G_CreateListOfItemsInFolder(GetDataFolder(1),2)	
 	string IntName = RemoveEnding(GrepList(AllWaves, "^r_"),";")
 	string QName = RemoveEnding(GrepList(AllWaves, "^q_"),";")

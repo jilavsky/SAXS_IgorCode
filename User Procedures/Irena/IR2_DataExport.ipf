@@ -1158,7 +1158,7 @@ Function IR2E_ExportAllAsNexus()
 	UseIndra2data = 1
 	string CurrentFoldersUSAXS=IR2P_GenStringOfFolders(winNm="UnivDataExportPanel", returnListOfFolders=1, forceReset=1)
 	CurrentFoldersUSAXS = GrepList(CurrentFoldersUSAXS, "---",1 , ";" )
-	//now we have all fodlers with data. These could be either USAXS SMR, USAXS DSM, and we have separate list for QRS data. 
+	//now we have all folders with data. These could be either USAXS SMR, USAXS DSM, and we have separate list for QRS data. 
 	//print CurrentFoldersUSAXS
 	//print CurrentFoldersQRS
 	//mneed to verify the file name and location are available, use name of current Igor experiment and its location, 
@@ -1189,11 +1189,23 @@ Function IR2E_ExportAllAsNexus()
 		endif
 		close/A
 	endif
-
-//	to preset the names, code is here: IR2E_ExportMultipleFiles()
+	variable ExportUSAXS=1
+	variable ExportSAXS=1
+	variable ExportWAXS=1
+	variable ExportOtherQRS=1
+	Prompt ExportUSAXS, "Export USAXS?", popup, "Yes;No;"
+	Prompt ExportSAXS, "Export QRS in root:SAXS/SAS/ImportedSAS?", popup, "Yes;No;"
+	Prompt ExportWAXS, "Export QRS in root:WAXS/WAS/ImportedWAXS?", popup, "Yes;No;"
+	Prompt ExportOtherQRS, "Export QRS in other locations?", popup, "Yes;No;"
+	DoPrompt/HELP="Choose if these specific types of data should be exported" "Select which data will be exported", ExportUSAXS, ExportSAXS, ExportWAXS, ExportOtherQRS 
+	if (V_Flag)
+		return -1								// User canceled
+	endif
+	//	note, value of 2 = NO
+	//	to preset the names, code is here: IR2E_ExportMultipleFiles()
 	//export USAXS data
 	STRUCT WMPopupAction PU_Struct
-	if(ItemsInList(CurrentFoldersUSAXS, ";")>0)
+	if(ItemsInList(CurrentFoldersUSAXS, ";")>0 && ExportUSAXS==1)
 		UseResults = 0
 		UseQRSdata = 0
 		UseIndra2data = 1
@@ -1235,6 +1247,23 @@ Function IR2E_ExportAllAsNexus()
 	UseIndra2data = 0
 	string CurrentFoldersQRS=IR2P_GenStringOfFolders(winNm="UnivDataExportPanel", returnListOfFolders=1, forceReset=1)
 	CurrentFoldersQRS = GrepList(CurrentFoldersQRS, "---",1 , ";" )
+	string TempList =""
+	string TempList2 = ""
+	if(ExportSAXS==1)
+		TempList += GrepList(CurrentFoldersQRS, ":SAXS:" ,0 )+GrepList(CurrentFoldersQRS, ":SAS:" ,0 )+GrepList(CurrentFoldersQRS, ":ImportedSAS:" ,0 )
+	endif
+	if(ExportWAXS==1)
+		TempList += GrepList(CurrentFoldersQRS, ":WAXS:" ,0 )+GrepList(CurrentFoldersQRS, ":WAS:" ,0 )+GrepList(CurrentFoldersQRS, ":ImportedWAXS:" ,0 )
+	endif
+	if(ExportOtherQRS==1)
+		TempList2 = GrepList(CurrentFoldersQRS, ":WAXS:" ,1 )
+		TempList2 = GrepList(TempList2, ":SAXS:" ,1 )
+		TempList2 = GrepList(TempList2, ":WAS:" ,1 )
+		TempList2 = GrepList(TempList2, ":SAS:" ,1 )
+		TempList2 = GrepList(TempList2, ":ImportedWAXS:" ,1 )
+		TempList2 = GrepList(TempList2, ":ImportedSAS:" ,1 )
+	endif
+	CurrentFoldersQRS = TempList + TempList2
 	if(ItemsInList(CurrentFoldersQRS, ";")>0)
 		For(i=0;i<ItemsInList(CurrentFoldersQRS, ";");i+=1)
 			tempFldr = StringFromList(i, CurrentFoldersQRS, ";")

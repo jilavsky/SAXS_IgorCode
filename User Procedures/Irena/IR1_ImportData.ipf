@@ -358,7 +358,6 @@ Function IR1I_ImportDataFnct()
 
 	string TopPanel=WinName(0, 64)
 	string OldDf = getDataFolder(1)
-	
 	Wave/T WaveOfFiles      = root:Packages:ImportData:WaveOfFiles
 	Wave WaveOfSelections = root:Packages:ImportData:WaveOfSelections
 
@@ -3118,6 +3117,8 @@ Function IR1I_ImportDataFnctNexus()
 
 	string TopPanel=WinName(0, 64)
 	string OldDf = getDataFolder(1)
+	Variable timerRefNum, microSeconds
+	timerRefNum = startMSTimer
 	
 	Wave/T WaveOfFiles      = root:Packages:ImportData:WaveOfFiles
 	Wave WaveOfSelections = root:Packages:ImportData:WaveOfSelections
@@ -3142,6 +3143,8 @@ Function IR1I_ImportDataFnctNexus()
 			icount+=1
 		endif
 	endfor
+	microSeconds = StopMSTimer(timerRefNum)
+	Print microSeconds/1e6, "Seconds for import"
 	print "Imported "+num2str(icount)+" data file(s) in total"
 	setDataFolder root:Packages:ImportData
 	//clean up the experiment..

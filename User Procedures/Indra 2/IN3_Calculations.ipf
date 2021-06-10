@@ -286,8 +286,10 @@ Function IN3_SmartBlankSelection(DataFolderName)
 			BlankOrderNumbers = IN2G_FindNumIndxForSort(AllBlanksWave[p])
 			Sort BlankOrderNumbers, BlankOrderNumbers, AllBlanksWave 
 			variable MatchON = BinarySearch(BlankOrderNumbers,DataOrderNum)
-			if(MatchON<0)
+			if(MatchON==-1)
 				MatchON = 0
+			elseif(MatchON ==-2 )
+				MatchON = numpnts(BlankOrderNumbers)-1
 			endif
 			String BestBlankName = AllBlanksWave[MatchON]
 			//this si what we need to select... 

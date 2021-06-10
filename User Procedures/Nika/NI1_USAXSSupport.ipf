@@ -981,13 +981,18 @@ Function/S NI1_9IDCSetDefaultConfiguration()
 	UserQMax = 0
 	UserQMin = 0
 
+	NVAR UseSubtractFixedOffset = root:Packages:Convert2Dto1D:UseSubtractFixedOffset
+	NVAR DEZINGERDATA=root:Packages:Convert2Dto1D:DezingerCCDData
+	NVAR DezingRatio=root:Packages:Convert2Dto1D:DezingerRatio
+	NVAR DezingNumTimes=root:Packages:Convert2Dto1D:DezingerHowManyTimes
 	if(WAXSDexelaSelected)	//Dexela special case
-		NVAR UseSubtractFixedOffset = root:Packages:Convert2Dto1D:UseSubtractFixedOffset
-		NVAR DEZINGERDATA=root:Packages:Convert2Dto1D:DezingerCCDData
-		NVAR DezingRatio=root:Packages:Convert2Dto1D:DezingerRatio
-		NVAR DezingNumTimes=root:Packages:Convert2Dto1D:DezingerHowManyTimes
 		UseSubtractFixedOffset = 1
 		DEZINGERDATA = 1
+		DezingRatio = 25
+		DezingNumTimes = 1
+	else
+		UseSubtractFixedOffset = 0
+		DEZINGERDATA = 0
 		DezingRatio = 25
 		DezingNumTimes = 1
 	endif

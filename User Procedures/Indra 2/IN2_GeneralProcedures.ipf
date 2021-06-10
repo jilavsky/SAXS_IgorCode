@@ -731,18 +731,47 @@ Function IN2G_SaveTopGraphJpg()
 		if(strlen(topWindow)<2)
 			Abort "This function does not work for subwindows in panels"
 		endif
-		SavePICT/E=-6/B=288	as (topWindow)				//this is jpg
+		//now we can grab some names for users on Irena specific gaphs. 
+		string NewName=topWindow
+		if(StringMatch(topWindow, "CCDImageToConvertFig" ))	//NIka 2D graph
+			SVAR/Z UserSampleName=root:Packages:Convert2Dto1D:UserSampleName
+			if(SVAR_Exists(UserSampleName))
+				NewName = UserSampleName
+			endif
+		elseif(StringMatch(topWindow, "RcurvePlotGraph" ))	//USAXS data reduction
+			SVAR/Z UserSampleName=root:Packages:Indra3:userFriendlySampleDFName
+			if(SVAR_Exists(UserSampleName))
+				NewName = UserSampleName
+			endif
+			
+			
+		endif
+		
+		SavePICT/E=-6/B=288	as (NewName)				//this is jpg
 end
 Function IN2G_SaveTopGraphPXP()
 		string topWindow=WinName(0,1)
 		if(strlen(topWindow)<2)
 			Abort "This function does not work for subwindows in panels"
 		endif
+		//now we can grab some names for users on Irena specific gaphs. 
+		string NewName=topWindow
+		if(StringMatch(topWindow, "CCDImageToConvertFig" ))	//NIka 2D graph
+			SVAR/Z UserSampleName=root:Packages:Convert2Dto1D:UserSampleName
+			if(SVAR_Exists(UserSampleName))
+				NewName = UserSampleName
+			endif
+		elseif(StringMatch(topWindow, "RcurvePlotGraph" ))	//USAXS data reduction
+			SVAR/Z UserSampleName=root:Packages:Indra3:userFriendlySampleDFName
+			if(SVAR_Exists(UserSampleName))
+				NewName = UserSampleName
+			endif
+		endif
 #if(IgorVersion()>8.99)
 		//SaveGraphCopy /I/T=1 /W=$(topWindow)	  			//this is h5xp
-		SaveGraphCopy /I /W=$(topWindow)	  			//this is pxp
+		SaveGraphCopy /I /W=$(NewName)	  			//this is pxp
 #else
-		SaveGraphCopy /I /W=$(topWindow)	  				//this is pxp
+		SaveGraphCopy /I /W=$(NewName)	  				//this is pxp
 #endif
 end
 //************************************************************************************************
