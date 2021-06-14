@@ -2,7 +2,7 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
 #pragma version=1.01
 
-Constant IR3AMassFrAggVersionNumber 	= 1.01
+Constant IR3AMassFrAggVersionNumber 	= 1.02
 Constant IR3TPOVPDBVersionNumber 		= 1.00
 Constant IR3TTwoPhaseVersionNumber 	= 1.00
 
@@ -14,11 +14,52 @@ Constant IR3TTwoPhaseVersionNumber 	= 1.00
 //*************************************************************************/
 
 
+//1.02 added MultiParticleAttraction parameter. 
 //1.01 3dAggregate added ability ot grow N aggregates and Compare Stored graph
 //1.00 first version, added code for 3DMassFractalAggregate from Alex McGlassson 
 //			note: this ipf file also contains tools for import of pdb (ATSAS, GNOM produced output files) and for POV files produced by SAXSMorph. 
 //			and some Gizmo tools to be used to visualize these. 
 
+
+
+//   Parameters description for referecne... This belongs to manual. 
+//	MultiParticleAttraction = "Multi Part attr" controls how particle attached when approaching existing aggregate. 
+// Sticking method controls how particle attached when approaching existing aggregate
+// MultiParticleAttraction = "Neutral;Attractive;Repulsive;Not Allowed;"
+// when : neutral, probablity of attaching does not depend on number of particles in neaest neighbor sphere aroudn the new position. 
+// when : Attractive more particles increase the probability of attaching
+// when : Repulsive more particles decrease the probability of attaching.
+// consequence - Repulsive creases larger, more open particles, Attractive creates more compact particles
+// Sticking method = which neighbors are counted as "nearest neigbor"
+//	1 : only in x, y, znd z direction on lattice, their center distance is < 1.1
+//	2 : in x,z,y and in xy, yz, xz planes, their distacne is < 1.05*sqrt(2) 
+//	3 : also in xyz body diagonal, their distacne is < 1.05*sqrt(3)
+// to grow compact particle set sticking method 1, low sticking probability and positive attraction, I got df up to 2.55   
+// to grow open particle, set sticking method 3, high sticking probability and negative attraction, I got df below 2 this way.  
+// 
+//	SVAR MultiParticleAttraction = root:Packages:AggregateModeling:MultiParticleAttraction 
+//	variable StickingProbability1, StickingProbabilityM1,StickingProbabilityM2, StickingProbabilityLoc
+//	if(StringMatch(MultiParticleAttraction, "Neutral"))
+//		StickingProbability1= StickingProbability
+//		StickingProbabilityM1= StickingProbability
+//		StickingProbabilityM2= StickingProbability
+//	elseif(StringMatch(MultiParticleAttraction, "Attractive"))
+//		StickingProbability1= StickingProbability
+//		StickingProbabilityM1= (StickingProbability+100)/2
+//		StickingProbabilityM2= (StickingProbability+300)/4
+//	elseif(StringMatch(MultiParticleAttraction, "Repulsive"))
+//		StickingProbability1 = StickingProbability
+//		StickingProbabilityM1 = (StickingProbability+10)/2
+//		StickingProbabilityM2 = (StickingProbability+30)/4
+//	elseif(StringMatch(MultiParticleAttraction, "Not allowed"))
+//		StickingProbability1 = StickingProbability
+//		StickingProbabilityM1 = 1
+//		StickingProbabilityM2 = 0
+//	else
+//		StickingProbability1 = StickingProbability
+//		StickingProbabilityM1 = StickingProbability
+//		StickingProbabilityM2 = StickingProbability
+//	endif
 
 
 
@@ -202,7 +243,7 @@ Function IR3A_FractalAggregatePanel()
 	//	R - aggregate size 
 	//	df - Mass fractal dimension of the aggregate 
 	//	p - short circuit path length 
-	//	s - connecGve path length 
+	//	s - connective path length 
 	//	dmin - minimum dimension of the aggregate 
 	//	c - connecGvity dimension of the aggregate 
 	//	s - connecGve path length of the aggregate
@@ -215,16 +256,21 @@ Function IR3A_FractalAggregatePanel()
 	SetVariable AggregateModeling,limits={10,Inf,0},variable= root:Packages:AggregateModeling:DegreeOfAggregation, bodyWidth=50
 	SetVariable StickingProbability,pos={10,285},size={190,16},noproc,title="Sticking prob. (10-100) ", help={"Sticking probablility, 100 for DLA, less for RLA"}
 	SetVariable StickingProbability,limits={10,100,0},variable= root:Packages:AggregateModeling:StickingProbability, bodyWidth=50
-	SetVariable NumberOfTestPaths,pos={10,310},size={190,16},noproc,title="No of test paths (1k-10k) ", help={"Test paths for parameetr evaluation. Larger takes long time but is more precise"}
+	SetVariable NumberOfTestPaths,pos={10,310},size={190,16},noproc,title="Max paths/end (1k-10k) ", help={"Max measured paths per end point for parameter evaluation. Larger = possibly longer times but is more precise"}
 	SetVariable NumberOfTestPaths,limits={1000,100000,0},variable= root:Packages:AggregateModeling:NumberOfTestPaths, bodyWidth=50
 
-	SetVariable RgPrimary,pos={200,260},size={170,16},noproc,title="Primary Rg[A] (10) ", help={"Size of primary particle from which Aggregate is created"}
+	SetVariable RgPrimary,pos={210,260},size={170,16},noproc,title="Primary Rg[A] (10) ", help={"Size of primary particle from which Aggregate is created"}
 	SetVariable RgPrimary,limits={10,Inf,0},variable= root:Packages:AggregateModeling:RgPrimary, bodyWidth=50
-	PopupMenu AllowedNearDistance,pos={240,290},size={150,20},proc=IR3A_PopMenuProc,title="Sticking method:"
+
+	PopupMenu AllowedNearDistance,pos={220,290},size={150,20},proc=IR3A_PopMenuProc,title="Sticking method:"
 	PopupMenu AllowedNearDistance,help={"Which neighbors are allowed to stick"}
 	NVAR AllowedNearDistance=root:Packages:AggregateModeling:AllowedNearDistance
 	PopupMenu AllowedNearDistance,mode=1,popvalue=num2str(AllowedNearDistance), value="1;2;3;"
 
+	PopupMenu MParticleAttraction,pos={220,310},size={150,20},proc=IR3A_PopMenuProc,title="Multi Part. attr:"
+	PopupMenu MParticleAttraction,help={"If there are more particles neaby, is chance of attaching? "}
+	SVAR MultiParticleAttraction=root:Packages:AggregateModeling:MultiParticleAttraction
+	PopupMenu MParticleAttraction,mode=1,popvalue=MultiParticleAttraction, value="Neutral;Attractive;Repulsive;Not allowed;"
 	
 	Button Grow1AggAll,pos={5,338},size={150,20}, proc=IR3A_PanelButtonProc,title="Grow 1 Agg, graph", help={"Perform all steps and generate 3D graph"}
 	Button GrowNAggAll,pos={165,338},size={150,20}, proc=IR3A_PanelButtonProc,title="Grow N Agg.", help={"Generate N aggregates randomly"}
@@ -946,23 +992,33 @@ static Function IR3A_DisplayAggNotebook(MassFractalAggregate, AppendToNotebook)
 		Notebook $nb ruler=Normal, text="*************************************************************************************************   \r"
 		Notebook $nb ruler=Normal, text="Mass Fractal 3D Aggregate from : "+ResultsLocation+"\r"
 		Notebook $nb ruler=Normal, text="Date & time generated : "+StringByKey("Mass Fractal Aggregate created", OldNote, "=", ";")+"\r"
-		Notebook $nb ruler=Normal, text="Degree of Aggregation z : \t\t"+StringByKey("z", OldNote, "=", ";")+"\r"
-		Notebook $nb ruler=Normal, text="Sticking Probability :\t\t\t"+StringByKey("StickingProbability", OldNote, "=", ";")+"\r"
-		Notebook $nb ruler=Normal, text="Aggregate Size R : \t\t\t"+StringByKey("R", OldNote, "=", ";")+"\r"
+		Notebook $nb ruler=Normal, text="****      *********      *************    *******    \r"
+		Notebook $nb ruler=Normal, text="Degree of Aggregation z : \t\t\t"+StringByKey("z", OldNote, "=", ";")+"\r"
+		Notebook $nb ruler=Normal, text="Aggregate Size R : \t\t\t\t\t\t"+StringByKey("R", OldNote, "=", ";")+"\r"
 		Notebook $nb ruler=Normal, text="Short circuit path length p : \t\t"+StringByKey("p", OldNote, "=", ";")+"\r"
-		Notebook $nb ruler=Normal, text="Connective path length s : \t\t"+StringByKey("s", OldNote, "=", ";")+"\r"
+		Notebook $nb ruler=Normal, text="Connective path length s : \t\t\t"+StringByKey("s", OldNote, "=", ";")+"\r"
 		Notebook $nb ruler=Normal, text="Mass fractal dimension df : \t\t"+StringByKey("df", OldNote, "=", ";")+"\r"
 		Notebook $nb ruler=Normal, text="Minimum dimension dmin : \t\t"+StringByKey("dmin", OldNote, "=", ";")+"\r"
-		Notebook $nb ruler=Normal, text="Connectivity dimension c : \t\t"+StringByKey("c", OldNote, "=", ";")+"\r"
-		Notebook $nb ruler=Normal, text="True Sticking Probability : \t\t"+StringByKey("True Sticking Probability", OldNote, "=", ";")+"\r"
-		Notebook $nb ruler=Normal, text="Sticking Method : \t\t\t"+StringByKey("StickingMethod", OldNote, "=", ";")+"\r"
+		Notebook $nb ruler=Normal, text="Connectivity dimension c : \t\t\t"+StringByKey("c", OldNote, "=", ";")+"\r"
+		Notebook $nb ruler=Normal, text="****      *********      *************    *******    \r"
+		Notebook $nb ruler=Normal, text="Sticking Probability :\t\t\t\t\t\t"+StringByKey("StickingProbability", OldNote, "=", ";")+"\r"
+		Notebook $nb ruler=Normal, text="Sticking Method : \t\t\t\t\t\t\t"+StringByKey("StickingMethod", OldNote, "=", ";")+"\r"
+		Notebook $nb ruler=Normal, text="Multi Particle Attraction : \t\t\t\t"+StringByKey("MultiParticleAttraction", OldNote, "=", ";")+"\r"
+		Notebook $nb ruler=Normal, text="True Sticking Probability : \t\t\t"+StringByKey("True Sticking Probability", OldNote, "=", ";")+"\r"
+		Notebook $nb ruler=Normal, text="Maximum Path Length : \t\t\t\t"+StringByKey("MaximumPathLength", OldNote, "=", ";")+"\r"
+		Notebook $nb ruler=Normal, text="Max Number Of Paths Per End : \t\t"+StringByKey("MaxNumberOfPathsPerEnd", OldNote, "=", ";")+"\r"
+		Notebook $nb ruler=Normal, text="Number Of End particles : \t\t\t"+StringByKey("NumberOfEnds", OldNote, "=", ";")+"\r"
 		Notebook $nb ruler=Normal, text="******          Target    &    resulting values         ************   \r"
-		Notebook $nb ruler=Normal, text="Sticking Probability :\t\t\t"+StringByKey("StickingProbability", OldNote, "=", ";")+"\r"
 		Notebook $nb ruler=Normal, text="dmin : \t\t Target : "+num2str(IN2G_roundSignificant(Target_dmin,3))+"\t\tResult : "+StringByKey("dmin", OldNote, "=", ";")+"\r"
 		Notebook $nb ruler=Normal, text="c : \t\t Target : "+num2str(IN2G_roundSignificant(Target_c,3))+"\t\tResult : "+StringByKey("c", OldNote, "=", ";")+"\r"
 		Notebook $nb ruler=Normal, text="df : \t\t Target : "+num2str(IN2G_roundSignificant(Target_df,3))+"\t\tResult : "+StringByKey("df", OldNote, "=", ";")+"\r"
 		Notebook $nb ruler=Normal, text="*************************************************************************************************   \r"
-	
+		//	NoteText="Mass Fractal Aggregate created="+date()+", "+time()+";z="+num2str(DegreeOfAggregation)+";StickingProbability="+num2str(StickingProbability)+";StickingMethod="+num2str(AllowedNearDistance)
+		//	NoteText+=";R="+num2str(RValue)+";Rprimary="+num2str(RgPrimary)+";p="+num2str(pValue)
+		//	NoteText+=";RxRgPrimaryValue="+num2str(RValue*PrimaryDiameter)+";s="+num2str(sValue)+";df="+num2str(IN2G_roundSignificant(dfValue,4))+";dmin="+num2str(IN2G_roundSignificant(dminValue,4))
+		//	NoteText+=";c="+num2str(IN2G_roundSignificant(cValue,4))+";True Sticking Probability="+num2str(100*DegreeOfAggregation/AttemptValue)
+		//	NoteText+=";MultiParticleAttraction="+MultiParticleAttraction+";MaximumPathLength="+num2str(MaxPathLength)+";MaxNumberOfPathsPerEnd="+num2str(MaxNumPaths)+";NumberOfEnds="+num2str(NumStarts)+";"
+
 		DoWIndow MassFractalAggregateView
 		if(V_Flag)
 			Notebook $nb scaling={80,80}, picture={MassFractalAggregateView, -5, 1 }
@@ -977,7 +1033,7 @@ static Function IR3A_DisplayAggNotebook(MassFractalAggregate, AppendToNotebook)
 	//	R - aggregate size 
 	//	df - Mass fractal dimension of the aggregate 
 	//	p - short circuit path length 
-	//	s - connecGve path length 
+	//	s - connective path length 
 	//	dmin - minimum dimension of the aggregate 
 	//	c - connectivity dimension of the aggregate 
 	//	s - connective path length of the aggregate
@@ -990,8 +1046,7 @@ end
 
 
 
-static Function IR3A_Grow1MassFractAgreg(breakOnFail)
-	variable breakOnFail
+static Function IR3A_Grow1MassFractAgreg()
 
 	DFref oldDf= GetDataFolderDFR()
 
@@ -1011,20 +1066,333 @@ static Function IR3A_Grow1MassFractAgreg(breakOnFail)
 	make/N=(DegreeOfAggregation)/O Distances 							// Distance between existing particles & new one. Needed by MakeAgg
 	variable StartTicks=ticks
 	variable Failed
-	print time()+"  Started Run All" 
+	print time()+"  Started Growing Aggregate and evaluation its structure " 
 	IR3A_MakeAgg(DegreeOfAggregation,MassFractalAggregate,StickingProbability,AllowedNearDistance)		// Agg is made with DegreeOfAggregation particles
-	Failed = IR3A_Ends(MassFractalAggregate, breakOnFail)
-	if(!Failed)
-		IR3A_Reted(endpoints)
-		IR3A_Path(NumberOfTestPaths)
+	//Failed = IR3A_Ends(MassFractalAggregate, breakOnFail)
+	//if(!Failed)
+		//IR3A_Reted(endpoints)
+		//IR3A_Path(NumberOfTestPaths)
+	IR3A_EvaluateAggregateUsingMT()
+	Failed = IR3A_CalculateParametersMT()
+	if(!failed)
 		IR3A_GizmoViewScatterPlot(MassFractalAggregate)
-		print time()+"  Finished, done in "+num2str((ticks-StartTicks)/60)+" seconds" 	
 	else
-		print time()+"  Failed, Aggregate is too compact " 	
+		Print "Failed to grow meaningful aggregate)"
 	endif
+	print time()+"  Finished, done in "+num2str((ticks-StartTicks)/60)+" seconds" 	
+	//else
+	//	print time()+"  Failed, Aggregate is too compact " 	
+	//endif
 	setDataFOlder OldDf
 	return Failed
 End
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//this is code to evaluate paths and statistics using multithreading and lot more unique paths... 
+
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+static FUnction IR3A_EvaluateAggregateUsingMT()
+
+	DFref oldDf= GetDataFolderDFR()
+	SetDataFolder root:Packages:AggregateModeling
+	print "****   Evaluating Aggregate structure    *****"
+	print "This may take anywhere from seconds to hours, depending on size and complexity of the aggregate." 
+	wave ListOfNeighbors
+	wave NumberOfNeighbors
+	NVAR NumberOfTestPaths = root:Packages:AggregateModeling:NumberOfTestPaths
+	NVAR DegreeOfAggregation = root:Packages:AggregateModeling:DegreeOfAggregation
+
+	variable timerRefNum=StartMSTimer
+		//Make/O/N=(dimsize(ListOfNeighbors,0)) ListOfStarts
+		//Duplicate/O ListOfNeighbors, ListOfNeighborsForStarts
+		//	variable i, ij 
+		//	For(i=numpnts(NumberOfNeighbors)-1;i>=0;i-=1)		//this iterates over all points in the aggregate, it goes in order of how points were added. 
+		//		if(NumberOfNeighbors[i]>1.5)				//this point is not end, delete. 
+		//			DeletePoints/M=0 i, 1, ListOfStarts, ListOfNeighborsForStarts
+		//		else
+		//			ListOfStarts[i]=i
+		//		endif
+		//	endFOR	
+
+	//the loop above can done easier by this: 
+	//extract indexes for end points. ListOfStarts = endpoints. 
+	Extract /O /INDX NumberOfNeighbors, ListOfStarts, NumberOfNeighbors<2
+	Duplicate/O ListOfStarts, ListOfNeighborsForStarts
+	//and these are neighbors fo each end point. 
+	ListOfNeighborsForStarts= ListOfNeighbors[ListOfStarts[p][0]]
+
+	//at this moment we have list of start points ListOfStarts and list of next points for each start point. 
+	//we can now start independent thread for each of pairs of ListOfStarts[i] as prior point and NumberOfNeighborsForStarts[i] as current point. 
+	Make/WAVE/O/N=(dimsize(ListOfStarts,0)) ListOfUniquePathListWvs
+	
+	multithread ListOfUniquePathListWvs = IR3A_MT_WalkPathThread(ListOfNeighbors,NumberOfNeighbors,ListOfStarts[p], NumberOfTestPaths, DegreeOfAggregation)
+
+	variable microSeconds = StopMSTimer(timerRefNum)
+
+	Print "***** Evaluted  aggregate in sec : "+num2str(microSeconds/1e6) 	//takes needless time.. 
+
+	setDataFOlder OldDf
+
+end
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+
+static Function IR3A_CalculateParametersMT()
+
+	DFref oldDf= GetDataFolderDFR()
+	SetDataFolder root:Packages:AggregateModeling
+	
+	Wave/WAVE ListOfUniquePathListWvs
+	WAVE ListOfStarts = root:Packages:AggregateModeling:ListOfStarts
+	NVAR dfValue
+	NVAR RValue
+	NVAR pValue
+	NVAR sValue
+	NVAR cValue
+	NVAR dminValue
+	NVAR TrueStickingProbability
+	NVAR StickingProbability=root:Packages:AggregateModeling:StickingProbability
+	NVAR RgPrimary=root:Packages:AggregateModeling:RgPrimary
+	NVAR AllowedNearDistance
+	NVAR AttemptValue
+	NVAR NumberOfTestPaths = root:Packages:AggregateModeling:NumberOfTestPaths
+	NVAR AllowedNearDistance=root:Packages:AggregateModeling:AllowedNearDistance
+	NVAR RxRgPrimaryValue=root:Packages:AggregateModeling:RxRgPrimaryValue
+	NVAR DegreeOfAggregation=root:Packages:AggregateModeling:DegreeOfAggregation
+	SVAR MultiParticleAttraction = root:Packages:AggregateModeling:MultiParticleAttraction //"Neutral;Attractive;Repulsive;Not allowed;"
+
+	variable failed=0
+	//here we will evaluate all paths, they arrive using wave of waves : ListOfUniquePathListWvs
+	//each item  in this wave is wavereference to free wave in memory with one path. 
+	variable i,j,ij, SumPL2, SumPL, NumPathsFOund, AveragePath, MaxPathLength, MaxNumPaths, tmpNumUsefulPaths
+	MaxPathLength = 0
+	Wave ListOfStarts
+	For(ij=0;ij<numpnts(ListOfStarts);ij+=1)
+		Wave UniquePathList=ListOfUniquePathListWvs[ij]
+		//calculate sum(path lengths^2)/sum(path Lengths)
+		//collect also length of longest path and number of paths per starting point. 
+		tmpNumUsefulPaths = 0
+		For(i=0;i<DimSize(UniquePathList,1);i+=1)
+			//get one path from the table
+			Duplicate /free/R=[][i]  UniquePathList, TempWv
+			//extract non NaN points from this. 
+			extract/Free TempWv, TempWv, TempWv<65534
+			//if it is longer than 2, add to list of waves
+			if(numpnts(TempWv)>2)
+				SumPL+=numpnts(TempWv)
+				SumPL2+=numpnts(TempWv)^2
+				NumPathsFound+=1
+				MaxPathLength = max(MaxPathLength, numpnts(TempWv))
+				tmpNumUsefulPaths+=1
+			endif
+		endfor
+		//this is max number of paths we have found in the system. 
+		MaxNumPaths = max(MaxNumPaths,tmpNumUsefulPaths)
+	endfor
+	//weighted avergae path. 
+	AveragePath = SumPL2/SumPL
+	//this is called also pValue
+	pValue = AveragePath
+	//this is useful to evaluate also... 
+	variable PathperEndPoint=NumPathsFound/numpnts(ListOfStarts)
+	//this will release from memory those free waves with paths, saves Igor memory.. 
+	KillWaves/Z ListOfUniquePathListWvs
+	
+	//Next we need to evaluate size of the aggregate. 
+	Wave/Z NumNeighbors=root:Packages:AggregateModeling:NumberOfNeighbors
+	if(WaveExists(NumNeighbors))
+		Wave Agg=root:Packages:AggregateModeling:MassFractalAggregate
+		//next we extract from list of neighbors only the short = 1 items items. These are end points. 
+		Extract /FREE /INDX NumNeighbors, AggregateEndsIndex, NumNeighbors<2
+		// AggregateEndsIndex indexes where are end points in Aggregate
+		variable NumEnds=numpnts(AggregateEndsIndex)
+		variable numcomb=binomial(NumEnds,2)
+		variable REnd, Rsum, cnt, FInx, SInx
+		make/Free/N=(numcomb) EndsDistances
+		For(i=0;i<NumEnds;i+=1)
+			For(j=i+1;j<NumEnds;j+=1)
+				FInx=AggregateEndsIndex[i]
+				SInx=AggregateEndsIndex[j]
+				EndsDistances[cnt]=sqrt((Agg[FInx][0]-Agg[SInx][0])^2+(Agg[FInx][1]-Agg[SInx][1])^2+(Agg[FInx][2]-Agg[SInx][2])^2)
+				cnt+=1
+			endfor
+		endfor
+		//For(i=0;i<numcomb;i+=1)
+		//	REnd+=EndsDistances[i]^2
+		//	Rsum+=EndsDistances[i]
+		//endfor
+		duplicate/Free EndsDistances, EndsDistances2
+		EndsDistances2=EndsDistances^2
+		REnd = sum(EndsDistances2)
+		Rsum=sum(EndsDistances)
+		REnd/=RSum
+		RValue=Rend
+		dfValue = log(DegreeOfAggregation)/log(REnd)
+		cValue=ln(DegreeOfAggregation)/ln(AveragePath)
+		dminValue=dfValue/cValue
+		sValue=(exp(ln(DegreeOfAggregation)/dminValue))
+	endif	
+
+	TrueStickingProbability = 100*DegreeOfAggregation/AttemptValue
+	variable PrimaryDiameter = 2*sqrt(5/3)*RgPrimary
+	variable NumStarts=numpnts(ListOfStarts)
+	RxRgPrimaryValue = RValue*PrimaryDiameter
+	print "***** Results listing ******"
+	print "Total number of end points is : "+num2str(NumStarts)
+	if(NumStarts<4)
+		print "Warning : This particle is too compact (too few ends) to make any sense"
+		failed = 1
+	endif
+	//print "Possible number of paths is : " +num2str(NumStarts*(NumStarts-1))
+	print "Total number of evaluated paths is : "+num2str(NumPathsFound)
+	print "Paths per end point is : "+num2str(PathperEndPoint)
+	if(MaxNumPaths > NumberOfTestPaths-2)
+		print "Warning : Some path/end point numbers were limited by max endpoint choice. Results may not be valid, increase No of test paths for these conditions"
+	endif
+	print "Maximum length path is: "+num2str(MaxPathLength)
+	print "Weighted Average Path ="+num2str(pValue)
+	Print "Aggregate Rg [relative] = "+num2str(REnd)
+	Print "R primary particles [A] = "+num2str(PrimaryDiameter/2)
+	Print "Aggregate R [Angstroms] = "+num2str(RValue*PrimaryDiameter)
+	Print "z = "+num2str(DegreeOfAggregation)
+	Print "p = "+num2str(pValue)
+	Print "c = "+num2str(cValue)
+	Print "s = "+num2str(sValue)
+	Print "df = "+num2str(dfValue)
+	Print "dmin = "+num2str(dminValue)
+	Print "True Sticking Probability = "+num2str(100*DegreeOfAggregation/AttemptValue)+"%"
+	//Print "R [primary particles]= "+num2str(REnd)
+
+	//appned note to MassFractalAggregate
+	string NoteText
+	NoteText="Mass Fractal Aggregate created="+date()+", "+time()+";z="+num2str(DegreeOfAggregation)+";StickingProbability="+num2str(StickingProbability)+";StickingMethod="+num2str(AllowedNearDistance)
+	NoteText+=";R="+num2str(RValue)+";Rprimary="+num2str(RgPrimary)+";p="+num2str(pValue)
+	NoteText+=";RxRgPrimaryValue="+num2str(RValue*PrimaryDiameter)+";s="+num2str(sValue)+";df="+num2str(IN2G_roundSignificant(dfValue,4))+";dmin="+num2str(IN2G_roundSignificant(dminValue,4))
+	NoteText+=";c="+num2str(IN2G_roundSignificant(cValue,4))+";True Sticking Probability="+num2str(100*DegreeOfAggregation/AttemptValue)
+	NoteText+=";MultiParticleAttraction="+MultiParticleAttraction+";MaximumPathLength="+num2str(MaxPathLength)+";MaxNumberOfPathsPerEnd="+num2str(MaxNumPaths)+";NumberOfEnds="+num2str(NumStarts)+";"
+
+	Wave MassFractalAggregate
+	Note MassFractalAggregate, NoteText
+	
+	setDataFOlder OldDf
+	return failed
+end
+
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//
+Threadsafe Function/Wave IR3A_MT_WalkPathThread(ListOfNeighbors,NumberOfNeighbors,startingPoint, NumberOfTestPaths, DegreeOfAggregation)
+	wave ListOfNeighbors, NumberOfNeighbors
+	variable startingPoint, NumberOfTestPaths, DegreeOfAggregation
+	//Advanced topics, Wave Reference MultiThread Example
+	DFREF dfSav= GetDataFolderDFR()
+	// Create a free data folder and set it as the current data folder
+	SetDataFolder NewFreeDataFolder()
+	variable/g UniquePathListInx
+	UniquePathListInx = 0
+	make/Free/W/U/N=(DegreeOfAggregation,NumberOfTestPaths) UniquePathList
+	UniquePathList = NaN
+	String PriorPathList 
+	variable currentPoint
+	PriorPathList=num2str(startingPoint)+";"				//this is the path start as list... 
+	currentPoint = ListOfNeighbors[startingPoint][0]		//this is next point since end point has only one neighbor...  
+	IR3A_MT_NextPathStep(UniquePathList, ListOfNeighbors,NumberOfNeighbors,currentPoint, startingPoint, PriorPathList)
+	// Restore the current data folder
+	SetDataFolder dfSav
+	return UniquePathList
+end
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+
+Threadsafe Function IR3A_MT_NextPathStep(UniquePathList, ListOfNeighbors,NumberOfNeighbors,currentPoint, priorPoint, PriorPathList)
+//Function MT_NextPathStep(ListOfNeighbors,NumberOfNeighbors,currentPoint, priorPoint, PriorPathList, OrderNumber)
+	wave UniquePathList, ListOfNeighbors
+	wave NumberOfNeighbors
+	variable priorPoint, currentPoint
+	string PriorPathList
+
+	variable pointsFound, i, NewCurrentPoint, NewpriorPoint
+	string CurrentPathList
+	
+	//here we need to check, if the new point is already in the list.
+	//if it is, this is loop and we shoudl simply return back and refuse to go here. May have to make more decisions later...
+	if(StringMatch(PriorPathList, "*;"+num2str(currentPoint)+";*"))
+		//print "This was circle:"+PriorPathList+", repeting point would be :"+num2str(currentPoint)
+		return 0
+	endif
+	NVAR UniquePathListInx
+	if(UniquePathListInx>=dimsize(UniquePathList,1))
+		//we have reached max number of paths allowed for this start point... 
+		return 0
+	endif
+	
+	PriorPathList+=num2str(currentPoint)+";"
+	CurrentPathList= PriorPathList
+#if(IgorVersion()>8.99)
+	MatrixOP/Free ListOfNeighborsRow = zapNaNs(replace(row(ListOfNeighbors,currentPoint),priorPoint,NaN)))
+	//how many points are left? 
+	pointsFound = numpnts(ListOfNeighborsRow)
+#else
+	MatrixOP/Free ListOfNeighborsRow = replace(row(ListOfNeighbors,currentPoint),priorPoint,NaN))
+	//how many points are not Nans? 
+	Extract /FREE /O ListOfNeighborsRow, ListOfNeighborsRow, numtype(ListOfNeighborsRow)==0
+	pointsFound = numpnts(ListOfNeighborsRow)
+#endif
+	//decisions what to do... 
+	if(pointsFound==0)		//this is end point, I just came from the only neighbor this has
+		//print "One complete path is : "+CurrentPathList
+		IR3A_MT_WriteOutPathString(UniquePathList, CurrentPathList)
+		//what we really need here is write out the path into some kind of final container when we get here. 
+	elseif(pointsFound==1)		//this is connecting segment, we need to go in next segment and see what is there
+		NewpriorPoint = currentPoint
+		NewCurrentPoint = ListOfNeighborsRow[0]		//this is new point left.
+		//go in next step
+		IR3A_MT_NextPathStep(UniquePathList, ListOfNeighbors,NumberOfNeighbors,NewCurrentPoint, NewpriorPoint, CurrentPathList)
+	elseif(pointsFound<4)								//this is junction with up to 3 new neighbors, let's take all here...
+		For(i=0;i<pointsFound;i+=1)
+			NewpriorPoint = currentPoint
+			NewCurrentPoint = ListOfNeighborsRow[i]		//this is new point left.
+			CurrentPathList = PriorPathList
+			IR3A_MT_NextPathStep(UniquePathList, ListOfNeighbors,NumberOfNeighbors,NewCurrentPoint, NewpriorPoint, CurrentPathList)
+		endfor
+	else												//more points than 3, let's take first three from here...  
+		For(i=0;i<3;i+=1)
+			NewpriorPoint = currentPoint
+			//NewCurrentPoint = ListOfNeighborsRow[floor(pointsFound*(enoise(0.5)+0.5))]		//this is new point left.
+			NewCurrentPoint = ListOfNeighborsRow[i]								//this is new point left.
+			CurrentPathList = PriorPathList
+			IR3A_MT_NextPathStep(UniquePathList, ListOfNeighbors,NumberOfNeighbors,NewCurrentPoint, NewpriorPoint, CurrentPathList)
+		endfor
+	endif	
+end
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+
+Threadsafe Function IR3A_MT_WriteOutPathString(UniquePathList, PathStr)
+	Wave UniquePathList
+	string PathStr
+	
+	NVAR UniquePathListInx
+	
+	if(DimSize(UniquePathList, 0)<ItemsInList(PathStr))// || UniquePathListInx > (DimSize(UniquePathList,1)-1))
+		//the length here is now set to DegreeOfAggregation which means that we cannot have longer path than number of particles... 
+		//variable WvMaxlength, WvNewlength
+		//WvMaxlength = DimSize(UniquePathList, 0)
+		//WvNewlength = max(WvMaxlength, ItemsInList(PathStr)+10)
+		//redimension/N=(WvNewlength,-1) UniquePathList
+	endif
+	//now, we need to write values in...
+	UniquePathList[][UniquePathListInx] = NaN	
+	UniquePathList[][UniquePathListInx] = str2num(StringFromList(p,PathStr, ";"))	
+
+	UniquePathListInx = UniquePathListInx+1
+end
+
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+
+
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
@@ -1069,7 +1437,7 @@ static Function IR3A_InitializeMassFractAgg()
 	ListOfVariables+="SelectedLevel;SelectedQlevel;SelectedBlevel;CurrentResults;StoredResults;"
 	ListOfVariables+="BrFract_G2;BrFract_Rg2;BrFract_B2;BrFract_P2;BrFract_G1;BrFract_Rg1;BrFract_B1;BrFract_P1;BrFract_dmin;"
 	ListOfVariables+="BrFract_c;BrFract_z;BrFract_fBr;BrFract_fM;BrFract_df;"
-	ListOfStrings="SlectedBranchedLevels;Model;BrFract_ErrorMessage;"
+	ListOfStrings="SlectedBranchedLevels;Model;BrFract_ErrorMessage;MultiParticleAttraction;"
 	Make/O/N=1/T Stored3DAggregates, Stored3DAggregatesPaths
 	Make/O/N=1 Stored3DAggSelections
 	Wave/T Stored3DAggregates
@@ -1110,6 +1478,11 @@ static Function IR3A_InitializeMassFractAgg()
 	endif
 	SVAR Model
 	Model = "Branched mass fractal"
+	SVAR MultiParticleAttraction
+	if(strlen(MultiParticleAttraction)<1)
+		MultiParticleAttraction = "Neutral"
+	endif
+
 
 	NVAR NUmberOfTestAggregates
 	if(NUmberOfTestAggregates<5)
@@ -1196,31 +1569,69 @@ end
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
-//static
- Function IR3A_MakeAgg(DegreeOfAggregation,MassFractalAggregate,StickingProbability, AllowedNearDistance)
+
+static Function IR3A_MakeAgg(DegreeOfAggregation,MassFractalAggregate,StickingProbability, AllowedNearDistance)
 	variable DegreeOfAggregation,StickingProbability, AllowedNearDistance
 	wave MassFractalAggregate
 	
 	DFref oldDf= GetDataFolderDFR()
 
 	SetDataFolder root:Packages:AggregateModeling
-	Wave Distances
-	make/Free/N=(dimsize(MassFractalAggregate,0),3) CurSite
-	make/Free/N=(dimsize(MassFractalAggregate,0)) tmpCol
-	variable chcnt=1,px,py,pz,aggct=1,cnt,con,stuck,dim,choice,wall,Rd=16,GL=16,farpoint,index=0, tmpVal
-	NVAR AttemptValue
+	variable NumParticles=dimsize(MassFractalAggregate,0)
+	//these are waves which must exist...
+	Wave Distances = root:Packages:AggregateModeling:Distances
+	NVAR AttemptValue = root:Packages:AggregateModeling:AttemptValue
 	AttemptValue=1
-	NVAR BoxSize
+	NVAR BoxSize = root:Packages:AggregateModeling:BoxSize
+	SVAR MultiParticleAttraction = root:Packages:AggregateModeling:MultiParticleAttraction //"Neutral;Attractive;Repulsive;Not allowed;"
+	variable StickingProbability1, StickingProbabilityM1,StickingProbabilityM2, StickingProbabilityLoc
+	if(StringMatch(MultiParticleAttraction, "Neutral"))
+		StickingProbability1= StickingProbability
+		StickingProbabilityM1= StickingProbability
+		StickingProbabilityM2= StickingProbability
+	elseif(StringMatch(MultiParticleAttraction, "Attractive"))
+		StickingProbability1= StickingProbability
+		StickingProbabilityM1= (StickingProbability+100)/2
+		StickingProbabilityM2= (StickingProbability+300)/4
+	elseif(StringMatch(MultiParticleAttraction, "Repulsive"))
+		StickingProbability1 = StickingProbability
+		StickingProbabilityM1 = (StickingProbability+10)/2
+		StickingProbabilityM2 = (StickingProbability+30)/4
+	elseif(StringMatch(MultiParticleAttraction, "Not allowed"))
+		StickingProbability1 = StickingProbability
+		StickingProbabilityM1 = 1
+		StickingProbabilityM2 = 0
+	else
+		StickingProbability1 = StickingProbability
+		StickingProbabilityM1 = StickingProbability
+		StickingProbabilityM2 = StickingProbability
+	endif
+
+
+	make/Free/N=(NumParticles,3) CurSite
+	make/Free/N=(NumParticles) tmpCol
+	//new recording of particles... 
+	KillWaves/Z ListOfNeighbors, NumberOfNeighbors, ListOfStarts
+	make/O/N=(NumParticles,26)/S ListOfNeighbors 
+	make/O/N=(NumParticles)/B/U NumberOfNeighbors
+	ListOfNeighbors = Nan
+	NumberOfNeighbors = 0
+	
+	variable chcnt=1,px,py,pz,aggct=1,cnt,con,stuck,dim,choice,wall,Rd=16,GL=16,farpoint,index=0, tmpVal
+	variable i
+	
+	
+	
+	
 	PauseUpdate
 	Do
 		// resize box based on size of Agg
-		index=0
-		do
-			if(MassFractalAggregate[aggct-1][index]>farpoint)
-				farpoint=MassFractalAggregate[aggct-1][index]
-			endif
-			index+=1
-		while(index<3)
+		farpoint = max(MassFractalAggregate[aggct-1][0], MassFractalAggregate[aggct-1][1],MassFractalAggregate[aggct-1][2],farpoint)
+		//For(i=0;i<3;i+=1)
+		//	if(MassFractalAggregate[aggct-1][i]>farpoint)
+		//		farpoint=MassFractalAggregate[aggct-1][i]
+		//	endif
+		//endfor
 		GL=2*abs(farpoint)+10
 		BoxSize=GL		
 		// initialize particle on a random wall of the box
@@ -1340,15 +1751,16 @@ end
 			//this is by far the longest step in the whole procedure
 			//basically, we are looking for how many neighbors px,py,pz position has 
 			//this is already much better than before, but it would really be nice to find better way of doing this. We are doing this A LOT. With every particle move, so it is done many, many times. 
-			Multithread Distances[0,aggct] = ((px-MassFractalAggregate[p][0])^2 + (py-MassFractalAggregate[p][1])^2 + (pz-MassFractalAggregate[p][2])^2)		//	Multithread helps, in my test case reduces time by ~60%
+			Multithread Distances[0,aggct] = ((px-MassFractalAggregate[p][0])^2 + (py-MassFractalAggregate[p][1])^2 + (pz-MassFractalAggregate[p][2])^2)		
+			//	Multithread helps, in my test case reduces time by ~60%
 			//this is slower... 
 			//CurSite[][0]=px
 			//CurSite[][1]=py
 			//CurSite[][2]=pz
 			//MatrixOp/O/Free/NTHR=0 Distances = sumRows(powR((MassFractalAggregate-CurSite),2))
-			variable MaxDistance = 1.05*AllowedNearDistance			//1 - in line nearest neighbor (1 step), 2 is two step nearest neighbor and 3 is nearest neighbor in any direction (3 step nearest neighbor). 
-			Histogram/B={0.5,MaxDistance,2}/R=[0,aggct]/Dest=DistHist Distances			//histogram - bin[0] is from 0.5 - 3.1, max allowed distance^2 is 3
-			con = DistHist[0]																	// this is number of nearest neighbors with distance below sqrt(3)
+			variable MaxDistance = 1.05*AllowedNearDistance							//1 - in line nearest neighbor (1 step), 2 is two step nearest neighbor and 3 is nearest neighbor in any direction (3 step nearest neighbor). 
+			Histogram/B={0.5,MaxDistance,2}/R=[0,aggct]/Dest=DistHist Distances		//histogram - bin[0] is from 0.5 - 3.1, max allowed distance^2 is 3
+			con = DistHist[0]														// this is number of nearest neighbors with distance below sqrt(3)
 			//another method, suggested by WM, but is slower, much slower ...
 			//			CurSite[0][0]=px
 			//			CurSite[0][1]=py
@@ -1365,12 +1777,20 @@ end
 			// end of neighbor counting. 
 			//choice=0
 			if(con>=1)	// particle can StickingProbability if there is at least 1 neighbor
+				if(con>=3)
+					StickingProbabilityLoc=StickingProbabilityM2
+				elseif(con==2)
+					StickingProbabilityLoc=StickingProbabilityM1
+				else
+					StickingProbabilityLoc=StickingProbability1
+				endif
+
 				do
 					// apply StickingProbabilitying probability between 1% and 100%
 					choice=floor(1 + mod(abs(enoise(100*99)),100))		//generates random integer from 1 to 99
 					choice-=1
 					AttemptValue+=1
-					if(choice<=StickingProbability)
+					if(choice<=StickingProbabilityLoc)
 						stuck=1
 						con=0
 					else
@@ -1385,13 +1805,18 @@ end
 			//if the particle StickingProbabilitys, add it to the aggregate
 			variable steps=trunc(DegreeOfAggregation/10)
 			steps = max(steps,100)
-			if(stuck==1 && IR3A_IsPXYZNOTinList3DWave(MassFractalAggregate,px,py,pz, aggct))	//added here to make sure we do nto accidentally add existing particle. 
+			if(stuck==1 && IR3A_IsPXYZNOTinList3DWave(MassFractalAggregate,px,py,pz, aggct))	//added here to make sure we do not accidentally add existing particle. 
 				if(mod(aggct,steps)<1) ///round(DegreeOfAggregation/50))==aggct/round(DegreeOfAggregation/50))
 					Print time()+"  Added "+num2str(aggct)+" particles to the aggregate  "	//takes needless time.. 
 				endif
 				MassFractalAggregate[aggct][0]=px
 				MassFractalAggregate[aggct][1]=py
 				MassFractalAggregate[aggct][2]=pz
+				//record here particle and its neighbors. 
+				//who is neighbor? that who has Distances[numparticle]<MaxDistance
+				//ListOfNeighbors[aggct] needs to get ^^ added to it.
+				//NumberOfNeighbors
+				IR3A_AddToNeighborList(ListOfNeighbors,NumberOfNeighbors, Distances, MaxDistance, aggct)
 				aggct+=1
 			endif
 		while(stuck==0)
@@ -1401,6 +1826,231 @@ end
 	setDataFOlder OldDf
 
 End
+//******************************************************************************************************************************************************
+Function IR3A_AddToNeighborList(ListOfNeighbors,NumberOfNeighbors, Distances, MaxDistance, aggct)
+	wave ListOfNeighbors, NumberOfNeighbors, Distances
+	variable MaxDistance, aggct
+	
+	variable i
+	For(i=0;i<aggct;i+=1)
+		if(Distances[i]<MaxDistance)	//this is neighbor!	
+			//i is now old particle as neighbor
+			//aggct is new particle	
+			ListOfNeighbors[aggct][NumberOfNeighbors[aggct]]=i
+			NumberOfNeighbors[aggct]+=1
+			ListOfNeighbors[i][NumberOfNeighbors[i]]=aggct
+			NumberOfNeighbors[i]+=1
+		endif
+	endfor 
+	
+end
+//******************************************************************************************************************************************************
+
+//static
+// Function IR3A_MakeAgg(DegreeOfAggregation,MassFractalAggregate,StickingProbability, AllowedNearDistance)
+//	variable DegreeOfAggregation,StickingProbability, AllowedNearDistance
+//	wave MassFractalAggregate
+//	
+//	DFref oldDf= GetDataFolderDFR()
+//
+//	SetDataFolder root:Packages:AggregateModeling
+//	Wave Distances
+//	make/Free/N=(dimsize(MassFractalAggregate,0),3) CurSite
+//	make/Free/N=(dimsize(MassFractalAggregate,0)) tmpCol
+//	variable chcnt=1,px,py,pz,aggct=1,cnt,con,stuck,dim,choice,wall,Rd=16,GL=16,farpoint,index=0, tmpVal
+//	NVAR AttemptValue
+//	AttemptValue=1
+//	NVAR BoxSize
+//	PauseUpdate
+//	Do
+//		// resize box based on size of Agg
+//		index=0
+//		do
+//			if(MassFractalAggregate[aggct-1][index]>farpoint)
+//				farpoint=MassFractalAggregate[aggct-1][index]
+//			endif
+//			index+=1
+//		while(index<3)
+//		GL=2*abs(farpoint)+10
+//		BoxSize=GL		
+//		// initialize particle on a random wall of the box
+//		wall=0;choice=0
+//		if(aggct<64)	// choose random wall on smaller box for low aggct
+//			do
+//				wall=abs(round(enoise(7)))
+//			while(wall==0 || wall==7)
+//			if(wall==1)
+//				px=-1+Rd/2;py=round(enoise(Rd/2));pz=round(enoise(Rd/2))
+//			endif
+//			if(wall==2)
+//				px=1-Rd/2;py=round(enoise(Rd/2));pz=round(enoise(Rd/2))
+//			endif
+//			if(wall==3)
+//				px=round(enoise(Rd/2));py=-1+Rd/2;pz=round(enoise(Rd/2))
+//			endif
+//			if(wall==4)
+//				px=round(enoise(Rd/2));py=1-Rd/2;pz=round(enoise(Rd/2))
+//			endif
+//			if(wall==5)
+//				px=round(enoise(Rd/2));py=round(enoise(Rd/2));pz=-1+Rd/2
+//			endif
+//			if(wall==6)
+//				px=round(enoise(Rd/2));py=round(enoise(Rd/2));pz=1-Rd/2
+//			endif
+//		else		// choose random wall on normal box
+//			do
+//				wall=abs(round(enoise(7)))
+//			while(wall==0 || wall==7)
+//			if(wall==1)
+//				px=-1+GL/2;py=round(enoise(GL/2));pz=round(enoise(GL/2))
+//			endif
+//			if(wall==2)
+//				px=1-GL/2;py=round(enoise(GL/2));pz=round(enoise(GL/2))
+//			endif
+//			if(wall==3)
+//				px=round(enoise(GL/2));py=-1+GL/2;pz=round(enoise(GL/2))
+//			endif
+//			if(wall==4)
+//				px=round(enoise(GL/2));py=1-GL/2;pz=round(enoise(GL/2))
+//			endif
+//			if(wall==5)
+//				px=round(enoise(GL/2));py=round(enoise(GL/2));pz=-1+GL/2
+//			endif
+//			if(wall==6)
+//				px=round(enoise(GL/2));py=round(enoise(GL/2));pz=1-GL/2
+//			endif
+//		endif
+//		// Move the particle until it a) hits the chain or b) leaves the box, if b) you need to have it reenter the box at a mirror position.
+//		do	//move 1 step in any direction
+//			//choice=0
+//			//do
+//			//choice=abs(round(enoise(7)))
+//			choice = floor(1 + mod(abs(enoise(100*6)),6))	
+//			//while(choice==0 || choice==7)
+//			if(choice==1)
+//				px+=1
+//			endif
+//			if(choice==2)	
+//				px-=1
+//			endif
+//			if(choice==3)	
+//				py+=1
+//			endif
+//			if(choice==4)
+//				py-=1
+//			endif
+//			if(choice==5)	
+//				pz+=1
+//			endif
+//			if(choice==6)	
+//				pz-=1
+//			endif
+//			//if you leave the box (a likely event) then go to the other side and reenter the box (mirror)
+//			If(aggct<64)	// use smaller box for low number of particles
+//				if(px>Rd/2)
+//					px=px-Rd
+//				endif
+//				if(px<-Rd/2)
+//					px=px+Rd
+//				endif
+//				if(py>Rd/2)
+//					py=py-Rd
+//				endif
+//				if(py<-Rd/2)
+//					py=py+Rd
+//				endif
+//				if(pz>Rd/2)
+//					pz=pz-Rd
+//				endif
+//				if(pz<-Rd/2)
+//					pz=pz+Rd
+//				endif	
+//			else		// use normal box for higher number of particles
+//				if(px>GL/2)
+//					px=px-GL
+//				endif
+//				if(px<-GL/2)
+//					px=px+GL
+//				endif
+//				if(py>GL/2)
+//					py=py-GL
+//				endif
+//				if(py<-GL/2)
+//					py=py+GL
+//				endif
+//				if(pz>GL/2)
+//					pz=pz-GL
+//				endif
+//				if(pz<-GL/2)
+//					pz=pz+GL
+//				endif
+//			endif
+//			cnt=0;con=0
+//			// check how many neighboring sites are occupied
+//			//this is by far the longest step in the whole procedure
+//			//basically, we are looking for how many neighbors px,py,pz position has 
+//			//this is already much better than before, but it would really be nice to find better way of doing this. We are doing this A LOT. With every particle move, so it is done many, many times. 
+//			Multithread Distances[0,aggct] = ((px-MassFractalAggregate[p][0])^2 + (py-MassFractalAggregate[p][1])^2 + (pz-MassFractalAggregate[p][2])^2)		//	Multithread helps, in my test case reduces time by ~60%
+//			//this is slower... 
+//			//CurSite[][0]=px
+//			//CurSite[][1]=py
+//			//CurSite[][2]=pz
+//			//MatrixOp/O/Free/NTHR=0 Distances = sumRows(powR((MassFractalAggregate-CurSite),2))
+//			variable MaxDistance = 1.05*AllowedNearDistance			//1 - in line nearest neighbor (1 step), 2 is two step nearest neighbor and 3 is nearest neighbor in any direction (3 step nearest neighbor). 
+//			Histogram/B={0.5,MaxDistance,2}/R=[0,aggct]/Dest=DistHist Distances			//histogram - bin[0] is from 0.5 - 3.1, max allowed distance^2 is 3
+//			con = DistHist[0]																	// this is number of nearest neighbors with distance below sqrt(3)
+//			//another method, suggested by WM, but is slower, much slower ...
+//			//			CurSite[0][0]=px
+//			//			CurSite[0][1]=py
+//			//			CurSite[0][2]=pz
+//			//			MatrixOp/Free TestWv = catRows(CurSite,agg)
+//			//			FPClustering /DSO TestWv
+//			//			Wave M_DistanceMap
+//			//			//Edit/K=1 root:M_DistanceMap
+//			//			MatrixOp/Free Distances=row(M_DistanceMap,0)
+//			//			//Edit/K=1 root:Distances
+//			//			Histogram/B={0.1,1.8,2}/Dest=DistHist Distances
+//			//			//Edit/K=1 root:DistHist
+//			//			con = DistHist[0]
+//			// end of neighbor counting. 
+//			//choice=0
+//			if(con>=1)	// particle can StickingProbability if there is at least 1 neighbor
+//				do
+//					// apply StickingProbabilitying probability between 1% and 100%
+//					choice=floor(1 + mod(abs(enoise(100*99)),100))		//generates random integer from 1 to 99
+//					choice-=1
+//					AttemptValue+=1
+//					if(choice<=StickingProbability)
+//						stuck=1
+//						con=0
+//					else
+//						con-=1
+//						stuck=0
+//					endif
+//				while(con>=1)
+//			//keep moving if alone or rejected by StickingProbabilitying probability
+//			else
+//				stuck=0
+//			endif
+//			//if the particle StickingProbabilitys, add it to the aggregate
+//			variable steps=trunc(DegreeOfAggregation/10)
+//			steps = max(steps,100)
+//			if(stuck==1 && IR3A_IsPXYZNOTinList3DWave(MassFractalAggregate,px,py,pz, aggct))	//added here to make sure we do nto accidentally add existing particle. 
+//				if(mod(aggct,steps)<1) ///round(DegreeOfAggregation/50))==aggct/round(DegreeOfAggregation/50))
+//					Print time()+"  Added "+num2str(aggct)+" particles to the aggregate  "	//takes needless time.. 
+//				endif
+//				MassFractalAggregate[aggct][0]=px
+//				MassFractalAggregate[aggct][1]=py
+//				MassFractalAggregate[aggct][2]=pz
+//				aggct+=1
+//			endif
+//		while(stuck==0)
+//		stuck=0 //reset stuck flag
+//	While(aggct<DegreeOfAggregation)	// stop aggregate growth when there are DegreeOfAggregation particles in Agg
+//	Print time()+"  Created Aggregate with "+num2str(aggct)+" particles in it" 	//takes needless time.. 
+//	setDataFOlder OldDf
+//
+//End
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
 //static
@@ -1422,269 +2072,278 @@ end
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
 
-
-static Function IR3A_Ends(MassFractalAggregate, breakOnFail)
-	wave MassFractalAggregate
-	variable breakOnFail
-
-	DFref oldDf= GetDataFolderDFR()
-
-	SetDataFolder root:Packages:AggregateModeling
-	NVAR DegreeOfAggregation
-	Wave endpoints
-
-	variable cnt=0,ncnt=0,con=0,endcnt=0,dim=0
-	Make/n=(26,3)/Free nghbr
-	Wave/Z nghbrOfsetList
-	if(!WaveExists(	nghbrOfsetList))
-		IR3A_MakeNBROffsetList()
-	endif
-	do
-		// define neighbors for each point in agg
-		nghbr = nghbrOfsetList[p][q] + MassFractalAggregate[cnt][q]
-		ncnt=0;con=0
-		do
-			dim=0
-			do
-				if(nghbr[dim][0]==MassFractalAggregate[ncnt][0]&&nghbr[dim][1]==MassFractalAggregate[ncnt][1]&&nghbr[dim][2]==MassFractalAggregate[ncnt][2])
-					con+=1
-				endif
-				dim+=1
-			while(dim<26)
-			ncnt+=1
-		while(ncnt<DegreeOfAggregation)
-		// it's an endpoint if there is exactly 1 neighboring point
-		// record position in x, y, z and then record index in agg
-		if(con==1)
-			endpoints[endcnt][0]=MassFractalAggregate[cnt][0];endpoints[endcnt][1]=MassFractalAggregate[cnt][1];endpoints[endcnt][2]=MassFractalAggregate[cnt][2];endpoints[endcnt][3]=cnt
-			endcnt+=1
-		endif
-		cnt+=1
-		//Print cnt
-	while(cnt<DegreeOfAggregation)
-	//remove extra rows from endpoints wave
-	DeletePoints endcnt,DegreeOfAggregation, endpoints
-	variable Failed = 0
-	if(dimsize(endpoints,0)<5)
-		Failed = 1
-		if(breakOnFail)
-			DoALert/T="FailedGrowth" 0, "Not enough endpoints found, too compact particle"
-		endif
-	endif
-	setDataFOlder OldDf
-	Print time()+"  Finished running Find Ends" 	//takes needless time.. 
-	return Failed
-End
+//static Function IR3A_Ends(MassFractalAggregate, breakOnFail)
+//	wave MassFractalAggregate
+//	variable breakOnFail
+//
+//	DFref oldDf= GetDataFolderDFR()
+//	SetDataFolder root:Packages:AggregateModeling
+//	Wave/Z ListOfNeighbors = root:Packages:AggregateModeling:ListOfNeighbors
+//	//this is list of each particle neighbors. Any one which has only one neigbor, is end point. 
+//	//we want to create wave containing row numbers for rows, where Column[2] is =0  
+//	if(WaveExists(ListOfNeighbors))
+//		make/O/N=(DimSize(ListOfNeighbors, 0)) endpoints
+//		variable i
+//		endpoints = numtype(ListOfNeighbors[p][1])==2 ? p : NaN
+//		Extract /O endpoints, endpoints, numtype(endpoints)==0
+//	else
+//		//this is old method, which for soem reason even does nto work as far as I can say... 
+//		NVAR DegreeOfAggregation
+//		Wave endpoints
+//	
+//		variable cnt=0,ncnt=0,con=0,endcnt=0,dim=0
+//		Make/n=(26,3)/Free nghbr
+//		Wave/Z nghbrOfsetList
+//		if(!WaveExists(	nghbrOfsetList))
+//			IR3A_MakeNBROffsetList()
+//		endif
+//		do
+//			// define neighbors for each point in agg
+//			nghbr = nghbrOfsetList[p][q] + MassFractalAggregate[cnt][q]
+//			ncnt=0;con=0
+//			do
+//				dim=0
+//				do
+//					if(nghbr[dim][0]==MassFractalAggregate[ncnt][0]&&nghbr[dim][1]==MassFractalAggregate[ncnt][1]&&nghbr[dim][2]==MassFractalAggregate[ncnt][2])
+//						con+=1
+//					endif
+//					dim+=1
+//				while(dim<26)
+//				ncnt+=1
+//			while(ncnt<DegreeOfAggregation)
+//			// it's an endpoint if there is exactly 1 neighboring point
+//			// record position in x, y, z and then record index in agg
+//			if(con==1)
+//				endpoints[endcnt][0]=MassFractalAggregate[cnt][0];endpoints[endcnt][1]=MassFractalAggregate[cnt][1];endpoints[endcnt][2]=MassFractalAggregate[cnt][2];endpoints[endcnt][3]=cnt
+//				endcnt+=1
+//			endif
+//			cnt+=1
+//			//Print cnt
+//		while(cnt<DegreeOfAggregation)
+//		//remove extra rows from endpoints wave
+//		DeletePoints endcnt,DegreeOfAggregation, endpoints
+//	endif
+//	variable Failed = 0
+//	if(dimsize(endpoints,0)<5)
+//		Failed = 1
+//		if(breakOnFail)
+//			DoALert/T="FailedGrowth" 0, "Not enough endpoints found, too compact particle"
+//		endif
+//	endif
+//	setDataFOlder OldDf
+//	Print time()+"  Finished running Find Ends" 	//takes needless time.. 
+//	return Failed
+//End
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
 // 3-16-2021 verification - yields same numbers as original code. 
-static Function IR3A_Reted(endpoints)
-	wave endpoints
-	// calculate longest end-to-end distance for each combination of endpoints and its square for weight-averaged end-to-end distance	
-	DFref oldDf= GetDataFolderDFR()
-
-	SetDataFolder root:Packages:AggregateModeling
-	NVAR DegreeOfAggregation=root:Packages:AggregateModeling:DegreeOfAggregation
-	NVAR RValue=root:Packages:AggregateModeling:RValue
-	NVAR dfValue=root:Packages:AggregateModeling:dfValue
-	NVAR RgPrimary=root:Packages:AggregateModeling:RgPrimary
-	NVAR RxRgPrimaryValue=root:Packages:AggregateModeling:RxRgPrimaryValue
-
-	variable endnum=DimSize(endpoints,0), numcomb=binomial(endnum,2), cnt=0,endadd=0,ecnt=1,REnd=0,Rsum=0,Retend=0,RAve=0,rem=endnum
-	Make/n=(numcomb,1)/o enddist=0
-	Make/n=(endnum-3,7)/o Rlarge=0
-	do	// determine end-to-end distance between all endpoints
-		do
-			enddist[endadd]=sqrt((endpoints[cnt][0]-endpoints[ecnt][0])^2+(endpoints[cnt][1]-endpoints[ecnt][1])^2+(endpoints[cnt][2]-endpoints[ecnt][2])^2)
-			if(endnum-cnt>3)	
-				if(enddist[endadd]>Rlarge[cnt][6])
-					Rlarge[cnt][0]=endpoints[cnt][0];Rlarge[cnt][1]=endpoints[cnt][1];Rlarge[cnt][2]=endpoints[cnt][2]
-					Rlarge[cnt][3]=endpoints[ecnt][0];Rlarge[cnt][4]=endpoints[ecnt][1];Rlarge[cnt][5]=endpoints[ecnt][2]
-					Rlarge[cnt][6]=enddist[endadd]
-				endif
-			endif
-			ecnt+=1
-			endadd+=1
-		while(ecnt<endnum)
-		cnt+=1
-		ecnt=cnt+1
-	while(ecnt<endnum)
-	cnt=0
-	do	// calculate longest end-to-end distance for each combination of endpoints and its square for weight-averaged end-to-end distance
-		REnd+=(Rlarge[cnt][6])*(Rlarge[cnt][6])
-		RSum+=(Rlarge[cnt][6])
-		cnt+=1
-	while(cnt<endnum-3)
-	RAve=RSum/cnt
-	REnd/=RSum
-	cnt=0
-	// Print and record R, df
-	
-	Print "R = "+num2str(REnd)
-	Print "df= "+num2str(log(DegreeOfAggregation)/log(REnd))
-	RValue=Rend
-	dfValue=log(DegreeOfAggregation)/log(REnd)
-	RxRgPrimaryValue = REnd*RgPrimary
-	setDataFOlder OldDf
-End
+//static Function IR3A_Reted(endpoints)
+//	wave endpoints
+//	// calculate longest end-to-end distance for each combination of endpoints and its square for weight-averaged end-to-end distance	
+//	DFref oldDf= GetDataFolderDFR()
+//
+//	SetDataFolder root:Packages:AggregateModeling
+//	NVAR DegreeOfAggregation=root:Packages:AggregateModeling:DegreeOfAggregation
+//	NVAR RValue=root:Packages:AggregateModeling:RValue
+//	NVAR dfValue=root:Packages:AggregateModeling:dfValue
+//	NVAR RgPrimary=root:Packages:AggregateModeling:RgPrimary
+//	NVAR RxRgPrimaryValue=root:Packages:AggregateModeling:RxRgPrimaryValue
+//
+//	variable endnum=DimSize(endpoints,0), numcomb=binomial(endnum,2), cnt=0,endadd=0,ecnt=1,REnd=0,Rsum=0,Retend=0,RAve=0,rem=endnum
+//	Make/n=(numcomb,1)/o enddist=0
+//	Make/n=(endnum-3,7)/o Rlarge=0
+//	do	// determine end-to-end distance between all endpoints
+//		do
+//			enddist[endadd]=sqrt((endpoints[cnt][0]-endpoints[ecnt][0])^2+(endpoints[cnt][1]-endpoints[ecnt][1])^2+(endpoints[cnt][2]-endpoints[ecnt][2])^2)
+//			if(endnum-cnt>3)	
+//				if(enddist[endadd]>Rlarge[cnt][6])
+//					Rlarge[cnt][0]=endpoints[cnt][0];Rlarge[cnt][1]=endpoints[cnt][1];Rlarge[cnt][2]=endpoints[cnt][2]
+//					Rlarge[cnt][3]=endpoints[ecnt][0];Rlarge[cnt][4]=endpoints[ecnt][1];Rlarge[cnt][5]=endpoints[ecnt][2]
+//					Rlarge[cnt][6]=enddist[endadd]
+//				endif
+//			endif
+//			ecnt+=1
+//			endadd+=1
+//		while(ecnt<endnum)
+//		cnt+=1
+//		ecnt=cnt+1
+//	while(ecnt<endnum)
+//	cnt=0
+//	do	// calculate longest end-to-end distance for each combination of endpoints and its square for weight-averaged end-to-end distance
+//		REnd+=(Rlarge[cnt][6])*(Rlarge[cnt][6])
+//		RSum+=(Rlarge[cnt][6])
+//		cnt+=1
+//	while(cnt<endnum-3)
+//	RAve=RSum/cnt
+//	REnd/=RSum
+//	cnt=0
+//	// Print and record R, df
+//	
+//	Print "R = "+num2str(REnd)
+//	Print "df= "+num2str(log(DegreeOfAggregation)/log(REnd))
+//	RValue=Rend
+//	dfValue=log(DegreeOfAggregation)/log(REnd)
+//	RxRgPrimaryValue = REnd*RgPrimary
+//	setDataFOlder OldDf
+//End
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
-
-static Function IR3A_Path(NumberOfTestPaths)
-	variable NumberOfTestPaths
-
-	DFref oldDf= GetDataFolderDFR()
-
-	SetDataFolder root:Packages:AggregateModeling
-	print time()+"  Started parameters evaluation, Calculating...   this takes longest time for these functions "
-	wave MassFractalAggregate
-	Wave endpoints
-	NVAR DegreeOfAggregation
-	NVAR AttemptValue
-	variable minPathLengthAccepted
-	minPathLengthAccepted = floor(min(DegreeOfAggregation^(1/2), 20))		//minimum length of path accpeted as evaluation path, for large particles original value is crazily large. 
-	Make/n=(26,3)/Free nghbr
-	Wave/Z nghbrOfsetList
-	if(!WaveExists(nghbrOfsetList))
-		IR3A_MakeNBROffsetList()
-	endif
-	Make /n=(DegreeOfAggregation,26)/O NeighborList=nan
-	Make/n=(DegreeOfAggregation,1)/Free Pathing=nan
-	Make/n=(NumberOfTestPaths,7)/Free Paths=nan
-	variable endnum=DimSize(endpoints,0), choice=0, cnt=0,ncnt=0,nnum=0,dim=0,con=0,pcnt=0,nans=0,flag=0,ecnt=0,highp,p1,p2,mom1,mom2,startpoint
-	Make/n=(endnum,1)/O LongPath=0
-	variable i
-	MatrixOp/Free EndPointsDistances=col(endpoints,3)
-	variable startTime=ticks
-	For(cnt=0;cnt<DegreeOfAggregation;cnt+=1)
-		nghbr = nghbrOfsetList[p][q] + MassFractalAggregate[cnt][q]					//this generates list of 26 neighbor positions, if any, around the agg[cnt] particle
-		nnum=0
-		For(ncnt=0;ncnt<DegreeOfAggregation;ncnt+=1)
-			For(dim=0;dim<26;dim+=1)
-				if(nghbr[dim][0]==MassFractalAggregate[ncnt][0]&&nghbr[dim][1]==MassFractalAggregate[ncnt][1]&&nghbr[dim][2]==MassFractalAggregate[ncnt][2])
-					NeighborList[cnt][nnum]=ncnt			//cnt is external loop, cnt = 0 ...DegreeOfAggregation
-					nnum+=1
-				endif
-			endfor
-		endfor
-	endfor
-	cnt=0
-	do	// snake through paths
-		pcnt=0
-		startpoint=floor(mod(abs(enoise(100*(endnum-1))),endnum))		//generates random integer from 0 to endnum
-		// record starting position and starting index in agg
-		Paths[cnt][0]=endpoints[startpoint][0]
-		Paths[cnt][1]=endpoints[startpoint][1]
-		Paths[cnt][2]=endpoints[startpoint][2]
-		Pathing[0]=endpoints[startpoint][3]
-		choice=0;con=0
-		do	//pick a random neighbor from list
-			ncnt=0
-			nans=0
-			flag=0
-			//this is faster... 	
-			For(i=0;i<8;i+=1)
-				if(numtype(NeighborList[Pathing[pcnt]][i])==2)
-					nans=8-i
-					break
-				endif
-			endfor
-			variable target= 8-nans-1
-			choice=floor(mod(abs(enoise(100*target)),target+1))		//generates random number from non NaNs entries... 		
-			ncnt=0
-			do	// check to see if value already in path
-				if(NeighborList[Pathing[pcnt]][choice]==Pathing[ncnt])
-					flag+=1
-				endif
-				ncnt+=1
-			while(ncnt<pcnt)
-			if(flag>=2)	// is there a loop in the aggregate?
-				con=1
-			else		// add normally
-				pcnt+=1				//this pcnt is sometimes too large, not sure how to avoid it... 
-				if(pcnt>=DegreeOfAggregation)
-					Abort "Wrong value in IR3A_Path, try again."
-				endif
-				Pathing[pcnt]=NeighborList[Pathing[pcnt-1]][choice]
-			endif
-			ncnt=1
-			ecnt=0
-			// this is about 2x faster...  EndPointsDistances was created above just once, it does not change. 
-			FindValue /V=(Pathing[pcnt])/T=0.1 EndPointsDistances
-			if(V_value>-0.1)
-				con=1
-			endif
-			// (2) done... 			
-		while(con!=1)
-		if(pcnt>minPathLengthAccepted) 				// only interested in longer paths that span aggregate; throws away short paths
-			Paths[cnt][3]=MassFractalAggregate[Pathing[pcnt]][0]
-			Paths[cnt][4]=MassFractalAggregate[Pathing[pcnt]][1]
-			Paths[cnt][5]=MassFractalAggregate[Pathing[pcnt]][2]
-			Paths[cnt][6]=pcnt+1
-			if(Paths[cnt][6]>LongPath[startpoint])
-				LongPath[startpoint]=Paths[cnt][6]	
-			endif
-			cnt+=1
-			//print "Evaluated path length of "+num2str(pcnt)
-		else
-			//print "Discarded path length of "+num2str(pcnt)
-			continue
-		endif
-		if(mod(cnt,500)==0) 
-			Print time()+"  Working... Evaluated "+num2str(cnt)+" Paths through the system"	//takes needless time.. 
-		endif
-	while(cnt<NumberOfTestPaths)
-	ncnt=0;highp=0;p1=0;p2=0
-	do	// determine weight-averaged percolation pathway
-		if(LongPath[ncnt]>highp)
-			highp=LongPAth[ncnt]
-		endif
-		p1+=(LongPath[ncnt])
-		p2+=(LongPath[ncnt])*(LongPath[ncnt])
-		ncnt+=1
-	while(ncnt<endnum)
-	mom2=round(p2/p1);mom1=round(p1/endnum)
-	// print results
-	NVAR dfValue
-	NVAR RValue
-	NVAR pValue
-	NVAR sValue
-	NVAR cValue
-	NVAR dminValue
-	NVAR TrueStickingProbability
-	NVAR StickingProbability=root:Packages:AggregateModeling:StickingProbability
-	NVAR RgPrimary=root:Packages:AggregateModeling:RgPrimary
-	NVAR AllowedNearDistance=root:Packages:AggregateModeling:AllowedNearDistance
-	pValue = mom2
-	cValue=ln(DegreeOfAggregation)/ln(pValue)
-	dminValue=dfValue/cValue
-	sValue=round(exp(ln(DegreeOfAggregation)/dminValue))
-	TrueStickingProbability = 100*DegreeOfAggregation/AttemptValue
-	NVAR RxRgPrimaryValue=root:Packages:AggregateModeling:RxRgPrimaryValue
-	variable PrimaryDiameter = 2*sqrt(5/3)*RgPrimary
-	RxRgPrimaryValue = RValue*PrimaryDiameter
-	Print "R [primary particles]= "+num2str(RValue)
-	Print "R [Angstroms] = "+num2str(RValue*PrimaryDiameter)
-	Print "z = "+num2str(DegreeOfAggregation)
-	Print "p = "+num2str(pValue)
-	Print "s = "+num2str(sValue)
-	Print "df = "+num2str(dfValue)
-	Print "dmin = "+num2str(dminValue)
-	Print "c = "+num2str(cValue)
-	Print "True Sticking Probability = "+num2str(100*DegreeOfAggregation/AttemptValue)+"%"
-	//appned note to MassFractalAggregate
-	string NoteText
-	NoteText="Mass Fractal Aggregate created="+date()+", "+time()+";z="+num2str(DegreeOfAggregation)+";StickingProbability="+num2str(StickingProbability)+";StickingMethod="+num2str(AllowedNearDistance)+";R="+num2str(RValue)+";Rprimary="+num2str(RgPrimary)+";p="+num2str(pValue)
-	NoteText+=";RxRgPrimaryValue="+num2str(RValue*PrimaryDiameter)+";s="+num2str(sValue)+";df="+num2str(IN2G_roundSignificant(dfValue,4))+";dmin="+num2str(IN2G_roundSignificant(dminValue,4))+";c="+num2str(IN2G_roundSignificant(cValue,4))+";True Sticking Probability="+num2str(100*DegreeOfAggregation/AttemptValue)+";"
-	Note MassFractalAggregate, NoteText
-	setDataFolder OldDf
-End
+//
+//static Function IR3A_Path(NumberOfTestPaths)
+//	variable NumberOfTestPaths
+//
+//	DFref oldDf= GetDataFolderDFR()
+//
+//	SetDataFolder root:Packages:AggregateModeling
+//	print time()+"  Started parameters evaluation, Calculating...   this takes longest time for these functions "
+//	wave MassFractalAggregate
+//	Wave endpoints
+//	NVAR DegreeOfAggregation
+//	NVAR AttemptValue
+//	variable minPathLengthAccepted
+//	minPathLengthAccepted = floor(min(DegreeOfAggregation^(1/2), 20))		//minimum length of path accpeted as evaluation path, for large particles original value is crazily large. 
+//	Make/n=(26,3)/Free nghbr
+//	Wave/Z nghbrOfsetList
+//	if(!WaveExists(nghbrOfsetList))
+//		IR3A_MakeNBROffsetList()
+//	endif
+//	Make /n=(DegreeOfAggregation,26)/O NeighborList=nan
+//	Make/n=(DegreeOfAggregation,1)/Free Pathing=nan
+//	Make/n=(NumberOfTestPaths,7)/Free Paths=nan
+//	variable endnum=DimSize(endpoints,0), choice=0, cnt=0,ncnt=0,nnum=0,dim=0,con=0,pcnt=0,nans=0,flag=0,ecnt=0,highp,p1,p2,mom1,mom2,startpoint
+//	Make/n=(endnum,1)/O LongPath=0
+//	variable i
+//	MatrixOp/Free EndPointsDistances=col(endpoints,3)
+//	variable startTime=ticks
+//	For(cnt=0;cnt<DegreeOfAggregation;cnt+=1)
+//		nghbr = nghbrOfsetList[p][q] + MassFractalAggregate[cnt][q]					//this generates list of 26 neighbor positions, if any, around the agg[cnt] particle
+//		nnum=0
+//		For(ncnt=0;ncnt<DegreeOfAggregation;ncnt+=1)
+//			For(dim=0;dim<26;dim+=1)
+//				if(nghbr[dim][0]==MassFractalAggregate[ncnt][0]&&nghbr[dim][1]==MassFractalAggregate[ncnt][1]&&nghbr[dim][2]==MassFractalAggregate[ncnt][2])
+//					NeighborList[cnt][nnum]=ncnt			//cnt is external loop, cnt = 0 ...DegreeOfAggregation
+//					nnum+=1
+//				endif
+//			endfor
+//		endfor
+//	endfor
+//	cnt=0
+//	do	// snake through paths
+//		pcnt=0
+//		startpoint=floor(mod(abs(enoise(100*(endnum-1))),endnum))		//generates random integer from 0 to endnum
+//		// record starting position and starting index in agg
+//		Paths[cnt][0]=endpoints[startpoint][0]
+//		Paths[cnt][1]=endpoints[startpoint][1]
+//		Paths[cnt][2]=endpoints[startpoint][2]
+//		Pathing[0]=endpoints[startpoint][3]
+//		choice=0;con=0
+//		do	//pick a random neighbor from list
+//			ncnt=0
+//			nans=0
+//			flag=0
+//			//this is faster... 	
+//			For(i=0;i<8;i+=1)
+//				if(numtype(NeighborList[Pathing[pcnt]][i])==2)
+//					nans=8-i
+//					break
+//				endif
+//			endfor
+//			variable target= 8-nans-1
+//			choice=floor(mod(abs(enoise(100*target)),target+1))		//generates random number from non NaNs entries... 		
+//			ncnt=0
+//			do	// check to see if value already in path
+//				if(NeighborList[Pathing[pcnt]][choice]==Pathing[ncnt])
+//					flag+=1
+//				endif
+//				ncnt+=1
+//			while(ncnt<pcnt)
+//			if(flag>=2)	// is there a loop in the aggregate?
+//				con=1
+//			else		// add normally
+//				pcnt+=1				//this pcnt is sometimes too large, not sure how to avoid it... 
+//				if(pcnt>=DegreeOfAggregation)
+//					Abort "Wrong value in IR3A_Path, try again."
+//				endif
+//				Pathing[pcnt]=NeighborList[Pathing[pcnt-1]][choice]
+//			endif
+//			ncnt=1
+//			ecnt=0
+//			// this is about 2x faster...  EndPointsDistances was created above just once, it does not change. 
+//			FindValue /V=(Pathing[pcnt])/T=0.1 EndPointsDistances
+//			if(V_value>-0.1)
+//				con=1
+//			endif
+//			// (2) done... 			
+//		while(con!=1)
+//		if(pcnt>minPathLengthAccepted) 				// only interested in longer paths that span aggregate; throws away short paths
+//			Paths[cnt][3]=MassFractalAggregate[Pathing[pcnt]][0]
+//			Paths[cnt][4]=MassFractalAggregate[Pathing[pcnt]][1]
+//			Paths[cnt][5]=MassFractalAggregate[Pathing[pcnt]][2]
+//			Paths[cnt][6]=pcnt+1
+//			if(Paths[cnt][6]>LongPath[startpoint])
+//				LongPath[startpoint]=Paths[cnt][6]	
+//			endif
+//			cnt+=1
+//			//print "Evaluated path length of "+num2str(pcnt)
+//		else
+//			//print "Discarded path length of "+num2str(pcnt)
+//			continue
+//		endif
+//		if(mod(cnt,500)==0) 
+//			Print time()+"  Working... Evaluated "+num2str(cnt)+" Paths through the system"	//takes needless time.. 
+//		endif
+//	while(cnt<NumberOfTestPaths)
+//	ncnt=0;highp=0;p1=0;p2=0
+//	do	// determine weight-averaged percolation pathway
+//		if(LongPath[ncnt]>highp)
+//			highp=LongPAth[ncnt]
+//		endif
+//		p1+=(LongPath[ncnt])
+//		p2+=(LongPath[ncnt])*(LongPath[ncnt])
+//		ncnt+=1
+//	while(ncnt<endnum)
+//	mom2=round(p2/p1);mom1=round(p1/endnum)
+//	// print results
+//	NVAR dfValue
+//	NVAR RValue
+//	NVAR pValue
+//	NVAR sValue
+//	NVAR cValue
+//	NVAR dminValue
+//	NVAR TrueStickingProbability
+//	NVAR StickingProbability=root:Packages:AggregateModeling:StickingProbability
+//	NVAR RgPrimary=root:Packages:AggregateModeling:RgPrimary
+//	NVAR AllowedNearDistance=root:Packages:AggregateModeling:AllowedNearDistance
+//	pValue = mom2
+//	cValue=ln(DegreeOfAggregation)/ln(pValue)
+//	dminValue=dfValue/cValue
+//	sValue=round(exp(ln(DegreeOfAggregation)/dminValue))
+//	TrueStickingProbability = 100*DegreeOfAggregation/AttemptValue
+//	NVAR RxRgPrimaryValue=root:Packages:AggregateModeling:RxRgPrimaryValue
+//	variable PrimaryDiameter = 2*sqrt(5/3)*RgPrimary
+//	RxRgPrimaryValue = RValue*PrimaryDiameter
+//	Print "R [primary particles]= "+num2str(RValue)
+//	Print "R [Angstroms] = "+num2str(RValue*PrimaryDiameter)
+//	Print "z = "+num2str(DegreeOfAggregation)
+//	Print "p = "+num2str(pValue)
+//	Print "s = "+num2str(sValue)
+//	Print "df = "+num2str(dfValue)
+//	Print "dmin = "+num2str(dminValue)
+//	Print "c = "+num2str(cValue)
+//	Print "True Sticking Probability = "+num2str(100*DegreeOfAggregation/AttemptValue)+"%"
+//	//appned note to MassFractalAggregate
+//	string NoteText
+//	NoteText="Mass Fractal Aggregate created="+date()+", "+time()+";z="+num2str(DegreeOfAggregation)+";StickingProbability="+num2str(StickingProbability)+";StickingMethod="+num2str(AllowedNearDistance)+";R="+num2str(RValue)+";Rprimary="+num2str(RgPrimary)+";p="+num2str(pValue)
+//	NoteText+=";RxRgPrimaryValue="+num2str(RValue*PrimaryDiameter)+";s="+num2str(sValue)+";df="+num2str(IN2G_roundSignificant(dfValue,4))+";dmin="+num2str(IN2G_roundSignificant(dminValue,4))+";c="+num2str(IN2G_roundSignificant(cValue,4))+";True Sticking Probability="+num2str(100*DegreeOfAggregation/AttemptValue)+";"
+//	Note MassFractalAggregate, NoteText
+//	setDataFolder OldDf
+//End
 
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
@@ -1871,8 +2530,10 @@ Function IR3A_PopMenuProc(pa) : PopupMenuControl
 				NUmberOfTestAggregates = str2num(popStr)
 			endif
 			
-			
-
+			if(stringMatch(CtrlName,"MParticleAttraction"))
+				SVAR MultiParticleAttraction=root:Packages:AggregateModeling:MultiParticleAttraction
+				MultiParticleAttraction = popStr
+			endif
 			break
 	endswitch
 
@@ -2249,7 +2910,7 @@ Function IR3A_PanelButtonProc(ba) : ButtonControl
 		case 2: // mouse up
 			// click code here
 			if(stringmatch(ba.ctrlName,"Grow1AggAll"))
-				failed = IR3A_Grow1MassFractAgreg(1)
+				failed = IR3A_Grow1MassFractAgreg()
 				if(!failed)
 					IR3A_Calculate1DIntensity()
 					IR3A_Display3DAggregate(1)
@@ -2260,7 +2921,7 @@ Function IR3A_PanelButtonProc(ba) : ButtonControl
 				NVAR NUmberOfTestAggregates=root:Packages:AggregateModeling:NUmberOfTestAggregates
 				variable i
 				For(i=0;i<NUmberOfTestAggregates;i+=1)
-					failed = IR3A_Grow1MassFractAgreg(0)
+					failed = IR3A_Grow1MassFractAgreg()
 					if(!failed)
 						IR3A_Calculate1DIntensity()
 						IR3A_StoreCurrentMassFractAgreg()
@@ -2440,17 +3101,30 @@ static Function IR3A_CompareStoredResults()
 	wavestats/Q dMinStoredResWave
 	MinVal=min(V_min,dminTarg)*0.95
 	MaxVal=max(V_max,dminTarg)*1.05
-	SetAxis left MinVal,MaxVal
+	if(numtype(dminTarg)==0)
+		SetAxis left MinVal,MaxVal
+	else
+		SetAxis/A left 
+	endif
+	
 	//
 	wavestats/Q cValStoredResWave
 	MinVal=min(V_min,cTarg)*0.95
 	MaxVal=max(V_max,cTarg)*1.05
-	SetAxis cAxis MinVal,MaxVal
+	if(numtype(cTarg)==0)
+		SetAxis cAxis MinVal,MaxVal
+	else
+		SetAxis/A cAxis 
+	endif
 	//
 	wavestats/Q dfStoredResWave
 	MinVal=min(V_min,dfTarg)*0.95
 	MaxVal=max(V_max,dfTarg)*1.05
-	SetAxis dfAxis MinVal,MaxVal
+	if(numtype(dfTarg)==0)
+		SetAxis dfAxis MinVal,MaxVal
+	else
+		SetAxis/A dfAxis 
+	endif
 
 	DrawLine 0,0.67,1,0.67
 	DrawLine 0,0.34,1,0.34
@@ -2470,7 +3144,7 @@ static Function IR3A_Return3DAggParamVal(PathToFolder, ParName)
 	if(StringMatch(ParName, "cval" ))
 		NVAR cval= cValue
 		RetValue = cval
-	elseif(StringMatch(ParName, "dMin"))
+	elseif(StringMatch(ParName, "dmin"))
 		NVAR dMin=DminValue
 		RetValue = dMin
 	elseif(StringMatch(ParName, "df"))
