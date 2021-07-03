@@ -1808,7 +1808,7 @@ Function NI1BC_BmCntrCreateImage()
 	NVAR BmCntrDisplayLogImage=root:Packages:Convert2Dto1D:BmCntrDisplayLogImage
 	wave BmCntrCCDImg
 	//allow user function modification to the image through hook function...
-#if Exists("ModifyImportedImageHook")
+#if Exists("ModifyImportedImageHook")==6
 	ModifyImportedImageHook(BmCntrCCDImg)
 #endif
 //		String infostr = FunctionInfo("ModifyImportedImageHook")

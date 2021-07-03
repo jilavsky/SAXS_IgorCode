@@ -1118,7 +1118,7 @@ static Function IR2R_CalculateReflectivity(w,x, res)
 	call[6]=0
 	dq=x*(res/100)
 
-#if Exists("Abeles_imag")	
+#if Exists("Abeles_imag")==3	
 	reflectivity=Abeles_imag(call,x)
 	if(dq>0)
 		reflectivity+=0.135*Abeles_imag(call,x-dq)
@@ -2580,7 +2580,7 @@ static Function IR2R_SimpleToolFit()
 			else
 				Duplicate/O FitIntensityWave, GenMaskWv
 				GenMaskWv=1
-#if Exists("gencurvefit")
+#if Exists("gencurvefit")==3
 	  	gencurvefit  /M=GenMaskWv/MAT=0/N/D=tempFitWv /TOL=0.05 /K={50,20,0.7,0.5} /X=FitQvectorWave IR2R_ST_FitFunction, FitIntensityWave  , W_Coef, HoldStr, Gen_Constraints  	
 #else
 		Abort  "Genetic Optimization xop NOT installed. Install xop support and then try again"
@@ -2592,7 +2592,7 @@ static Function IR2R_SimpleToolFit()
 			else
 				Duplicate/O FitIntensityWave, GenMaskWv
 				GenMaskWv=1
-#if Exists("gencurvefit")
+#if Exists("gencurvefit")==3
 	  	//gencurvefit  /I=1 /W=FitErrorWave /M=GenMaskWv /N /TOL=0.001 /K={50,20,0.7,0.5} /X=FitQvectorWave IR2R_ST_FitFunction, FitIntensityWave  , W_Coef, HoldStr, Gen_Constraints  	
 	  	gencurvefit  /I=1/MAT=0/N /W=FitErrorWave/D=tempFitWv /M=GenMaskWv /TOL=0.05 /K={50,20,0.7,0.5} /X=FitQvectorWave IR2R_ST_FitFunction, FitIntensityWave  , W_Coef, HoldStr, Gen_Constraints  	
 #else
@@ -2623,7 +2623,7 @@ static Function IR2R_SimpleToolFit()
 			else
 				Duplicate/O FitIntensityWave, GenMaskWv
 				GenMaskWv=1
-#if Exists("gencurvefit")
+#if Exists("gencurvefit")==3
 	  	gencurvefit  /M=GenMaskWv/MAT=0/N/D=tempFitWv /TOL=0.05 /K={50,20,0.7,0.5} /X=FitQvectorWave IR2R_ST_FitFunction, FitIntensityWave  , W_Coef, HoldStr, Gen_Constraints  	
 #else
 		Abort  "Genetic Optimization xop NOT installed. Install xop support and then try again"
@@ -2635,7 +2635,7 @@ static Function IR2R_SimpleToolFit()
 			else
 				Duplicate/O FitIntensityWave, GenMaskWv
 				GenMaskWv=1
-#if Exists("gencurvefit")
+#if Exists("gencurvefit")==3
 	  	gencurvefit  /I=1 /W=FitErrorWave/MAT=0/Q/N/D=tempFitWv /M=GenMaskWv /TOL=0.05 /K={50,20,0.7,0.5} /X=FitQvectorWave IR2R_ST_FitFunction, FitIntensityWave  , W_Coef, HoldStr, Gen_Constraints  	
 #else
 		Abort  "Genetic Optimization xop NOT installed. Install xop support and then try again"

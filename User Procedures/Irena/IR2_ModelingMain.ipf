@@ -1950,7 +1950,7 @@ Function IR2L_Fitting(SkipDialogs)
 	//and now the fit...
 	if(NoFittingLimits)
 		if(UseGeneticOptimization)
-#if Exists("gencurvefit")
+#if Exists("gencurvefit")==3
 			Abort "Genetic optiomization cannot be used without fitting limits!"
 		  	//gencurvefit  /I=1 /W=EWvForFit /M=MaskWaveGenOpt /N /TOL=0.002 /K={50,20,0.7,0.5} /X=QWvForFit IR2L_FitFunction, IntWvForFit  , W_Coef, HoldStr, Gen_Constraints  	
 #else
@@ -1961,7 +1961,7 @@ Function IR2L_Fitting(SkipDialogs)
 		endif
 	else		//old code, use fitting limits
 		if(UseGeneticOptimization)
-#if Exists("gencurvefit")
+#if Exists("gencurvefit")==3
 		  	gencurvefit  /I=1 /W=EWvForFit /M=MaskWaveGenOpt /N /TOL=0.002 /K={50,20,0.7,0.5} /X=QWvForFit IR2L_FitFunction, IntWvForFit  , W_Coef, HoldStr, Gen_Constraints  	
 #else
 			Abort  "Genetic Optimization xop NOT installed. Install xop support and then try again"

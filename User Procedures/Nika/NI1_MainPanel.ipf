@@ -1810,7 +1810,7 @@ Function NI1A_DisplayLineoutAfterProc(int,Qvec,Err,NumOfWavesToKeep,typeGraph)
 	//Legend/C/N=text0/A=RT
 	ModifyGraph mirror=1
 	IN2G_ColorTopGrphRainbow()
-#if Exists("Nika_Hook_AfterDisplayLineout")
+#if Exists("Nika_Hook_AfterDisplayLineout")==6
 	Nika_Hook_AfterDisplayLineout(int,Qvec,Err)
 #endif
 

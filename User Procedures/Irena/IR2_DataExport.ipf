@@ -1204,11 +1204,13 @@ Function IR2E_ExportAllAsNexus()
 	//	note, value of 2 = NO
 	//	to preset the names, code is here: IR2E_ExportMultipleFiles()
 	//export USAXS data
+	SVAR FolderMatchStr = root:Packages:IrenaControlProcs:UnivDataExportPanel:FolderMatchStr
+	FolderMatchStr=""
+	UseResults = 0
+	UseQRSdata = 0
+	UseIndra2data = 1
 	STRUCT WMPopupAction PU_Struct
 	if(ItemsInList(CurrentFoldersUSAXS, ";")>0 && ExportUSAXS==1)
-		UseResults = 0
-		UseQRSdata = 0
-		UseIndra2data = 1
 		For(i=0;i<ItemsInList(CurrentFoldersUSAXS, ";");i+=1)
 			tempFldr = StringFromList(i, CurrentFoldersUSAXS, ";")
 			DataFolderName = StringFromList(i, CurrentFoldersUSAXS, ";")

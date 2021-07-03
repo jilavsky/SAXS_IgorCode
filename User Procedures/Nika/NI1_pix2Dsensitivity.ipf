@@ -432,7 +432,7 @@ Function NI1_FloodCreateAppendImage(AppendImg)
 		NI1A_UniversalLoader("Convert2Dto1DFloodPath",FileNameToLoad,FloodFileType,"FloodFieldImg")
 		wave FloodFieldImg
 		//allow user function modification to the image through hook function...
-#if Exists("ModifyImportedImageHook")
+#if Exists("ModifyImportedImageHook")==6
 	ModifyImportedImageHook(FloodFieldImg)
 #endif
 		//end of allow user modification of imported image through hook function
@@ -445,7 +445,7 @@ Function NI1_FloodCreateAppendImage(AppendImg)
 		NI1A_UniversalLoader("Convert2Dto1DFloodPath",FileNameToLoad,FloodFileType,"FloodFieldImg")
 		wave FloodFieldImg
 		//allow user function modification to the image through hook function...
-#if Exists("ModifyImportedImageHook")
+#if Exists("ModifyImportedImageHook")==6
 	ModifyImportedImageHook(FloodFieldImg)
 #endif
 		//end of allow user modification of imported image through hook function

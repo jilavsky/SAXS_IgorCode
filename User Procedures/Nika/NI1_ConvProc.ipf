@@ -2097,7 +2097,7 @@ Function NI1A_ImportThisOneFile(SelectedFileToLoad)
 		Duplicate/O CCDImageToConvert, Calibrated2DData
 	endif
 	//allow user function modification to the image through hook function...
-#if Exists("ModifyImportedImageHook")
+#if Exists("ModifyImportedImageHook")==6
 	ModifyImportedImageHook(CCDImageToConvert)
 #endif
 	//end of allow user modification of imported image through hook function
@@ -3429,7 +3429,7 @@ Function NI1A_LoadEmptyOrDark(EmptyOrDark)
 
 
 	//allow user function modification to the image through hook function...
-#if Exists("ModifyImportedImageHook")
+#if Exists("ModifyImportedImageHook")==6
 	ModifyImportedImageHook(NewCCDData)
 #endif
 

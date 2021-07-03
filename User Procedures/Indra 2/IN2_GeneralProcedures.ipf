@@ -6652,7 +6652,7 @@ Function IN2G_GenerateLegendForGraph(fntsize,WNoteName,RemoveRepeated)  //genera
 	endif
 	variable repeated=0
 	string NewLegend=""
-#if Exists("IN2G_LkUpDfltStr")
+#if (Exists("IN2G_LkUpDfltStr")==6)
 	NewLegend ="\\F"+IN2G_LkUpDfltStr("FontType")
 #endif	
 	NewLegend +="\\Z"+fntsizeStr

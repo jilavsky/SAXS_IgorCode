@@ -2423,7 +2423,7 @@ static Function IR2H_ConstructTheFittingCommand()
 			endif
 			//***End of Catch error issues
 			//FuncFit /N/Q IR2H_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1/E=E_wave /D /C=T_Constraints 
-#if Exists("gencurvefit")
+#if Exists("gencurvefit")==3
 			Duplicate/O FitIntensityWave, GenMaskWv
 			GenMaskWv=1
 		  	gencurvefit  /I=1 /W=FitErrorWave /M=GenMaskWv /N /TOL=0.001 /K={50,20,0.7,0.5} /X=FitQvectorWave IR2H_FitFunction, FitIntensityWave  , W_Coef, HoldStr, Gen_Constraints  	
@@ -2446,7 +2446,7 @@ static Function IR2H_ConstructTheFittingCommand()
 			endif
 			//***End of Catch error issues
 			//FuncFit /N/Q IR2H_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1 /E=E_wave/D /C=T_Constraints	
-#if Exists("gencurvefit")
+#if Exists("gencurvefit")==3
 		  	gencurvefit  /I=1 /W=FitErrorWave /M=GenMaskWv /N /TOL=0.001 /K={50,20,0.7,0.5} /X=FitQvectorWave IR2H_FitFunction, FitIntensityWave  , W_Coef, HoldStr, Gen_Constraints  	
 #else
 			Abort "Genetic Optimization xop NOT installed. Install xop support and then try again"

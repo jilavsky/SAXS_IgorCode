@@ -805,7 +805,7 @@ Function/T NEXUS_ImportAFile(FilePathName,Filename)		//imports any Nexus (HDF5) 
 		print "HDF5 import failed, message: "+Status		//if not "" then error ocured, Handle somehow!
 		return ""
 	endif
-	string desiredFilename = (IN2G_CreateUserName(Filename,30, 0, 11))
+	string desiredFilename = (IN2G_CreateUserName(StringFromList(0,FileName,"."),30, 0, 11))
 	string HDF5Filename = stringfromlist(0, Filename, ".")		//new folder name.  Will fail if there are more . in the name!		
 	string NewDataPath = "root:Packages:NexusImportTMP:"+PossiblyQuoteName(HDF5Filename)		//this should be where the file is.
 	if(!stringmatch(desiredFilename,HDF5Filename))
@@ -2637,7 +2637,11 @@ static Function NEXUS_HdfSaveArrayAttrib(AttribName,AttribValue,AttribLoc, fileI
 		endif
 	endif						
 	//HDF5SaveData /O/A=AttribName groupAttribute, fileID, AttribLoc
+#if(IgorVersion()>8.99)
+	HDF5SaveData /O/A=AttribName/STRF={0,1,0} AttribValue, fileID, AttribLoc		//force IP9 variable length strings and ASCII coding. 
+#else
 	HDF5SaveData /O/A=AttribName AttribValue, fileID, AttribLoc
+#endif
 	if (V_flag != 0)
 		Print "HDF5SaveData failed when saving Attribute "+AttribName+" with value of "+AttribValue[0]+" at location of "+AttribLoc
 	endif	
@@ -2657,7 +2661,12 @@ static Function NEXUS_HdfSaveAttrib(AttribName,AttribValue,AttribLoc, fileID,[Do
 			return 0
 		endif
 	endif						
+	//HDF5SaveData /O/A=AttribName groupAttribute, fileID, AttribLoc
+#if(IgorVersion()>8.99)
+	HDF5SaveData /O/A=AttribName/STRF={0,1,0} groupAttribute, fileID, AttribLoc		//force IP9 variable length strings and ASCII coding. 
+#else
 	HDF5SaveData /O/A=AttribName groupAttribute, fileID, AttribLoc
+#endif
 	if (V_flag != 0)
 		Print "HDF5SaveData failed when saving Attribute "+AttribName+" with value of "+AttribValue+" at location of "+AttribLoc
 	endif	
@@ -2671,7 +2680,12 @@ static Function NEXUS_HdfSaveAttribIntg(AttribName,AttribValue,AttribLoc, fileID
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	make/U/W/Free/N=1 groupAttribute
 	groupAttribute = AttribValue									
+	//HDF5SaveData /O/A=AttribName groupAttribute, fileID, AttribLoc
+#if(IgorVersion()>8.99)
+	HDF5SaveData /O/A=AttribName/STRF={0,1,0} groupAttribute, fileID, AttribLoc		//force IP9 variable length strings and ASCII coding. 
+#else
 	HDF5SaveData /O/A=AttribName groupAttribute, fileID, AttribLoc
+#endif
 	if (V_flag != 0)
 		Print "HDF5SaveData failed when saving Attribute "+AttribName+" with value of "+num2str(AttribValue)+" at location of "+AttribLoc
 	endif	

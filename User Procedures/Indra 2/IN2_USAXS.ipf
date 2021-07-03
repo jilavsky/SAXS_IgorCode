@@ -4243,7 +4243,7 @@ FUNCTION IN2_metadata2XML(fileID, parent, index, section, node, theList)
 	STRING theItem, theKey, theValue
 	VARIABLE i, pos
 
-#if Exists("XMLaddNode")
+#if Exists("XMLaddNode")==3
 	XMLaddNode(fileID, parent, "", node, "", 1)
 	parent += "/"+node+"[" + num2str(index) + "]"
 	XMLsetAttr(fileID,	parent, "", "name", section)

@@ -1,7 +1,7 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version = 1.03
+#pragma version = 1.04
 #pragma IgorVersion=8.03
 
 
@@ -13,6 +13,7 @@
 
 //this is tool to setup Sample Plates for USAXS, survey sample positions, and generate Command files. 
 
+//1.04 modifications to beamline survey with epics controls. 
 //1.03 Remove for MatrixOP /NTHR=0 since it is applicable to 3D matrices only 
 //1.02 Added checking if existing sate is saved to reduce number of dialogs user needs to deal with. 
 //1.01 Added NMRAcrylicPlate
@@ -37,12 +38,12 @@
 
 constant IN3_SamplePlateSetupVersion=1
 constant IN3SBeamlineSurveyEpicsMonTicks = 15 
-constant IN3SBeamlineSurveyDevelopOn = 1
+constant IN3SBeamlineSurveyDevelopOn = 0
 //  values for beamtime estimate
-constant IN3BmSrvUSAXSOverhead 		= 25		//overhead for flyscan 
+constant IN3BmSrvUSAXSOverhead 		= 30		//overhead for flyscan, 6-19-21 tested in BS = 30sec (with sample motion)  
 constant IN3BmSrvSAXSOverhead 		= 10		//overhead for SAXS, transmission measurement 
 constant IN3BmSrvWAXSOverhead 		= 3			//overhead for WAXS 
-constant IN3BmSrvSampleMoveSpeed 	= 8			//average moving samples around in mm/sec
+constant IN3BmSrvSampleMoveSpeed 	= 2			//average moving samples around in mm/sec, is 4rev/sec
 constant IN3BmSrvTuneTimeStep 		= 600		//retune every 600 seconds 
 constant IN3BmSrvTuneTimeNumU 		= 3			//retune every 3 USAXS scans 
 constant IN3BmSrvTuneAveTime  		= 40		//retune takes avergate 40 seconds full preUSAXStune is 40 seconds... 
@@ -164,7 +165,7 @@ Function IN3S_MainPanel()
 	    TabControl TableTabs  tabLabel(1)="Option Controls"
 		TitleBox Info20 title="\Zr080Use shift to select range of lines, ctrl/cmd select disjoint multiple lines",pos={5,590},size={400,10},frame=0,fColor=(0,0,65535),labelBack=0
 		//Tab 0
-			ListBox CommandsList,pos={8,180},size={573,400} //, special={0,0,1 }		//this will scale the width of column, users may need to slide right using slider at the bottom. 
+			ListBox CommandsList,pos={8,185},size={573,395} //, special={0,0,1 }		//this will scale the width of column, users may need to slide right using slider at the bottom. 
 			ListBox CommandsList,listWave=root:Packages:SamplePlateSetup:LBCommandWv
 			ListBox CommandsList,selWave=root:Packages:SamplePlateSetup:LBSelectionWv
 			ListBox CommandsList,proc=IN3S_ListBoxMenuProc, selRow= 0, editStyle= 0
@@ -178,22 +179,29 @@ Function IN3S_MainPanel()
 			CheckBox USAXSAll variable=root:Packages:SamplePlateSetup:USAXSAll, proc=IN3S_CheckProc
 			CheckBox SAXSAll pos={30,250},size={70,20},title="SAXS All?", help={"Run SAXS for All"}
 			CheckBox SAXSAll variable=root:Packages:SamplePlateSetup:SAXSAll,  proc=IN3S_CheckProc
-			CheckBox WAXSAll pos={30,280},size={70,20},title="WAXS All?", help={"Run WSAXS for All"}
+			CheckBox WAXSAll pos={30,280},size={70,20},title="WAXS All?", help={"Run WAXS for All"}
 			CheckBox WAXSAll variable=root:Packages:SamplePlateSetup:WAXSAll,  proc=IN3S_CheckProc
 			SetVariable DefaultSampleThickness,pos={30,310},size={250,20},limits={0.01,20,0.1}, noproc,title="Default Sample thickness [mm]: "
 			Setvariable DefaultSampleThickness,fStyle=2, variable=root:Packages:SamplePlateSetup:DefaultSampleThickness, help={"Thickness if not defined."}
 
-			CheckBox RunExportHookFunction pos={30,350},size={90,20},title="Run Export hook function? ", help={"Run export hook function"}
+
+			SVAR ExportOrder=root:Packages:SamplePlateSetup:ExportOrder
+			PopupMenu ExportOrderPop,pos={30,340},size={350,21},proc=IN3S_PopMenuProc,title="Export order  :      ", help={"Pick order of scans to export"}
+			PopupMenu ExportOrderPop,mode=1,popvalue=ExportOrder
+			PopupMenu ExportOrderPop,value="USAXS-SAXS-WAXS;SAXS-WAXS-USAXS;USAXS-WAXS-SAXS;"
+
+			CheckBox RunExportHookFunction pos={30,375},size={90,20},title="Run Export hook function? ", help={"Run export hook function"}
 			CheckBox RunExportHookFunction variable=root:Packages:SamplePlateSetup:RunExportHookFunction,  noproc
 
-			Button DisplayHookFunction,pos={300,350},size={240,20}, proc=IN3S_ButtonProc,title="Display Hook Function", help={"Displays hook function for user"}
+			Button DisplayHookFunction,pos={300,370},size={240,20}, proc=IN3S_ButtonProc,title="Display Hook Function", help={"Displays hook function for user"}
 
-			SetVariable USAXSScanTime,pos={30,380},size={250,20},limits={30,360,15}, proc=IN3S_SetVarProc,title="USAXS time = "
+			SetVariable USAXSScanTime,pos={30,440},size={250,20},limits={30,360,15}, proc=IN3S_SetVarProc,title="USAXS time for run time estimate = "
 			Setvariable USAXSScanTime,fStyle=2, variable=root:Packages:SamplePlateSetup:USAXSScanTime, help={"USAXS time from epics, used to calculate run time."}
-			SetVariable SAXSScanTime,pos={30,410},size={250,20},limits={1,60,5}, proc=IN3S_SetVarProc,title="SAXS time = "
+			SetVariable SAXSScanTime,pos={30,460},size={250,20},limits={1,60,5}, proc=IN3S_SetVarProc,title="SAXS time for run time estimate   = "
 			Setvariable SAXSScanTime,fStyle=2, variable=root:Packages:SamplePlateSetup:SAXSScanTime, help={"SAXS time from epics, used to calculate run time."}
-			SetVariable WAXSScanTime,pos={30,440},size={250,20},limits={1,60,5}, proc=IN3S_SetVarProc,title="WAXS time = "
+			SetVariable WAXSScanTime,pos={30,480},size={250,20},limits={1,60,5}, proc=IN3S_SetVarProc,title="WAXS time for run time estimate  = "
 			Setvariable WAXSScanTime,fStyle=2, variable=root:Packages:SamplePlateSetup:WAXSScanTime, help={"WAXS time from epics, used to calculate run time."}
+
 	
 
 			SetVariable DefaultCommandFileName,pos={100,550},size={450,25},noproc,title="Default Command file name : "
@@ -201,7 +209,7 @@ Function IN3S_MainPanel()
 
 			//GUI controls, rigth side
 			TitleBox Info11 title="\Zr120GUI Controls ",size={250,15},pos={340,190},frame=0,fColor=(0,0,65535),labelBack=0
-			CheckBox DisplayUSWAXScntrls pos={340,220},size={70,20},title="Display Individ Controls?", help={"Individual U-S-WAXS controsl per sample"}
+			CheckBox DisplayUSWAXScntrls pos={340,220},size={70,20},title="Display Individ Controls?", help={"Individual U-S-WAXS controls per sample"}
 			CheckBox DisplayUSWAXScntrls variable=root:Packages:SamplePlateSetup:DisplayUSWAXScntrls,  proc=IN3S_CheckProc
 			CheckBox DisplayAllSamplesInImage pos={340,250},size={90,20},title="Display all samples in image? ", help={"Add to image all defined sample positiosn"}
 			CheckBox DisplayAllSamplesInImage variable=root:Packages:SamplePlateSetup:DisplayAllSamplesInImage,  proc=IN3S_CheckProc
@@ -324,6 +332,7 @@ Function IN3S_TableTabsTabProc(tca) : TabControl
 			SetVariable SAXSScanTime,  win=SamplePlateSetup, disable=(tab!=1)
 			SetVariable WAXSScanTime,  win=SamplePlateSetup, disable=(tab!=1)
 			Button DisplayHookFunction,  win=SamplePlateSetup, disable=(tab!=1)
+			PopupMenu ExportOrderPop,  win=SamplePlateSetup, disable=(tab!=1)
 			IN3S_EstimateRunTime()
 			break
 		case -1: // control being killed
@@ -370,8 +379,6 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 	string ListOfSelRows
 	variable tempRow, j, firstSelectedRow, NoSelectedRows
 	SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
-	
-	
 	
 	switch( lba.eventCode )
 		case -1: // control being killed
@@ -731,8 +738,8 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 				SVAR SelectedSampleName=root:Packages:SamplePlateSetup:SelectedSampleName
 				Wave/T ListWV = root:Packages:SamplePlateSetup:LBCommandWv
 				NVAR SampleThickness=root:Packages:SamplePlateSetup:SampleThickness
-				NVAR SampleXRBV=root:Packages:SamplePlateSetup:SampleXRBV
-				NVAR SampleYRBV=root:Packages:SamplePlateSetup:SampleYRBV
+				NVAR SampleXTAR=root:Packages:SamplePlateSetup:SampleXTAR
+				NVAR SampleYTAR=root:Packages:SamplePlateSetup:SampleYTAR
 				NVAR SampleXTable = root:Packages:SamplePlateSetup:SampleXTable
 				NVAR SampleYTable = root:Packages:SamplePlateSetup:SampleYTable
 				NVAR defTh=root:Packages:SamplePlateSetup:DefaultSampleThickness
@@ -800,6 +807,19 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 			IN3S_FixSaveButton()
 			break
 		case 13: // checkbox clicked (Igor 6.2 or later)
+			//here we need to deal with what happens when user clicks on selection of checkboxes...
+			NVAR USAXSAll = root:Packages:SamplePlateSetup:USAXSAll
+			NVAR SAXSAll = root:Packages:SamplePlateSetup:SAXSAll
+			NVAR WAXSAll = root:Packages:SamplePlateSetup:WAXSAll 
+			if(lba.col==4)	//USAXS
+				USAXSAll = 0
+			elseif(lba.col==5)	//SAXS
+				SAXSAll = 0
+			elseif(lba.col==6)	//WAXS
+				WAXSAll = 0
+			else
+			
+			endif
 			break
 	endswitch
 
@@ -818,6 +838,11 @@ Function IN3S_PopMenuProc(pa) : PopupMenuControl
 			if(StringMatch(pa.ctrlName, "NewPlateTemplate"))
 				SVAR SelectedPlateName=root:Packages:SamplePlateSetup:SelectedPlateName
 				SelectedPlateName = popStr
+			endif
+
+			if(StringMatch(pa.ctrlName, "ExportOrderPop"))
+				SVAR ExportOrder=root:Packages:SamplePlateSetup:ExportOrder
+				ExportOrder = popStr
 			endif
 			
 			break
@@ -1152,8 +1177,10 @@ Function IN3S_CheckProc(cba) : CheckBoxControl
 			Variable checked = cba.checked
 			Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
 			Wave/T LBCommandWv = root:Packages:SamplePlateSetup:LBCommandWv
+			NVAR WAXSAll = root:Packages:SamplePlateSetup:WAXSAll
+			NVAR USAXSAll = root:Packages:SamplePlateSetup:USAXSAll
+			NVAR SAXSAll = root:Packages:SamplePlateSetup:SAXSAll
 			if(stringmatch(cba.ctrlName,"USAXSAll"))
-				NVAR USAXSAll = root:Packages:SamplePlateSetup:USAXSAll
 				if(USAXSAll)
 					LBSelectionWv[][4]=48
 				else
@@ -1162,7 +1189,6 @@ Function IN3S_CheckProc(cba) : CheckBoxControl
 				IN3S_EstimateRunTime()
 			endif
 			if(stringmatch(cba.ctrlName,"SAXSAll"))
-				NVAR SAXSAll = root:Packages:SamplePlateSetup:SAXSAll
 				if(SAXSAll)
 					LBSelectionWv[][5]=48
 				else
@@ -1171,7 +1197,6 @@ Function IN3S_CheckProc(cba) : CheckBoxControl
 				IN3S_EstimateRunTime()
 			endif
 			if(stringmatch(cba.ctrlName,"WAXSAll"))
-				NVAR WAXSAll = root:Packages:SamplePlateSetup:WAXSAll
 				if(WAXSAll)
 					LBSelectionWv[][6]=48
 				else
@@ -1181,6 +1206,15 @@ Function IN3S_CheckProc(cba) : CheckBoxControl
 			endif
 			if(stringmatch(cba.ctrlName,"DisplayUSWAXScntrls"))
 				IN3S_FixUSWAXSForAll()
+				if(checked)
+					WAXSAll  = 0
+					USAXSAll = 0
+					SAXSAll  = 0 
+				else
+					WAXSAll  = 1
+					USAXSAll = 1
+					SAXSAll  = 1 
+				endif
 			endif
 			if(stringmatch(cba.ctrlName,"DisplayAllSamplesInImage"))
 				Wave/T listWave=root:Packages:SamplePlateSetup:LBCommandWv
@@ -1467,63 +1501,6 @@ static Function IN3S_WriteCommandFile(show)
    if(RunExportHookFunction)
    		IN3S_ExportHookFunction(listWaveG, LBSelectionWvG)
    endif
-   
-//   For(i=0;i<dimsize(listWaveG,0);i+=1)
-//   		if(SAXSAllG || LBSelectionWvG[i][5]==48)
-//			if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
-//	   			haveAnySWAXS=1
-//	   			thickness = str2num(listWaveG[i][3])
-//	   			thickness = thickness>0 ? thickness : DefaultSampleThickness
-//	   			if(RunExportHookFunction)
-//	   				IN3S_ExportHookFunction("saxsExp",listWaveG[i][0], listWaveG[i][1],listWaveG[i][2],num2str(thickness), "" )
-//	   			else
-//					Notebook $nbl text="      saxsExp        "+listWaveG[i][1]+"      "+listWaveG[i][2]+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+"\"  \r"
-//				endif
-//			endif
-//		endif   
-//   endfor
-//   //WAXS is next. 
-//	Notebook $nbl text="\r"
-//	Notebook $nbl text="		#WAXS measurements \r"
-//   For(i=0;i<dimsize(listWaveG,0);i+=1)
-//   		if(WAXSAllG || LBSelectionWvG[i][6]==48)
-//			if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
-//	   			haveAnySWAXS=1
-//	   			thickness = str2num(listWaveG[i][3])
-//	   			thickness = thickness>0 ? thickness : DefaultSampleThickness
-//	   			if(RunExportHookFunction)
-//	   				IN3S_ExportHookFunction("waxsExp",listWaveG[i][0], listWaveG[i][1],listWaveG[i][2],num2str(thickness), "" )
-//	   			else
-//					Notebook $nbl text="      waxsExp        "+listWaveG[i][1]+"      "+listWaveG[i][2]+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+"\"  \r"
-//				endif
-//			endif
-//		endif   
-//   endfor
-//   //and USAXS . 
-//   //do we have any USAXS scans?
-//   Duplicate/Free/R=[][4] LBSelectionWvG, TempUSAXSChoice
-//   WaveStats/Q TempUSAXSChoice
-//   variable HaveUSAXS = V_max>40 ? 1 : 0
-//   
-//   if(haveAnySWAXS && (USAXSAllG||HaveUSAXS))
-//		Notebook $nbl text="\r"
-//		Notebook $nbl text="		preUSAXStune \r"   
-//   endif
-//	Notebook $nbl text="\r"
-//	Notebook $nbl text="		#USAXS measurements \r"
-//   For(i=0;i<dimsize(listWaveG,0);i+=1)
-//   		if(USAXSAllG || LBSelectionWvG[i][4]==48)
-//			if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
-//	   			thickness = str2num(listWaveG[i][3])
-//	   			thickness = thickness>0 ? thickness : DefaultSampleThickness
-//	   			if(RunExportHookFunction)
-//	   				IN3S_ExportHookFunction("USAXSscan",listWaveG[i][0], listWaveG[i][1],listWaveG[i][2],num2str(thickness), "" )
-//	   			else
-//					Notebook $nbl text="      USAXSscan      "+listWaveG[i][1]+"      "+listWaveG[i][2]+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+"\"  \r"
-//				endif
-//			endif
-//		endif   
-//   endfor
 
 	if (show)		///Logbook want to show it...
 		DoWindow/F $nbl
@@ -1568,6 +1545,8 @@ Function IN3S_WriteListOfCommands(listWaveG, LBSelectionWvG, sxOffset, syOffset,
 	NVAR USAXSAllG = root:Packages:SamplePlateSetup:USAXSAll
 	NVAR SAXSAllG = root:Packages:SamplePlateSetup:SAXSAll
 	NVAR WAXSAllG = root:Packages:SamplePlateSetup:WAXSAll
+	SVAR ExportOrder=root:Packages:SamplePlateSetup:ExportOrder
+	// ExportOrder can be: USAXS-SAXS-WAXS, SAXS-WAXS-USAXS, or USAXS-WAXS-SAXS
 
 	variable i, haveAnySWAXS, thickness, sxMod, syMod, numSAXSWAXS
 	haveAnySWAXS = 0
@@ -1575,72 +1554,172 @@ Function IN3S_WriteListOfCommands(listWaveG, LBSelectionWvG, sxOffset, syOffset,
 
 	string Command, SampleName
 	variable SX, SY 
+	variable HaveUSAXS
 	//this  function will write (potentially modified) output of the command file for given line. This needs to be cutomized for specific need. 
 	SVAR nbl=root:Packages:SamplePlateSetup:NotebookName
 
-	//in this case it will write each command in notebook multiple times, in original position and then +/- 1mm in sx and sy
-	//center	
-	//Notebook $nbl text="      "+Command+"        "+SX+"      "+SY+"      "+Thickness+"      \""+SampleName+"\"  \r"
-   For(i=0;i<dimsize(listWaveG,0);i+=1)
-   		if(SAXSAllG || LBSelectionWvG[i][5]==48)
-			if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
-	   			haveAnySWAXS=1
-	   			numSAXSWAXS+=1
-	   			thickness = str2num(listWaveG[i][3])
-	   			thickness = thickness>0 ? thickness : DefaultSampleThickness
-	   			SX=str2num(listWaveG[i][1])+sxOffset
-	   			SY=str2num(listWaveG[i][2])+syOffset
-				Notebook $nbl text="      saxsExp        "+num2str(SX)+"      "+num2str(SY)+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+TitleModifier+"\"  \r"
-			endif
-		endif   
-   endfor
-   //WAXS is next. 
-	Notebook $nbl text="\r"
-	Notebook $nbl text="		#WAXS measurements \r"
-   For(i=0;i<dimsize(listWaveG,0);i+=1)
-   		if(WAXSAllG || LBSelectionWvG[i][6]==48)
-			if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
-	   			haveAnySWAXS=1
-	   			numSAXSWAXS+=1
-	   			thickness = str2num(listWaveG[i][3])
-	   			thickness = thickness>0 ? thickness : DefaultSampleThickness
-	   			SX=str2num(listWaveG[i][1])+sxOffset
-	   			SY=str2num(listWaveG[i][2])+syOffset
-				Notebook $nbl text="      waxsExp        "+num2str(SX)+"      "+num2str(SY)+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+TitleModifier+"\"  \r"
-			endif
-		endif   
-   endfor
-   //and USAXS . 
-   //do we have any USAXS scans?
-   Duplicate/Free/R=[][4] LBSelectionWvG, TempUSAXSChoice
-   WaveStats/Q TempUSAXSChoice
-   variable HaveUSAXS = (V_max>40) ? 1 : 0
-   
-   if(haveAnySWAXS && USAXSAllG && HaveUSAXS)
-		Notebook $nbl text="\r"
-		Notebook $nbl text="		preUSAXStune \r"   
-		if(numSAXSWAXS>15)
-			Notebook $nbl text="		preUSAXStune \r"   
-		endif
-		if(numSAXSWAXS>30)
-			Notebook $nbl text="		preUSAXStune \r"   	
-		endif
-   endif
-	Notebook $nbl text="\r"
-	Notebook $nbl text="		#USAXS measurements \r"
-   For(i=0;i<dimsize(listWaveG,0);i+=1)
-   		if(USAXSAllG || LBSelectionWvG[i][4]==48)
-			if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
-	   			thickness = str2num(listWaveG[i][3])
-	   			thickness = thickness>0 ? thickness : DefaultSampleThickness
-	   			SX=str2num(listWaveG[i][1])+sxOffset
-	   			SY=str2num(listWaveG[i][2])+syOffset
-				Notebook $nbl text="      USAXSscan        "+num2str(SX)+"      "+num2str(SY)+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+TitleModifier+"\"  \r"
-			endif
-		endif   
-   endfor
-	Notebook $nbl text="\r"
-	Notebook $nbl text="		#END USAXS measurements \r"
+	strswitch(ExportOrder)
+	
+		case "USAXS-SAXS-WAXS":
+		   Notebook $nbl text="\r"
+		   Notebook $nbl text="		#USAXS measurements \r"
+		   For(i=0;i<dimsize(listWaveG,0);i+=1)
+		   		if(USAXSAllG || LBSelectionWvG[i][4]==48)
+					if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
+			   			thickness = str2num(listWaveG[i][3])
+			   			thickness = thickness>0 ? thickness : DefaultSampleThickness
+			   			SX=str2num(listWaveG[i][1])+sxOffset
+			   			SY=str2num(listWaveG[i][2])+syOffset
+						Notebook $nbl text="      USAXSscan        "+num2str(SX)+"      "+num2str(SY)+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+TitleModifier+"\"  \r"
+					endif
+				endif   
+		   endfor
+			Notebook $nbl text="\r"
+			Notebook $nbl text="		#SAXS measurements \r"
+		   //this is SAXS
+		   For(i=0;i<dimsize(listWaveG,0);i+=1)
+		   		if(SAXSAllG || LBSelectionWvG[i][5]==48)
+					if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
+			   			haveAnySWAXS=1
+			   			numSAXSWAXS+=1
+			   			thickness = str2num(listWaveG[i][3])
+			   			thickness = thickness>0 ? thickness : DefaultSampleThickness
+			   			SX=str2num(listWaveG[i][1])+sxOffset
+			   			SY=str2num(listWaveG[i][2])+syOffset
+						Notebook $nbl text="      saxsExp        "+num2str(SX)+"      "+num2str(SY)+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+TitleModifier+"\"  \r"
+					endif
+				endif   
+		   endfor
+		   //WAXS is next. 
+			Notebook $nbl text="\r"
+			Notebook $nbl text="		#WAXS measurements \r"
+		   For(i=0;i<dimsize(listWaveG,0);i+=1)
+		   		if(WAXSAllG || LBSelectionWvG[i][6]==48)
+					if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
+			   			haveAnySWAXS=1
+			   			numSAXSWAXS+=1
+			   			thickness = str2num(listWaveG[i][3])
+			   			thickness = thickness>0 ? thickness : DefaultSampleThickness
+			   			SX=str2num(listWaveG[i][1])+sxOffset
+			   			SY=str2num(listWaveG[i][2])+syOffset
+						Notebook $nbl text="      waxsExp        "+num2str(SX)+"      "+num2str(SY)+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+TitleModifier+"\"  \r"
+					endif
+				endif   
+		   endfor
+			Notebook $nbl text="		#END of batch of measurements \r"
+			break
+		case "USAXS-WAXS-SAXS":
+		   Notebook $nbl text="\r"
+		   Notebook $nbl text="		#USAXS measurements \r"
+		   For(i=0;i<dimsize(listWaveG,0);i+=1)
+		   		if(USAXSAllG || LBSelectionWvG[i][4]==48)
+					if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
+			   			thickness = str2num(listWaveG[i][3])
+			   			thickness = thickness>0 ? thickness : DefaultSampleThickness
+			   			SX=str2num(listWaveG[i][1])+sxOffset
+			   			SY=str2num(listWaveG[i][2])+syOffset
+						Notebook $nbl text="      USAXSscan        "+num2str(SX)+"      "+num2str(SY)+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+TitleModifier+"\"  \r"
+					endif
+				endif   
+		   endfor
+		   //WAXS is next. 
+			Notebook $nbl text="\r"
+			Notebook $nbl text="		#WAXS measurements \r"
+		   For(i=0;i<dimsize(listWaveG,0);i+=1)
+		   		if(WAXSAllG || LBSelectionWvG[i][6]==48)
+					if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
+			   			haveAnySWAXS=1
+			   			numSAXSWAXS+=1
+			   			thickness = str2num(listWaveG[i][3])
+			   			thickness = thickness>0 ? thickness : DefaultSampleThickness
+			   			SX=str2num(listWaveG[i][1])+sxOffset
+			   			SY=str2num(listWaveG[i][2])+syOffset
+						Notebook $nbl text="      waxsExp        "+num2str(SX)+"      "+num2str(SY)+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+TitleModifier+"\"  \r"
+					endif
+				endif   
+		   endfor
+			Notebook $nbl text="\r"
+			Notebook $nbl text="		#SAXS measurements \r"
+		   //this is SAXS
+		   For(i=0;i<dimsize(listWaveG,0);i+=1)
+		   		if(SAXSAllG || LBSelectionWvG[i][5]==48)
+					if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
+			   			haveAnySWAXS=1
+			   			numSAXSWAXS+=1
+			   			thickness = str2num(listWaveG[i][3])
+			   			thickness = thickness>0 ? thickness : DefaultSampleThickness
+			   			SX=str2num(listWaveG[i][1])+sxOffset
+			   			SY=str2num(listWaveG[i][2])+syOffset
+						Notebook $nbl text="      saxsExp        "+num2str(SX)+"      "+num2str(SY)+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+TitleModifier+"\"  \r"
+					endif
+				endif   
+		   endfor
+			Notebook $nbl text="		#END of batch of measurements \r"
+			break
+		case "SAXS-WAXS-USAXS":
+		   //this is SAXS
+		   For(i=0;i<dimsize(listWaveG,0);i+=1)
+		   		if(SAXSAllG || LBSelectionWvG[i][5]==48)
+					if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
+			   			haveAnySWAXS=1
+			   			numSAXSWAXS+=1
+			   			thickness = str2num(listWaveG[i][3])
+			   			thickness = thickness>0 ? thickness : DefaultSampleThickness
+			   			SX=str2num(listWaveG[i][1])+sxOffset
+			   			SY=str2num(listWaveG[i][2])+syOffset
+						Notebook $nbl text="      saxsExp        "+num2str(SX)+"      "+num2str(SY)+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+TitleModifier+"\"  \r"
+					endif
+				endif   
+		   endfor
+		   //WAXS is next. 
+			Notebook $nbl text="\r"
+			Notebook $nbl text="		#WAXS measurements \r"
+		   For(i=0;i<dimsize(listWaveG,0);i+=1)
+		   		if(WAXSAllG || LBSelectionWvG[i][6]==48)
+					if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
+			   			haveAnySWAXS=1
+			   			numSAXSWAXS+=1
+			   			thickness = str2num(listWaveG[i][3])
+			   			thickness = thickness>0 ? thickness : DefaultSampleThickness
+			   			SX=str2num(listWaveG[i][1])+sxOffset
+			   			SY=str2num(listWaveG[i][2])+syOffset
+						Notebook $nbl text="      waxsExp        "+num2str(SX)+"      "+num2str(SY)+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+TitleModifier+"\"  \r"
+					endif
+				endif   
+		   endfor
+		   //and USAXS . 
+		   //do we have any USAXS scans?
+		   Duplicate/Free/R=[][4] LBSelectionWvG, TempUSAXSChoice
+		   WaveStats/Q TempUSAXSChoice
+		   HaveUSAXS = (V_max>40) ? 1 : 0
+		   if(haveAnySWAXS && USAXSAllG && HaveUSAXS)
+				Notebook $nbl text="\r"
+				Notebook $nbl text="		preUSAXStune \r"   
+				if(numSAXSWAXS>15)
+					Notebook $nbl text="		preUSAXStune \r"   
+				endif
+				if(numSAXSWAXS>30)
+					Notebook $nbl text="		preUSAXStune \r"   	
+				endif
+		   endif
+			Notebook $nbl text="\r"
+			Notebook $nbl text="		#USAXS measurements \r"
+		   For(i=0;i<dimsize(listWaveG,0);i+=1)
+		   		if(USAXSAllG || LBSelectionWvG[i][4]==48)
+					if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
+			   			thickness = str2num(listWaveG[i][3])
+			   			thickness = thickness>0 ? thickness : DefaultSampleThickness
+			   			SX=str2num(listWaveG[i][1])+sxOffset
+			   			SY=str2num(listWaveG[i][2])+syOffset
+						Notebook $nbl text="      USAXSscan        "+num2str(SX)+"      "+num2str(SY)+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+TitleModifier+"\"  \r"
+					endif
+				endif   
+		   endfor
+			Notebook $nbl text="\r"
+			Notebook $nbl text="		#END USAXS measurements \r"
+			break
+
+	endswitch
 
 end
 
@@ -1701,7 +1780,7 @@ static Function IN3S_Initialize()
 	
 	ListOfVariables="NumberOfSamplesToCreate;DisplayAllSamplesInImage;"
 	ListOfVariables+="DefaultSampleThickness;USAXSAll;SAXSAll;WAXSAll;DisplayUSWAXScntrls;"
-	ListOfVariables+="SampleXRBV;SampleYRBV;SelectedRow;SampleThickness;"
+	ListOfVariables+="SampleXTAR;SampleYTAR;SelectedRow;SampleThickness;SampleXRBV;SampleYRBV;"
 	ListOfVariables+="SampleXTable;SampleYTable;SurveySXStep;SurveySYStep;MoveWhenRowChanges;"
 	ListOfVariables+="RunExportHookFunction;"
 	ListOfVariables+="USAXSScanTime;SAXSScanTime;WAXSScanTime;CalculatedOverAllTime;"
@@ -1709,6 +1788,7 @@ static Function IN3S_Initialize()
 
 	ListOfStrings="SelectedPlateName;UserNameForSampleSet;UserName;WarningForUser;"
 	ListOfStrings+="SelectedSampleName;DefaultCommandFileName;TableClipboard;"
+	ListOfStrings+="ExportOrder;"
 	//and here we create them
 	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
 		IN2G_CreateItem("variable",StringFromList(i,ListOfVariables))
@@ -1741,6 +1821,11 @@ static Function IN3S_Initialize()
 	if(strlen(DefaultCommandFileName)<4)
 		DefaultCommandFileName="usaxs.mac"
 	endif
+	SVAR ExportOrder
+	if(strlen(ExportOrder)<2)
+		ExportOrder="USAXS-SAXS-WAXS"
+	endif
+	
 	NVAR SurveySXStep
 	if(SurveySXStep<0.01)
 		SurveySXStep = 1
@@ -2366,8 +2451,8 @@ Function IN3S_PlateImageHook(s)
 									SVAR SelectedSampleName=root:Packages:SamplePlateSetup:SelectedSampleName
 									Wave/T ListWV = root:Packages:SamplePlateSetup:LBCommandWv
 									NVAR SampleThickness=root:Packages:SamplePlateSetup:SampleThickness
-									NVAR SampleXRBV=root:Packages:SamplePlateSetup:SampleXRBV
-									NVAR SampleYRBV=root:Packages:SamplePlateSetup:SampleYRBV
+									NVAR SampleXTAR=root:Packages:SamplePlateSetup:SampleXTAR
+									NVAR SampleYTAR=root:Packages:SamplePlateSetup:SampleYTAR
 									NVAR SampleXTable = root:Packages:SamplePlateSetup:SampleXTable
 									NVAR SampleYTable = root:Packages:SamplePlateSetup:SampleYTable
 									if(serrow>=0)
@@ -2399,8 +2484,8 @@ Function IN3S_PlateImageHook(s)
 									SVAR SelectedSampleName=root:Packages:SamplePlateSetup:SelectedSampleName
 									Wave/T ListWV = root:Packages:SamplePlateSetup:LBCommandWv
 									NVAR SampleThickness=root:Packages:SamplePlateSetup:SampleThickness
-									NVAR SampleXRBV=root:Packages:SamplePlateSetup:SampleXRBV
-									NVAR SampleYRBV=root:Packages:SamplePlateSetup:SampleYRBV
+									NVAR SampleXTAR=root:Packages:SamplePlateSetup:SampleXTAR
+									NVAR SampleYTAR=root:Packages:SamplePlateSetup:SampleYTAR
 									NVAR SampleXTable = root:Packages:SamplePlateSetup:SampleXTable
 									NVAR SampleYTable = root:Packages:SamplePlateSetup:SampleYTable
 									if(dimSize(listWave,0)-1>=0)
@@ -2587,7 +2672,7 @@ Function IN3S_BeamlineSurvey()
 
 	//abort if epics support does not exist...
 	if(exists("pvOpen")!=4 && IN3SBeamlineSurveyDevelopOn<1)
-		Abort "This is useful only at the beamline on usaxspc7" 
+		Abort "This is useful only at the beamline on usaxspc7 or usaxspc11" 
 	endif
 	/// abort if instrument in use. 
 	IN3S_BeramlineSurveyAbortIfNeeded("Cannot use survey tool")
@@ -2603,8 +2688,8 @@ Function IN3S_BeamlineSurvey()
 	//Sync values
 	SVAR SelectedSampleName=root:Packages:SamplePlateSetup:SelectedSampleName
 	NVAR SampleThickness=root:Packages:SamplePlateSetup:SampleThickness
-	NVAR SampleXRBV=root:Packages:SamplePlateSetup:SampleXRBV
-	NVAR SampleYRBV=root:Packages:SamplePlateSetup:SampleYRBV
+	NVAR SampleXTAR=root:Packages:SamplePlateSetup:SampleXTAR
+	NVAR SampleYTAR=root:Packages:SamplePlateSetup:SampleYTAR
 	NVAR SampleXTable = root:Packages:SamplePlateSetup:SampleXTable
 	NVAR SampleYTable = root:Packages:SamplePlateSetup:SampleYTable
 	SelectedSampleName = ListWV[SelectedRow][0]
@@ -2656,7 +2741,7 @@ Function IN3S_BeamlineSurveyEpicsHook(s)
 	if(stringMatch(s.winName, "BeamlinePlateSetup"))
 		switch( s.eventCode )
 			case 0: // window being activated
-				//IN3S_BeamlineSurveyStartEpicsUpdate()
+				IN3S_BeamlineSurveyStartEpicsUpdate()
 				break
 			case 1: // window being deactivated
 				//IN3S_BeamlineSurveyStopEpicsUpdate()
@@ -2771,12 +2856,17 @@ Function IN3S_BeamlineSurveyPanel()
 		Button SaveValues,pos={100,208.00},size={200,20}, proc=IN3S_SurveyButtonProc,title="Save Values",fSize=14, help={"Copies values to the table of positions"}
 		Button SaveValues fColor=(65535,32768,32768)
 
-		TitleBox Info1 title="\Zr200Sx : ",pos={70,235},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0,fstyle=1
-		TitleBox Info2 title="\Zr200Sy : ",pos={285,235},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0,fstyle=1
-		SetVariable SampleXRBV,pos={50,270},size={90,30}, limits={-200,200, 0}, proc=IN3S_SurveySetVarProc,title=" ",fSize=25
-		Setvariable SampleXRBV,fStyle=2, variable=root:Packages:SamplePlateSetup:SampleXRBV, help={"SX position"},format="%6.2f"
-		SetVariable SampleYRBV,pos={260,270},size={90,30}, limits={-200,200, 0}, proc=IN3S_SurveySetVarProc,title=" ",fSize=25
-		Setvariable SampleYRBV,fStyle=2, variable=root:Packages:SamplePlateSetup:SampleYRBV, help={"SY position"},format="%6.2f"
+		TitleBox Info1 title="\Zr200Sx : ",pos={45,238},size={20,15},frame=0,fColor=(0,0,65535),labelBack=0,fstyle=1
+		TitleBox Info2 title="\Zr200Sy : ",pos={265,238},size={20,15},frame=0,fColor=(0,0,65535),labelBack=0,fstyle=1
+		SetVariable SampleXRBV,pos={80,238},size={60,30}, limits={-200,200, 0}, noproc,title=" ",fSize=18, noedit=1, frame=0
+		SetVariable SampleXRBV,variable=root:Packages:SamplePlateSetup:SampleXRBV, help={"SX RBV position"},format="%6.2f"
+		SetVariable SampleYRBV,pos={300,238},size={60,30}, limits={-200,200, 0}, noproc,title=" ",fSize=18, noedit=1, frame=0
+		SetVariable SampleYRBV,variable=root:Packages:SamplePlateSetup:SampleYRBV, help={"SY RBV position"},format="%6.2f"
+
+		SetVariable SampleXTAR,pos={50,270},size={90,30}, limits={-200,200, 0}, proc=IN3S_SurveySetVarProc,title=" ",fSize=25
+		Setvariable SampleXTAR,fStyle=2, variable=root:Packages:SamplePlateSetup:SampleXTAR, help={"SX position"},format="%6.2f"
+		SetVariable SampleYTAR,pos={260,270},size={90,30}, limits={-200,200, 0}, proc=IN3S_SurveySetVarProc,title=" ",fSize=25
+		Setvariable SampleYTAR,fStyle=2, variable=root:Packages:SamplePlateSetup:SampleYTAR, help={"SY position"},format="%6.2f"
 
 		Button MoveSXLow,pos={10,260},size={30,50}, proc=IN3S_SurveyButtonProc,title="〈",help={"Moves SX lower by the step value"}
 		Button MoveSXLow,fSize=24,fstyle=1,fColor=(1,16019,65535)
@@ -2816,7 +2906,7 @@ Function IN3S_BeamlineSurveyPanel()
 		Button OpenSlitsUSAXS,pos={250,450},size={135,20}, proc=IN3S_SurveyButtonProc,title="USAXS Slits",fSize=14, help={"Open Slits for USAXS"}
 		Button OpenSlitsSWAXS,pos={250,475},size={135,20}, proc=IN3S_SurveyButtonProc,title="SWAXS Slits",fSize=14, help={"Open Slits for SAXS/WAXS"}
 
-		TitleBox Info3 title="\Zr110NOTE: row numbering is 0 based...",size={355,20},pos={5,480},frame=0,fColor=(0,0,65535),labelBack=0
+		TitleBox Info5 title="\Zr110NOTE: row numbering is 0 based...",size={355,20},pos={5,480},frame=0,fColor=(0,0,65535),labelBack=0
 
 	endif
 
@@ -2844,8 +2934,8 @@ Function IN3S_SurveySetVarProc(sva) : SetVariableControl
 				SVAR SelectedSampleName=root:Packages:SamplePlateSetup:SelectedSampleName
 				Wave/T ListWV = root:Packages:SamplePlateSetup:LBCommandWv
 				NVAR SampleThickness=root:Packages:SamplePlateSetup:SampleThickness
-				NVAR SampleXRBV=root:Packages:SamplePlateSetup:SampleXRBV
-				NVAR SampleYRBV=root:Packages:SamplePlateSetup:SampleYRBV
+				NVAR SampleXTAR=root:Packages:SamplePlateSetup:SampleXTAR
+				NVAR SampleYTAR=root:Packages:SamplePlateSetup:SampleYTAR
 				NVAR SampleXTable = root:Packages:SamplePlateSetup:SampleXTable
 				NVAR SampleYTable = root:Packages:SamplePlateSetup:SampleYTable
 				NVAR DefSaThick = root:Packages:SamplePlateSetup:DefaultSampleThickness
@@ -2863,12 +2953,12 @@ Function IN3S_SurveySetVarProc(sva) : SetVariableControl
 				IN3S_EstimateRunTime()			
 			endif
 			
-			if(StringMatch(sva.ctrlName, "SampleXRBV"))
+			if(StringMatch(sva.ctrlName, "SampleXTAR"))
+				IN3S_BeamlineSurveyStartEpicsUpdate()
 				IN3S_MoveMotorInEpics("SX",dval)
-				//IN3S_PutEpicsPv("9idcLAX:m58:c2:m1.VAL", dval)		//SX
 			endif
-			if(StringMatch(sva.ctrlName, "SampleYRBV"))
-				//IN3S_PutEpicsPv("9idcLAX:m58:c2:m2.VAL", dval)		//SY	
+			if(StringMatch(sva.ctrlName, "SampleYTAR"))
+				IN3S_BeamlineSurveyStartEpicsUpdate()
 				IN3S_MoveMotorInEpics("SY",dval)	
 			endif
 			if(StringMatch(sva.ctrlName, "SelectedSampleName"))
@@ -2904,8 +2994,8 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 			// click code here
 			NVAR SXStep = root:Packages:SamplePlateSetup:SurveySXStep
 			NVAR SYStep = root:Packages:SamplePlateSetup:SurveySYStep
-			NVAR CurentSX=root:Packages:SamplePlateSetup:SampleXRBV
-			NVAR CurentSY=root:Packages:SamplePlateSetup:SampleYRBV
+			NVAR CurentSX=root:Packages:SamplePlateSetup:SampleXTAR
+			NVAR CurentSY=root:Packages:SamplePlateSetup:SampleYTAR
 			if(StringMatch(ba.ctrlName, "MoveSXLow"))		
 				IN3S_MoveMotorInEpics("SX",CurentSX-SXStep)
 			endif
@@ -3042,8 +3132,8 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 				SVAR SelectedSampleName=root:Packages:SamplePlateSetup:SelectedSampleName
 				Wave/T ListWV = root:Packages:SamplePlateSetup:LBCommandWv
 				NVAR SampleThickness=root:Packages:SamplePlateSetup:SampleThickness
-				NVAR SampleXRBV=root:Packages:SamplePlateSetup:SampleXRBV
-				NVAR SampleYRBV=root:Packages:SamplePlateSetup:SampleYRBV
+				NVAR SampleXTAR=root:Packages:SamplePlateSetup:SampleXTAR
+				NVAR SampleYTAR=root:Packages:SamplePlateSetup:SampleYTAR
 				NVAR SampleXTable = root:Packages:SamplePlateSetup:SampleXTable
 				NVAR SampleYTable = root:Packages:SamplePlateSetup:SampleYTable
 				NVAR DefSaThick = root:Packages:SamplePlateSetup:DefaultSampleThickness
@@ -3067,8 +3157,8 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 				SVAR SelectedSampleName=root:Packages:SamplePlateSetup:SelectedSampleName
 				Wave/T ListWV = root:Packages:SamplePlateSetup:LBCommandWv
 				NVAR SampleThickness=root:Packages:SamplePlateSetup:SampleThickness
-				NVAR SampleXRBV=root:Packages:SamplePlateSetup:SampleXRBV
-				NVAR SampleYRBV=root:Packages:SamplePlateSetup:SampleYRBV
+				NVAR SampleXTAR=root:Packages:SamplePlateSetup:SampleXTAR
+				NVAR SampleYTAR=root:Packages:SamplePlateSetup:SampleYTAR
 				NVAR SampleXTable = root:Packages:SamplePlateSetup:SampleXTable
 				NVAR SampleYTable = root:Packages:SamplePlateSetup:SampleYTable
 				NVAR DefSaThick = root:Packages:SamplePlateSetup:DefaultSampleThickness

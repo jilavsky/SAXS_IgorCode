@@ -2428,7 +2428,7 @@ Function IR2D_Fitting()
 	Variable V_FitError=0			//This should prevent errors from being generated
 	//and now the fit...
 	if(UseGeneticOptimization)
-#if Exists("gencurvefit")
+#if Exists("gencurvefit")==3
 	  	gencurvefit  /I=1 /W=ErrorForFit /M=MaskWaveGenOpt /N /TOL=0.002 /K={50,20,0.7,0.5} /X=QvectorForFit IR2D_FitFunction, IntensityForFit  , W_Coef, HoldStr, Gen_Constraints  	
 #else
 //	  	GEN_curvefit("IR2D_FitFunction",W_Coef,IntensityForFit,HoldStr,x=QvectorForFit,w=ErrorForFit,c=Gen_Constraints, mask=MaskWaveGenOpt, popsize=20,k_m=0.7,recomb=0.5,iters=50,tol=0.002)	

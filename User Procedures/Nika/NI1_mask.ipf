@@ -575,7 +575,7 @@ Function NI1M_MaskCreateImage()
 	NVAR MaskDisplayLogImage=root:Packages:Convert2Dto1D:MaskDisplayLogImage
 	wave OriginalCCD
 	//allow user function modification to the image through hook function...
-#if Exists("ModifyImportedImageHook")
+#if Exists("ModifyImportedImageHook")==6
 	ModifyImportedImageHook(OriginalCCD)
 #endif
 //		String infostr = FunctionInfo("ModifyImportedImageHook")

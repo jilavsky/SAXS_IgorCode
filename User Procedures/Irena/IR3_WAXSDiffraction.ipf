@@ -3084,7 +3084,7 @@ static Function/T IR3W_ReadXMLJCPDSCard(PathToDataFull)
 	close fileID
 	//OK, now the file should exist... 
 	//check for xop presence and throw error if not present. 
-#if Exists("xmlopenfile")
+#if Exists("xmlopenfile")==3
 	//create 
 	NewDataFolder/O/S root:Packages
 	KillDataFolder/Z root:Packages:Irena_JCPDSImport
