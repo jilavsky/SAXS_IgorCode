@@ -1,8 +1,8 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.981
+#pragma version = 1.985
 #pragma IgorVersion=8.03
 
-//1.981  beta
+//1.985  beta
 //1.98   September2020 release. 
 //1.97   February 2020 release. 
 //1.96   December 2018, updates 64 bit OSX xops, changes and fixes for 2018-03 cycle and general improvements. 
@@ -129,7 +129,7 @@ Proc LoadUSAXSIrenaandNika()
 end
 
 Function LoadUSAXSMacros()
-	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))>=7.05)
+	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))>=8.03)
 		Execute/P "INSERTINCLUDE \"IN2_Load Indra 2\""
 		Execute/P "COMPILEPROCEDURES "
 		Execute/P "IN2N_CreateShowNtbkForLogging(0)"
@@ -141,7 +141,7 @@ Function LoadUSAXSMacros()
 		//Execute/P "BuildMenu \"USAXS\""
 		//IN2L_GenerateReadMe()
 	else
-		DoAlert 0, "Your version of Igor is lower than 7.05, these macros need version 7.05 or higher"  
+		DoAlert 0, "Your version of Igor is lower than 8.03, these macros need version 8.04 or higher"  
 	endif
 	
 end
