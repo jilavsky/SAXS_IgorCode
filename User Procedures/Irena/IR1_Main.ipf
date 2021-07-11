@@ -1,11 +1,11 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
-#pragma version=2.703
+#pragma version=2.705
 #pragma IgorVersion=8.03
 
 //DO NOT renumber Main files every time, these are main release numbers...
 //define manual date and release verison 
-constant CurrentIrenaVersionNumber = 2.703		//change version of Boot Irena1 modeling.ipf to get proper check version. 
+constant CurrentIrenaVersionNumber = 2.705		//change version of Boot Irena1 modeling.ipf to get proper check version. 
 
 //*************************************************************************
 //* Copyright (c) 2005 - 2021, Argonne National Laboratory
@@ -13,9 +13,10 @@ constant CurrentIrenaVersionNumber = 2.703		//change version of Boot Irena1 mode
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************
 
-//2.703	Beta version after September 2020 release. 
+//2.705	Beta version after September 2020 release. 
+//			New MultisamplePlotting tool
 //			Add replacement for Analytical models: System Specific models
-//			Add repalcement for Evaluaate Size Distributions : Analyze Results tool
+//			Add repalcement for Evaluate Size Distributions : Analyze Results tool
 //			Fix Multi-data GUI tools to handle Liberal names
 //			Data Manipulation 3
 //2.70		Require Igor 8.03 and higher. No testing for Igor 7 anymore. 

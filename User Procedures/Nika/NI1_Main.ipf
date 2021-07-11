@@ -1,11 +1,11 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.833
+#pragma version=1.835
 #pragma IgorVersion=8.03
 
 //DO NOT renumber Main files every time, these are main release numbers...
 
-constant CurrentNikaVersionNumber = 1.833
+constant CurrentNikaVersionNumber = 1.835
 constant FixBackgroundOversubScale=1.05			//this is used to fix oversubtracted background. Adds FixBackgroundOversubScale*abs(V_min) to all intensity value. 
 constant NikaNumberOfQCirclesDisp=15
 //*************************************************************************\
@@ -14,6 +14,8 @@ constant NikaNumberOfQCirclesDisp=15
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.835 	current beta version
+//			minor changes. 
 //1.83		require Igor 8.03 now. Not testing Igor 7 anymore. 
 //			Improve NXcanSAS 2D calibrated data import for NSLS-SMI beamline. 
 //1.826 	Beta version after February2020 release
