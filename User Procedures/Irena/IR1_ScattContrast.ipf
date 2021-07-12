@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=2.27
+#pragma version=2.28
 
 constant IR1K_CurrentPanelVersion=2.27
 
@@ -10,6 +10,7 @@ constant IR1K_CurrentPanelVersion=2.27
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.28 Tweaked GUI controls position. Works well with default fonts on Mac. 
 //2.27 added Compound name mask (regex) string to handle when lots of names is listed. 
 //2.26  removed unused functions
 //2.25  Modified Screen Size check to match the needs
@@ -65,12 +66,9 @@ Window IR1K_ScatteringContCalc()
 	DoWindow/T IR1K_ScatteringContCalc,"Scattering contrast calculator main"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 20,fstyle= 3,textrgb= (0,0,65280)
-	TitleBox MainTitle title="\Zr220Substance editor and scattering contrast calculator",pos={100,10},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={560,24},anchor=MC,fColor=(0,0,52224)
-//	DrawText 100,32,"Substance editor and scattering contrast calculator"
-	TitleBox Info1 title="\Zr160Modify element:",pos={13,91},frame=0,fstyle=1, fixedSize=1,size={120,20},fColor=(0,0,52224)
-	//DrawText 13,91,"Modify element:"
-	//SetDrawEnv fsize= 14,fstyle= 3,textrgb= (0,0,65280)
-	TitleBox Info21 title="\Zr160Saved substances:",pos={300,200},frame=0,fstyle=2, fixedSize=1,size={150,20}, fColor= (0,0,65280)
+	TitleBox MainTitle title="\Zr220Substance editor and scattering contrast calculator",pos={100,10},frame=0,fstyle=3, fixedSize=0,font= "Times New Roman", size={560,24},anchor=MC,fColor=(0,0,52224)
+	TitleBox Info1 title="\Zr150Modify element:",pos={5,91},frame=0,fstyle=1, fixedSize=1,size={140,20},fColor=(0,0,52224)
+	TitleBox Info21 title="\Zr160Saved substances:",pos={300,200},frame=0,fstyle=2, fixedSize=0,size={150,20}, fColor= (0,0,65280)
 	//DrawText 300,220,"Saved substances:"
 	TitleBox CompoundFormula,pos={10,170},size={75,15},title="  "
 	TitleBox CompoundFormula,frame=0
@@ -85,17 +83,17 @@ Window IR1K_ScatteringContCalc()
 	CheckBox BalanceElement,help={"Check to have this element to be balance"}, disable=!(root:Packages:ScatteringContrast:UseWeightPercent)
 	Button GetHelp,pos={670,45},size={80,15},fColor=(65535,32768,32768), proc=IR1K_ButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 
-	Slider ElementSelection size={500,20},pos={115,75},vert=0, proc=IR1K_ScatCont2SliderProc, limits= {1,root:Packages:ScatteringContrast:NumberOfAtoms,1 }
+	Slider ElementSelection size={560,20},pos={135,75},vert=0, proc=IR1K_ScatCont2SliderProc, limits= {1,root:Packages:ScatteringContrast:NumberOfAtoms,1 }
 	Slider ElementSelection help={"Select element to edit (maximum of elements changes as set above)"}
 	
 //	PopupMenu ElementType,pos={5,130},size={51,21}, proc=IR1K_PopMenuProc, title="Select element",help={"Select atom type"}
 //	PopupMenu ElementType,mode=1,popvalue= "---",value= #"root:Packages:ScatteringContrast:ListOfElements"
 	SetVariable ElementType,pos={13,128},size={125,20},title="Element    ",help={"Element"}, frame=0, noedit=1, bodywidth=40
 	SetVariable ElementType, proc=IR1K_SetVarProc,limits={0,Inf,0},value= root:Packages:ScatteringContrast:El1_type
-	Button SelectElement size={90,20},pos={40,150}, proc=IR1K_ButtonProc
+	Button SelectElement size={120,18},pos={10,150}, proc=IR1K_ButtonProc
 	Button SelectElement title="Change element",help={"Click to change the displayed element"}
 
-	SetVariable Elementcontent,pos={140,145},size={40,16},title=" ",help={"Amount of this atom in molecule, use decimal numbers if necessary"}
+	SetVariable Elementcontent,pos={140,143},size={40,16},title=" ",help={"Amount of this atom in molecule, use decimal numbers if necessary"}
 	SetVariable Elementcontent,proc=IR1K_SetVarProc,limits={0,Inf,0},value= root:Packages:ScatteringContrast:El1_content
 	PopupMenu ElementIsotope,pos={230,130},size={106,21},title="Isotope",proc=IR1K_PopMenuProc
 	PopupMenu ElementIsotope,mode=1,popvalue=root:Packages:ScatteringContrast:El1_Isotope,value= #"IR1K_ListTheIsotopes(root:Packages:ScatteringContrast:El1_type)"
@@ -112,19 +110,19 @@ Window IR1K_ScatteringContCalc()
 	SetVariable ElNeutronAbsCross,limits={-Inf,Inf,0},noedit= 1,frame=0, value=root:Packages:ScatteringContrast:El_NeutronAbsCross
 
 	SetVariable MolWeight,pos={14,216},size={260,16},title="Molecular weight                             ",frame=0, help={"Molecular weight"}
-	SetVariable MolWeight,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:MolWeight,noedit= 1
+	SetVariable MolWeight,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:MolWeight,noedit= 1, format="%.4g"
 	SetVariable WghtOf1Mol,pos={13,234},size={260,16},title="Weight of 1 mol [g]                          ",frame=0, help={"Weight of 1 molecule"}
 	SetVariable WghtOf1Mol,help={"Weight of 1 molecule in gramms caluclated from density and other numbers"}
-	SetVariable WghtOf1Mol,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:WghtOf1Mol,noedit= 1, format="%.5e"
+	SetVariable WghtOf1Mol,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:WghtOf1Mol,noedit= 1, format="%.4e"
 	SetVariable NumOfMolin1cm3,pos={14,252},size={260,16},title="Num of mol in 1cm3                        ",frame=0, help={"Number of molecules in 1 cm3"}
-	SetVariable NumOfMolin1cm3,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:NumOfMolin1cm3,noedit= 1, format="%.5e"
+	SetVariable NumOfMolin1cm3,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:NumOfMolin1cm3,noedit= 1, format="%.4e"
 	SetVariable NumOfElperMol,pos={14,270},size={260,16},title="Number of electrons per mol           ",frame=0, help={"Number of electrons per 1 molecule"}
 	SetVariable NumOfElperMol,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:NumOfElperMol,noedit= 1
 	SetVariable NumOfElincm3,pos={14,294},size={260,16},title="Number of el per 1cm3                   ",frame=0, help={"Number of electors per 1 cm3"}
-	SetVariable NumOfElincm3,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:NumOfElincm3,noedit= 1, format="%.5e"
+	SetVariable NumOfElincm3,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:NumOfElincm3,noedit= 1, format="%.4e"
 	SetVariable ScattContrXrays,pos={14,312},size={270,16},title="Xray scat length dens (rho) [10^10 cm-2] ",frame=0,labelBack=(32768,65280,32768)
 	SetVariable ScattContrXrays,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:ScattContrXrays,noedit= 1, format="%.4g", help={"X ray scattering length density [10^10 cm-2], also known as rho"}
-	SetVariable ScattContrXraysPerGram,pos={14,330},size={270,16},title="Xray SL per gram [10^10 cm/g] ",frame=0,labelBack=(32768,65280,32768)
+	SetVariable ScattContrXraysPerGram,pos={14,330},size={270,16},title="Xray SL per gram [10^10 cm/g]               ",frame=0,labelBack=(32768,65280,32768)
 	SetVariable ScattContrXraysPerGram,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:ScattContrXraysPerGram,noedit= 1, format="%.4g", help={"X ray scattering length density [10^10 cm-2] per 1g of material, also known as rho"}
 
 	SetVariable NeutronsVolume1Mol,pos={14,350},size={260,16},title="Volume of 1 mol [cm3]                     ",frame=0
@@ -133,7 +131,7 @@ Window IR1K_ScatteringContCalc()
 	SetVariable NeutronTotalMolB,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:NeutronTotalMolB,noedit= 1, format="%.5e",help={"Neutron sum of Bs for all atoms in the molecule, properly weighted"}
 	SetVariable NeutronsScatlengthDens,pos={14,386},size={270,16},title="Neut. scat length dens (rho) [10^10 cm-2]  ",frame=0,labelBack=(32768,65280,32768)
 	SetVariable NeutronsScatlengthDens,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:NeutronsScatlengthDens,noedit= 1, format="%.4g",help={"Neutron scattering length density in cm-2, also known as rho"}
-	SetVariable NeutronsScatlengthDensPerGram,pos={14,404},size={270,16},title="Neut. SLD (rho) per gram [10^10 cm/g]  ",frame=0,labelBack=(32768,65280,32768)
+	SetVariable NeutronsScatlengthDensPerGram,pos={14,404},size={270,16},title="Neut. SLD (rho) per gram [10^10 cm/g]       ",frame=0,labelBack=(32768,65280,32768)
 	SetVariable NeutronsScatlengthDensPerGram,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:NeutronsScatlengthDensPerGram,noedit= 1, format="%.4g",help={"Neutron scattering length density in cm per gram, also known as rho per gram"}
 	
 	SetVariable UsedMatrixCompound,pos={330,370},size={250,16},title="Second phase :  ",help={"This is the name of compound set as matrix using button on right"}
@@ -143,9 +141,9 @@ Window IR1K_ScatteringContCalc()
 	SetVariable MatrixScattContNeutrons,pos={330,410},size={390,16},title="Neutrons scatt length dens second phase  (rho)  [10^10 cm-2]  ",help={"Input matrix Neutron rho"}
 	SetVariable MatrixScattContNeutrons,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:MatrixScattContNeutrons, proc=IR1K_SetVarProc, format="%.4g"
 
-	SetVariable CalcXrays,pos={14,422},size={270,16},title="X rays delta-rho squared   [10^20 cm-4]          ",frame=0,labelBack=(32768,65280,32768)
+	SetVariable CalcXrays,pos={14,422},size={270,16},title="X rays delta-rho squared   [10^20 cm-4]          ",frame=0,labelBack=(65535,32768,32768)
 	SetVariable CalcXrays,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:XraysDeltaRhoSquared, format="%4.4g",help={"Xrays contrast (delta-rho squared)"}
-	SetVariable CalcNeutrons,pos={14,440},size={270,16},title="Neutrons delta-rho squared    [10^20 cm-4]     ",frame=0,labelBack=(32768,65280,32768)
+	SetVariable CalcNeutrons,pos={14,440},size={270,16},title="Neutrons delta-rho squared    [10^20 cm-4]     ",frame=0,labelBack=(65535,32768,32768)
 	SetVariable CalcNeutrons,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:NeutronsDeltaRhoSquared, format="%4.4g",help={"Neutron contrast (delta-rho squared)"}
 	SetVariable XraysNeutronsRatio,pos={14,458},size={270,16},title="Ratio Xrays/Neutrons delta rho-squared          ",frame=0,labelBack=(32768,65280,32768), format="%.4g"
 	SetVariable XraysNeutronsRatio,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:XraysNeutronsRatio,help={"This is ratio of X-ray and neutron contrast (delta-rho sqaured)"}

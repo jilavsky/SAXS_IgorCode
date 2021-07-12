@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.12
+#pragma version=1.13
 constant IR3JversionNumber = 0.3			//Simple Fit panel version number
 
 //*************************************************************************\
@@ -11,6 +11,7 @@ constant IR3JversionNumber = 0.3			//Simple Fit panel version number
 constant SimpleFitsLinPlotMaxScale = 1.07
 constant SimpleFitsLinPlotMinScale = 0.8
 
+//1.13 	Added SMR USAXS data (not QRS), checked (and fixed) Sphere and spheroid models. 
 //1.12 	Added Invariant calculation. 
 //1.1 		combined this ipf with "Simple fits models"
 //1.0 		Simple Fits tool first release version 
@@ -104,7 +105,7 @@ Function IR3J_SimpleFitsPanelFnct()
 	string XUserLookup=""
 	string EUserLookup=""
 	IR2C_AddDataControls("Irena:SimpleFits","IR3J_SimpleFitsPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
-	IR3C_MultiAppendControls("Irena:SimpleFits","IR3J_SimpleFitsPanel", "IR3J_CopyAndAppendData","",1,0)
+	IR3C_MultiAppendControls("Irena:SimpleFits","IR3J_SimpleFitsPanel", "IR3J_CopyAndAppendData","",1,1)
 	//hide what is not needed
 	checkbox UseResults, disable=0
 	SetVariable DataQEnd,pos={290,90},size={190,15}, proc=IR3J_SetVarProc,title="Q max for fitting    "
@@ -279,7 +280,7 @@ Function IR3J_InitSimpleFits()
 	//parameters for Invariant
 	ListOfStrings+="InvBackgModel;InvBackgModelList;"
 
-	ListOfVariables="UseIndra2Data1;UseQRSdata1;"
+	ListOfVariables="UseIndra2Data1;UseQRSdata1;SlitLength;UseSMRData;"
 	ListOfVariables+="DataBackground;AchievedChiSquare;ScatteringContrast;"
 	ListOfVariables+="Guinier_Rg;Guinier_I0;"
 	ListOfVariables+="Porod_Constant;Porod_SpecificSurface;Sphere_Radius;Sphere_ScalingConstant;"
@@ -493,7 +494,23 @@ Function IR3J_SetVarProc(sva) : SetVariableControl
 			if(stringmatch(sva.ctrlName,"InvContrast"))		//contrast changed
 				IR3J_InvCalculateInvariant()
 			endif
+			//update model to allow some playin...
+			if(stringmatch(sva.ctrlName,"Sphere_Radius") || stringmatch(sva.ctrlName,"DataBackground") || stringmatch(sva.ctrlName,"Sphere_ScalingConstant") )		//update model.. 
+				IR3J_CalculateModel()
+			endif
+			if(stringmatch(sva.ctrlName,"Porod_Constant") || stringmatch(sva.ctrlName,"ScatteringContrast") || stringmatch(sva.ctrlName,"Spheroid_ScalingConstant") )		//update model.. 
+				IR3J_CalculateModel()
+			endif
+			if(stringmatch(sva.ctrlName,"Guinier_I0") || stringmatch(sva.ctrlName,"Guinier_Rg") || stringmatch(sva.ctrlName,"Spheroid_Beta") )		//update model.. 
+				IR3J_CalculateModel()
+			endif
+			if(stringmatch(sva.ctrlName,"Spheroid_Radius"))		//update model.. 
+				IR3J_CalculateModel()
+			endif
+
+
 			break
+			
 
 		case 3: // live update
 			break
@@ -520,6 +537,8 @@ Function IR3J_CopyAndAppendData(FolderNameStr)
 		SVAR dQWavename=root:Packages:Irena:SimpleFits:dQWavename
 		NVAR UseIndra2Data=root:Packages:Irena:SimpleFits:UseIndra2Data
 		NVAR UseQRSdata=root:Packages:Irena:SimpleFits:UseQRSdata
+		NVAR UseSMRData = root:Packages:Irena:SimpleFits:UseSMRData
+		NVAR SlitLength = root:Packages:Irena:SimpleFits:SlitLength
 		//these are variables used by the control procedure
 		NVAR  UseResults=  root:Packages:Irena:SimpleFits:UseResults
 		NVAR  UseUserDefinedData=  root:Packages:Irena:SimpleFits:UseUserDefinedData
@@ -552,6 +571,15 @@ Function IR3J_CopyAndAppendData(FolderNameStr)
 		else
 			dQWavename=""
 		endif
+		//support slit smeared data for USAXS
+		UseSMRData = 0
+		if(UseIndra2Data)
+			if(StringMatch(IntensityWaveName, "*SMR_Int" ))
+				UseSMRData = 1
+				SlitLength = NumberByKey("SlitLength", note(OriginalDataIntWave), "=",";")
+			endif
+		endif
+		//done slit smeared support. 	
 		IR3J_CreateCheckGraphs()
 		//clear obsolete data:
 		Wave/Z NormRes1=root:Packages:Irena:SimpleFits:NormalizedResidualLinLin
@@ -1133,6 +1161,8 @@ static Function IR3J_FitGuinier(which)
 	NVAR Guinier_I0 = root:Packages:Irena:SimpleFits:Guinier_I0
 	NVAR Guinier_Rg=root:Packages:Irena:SimpleFits:Guinier_Rg
 	NVAR AchievedChiSquare=root:Packages:Irena:SimpleFits:AchievedChiSquare
+	NVAR UseSMRData	=	root:Packages:Irena:SimpleFits:UseSMRData
+
 	Make/D/N=0/O W_coef, LocalEwave
 	Make/D/T/N=0/O T_Constraints
 	Wave/Z W_sigma
@@ -1161,14 +1191,26 @@ static Function IR3J_FitGuinier(which)
 	
 	V_FitError=0			//This should prevent errors from being generated
 	strswitch(which)		// string switch
-		case "Sphere":		// execute if case matches expression
-			FuncFit IR1_GuinierFit W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /C=T_Constraints /W=OriginalDataErrorWave /I=1 /E=LocalEwave
+		case "Sphere":		// execute if case matches expression	
+			if(UseSMRData)
+				FuncFit IR3J_FitGuinierSMR W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /C=T_Constraints /W=OriginalDataErrorWave /I=1 /E=LocalEwave
+			else
+				FuncFit IR1_GuinierFit W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /C=T_Constraints /W=OriginalDataErrorWave /I=1 /E=LocalEwave
+			endif
 			break					// exit from switch
 		case "Rod":	// execute if case matches expression
-			FuncFit IR1_GuinierRodFit W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /C=T_Constraints /W=OriginalDataErrorWave /I=1 /E=LocalEwave
+			if(UseSMRData)
+				FuncFit IR3J_FitGuinierRodSMR W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /C=T_Constraints /W=OriginalDataErrorWave /I=1 /E=LocalEwave
+			else
+				FuncFit IR1_GuinierRodFit W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /C=T_Constraints /W=OriginalDataErrorWave /I=1 /E=LocalEwave
+			endif
 			break
 		case "Sheet":	// execute if case matches expression
-			FuncFit IR1_GuinierSheetFit W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /C=T_Constraints /W=OriginalDataErrorWave /I=1 /E=LocalEwave
+			if(UseSMRData)
+				FuncFit IR3J_FitGuinierSheetSMR W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /C=T_Constraints /W=OriginalDataErrorWave /I=1 /E=LocalEwave
+			else
+				FuncFit IR1_GuinierSheetFit W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /C=T_Constraints /W=OriginalDataErrorWave /I=1 /E=LocalEwave
+			endif
 			break
 		default:			// optional default expression executed
 			abort
@@ -1303,6 +1345,47 @@ Function IR3J_Gauss1D(w,q) : FitFunc
 
 	return w[0]/(w[2]*sqrt(2*pi))*exp((-1/2)*((q-w[1])/w[2])^2) + w[3]
 End
+//*****************************************************************************************************************
+Function IR3J_FitPorodSMR(w,yw,xw) : FitFunc
+	Wave w,yw,xw
+	NVAR SlitLength	 =	root:Packages:Irena:SimpleFits:SlitLength
+	duplicate/free yw, ywSM
+	yw = PorodInLogLog(w,xw[p])
+	IR1B_SmearData(yw, xw, SlitLength, ywSM)
+	yw=ywSM	
+End
+
+//*****************************************************************************************************************
+Function IR3J_FitGuinierSMR(w,yw,xw) : FitFunc
+	Wave w,yw,xw
+	NVAR SlitLength	 =	root:Packages:Irena:SimpleFits:SlitLength
+	duplicate/free yw, ywSM
+	yw = IR1_GuinierFit(w,xw[p])
+	IR1B_SmearData(yw, xw, SlitLength, ywSM)
+	yw=ywSM	
+End
+
+//*****************************************************************************************************************
+Function IR3J_FitGuinierRodSMR(w,yw,xw) : FitFunc
+	Wave w,yw,xw
+	NVAR SlitLength	 =	root:Packages:Irena:SimpleFits:SlitLength
+	duplicate/free yw, ywSM
+	yw = IR1_GuinierRodFit(w,xw[p])
+	IR1B_SmearData(yw, xw, SlitLength, ywSM)
+	yw=ywSM	
+End
+
+//*****************************************************************************************************************
+Function IR3J_FitGuinierSheetSMR(w,yw,xw) : FitFunc
+	Wave w,yw,xw
+	NVAR SlitLength	 =	root:Packages:Irena:SimpleFits:SlitLength
+	duplicate/free yw, ywSM
+	yw = IR1_GuinierSheetFit(w,xw[p])
+	IR1B_SmearData(yw, xw, SlitLength, ywSM)
+	yw=ywSM	
+End
+
+//*****************************************************************************************************************
 Function IR3J_Porod_Ruland(w,q) : FitFunc
 	Wave w
 	Variable q
@@ -1339,6 +1422,8 @@ static Function IR3J_FitPorod()
 	NVAR Porod_Constant = root:Packages:Irena:SimpleFits:Porod_Constant
 	NVAR DataBackground=root:Packages:Irena:SimpleFits:DataBackground
 	NVAR AchievedChiSquare=root:Packages:Irena:SimpleFits:AchievedChiSquare
+	NVAR UseSMRData					=	root:Packages:Irena:SimpleFits:UseSMRData
+	NVAR SlitLength					=	root:Packages:Irena:SimpleFits:SlitLength
 	Wave/Z CursorAWave = CsrWaveRef(A, "IR3J_LogLogDataDisplay")
 	Wave/Z CursorBWave = CsrWaveRef(B, "IR3J_LogLogDataDisplay")
 	Wave CursorAXWave= CsrXWaveRef(A, "IR3J_LogLogDataDisplay")
@@ -1353,14 +1438,22 @@ static Function IR3J_FitPorod()
 		Abort "Cursors are not properly set on same wave"
 	endif
 	//make a good starting guesses:
-	Porod_Constant=CursorAWave[DataQstartPoint]/(CursorAXWave[DataQstartPoint]^(-4))
+	if(UseSMRData)
+		Porod_Constant=CursorAWave[DataQstartPoint]/(CursorAXWave[DataQstartPoint]^(-3))
+	else
+		Porod_Constant=CursorAWave[DataQstartPoint]/(CursorAXWave[DataQstartPoint]^(-4))
+	endif
 	DataBackground=CursorAwave[DataQEndPoint]
 	W_coef = {Porod_Constant,DataBackground}
 	LocalEwave[0]=(Porod_Constant/20)
 	LocalEwave[1]=(DataBackground/20)
 
 	variable/g V_FitError=0			//This should prevent errors from being generated
-	FuncFit PorodInLogLog W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /C=T_Constraints /W=OriginalDataErrorWave /I=1
+	if(UseSMRData)
+		FuncFit IR3J_FitPorodSMR W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /C=T_Constraints /W=OriginalDataErrorWave /I=1
+	else
+		FuncFit PorodInLogLog W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /C=T_Constraints /W=OriginalDataErrorWave /I=1
+	endif
 	if (V_FitError==0)	// fitting was fine... 
 		Wave W_sigma
 		AchievedChiSquare = V_chisq/(DataQEndPoint-DataQstartPoint)
@@ -1372,7 +1465,7 @@ static Function IR3J_FitPorod()
 		string TagName= "PorodFit" 
 		Tag/C/W=IR3J_LogLogDataDisplay/N=$(TagName)/L=2/X=-15.00/Y=-15.00  $NameOfWave(CursorAWave), ((DataQstartPoint + DataQEndPoint)/2),TagText	
 		Porod_Constant=W_coef[0] 	//PC
-		DataBackground=W_coef[1]	//Background
+		DataBackground=W_coef[1]		//Background
 	else
 		RemoveFromGraph/Z $("fit_"+NameOfWave(CursorAWave))
 		beep
@@ -1408,15 +1501,15 @@ Function IR3J_FitSizeDistribution(Which)
 	Wave/Z CursorBWave = CsrWaveRef(B, "IR3J_LogLogDataDisplay")
 	Wave CursorAXWave= CsrXWaveRef(A, "IR3J_LogLogDataDisplay")
 	Wave OriginalDataErrorWave=root:Packages:Irena:SimpleFits:OriginalDataErrorWave
-	NVAR VOlSD_Rg					=root:Packages:Irena:SimpleFits:VOlSD_Rg
-	NVAR VolSD_Volume				=root:Packages:Irena:SimpleFits:VolSD_Volume
-	NVAR VolSD_MeanDiameter		=root:Packages:Irena:SimpleFits:VolSD_MeanDiameter
-	NVAR VolSD_MedianDiameter	=root:Packages:Irena:SimpleFits:VolSD_MedianDiameter
-	NVAR VOlSD_ModeDiamater		=root:Packages:Irena:SimpleFits:VOlSD_ModeDiamater
-	NVAR NumSD_NumPartPerCm3		=root:Packages:Irena:SimpleFits:NumSD_NumPartPerCm3
-	NVAR NumSD_MeanDiameter		=root:Packages:Irena:SimpleFits:NumSD_MeanDiameter
-	NVAR NumSD_MedianDiameter	=root:Packages:Irena:SimpleFits:NumSD_MedianDiameter
-	NVAR NumSD_ModeDiamater		=root:Packages:Irena:SimpleFits:NumSD_ModeDiamater
+//	NVAR VOlSD_Rg					=root:Packages:Irena:SimpleFits:VOlSD_Rg
+//	NVAR VolSD_Volume				=root:Packages:Irena:SimpleFits:VolSD_Volume
+//	NVAR VolSD_MeanDiameter		=root:Packages:Irena:SimpleFits:VolSD_MeanDiameter
+//	NVAR VolSD_MedianDiameter	=root:Packages:Irena:SimpleFits:VolSD_MedianDiameter
+//	NVAR VOlSD_ModeDiamater		=root:Packages:Irena:SimpleFits:VOlSD_ModeDiamater
+//	NVAR NumSD_NumPartPerCm3		=root:Packages:Irena:SimpleFits:NumSD_NumPartPerCm3
+//	NVAR NumSD_MeanDiameter		=root:Packages:Irena:SimpleFits:NumSD_MeanDiameter
+//	NVAR NumSD_MedianDiameter	=root:Packages:Irena:SimpleFits:NumSD_MedianDiameter
+//	NVAR NumSD_ModeDiamater		=root:Packages:Irena:SimpleFits:NumSD_ModeDiamater
 	SVAR QWavename 					=root:Packages:Irena:SimpleFits:QWavename
 
 	if(!WaveExists(CursorAWave)||!WaveExists(CursorBWave))
@@ -1490,6 +1583,7 @@ static Function IR3J_FitSphere()
 	NVAR SphereScalingConst = root:Packages:Irena:SimpleFits:Sphere_ScalingConstant
 	NVAR DataBackground=root:Packages:Irena:SimpleFits:DataBackground
 	NVAR AchievedChiSquare=root:Packages:Irena:SimpleFits:AchievedChiSquare
+	NVAR UseSMRData	=	root:Packages:Irena:SimpleFits:UseSMRData
 	Make/D/N=0/O W_coef, LocalEwave
 	Make/D/T/N=0/O T_Constraints
 	Wave/Z W_sigma
@@ -1506,7 +1600,7 @@ static Function IR3J_FitSphere()
 	endif
 	//make a good starting guesses:
 	SphereScalingConst=CursorAWave[DataQstartPoint]
-	SphereRadius=2*pi/CursorAWave[DataQstartPoint]
+	SphereRadius=0.2 * 2*pi/CursorAXWave[DataQstartPoint]
 	DataBackground=0.05*CursorAwave[DataQEndPoint]
 	W_coef = {SphereScalingConst, SphereRadius,DataBackground}	
 	LocalEwave[0]=(SphereScalingConst/20)
@@ -1514,13 +1608,13 @@ static Function IR3J_FitSphere()
 	LocalEwave[2]=(DataBackground/20)
 
 	variable/g V_FitError=0			//This should prevent errors from being generated
-//		if (FitUseErrors && WaveExists(ErrorWave))
-	FuncFit IR3J_SphereFormfactor W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /C=T_Constraints /W=OriginalDataErrorWave /I=1
-//		else
-//			FuncFit PorodInLogLog W_coef CursorAWave[pcsr(A),pcsr(B)] /X=CursorAXWave /D /C=T_Constraints			
-//		endif
+	if(UseSMRData)
+		FuncFit IR3J_SphereFormfactorSMR W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /C=T_Constraints /W=OriginalDataErrorWave /I=1
+	else
+		FuncFit IR3J_SphereFormfactor W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /C=T_Constraints /W=OriginalDataErrorWave /I=1
+	endif
 	if (V_FitError!=0)	//there was error in fitting
-		RemoveFromGraph $("fit_"+NameOfWave(CursorAWave))
+		RemoveFromGraph/Z $("fit_"+NameOfWave(CursorAWave))
 		beep
 		Abort "Fitting error, check starting parameters and fitting limits" 
 	endif
@@ -1556,8 +1650,19 @@ Function IR3J_SphereFormfactor(w,Q) : FitFunc
 	//CurveFitDialog/ w[2] = Background
 
 	variable QR=Q*w[1]
+	variable FF = (3/(QR*QR*QR))*(sin(QR)-(QR*cos(QR)))
+	return w[0] * FF * FF + w[2]
+End
 
-	return w[0] * (3/(QR*QR*QR))*(sin(QR)-(QR*cos(QR))) + w[2]
+//**********************************************************************************************************
+//**********************************************************************************************************
+Function IR3J_SphereFormfactorSMR(w,yw,xw) : FitFunc
+	Wave w,yw,xw
+	NVAR SlitLength	 =	root:Packages:Irena:SimpleFits:SlitLength
+	duplicate/free yw, ywSM
+	yw = IR3J_SphereFormfactor(w,xw[p])
+	IR1B_SmearData(yw, xw, SlitLength, ywSM)
+	yw=ywSM	
 End
 
 //**********************************************************************************************************
@@ -1578,6 +1683,7 @@ static Function IR3J_FitSpheroid()
 	NVAR Spheroid_ScalingConstant = root:Packages:Irena:SimpleFits:Spheroid_ScalingConstant
 	NVAR DataBackground=root:Packages:Irena:SimpleFits:DataBackground
 	NVAR AchievedChiSquare=root:Packages:Irena:SimpleFits:AchievedChiSquare
+	NVAR UseSMRData	=	root:Packages:Irena:SimpleFits:UseSMRData
 	Make/D/N=0/O W_coef, LocalEwave
 	Make/D/T/N=0/O T_Constraints
 	Wave/Z W_sigma
@@ -1597,7 +1703,7 @@ static Function IR3J_FitSpheroid()
 	endif
 	//make a good starting guesses:
 	Spheroid_ScalingConstant=CursorAWave[DataQstartPoint]
-	Spheroid_Radius=2*pi/CursorAWave[DataQstartPoint]
+	Spheroid_Radius=0.2*2*pi/CursorAXWave[DataQstartPoint]
 	DataBackground=0.01*CursorAwave[DataQEndPoint]
 	Spheroid_Beta = 1
 	W_coef = {Spheroid_ScalingConstant, Spheroid_Radius,Spheroid_Beta,DataBackground}
@@ -1608,13 +1714,13 @@ static Function IR3J_FitSpheroid()
 	LocalEwave[3]=(DataBackground/20)
 
 	variable/g V_FitError=0			//This should prevent errors from being generated
-//		if (FitUseErrors && WaveExists(ErrorWave))
-	FuncFit IR3J_SpheroidFormfactor W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /C=T_Constraints /W=OriginalDataErrorWave /I=1
-//		else
-//			FuncFit PorodInLogLog W_coef CursorAWave[pcsr(A),pcsr(B)] /X=CursorAXWave /D /C=T_Constraints			
-//		endif
+	if(UseSMRData)
+		FuncFit IR3J_SpheroidFormfactorSMR W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /C=T_Constraints /W=OriginalDataErrorWave /I=1
+	else
+		FuncFit IR3J_SpheroidFormfactor W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /C=T_Constraints /W=OriginalDataErrorWave /I=1
+	endif
 	if (V_FitError!=0)	//there was error in fitting
-		RemoveFromGraph $("fit_"+NameOfWave(CursorAWave))
+		RemoveFromGraph/Z $("fit_"+NameOfWave(CursorAWave))
 		beep
 		Abort "Fitting error, check starting parameters and fitting limits" 
 	endif
@@ -1651,45 +1757,59 @@ Function IR3J_SpheroidFormfactor(w,Q) : FitFunc
 	//CurveFitDialog/ w[1] = Radius
 	//CurveFitDialog/ w[2] = Beta - aspect ratio
 	//CurveFitDialog/ w[3] = Background
+	variable FF = IR1T_CalcIntgSpheroidFFPoints(Q,w[1],w[2])
 
-	return w[0]*IR1T_CalcIntgSpheroidFFPoints(Q,w[1],w[2])+w[3]
+	return w[0]*FF*FF + w[3]
+End
+
+//**********************************************************************************************************
+//**********************************************************************************************************
+
+Function IR3J_SpheroidFormfactorSMR(w,yw,xw) : FitFunc
+	Wave w,yw,xw
+	NVAR SlitLength	 =	root:Packages:Irena:SimpleFits:SlitLength
+	duplicate/free yw, ywSM
+	yw = IR3J_SpheroidFormfactor(w,xw[p])
+	IR1B_SmearData(yw, xw, SlitLength, ywSM)
+	yw=ywSM	
 End
 
 
-
-
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
-static Function IR3J_CalculateModel()
+//static
+Function IR3J_CalculateModel()
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	IR3J_CreateCheckGraphs()
 	DFref oldDf= GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:SimpleFits					//go into the folder
-	NVAR DataQEnd = root:Packages:Irena:SimpleFits:DataQEnd
-	NVAR DataQstart = root:Packages:Irena:SimpleFits:DataQstart
-	NVAR DataQEndPoint = root:Packages:Irena:SimpleFits:DataQEndPoint
-	NVAR DataQstartPoint = root:Packages:Irena:SimpleFits:DataQstartPoint
-	Wave OriginalDataIntWave		=root:Packages:Irena:SimpleFits:OriginalDataIntWave
-	Wave OriginalDataQWave		=root:Packages:Irena:SimpleFits:OriginalDataQWave
-	Wave OriginalDataErrorWave	=root:Packages:Irena:SimpleFits:OriginalDataErrorWave
-	Wave/Z LinModelDataIntWave		=root:Packages:Irena:SimpleFits:LinModelDataIntWave
-	Wave/Z LinModelDataQWave		=root:Packages:Irena:SimpleFits:LinModelDataQWave
-	Wave/Z LinModelDataEWave		=root:Packages:Irena:SimpleFits:LinModelDataEWave
-	NVAR AchievedChiSquare		=root:Packages:Irena:SimpleFits:AchievedChiSquare
-	NVAR Guinier_I0 				= root:Packages:Irena:SimpleFits:Guinier_I0
-	NVAR Guinier_Rg					=root:Packages:Irena:SimpleFits:Guinier_Rg
-	NVAR Porod_Constant				=root:Packages:Irena:SimpleFits:Porod_Constant
-	NVAR Porod_SpecificSurface	=root:Packages:Irena:SimpleFits:Porod_SpecificSurface
-	NVAR ScatteringContrast		=root:Packages:Irena:SimpleFits:ScatteringContrast
-	NVAR Sphere_Radius				=root:Packages:Irena:SimpleFits:Sphere_Radius
-	NVAR Sphere_ScalingConstant	=root:Packages:Irena:SimpleFits:Sphere_ScalingConstant
-	NVAR Spheroid_Radius			=root:Packages:Irena:SimpleFits:Spheroid_Radius
-	NVAR Spheroid_ScalingConstant=root:Packages:Irena:SimpleFits:Spheroid_ScalingConstant
-	NVAR Spheroid_Beta				=root:Packages:Irena:SimpleFits:Spheroid_Beta
-	NVAR DataBackground			=root:Packages:Irena:SimpleFits:DataBackground
-	SVAR SimpleModel 				= root:Packages:Irena:SimpleFits:SimpleModel
+	NVAR DataQEnd 					= 	root:Packages:Irena:SimpleFits:DataQEnd
+	NVAR DataQstart 				= 	root:Packages:Irena:SimpleFits:DataQstart
+	NVAR DataQEndPoint 			= 	root:Packages:Irena:SimpleFits:DataQEndPoint
+	NVAR DataQstartPoint 			= 	root:Packages:Irena:SimpleFits:DataQstartPoint
+	Wave OriginalDataIntWave		=	root:Packages:Irena:SimpleFits:OriginalDataIntWave
+	Wave OriginalDataQWave		=	root:Packages:Irena:SimpleFits:OriginalDataQWave
+	Wave OriginalDataErrorWave	=	root:Packages:Irena:SimpleFits:OriginalDataErrorWave
+	Wave/Z LinModelDataIntWave	=	root:Packages:Irena:SimpleFits:LinModelDataIntWave
+	Wave/Z LinModelDataQWave		=	root:Packages:Irena:SimpleFits:LinModelDataQWave
+	Wave/Z LinModelDataEWave		=	root:Packages:Irena:SimpleFits:LinModelDataEWave
+	NVAR AchievedChiSquare		=	root:Packages:Irena:SimpleFits:AchievedChiSquare
+	NVAR Guinier_I0 				= 	root:Packages:Irena:SimpleFits:Guinier_I0
+	NVAR Guinier_Rg					=	root:Packages:Irena:SimpleFits:Guinier_Rg
+	NVAR Porod_Constant			=	root:Packages:Irena:SimpleFits:Porod_Constant
+	NVAR Porod_SpecificSurface	=	root:Packages:Irena:SimpleFits:Porod_SpecificSurface
+	NVAR ScatteringContrast		=	root:Packages:Irena:SimpleFits:ScatteringContrast
+	NVAR Sphere_Radius				=	root:Packages:Irena:SimpleFits:Sphere_Radius
+	NVAR Sphere_ScalingConstant	=	root:Packages:Irena:SimpleFits:Sphere_ScalingConstant
+	NVAR Spheroid_Radius			=	root:Packages:Irena:SimpleFits:Spheroid_Radius
+	NVAR Spheroid_ScalingConstant=	root:Packages:Irena:SimpleFits:Spheroid_ScalingConstant
+	NVAR Spheroid_Beta				=	root:Packages:Irena:SimpleFits:Spheroid_Beta
+	NVAR DataBackground			=	root:Packages:Irena:SimpleFits:DataBackground
+	SVAR SimpleModel 				= 	root:Packages:Irena:SimpleFits:SimpleModel
+	NVAR UseSMRData					=	root:Packages:Irena:SimpleFits:UseSMRData
+	NVAR SlitLength					=	root:Packages:Irena:SimpleFits:SlitLength
 
 	Duplicate/O/R=[DataQstartPoint,DataQEndPoint] OriginalDataQWave, ModelLogLogQ, ModelLogLogInt, NormalizedResidualLogLogQ
 	Duplicate/O/R=[DataQstartPoint,DataQEndPoint] OriginalDataIntWave, NormalizedResidualLogLog, ZeroLineResidualLogLog
@@ -1715,19 +1835,40 @@ static Function IR3J_CalculateModel()
 	//now calculate the data... 
 	strswitch(SimpleModel)				// Guinier
 		case "Guinier":						// execute if case matches expression
-			ModelLogLogInt = Guinier_I0 *exp(-ModelLogLogQ[p]^2*Guinier_Rg^2/3)
+			ModelLogLogInt = Guinier_I0 *exp(-ModelLogLogQ[p]^2*Guinier_Rg^2/3) 
+				//slit smearing,  
+				if(UseSMRData)
+					duplicate/free ModelLogLogInt, ModelLogLogIntSM
+					IR1B_SmearData(ModelLogLogInt, ModelLogLogQ, SlitLength, ModelLogLogIntSM)
+					ModelLogLogInt=ModelLogLogIntSM
+				endif
+				//end of slit smearing
 			if(UsingLinearizedModel)
 				ModelLinLinLogInt = ln(ModelLogLogInt)	
 			endif
 			break								// exit from switch
 		case "Guinier Rod":				// Guinier rod
 			ModelLogLogInt = Guinier_I0*exp(-ModelLogLogQ[p]^2*Guinier_Rg^2/2)/ModelLogLogQ
+				//slit smearing,  
+				if(UseSMRData)
+					duplicate/free ModelLogLogInt, ModelLogLogIntSM
+					IR1B_SmearData(ModelLogLogInt, ModelLogLogQ, SlitLength, ModelLogLogIntSM)
+					ModelLogLogInt=ModelLogLogIntSM
+				endif
+				//end of slit smearing
 			if(UsingLinearizedModel)
 				ModelLinLinLogInt = ln(ModelLogLogInt*ModelLogLogQ)	
 			endif
 			break		
 		case "Guinier Sheet":				// Guinier Sheet
 			ModelLogLogInt = Guinier_I0 *exp(-ModelLogLogQ[p]^2*Guinier_Rg^2)*ModelLogLogQ^(-2)
+				//slit smearing,  
+				if(UseSMRData)
+					duplicate/free ModelLogLogInt, ModelLogLogIntSM
+					IR1B_SmearData(ModelLogLogInt, ModelLogLogQ, SlitLength, ModelLogLogIntSM)
+					ModelLogLogInt=ModelLogLogIntSM
+				endif
+				//end of slit smearing
 			if(UsingLinearizedModel)
 				ModelLinLinLogInt = ln(ModelLogLogInt*ModelLogLogQ^2)	
 			endif
@@ -1735,15 +1876,38 @@ static Function IR3J_CalculateModel()
 		case "Porod":						// Porod
 			Porod_SpecificSurface =Porod_Constant *1e32 / (2*pi*ScatteringContrast*1e20)
 			ModelLogLogInt = DataBackground+Porod_Constant * ModelLogLogQ^(-4)
+				//slit smearing,  
+				if(UseSMRData)
+					duplicate/free ModelLogLogInt, ModelLogLogIntSM
+					IR1B_SmearData(ModelLogLogInt, ModelLogLogQ, SlitLength, ModelLogLogIntSM)
+					ModelLogLogInt=ModelLogLogIntSM
+				endif
+				//end of slit smearing
 			if(UsingLinearizedModel)
 				ModelLinLinLogInt = ModelLogLogInt*ModelLogLogQ^4	
 			endif
 			break
-		case "Sphere":						// spehre calculation
-			ModelLogLogInt = DataBackground + 	Sphere_ScalingConstant * (3/(ModelLogLogQ[p]*Sphere_Radius)^3)*(sin(ModelLogLogQ[p]*Sphere_Radius)-(ModelLogLogQ[p]*Sphere_Radius*cos(ModelLogLogQ[p]*Sphere_Radius)))
+		case "Sphere":						// sphere calculation
+			//ModelLogLogInt = DataBackground + 	Sphere_ScalingConstant * (3/(ModelLogLogQ[p]*Sphere_Radius)^3)*(sin(ModelLogLogQ[p]*Sphere_Radius)-(ModelLogLogQ[p]*Sphere_Radius*cos(ModelLogLogQ[p]*Sphere_Radius)))
+			ModelLogLogInt = IR3J_SphereFormfactor({Sphere_ScalingConstant,Sphere_Radius,DataBackground},ModelLogLogQ[p])
+				//slit smearing,  
+				if(UseSMRData)
+					duplicate/free ModelLogLogInt, ModelLogLogIntSM
+					IR1B_SmearData(ModelLogLogInt, ModelLogLogQ, SlitLength, ModelLogLogIntSM)
+					ModelLogLogInt=ModelLogLogIntSM
+				endif
+				//end of slit smearing
 			break
 		case "Spheroid":					// spheroid
-			ModelLogLogInt = 	DataBackground +  Spheroid_ScalingConstant*IR1T_CalcIntgSpheroidFFPoints(ModelLogLogQ[p],Spheroid_Radius,Spheroid_Beta)
+			//ModelLogLogInt = 	DataBackground +  Spheroid_ScalingConstant*IR1T_CalcIntgSpheroidFFPoints(ModelLogLogQ[p],Spheroid_Radius,Spheroid_Beta)
+			ModelLogLogInt = 	IR3J_SpheroidFormfactor({Spheroid_ScalingConstant,Spheroid_Radius,Spheroid_Beta,DataBackground},ModelLogLogQ[p])
+				//slit smearing,  
+				if(UseSMRData)
+					duplicate/free ModelLogLogInt, ModelLogLogIntSM
+					IR1B_SmearData(ModelLogLogInt, ModelLogLogQ, SlitLength, ModelLogLogIntSM)
+					ModelLogLogInt=ModelLogLogIntSM
+				endif
+				//end of slit smearing
 			break
 		default:						// optional default expression executed
 		//nothing is default here, so set values to 0 to know there is problem. 
@@ -1838,15 +2002,15 @@ static Function IR3J_SaveResultsToNotebook()
 	NVAR DataBackground			=root:Packages:Irena:SimpleFits:DataBackground
 	SVAR SimpleModel 				= root:Packages:Irena:SimpleFits:SimpleModel
 
-	NVAR VOlSD_Rg					=root:Packages:Irena:SimpleFits:VOlSD_Rg
-	NVAR VolSD_Volume				=root:Packages:Irena:SimpleFits:VolSD_Volume
-	NVAR VolSD_MeanDiameter		=root:Packages:Irena:SimpleFits:VolSD_MeanDiameter
-	NVAR VolSD_MedianDiameter	=root:Packages:Irena:SimpleFits:VolSD_MedianDiameter
-	NVAR VOlSD_ModeDiamater		=root:Packages:Irena:SimpleFits:VOlSD_ModeDiamater
-	NVAR NumSD_NumPartPerCm3		=root:Packages:Irena:SimpleFits:NumSD_NumPartPerCm3
-	NVAR NumSD_MeanDiameter		=root:Packages:Irena:SimpleFits:NumSD_MeanDiameter
-	NVAR NumSD_MedianDiameter	=root:Packages:Irena:SimpleFits:NumSD_MedianDiameter
-	NVAR NumSD_ModeDiamater		=root:Packages:Irena:SimpleFits:NumSD_ModeDiamater
+//	NVAR VOlSD_Rg					=root:Packages:Irena:SimpleFits:VOlSD_Rg
+//	NVAR VolSD_Volume				=root:Packages:Irena:SimpleFits:VolSD_Volume
+//	NVAR VolSD_MeanDiameter		=root:Packages:Irena:SimpleFits:VolSD_MeanDiameter
+//	NVAR VolSD_MedianDiameter	=root:Packages:Irena:SimpleFits:VolSD_MedianDiameter
+//	NVAR VOlSD_ModeDiamater		=root:Packages:Irena:SimpleFits:VOlSD_ModeDiamater
+//	NVAR NumSD_NumPartPerCm3		=root:Packages:Irena:SimpleFits:NumSD_NumPartPerCm3
+//	NVAR NumSD_MeanDiameter		=root:Packages:Irena:SimpleFits:NumSD_MeanDiameter
+//	NVAR NumSD_MedianDiameter	=root:Packages:Irena:SimpleFits:NumSD_MedianDiameter
+//	NVAR NumSD_ModeDiamater		=root:Packages:Irena:SimpleFits:NumSD_ModeDiamater
 
 	NVAR InvQmaxUsed =	root:Packages:Irena:SimpleFits:InvQmaxUsed
 	NVAR Invariant =	root:Packages:Irena:SimpleFits:invariant
@@ -2120,15 +2284,15 @@ static Function IR3J_SaveResultsToWaves()
 	NVAR InvContrast 		= root:Packages:Irena:SimpleFits:InvContrast
 	NVAR InvVolumeFraction = root:Packages:Irena:SimpleFits:InvVolumeFraction
 
-	NVAR VOlSD_Rg					=root:Packages:Irena:SimpleFits:VOlSD_Rg
-	NVAR VolSD_Volume				=root:Packages:Irena:SimpleFits:VolSD_Volume
-	NVAR VolSD_MeanDiameter		=root:Packages:Irena:SimpleFits:VolSD_MeanDiameter
-	NVAR VolSD_MedianDiameter	=root:Packages:Irena:SimpleFits:VolSD_MedianDiameter
-	NVAR VOlSD_ModeDiamater		=root:Packages:Irena:SimpleFits:VOlSD_ModeDiamater
-	NVAR NumSD_NumPartPerCm3		=root:Packages:Irena:SimpleFits:NumSD_NumPartPerCm3
-	NVAR NumSD_MeanDiameter		=root:Packages:Irena:SimpleFits:NumSD_MeanDiameter
-	NVAR NumSD_MedianDiameter	=root:Packages:Irena:SimpleFits:NumSD_MedianDiameter
-	NVAR NumSD_ModeDiamater		=root:Packages:Irena:SimpleFits:NumSD_ModeDiamater
+//	NVAR VOlSD_Rg					=root:Packages:Irena:SimpleFits:VOlSD_Rg
+//	NVAR VolSD_Volume				=root:Packages:Irena:SimpleFits:VolSD_Volume
+//	NVAR VolSD_MeanDiameter		=root:Packages:Irena:SimpleFits:VolSD_MeanDiameter
+//	NVAR VolSD_MedianDiameter	=root:Packages:Irena:SimpleFits:VolSD_MedianDiameter
+//	NVAR VOlSD_ModeDiamater		=root:Packages:Irena:SimpleFits:VOlSD_ModeDiamater
+//	NVAR NumSD_NumPartPerCm3		=root:Packages:Irena:SimpleFits:NumSD_NumPartPerCm3
+//	NVAR NumSD_MeanDiameter		=root:Packages:Irena:SimpleFits:NumSD_MeanDiameter
+//	NVAR NumSD_MedianDiameter	=root:Packages:Irena:SimpleFits:NumSD_MedianDiameter
+//	NVAR NumSD_ModeDiamater		=root:Packages:Irena:SimpleFits:NumSD_ModeDiamater
 	Wave/Z ModelInt = root:Packages:Irena:SimpleFits:ModelLogLogInt
 	Wave/Z ModelQ = root:Packages:Irena:SimpleFits:ModelLogLogQ
 	//others can be created via Simple polots as needed... 

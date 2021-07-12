@@ -3935,6 +3935,13 @@ Function IR3C_MultiPopMenuProc(pa) : PopupMenuControl
 		//do something here
 		SVAR DataSubType = $(CntrlLocation+":DataSubType")
 		DataSubType = popStr
+		//need to deal with slit smeared data...
+		NVAR UseSMRData = $(CntrlLocation+":UseSMRData")
+		if(StringMatch(popStr, "SMR_Int"))
+			UseSMRData = 1
+		else
+			UseSMRData = 0
+		endif
 		IR3C_MultiUpdListOfAvailFiles(CntrlLocationShort)
 	endif
 	if(stringmatch(ctrlName,"ToolResultsSelector"))
