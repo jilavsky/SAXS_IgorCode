@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.18
+#pragma version=1.19
 Constant IR2EversionNumber = 1.18
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR2EversionNumber = 1.18
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.19 fix ASCII exportof USAXS data which was exporting incorrect Q data. 
 //1.18 added export of all data from current experiment using IR2E_ExportAllAsNexus(), for now sets dQ=0 for DSM data, sets dQl=slit length and dQw to dQ for SMR data. 
 //1.17 fixed dQ USAXS data Nexus export which exported always SMR dQ. 
 //1.16 add option to export ASCII with d, two theta or Q. Tested against Nika TTH, Q, and D data and works fine within precision errors. 
@@ -759,7 +760,7 @@ Function IR2E_ExportTheData()
 			//convert q tth or d into what is asked for... 
 			Duplicate/Free tempX, TempXConverted 
 			if(ASCIIExportQ)		//user wants Q
-				if(StringMatch(QWavename, "q_*") || StringMatch(QWavename, "'q_*"))		//q wave
+				if(StringMatch(QWavename, "q_*") || StringMatch(QWavename, "'q_*")||StringMatch(QWavename, "*_Qvec"))		//q wave
 					TempXConverted = tempX
 				elseif(StringMatch(QWavename, "d_*") || StringMatch(QWavename, "'d_*"))		//d wave
 					//q = 2pi/d
@@ -775,7 +776,7 @@ Function IR2E_ExportTheData()
 					Save/A=2/G/W/M="\r\n"/P=IR2E_ExportPath Qvector_A,Intensity as FinalOutputName		
 				endif
 			elseif(ASCIIExportD)		//user wants d
-				if(StringMatch(QWavename, "q_*") || StringMatch(QWavename, "'q_*"))		//q wave
+				if(StringMatch(QWavename, "q_*") || StringMatch(QWavename, "'q_*")||StringMatch(QWavename, "*_Qvec"))		//q wave
 					//d = 2pi/q
 					TempXConverted = 2*pi / TempX
 				elseif(StringMatch(QWavename, "d_*") || StringMatch(QWavename, "'d_*"))		//d wave
@@ -794,7 +795,7 @@ Function IR2E_ExportTheData()
 					Save/A=2/G/W/M="\r\n"/P=IR2E_ExportPath Dspacing_A,Intensity as FinalOutputName		
 				endif
 			elseif(ASCIIExportTTH)	//user wants Two Theta
-				if(StringMatch(QWavename, "q_*") || StringMatch(QWavename, "'q_*"))		//q wave
+				if(StringMatch(QWavename, "q_*") || StringMatch(QWavename, "'q_*")||StringMatch(QWavename, "*_Qvec"))		//q wave
 					//TwoTheta = 2* asin(q * lambda /4pi)
 					TempXCOnverted = 114.592 * asin(TempX * wvlgth /(4*pi))		
 				elseif(StringMatch(QWavename, "d_*") || StringMatch(QWavename, "'d_*"))		//d wave
@@ -869,7 +870,7 @@ Function IR2E_ExportTheData()
 		endif
 		//convert q or d into two theta as needed... 
 		Duplicate/Free tempX, TempXCOnverted 
-		if(StringMatch(QWavename, "q_*") || StringMatch(QWavename, "'q_*"))		//q wave
+		if(StringMatch(QWavename, "q_*") || StringMatch(QWavename, "'q_*")||StringMatch(QWavename, "*_Qvec"))		//q wave
 			TempXCOnverted = 2 * 180/pi * asin(TempX * wvlgth /(4*pi))		
 		elseif(StringMatch(QWavename, "d_*") || StringMatch(QWavename, "'d_*"))		//d wave
 			TempXCOnverted = 2 * 180/pi * (wvlgth / (2*TempX))
