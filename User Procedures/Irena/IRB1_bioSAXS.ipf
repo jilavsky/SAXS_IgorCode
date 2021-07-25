@@ -1,6 +1,6 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.0
+#pragma version=1.01
 #pragma IgorVersion = 8.03
 
 
@@ -16,6 +16,7 @@ constant IRB1_PDDFInterfaceVersion = 0.1					//IRB1_PDDFInterfaceFunction versio
 //functions for bioSAXS community
 //
 //version summary 
+//1.01 add handling of USAXS M_... waves 
 //1.0 September2020 release
 //0.5 July 2020 version
 //0.2 Beta version June 2020
@@ -23,7 +24,7 @@ constant IRB1_PDDFInterfaceVersion = 0.1					//IRB1_PDDFInterfaceFunction versio
 
 //Contains these main parts:
 //Import ASCII data: 	IRB1_ImportASCII()
-//Avergae data and other data manipulations : IRB1_DataManipulation()
+//Average data and other data manipulations : IRB1_DataManipulation()
 //ATSAS support IRB1_PDDFInterfaceFunction()
 
 
@@ -986,6 +987,12 @@ Function IRB1_DataManAppendOneDataSet(FolderNameStr)
 	Wave/Z SourceQWv=$(DataFolderName+possiblyQUoteName(QWavename))
 	Wave/Z SourceErrorWv=$(DataFolderName+possiblyQUoteName(ErrorWaveName))
 	Wave/Z SourcedQWv=$(DataFolderName+possiblyQUoteName(dQWavename))
+	if(!WaveExists(SourceIntWv) &&	!WaveExists(SourceQWv) && UseIndra2Data)		//may be we heve M_... data here?
+		Wave/Z SourceIntWv=$(DataFolderName+possiblyQUoteName("M_"+IntensityWaveName))
+		Wave/Z SourceQWv=$(DataFolderName+possiblyQUoteName("M_"+QWavename))
+		Wave/Z SourceErrorWv=$(DataFolderName+possiblyQUoteName("M_"+ErrorWaveName))
+		Wave/Z SourcedQWv=$(DataFolderName+possiblyQUoteName("M_"+dQWavename))
+	endif
 	if(!WaveExists(SourceIntWv)||	!WaveExists(SourceQWv)||!WaveExists(SourceErrorWv))
 		Abort "Data selection failed for Data"
 	endif
@@ -3005,6 +3012,12 @@ Function IRB1_PDDFAppendOneDataSet(FolderNameStr)
 	Wave/Z SourceQWv=$(DataFolderName+possiblyQuoteName(QWavename))
 	Wave/Z SourceErrorWv=$(DataFolderName+possiblyQuoteName(ErrorWaveName))
 	Wave/Z SourcedQWv=$(DataFolderName+possiblyQuoteName(dQWavename))
+	if(!WaveExists(SourceIntWv) &&	!WaveExists(SourceQWv) && UseIndra2Data)		//may be we heve M_... data here?
+		Wave/Z SourceIntWv=$(DataFolderName+possiblyQUoteName("M_"+IntensityWaveName))
+		Wave/Z SourceQWv=$(DataFolderName+possiblyQUoteName("M_"+QWavename))
+		Wave/Z SourceErrorWv=$(DataFolderName+possiblyQUoteName("M_"+ErrorWaveName))
+		Wave/Z SourcedQWv=$(DataFolderName+possiblyQUoteName("M_"+dQWavename))
+	endif
 	if(!WaveExists(SourceIntWv)||	!WaveExists(SourceQWv)||!WaveExists(SourceErrorWv))
 		Abort "Data selection failed for Data"
 	endif

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.14
+#pragma version=1.15
 
 Constant IR2MversionNumber = 1.13			//Data mining tool version number
 constant IR3BversionNumber = 0.1			//MetadataBrowser tool version number. 
@@ -10,6 +10,7 @@ constant IR3BversionNumber = 0.1			//MetadataBrowser tool version number.
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.15 add handling of USAXS M_... waves 
 //1.14 added MetadataBrowser tool in this package,
 //1.13 GetHelp button
 //1.12 more fixes for panel scaling. 
@@ -619,6 +620,9 @@ static Function/T IR3B_FindSpecificMetadata(FolderNameStr, KeyString)
 		IR3C_SelectWaveNamesData("Irena:MetadataBrowser", FolderNameStr)			//this routine will preset names in strings as needed
 	endif
 	Wave/Z SourceIntWv=$(DataFolderName+possiblyQUoteName(IntensityWaveName))
+	if(!WaveExists(SourceIntWv))// && UseIndra2Data)		//may be we heve M_... data here?
+		Wave/Z SourceIntWv=$(DataFolderName+possiblyQUoteName("M_"+IntensityWaveName))
+	endif
 	if(!WaveExists(SourceIntWv))
 		DoAlert /T="Incorrectly defined data type" 0, "Please, check definition of data type, it seems incorrectly defined yet"
 		SetDataFolder oldDf
@@ -665,6 +669,9 @@ static Function IR3B_ExtrMtdtFromOneFolder(FolderNameStr)
 		IR3C_SelectWaveNamesData("Irena:MetadataBrowser", FolderNameStr)			//this routine will preset names in strings as needed
 	endif
 	Wave/Z SourceIntWv=$(DataFolderName+possiblyQUoteName(IntensityWaveName))
+	if(!WaveExists(SourceIntWv))// && UseIndra2Data)		//may be we heve M_... data here?
+		Wave/Z SourceIntWv=$(DataFolderName+possiblyQUoteName("M_"+IntensityWaveName))
+	endif
 	if(!WaveExists(SourceIntWv))
 		DoAlert /T="Incorrectly defined data type" 0, "Please, check definition of data type, it seems incorrectly defined yet"
 		SetDataFolder oldDf
@@ -802,6 +809,9 @@ static Function IR3B_DisplayWaveNote(FolderNameStr)
 			IR3C_SelectWaveNamesData("Irena:MetadataBrowser", FolderNameStr)			//this routine will preset names in strings as needed
 		endif
 		Wave/Z SourceIntWv=$(DataFolderName+possiblyQUoteName(IntensityWaveName))
+		if(!WaveExists(SourceIntWv) && UseIndra2Data)		//may be we heve M_... data here?
+			Wave/Z SourceIntWv=$(DataFolderName+possiblyQUoteName("M_"+IntensityWaveName))
+		endif
 		if(!WaveExists(SourceIntWv))
 			DoAlert /T="Incorrectly defined data type" 0, "Please, check definition of data type, it seems incorrectly defined yet"
 			SetDataFolder oldDf

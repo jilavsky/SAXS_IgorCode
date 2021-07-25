@@ -1,11 +1,15 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version=1
+#pragma version=1.01
 
 
 constant IR3DMversionNumber = 0.1			//Data Manipulation III panel version number
 
+
+//Version n otes:
+//1.01 add handling of USAXS M_... waves 
+//1.00 first usable version. 
 
 //TODO: Need to add action function to Process data, for now it does not exist. 
 //
@@ -414,6 +418,12 @@ Function IR3DM_DeleteData(FolderNameStr)
 		Wave/Z SourceQWv=$(DataFolderName+possiblyQUoteName(QWavename))
 		Wave/Z SourceErrorWv=$(DataFolderName+possiblyQUoteName(ErrorWaveName))
 		Wave/Z SourcedQWv=$(DataFolderName+possiblyQUoteName(dQWavename))
+		if(!WaveExists(SourceIntWv) &&	!WaveExists(SourceQWv) && UseIndra2Data)		//may be we heve M_... data here?
+			Wave/Z SourceIntWv=$(DataFolderName+possiblyQUoteName("M_"+IntensityWaveName))
+			Wave/Z SourceQWv=$(DataFolderName+possiblyQUoteName("M_"+QWavename))
+			Wave/Z SourceErrorWv=$(DataFolderName+possiblyQUoteName("M_"+ErrorWaveName))
+			Wave/Z SourcedQWv=$(DataFolderName+possiblyQUoteName("M_"+dQWavename))
+		endif
 		CheckDisplayed /A SourceIntWv, SourceQWv, SourceErrorWv, SourcedQWv
 		if(V_Flag>0)
 			Abort "Data from "+DataFolderName+" are in use in graph or table. Close all tables and graphs using it and try again."
@@ -539,6 +549,12 @@ Function IR3DM_CopyAndAppendDataToSubtract(FolderNameStr)
 	Wave/Z SourceQWv=$(DataFolderName+possiblyQUoteName(QWavename))
 	Wave/Z SourceErrorWv=$(DataFolderName+possiblyQUoteName(ErrorWaveName))
 	Wave/Z SourcedQWv=$(DataFolderName+possiblyQUoteName(dQWavename))
+	if(!WaveExists(SourceIntWv) &&	!WaveExists(SourceQWv) && UseIndra2Data)		//may be we heve M_... data here?
+		Wave/Z SourceIntWv=$(DataFolderName+possiblyQUoteName("M_"+IntensityWaveName))
+		Wave/Z SourceQWv=$(DataFolderName+possiblyQUoteName("M_"+QWavename))
+		Wave/Z SourceErrorWv=$(DataFolderName+possiblyQUoteName("M_"+ErrorWaveName))
+		Wave/Z SourcedQWv=$(DataFolderName+possiblyQUoteName("M_"+dQWavename))
+	endif
 	if(!WaveExists(SourceIntWv)||	!WaveExists(SourceQWv))				//||!WaveExists(SourceErrorWv))
 		Abort "Data selection failed for Data in routine IR3DM_CopyAndAppendDataToSubtract"
 	endif
@@ -619,6 +635,12 @@ Function IR3DM_CopyAndAppendData(FolderNameStr)
 			Wave/Z SourceQWv=$(DataFolderName+possiblyQUoteName(QWavename))
 			Wave/Z SourceErrorWv=$(DataFolderName+possiblyQUoteName(ErrorWaveName))
 			Wave/Z SourcedQWv=$(DataFolderName+possiblyQUoteName(dQWavename))
+			if(!WaveExists(SourceIntWv) &&	!WaveExists(SourceQWv) && UseIndra2Data)		//may be we heve M_... data here?
+				Wave/Z SourceIntWv=$(DataFolderName+possiblyQUoteName("M_"+IntensityWaveName))
+				Wave/Z SourceQWv=$(DataFolderName+possiblyQUoteName("M_"+QWavename))
+				Wave/Z SourceErrorWv=$(DataFolderName+possiblyQUoteName("M_"+ErrorWaveName))
+				Wave/Z SourcedQWv=$(DataFolderName+possiblyQUoteName("M_"+dQWavename))
+			endif
 			if(!WaveExists(SourceIntWv)||	!WaveExists(SourceQWv))//||!WaveExists(SourceErrorWv))
 				Abort "Data selection failed for Data in routine IR3DM_CopyAndAppendData"
 			endif
@@ -671,6 +693,12 @@ Function IR3DM_CopyAndAppendData(FolderNameStr)
 			Wave/Z SourceQWv=$(DataFolderName+possiblyQUoteName(QWavename))
 			Wave/Z SourceErrorWv=$(DataFolderName+possiblyQUoteName(ErrorWaveName))
 			Wave/Z SourcedQWv=$(DataFolderName+possiblyQUoteName(dQWavename))
+			if(!WaveExists(SourceIntWv) &&	!WaveExists(SourceQWv) && UseIndra2Data)		//may be we heve M_... data here?
+				Wave/Z SourceIntWv=$(DataFolderName+possiblyQUoteName("M_"+IntensityWaveName))
+				Wave/Z SourceQWv=$(DataFolderName+possiblyQUoteName("M_"+QWavename))
+				Wave/Z SourceErrorWv=$(DataFolderName+possiblyQUoteName("M_"+ErrorWaveName))
+				Wave/Z SourcedQWv=$(DataFolderName+possiblyQUoteName("M_"+dQWavename))
+			endif
 			if(!WaveExists(SourceIntWv)||	!WaveExists(SourceQWv))//||!WaveExists(SourceErrorWv))
 				Abort "Data selection failed for Data in routine IR3DM_CopyAndAppendData"
 			endif

@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.13
+#pragma version=1.14
 constant IR3JversionNumber = 0.3			//Simple Fit panel version number
 
 //*************************************************************************\
@@ -11,6 +11,7 @@ constant IR3JversionNumber = 0.3			//Simple Fit panel version number
 constant SimpleFitsLinPlotMaxScale = 1.07
 constant SimpleFitsLinPlotMinScale = 0.8
 
+//1.14	 	add handling of USAXS M_... waves 
 //1.13 	Added SMR USAXS data (not QRS), checked (and fixed) Sphere and spheroid models. 
 //1.12 	Added Invariant calculation. 
 //1.1 		combined this ipf with "Simple fits models"
@@ -555,6 +556,12 @@ Function IR3J_CopyAndAppendData(FolderNameStr)
 		Wave/Z SourceQWv=$(DataFolderName+possiblyQUoteName(QWavename))
 		Wave/Z SourceErrorWv=$(DataFolderName+possiblyQUoteName(ErrorWaveName))
 		Wave/Z SourcedQWv=$(DataFolderName+possiblyQUoteName(dQWavename))
+		if(!WaveExists(SourceIntWv) &&	!WaveExists(SourceQWv) && UseIndra2Data)		//may be we heve M_... data here?
+			Wave/Z SourceIntWv=$(DataFolderName+possiblyQUoteName("M_"+IntensityWaveName))
+			Wave/Z SourceQWv=$(DataFolderName+possiblyQUoteName("M_"+QWavename))
+			Wave/Z SourceErrorWv=$(DataFolderName+possiblyQUoteName("M_"+ErrorWaveName))
+			Wave/Z SourcedQWv=$(DataFolderName+possiblyQUoteName("M_"+dQWavename))
+		endif
 		if(!WaveExists(SourceIntWv)||	!WaveExists(SourceQWv))//||!WaveExists(SourceErrorWv))
 			Abort "Data selection failed for Data in Simple/basic fits routine IR3J_CopyAndAppendData"
 		endif

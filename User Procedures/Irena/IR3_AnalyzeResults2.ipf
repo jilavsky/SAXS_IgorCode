@@ -1,7 +1,7 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version=0.1
+#pragma version=0.2
 
 
 //*************************************************************************\
@@ -17,8 +17,9 @@ constant IR3EversionNumber = 0.1			//AnalyzeResults panel version number
 // IR3E = working prefix, short (e.g., IR3DM) 
 // add IR3E_MainCheckVersion to Irena after compile hook finction correctly
 
-// Version notes"
-// 0.1	Working version. 
+// Version notes:
+//0.2 add handling of USAXS M_... waves 
+//0.1	Working version. 
 
 //
 //Menu "Development"
@@ -428,6 +429,12 @@ Function IR3E_CopyAndAppendData(FolderNameStr)
 		Wave/Z SourceQWv=$(DataFolderName+possiblyQUoteName(XDataWaveName))
 		Wave/Z SourceErrorWv=$(DataFolderName+possiblyQUoteName(ErrorWaveName))
 		Wave/Z SourcedQWv=$(DataFolderName+possiblyQUoteName(dXDataWaveName))
+		if(!WaveExists(SourceIntWv) &&	!WaveExists(SourceQWv) && UseIndra2Data)		//may be we heve M_... data here?
+			Wave/Z SourceIntWv=$(DataFolderName+possiblyQUoteName("M_"+YDataWaveName))
+			Wave/Z SourceQWv=$(DataFolderName+possiblyQUoteName("M_"+XDataWaveName))
+			Wave/Z SourceErrorWv=$(DataFolderName+possiblyQUoteName("M_"+ErrorWaveName))
+			Wave/Z SourcedQWv=$(DataFolderName+possiblyQUoteName("M_"+dXDataWaveName))
+		endif
 		if(!WaveExists(SourceIntWv)||	!WaveExists(SourceQWv))//||!WaveExists(SourceErrorWv))
 			Abort "Data selection failed for Data in Simple/basic fits routine IR3E_CopyAndAppendData"
 		endif

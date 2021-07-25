@@ -2279,7 +2279,10 @@ end
 	Wave DeletePointsMaskErrorWave
 	AppendToGraph/W=IR1R_SizesInputGraph Intensity vs Q_vec
 	AppendToGraph/W=IR1R_SizesInputGraph SizesFitIntensity vs Q_vec
-	AppendToGraph/W=IR1R_SizesInputGraph BackgroundWave vs Q_vecOriginal
+	CheckDisplayed /W=IR1R_SizesInputGraph BackgroundWave
+	if(V_Flag==0)
+		AppendToGraph/W=IR1R_SizesInputGraph BackgroundWave vs Q_vecOriginal
+	endif
 	AppendToGraph/W=IR1R_SizesInputGraph IntensityOriginal vs Q_vecOriginal
 	AppendToGraph/W=IR1R_SizesInputGraph/L=ChisquaredAxis NormalizedResidual vs Q_vec
 	ModifyGraph/W=IR1R_SizesInputGraph log(left)=1
@@ -3279,7 +3282,10 @@ Function  IR1R_SizesInputGraphFnct()
 	AutoPositionWindow/M=0/R=IR1R_SizesInputPanel 	IR1R_SizesInputGraph	
 	IR1R_AppendIntOriginal()	//appends original Intensity 
 	ModifyGraph mirror=1
-	AppendToGraph BackgroundWave vs Q_vecOriginal
+	CheckDisplayed /W=IR1R_SizesInputGraph BackgroundWave
+	if(V_Flag==0)
+		AppendToGraph BackgroundWave vs Q_vecOriginal
+	endif
 	ModifyGraph lstyle(BackgroundWave)=3
 	ModifyGraph/Z margin(top)=80
 	ControlBar /T 60
@@ -3557,8 +3563,8 @@ Function IR1R_BackgroundInput(ctrlName,varNum,varStr,varName) : SetVariableContr
 	Duplicate/O Q_vec BackgroundWave
 //	BackgroundWave=LowQScalingFactor*(Q_vec^(-1*LowQPowerLawSlope)) + Background
 	IR1R_CalculateBackgroundData(Q_vec, BackgroundWave)
-	CheckDisplayed BackgroundWave 
-	if (!V_Flag)
+	CheckDisplayed /W=IR1R_SizesInputGraph BackgroundWave
+	if(V_Flag<1)
 		AppendToGraph BackgroundWave vs Q_vec
 	endif
 

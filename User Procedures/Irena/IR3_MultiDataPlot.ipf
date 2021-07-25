@@ -1,6 +1,6 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.04
-constant IR3LversionNumber = 1.03			//MultiDataplotting tool version number. 
+#pragma version=1.05
+constant IR3LversionNumber = 1.03		//MultiDataplotting tool version number. 
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2021, Argonne National Laboratory
@@ -8,7 +8,7 @@ constant IR3LversionNumber = 1.03			//MultiDataplotting tool version number.
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-
+//1.05 	add handling of USAXS M_... waves 
 //1.04 	fix bug for same name waves (USAXS, results) which run into wave/trace name issues as appending error bars.  
 //1.03 	Added more graph controls. Reverse traces, added ability to create contour plot. 
 //1.02 	Added Two more versionf of Porod plot - IQ4 vs Q and IQ3 vs Q. 
@@ -733,11 +733,17 @@ static Function IR3L_AppendData(FolderNameStr)
 		SVAR SelectedDataPlot=root:Packages:Irena:MultiSamplePlot:SelectedDataPlot
 		SVAR ListOfDefinedDataPlots=root:Packages:Irena:MultiSamplePlot:ListOfDefinedDataPlots
 
-		IR3C_SelectWaveNamesData("Irena:MultiSamplePlot", FolderNameStr)			//thsi routine will presetn names in strings as needed
+		IR3C_SelectWaveNamesData("Irena:MultiSamplePlot", FolderNameStr)			//this routine will present names in strings as needed
 		Wave/Z SourceIntWv=$(DataFolderName+possiblyQUoteName(IntensityWaveName))
 		Wave/Z SourceQWv=$(DataFolderName+possiblyQUoteName(QWavename))
 		Wave/Z SourceErrorWv=$(DataFolderName+possiblyQUoteName(ErrorWaveName))
 		Wave/Z SourcedQWv=$(DataFolderName+possiblyQUoteName(dQWavename))
+		if(!WaveExists(SourceIntWv) &&	!WaveExists(SourceQWv) && UseIndra2Data)		//may be we heve M_... data here?
+			Wave/Z SourceIntWv=$(DataFolderName+possiblyQUoteName("M_"+IntensityWaveName))
+			Wave/Z SourceQWv=$(DataFolderName+possiblyQUoteName("M_"+QWavename))
+			Wave/Z SourceErrorWv=$(DataFolderName+possiblyQUoteName("M_"+ErrorWaveName))
+			Wave/Z SourcedQWv=$(DataFolderName+possiblyQUoteName("M_"+dQWavename))
+		endif
 		if(!WaveExists(SourceIntWv)||	!WaveExists(SourceQWv))
 			print "Data selection failed for "+DataFolderName
 			return 0
