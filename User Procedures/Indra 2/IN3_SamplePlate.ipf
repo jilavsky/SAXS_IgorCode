@@ -39,16 +39,17 @@
 constant IN3_SamplePlateSetupVersion=1
 constant IN3SBeamlineSurveyEpicsMonTicks = 15 
 constant IN3SBeamlineSurveyDevelopOn = 0
-//  values for beamtime estimate
-constant IN3BmSrvUSAXSOverhead 		= 30		//overhead for flyscan, 6-19-21 tested in BS = 30sec (with sample motion)  
-constant IN3BmSrvSAXSOverhead 		= 10		//overhead for SAXS, transmission measurement 
-constant IN3BmSrvWAXSOverhead 		= 3			//overhead for WAXS 
+//  values for beamtime estimate, last calibrated using BS on 7/31/2021 JIL (used 15 scan records BS).
+//  result is about 2 minutes more than real time. 
+constant IN3BmSrvUSAXSOverhead 		= 10		//overhead for flyscan
+constant IN3BmSrvSAXSOverhead 		= 3			//overhead for SAXS, transmission measurement 
+constant IN3BmSrvWAXSOverhead 		= 1			//overhead for WAXS 
 constant IN3BmSrvSampleMoveSpeed 	= 2			//average moving samples around in mm/sec, is 4rev/sec
 constant IN3BmSrvTuneTimeStep 		= 600		//retune every 600 seconds 
 constant IN3BmSrvTuneTimeNumU 		= 3			//retune every 3 USAXS scans 
 constant IN3BmSrvTuneAveTime  		= 40		//retune takes avergate 40 seconds full preUSAXStune is 40 seconds... 
 constant IN3BmSrvSWTuneAveTime 		= 14		//SWAXS tune MR
-constant IN3BmSrvMoveGeometryTime 	= 20		//overhead to mvoe from USAXS to SAXS to WAXS
+constant IN3BmSrvMoveGeometryTime 	= 20		//overhead to move from USAXS to SAXS to WAXS
 
 
 //TODO:
@@ -219,6 +220,10 @@ Function IN3S_MainPanel()
 		Button CreateCommandFile,pos={230,607},size={160,17}, proc=IN3S_ButtonProc,title="Preview cmd file", help={"Creates and displays command file with current set of positions"}
 		Button ExportCommandFile,pos={415,605},size={160,20}, proc=IN3S_ButtonProc,title="Export cmd file", help={"Exports usaxs.mac or defaultname.mac cmd file with current set of positions"}
 		Button ExportCommandFile2,pos={415,630},size={160,20}, proc=IN3S_ButtonProc,title="Dialog Export cmd file", help={"Dialog - Exports cmd file with current set of positions"}
+
+		Setvariable NumberOfSamples title="\Zr100Samples: ",pos={10,610},size={150,15},frame=0,fstyle=3,fColor=(0,0,65535),valueColor=(0,0,0), labelBack=0, noedit=1
+		Setvariable NumberOfSamples,variable=root:Packages:SamplePlateSetup:NumberOfSamples, help={"Number of used saples"}, limits={0,inf,0}
+
 
 		Setvariable CalculatedOverAllTime title="\Zr120Estimated run time [min]: ",pos={10,628},size={350,15},frame=0,fstyle=3,fColor=(0,0,65535),valueColor=(0,0,0), labelBack=0, noedit=1
 		Setvariable CalculatedOverAllTime,variable=root:Packages:SamplePlateSetup:CalculatedOverAllTime, help={"Estimated run time for all"}, limits={0,inf,0}
@@ -955,6 +960,21 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 							IN3S_EstimateRunTime()
 							break		// exit from switch
 						case "NMR Tubes holder":	 
+							Wave Centers = root:Packages:SamplePlatesAvailable:NMRTubesHolderCenters
+			 				//create enough space:
+							IN3S_CreateTablesForPlates(DimSize(Centers, 0 ), 0)
+							Wave/T LBCommandWv = root:Packages:SamplePlateSetup:LBCommandWv
+							LBCommandWv[][0]=""
+							LBCommandWv[][1]=num2str(Centers[p][0])
+							LBCommandWv[][2]=num2str(Centers[p][1])
+							SVAR NewPlateName = root:Packages:SamplePlateSetup:UserNameForSampleSet
+							NewPlateName = "NMRTubesSet"+num2str(abs(round(gnoise(100))))
+							ListBox CommandsList win=SamplePlateSetup, selRow=1					
+							SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+							WarningForUser = "Created a new set of positions for "+ SelectedPlateName
+							IN3S_EstimateRunTime()
+							break		// exit from switch
+						case "NMR Tubes heater":	 
 							Wave Centers = root:Packages:SamplePlatesAvailable:NMRTubesHolderCenters
 			 				//create enough space:
 							IN3S_CreateTablesForPlates(DimSize(Centers, 0 ), 0)
@@ -1783,7 +1803,7 @@ static Function IN3S_Initialize()
 	ListOfVariables+="SampleXTAR;SampleYTAR;SelectedRow;SampleThickness;SampleXRBV;SampleYRBV;"
 	ListOfVariables+="SampleXTable;SampleYTable;SurveySXStep;SurveySYStep;MoveWhenRowChanges;"
 	ListOfVariables+="RunExportHookFunction;"
-	ListOfVariables+="USAXSScanTime;SAXSScanTime;WAXSScanTime;CalculatedOverAllTime;"
+	ListOfVariables+="USAXSScanTime;SAXSScanTime;WAXSScanTime;CalculatedOverAllTime;NumberOfSamples;"
 	ListOfVariables+="TableIsSaved;"
 
 	ListOfStrings="SelectedPlateName;UserNameForSampleSet;UserName;WarningForUser;"
@@ -1864,7 +1884,11 @@ static Function IN3S_EstimateRunTime()
 	Wave/T listWaveG   =  root:Packages:SamplePlateSetup:LBCommandWv
 	Wave LBSelectionWvG= root:Packages:SamplePlateSetup:LBSelectionWv
 	
-	
+	NVAR/Z NumberOfSamples   =  root:Packages:SamplePlateSetup:NumberOfSamples
+	if(!NVAR_Exists(NumberOfSamples))
+		variable/g  root:Packages:SamplePlateSetup:NumberOfSamples
+		NVAR NumberOfSamples   =  root:Packages:SamplePlateSetup:NumberOfSamples
+	endif
 	
 	//SAXS LBSelectionWvG[i][5]==48
 	//WAXS LBSelectionWvG[i][6]==48
@@ -1921,6 +1945,7 @@ static Function IN3S_EstimateRunTime()
 		endif   
    endfor
    numSamples = max(NumUSAXS, NumSAXS, NumWAXS)
+   NumberOfSamples = numSamples
 
 	CalculatedOverAllTime  =  NumUSAXS*(USAXSScanTime+IN3BmSrvUSAXSOverhead)+totalSXSYUSAXS/IN3BmSrvSampleMoveSpeed+NumUSAXS	//this is USAXS
 								//   USAXS scans 			+				Total distance/ speed + assume 1 second speed ramp up and down
@@ -2692,6 +2717,8 @@ Function IN3S_BeamlineSurvey()
 	NVAR SampleYTAR=root:Packages:SamplePlateSetup:SampleYTAR
 	NVAR SampleXTable = root:Packages:SamplePlateSetup:SampleXTable
 	NVAR SampleYTable = root:Packages:SamplePlateSetup:SampleYTable
+	NVAR SampleXRBV=root:Packages:SamplePlateSetup:SampleXRBV
+	NVAR SampleYRBV=root:Packages:SamplePlateSetup:SampleYRBV
 	SelectedSampleName = ListWV[SelectedRow][0]
 	ListBox CommandsList, win=SamplePlateSetup, selrow=SelectedRow
 	SampleXTable = str2num(ListWV[SelectedRow][1])
@@ -2707,6 +2734,21 @@ Function IN3S_BeamlineSurvey()
 	endif
 	SetWindow BeamlinePlateSetup  hook(EpicsMon)=IN3S_BeamlineSurveyEpicsHook
 	IN3S_BeamlineSurveyStartEpicsUpdate()
+	//sync epics, RBV and TAR positions here
+#if(exists("pvOpen")==4)
+	variable SxPV, SyPV
+	pvOpen/Q SxPV, "9idcLAX:m58:c2:m1.RBV"
+	pvOpen/Q SyPV, "9idcLAX:m58:c2:m2.RBV"
+	pvWait 5
+	//this needs to be in background function and in 10Hz loop. 	
+	SampleXRBV = IN3S_GetMotorPositions(SxPV)
+	SampleYRBV = IN3S_GetMotorPositions(SyPV)
+	//end of background function loop. 
+	pvClose SxPV
+	pvClose SyPV
+#endif
+	SampleXTAR = SampleXRBV
+	SampleYTAR = SampleYRBV
 end
 
 //*************************************************************************************************
@@ -2763,7 +2805,7 @@ Function IN3S_BeamlineSurveyEpicsHook(s)
 end
 //*************************************************************************************************
 Function IN3S_BackgroundEpics(s) // This is the function that will be called periodically 
-	STRUCT WMBackgroundStruct &s	//note: cannot be static or things wil not work. 
+	STRUCT WMBackgroundStruct &s	//note: cannot be static or things will not work. 
 	NVAR SampleXRBV=root:Packages:SamplePlateSetup:SampleXRBV
 	NVAR SampleYRBV=root:Packages:SamplePlateSetup:SampleYRBV
 #if(exists("pvOpen")==4)
@@ -2868,14 +2910,14 @@ Function IN3S_BeamlineSurveyPanel()
 		SetVariable SampleYTAR,pos={260,270},size={90,30}, limits={-200,200, 0}, proc=IN3S_SurveySetVarProc,title=" ",fSize=25
 		Setvariable SampleYTAR,fStyle=2, variable=root:Packages:SamplePlateSetup:SampleYTAR, help={"SY position"},format="%6.2f"
 
-		Button MoveSXLow,pos={10,260},size={30,50}, proc=IN3S_SurveyButtonProc,title="〈",help={"Moves SX lower by the step value"}
+		Button MoveSXLow,pos={10,260},size={30,50}, proc=IN3S_SurveyButtonProc,title="-",help={"Moves SX lower by the step value"}
 		Button MoveSXLow,fSize=24,fstyle=1,fColor=(1,16019,65535)
-		Button MoveSXHigh,pos={150,260},size={30,50}, proc=IN3S_SurveyButtonProc,title="〉",help={"Moves SX higher by the step value"}
+		Button MoveSXHigh,pos={150,260},size={30,50}, proc=IN3S_SurveyButtonProc,title="+",help={"Moves SX higher by the step value"}
 		Button MoveSXHigh,fSize=24,fstyle=1,fColor=(1,16019,65535)
 
-		Button MoveSYLow,pos={220,260},size={30,50}, proc=IN3S_SurveyButtonProc,title="〈",help={"Moves SY lower by the step value"}
+		Button MoveSYLow,pos={220,260},size={30,50}, proc=IN3S_SurveyButtonProc,title="-",help={"Moves SY lower by the step value"}
 		Button MoveSYLow,fSize=24,fstyle=1,fColor=(1,16019,65535)
-		Button MoveSYHigh,pos={360,260},size={30,50}, proc=IN3S_SurveyButtonProc,title="〉",help={"Moves SY higher by the step value"}
+		Button MoveSYHigh,pos={360,260},size={30,50}, proc=IN3S_SurveyButtonProc,title="+",help={"Moves SY higher by the step value"}
 		Button MoveSYHigh,fSize=24,fstyle=1,fColor=(1,16019,65535)
 
 
@@ -2994,19 +3036,25 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 			// click code here
 			NVAR SXStep = root:Packages:SamplePlateSetup:SurveySXStep
 			NVAR SYStep = root:Packages:SamplePlateSetup:SurveySYStep
-			NVAR CurentSX=root:Packages:SamplePlateSetup:SampleXTAR
-			NVAR CurentSY=root:Packages:SamplePlateSetup:SampleYTAR
+//			NVAR CurentSX=root:Packages:SamplePlateSetup:SampleXTAR
+//			NVAR CurentSY=root:Packages:SamplePlateSetup:SampleYTAR
+			NVAR SampleXTAR = root:Packages:SamplePlateSetup:SampleXTAR
+			NVAR SampleYTAR = root:Packages:SamplePlateSetup:SampleYTAR
 			if(StringMatch(ba.ctrlName, "MoveSXLow"))		
-				IN3S_MoveMotorInEpics("SX",CurentSX-SXStep)
+				SampleXTAR = SampleXTAR-SXStep
+				IN3S_MoveMotorInEpics("SX",SampleXTAR)			
 			endif
 			if(StringMatch(ba.ctrlName, "MoveSXHigh"))
-				IN3S_MoveMotorInEpics("SX",CurentSX+SXStep)
+				SampleXTAR = SampleXTAR+SXStep
+				IN3S_MoveMotorInEpics("SX",SampleXTAR)
 			endif
 			if(StringMatch(ba.ctrlName, "MoveSYLow"))		
-				IN3S_MoveMotorInEpics("SY",CurentSY-SYStep)
+				SampleyTAR = SampleYTAR-SyStep
+				IN3S_MoveMotorInEpics("SY",SampleyTAR)
 			endif
 			if(StringMatch(ba.ctrlName, "MoveSYHigh"))
-				IN3S_MoveMotorInEpics("SY",CurentSY+SYStep)
+				SampleyTAR = SampleYTAR+SyStep
+				IN3S_MoveMotorInEpics("SY",SampleyTAR)
 			endif
 			if(StringMatch(ba.ctrlName, "ChangeSXStepLow"))
 				SXStep = (SXStep<0.01 || SXStep>100) ? 1 : SXStep
@@ -3027,8 +3075,10 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 			endif
 			
 			if(StringMatch(ba.ctrlName, "GoTo00"))
-				IN3S_MoveMotorInEpics("SX",0)
-				IN3S_MoveMotorInEpics("SY",0)
+				SampleXTAR = 0
+				SampleYTAR = 0
+				IN3S_MoveMotorInEpics("SX",SampleXTAR)
+				IN3S_MoveMotorInEpics("SY",SampleYTAR)
 			endif
 			variable InstrumentUsed
 			if(StringMatch(ba.ctrlName, "SetSXAs00"))
@@ -3044,6 +3094,7 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 						sleep/T 10
 						IN3S_PutEpicsPv("9idcLAX:m58:c2:m1.SUSE", 1)
 					endif
+				SampleXTAR = 0
 #endif
 			endif		
 			if(StringMatch(ba.ctrlName, "SetSYAs00"))
@@ -3059,6 +3110,7 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 						sleep/T 10
 						IN3S_PutEpicsPv("9idcLAX:m58:c2:m2.SUSE", 1)
 					endif
+				SampleYTAR = 0
 #endif
 			endif		
 			if(StringMatch(ba.ctrlName, "STOPMotors"))
@@ -3128,6 +3180,7 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 			endif		
 		
 			if(StringMatch(ba.ctrlName, "MoveRowUp"))
+				Wave SelWv=root:Packages:SamplePlateSetup:LBSelectionWv
 				NVAR SelectedRow=root:Packages:SamplePlateSetup:SelectedRow
 				SVAR SelectedSampleName=root:Packages:SamplePlateSetup:SelectedSampleName
 				Wave/T ListWV = root:Packages:SamplePlateSetup:LBCommandWv
@@ -3139,8 +3192,10 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 				NVAR DefSaThick = root:Packages:SamplePlateSetup:DefaultSampleThickness
 				if(SelectedRow>0)
 					SelectedRow=SelectedRow-1
+					SelWv[][0]=2
+					SelWv[SelectedRow]=3
 					SelectedSampleName = ListWV[SelectedRow][0]
-					ListBox CommandsList, win=SamplePlateSetup, selrow=SelectedRow
+					//ListBox CommandsList, win=SamplePlateSetup, selrow=SelectedRow
 					SampleXTable = str2num(ListWV[SelectedRow][1])
 					SampleYTable = str2num(ListWV[SelectedRow][2])
 					SampleThickness = str2num(ListWV[SelectedRow][3])
@@ -3153,6 +3208,7 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 				IN3S_EstimateRunTime()
 			endif
 			if(StringMatch(ba.ctrlName, "MoveRowDown"))
+				Wave SelWv=root:Packages:SamplePlateSetup:LBSelectionWv
 				NVAR SelectedRow=root:Packages:SamplePlateSetup:SelectedRow
 				SVAR SelectedSampleName=root:Packages:SamplePlateSetup:SelectedSampleName
 				Wave/T ListWV = root:Packages:SamplePlateSetup:LBCommandWv
@@ -3166,8 +3222,10 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 					IN3S_InsertDeleteLines(4, SelectedRow, 1)
 				endif
 				SelectedRow=SelectedRow+1
+				SelWv[][0]=2
+				SelWv[SelectedRow]=3
 				SelectedSampleName = ListWV[SelectedRow][0]
-				ListBox CommandsList, win=SamplePlateSetup, selrow=SelectedRow
+				//ListBox CommandsList, win=SamplePlateSetup, selrow=SelectedRow
 				SampleXTable = str2num(ListWV[SelectedRow][1])
 				SampleYTable = str2num(ListWV[SelectedRow][2])
 				SampleThickness = str2num(ListWV[SelectedRow][3])
@@ -3183,8 +3241,12 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 				Wave/T ListWV = root:Packages:SamplePlateSetup:LBCommandWv
 				NVAR SampleXTable = root:Packages:SamplePlateSetup:SampleXTable
 				NVAR SampleYTable = root:Packages:SamplePlateSetup:SampleYTable
-				IN3S_MoveMotorInEpics("SX",SampleXTable)	
-				IN3S_MoveMotorInEpics("SY",SampleYTable)
+				NVAR SampleXTAR = root:Packages:SamplePlateSetup:SampleXTAR
+				NVAR SampleYTAR = root:Packages:SamplePlateSetup:SampleYTAR
+				SampleXTAR = SampleXTable
+				SampleYTAR = SampleYTable
+				IN3S_MoveMotorInEpics("SX",SampleXTAR)	
+				IN3S_MoveMotorInEpics("SY",SampleYTAR)
 				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 				WarningForUser = "Moved to sample position from table" 
 			endif
@@ -3226,9 +3288,13 @@ Function IN3S_MoveToPositionIfOK()
 	if(V_Flag)	//exists
 		NVAR ShouldMove=root:Packages:SamplePlateSetup:MoveWhenRowChanges
 		if(ShouldMove)
+			NVAR SampleXTAR=root:Packages:SamplePlateSetup:SampleXTAR
+			NVAR SampleYTAR=root:Packages:SamplePlateSetup:SampleYTAR
 			NVAR TableSX=root:Packages:SamplePlateSetup:SampleXTable
 			NVAR TableSY=root:Packages:SamplePlateSetup:SampleYTable
 			if(numtype(TableSX)==0 && numtype(TableSY)==0) //are these numbers?
+				SampleXTAR = TableSX
+				SampleYTAR = TableSY
 				IN3S_MoveMotorInEpics("SX",TableSX)
 				IN3S_MoveMotorInEpics("SY",TableSY)	
 				//SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser

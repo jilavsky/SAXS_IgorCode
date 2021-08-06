@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=2.54
+#pragma version=2.55
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2021, Argonne National Laboratory
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.55 fix edf file Xenocs loading, they changed \r\n into \n only and that broke parrsing header... 
 //2.54 Remove for MatrixOP /NTHR=0 since it is applicable to 3D matrices only 
 //2.53 added FLOAT as Pilatus EDF file format option. Seems like we now have float values in there. 
 //2.52 added 12ID-B tiff files, these are tiff files with associated metadata file. Location based on folder structure. 
@@ -365,7 +366,8 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 			headerStr=PadString (headerStr, headerLength, 0x20)
 			FBinRead RefNum, headerStr
 			close RefNum
-			headerStr=ReplaceString("\r\n", headerStr, "")
+			headerStr=ReplaceString("\r", headerStr, "")
+			headerStr=ReplaceString("\n", headerStr, "")
 			headerStr=ReplaceString(" ;", headerStr, ";")
 			headerStr=ReplaceString(" = ", headerStr, "=")
 			headerStr=ReplaceString("{", headerStr, "")

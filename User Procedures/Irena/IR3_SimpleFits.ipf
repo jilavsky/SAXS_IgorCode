@@ -3340,6 +3340,11 @@ Function IR3J_InvCalculateInvariant()
 	variable StartPnt, EndPnt
 	StartPnt = BinarySearch(QWave, InvBckgMinQ )
 	EndPnt   = BinarySearch(QWave, InvBckgMaxQ )
+	
+	DoWIndow IR3J_LogLogDataDisplay
+	if(V_Flag!=1)
+		return 0
+	endif
 
 	Duplicate/O IntWave, InvariantIntWaveCorr
 	//Correct data for background and add corrected data to graph

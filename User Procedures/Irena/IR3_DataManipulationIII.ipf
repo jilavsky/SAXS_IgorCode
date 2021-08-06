@@ -1,13 +1,14 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version=1.01
+#pragma version=1.02
 
 
-constant IR3DMversionNumber = 0.1			//Data Manipulation III panel version number
+constant IR3DMversionNumber = 1.02			//Data Manipulation III panel version number
 
 
-//Version n otes:
+//Version notes:
+//1.02 fix Process data - trim 
 //1.01 add handling of USAXS M_... waves 
 //1.00 first usable version. 
 
@@ -124,10 +125,11 @@ Function IR3DM_DataManIIIPanelFnct()
 	SetVariable AppendModifier,pos={380,400},size={120,15}, noproc,title="Append :"
 	Setvariable AppendModifier, variable=root:Packages:Irena:DataManIII:AppendModifier
 
-	Button DoManipulationBTN,pos={290,490},size={200,20}, proc=IR3DM_ButtonProc,title=" ", help={"This will run selected data manipualtion"}
+	Button DoManipulationBTN,pos={290,490},size={200,20}, proc=IR3DM_ButtonProc,title=" ", help={"This will run selected data manipulation"}
 	Button DoManipulationBTN fColor=(65535,0,0)
 
-	Button ClearTheToolBTN,pos={290,550},size={200,20}, proc=IR3DM_ButtonProc,title="Clear data", help={"This will remvoe all data from this tool"}
+	Button ClearTheToolBTN,pos={290,550},size={200,20}, proc=IR3DM_ButtonProc,title="Clear data", help={"This will remove all data from this tool"}
+	Button SaveManipulationsBTN,pos={290,550},size={200,20}, proc=IR3DM_ButtonProc,title="Save data", help={"This will save results from manipulation"}
 
 
 
@@ -189,6 +191,8 @@ static Function IR3DM_SetupControlsOnMainpanel()
 			Button DoManipulationBTN  win=IR3DM_DataManIIIPanel, title=""
 		endif
 		Button ClearTheToolBTN		win=IR3DM_DataManIIIPanel, disable= (!AverageData)	
+		Button SaveManipulationsBTN		win=IR3DM_DataManIIIPanel, disable= (!ProcessData)	
+		
 		
 	endif
 end
@@ -268,9 +272,12 @@ Function IR3DM_ButtonProc(ba) : ButtonControl
 				elseif(AverageData)		//this is save data button now
 					IR3DM_AverageSaveData()
 				elseif(ProcessData)		//this is process or save, we need to figure this out... 
-				
+					IR3DM_ProcessSequenceOfData("ProcessData")
 				endif
 				
+			endif
+			if(stringmatch(ba.ctrlName,"SaveManipulationsBTN"))		//Save results of manipulations
+				IR3DM_SaveProcessDataFnct()
 			endif
 			if(stringmatch(ba.ctrlName,"SelectAll"))
 				Wave/Z SelectionOfAvailableData = root:Packages:Irena:DataManIII:SelectionOfAvailableData
@@ -368,15 +375,17 @@ static Function IR3DM_ProcessSequenceOfData(WhatToDO)
 		//NVAR DelayBetweenProcessing=root:Packages:Irena:DataManIII:DelayBetweenProcessing
 		Wave SelectionOfAvailableData = root:Packages:Irena:DataManIII:SelectionOfAvailableData
 		Wave/T ListOfAvailableData = root:Packages:Irena:DataManIII:ListOfAvailableData
-		variable i, imax
+		variable i, imax, HowMany
 		imax = numpnts(ListOfAvailableData)
+		HowMany = sum(SelectionOfAvailableData)
 		For(i=0;i<imax;i+=1)
 			if(SelectionOfAvailableData[i]>0.5)		//data set selected
 				if(StringMatch(WhatToDO, "DeleteData"))
 					IR3DM_DeleteData(ListOfAvailableData[i])
+				elseif(StringMatch(WhatToDO, "ProcessData"))
+					IR3DM_CopyAndAppendData(ListOfAvailableData[i])
+					IR3DM_ProcessDataFunction(HowMany)
 				endif
-				//DoUpdate 
-				//sleep/S/C=6/M="Fitted data for "+ListOfAvailableData[i] DelayBetweenProcessing
 			endif
 		endfor
 		//IR3J_CleanUnusedParamWaves()
@@ -460,29 +469,29 @@ Function IR3DM_SetVarProc(sva) : SetVariableControl
 			NVAR DataQstartPoint = root:Packages:Irena:DataManIII:DataQstartPoint
 			
 			if(stringmatch(sva.ctrlName,"DataQEnd"))
-				WAVE OriginalDataQWave = root:Packages:Irena:DataManIII:OriginalDataQWave
-				tempP = BinarySearch(OriginalDataQWave, DataQEnd )
+				WAVE Original_Q = root:Packages:Irena:DataManIII:Original_Q
+				tempP = BinarySearch(Original_Q, DataQEnd )
 				if(tempP<1)
 					print "Wrong Q value set, Data Q max must be at most 1 point before the end of Data"
-					tempP = numpnts(OriginalDataQWave)-2
-					DataQEnd = OriginalDataQWave[tempP]
+					tempP = numpnts(Original_Q)-2
+					DataQEnd = Original_Q[tempP]
 				endif
 				DataQEndPoint = tempP	
 				//set cursor
-				Cursor /W=IR3DM_DataManIIIDataDisplay /P B  OriginalDataIntWave  DataQEndPoint		
-				IR3DM_SyncCursorsTogether("OriginalDataIntWave","B",tempP)
+				Cursor /W=IR3DM_DataManIIIDataDisplay /P B  Original_Intensity  DataQEndPoint		
+				IR3DM_SyncCursorsTogether("Original_Intensity","B",tempP)
 			endif
 			if(stringmatch(sva.ctrlName,"DataQstart"))
-				WAVE OriginalDataQWave = root:Packages:Irena:DataManIII:OriginalDataQWave
-				tempP = BinarySearch(OriginalDataQWave, DataQstart )
+				WAVE Original_Q = root:Packages:Irena:DataManIII:Original_Q
+				tempP = BinarySearch(Original_Q, DataQstart )
 				if(tempP<1)
 					print "Wrong Q value set, Data Q min must be at least 1 point from the start of Data"
 					tempP = 1
-					DataQstart = OriginalDataQWave[tempP]
+					DataQstart = Original_Q[tempP]
 				endif
 				DataQstartPoint=tempP
-				Cursor /W=IR3DM_DataManIIIDataDisplay /P A  OriginalDataIntWave  DataQstartPoint		
-				IR3DM_SyncCursorsTogether("OriginalDataIntWave","A",tempP)
+				Cursor /W=IR3DM_DataManIIIDataDisplay /P A  Original_Intensity  DataQstartPoint		
+				IR3DM_SyncCursorsTogether("Original_Intensity","A",tempP)
 		endif
 			break
 
@@ -607,9 +616,10 @@ Function IR3DM_CopyAndAppendData(FolderNameStr)
 			endif
 		elseif(ProcessData)															//Add one data set to graph and process 
 			//remove any data from AverageData below
+			KillWaves/Z AverageIntensity, AverageQvector, AverageErrors
 			variable i
 			For(i=0;i<50;i+=1)
-				KillWaves/Z $("OriginalDataIntWave"+num2str(i)), $("OriginalDataQWave"+num2str(i)), $("OriginalDataErrorWave"+num2str(i)), $("OriginalDatadQWave"+num2str(i))
+				KillWaves/Z $("Original_Intensity"+num2str(i)), $("Original_Q"+num2str(i)), $("Original_Errors"+num2str(i)), $("Original_dQ"+num2str(i))
 			endfor
 			SVAR DataStartFolder=root:Packages:Irena:DataManIII:DataStartFolder
 			SVAR DataFolderName=root:Packages:Irena:DataManIII:DataFolderName
@@ -627,6 +637,9 @@ Function IR3DM_CopyAndAppendData(FolderNameStr)
 			SVAR IntensityWaveName = root:Packages:Irena:DataManIII:IntensityWaveName
 			SVAR QWavename = root:Packages:Irena:DataManIII:QWavename
 			SVAR ErrorWaveName = root:Packages:Irena:DataManIII:ErrorWaveName
+			SVAR AddExtension=root:Packages:Irena:DataManIII:AppendModifier
+			SVAR SaveDataToFolder = root:Packages:Irena:DataManIII:SaveDataToFolder
+			SVAR SaveDataToFolderFull = root:Packages:Irena:DataManIII:SaveDataToFolderFull
 			UseUserDefinedData = 0
 			UseModelData = 0
 			//get the names of waves, assume this tool actually works. May not under some conditions. In that case this tool will not work. 
@@ -644,31 +657,38 @@ Function IR3DM_CopyAndAppendData(FolderNameStr)
 			if(!WaveExists(SourceIntWv)||	!WaveExists(SourceQWv))//||!WaveExists(SourceErrorWv))
 				Abort "Data selection failed for Data in routine IR3DM_CopyAndAppendData"
 			endif
+			string OutputWaveNameMain
+			OutputWaveNameMain = RemoveEnding(IN2G_removeExtraQuote(DataFolderName,1,1), ":")  + AddExtension+":"
+			//if(strlen(SaveDataToFolder)<1)
+			SaveDataToFolder = OutputWaveNameMain
+			//endif
+
 			//this one is using only one data set at time... 
-			Duplicate/O SourceIntWv, OriginalDataIntWave
-			Duplicate/O SourceQWv, OriginalDataQWave
+			Duplicate/O SourceIntWv, Original_Intensity
+			Duplicate/O SourceQWv, Original_Q
 			if(WaveExists(SourceErrorWv))
-				Duplicate/O SourceErrorWv, OriginalDataErrorWave
+				Duplicate/O SourceErrorWv, Original_Errors
 			else
-				Duplicate/O SourceIntWv, OriginalDataErrorWave
-				OriginalDataErrorWave = 0
+				Duplicate/O SourceIntWv, Original_Errors
+				Original_Errors = 0
 			endif
 			if(WaveExists(SourcedQWv))
-				Duplicate/O SourcedQWv, OriginalDatadQWave
+				Duplicate/O SourcedQWv, Original_dQ
 			else
-				dQWavename=""
+				Duplicate/O SourceQWv, Original_dQ
+				WAVE Original_dQ
+				Original_dQ = 0
 			endif
-			//pauseUpdate
 			IR3DM_AppendProcessDataToGraphLogLog()
-			//DoUpdate
-			print "Added Data from folder : "+DataFolderName
+			print "Added Data from folder : "+DataFolderName		
 		elseif(AverageData)															//Add many data sets to graph and average
 			//remove any data from Process data above
-			Wave/Z OriginalDataIntWave
-			Wave/Z OriginalDataQWave
-			Wave/Z OriginalDataErrorWave
-			Wave/Z OriginalDatadQWave
-			KillWaves/Z OriginalDataIntWave, OriginalDataQWave, OriginalDataErrorWave, OriginalDatadQWave
+			killwaves/Z Modified_Intensity, Modified_Q  , Modified_Errors, Modified_dQ 
+			Wave/Z Original_Intensity
+			Wave/Z Original_Q
+			Wave/Z Original_Errors
+			Wave/Z Original_dQ
+			KillWaves/Z Original_Intensity, Original_Q, Original_Errors, Original_dQ
 			SVAR DataStartFolder=root:Packages:Irena:DataManIII:DataStartFolder
 			SVAR DataFolderName=root:Packages:Irena:DataManIII:DataFolderName
 			SVAR IntensityWaveName=root:Packages:Irena:DataManIII:IntensityWaveName
@@ -710,6 +730,131 @@ Function IR3DM_CopyAndAppendData(FolderNameStr)
 end
 //**********************************************************************************************************
 //**********************************************************************************************************
+//**********************************************************************************************************
+//************************************************************************************************************
+
+Function IR3DM_ProcessDataFunction(HowMany)
+	variable HowMany
+	
+	doWIndow IR3DM_DataManIIIDataDisplay
+	if(V_Flag==0)
+		return 0
+	endif
+	DoWIndow/F IR3DM_DataManIIIDataDisplay
+	DfRef OldDf=GetDataFolderDFR()
+	setDataFolder root:Packages:Irena:DataManIII
+	variable i, numTraces
+	string TraceNames, NewNote
+	SVAR AddExtension=root:Packages:Irena:DataManIII:AppendModifier
+	NVAR UseIndra2Data=root:Packages:Irena:DataManIII:UseIndra2Data
+	NVAR UseQRSdata=root:Packages:Irena:DataManIII:UseQRSdata
+	NVAR UseResults=  root:Packages:Irena:DataManIII:UseResults
+	SVAR SaveDataToFolder = root:Packages:Irena:DataManIII:SaveDataToFolder
+	SVAR SaveDataToFolderFull = root:Packages:Irena:DataManIII:SaveDataToFolderFull
+	SVAR DataFolderName=root:Packages:Irena:DataManIII:DataFolderName
+	//let's trim if asked for...
+	NVAR TrimSelected=root:Packages:Irena:DataManIII:ProcessTrim
+	NVAR Subtract = root:Packages:Irena:DataManIII:ProcessSubtractData
+
+	Wave Original_Intensity
+	Wave Original_Q
+	Wave Original_Errors
+	Wave Original_dQ
+
+	NewNote = "Processed Data;"+date()+";"+time()+";"
+	NVAR Qmax=root:Packages:Irena:DataManIII:DataQEnd
+	NVAR Qmin=root:Packages:Irena:DataManIII:DataQstart
+	variable StartP, EndP
+	if(TrimSelected)
+		StartP= BinarySearch(Original_Q, Qmin )
+		EndP= BinarySearch(Original_Q, Qmax )
+		EndP = (EndP<numpnts(Original_Q)&&EndP>0) ? EndP : (numpnts(Original_Q)-1)
+		StartP = (StartP>=0) ? StartP : 0
+		Duplicate/O/R=[StartP,EndP] Original_Intensity, Modified_Intensity 
+		Duplicate/O/R=[StartP,EndP] Original_Q, Modified_Q 
+		Duplicate/O/R=[StartP,EndP] Original_Errors, Modified_Errors 
+		Duplicate/O/R=[StartP,EndP] Original_dQ, Modified_dQ 
+		NewNote = "Data trimmed;StartQ="+num2str(Qmin)+";EndQ="+num2str(Qmax)+";"
+	else
+		Duplicate/O Original_Intensity, Modified_Intensity 
+		Duplicate/O Original_Q, Modified_Q 
+		Duplicate/O Original_Errors, Modified_Errors 
+		Duplicate/O Original_dQ, Modified_dQ 
+	endif
+	
+	Wave Modified_Intensity = root:Packages:Irena:DataManIII:Modified_Intensity
+	Wave Modified_Q = root:Packages:Irena:DataManIII:Modified_Q
+	Wave Modified_Errors = root:Packages:Irena:DataManIII:Modified_Errors
+	Note /K/NOCR Modified_Intensity, NewNote
+	Note /K/NOCR Modified_Q, NewNote
+	Note /K/NOCR Modified_Errors, NewNote
+
+	RemoveFromGraph /W=IR3DM_DataManIIIDataDisplay /Z Modified_Intensity
+	IN2G_ColorTopGrphRainbow(topGraphStr="IR3DM_DataManIIIDataDisplay")
+
+	AppendToGraph /W=IR3DM_DataManIIIDataDisplay  Modified_Intensity  vs Modified_Q
+	ErrorBars/T=2/L=2 /W=IR3DM_DataManIIIDataDisplay $(NameOfWave(Modified_Intensity)) Y,wave=(Modified_Errors,Modified_Errors)
+	ModifyGraph /W=IR3DM_DataManIIIDataDisplay lstyle($(NameOfWave(Modified_Intensity)))=3,lsize($(NameOfWave(Modified_Intensity)))=3,rgb($(NameOfWave(Modified_Intensity)))=(0,0,0)
+	ReorderTraces/W=IR3DM_DataManIIIDataDisplay _back_, {$(NameOfWave(Modified_Intensity))}
+	IN2G_LegendTopGrphFldr(str2num(IN2G_LkUpDfltVar("LegendSize")), 20, 0, 1, topGraphStr="IR3DM_DataManIIIDataDisplay")
+	DoUpdate 
+	if(HowMany>1)	//processign many data sets, need to save the data here also. 
+		IR3DM_SaveProcessDataFnct()
+	endif
+	
+	setDataFOlder oldDf
+
+end
+
+//**********************************************************************************************************
+
+//************************************************************************************************************
+
+Function IR3DM_SaveProcessDataFnct()
+	
+	doWIndow IR3DM_DataManIIIDataDisplay
+	if(V_Flag==0)
+		return 0
+	endif
+	DoWIndow/F IR3DM_DataManIIIDataDisplay
+	DfRef OldDf=GetDataFolderDFR()
+	setDataFolder root:Packages:Irena:DataManIII
+	variable i, numTraces
+	string TraceNames, NewNote
+	SVAR AddExtension=root:Packages:Irena:DataManIII:AppendModifier
+	NVAR UseIndra2Data=root:Packages:Irena:DataManIII:UseIndra2Data
+	NVAR UseQRSdata=root:Packages:Irena:DataManIII:UseQRSdata
+	NVAR UseResults=  root:Packages:Irena:DataManIII:UseResults
+	SVAR SaveDataToFolder = root:Packages:Irena:DataManIII:SaveDataToFolder
+	SVAR SaveDataToFolderFull = root:Packages:Irena:DataManIII:SaveDataToFolderFull
+	SVAR DataFolderName=root:Packages:Irena:DataManIII:DataFolderName
+
+	Wave Original_Intensity
+	Wave Original_Q
+	Wave Original_Errors
+	Wave Original_dQ
+	Wave/Z Modified_Intensity = root:Packages:Irena:DataManIII:Modified_Intensity
+	Wave/Z Modified_Q = root:Packages:Irena:DataManIII:Modified_Q
+	Wave/Z Modified_Errors = root:Packages:Irena:DataManIII:Modified_Errors
+	SVAR IntensityWaveName = root:Packages:Irena:DataManIII:IntensityWaveName
+	SVAR QWavename = root:Packages:Irena:DataManIII:QWavename
+	SVAR ErrorWaveName = root:Packages:Irena:DataManIII:ErrorWaveName
+
+	if(WaveExists(Modified_Intensity)&&WaveExists(Modified_Q)&&WaveExists(Modified_Errors))
+		//SetDataFOlder $(RemoveListItem(ItemsInList(SaveDataToFolderFull,":")-1, SaveDataToFolderFull, ":"))
+		SetDataFOlder $(SaveDataToFolderFull)
+		//print GetDataFOlder(1)
+		NewDataFolder/O/S $(StringFromList(ItemsInList(SaveDataToFolder,":")-1, SaveDataToFolder, ":"))
+		print "Data saved in folder: "+GetDataFOlder(1)
+		Duplicate/O Modified_Intensity, $(IN2G_removeExtraQuote(IntensityWaveName,1,1) + AddExtension)
+		Duplicate/O Modified_Q, $(IN2G_removeExtraQuote(QWavename,1,1) + AddExtension)
+		Duplicate/O Modified_Errors, $(IN2G_removeExtraQuote(ErrorWaveName,1,1) + AddExtension)
+	else
+		Print "No data to save in IR3DM_SaveProcessDataFnct"
+	endif
+	setDataFolder root:Packages:Irena:DataManIII
+
+end//************************************************************************************************************
 //************************************************************************************************************
 
 Function IR3DM_AverageDataFunction()
@@ -920,10 +1065,10 @@ Function IR3DM_AppendProcessDataToGraphLogLog()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable WhichLegend=0
 	string Shortname1, SubtractShortName, legendText
-	Wave/Z OriginalDataIntWave=root:Packages:Irena:DataManIII:OriginalDataIntWave
-	Wave/Z OriginalDataQWave=root:Packages:Irena:DataManIII:OriginalDataQWave
-	Wave/Z OriginalDataErrorWave=root:Packages:Irena:DataManIII:OriginalDataErrorWave
-	if(!WaveExists(OriginalDataIntWave))
+	Wave/Z Original_Intensity=root:Packages:Irena:DataManIII:Original_Intensity
+	Wave/Z Original_Q=root:Packages:Irena:DataManIII:Original_Q
+	Wave/Z Original_Errors=root:Packages:Irena:DataManIII:Original_Errors
+	if(!WaveExists(Original_Intensity))
 		return 0
 	endif
 	DoWIndow IR3DM_DataManIIIDataDisplay
@@ -931,35 +1076,35 @@ Function IR3DM_AppendProcessDataToGraphLogLog()
 		IR3DM_CreateDM3Graphs()
 	endif
 	
-	CheckDisplayed /W=IR3DM_DataManIIIDataDisplay OriginalDataIntWave
+	CheckDisplayed /W=IR3DM_DataManIIIDataDisplay Original_Intensity
 	if(!V_flag)
-		AppendToGraph /W=IR3DM_DataManIIIDataDisplay  OriginalDataIntWave  vs OriginalDataQWave
+		AppendToGraph /W=IR3DM_DataManIIIDataDisplay  Original_Intensity  vs Original_Q
 		ModifyGraph /W=IR3DM_DataManIIIDataDisplay log=1, mirror(bottom)=1
 		Label /W=IR3DM_DataManIIIDataDisplay left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity"
 		Label /W=IR3DM_DataManIIIDataDisplay bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q[A\\S-1\\M"+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
-		ErrorBars /W=IR3DM_DataManIIIDataDisplay OriginalDataIntWave Y,wave=(OriginalDataErrorWave,OriginalDataErrorWave)		
+		ErrorBars /W=IR3DM_DataManIIIDataDisplay Original_Intensity Y,wave=(Original_Errors,Original_Errors)		
 	endif
 	NVAR DataQEnd = root:Packages:Irena:DataManIII:DataQEnd
 	NVAR DataQstart = root:Packages:Irena:DataManIII:DataQstart
 	NVAR DataQEndPoint = root:Packages:Irena:DataManIII:DataQEndPoint
 	NVAR DataQstartPoint = root:Packages:Irena:DataManIII:DataQstartPoint
 	if(DataQstart>0)	 		//old Q min already set.
-		DataQstartPoint = BinarySearch(OriginalDataQWave, DataQstart)
+		DataQstartPoint = BinarySearch(Original_Q, DataQstart)
 	endif
 	if(DataQstartPoint<1)	//Qmin not set or not found. Set to point 2 on that wave. 
-		DataQstart = OriginalDataQWave[1]
+		DataQstart = Original_Q[1]
 		DataQstartPoint = 1
 	endif
 	if(DataQEnd>0)	 		//old Q max already set.
-		DataQEndPoint = BinarySearch(OriginalDataQWave, DataQEnd)
+		DataQEndPoint = BinarySearch(Original_Q, DataQEnd)
 	endif
 	if(DataQEndPoint<1)	//Qmax not set or not found. Set to last point-1 on that wave. 
-		DataQEnd = OriginalDataQWave[numpnts(OriginalDataQWave)-2]
-		DataQEndPoint = numpnts(OriginalDataQWave)-2
+		DataQEnd = Original_Q[numpnts(Original_Q)-2]
+		DataQEndPoint = numpnts(Original_Q)-2
 	endif
 	SetWindow IR3DM_DataManIIIDataDisplay, hook(DM3LogCursorMoved) = $""
-	cursor /W=IR3DM_DataManIIIDataDisplay B, OriginalDataIntWave, DataQEndPoint
-	cursor /W=IR3DM_DataManIIIDataDisplay A, OriginalDataIntWave, DataQstartPoint
+	cursor /W=IR3DM_DataManIIIDataDisplay B, Original_Intensity, DataQEndPoint
+	cursor /W=IR3DM_DataManIIIDataDisplay A, Original_Intensity, DataQstartPoint
 	SetWindow IR3DM_DataManIIIDataDisplay, hook(DM3LogCursorMoved) = IR3DM_GraphWindowHook
 
 
@@ -988,10 +1133,10 @@ Function IR3DM_AppendProcessDataToGraphLogLog()
 	SubtractShortName = StringFromList(ItemsInList(SelectedFolderToSubtract, ":")-1, SelectedFolderToSubtract  ,":")
 	if(ProcessSubtractData)
 		SubtractShortName = "\\s("+nameofWave(OriginalSubtractIntWave)+") Subtract wave : "+ SubtractShortName
-		legendText = "\\s(OriginalDataIntWave) "+Shortname1+"\r"+ SubtractShortName
+		legendText = "\\s(Original_Intensity) "+Shortname1+"\r"+ SubtractShortName
 		Legend/W=IR3DM_DataManIIIDataDisplay /C/N=text0/J/A=LB legendText
 	else
-		Legend/W=IR3DM_DataManIIIDataDisplay /C/N=text0/J/A=LB "\\s(OriginalDataIntWave) "+Shortname1
+		Legend/W=IR3DM_DataManIIIDataDisplay /C/N=text0/J/A=LB "\\s(Original_Intensity) "+Shortname1
 	endif
 	//IN2G_LegendTopGrphFldr(IN2G_LkUpDfltVar("LegendSize"), 20, 1, 0, topGraphStr = "IR3DM_DataManIIIDataDisplay")
 	//IN2G_ColorTopGrphRainbow(topGraphStr="IR3DM_DataManIIIDataDisplay")
@@ -1033,18 +1178,18 @@ static Function IR3DM_SyncCursorsTogether(traceName,CursorName,PointNumber)
 	NVAR DataQstart = root:Packages:Irena:DataManIII:DataQstart
 	NVAR DataQEndPoint = root:Packages:Irena:DataManIII:DataQEndPoint
 	NVAR DataQstartPoint = root:Packages:Irena:DataManIII:DataQstartPoint
-	Wave OriginalDataQWave=root:Packages:Irena:DataManIII:OriginalDataQWave
-	Wave OriginalDataIntWave=root:Packages:Irena:DataManIII:OriginalDataIntWave
+	Wave Original_Q=root:Packages:Irena:DataManIII:Original_Q
+	Wave Original_Intensity=root:Packages:Irena:DataManIII:Original_Intensity
 	variable tempMaxQ, tempMaxQY, tempMinQY, maxY, minY
 	//check if user removed cursor from graph, in which case do nothing for now...
 	if(numtype(PointNumber)==0)
 		if(stringmatch(CursorName,"A"))		//moved cursor A, which is start of Q range
 			DataQstartPoint = PointNumber
-			DataQstart = OriginalDataQWave[PointNumber]
+			DataQstart = Original_Q[PointNumber]
 		endif
 		if(stringmatch(CursorName,"B"))		//moved cursor B, which is end of Q range
 			DataQEndPoint = PointNumber
-			DataQEnd = OriginalDataQWave[PointNumber]
+			DataQEnd = Original_Q[PointNumber]
 		endif
 	endif
 end
