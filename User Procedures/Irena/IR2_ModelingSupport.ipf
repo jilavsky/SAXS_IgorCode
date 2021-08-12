@@ -4882,26 +4882,28 @@ Function IR2L_InputPanelButtonProc(ctrlName) : ButtonControl
 	endif
 
 	if(stringmatch(ctrlName,"GetFFHelp"))
-		ControlInfo /W=LSQF2_MainPanel FormFactorPop 
-		//print S_Value
-		DisplayHelpTopic /Z "Form Factors & Structure factors["+S_Value+"]"
-		if(V_Flag)
-			DisplayHelpTopic /Z "Form Factors & Structure factors"
-		endif
-		DoIgorMenu "Control", "Retrieve Window"
+//		ControlInfo /W=LSQF2_MainPanel FormFactorPop 
+//		//print S_Value
+//		DisplayHelpTopic /Z "Form Factors & Structure factors["+S_Value+"]"
+//		if(V_Flag)
+//			DisplayHelpTopic /Z "Form Factors & Structure factors"
+//		endif
+//		DoIgorMenu "Control", "Retrieve Window"
+		IN2G_OpenWebManual("Irena/FormStructureFactors.html")
 	endif
 	if(stringmatch(ctrlName,"GetSFHelp"))
-		ControlInfo /W=LSQF2_MainPanel StructureFactorModel 
-		if(Stringmatch(S_Value,"Dilute system"))
-			DisplayHelpTopic /Z "Form Factors & Structure factors"	
-		else
-			//print S_Value
-			DisplayHelpTopic /Z "Form Factors & Structure factors["+S_Value+"]"
-			if(V_Flag)
-				DisplayHelpTopic /Z "Form Factors & Structure factors"
-			endif
-		endif
-		DoIgorMenu "Control", "Retrieve Window"
+//		ControlInfo /W=LSQF2_MainPanel StructureFactorModel 
+//		if(Stringmatch(S_Value,"Dilute system"))
+//			DisplayHelpTopic /Z "Form Factors & Structure factors"	
+//		else
+//			//print S_Value
+//			DisplayHelpTopic /Z "Form Factors & Structure factors["+S_Value+"]"
+//			if(V_Flag)
+//				DisplayHelpTopic /Z "Form Factors & Structure factors"
+//			endif
+//		endif
+//		DoIgorMenu "Control", "Retrieve Window"
+		IN2G_OpenWebManual("Irena/FormStructureFactors.html")
 	endif
 
 

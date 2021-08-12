@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=1.07
+#pragma version=1.08
 
 
 //*************************************************************************\
@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.08 added DisorderedCrystal of second type https://en.wikipedia.org/wiki/Structure_factor#Finite_crystals_with_disorder_of_the_second_kind
 //1.07 removed most Executes in preparation fro Igor 7
 //1.06 added support for "No fitting limits" option i n GUI
 //1.05 changed back to rtGlobals=2, need to check code much more to make it 3
@@ -40,6 +41,7 @@
 //	IR2_HardSphereStruct			this is Percus-Yevick model
 //	IR2_StickyHS_Struct			this is sticky hard spheres
 //	IR2_SquareWellStruct			this is Square well
+//	IR2_DisorderedCrystal			this is Disordered Crystal
 //	IR2_HayterPenfoldMSA			this is HayterPenfoldMSA model
 //   "User" is anything user defines with up to 6 parameters. 
 //		Example:
@@ -154,6 +156,8 @@ Function IR2S_CalcStructureFactor(SFname,Qvalue,Param1,Param2,Param3,Param4,Para
 			result = IR2_HayterPenfoldMSA(parWv,Qvalue)
 		elseif(cmpstr(SFname,"InterPrecipitate")==0)
 			result = IR2S_InterprecipitateSF(parWv,Qvalue)
+		elseif(cmpstr(SFname,"DisorderedCrystal")==0)
+			result = IR2S_DisorderedCrystal(parWv,Qvalue)
 		elseif(cmpstr(SFname,"User")==0)
 			String infostr = FunctionInfo(UserStrFacFormula)
 			if (strlen(infostr) == 0)
@@ -189,7 +193,7 @@ Function IR2S_InitStructureFactors()
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:StructureFactorCalc
 	
-	string/g ListOfStructureFactors="Dilute system;Interferences;HardSpheres;SquareWell;StickyHardSpheres;HayerPenfoldMSA;InterPrecipitate;User;"
+	string/g ListOfStructureFactors="Dilute system;Interferences;HardSpheres;SquareWell;StickyHardSpheres;HayerPenfoldMSA;InterPrecipitate;DisorderedCrystal;User;"
 //	unfinished="Fractal Aggregate;"
 	SVAR ListOfStructureFactors=root:Packages:StructureFactorCalc:ListOfStructureFactors
 	setDataFolder OldDf
@@ -239,7 +243,7 @@ Function IR2S_CheckFitParameter(StructureFactor,FitP1Str,FitP2Str,FitP3Str,FitP4
 			FitP5=0
 			FitP6=0
 		endif	
-		if(stringmatch(StructureFactor,"InterPrecipitate"))			//two parameters.
+		if(stringmatch(StructureFactor,"InterPrecipitate")||stringmatch(StructureFactor,"DisorderedCrystal"))			//two parameters.
 			FitP3=0
 			FitP4=0
 			FitP5=0
@@ -321,7 +325,7 @@ Function IR2S_MakeSFParamPanel(TitleStr,SFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 			FitP4=0
 			FitP5=0
 		endif	
-		if(stringmatch(CurSF,"InterPrecipitate"))			//two parameters.
+		if(stringmatch(CurSF,"InterPrecipitate")||stringmatch(CurSF,"DisorderedCrystal"))			//two parameters.
 			FitP3=0
 			FitP4=0
 			FitP5=0
@@ -385,7 +389,7 @@ Function IR2S_MakeSFParamPanel(TitleStr,SFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 	if(stringmatch(CurrentSF,"Interferences"))
 		SetVariable P1Value,title="Distance (ETA) [A] = ", help={"Distance of this Structure factor. units = [A]"}
 	endif
-	if(stringmatch(CurrentSF,"InterPrecipitate"))
+	if(stringmatch(CurrentSF,"InterPrecipitate")||stringmatch(CurrentSF,"DisorderedCrystal"))
 		SetVariable P1Value,title="Distance L [A] = ", help={"Distance of this Structure factor. units = [A]"}
 	endif
 	if(stringmatch(CurrentSF,"User"))
@@ -421,7 +425,7 @@ Function IR2S_MakeSFParamPanel(TitleStr,SFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 	if(stringmatch(CurrentSF,"Interferences"))
 		SetVariable P2Value,title="Phi (~ 8 * Vol fract) = ", help={"Phi for old interferences"}
 	endif
-	if(stringmatch(CurrentSF,"InterPrecipitate"))
+	if(stringmatch(CurrentSF,"InterPrecipitate")||stringmatch(CurrentSF,"DisorderedCrystal"))
 		SetVariable P2Value,title="Sigma = ", help={"Sigma (~ volume fraction)"}
 	endif
 	if(stringmatch(CurrentSF,"User"))
@@ -803,6 +807,17 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
+Function IR2S_DisorderedCrystal(w,x)
+	Wave w	//contains parameters:   {Par1,Par2,Par3,Par4,Par5,Par6}
+	Variable x				//this is Q for which to calculate S(Q)
+	Variable Rval, Sigma2, Aval		//declare meaningful parameters names
+	variable temp
+	Aval = w[0]				//Distance between crystal spaces
+	Sigma2 = w[1]			//disorder
+	Rval = exp(-1*x^2*Sigma2^2/2)
+	temp = ((1 - Rval^2) / (1 + Rval^2 - 2*Rval*cos(x*Aval)))
+	return  temp						//return the value
+end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
@@ -1807,7 +1822,7 @@ Function/T IR1T_IdentifySFParamName(SFactorName,ParameterOrder)
 	SetDataFolder root:Packages:StructureFactorCalc
 	string SFParamName=""
 	
-	Make/O/T/N=6 Interferences,HardSpheres,SquareWell,StickyHardSpheres,HayerPenfoldMSA, InterPrecipitate
+	Make/O/T/N=6 Interferences,HardSpheres,SquareWell,StickyHardSpheres,HayerPenfoldMSA, InterPrecipitate, DisorderedCrystal
 	
 	//Spheroid 				= {"Aspect Ratio","","","",""}
 	Interferences		= {"Radius (ETA)","Volume fraction (phi)","","","",""}
@@ -1816,7 +1831,7 @@ Function/T IR1T_IdentifySFParamName(SFactorName,ParameterOrder)
 	StickyHardSpheres		= {"Radius","Volume fraction","Perturbation parameter","Stickiness","",""}
 	HayerPenfoldMSA	= {"Radius","Charge","Volume Fraction","Temperature","M","Diel Const of solvent"}
 	InterPrecipitate		= {"Distance L","Sigma ","","","",""}
-	
+	DisorderedCrystal 		= {"Distance a","Sigma ","","","",""}
 	Wave/T/Z Lookup=$(SFactorName) 
 	if(WaveExists(Lookup))
 		SFParamName=Lookup[ParameterOrder-1]
