@@ -13,7 +13,7 @@ This beta adds compatibility with Igor Pro 9 and some new tools under developeme
 see: https://github.com/jilavsky/SAXS_IgorCode/wiki/Installation-Problems
 
 
-Web based manuals pages
+**Web based manuals pages**
 http://saxs-igorcodedocs.readthedocs.io/
 
 For more information on releases of distributions, please visit:
