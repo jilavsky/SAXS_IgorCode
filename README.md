@@ -9,8 +9,9 @@ This beta adds compatibility with Igor Pro 9 and some new tools under developeme
 **This code can be installed using Igor installer** from https://github.com/jilavsky/SAXS_IgorInstaller/tree/master/Igor_GitHub If you want to install one or more packages from here, download the latest version of 
 "GHInstaller_IrenaNika_vxxx.pxp" and use that to install. Direct link to the latest version of installer is : https://github.com/jilavsky/SAXS_IgorInstaller/blob/master/Igor_GitHub/GHInstaller_IrenaNika_v1.12.pxp?raw=true
 
-**The LAST Igor 7 compatible release** 
-The last compatible release for Igor 7.08 is *February2020*. You also need older version of installer (version 1.10). Link to installer: https://github.com/jilavsky/SAXS_IgorInstaller/blob/master/Igor_GitHub/GHInstaller_IrenaNika_v1.10.pxp?raw=true run installer and choose February2020 as version you want to install. Higher versions will NOT run on Igor 7.08. 
+**Igor 7 or before** 
+see: https://github.com/jilavsky/SAXS_IgorCode/wiki/Installation-Problems
+
 
 Web based manuals pages
 http://saxs-igorcodedocs.readthedocs.io/
