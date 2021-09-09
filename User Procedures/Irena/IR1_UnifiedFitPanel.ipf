@@ -1,8 +1,7 @@
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
-//#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.27
+#pragma version=2.28
 
-Constant IR1AversionNumber=2.27
+Constant IR1AversionNumber=2.28
 
 
 //*************************************************************************\
@@ -11,6 +10,9 @@ Constant IR1AversionNumber=2.27
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.28 remove k factor and use (per Greg): if P is more than 3 then k=1 and if P is less than 3 k = 1.06  
+//		change Link B to inot "Estimate B from" because it is wild guess. 
+//		removed "In this mass fractal from lower level" option as this is lot more complciated... 
 //2.27 added button to open wikipedia page. 
 //2.26 added info on K value to panel. Need to force reopen now, unluckily. 
 //2.25 combined with IR1_Unified_Panel_Fncts.ipf and removed that from code
@@ -561,9 +563,9 @@ Function IR1A_ControlPanelFnct()
 	SetVariable Level1RgHighLimit,pos={300,300},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
 	SetVariable Level1RgHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level1RgHighLimit, help={"High limit for Rg fitting"}
 
-	CheckBox Level1MassFractal,pos={20,330},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this mass fractal from lower level?"
-	CheckBox Level1MassFractal,variable= root:Packages:Irena_UnifFit:Level1MassFractal, help={"Is this mass fractal composed of particles from lower level?"}
-	CheckBox Level1LinkB,pos={20,350},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link B to G/Rg/P?"
+//	CheckBox Level1MassFractal,pos={20,330},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this mass fractal from lower level?"
+//	CheckBox Level1MassFractal,variable= root:Packages:Irena_UnifFit:Level1MassFractal, help={"Is this mass fractal composed of particles from lower level?"}
+	CheckBox Level1LinkB,pos={20,350},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Estimate B from G/Rg/P?"
 	CheckBox Level1LinkB,variable= root:Packages:Irena_UnifFit:Level1LinkB, help={"If the B should be calculated based on Guinier/Porods law?"}
 	SetVariable Level1SurfToVolRat,pos={230,350},size={130,16},proc=IR1A_PanelSetVarProc,title="pi B/Q [m2/cm3]", help={"S/(V*fi(1-fi)) - Surface to volume ratio if P=4 (Porod law) in m2/cm3 if input Q in is A^-1"}
 	SetVariable Level1SurfToVolRat,limits={inf,inf,0},value= root:Packages:Irena_UnifFit:Level1SurfaceToVolRat
@@ -602,10 +604,10 @@ Function IR1A_ControlPanelFnct()
 	CheckBox Level1LinkRGCO,pos={140,452},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link RGCO"
 	CheckBox Level1LinkRGCO,variable= root:Packages:Irena_UnifFit:Level1LinkRgCo, help={"Link the RgCO to lower level and fit at the same time?"}
 
-	PopupMenu Level1KFactor,pos={230,435},size={170,21},proc=IR1A_PanelPopupControl,title="k factor :"
-	PopupMenu Level1KFactor,mode=2,popvalue="1",value= #"\"1;1.06;\"", help={"This value is usually 1, for weak decays and mass fractals 1.06"}
-	TitleBox Info20 title="\Zr100=1 usually",pos={325,438},frame=0,fstyle=2, fixedSize=0,size={40,15},fColor=(0,0,52224)
-	TitleBox Info21 title="\Zr100k=1.06 for Mass Fractals",pos={250,456},frame=0,fstyle=2, fixedSize=0,size={40,15},fColor=(0,0,52224)
+//	PopupMenu Level1KFactor,pos={230,435},size={170,21},proc=IR1A_PanelPopupControl,title="k factor :"
+//	PopupMenu Level1KFactor,mode=2,popvalue="1",value= #"\"1;1.06;\"", help={"This value is usually 1, for weak decays and mass fractals 1.06"}
+//	TitleBox Info20 title="\Zr100=1 usually",pos={325,438},frame=0,fstyle=2, fixedSize=0,size={40,15},fColor=(0,0,52224)
+//	TitleBox Info21 title="\Zr100k=1.06 for Mass Fractals",pos={250,456},frame=0,fstyle=2, fixedSize=0,size={40,15},fColor=(0,0,52224)
 
 	CheckBox Level1Corelations,pos={90,480},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this correlated system? "
 	CheckBox Level1Corelations,variable= root:Packages:Irena_UnifFit:Level1Corelations, help={"Is there a peak or do you expect Corelations between particles to have importance"}
@@ -662,9 +664,9 @@ Function IR1A_ControlPanelFnct()
 
 	//Button Level2FitRgAndG,pos={230,318},size={130,20}, proc=IR1A_InputPanelButtonProc,title="Fit Rg/G bwtn cursors", help={"Do locol fit of Guinier dependence between the cursors amd put resulting values into the Rg and G fields"}
 
-	CheckBox Level2MassFractal,pos={20,330},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this mass fractal from lower level?"
-	CheckBox Level2MassFractal,variable= root:Packages:Irena_UnifFit:Level2MassFractal, help={"Is this mass fractal composed of particles from lower level?"}
-	CheckBox Level2LinkB,pos={20,350},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link B to G/Rg/P?"
+//	CheckBox Level2MassFractal,pos={20,330},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this mass fractal from lower level?"
+//	CheckBox Level2MassFractal,variable= root:Packages:Irena_UnifFit:Level2MassFractal, help={"Is this mass fractal composed of particles from lower level?"}
+	CheckBox Level2LinkB,pos={20,350},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Estimate B from G/Rg/P?"
 	CheckBox Level2LinkB,variable= root:Packages:Irena_UnifFit:Level2LinkB, help={"If the B should be calculated based on Guinier/Porods law?"}
 	SetVariable Level2SurfToVolRat,pos={230,350},size={130,16},proc=IR1A_PanelSetVarProc,title="Surf / Vol", help={"Surface to volume ratio if P=4 (Porod law) in m2/cm3 if input Q in is A"}
 	SetVariable Level2SurfToVolRat,limits={inf,inf,0},value= root:Packages:Irena_UnifFit:Level2SurfaceToVolRat
@@ -705,8 +707,8 @@ Function IR1A_ControlPanelFnct()
 	CheckBox Level2LinkRGCO,pos={140,452},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link RGCO"
 	CheckBox Level2LinkRGCO,variable= root:Packages:Irena_UnifFit:Level2LinkRgCo, help={"Link the RgCO to lower level and fit at the same time?"}
 
-	PopupMenu Level2KFactor,pos={230,435},size={170,21},proc=IR1A_PanelPopupControl,title="k factor :"
-	PopupMenu Level2KFactor,mode=2,popvalue="1",value= #"\"1;1.06;\"", help={"This value is usually 1, for weak decays and mass fractals 1.06"}
+//	PopupMenu Level2KFactor,pos={230,435},size={170,21},proc=IR1A_PanelPopupControl,title="k factor :"
+//	PopupMenu Level2KFactor,mode=2,popvalue="1",value= #"\"1;1.06;\"", help={"This value is usually 1, for weak decays and mass fractals 1.06"}
 
 	CheckBox Level2Corelations,pos={90,480},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this correlated system? "
 	CheckBox Level2Corelations,variable= root:Packages:Irena_UnifFit:Level2Corelations, help={"Is there a peak or do you expect Corelations between particles to have importance"}
@@ -759,9 +761,9 @@ Function IR1A_ControlPanelFnct()
 
 	//Button Level3FitRgAndG,pos={230,318},size={130,20}, proc=IR1A_InputPanelButtonProc,title="Fit Rg/G bwtn cursors", help={"Do locol fit of Guinier dependence between the cursors amd put resulting values into the Rg and G fields"}
 
-	CheckBox Level3MassFractal,pos={20,330},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this mass fractal from lower level?"
-	CheckBox Level3MassFractal,variable= root:Packages:Irena_UnifFit:Level3MassFractal, help={"Is this mass fractal composed of particles from lower level?"}
-	CheckBox Level3LinkB,pos={20,350},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link B to G/Rg/P?"
+//	CheckBox Level3MassFractal,pos={20,330},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this mass fractal from lower level?"
+//	CheckBox Level3MassFractal,variable= root:Packages:Irena_UnifFit:Level3MassFractal, help={"Is this mass fractal composed of particles from lower level?"}
+	CheckBox Level3LinkB,pos={20,350},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Estimate B from G/Rg/P?"
 	CheckBox Level3LinkB,variable= root:Packages:Irena_UnifFit:Level3LinkB, help={"If the B should be calculated based on Guinier/Porods law?"}
 	SetVariable Level3SurfToVolRat,pos={230,350},size={130,16},proc=IR1A_PanelSetVarProc,title="Surf / Vol", help={"Surface to volume ratio if P=4 (Porod law) in m2/cm3 if input Q in is A"}
 	SetVariable Level3SurfToVolRat,limits={inf,inf,0},value= root:Packages:Irena_UnifFit:Level3SurfaceToVolRat
@@ -797,8 +799,8 @@ Function IR1A_ControlPanelFnct()
 	CheckBox Level3LinkRGCO,pos={140,452},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link RGCO"
 	CheckBox Level3LinkRGCO,variable= root:Packages:Irena_UnifFit:Level3LinkRgCo, help={"Link the RgCO to lower level and fit at the same time?"}
 
-	PopupMenu Level3KFactor,pos={230,435},size={170,21},proc=IR1A_PanelPopupControl,title="k factor :"
-	PopupMenu Level3KFactor,mode=2,popvalue="1",value= #"\"1;1.06;\"", help={"This value is usually 1, for weak decays and mass fractals 1.06"}
+//	PopupMenu Level3KFactor,pos={230,435},size={170,21},proc=IR1A_PanelPopupControl,title="k factor :"
+//	PopupMenu Level3KFactor,mode=2,popvalue="1",value= #"\"1;1.06;\"", help={"This value is usually 1, for weak decays and mass fractals 1.06"}
 
 	CheckBox Level3Corelations,pos={90,480},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this correlated system? "
 	CheckBox Level3Corelations,variable= root:Packages:Irena_UnifFit:Level3Corelations, help={"Is there a peak or do you expect Corelations between particles to have importance"}
@@ -851,9 +853,9 @@ Function IR1A_ControlPanelFnct()
 
 	//Button Level4FitRgAndG,pos={230,318},size={130,20}, proc=IR1A_InputPanelButtonProc,title="Fit Rg/G bwtn cursors", help={"Do local fit of Guinier dependence between the cursors amd put resulting values into the Rg and G fields"}
 
-	CheckBox Level4MassFractal,pos={20,330},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this mass fractal from lower level?"
-	CheckBox Level4MassFractal,variable= root:Packages:Irena_UnifFit:Level4MassFractal, help={"Is this mass fractal composed of particles from lower level?"}
-	CheckBox Level4LinkB,pos={20,350},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link B to G/Rg/P?"
+//	CheckBox Level4MassFractal,pos={20,330},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this mass fractal from lower level?"
+//	CheckBox Level4MassFractal,variable= root:Packages:Irena_UnifFit:Level4MassFractal, help={"Is this mass fractal composed of particles from lower level?"}
+	CheckBox Level4LinkB,pos={20,350},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Estimate B from G/Rg/P?"
 	CheckBox Level4LinkB,variable= root:Packages:Irena_UnifFit:Level4LinkB, help={"If the B should be calculated based on Guinier/Porods law?"}
 	SetVariable Level4SurfToVolRat,pos={230,350},size={130,16},proc=IR1A_PanelSetVarProc,title="Surf / Vol", help={"Surface to volume ratio if P=4 (Porod law) in m2/cm3 if input Q in is A"}
 	SetVariable Level4SurfToVolRat,limits={inf,inf,0},value= root:Packages:Irena_UnifFit:Level4SurfaceToVolRat
@@ -889,8 +891,8 @@ Function IR1A_ControlPanelFnct()
 	CheckBox Level4LinkRGCO,pos={140,452},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link RGCO"
 	CheckBox Level4LinkRGCO,variable= root:Packages:Irena_UnifFit:Level4LinkRgCo, help={"Link the RgCO to lower level and fit at the same time?"}
 
-	PopupMenu Level4KFactor,pos={230,435},size={170,21},proc=IR1A_PanelPopupControl,title="k factor :"
-	PopupMenu Level4KFactor,mode=2,popvalue="1",value= #"\"1;1.06;\"", help={"This value is usually 1, for weak decays and mass fractals 1.06"}
+//	PopupMenu Level4KFactor,pos={230,435},size={170,21},proc=IR1A_PanelPopupControl,title="k factor :"
+//	PopupMenu Level4KFactor,mode=2,popvalue="1",value= #"\"1;1.06;\"", help={"This value is usually 1, for weak decays and mass fractals 1.06"}
 
 	CheckBox Level4Corelations,pos={90,480},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this correlated system? "
 	CheckBox Level4Corelations,variable= root:Packages:Irena_UnifFit:Level4Corelations, help={"Is there a peak or do you expect Corelations between particles to have importance"}
@@ -944,9 +946,9 @@ Function IR1A_ControlPanelFnct()
 
 	//Button Level5FitRgAndG,pos={230,318},size={130,20}, proc=IR1A_InputPanelButtonProc,title="Fit Rg/G bwtn cursors", help={"Do local fit of Guinier dependence between the cursors amd put resulting values into the Rg and G fields"}
 
-	CheckBox Level5MassFractal,pos={20,330},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this mass fractal from lower level?"
-	CheckBox Level5MassFractal,variable= root:Packages:Irena_UnifFit:Level5MassFractal, help={"Is this mass fractal composed of particles from lower level?"}
-	CheckBox Level5LinkB,pos={20,350},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link B to G/Rg/P?"
+//	CheckBox Level5MassFractal,pos={20,330},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this mass fractal from lower level?"
+//	CheckBox Level5MassFractal,variable= root:Packages:Irena_UnifFit:Level5MassFractal, help={"Is this mass fractal composed of particles from lower level?"}
+	CheckBox Level5LinkB,pos={20,350},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Estimate B from G/Rg/P?"
 	CheckBox Level5LinkB,variable= root:Packages:Irena_UnifFit:Level5LinkB, help={"If the B should be calculated based on Guinier/Porods law?"}
 	SetVariable Level5SurfToVolRat,pos={230,350},size={130,16},proc=IR1A_PanelSetVarProc,title="Surf / Vol", help={"Surface to volume ratio if P=4 (Porod law) in m2/cm3 if input Q in is A"}
 	SetVariable Level5SurfToVolRat,limits={inf,inf,0},value= root:Packages:Irena_UnifFit:Level5SurfaceToVolRat
@@ -982,8 +984,8 @@ Function IR1A_ControlPanelFnct()
 	CheckBox Level5LinkRGCO,pos={140,452},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link RGCO"
 	CheckBox Level5LinkRGCO,variable= root:Packages:Irena_UnifFit:Level5LinkRgCo, help={"Link the RgCO to lower level and fit at the same time?"}
 
-	PopupMenu Level5KFactor,pos={230,435},size={170,21},proc=IR1A_PanelPopupControl,title="k factor :"
-	PopupMenu Level5KFactor,mode=2,popvalue="1",value= #"\"1;1.06;\"", help={"This value is usually 1, for weak decays and mass fractals 1.06"}
+//	PopupMenu Level5KFactor,pos={230,435},size={170,21},proc=IR1A_PanelPopupControl,title="k factor :"
+//	PopupMenu Level5KFactor,mode=2,popvalue="1",value= #"\"1;1.06;\"", help={"This value is usually 1, for weak decays and mass fractals 1.06"}
 
 	CheckBox Level5Corelations,pos={90,480},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this correlated system? "
 	CheckBox Level5Corelations,variable= root:Packages:Irena_UnifFit:Level5Corelations, help={"Is there a peak or do you expect Corelations between particles to have importance"}
@@ -1083,8 +1085,8 @@ Function IR1A_TabPanelControl(name,tab)
 		SetVariable Level1GLowLimit,disable= (tab!=0 || Nmbdist<1 || Level1FitG!=1 || UseNoLimits)
 		SetVariable Level1GHighLimit,disable= (tab!=0 || Nmbdist<1 || Level1FitG!=1 || UseNoLimits)
 	
-		CheckBox Level1MassFractal, value=Level1MassFractal
-		CheckBox Level1MassFractal,disable= (tab!=0 || Nmbdist<1)
+//		CheckBox Level1MassFractal, value=Level1MassFractal
+//		CheckBox Level1MassFractal,disable= (tab!=0 || Nmbdist<1)
 		SetVariable Level1SurfToVolRat,disable= (tab!=0 || Nmbdist<1)
 		
 		SetVariable Level1P,disable= (tab!=0 || Nmbdist<1)
@@ -1121,7 +1123,7 @@ Function IR1A_TabPanelControl(name,tab)
 //		SetVariable Level1RgCOHighLimit,disable= (tab!=0 || Nmbdist<1 || Level1FitRGCO!=1|| Level1LinkRGCO)
 		Button Level1SetRGCODefault,disable= (tab!=0 || Nmbdist<1 || tab==0)
 		CheckBox Level1LinkRGCO,disable= (tab!=0 || Nmbdist<1 || tab==0)
-		PopupMenu Level1KFactor,disable= (tab!=0 || Nmbdist<1)
+//		PopupMenu Level1KFactor,disable= (tab!=0 || Nmbdist<1)
 	endif	
 //
 
@@ -1150,8 +1152,8 @@ Function IR1A_TabPanelControl(name,tab)
 		SetVariable Level2GLowLimit,disable= (tab!=1 || Nmbdist<2 || Level2FitG!=1 || UseNoLimits)
 		SetVariable Level2GHighLimit,disable= (tab!=1 || Nmbdist<2 || Level2FitG!=1 || UseNoLimits)
 	
-		CheckBox Level2MassFractal, value=Level2MassFractal
-		CheckBox Level2MassFractal,disable= (tab!=1 || Nmbdist<2 ) 
+//		CheckBox Level2MassFractal, value=Level2MassFractal
+//		CheckBox Level2MassFractal,disable= (tab!=1 || Nmbdist<2 ) 
 		SetVariable Level2SurfToVolRat,disable= (tab!=1 || Nmbdist<2)
 		
 		SetVariable Level2P,disable= (tab!=1 || Nmbdist<2)
@@ -1192,7 +1194,7 @@ Function IR1A_TabPanelControl(name,tab)
 //		SetVariable Level2RGCOHighLimit,disable= (tab!=1 || Nmbdist<2 || Level2FitRGCO!=1 || Level2LinkRGCO)
 		Button Level2SetRGCODefault,disable= (tab!=1 || Nmbdist<2)
 		CheckBox Level2LinkRGCO,disable= (tab!=1 || Nmbdist<2)
-		PopupMenu Level2KFactor,disable= (tab!=1 || Nmbdist<2)
+//		PopupMenu Level2KFactor,disable= (tab!=1 || Nmbdist<2)
 	endif
 //
 //
@@ -1222,8 +1224,8 @@ Function IR1A_TabPanelControl(name,tab)
 		SetVariable Level3GLowLimit,disable= (tab!=2 || Nmbdist<3 || Level3FitG!=1 || UseNoLimits)
 		SetVariable Level3GHighLimit,disable= (tab!=2 || Nmbdist<3 || Level3FitG!=1 || UseNoLimits)
 	
-		CheckBox Level3MassFractal, value=Level3MassFractal
-		CheckBox Level3MassFractal,disable= (tab!=2 || Nmbdist<3) 
+//		CheckBox Level3MassFractal, value=Level3MassFractal
+//		CheckBox Level3MassFractal,disable= (tab!=2 || Nmbdist<3) 
 		SetVariable Level3SurfToVolRat,disable= (tab!=2 || Nmbdist<3)
 	
 //		SetVariable Level3RgStep,disable= (tab!=2 || Nmbdist<3)
@@ -1268,7 +1270,7 @@ Function IR1A_TabPanelControl(name,tab)
 //		SetVariable Level3RGCOHighLimit,disable= (tab!=2 || Nmbdist<3 || Level3FitRGCO!=1 || Level3LinkRGCO)
 		Button Level3SetRGCODefault,disable= (tab!=2 || Nmbdist<3)
 		CheckBox Level3LinkRGCO,disable= (tab!=2 || Nmbdist<3)
-		PopupMenu Level3KFactor,disable= (tab!=2 || Nmbdist<3)
+//		PopupMenu Level3KFactor,disable= (tab!=2 || Nmbdist<3)
 	endif
 //
 //
@@ -1298,8 +1300,8 @@ Function IR1A_TabPanelControl(name,tab)
 		SetVariable Level4GLowLimit,disable= (tab!=3 || Nmbdist<4 || Level4FitG!=1 || UseNoLimits)
 		SetVariable Level4GHighLimit,disable= (tab!=3 || Nmbdist<4 || Level4FitG!=1 || UseNoLimits)
 	
-		CheckBox Level4MassFractal, value=Level4MassFractal
-		CheckBox Level4MassFractal,disable= (tab!=3 || Nmbdist<4) 
+//		CheckBox Level4MassFractal, value=Level4MassFractal
+//		CheckBox Level4MassFractal,disable= (tab!=3 || Nmbdist<4) 
 		SetVariable Level4SurfToVolRat,disable= (tab!=3 || Nmbdist<4)
 	
 //		SetVariable Level4RgStep,disable= (tab!=3 || Nmbdist<4)
@@ -1344,7 +1346,7 @@ Function IR1A_TabPanelControl(name,tab)
 //		SetVariable Level4RGCOHighLimit,disable= (tab!=3 || Nmbdist<4 || Level4FitRGCO!=1 || Level4LinkRGCO)
 		Button Level4SetRGCODefault,disable= (tab!=3 || Nmbdist<4)
 		CheckBox Level4LinkRGCO,disable= (tab!=3 || Nmbdist<4)
-		PopupMenu Level4KFactor,disable= (tab!=3 || Nmbdist<4)
+//		PopupMenu Level4KFactor,disable= (tab!=3 || Nmbdist<4)
 	endif
 //
 	if((cmpstr(name,"Checkbox")!=0 ) || ((cmpstr(name,"Checkbox")==0)&&(tab==4)))
@@ -1373,8 +1375,8 @@ Function IR1A_TabPanelControl(name,tab)
 		SetVariable Level5GLowLimit,disable= (tab!=4 || Nmbdist<5 || Level5FitG!=1 || UseNoLimits)
 		SetVariable Level5GHighLimit,disable= (tab!=4 || Nmbdist<5 || Level5FitG!=1 || UseNoLimits)
 		
-		CheckBox Level5MassFractal, value=Level5MassFractal
-		CheckBox Level5MassFractal,disable= (tab!=4 || Nmbdist<5) 
+//		CheckBox Level5MassFractal, value=Level5MassFractal
+//		CheckBox Level5MassFractal,disable= (tab!=4 || Nmbdist<5) 
 		SetVariable Level5SurfToVolRat,disable= (tab!=4 || Nmbdist<5)
 		
 //		SetVariable Level5RgStep,disable= (tab!=4 || Nmbdist<5)
@@ -1419,7 +1421,7 @@ Function IR1A_TabPanelControl(name,tab)
 //		SetVariable Level5RGCOHighLimit,disable= (tab!=4 || Nmbdist<5 || Level5FitRGCO!=1 || Level5LinkRGCO)
 		Button Level5SetRGCODefault,disable= (tab!=4 || Nmbdist<5)
 		CheckBox Level5LinkRGCO,disable= (tab!=4 || Nmbdist<5)
-		PopupMenu Level5KFactor,disable= (tab!=4 || Nmbdist<5)
+//		PopupMenu Level5KFactor,disable= (tab!=4 || Nmbdist<5)
 	endif
 //
 	//update the displayed local fits in graph

@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals = 3// Use strict wave reference mode and runtime bounds checking
-#pragma version=2.35
+#pragma version=2.36
 
 
 constant IR2UversionNumber=2.23 			//Evaluation panel version number. 
@@ -10,6 +10,7 @@ constant IR2UversionNumber=2.23 			//Evaluation panel version number.
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.36 remove k factor and set automatically per Greg's suggestion. 
 //2.35 removed IR1A_UnifiedFitCalcIntOne which had bug anyway when LinkB was selected. Not needed, using IR1A_UnifiedCalcIntOne instead also for fitting. 
 //2.34 fixed cursor calls to target graph "IR1_LogLogPlotU"
 //2.34 Added Level0 Local level which conatins flat background and fixed minor issues with loacl fits export. Fixed control procs to handle them correctly.  
@@ -182,6 +183,8 @@ constant IR2UversionNumber=2.23 			//Evaluation panel version number.
 //	 Level1PACKError   
 //	 Level1RGCOError
 
+//2.36 - 8-23-2021 - per greg suggestion LevelXK if P is more than 3 then k=1 and if P is less than 3 k = 1.06  
+
 
 
 Function IR1A_UnifiedCalculateIntensity()
@@ -286,6 +289,11 @@ Function IR1A_UnifiedCalcIntOne(level, OriginalQvector)
 	if(LocalLinkB)
 		B = G * exp(-1*P/2)*(3*P/2)^(P/2)*(1/Rg^P) 
 	endif
+	//2.36 - 8-23-2021 
+	//if P is more than 3 then k=1 and if P is less than 3 k = 1.06  
+	k = (P>3) ? 1 : 1.06
+	//done... 
+	
 	if (LinkRGCO==1 && level>=2)
 		NVAR RgLowerLevel=$("root:Packages:Irena_UnifFit:Level"+num2str(level-1)+"Rg")	
 		RGCO=RgLowerLevel

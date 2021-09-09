@@ -8063,7 +8063,7 @@ Function NI1A_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 		if(cmpstr(popStr,"GeneralBinary")==0)
 			NI1_GBLoaderPanelFnct()
 		endif
-		if(cmpstr(popStr,"Pilatus")==0)
+		if(cmpstr(popStr,"Pilatus/Eiger")==0)
 			NI1_PilatusLoaderPanelFnct()
 		endif
 		if(cmpstr(popStr,"ESRFedf")==0)

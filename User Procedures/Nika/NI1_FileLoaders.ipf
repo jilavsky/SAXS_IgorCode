@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=2.55
+#pragma version=2.56
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2021, Argonne National Laboratory
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.56 add Eiger detector support, tested on 16M background image. 
 //2.55 fix edf file Xenocs loading, they changed \r\n into \n only and that broke parrsing header... 
 //2.54 Remove for MatrixOP /NTHR=0 since it is applicable to 3D matrices only 
 //2.53 added FLOAT as Pilatus EDF file format option. Seems like we now have float values in there. 
@@ -623,7 +624,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		NewNote+="DataFileType="+"GE binary"+";"
 		NewNote+="GE binary images in the file="+num2str(NumImages)+";"
 		print "Loaded GE file :"+FileNameToLoad+"   which contained "+num2str(NumImages)+"  images"
-	elseif(cmpstr(FileType,"Pilatus")==0)	//temporaty for Pilatus... 
+	elseif(cmpstr(FileType,"Pilatus/Eiger")==0)					//for Pilatus/Eiger... 
 		//Pilatus parameters
 		NVAR PilatusReadAuxTxtHeader=root:Packages:Convert2Dto1D:PilatusReadAuxTxtHeader
 		SVAR PilatusFileType=root:Packages:Convert2Dto1D:PilatusFileType
@@ -786,7 +787,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 				return 0
 			endif
               Wave LoadedWave0
-              if(stringmatch(PilatusType,"Pilatus100k"))
+           if(stringmatch(PilatusType,"Pilatus100k"))
  	             Redimension/N=(487,195) Loadedwave0
  	        elseif(stringmatch(PilatusType,"Pilatus1M"))
  	             Redimension/N=(981,1043) Loadedwave0
@@ -800,6 +801,16 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
  	             Redimension/N=(2463,2527) Loadedwave0
  	        elseif(stringmatch(PilatusType,"Pilatus3_200k"))
  	             Redimension/N=(487,407) Loadedwave0   
+ 	        elseif(stringmatch(PilatusType,"Eiger500k"))			//Eiger500k;Eiger1M;Eiger4M;Eiger9M;Eiger16M
+ 	             Redimension/N=(512,1028) Loadedwave0   
+ 	        elseif(stringmatch(PilatusType,"Eiger1M"))
+ 	             Redimension/N=(1062,1028) Loadedwave0   
+ 	        elseif(stringmatch(PilatusType,"Eiger4M"))
+ 	             Redimension/N=(2162,2068) Loadedwave0   
+ 	        elseif(stringmatch(PilatusType,"Eiger9M"))
+ 	             Redimension/N=(3262,3108) Loadedwave0   
+ 	        elseif(stringmatch(PilatusType,"Eiger16M"))
+ 	            Redimension/N=(4362,4148) Loadedwave0   
  	        else
  	        	Abort "Unknown Pilatus Type"
  	        endif
@@ -809,9 +820,6 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
               if(exists("PilatusHookFunction")==6)
               	Execute("PilatusHookFunction("+NewWaveName+")")
               endif
-//#if(exists("PilatusHookFunction")==3)
-//		PilatusHookFunction(FileNameToLoad)
-//#endif             
               killwaves Loadedwave0
               NewNote+="DataFileName="+FileNameToLoad+";"
               NewNote+="DataFileType="+PilatusType+";"
@@ -1554,18 +1562,18 @@ Function NI1_PilatusLoaderPanelFnct() : Panel
 		SVAR PilatusFileType=root:Packages:Convert2Dto1D:PilatusFileType
 		SVAR PilatusColorDepth=root:Packages:Convert2Dto1D:PilatusColorDepth
 		PauseUpdate    		// building window...
-		NewPanel/K=1 /W=(240,98,644,414) as "Pilatus loader config panel"
+		NewPanel/K=1 /W=(240,98,644,414) as "Pilatus/Eiger loader config panel"
 		DoWindow/C NI_PilatusLoaderPanel
 		SetDrawLayer UserBack
 		SetDrawEnv fsize= 18,fstyle= 3,textrgb= (0,0,65280)
-		DrawText 28,36,"Nika Pilatus Loader Config"
+		DrawText 28,36,"Nika Pilatus/Eiger Loader Config"
 //		SetDrawEnv fsize= 16,fstyle= 1,textrgb= (0,0,65280)
 		DrawText 10,250,"Use hook function :  "
 		DrawText 10,265,"             PilatusHookFunction(FileNameToLoad)"
 		DrawText 10,280,"to add functionality.  Called after loading the file."
 		PopupMenu PilatusType,pos={15,70},size={122,21},proc=NI1_PilatusPopMenuProc,title="Detector Type :  "
 		PopupMenu PilatusType,help={"Select detector type :"}
-		PopupMenu PilatusType,mode=1,popvalue=PilatusType,value= #"\"Pilatus100k;Pilatus300k;Pilatus300k-w;Pilatus1M;Pilatus2M;Pilatus6M;Pilatus3_200k;\""
+		PopupMenu PilatusType,mode=1,popvalue=PilatusType,value= #"\"Pilatus100k;Pilatus300k;Pilatus300k-w;Pilatus1M;Pilatus2M;Pilatus6M;Pilatus3_200k;Eiger500k;Eiger1M;Eiger4M;Eiger9M;Eiger16M;\""
 
 		PopupMenu PilatusFileType,pos={15,100},size={122,21},proc=NI1_PilatusPopMenuProc,title="File Type :  "
 		PopupMenu PilatusFileType,help={"Select file type :"}
@@ -1593,10 +1601,19 @@ Function NI1_Pilatus_ButtonProc(ba) : ButtonControl
 	switch( ba.eventCode )
 		case 2: // mouse up
 			// click code here
+			SVAR PilatusType=root:Packages:Convert2Dto1D:PilatusType
 			NVAR PixelSizeX = root:Packages:Convert2Dto1D:PixelSizeX
 			NVAR PixelSizeY = root:Packages:Convert2Dto1D:PixelSizeY
-			PixelSizeX = 0.172
-			PixelSizeY=0.172
+			if(StringMatch(PilatusType, "Pilatus*"))
+				PixelSizeX = 0.172
+				PixelSizeY=0.172
+			elseif(StringMatch(PilatusType, "Eiger*"))
+				PixelSizeX = 0.075
+				PixelSizeY=0.075
+			else
+				PixelSizeX = 1
+				PixelSizeY=1
+			endif
 			NVAR SelectedUncertainity = root:Packages:IrenaConfigFolder:SelectedUncertainity
 			NVAR ErrorCalculationsUseOld=root:Packages:Convert2Dto1D:ErrorCalculationsUseOld
 			NVAR ErrorCalculationsUseStdDev=root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev

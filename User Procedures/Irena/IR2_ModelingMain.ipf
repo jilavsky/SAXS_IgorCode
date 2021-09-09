@@ -284,8 +284,8 @@ Function IR2L_MainPanel()
 		Button FitRgAndG,pos={200,320},size={100,15}, proc=IR2L_InputPanelButtonProc,title="Fit Rg/G bwtn csrs", help={"Do local fit of Guinier dependence between the cursors amd put resulting values into the Rg and G fields"}
 		Button FitPandB,pos={301,320},size={100,15}, proc=IR2L_InputPanelButtonProc,title="Fit P/B bwtn csrs", help={"Do local fit of Powerlaw dependence between the cursors amd put resulting values into the Rg and G fields"}
 
-		CheckBox UF_LinkB,pos={20,328},size={20,16},proc=IR2L_ModelTabCheckboxProc,title="Link B to G/Rg/P?"
-		CheckBox UF_LinkB,variable= root:Packages:IR2L_NLSQF:UF_LinkB_pop1, help={"Link B to G/Rg/B based on Guinier/Porod model?"}
+		CheckBox UF_LinkB,pos={20,328},size={20,16},proc=IR2L_ModelTabCheckboxProc,title="Estimate B from G/Rg/P?"
+		CheckBox UF_LinkB,variable= root:Packages:IR2L_NLSQF:UF_LinkB_pop1, help={"Estimate B from G/Rg/B based on Guinier/Porod model?"}
 
 		SetVariable UF_G,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:UF_G_pop1,proc=IR2L_PopSetVarProc
 		SetVariable UF_G,pos={8,355},size={140,15},title="G = ", help={"G for Unified level"} 
@@ -325,8 +325,8 @@ Function IR2L_MainPanel()
 
 		SetVariable UF_RGCO,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:UF_RGCO_pop1,proc=IR2L_PopSetVarProc
 		SetVariable UF_RGCO,pos={8,435},size={140,15},title="Rg cut off = ", help={"Rg cut off for higher Unified levels, see reference or manual for meaning"} 
-		PopupMenu KFactor,pos={220,452},size={170,15},proc=IR2L_PanelPopupControl,title="k factor :"
-		PopupMenu KFactor,mode=2,popvalue="1",value= #"\"1;1.06;\"", help={"This value is usually 1, for weak decays and mass fractals 1.06"}
+//		PopupMenu KFactor,pos={220,452},size={170,15},proc=IR2L_PanelPopupControl,title="k factor :"
+//		PopupMenu KFactor,mode=2,popvalue="1",value= #"\"1;1.06;\"", help={"This value is usually 1, for weak decays and mass fractals 1.06"}
 
 //particulate controls
 		SetVariable Volume,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:Volume_pop1,proc=IR2L_PopSetVarProc

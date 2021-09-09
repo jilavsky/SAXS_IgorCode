@@ -864,8 +864,8 @@ Function IR2L_MakeFFParamPanel(TitleStr, which)
 	SetVariable P1HighLim,limits={0,Inf,0},variable= $("root:Packages:IR2L_NLSQF:UF_RGCOMax_pop"+num2str(which))//, disable=!disableMe
 	SetVariable P1HighLim,pos={320,100},size={80,15},title=" ", help={"High limit for fitting param 1"}
 
-	PopupMenu KFactor,pos={10,135},size={170,21},proc=IR2L_PanelPopupControl,title="k factor :"
-	PopupMenu KFactor,mode=2,popvalue="1",value= #"\"1;1.06;\"", help={"This value is usually 1, for weak decays and mass fractals 1.06"}
+//	PopupMenu KFactor,pos={10,135},size={170,21},proc=IR2L_PanelPopupControl,title="k factor :"
+//	PopupMenu KFactor,mode=2,popvalue="1",value= #"\"1;1.06;\"", help={"This value is usually 1, for weak decays and mass fractals 1.06"}
 	
 	setDataFolder OldDf
 end
@@ -1294,8 +1294,8 @@ Function IR2L_Model_TabPanelControl(name,tab)
 		//SetVariable UF_RGCOMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("UF_RGCOMin_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| (F_sw)|| !(UsePop)|| !(UNF5))")
 		//SetVariable UF_RGCOMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("UF_RGCOMax_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| (F_sw)|| !(UsePop)|| !(UNF5))")
 		
-		NVAR UF_K=$("root:Packages:IR2L_NLSQF:UF_K_pop"+num2str(tab+1))
-		PopupMenu KFactor,win=LSQF2_MainPanel, mode=(WhichListItem(num2str(UF_K),"1;1.06;")+1), disable=(!(DisplayModelControls)|| (F_sw)|| !(UsePop))
+//		NVAR UF_K=$("root:Packages:IR2L_NLSQF:UF_K_pop"+num2str(tab+1))
+//		PopupMenu KFactor,win=LSQF2_MainPanel, mode=(WhichListItem(num2str(UF_K),"1;1.06;")+1), disable=(!(DisplayModelControls)|| (F_sw)|| !(UsePop))
 
 		SVAR StrA=$("root:Packages:IR2L_NLSQF:StructureFactor_pop"+num2str(tab+1))
 		SVAR StrB=root:Packages:StructureFactorCalc:ListOfStructureFactors
@@ -6481,6 +6481,10 @@ Function IR2L_CalcUnifiedIntPopXDataSetY(pop,dataSet)
 		if(LLinkB)
 			B = G * exp(-1*P/2)*(3*P/2)^(P/2)*(1/Rg^P) 
 		endif
+		//2.36 - 8-23-2021 
+		//if P is more than 3 then k=1 and if P is less than 3 k = 1.06  
+		Kval = (P>3) ? 1 : 1.06
+		//done... 
 		
 		Duplicate /O ModelQ, QstarVector
 		QstarVector=ModelQ/(erf(Kval*ModelQ*Rg/sqrt(6)))^3

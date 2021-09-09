@@ -1,7 +1,7 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version = 1.04
+#pragma version = 1.05
 #pragma IgorVersion=8.03
 
 
@@ -13,6 +13,7 @@
 
 //this is tool to setup Sample Plates for USAXS, survey sample positions, and generate Command files. 
 
+//1.05 added Append to command file
 //1.04 modifications to beamline survey with epics controls. 
 //1.03 Remove for MatrixOP /NTHR=0 since it is applicable to 3D matrices only 
 //1.02 Added checking if existing sate is saved to reduce number of dialogs user needs to deal with. 
@@ -134,7 +135,7 @@ Function IN3S_MainPanel()
 		DoWindow/F SamplePlateSetup
 	else
 		PauseUpdate    		// building window...
-		NewPanel /K=1 /W=(2.25,43.25,590,715)/N=SamplePlateSetup as "Sample Plate setup"
+		NewPanel /K=1 /W=(2.25,43.25,590,725)/N=SamplePlateSetup as "Sample Plate setup"
 		TitleBox Title title="\Zr210Sample Plate setup",pos={120,3},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428), anchor=MC
 		Button GetHelp,pos={490,25},size={80,15},fColor=(65535,32768,32768), proc=IN3S_ButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 		//left size
@@ -217,18 +218,19 @@ Function IN3S_MainPanel()
 
 		//controls under the table
 		//save export
-		Button CreateCommandFile,pos={230,607},size={160,17}, proc=IN3S_ButtonProc,title="Preview cmd file", help={"Creates and displays command file with current set of positions"}
-		Button ExportCommandFile,pos={415,605},size={160,20}, proc=IN3S_ButtonProc,title="Export cmd file", help={"Exports usaxs.mac or defaultname.mac cmd file with current set of positions"}
-		Button ExportCommandFile2,pos={415,630},size={160,20}, proc=IN3S_ButtonProc,title="Dialog Export cmd file", help={"Dialog - Exports cmd file with current set of positions"}
+		Button PreviewCommandFile,pos={260,595},size={140,20}, proc=IN3S_ButtonProc,title="Preview cmd file", help={"Creates and displays command file with current set of positions"}
+		Button ExportCommandFile,pos={415,595},size={160,20}, proc=IN3S_ButtonProc,title="Export cmd file", help={"Exports usaxs.mac or defaultname.mac cmd file with current set of positions"}
+		Button AppendToCommandFile,pos={415,620},size={160,20}, proc=IN3S_ButtonProc,title="Append to cmd file", help={"Appends to command file on desktop"}
+		Button ExportCommandFile2,pos={415,645},size={160,20}, proc=IN3S_ButtonProc,title="Dialog Export cmd file", help={"Dialog - Exports cmd file with current set of positions"}
 
 		Setvariable NumberOfSamples title="\Zr100Samples: ",pos={10,610},size={150,15},frame=0,fstyle=3,fColor=(0,0,65535),valueColor=(0,0,0), labelBack=0, noedit=1
 		Setvariable NumberOfSamples,variable=root:Packages:SamplePlateSetup:NumberOfSamples, help={"Number of used saples"}, limits={0,inf,0}
 
 
-		Setvariable CalculatedOverAllTime title="\Zr120Estimated run time [min]: ",pos={10,628},size={350,15},frame=0,fstyle=3,fColor=(0,0,65535),valueColor=(0,0,0), labelBack=0, noedit=1
+		Setvariable CalculatedOverAllTime title="\Zr120Estimated run time [min]: ",pos={10,628},size={220,15},frame=0,fstyle=3,fColor=(0,0,65535),valueColor=(0,0,0), labelBack=0, noedit=1
 		Setvariable CalculatedOverAllTime,variable=root:Packages:SamplePlateSetup:CalculatedOverAllTime, help={"Estimated run time for all"}, limits={0,inf,0}
 
-		Setvariable Warnings title="\Zr120Last Info/Warning: ",pos={10,652},size={550,15},frame=0,fstyle=3,fColor=(0,0,65535),valueColor=(65535,0,0), labelBack=0, noedit=1
+		Setvariable Warnings title="\Zr120Last Info/Warning: ",pos={10,662},size={550,15},frame=0,fstyle=3,fColor=(0,0,65535),valueColor=(65535,0,0), labelBack=0, noedit=1
 		Setvariable Warnings,variable=root:Packages:SamplePlateSetup:WarningForUser, help={"Last warning which code issued"}
 
 	endif
@@ -1095,31 +1097,40 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 				IN3S_EstimateRunTime()
 				TableIsSaved = 1
 			endif
-			if(StringMatch(ba.ctrlName, "CreateCommandFile" ))
+			if(StringMatch(ba.ctrlName, "PreviewCommandFile" ))
 				IN3S_CheckForSensibility()
-				IN3S_WriteCommandFile(1)
+				IN3S_WriteCommandFile(1,1)
 				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 				WarningForUser = "Created Notebook with commands for review"
 			endif
 			string newName
 			if(StringMatch(ba.ctrlName, "ExportCommandFile" ))
-				//IN3S_WriteCommandFile(1)
 				//here we need to save that notebook somewhere
-				newName = IN3S_ExportMacroFile(0)
+				newName = IN3S_ExportMacroFile(0,0)
 				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 				WarningForUser = "Exported usaxs.mac on your desktop"
 				IN3_FTPUSAXSMacFile()
 			endif
 			if(StringMatch(ba.ctrlName, "ExportCommandFile2" ))
-				//IN3S_WriteCommandFile(1)
 				//here we need to save that notebook somewhere
-				newName = IN3S_ExportMacroFile(1)
+				newName = IN3S_ExportMacroFile(1,0)
 				if(strlen(newName)>0)
 					SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 					WarningForUser = "Exported command file as "+newName
 				else
 					SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 					WarningForUser = "Command file export was cancelled"
+				endif
+			endif
+			if(StringMatch(ba.ctrlName, "AppendToCommandFile" ))
+				newName = IN3S_ExportMacroFile(0,1)
+				if(strlen(newName)>0)
+					SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+					WarningForUser = "Appended to command file "+newName
+					IN3_FTPUSAXSMacFile()
+				else
+					SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+					WarningForUser = "Append To Command file export was cancelled"
 				endif
 			endif
 
@@ -1465,8 +1476,8 @@ static Function IN3S_CheckForSensibility()
 end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-static Function IN3S_WriteCommandFile(show)
-	variable show
+static Function IN3S_WriteCommandFile(show, AppendHeaders)
+	variable show, AppendHeaders
 
 	//create USAXS command file... For now as notebook and just display for user. 
 
@@ -1496,23 +1507,25 @@ static Function IN3S_WriteCommandFile(show)
 	
 	NewNotebook/K=1/F=0/ENCG={3,0}/N=$nbl/V=1/W=(235.5,44.75,817.5,592.25) as nbl		
 	Notebook $nbl writeBOM = 0
-	Notebook $nbl text="        CURRENT_EXPERIMENT_NAME \""+UserNameForSampleSet+"\"\r"
-	Notebook $nbl text="		# This file runs USAXS, SAXS and WAXS scans according to the syntax shown below\r"
-	Notebook $nbl text="		#       \r"
-	Notebook $nbl text="		# Scan Type      sx         sy   Thickness  Sample Name\r"
-	Notebook $nbl text="		# ------------------------------------------------------  \r"
-	Notebook $nbl text="		# USAXSscan    45.07       98.3     0      \"Water Blank\"\r"
-	Notebook $nbl text="		# saxsExp      45.07       98.3     0      \"Water Blank\"\r"
-	Notebook $nbl text="		# waxsExp      45.07       98.3     0      \"Water Blank\"  \r"
-	Notebook $nbl text="		#      Use a space (not a tab) to separate arguments (i.e., 45.07 <space> 98.3 in the examples above)\r"  
-	Notebook $nbl text="\r"
-	Notebook $nbl text="		# Run this file by typing the following command in the spec window:   USAXS> CollectData usaxs.mac \r"             
-	Notebook $nbl text="\r"                                   
-	Notebook $nbl text="		# Stop the run using the \"Stop after this scan?\" checkbox in USAXS user main intf  \r" 
-	Notebook $nbl text="		# and wait until the USAXS> prompt reappears\r"
-	Notebook $nbl text="\r"          
-	Notebook $nbl text="		############ PLACE ALL USER COMMANDS AFTER THIS LINE ############  \r"              
-	Notebook $nbl text="\r"
+	if(AppendHeaders)
+		Notebook $nbl text="        CURRENT_EXPERIMENT_NAME \""+UserNameForSampleSet+"\"\r"
+		Notebook $nbl text="		# This file runs USAXS, SAXS and WAXS scans according to the syntax shown below\r"
+		Notebook $nbl text="		#       \r"
+		Notebook $nbl text="		# Scan Type      sx         sy   Thickness  Sample Name\r"
+		Notebook $nbl text="		# ------------------------------------------------------  \r"
+		Notebook $nbl text="		# USAXSscan    45.07       98.3     0      \"Water Blank\"\r"
+		Notebook $nbl text="		# saxsExp      45.07       98.3     0      \"Water Blank\"\r"
+		Notebook $nbl text="		# waxsExp      45.07       98.3     0      \"Water Blank\"  \r"
+		Notebook $nbl text="		#      Use a space (not a tab) to separate arguments (i.e., 45.07 <space> 98.3 in the examples above)\r"  
+		Notebook $nbl text="\r"
+		Notebook $nbl text="		# Run this file by typing the following command in the spec window:   USAXS> CollectData usaxs.mac \r"             
+		Notebook $nbl text="\r"                                   
+		Notebook $nbl text="		# Stop the run using the \"Stop after this scan?\" checkbox in USAXS user main intf  \r" 
+		Notebook $nbl text="		# and wait until the USAXS> prompt reappears\r"
+		Notebook $nbl text="\r"          
+		Notebook $nbl text="		############ PLACE ALL USER COMMANDS AFTER THIS LINE ############  \r"              
+		Notebook $nbl text="\r"
+	endif
 	Notebook $nbl text="		#SAXS measurements \r"
    //and now we will write the commands... 
    //SAXS is first. 
@@ -1746,13 +1759,12 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
-static Function/T IN3S_ExportMacroFile(UseUsername)	
+static Function/T IN3S_ExportMacroFile(UseUsername, AppendToExisting)	
 	variable UseUsername		//set to 0 for usaxs.mac, 1 for user choice. 
+	variable AppendToExisting 	//set to 1 if one should append to existing file on desktop. 
 	
 	IN3S_CheckForSensibility()
-	IN3S_WriteCommandFile(0)
 	string NewFileName
-	SVAR nbl=root:Packages:SamplePlateSetup:NotebookName
 	SVAR UserDefinedCmdName=root:Packages:SamplePlateSetup:DefaultCommandFileName
 	string UseCmdName
 	if(strlen(UserDefinedCmdName)>4)
@@ -1762,14 +1774,47 @@ static Function/T IN3S_ExportMacroFile(UseUsername)
 	endif
 	NewPath /C/Q/O UserDesktop , SpecialDirPath("Desktop", 0, 0, 0 )
 	if(UseUsername)
+		IN3S_WriteCommandFile(0,1)		//this creates notebook with commands, 
+		SVAR nbl=root:Packages:SamplePlateSetup:NotebookName
 		SaveNotebook /P=UserDesktop/ENCG=1/S=6/I/M="Select location and name for your command file" $(nbl)  as UseCmdName
+		if(strlen(S_path)<1)
+			Abort
+		endif
 		NewFileName = S_path
 		string NewFullNamePath =  ReplaceString(".txt", NewFileName, "" )
+		//if needed and user did not use .mac, append it. 
+		if(!StringMatch(NewFullNamePath, "*.mac"))
+			NewFullNamePath = NewFullNamePath+".mac"
+		endif
 		MoveFile/O  NewFileName  as NewFullNamePath		
 		NewFileName = NewFullNamePath
-	else
-		SaveNotebook /P=UserDesktop $(nbl)  as UseCmdName
+	else			//using default name set in panel... Typically usaxs.mac. 
+		if(AppendToExisting)	//need to reimport the existing notebook, cannot append using SaveNotebook
+			IN3S_WriteCommandFile(0,0)		//this creates notebook with commands, no header of comments. 
+			SVAR nbl=root:Packages:SamplePlateSetup:NotebookName
+			OpenNotebook /P=UserDesktop/N=TempOldCmdFile/Z UseCmdName
+			if(V_Flag!=0)
+				NewNotebook as "TempOldCmdFile" 
+			endif
+			//read all from imported TempOldCmdFile and stuff it at the beggining of the nbl
+			notebook  TempOldCmdFile, selection={startOfFile, endOfFile }
+			GetSelection notebook, TempOldCmdFile, 3
+			KillWindow/Z TempOldCmdFile
+			//print S_selection
+			//got to top of the notebook
+			notebook  $(nbl), selection={startOfFile, startOfFile }
+			//insert old content from existing file. 
+			notebook  $(nbl), text=S_selection
+			notebook  $(nbl), text="\r"
+			notebook  $(nbl), text="###  Appended commands \r"
+			notebook  $(nbl), text="\r"
+		else
+			IN3S_WriteCommandFile(0,1)		//this creates notebook with commands, 	
+			SVAR nbl=root:Packages:SamplePlateSetup:NotebookName
+		endif
+		SaveNotebook /P=UserDesktop/ENCG=1/S=6 $(nbl)  as UseCmdName
 	endif
+	SVAR nbl=root:Packages:SamplePlateSetup:NotebookName
 	KillWindow/Z $(nbl)
 	if(strlen(S_path)>0)
 		NewFileName = S_path

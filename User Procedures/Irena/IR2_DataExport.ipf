@@ -8,7 +8,7 @@ Constant IR2EversionNumber = 1.18
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.19 fix ASCII exportof USAXS data which was exporting incorrect Q data. 
+//1.19 fix ASCII export of USAXS data which was exporting incorrect Q data. 
 //1.18 added export of all data from current experiment using IR2E_ExportAllAsNexus(), for now sets dQ=0 for DSM data, sets dQl=slit length and dQw to dQ for SMR data. 
 //1.17 fixed dQ USAXS data Nexus export which exported always SMR dQ. 
 //1.16 add option to export ASCII with d, two theta or Q. Tested against Nika TTH, Q, and D data and works fine within precision errors. 
@@ -30,7 +30,7 @@ Constant IR2EversionNumber = 1.18
 //1.01 added license for ANL
  
 
-//This is tool to export any type of 2 -3 column data we have x, y, and error (if exists)
+//This is tool to export any type of 2 - 3 column data we have x, y, and error (if exists)
 
 Function IR2E_UniversalDataExport()
   

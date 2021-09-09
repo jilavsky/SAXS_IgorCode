@@ -181,7 +181,7 @@ Menu "SAS"
 		"Draw Line Of -4 Slope",  IR2P_DrawLineOf4Slope()
 		"Draw Line Of -3 Slope",  IR2P_DrawLineOf3Slope()
 		"Draw Line Of -2 Slope",  IR2P_DrawLineOf2Slope()
-		"Make log-log graph decade limits", IR2P_MakeLogLogGraphDecLim()
+		"Make log-log graph decade limits", IN2G_MakeGrphLimitsNice()
 		"--"
 		"Fit Line With Cursors", IR2P_FitLineWithCursors()
 		"Fit Power Law with Cursors", IR2P_FitPowerLawWithCursors()

@@ -4,10 +4,9 @@
 //#pragma independentModule = HOBIAutoSave
 
 
-// 2019-08-13, JIL, changed to use File menu on WIndows also, seems to work. 
+// 2021-09-05 JIL, fix IP9 Autosave. Use IgorInfo(13) to check if Igor Autosave is running and abort this code if yes. 
+// 2019-08-13, JIL, changed to use File menu on Windows also, seems to work. 
 // 2011-3-30 DRD
-//#pragma rtGlobals=1     // Use modern global access method.
-
 //--------------------------------------------------------------------------
 // Implements automatic background saving or copying of the current experiment file.
 // Places a dynamic auto-save item in the file menu.  When auto-save is not already active,
@@ -26,17 +25,12 @@
 // David Dana, 2011/3/30
 // modified by JIL 2019/08/13
 //--------------------------------------------------------------------------
-//#ifdef WINDOWS
-//    Menu "Data", dynamic
-//        "-"
-//        ASMenuItem(), /Q, ASMenuAction()
-//    End Menu
-//#else
+
 Menu "File", dynamic
      "-"
      ASMenuItem(), /Q, ASMenuAction()
 End Menu
-//#endif
+
 
 Constant kOverwriteMode = 1
 Constant kBackupMode = 2
@@ -77,6 +71,10 @@ End Menu
 //  either stops it or asks the user to set it up
 //--------------------------------------------------------------------------
 Function ASMenuAction()
+#if(IgorVersion()>8.1)
+	//Igor 9, need to check on Autosave built in IP9
+	print "Igor 9 has now built-in Autosave. It may be better to use that one. You can Find it in \"Misc > Miscellaneous Settings...\" "
+#endif
     GetLastUserMenuInfo
     if (ASIsActive())
         ASStop()
@@ -117,7 +115,16 @@ End Function
 Function ASTask(s)
 STRUCT WMBackgroundStruct &s        // required by Igor but unused
 
-        // First check whether a save is even necessary
+	//check if IP9 is in autosave mode...
+#if(IgorVersion()>8.1)
+	//Igor 9, need to check on Autosave built in IP9
+	if(NumberByKey("Enabled", IgorInfo(13), ":", ";")) 
+		print "Igor 9 Autosave is running, cannot use two different Autosave tools, aborting"
+		return 1
+	endif
+#endif
+	
+    // First check whether a save is even necessary
     ExperimentModified      // this only works in overwrite mode; saving a copy doesn't change the "modified" status
     if (v_flag == 0)        // the experiment is unmodified; no need to save
         return 0
@@ -142,6 +149,13 @@ End Function
 //  Handles the setup and user input necessary to start auto-save.
 //--------------------------------------------------------------------------
 Function ASSetup()
+
+#if(IgorVersion()>8.1)
+	//Igor 9, need to check on Autosave built in IP9
+	if(NumberByKey("Enabled", IgorInfo(13), ":", ";")) 
+		Abort "Igor 9 Autosave is running, cannot use two different Autosave tools, aborting"
+	endif
+#endif
     
     PathInfo home       // First check whether the experiment has previously been saved
     if (v_flag == 0)    // the home path doesn't exist; the experiment has never been saved

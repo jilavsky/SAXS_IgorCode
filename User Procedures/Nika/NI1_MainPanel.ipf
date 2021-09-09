@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=2.70
-Constant NI1AversionNumber = 2.70
+#pragma version=2.71
+Constant NI1AversionNumber = 2.71
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2021, Argonne National Laboratory
@@ -9,6 +9,7 @@ Constant NI1AversionNumber = 2.70
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.71 add Eiger types 
 //2.70 fixed Max number of points selection which did not account for Qmin and Qmax and was therefore producing too many points
 //2.70 added correction for self absorption. 
 //2.69 added 12ID-B tiff file which is tiff file combined with metadata log file. 
@@ -230,7 +231,7 @@ Function NI1A_Initialize2Dto1DConversion()
 	NewDataFolder/O/S root:Packages:Convert2Dto1D
 
 	//internal loaders
-	string/g ListOfKnownExtensions=".tif;GeneralBinary;Pilatus;Nexus;BrukerCCD;MarCCD;mpa;mp/bin;BSRC/Gold;12IDB_tif;DND/txt;RIGK/Raxis;ADSC;ADSC_A;WinView spe (Princeton);ASCII;ibw;BSL/SAXS;BSL/WAXS;ascii512x512;ascii128x128;ESRFedf;"
+	string/g ListOfKnownExtensions=".tif;GeneralBinary;Pilatus/Eiger;Nexus;BrukerCCD;MarCCD;mpa;mp/bin;BSRC/Gold;12IDB_tif;DND/txt;RIGK/Raxis;ADSC;ADSC_A;WinView spe (Princeton);ASCII;ibw;BSL/SAXS;BSL/WAXS;ascii512x512;ascii128x128;ESRFedf;"
 	ListOfKnownExtensions+="SSRLMatSAXS;TPA/XML;Fuji/img;mpa/UC;FITS;.hdf;GE binary;---;"//mpa/bin;mpa/asc;mp/bin;mp/asc
 //#if(Exists("ccp4unpack"))	
 //	ListOfKnownExtensions+="MarIP/xop;"
