@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=2.56
+#pragma version=2.57
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2021, Argonne National Laboratory
@@ -8,8 +8,9 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.57 fix reading of edf header. Works now for Xenocs Pilatus 300k header. Singificant changes due to changing line breaks characters. 
 //2.56 add Eiger detector support, tested on 16M background image. 
-//2.55 fix edf file Xenocs loading, they changed \r\n into \n only and that broke parrsing header... 
+//2.55 fix edf file Xenocs loading, they changed \r\n into \n only and that broke parsing header... 
 //2.54 Remove for MatrixOP /NTHR=0 since it is applicable to 3D matrices only 
 //2.53 added FLOAT as Pilatus EDF file format option. Seems like we now have float values in there. 
 //2.52 added 12ID-B tiff files, these are tiff files with associated metadata file. Location based on folder structure. 
@@ -439,36 +440,52 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		NVAR Wavelength=root:Packages:Convert2Dto1D:Wavelength
 		NVAR XrayEnergy=root:Packages:Convert2Dto1D:XrayEnergy
 		NVAR SampleMeasurementTime=root:Packages:Convert2Dto1D:SampleMeasurementTime
+		testLine = ReplaceString("\r\n", testLine, "")
+		testLine = ReplaceString("\n", testLine, "")
+		testLine = ReplaceString("\t", testLine, "")
+		testLine = ReplaceString("\r", testLine, "")
+		testLine =  ReplaceString(" ", testLine, "")
 		if(ESRFEdf_ExposureTime)
 			//print StringByKey("\r\nExposureTime", testLine , " = ",";")
 			//print StringFromList(1,StringByKey("\r\nExposureTime", testLine , " = ",";")," ")
-			SampleMeasurementTime=str2num(StringFromList(1,StringByKey("\r\nExposureTime", testLine , " = ",";")," "))
+			//SampleMeasurementTime=str2num(StringFromList(1,StringByKey("ExposureTime", testLine , "=",";")," "))
+			SampleMeasurementTime=NumberByKey("ExposureTime", testLine , "=",";")
 		endif
 		if(ESRFEdf_Center_1)
-			BeamCenterX=str2num(StringFromList(1,StringByKey("\r\nCenter_1", testLine , " = ",";")," "))
+			//BeamCenterX=str2num(StringFromList(1,StringByKey("Center_1", testLine , "=",";")," "))
+			BeamCenterX=NumberByKey("Center_1", testLine , "=",";")
 		endif
 		if(ESRFEdf_Center_2)
-			BeamCenterY=str2num(StringFromList(1,StringByKey("\r\nCenter_2", testLine , " = ",";")," "))
+			//eamCenterY=str2num(StringFromList(1,StringByKey("Center_2", testLine , "=",";")," "))
+			BeamCenterY=NumberByKey("Center_2", testLine , "=",";")
 		endif
 		if(ESRFEdf_PSize_1)
-			PixelSizeX=str2num(StringFromList(1,StringByKey("\r\nPSize_1", testLine , " = ",";")," "))*1e3	//convert to mm
+			//PixelSizeX=str2num(StringFromList(1,StringByKey("PSize_1", testLine , "=",";")," "))*1e3	//convert to mm
+			PixelSizeX=NumberByKey("PSize_1", testLine , "=",";")*1e3	//convert to mm
 		endif
 		if(ESRFEdf_PSize_2)
-			PixelSizeY=str2num(StringFromList(1,StringByKey("\r\nPSize_2", testLine , " = ",";")," "))*1e3	//convert to mm
+			//PixelSizeY=str2num(StringFromList(1,StringByKey("PSize_2", testLine , "=",";")," "))*1e3	//convert to mm
+			PixelSizeY=NumberByKey("PSize_2", testLine , "=",";")*1e3	//convert to mm
 		endif
 		if(ESRFEdf_SampleDistance)
-			SampleToCCDDistance=str2num(StringFromList(1,StringByKey("\r\nSampleDistance", testLine , " = ",";")," "))*1e3	//convert to mm
+			//SampleToCCDDistance=str2num(StringFromList(1,StringByKey("SampleDistance", testLine , "=",";")," "))*1e3	//convert to mm
+			SampleToCCDDistance=NumberByKey("SampleDistance", testLine , "=",";")*1e3	//convert to mm
 		endif
 		if(ESRFEdf_SampleThickness)
-			SampleThickness=str2num(StringFromList(1,StringByKey("\r\nSampleThickness", testLine , " = ",";")," "))	//is in mm
+			//SampleThickness=str2num(StringFromList(1,StringByKey("SampleThickness", testLine , "=",";")," "))	//is in mm
+			SampleThickness=NumberByKey("Thickness", testLine , "=",";")	//is in mm
+			if(numtype(SampleThickness)!=0)
+				SampleThickness=NumberByKey("SampleThickness", testLine , "=",";")	//is in mm
+			endif 
 		endif
 		if(ESRFEdf_WaveLength)
-			Wavelength=str2num(StringFromList(1,StringByKey("\r\nWaveLength", testLine , " = ",";")," "))*1e10	//convert to A
+			//Wavelength=str2num(StringFromList(1,StringByKey("WaveLength", testLine , "=",";")," "))*1e10	//convert to A
+			Wavelength=NumberByKey("WaveLength", testLine , "=",";")*1e10	//convert to A
 			XrayEnergy =  12.3984 /Wavelength
 		endif
 		//done reading header....
 		if(ESRFEdf_Title)
-			NewNote+="DataFileName="+replaceString("= ", StringByKey("\r\nTitle", testLine , " = ",";"),"")+" "+FileNameToLoad+";"
+			NewNote+="DataFileName="+replaceString("= ", StringByKey("Title", testLine , "=",";"),"")+" "+FileNameToLoad+";"
 		else
 			NewNote+="DataFileName="+FileNameToLoad+";"
 		endif
@@ -4455,7 +4472,7 @@ Function NI1A_LoadCbfCompresedImage(PathName,FileNameToLoad, WaveNameToCreate)
 	FBinRead filevar, testLine
 	close filevar
 	SkipBytes=strsearch(testLine, "\014\032\004\325" , 0)+4		//this is tring I found in test images
-	if(SkipBytes<5)													//string not found...
+	if(SkipBytes<5)															//string not found...
 		SkipBytes=strsearch(testLine, "\012\026\004\213" , 0)+4	//this is per http://www.bernstein-plus-sons.com/software/CBF/doc/CBFlib.html#3.2.2 what should be there. Go figure... 
 	endif
 	if(SkipBytes<5)
@@ -4478,38 +4495,50 @@ Function NI1A_LoadCbfCompresedImage(PathName,FileNameToLoad, WaveNameToCreate)
 	endif
 	FSetPos fileVar, SkipBytes											//start of the image
 	FStatus fileVar
-	bufSize = V_logEOF-V_filePos										//this is how mcuh data we have in the image starting at the binary data start
-	make/B/O/N=(bufSize)/Free BufWv									//signed 1 byte wave for the data
-	make/O/N=(sizeToExpect)/Free ResultImage							//here go teh converted singed integers. Note, they can be 8, 16, or 32 bits. 64bits not supported here. 
-	FBinRead/B=1/F=1 fileVar, BufWv									//read 1 Byte each into singed integers wave
+	bufSize = V_logEOF-V_filePos										//this is how much data we have in the image starting at the binary data start
+	make/B/O/N=(bufSize)/Free BufWv										//signed 1 byte wave for the data
+	make/O/N=(sizeToExpect)/Free ResultImage							//here go the converted signed integers. Note, they can be 8, 16, or 32 bits. 64bits not supported here. 
+	FBinRead/B=1/F=1 fileVar, BufWv										//read 1 Byte each into singed integers wave
 	close filevar
-	//and not decompress the data here 	
+	//and decompress the data here 	
 	variable i, j, PixelValue, ReadValue
-	j=0																	// j is index of the signed 1 byte wave (stream of data in) 
+	j=0																		// j is index of the signed 1 byte wave (stream of data in) 
 	PixelValue = 0														//value in current pixel in image. 
-	For(i=0;i<(sizeToExpect);i+=1)										//i is index for output wave
-		if(j>bufSize-1)
-			break														//just in case, we run our of j. Should never happen
-		endif
+		//http://www.bernstein-plus-sons.com/software/CBF/doc/CBFlib.html#3.2.2
+		//	The "byte_offset" decompression algorithm is the following:
+		//
+		//Start with a base pixel value of 0.
+		//Read the next byte as delta
+		//If -127 ≤ delta ≤ 127, add delta to the base pixel value, make that the new base pixel value, place it on the output array and return to step 2.
+		//If delta is 80 hex, read the next two bytes as a little_endian 16-bit number and make that delta.
+		//If -32767 ≤ delta ≤ 32767, add delta to the base pixel value, make that the new base pixel value, place it on the output array and return to step 2.
+		//If delta is 8000 hex, read the next 4 bytes as a little_endian 32-bit number and make that delta
+		//If -2147483647 ≤ delta ≤ 2147483647, add delta to the base pixel value, make that the new base pixel value, place it on the output array and return to step 2.
+		//If delta is 80000000 hex, read the next 8 bytes as a little_endian 64-bit number and make that delta, add delta to the base pixel value, make that the new base pixel value, place it on the output array and return to step 2.
+
+	For(i=0;i<(sizeToExpect);i+=1)									//i is index for output wave
+		//if(j>bufSize-1)
+		//	break															//just in case, we run our of j. Should never happen
+		//endif
 		ReadValue = BufWv[j]											//read 1 Byte integer
-		if(ReadValue>-128)												//this is useable value if +/- 127
-			PixelValue += ReadValue										//add to prior pixel value
-			ResultImage[i] = PixelValue									//store in output stream
-			j+=1														// move to another j point 
+		if(abs(ReadValue)<128)										//this is useable value within +/- 127
+			PixelValue += ReadValue									//add to prior pixel value
+			ResultImage[i] = PixelValue								//store in output stream
+			j+=1															// move to another j point 
 		elseif(ReadValue==-128)										// This is indicator that the difference did not fit in 1Byte, read 2 bytes and use those.
-			j+=1														// move to another point to start reading the 2 bytes
-			ReadValue = NI1A_Conv2Bytes(BufWv[j],BufWv[j+1])			//read and convert 2 Bytes in integer
-			if(ReadValue>-32768)										//this is useable value, use these two bytes
-				PixelValue += ReadValue									//add to prior pixel value
-				ResultImage[i] = PixelValue								//store in output stream
-				j+=2													//move to another j point  
-			elseif(ReadValue==-32768)									// This is indicator that the difference did not fit in 2Bytes, read 4 bytes and use those.
-				j+=2													//move to another point to start reading the 4 bytes 
+			j+=1															// move to another point to start reading the 2 bytes
+			ReadValue = NI1A_Conv2Bytes(BufWv[j],BufWv[j+1])	//read and convert 2 Bytes in integer
+			if(abs(ReadValue)<32768)									//this is useable value, use these two bytes
+				PixelValue += ReadValue								//add to prior pixel value
+				ResultImage[i] = PixelValue							//store in output stream
+				j+=2														//move to another j point  
+			elseif(ReadValue==-32768)								// This is indicator that the difference did not fit in 2Bytes, read 4 bytes and use those.
+				j+=2														//move to another point to start reading the 4 bytes 
 				ReadValue = NI1A_Conv4Bytes(BufWv[j],BufWv[j+1], BufWv[j+2], BufWv[j+3])		//read and convert next 4 Bytes in integer
 				if(abs(ReadValue)<2147483648)						//this is correct value for 32 bits
-					PixelValue += ReadValue								//add to prior pixel value
-					ResultImage[i] = PixelValue							//store in output stream
-					j+=4												//move to another j point 
+					PixelValue += ReadValue							//add to prior pixel value
+					ResultImage[i] = PixelValue						//store in output stream
+					j+=4													//move to another j point 
 				else														//abort, do not support 64 byte integers (no such detector exists... 
 					abort "64 bits data are not supported"
 				endif
