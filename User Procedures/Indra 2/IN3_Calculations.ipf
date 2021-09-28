@@ -2398,7 +2398,7 @@ Function IN3_DesmearData()
 
 		Duplicate/O tmpWork_Int, DSM_Int
 		Duplicate/O tmpWork_Qvec, DSM_Qvec
-		Duplicate/O tmpWork_Error, DSM_Error
+		Duplicate/O tmpWork_Error, DSM_Error	
 		Duplicate/O tmpWork_dQ, DSM_dQ
 		DoWindow RcurvePlotGraph
 		if(V_Flag)
@@ -2413,6 +2413,7 @@ Function IN3_DesmearData()
 			DoUpdate /W=RcurvePlotGraph
 			IN3_DisplayDesExtAndError()
 		endif
+		DSM_Error =  abs(DSM_Error)				//remove negative values this gets in extreme cases.
 	elseif(is2DCollimated)		//2DUSAXS, keep desmeared data, remove slit smeared data if present
 		DoWindow RcurvePlotGraph
 		if(V_Flag)

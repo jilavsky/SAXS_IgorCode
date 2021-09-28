@@ -914,7 +914,7 @@ Function IR1I_ProcessImpWaves(selectedFile)
 	endif
 	//check on TempError if it contains meaningful number and stop user if not...
 	if(!WaveExists(TempError))
-		abort "The Errors (Uncertainities) data do NOT exiost. Please, select a method to create them and try again."
+		abort "The Errors (Uncertainities) data do NOT exist. Please, select a method to create them and try again."
 	endif
 	wavestats/Q TempError
 	if((V_min<=0)||(V_numNANs>0)||(V_numINFs>0))

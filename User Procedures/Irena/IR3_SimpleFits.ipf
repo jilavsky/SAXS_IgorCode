@@ -1,6 +1,6 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.14
-constant IR3JversionNumber = 0.3			//Simple Fit panel version number
+#pragma version=1.15
+constant IR3JversionNumber = 0.5			//Simple Fit panel version number
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2021, Argonne National Laboratory
@@ -11,6 +11,7 @@ constant IR3JversionNumber = 0.3			//Simple Fit panel version number
 constant SimpleFitsLinPlotMaxScale = 1.07
 constant SimpleFitsLinPlotMinScale = 0.8
 
+//1.15 	add 1D Correlation function
 //1.14	 	add handling of USAXS M_... waves 
 //1.13 	Added SMR USAXS data (not QRS), checked (and fixed) Sphere and spheroid models. 
 //1.12 	Added Invariant calculation. 
@@ -19,7 +20,7 @@ constant SimpleFitsLinPlotMinScale = 0.8
 
 
 //To add new function:
-//at this moment we have: 	ListOfSimpleModels="Guinier;Porod;Sphere;Spheroid;Guinier Rod;Guinier Sheet;"
+//at this moment we have: 	ListOfSimpleModels="Guinier;Porod;Sphere;Spheroid;Guinier Rod;Guinier Sheet;1DCorrelation;"
 //IR3J_InitSimpleFits()	
 //			add to: ListOfSimpleModels list as new data type ("Guinier")
 //			add any new parameters, which will need to be fit. Keep in mind, all will be fit. 
@@ -46,13 +47,59 @@ constant SimpleFitsLinPlotMinScale = 0.8
 //add also results type to IR2_PanelControLProcedures.ipf 
 //			Procedure is IR2C_InitControls
 //existing:  	AllCurrentlyAllowedTypes+="SimFitYGuinier;SimFitYGuinierR;SimFitYGuinierS;SimFitYSphere;SimFitYSpheroid;"
-
+// and more: 		Corr1DK;Corr1DGammaA;Corr1DGammaI
 
 //Invariant background definitions:
 //InvBackgModelList = "Porod+y0;PowerLaw+y0;Constant;Gauss y0+A*exp((X-X0)^2/width;Ruland A*exp(B*X^2)+y0;None;"
 //InvBackgModelList = "Porod+y0;PowerLaw+y0;Constant;Gauss Peak;Exponential;None;"
 //	Gauss y0+A*exp((X-X0)^2/width 	= 	Gauss Peak
 //	Ruland A*exp(B*X^2)+y0 			=  Exponential
+//**********************
+// 1D Correlation procedure calculates the 1D correlation function as typically seen used to analyze 
+// lamellar structures.  
+//	Code p[rovided by RIck Beyer, included 9/30/2021
+//	There are 3 choices:
+//1) Calculate K(z) as typically reported by Strobl.  The result is reported in units of (mol e-/cm^3)^2.
+//		I'm not confident in the data scaling in this case.
+//2) For an anisotropic (highly oritented) lamellar morphoplogy, calculate Gamma(z) as derived by Vonk 
+//		& Kortleve, but following Roe's book.  
+//3) For an isotropic lamellar morphology (very common), calculate gamma(z) as in #2 but applying a
+//		Lorentz-type correction to I(q) first.
+//
+//References:
+//Litvinov et al, Macromolecules 2011, 44, 9254.
+//Vonk, C. G.; Kortleve, G. Kolloid-Zeitschrift und Zeitschrift für Polymere 1967, 220(1), 19-24.
+//Strobl, G. R. Journal of Applied Crystallography 1973, 6(5), 365-370.
+//Strobl, G. R.; Schneider, M. Journal of Polymer Science Part B-Polymer Physics 1980, 18(6), 1343-1359.
+//Roe, R.J. Methods of X-ray and Neutron Scattering in Polymer Science.
+//
+//Clasical electron radius = re = 2.8179e-15 m = 2.8179e-13 cm
+//
+//Z input (maximum Z in real space) must be in same units as q (nm and 1/nm, or Ang and 1/Ang)
+//results in Corr1DZ_N, Corr1DK_N or Corr1DGammaA_N or Corr1DGammaI_N
+//		Wave ZWave = root:Packages:Irena:SimpleFits:ZWave
+//			Duplicate/O ZWave, $(DataFolderName+"Corr1DZ_"+num2str(generation))
+//			Wave ResultX=$(DataFolderName+"Corr1DZ_"+num2str(generation))
+//			If(StringMatch(Corr1DMethod, "Anisotropic (abs, Strobl)")) 								
+//				//Strobl approach
+//				Wave Kwave = root:Packages:Irena:SimpleFits:Kwave
+//				Duplicate/O Kwave, $(DataFolderName+"Corr1DK_"+num2str(generation))
+//				Wave ResultY = $(DataFolderName+"Corr1DK_"+num2str(generation))
+//			ElseIf(StringMatch(Corr1DMethod, "Anisotropic (norm)"))								
+//				//Roe approach for anisotropic data
+//				Wave GammaA_wave = root:Packages:Irena:SimpleFits:GammaA_wave
+//				Duplicate/O GammaA_wave, $(DataFolderName+"Corr1DGammaA_"+num2str(generation))
+//				Wave ResultY = $(DataFolderName+"Corr1DGammaA_"+num2str(generation))
+//			ElseIf(StringMatch(Corr1DMethod, "Isotropic (norm)"))							
+//				//Roe approach for isotropic data
+//				Wave GammaI_wave = root:Packages:Irena:SimpleFits:GammaI_wave
+//				Duplicate/O GammaI_wave, $(DataFolderName+"Corr1DGammaI_"+num2str(generation))
+//				Wave ResultY = $(DataFolderName+"Corr1DGammaI_"+num2str(generation))
+
+
+//**********************
+
+
 ///******************************************************************************************
 ///******************************************************************************************
 ///******************************************************************************************
@@ -177,6 +224,15 @@ Function IR3J_SimpleFitsPanelFnct()
 	SetVariable InvQmaxUsed,pos={240,420},size={220,15}, noproc,title="Qmax used = ", bodywidth=80, noedit=1, limits={0,inf,0}, format="%4.3g",frame=0
 	Setvariable InvQmaxUsed, variable=root:Packages:Irena:SimpleFits:InvQmaxUsed,  help={"Calculated Qmax used in evaluation"}
 
+	//1DCorrelation controls
+	SVAR Corr1DMethod = root:Packages:Irena:SimpleFits:Corr1DMethod
+	SVAR ListOfCorr1DMethod = root:Packages:Irena:SimpleFits:ListOfCorr1DMethod
+	PopupMenu Corr1DMethodSel,pos={280,252},size={200,20},fStyle=2,proc=IR3J_PopMenuProc,title="Model: "
+	PopupMenu Corr1DMethodSel,value= #"root:Packages:Irena:SimpleFits:ListOfCorr1DMethod" ,mode=(WhichListItem(Corr1DMethod, ListOfCorr1DMethod)+1) 
+	SetVariable Corr1DZmax,pos={240,285},size={220,15}, proc=IR3J_SetVarProc, title="Max dim [A]", bodywidth=80
+	Setvariable Corr1DZmax, variable=root:Packages:Irena:SimpleFits:Corr1DZmax, limits={10,inf,0}, help={"Maximum real space dimension [A]"}
+	SetVariable Corr1DWavelength,pos={240,305},size={220,15}, proc=IR3J_SetVarProc, title="Wavelngth [A]", bodywidth=80
+	Setvariable Corr1DWavelength, variable=root:Packages:Irena:SimpleFits:Corr1DWavelength, limits={0.01,10,0}, help={"X-ray wavelength [A]"}
 
 	//other stuff...
 	Button FitCurrentDataSet,pos={280,450},size={180,20}, proc=IR3J_ButtonProc,title="Fit Current (one) Dataset", help={"Fit current data set"}
@@ -230,7 +286,7 @@ Function IR3J_CreateCheckGraphs()
 	variable exists2=0
 	SVAR SimpleModel = root:Packages:Irena:SimpleFits:SimpleModel
 
-	if(StringMatch(SimpleModel,"Guinier*") || StringMatch(SimpleModel,"Porod*"))
+	if(StringMatch(SimpleModel,"Guinier*") || StringMatch(SimpleModel,"Porod*") || StringMatch(SimpleModel,"1DCorrelation"))
 		DoWIndow IR3J_LinDataDisplay
 		if(V_Flag)
 			DoWIndow/hide=? IR3J_LinDataDisplay
@@ -278,8 +334,8 @@ Function IR3J_InitSimpleFits()
 	ListOfStrings+="DataStartFolder;DataMatchString;FolderSortString;FolderSortStringAll;"
 	ListOfStrings+="UserMessageString;SavedDataMessage;"
 	ListOfStrings+="SimpleModel;ListOfSimpleModels;"
-	//parameters for Invariant
-	ListOfStrings+="InvBackgModel;InvBackgModelList;"
+	//parameters for Invariant and 1DCorrelation
+	ListOfStrings+="InvBackgModel;InvBackgModelList;Corr1DMethod;ListOfCorr1DMethod;"
 
 	ListOfVariables="UseIndra2Data1;UseQRSdata1;SlitLength;UseSMRData;"
 	ListOfVariables+="DataBackground;AchievedChiSquare;ScatteringContrast;"
@@ -289,9 +345,9 @@ Function IR3J_InitSimpleFits()
 	ListOfVariables+="ProcessManually;ProcessSequentially;OverwriteExistingData;AutosaveAfterProcessing;DelayBetweenProcessing;"
 	ListOfVariables+="DataQEnd;DataQstart;DataQEndPoint;DataQstartPoint;"
 	ListOfVariables+="SaveToNotebook;SaveToWaves;SaveToFolder;"
-	//parameters for Invariant
+	//parameters for Invariant and 1DCorrelation
 	ListOfVariables+="InvBckgMinQ;InvBckgMaxQ;Invariant;InvQmaxUsed;InvExtrapolateLowQ;InvContrast;InvVolumeFraction;"
-	ListOfVariables+="InvariantIrena;"
+	ListOfVariables+="InvariantIrena;Corr1DZmax;Corr1DWavelength;"
 	//InvariantIrena is in 1/cm4
 	 
 //	ListOfVariables+="VOlSD_Rg;VolSD_Volume;VolSD_MeanDiameter;VolSD_MedianDiameter;VOlSD_ModeDiamater;"
@@ -333,12 +389,18 @@ Function IR3J_InitSimpleFits()
 	endif
 	SVAR ListOfSimpleModels
 	ListOfSimpleModels="Guinier;Porod;Sphere;Spheroid;Guinier Rod;Guinier Sheet;"
-	ListOfSimpleModels+="Invariant;"
-	//ListOfSimpleModels+="Invariant;Volume Size Distribution;Number Size Distribution;"
+	ListOfSimpleModels+="Invariant;1DCorrelation;"
+	SVAR ListOfCorr1DMethod 
+	ListOfCorr1DMethod = "Anisotropic (abs, Strobl);Anisotropic (norm);Isotropic (norm);"
 	SVAR SimpleModel
 	if(strlen(SimpleModel)<1)
 		SimpleModel="Guinier"
 	endif
+	SVAR Corr1DMethod
+	if(strlen(Corr1DMethod)<1)
+		Corr1DMethod="Anisotropic (abs, Strobl)"
+	endif
+	
 	NVAR Guinier_Rg
 	NVAR Guinier_I0
 	if(Guinier_Rg<5)
@@ -379,6 +441,15 @@ Function IR3J_InitSimpleFits()
 	if(ScatteringContrast<1)
 		ScatteringContrast = 1
 	endif
+	NVAR Corr1DZmax
+	if(Corr1DZmax<50)
+		Corr1DZmax = 200
+	endif
+	NVAR Corr1DWavelength
+	if(Corr1DWavelength<0.05)
+		Corr1DWavelength = 1.542
+	endif
+	
 	NVAR InvBckgMinQ
 	//InvBckgMinQ = 0
 	NVAR InvBckgMaxQ
@@ -411,7 +482,7 @@ Function IR3J_CheckProc(cba) : CheckBoxControl
 			NVAR UseQRSData =  root:Packages:Irena:SimpleFits:UseQRSData
 			SVAR DataStartFolder = root:Packages:Irena:SimpleFits:DataStartFolder
   			if(StringMatch(cba.ctrlName, "InvExtrapolateLowQ") )
-  				IR3J_InvCalculateInvariant()
+  				IR3J_CalculateInvariant()
   			endif
 			break
 		case -1: // control being killed
@@ -493,9 +564,9 @@ Function IR3J_SetVarProc(sva) : SetVariableControl
 				IR3J_InvSyncBckgCursors(0)
 			endif			
 			if(stringmatch(sva.ctrlName,"InvContrast"))		//contrast changed
-				IR3J_InvCalculateInvariant()
+				IR3J_CalculateInvariant()
 			endif
-			//update model to allow some playin...
+			//update model to allow some playing...
 			if(stringmatch(sva.ctrlName,"Sphere_Radius") || stringmatch(sva.ctrlName,"DataBackground") || stringmatch(sva.ctrlName,"Sphere_ScalingConstant") )		//update model.. 
 				IR3J_CalculateModel()
 			endif
@@ -507,6 +578,9 @@ Function IR3J_SetVarProc(sva) : SetVariableControl
 			endif
 			if(stringmatch(sva.ctrlName,"Spheroid_Radius"))		//update model.. 
 				IR3J_CalculateModel()
+			endif
+			if(stringmatch(sva.ctrlName,"Corr1DZmax") || stringmatch(sva.ctrlName,"Corr1DWavelength") )		//update model.. 
+				IR3J_Calculate1DCorrelation()
 			endif
 
 
@@ -614,10 +688,7 @@ Function IR3J_CopyAndAppendData(FolderNameStr)
 		IR3J_CreateLinearizedData()
 		IR3J_AppendDataToGraphModel()
 		SVAR SimpleModel=root:Packages:Irena:SimpleFits:SimpleModel
-		if(StringMatch(SimpleModel, "Invariant" ))
-			IR3J_InvInitializeBackground()
-			IR3J_InvFitBackground()
-		endif	
+		IR3J_RecalculateIfAppropriate()
 		DoUpdate
 		print "Added Data from folder : "+DataFolderName
 	SetDataFolder oldDf
@@ -752,6 +823,9 @@ Function IR3J_AppendDataToGraphModel()
 			minY*=SimpleFitsLinPlotMaxScale
 		endif
 		SetAxis/W=IR3J_LinDataDisplay left minY, maxY
+	elseif(StringMatch(SimpleModel,"1DCorrelation"))	
+		//	IR3J_LinDataDisplay will be used to display results
+		
 	else
 		KillWindow/Z IR3J_LinDataDisplay
 	endif
@@ -870,7 +944,7 @@ Function IR3J_ButtonProc(ba) : ButtonControl
 			endif
 
 			if(stringmatch(ba.ctrlName,"GetHelp"))
-				IN2G_OpenWebManual("Irena/bioSAXS.html#basic-fits")				//fix me!!			
+				IN2G_OpenWebManual("Irena/SimpleFits.html#simple-fits")				//fix me!!			
 			endif
 
 			
@@ -941,14 +1015,13 @@ static Function IR3J_FitData()
 			IR3J_FitSpheroid()
 			IR3J_CalculateModel()		
 			break
-		case "Invariant":			// Spheroid
+		case "Invariant":			// Invariant
 			IR3J_InvFitBackground()
-			IR3J_InvCalculateInvariant()	
+			IR3J_CalculateInvariant()	
 			break
-//		case "Volume Size Distribution":			// Spheroid
-//			IR3J_FitSizeDistribution("Volume")
-//			//IR3J_CalculateModel()		
-//			break
+		case "1DCorrelation":			// 1DCorrelation
+			IR3J_Calculate1DCorrelation()		
+			break
 //		case "Number Size Distribution":			// Spheroid
 //			IR3J_FitSizeDistribution("Number")
 //			//IR3J_CalculateModel()		
@@ -1024,6 +1097,7 @@ Function IR3J_GraphWindowHook(s)
 		case 7:				//cursor moved
 			if(StringMatch(s.cursorName, "A")||StringMatch(s.cursorName, "B"))
 				IR3J_SyncCursorsTogether(s.traceName,s.cursorName,s.pointNumber)
+				IR3J_RecalculateIfAppropriate()
 			elseif(StringMatch(s.cursorName, "C")||StringMatch(s.cursorName, "D"))
 				//this resets Qmin and Qmax even when added through code and cursors moved due to 
 				//code setting cursor to nearest point. There does not seem to be any way to catch this
@@ -1047,6 +1121,18 @@ Function IR3J_GraphWindowHook(s)
 End
 
 //**********************************************************************************************************
+//**********************************************************************************************************
+static Function IR3J_RecalculateIfAppropriate()
+
+	SVAR SimpleModel = root:Packages:Irena:SimpleFits:SimpleModel
+	if(StringMatch(SimpleModel, "1DCorrelation"))
+		IR3J_Calculate1DCorrelation()
+	elseif(StringMatch(SimpleModel, "Invariant" ))
+		IR3J_InvInitializeBackground()
+		IR3J_InvFitBackground()
+	endif	
+
+end
 //**********************************************************************************************************
 //**********************************************************************************************************
 
@@ -2008,17 +2094,6 @@ static Function IR3J_SaveResultsToNotebook()
 	NVAR Spheroid_Beta				=root:Packages:Irena:SimpleFits:Spheroid_Beta
 	NVAR DataBackground			=root:Packages:Irena:SimpleFits:DataBackground
 	SVAR SimpleModel 				= root:Packages:Irena:SimpleFits:SimpleModel
-
-//	NVAR VOlSD_Rg					=root:Packages:Irena:SimpleFits:VOlSD_Rg
-//	NVAR VolSD_Volume				=root:Packages:Irena:SimpleFits:VolSD_Volume
-//	NVAR VolSD_MeanDiameter		=root:Packages:Irena:SimpleFits:VolSD_MeanDiameter
-//	NVAR VolSD_MedianDiameter	=root:Packages:Irena:SimpleFits:VolSD_MedianDiameter
-//	NVAR VOlSD_ModeDiamater		=root:Packages:Irena:SimpleFits:VOlSD_ModeDiamater
-//	NVAR NumSD_NumPartPerCm3		=root:Packages:Irena:SimpleFits:NumSD_NumPartPerCm3
-//	NVAR NumSD_MeanDiameter		=root:Packages:Irena:SimpleFits:NumSD_MeanDiameter
-//	NVAR NumSD_MedianDiameter	=root:Packages:Irena:SimpleFits:NumSD_MedianDiameter
-//	NVAR NumSD_ModeDiamater		=root:Packages:Irena:SimpleFits:NumSD_ModeDiamater
-
 	NVAR InvQmaxUsed =	root:Packages:Irena:SimpleFits:InvQmaxUsed
 	NVAR Invariant =	root:Packages:Irena:SimpleFits:invariant
 	NVAR DataQEnd = 	root:Packages:Irena:SimpleFits:DataQEnd
@@ -2028,10 +2103,13 @@ static Function IR3J_SaveResultsToNotebook()
 	SVAR InvBackgModel = root:Packages:Irena:SimpleFits:InvBackgModel
 	NVAR InvBckgMinQ = root:Packages:Irena:SimpleFits:InvBckgMinQ
 	NVAR InvBckgMaxQ = root:Packages:Irena:SimpleFits:InvBckgMaxQ
+	SVAR Corr1DMethod = root:Packages:Irena:SimpleFits:Corr1DMethod
+	NVAR Zmax = root:Packages:Irena:SimpleFits:Corr1DZmax
+	NVAR Corr1DWavelength = root:Packages:Irena:SimpleFits:Corr1DWavelength
 
 	Wave/Z ModelInt = root:Packages:Irena:SimpleFits:ModelLogLogInt
 	Wave/Z ModelQ = root:Packages:Irena:SimpleFits:ModelLogLogQ
-	//others can be created via Simple polots as needed... 
+	//others can be created via Simple plots as needed... 
 	//if(!WaveExists(modelInt)||!WaveExists(ModelQ))
 	//	return 0			//cannot do anything, bail out. 
 	//endif
@@ -2042,42 +2120,48 @@ static Function IR3J_SaveResultsToNotebook()
 	IR1_AppendAnyText("Intensity: \t"+IntensityWaveName,0)	
 	IR1_AppendAnyText("Q: \t"+QWavename,0)	
 	IR1_AppendAnyText("Error: \t"+ErrorWaveName,0)	
+	IR1_AppendAnyText("Qmin = "+num2str(DataQstart),0)
+	IR1_AppendAnyText("Qmax = "+num2str(DataQEnd),0)
 	IR1_AppendAnyText(" ",0)	
 	if(stringmatch(SimpleModel,"Guinier"))
 		IR1_AppendAnyText("\tRg                  = "+num2str(Guinier_Rg),0)
 		IR1_AppendAnyText("\tI0                  = "+num2str(Guinier_I0),0)
+		IR1_AppendAnyText("Achieved Normalized chi-square = "+num2str(AchievedChiSquare),0)
 	elseif(stringmatch(SimpleModel,"Guinier Rod"))
 		IR1_AppendAnyText("\tRc                  = "+num2str(Guinier_Rg),0)
 		IR1_AppendAnyText("\tI0                  = "+num2str(Guinier_I0),0)
+		IR1_AppendAnyText("Achieved Normalized chi-square = "+num2str(AchievedChiSquare),0)
 	elseif(stringmatch(SimpleModel,"Guinier Sheet"))
 		IR1_AppendAnyText("\tThickness           = "+num2str(sqrt(12)*Guinier_Rg),0)
 		IR1_AppendAnyText("\tI0                  = "+num2str(Guinier_I0),0)
+		IR1_AppendAnyText("Achieved Normalized chi-square = "+num2str(AchievedChiSquare),0)
 	elseif(stringmatch(SimpleModel,"Porod"))
 		IR1_AppendAnyText("\tPorod Constant [1/cm 1/A^4] = "+num2str(Porod_Constant),0)
 		IR1_AppendAnyText("\tSpecific Surface [cm2/cm3] = "+num2str(Porod_SpecificSurface),0)
 		IR1_AppendAnyText("\tContrast [10^20 cm^-4] = "+num2str(Porod_Constant),0)
 		IR1_AppendAnyText("\tBackground          = "+num2str(DataBackground),0)
+		IR1_AppendAnyText("Achieved Normalized chi-square = "+num2str(AchievedChiSquare),0)
 	elseif(stringmatch(SimpleModel,"Sphere"))
 		IR1_AppendAnyText("\tSphere Radius [A]   = "+num2str(Sphere_Radius),0)
 		IR1_AppendAnyText("\tScaling constant    = "+num2str(Sphere_ScalingConstant),0)
 		IR1_AppendAnyText("\tBackground = "+num2str(DataBackground),0)
+		IR1_AppendAnyText("Achieved Normalized chi-square = "+num2str(AchievedChiSquare),0)
 	elseif(stringmatch(SimpleModel,"Spheroid"))
 		IR1_AppendAnyText("\tSpheroid Radius [A] = "+num2str(Spheroid_Radius),0)
 		IR1_AppendAnyText("\tScaling constant    = "+num2str(Spheroid_ScalingConstant),0)
 		IR1_AppendAnyText("\tSpheroid Beta       = "+num2str(Spheroid_Beta),0)
 		IR1_AppendAnyText("\tBackground          = "+num2str(DataBackground),0)
+		IR1_AppendAnyText("Achieved Normalized chi-square = "+num2str(AchievedChiSquare),0)
 	elseif(stringmatch(SimpleModel,"Invariant"))
 		IR1_AppendAnyText("\tInvariant [(mol e-^2/cm^3)^3] 	= "+num2str(Invariant),0)
 		IR1_AppendAnyText("\tQmax used for calc.				= "+num2str(InvQmaxUsed),0)
 		IR1_AppendAnyText("\tBackground Model				= "+InvBackgModel,0)
 		IR1_AppendAnyText("\tBckg Q start         					= "+num2str(InvBckgMinQ),0)
 		IR1_AppendAnyText("\tBckg Q end          					= "+num2str(InvBckgMaxQ),0)
-//	elseif(stringmatch(SimpleModel,"Volume Size Distribution"))
-//		IR1_AppendAnyText("\tRg [A]              =  "+num2str(VOlSD_Rg),0)
-//		IR1_AppendAnyText("\tVolume fraction     =  "+num2str(VolSD_Volume),0)
-//		IR1_AppendAnyText("\tMean Diameter [A]   =  "+num2str(VolSD_MeanDiameter),0)
-//		IR1_AppendAnyText("\tMedian Diameter [A] =  "+num2str(VolSD_MedianDiameter),0)
-//		IR1_AppendAnyText("\tMode Diameter [A]   =  "+num2str(VOlSD_ModeDiamater),0)
+	elseif(stringmatch(SimpleModel,"1DCorrelation"))
+		IR1_AppendAnyText("\tMethod              =  "+Corr1DMethod,0)
+		IR1_AppendAnyText("\tWavelength          =  "+num2str(Corr1DWavelength),0)
+		IR1_AppendAnyText("\tZ max [A]           =  "+num2str(Zmax),0)
 //	elseif(stringmatch(SimpleModel,"Number Size Distribution"))
 //		IR1_AppendAnyText("\tNum Particles/cm3   =  "+num2str(NumSD_NumPartPerCm3),0)
 //		IR1_AppendAnyText("\tMean Diameter [A]   =  "+num2str(NumSD_MeanDiameter),0)
@@ -2085,9 +2169,6 @@ static Function IR3J_SaveResultsToNotebook()
 //		IR1_AppendAnyText("\tMode Diameter [A]   =  "+num2str(NumSD_ModeDiamater),0)
 	endif
 
-	IR1_AppendAnyText("Achieved Normalized chi-square = "+num2str(AchievedChiSquare),0)
-	IR1_AppendAnyText("Qmin = "+num2str(DataQstart),0)
-	IR1_AppendAnyText("Qmax = "+num2str(DataQEnd),0)
 	IR1_AppendAnyGraph("IR3J_LogLogDataDisplay")
 	DOWIndow IR3J_LinDataDisplay
 	if(V_Flag)
@@ -2134,6 +2215,9 @@ static Function IR3J_SaveResultsToFolder()
 	SVAR SimpleModel 				= root:Packages:Irena:SimpleFits:SimpleModel
 	NVAR SaveToNotebook			=root:Packages:Irena:SimpleFits:SaveToNotebook
 	NVAR SaveToWaves				=root:Packages:Irena:SimpleFits:SaveToWaves
+	SVAR Corr1DMethod = root:Packages:Irena:SimpleFits:Corr1DMethod
+	NVAR Zmax = root:Packages:Irena:SimpleFits:Corr1DZmax
+	NVAR Corr1DWavelength = root:Packages:Irena:SimpleFits:Corr1DWavelength
 
 	//create new results names...
 	//AllCurrentlyAllowedTypes+="SimFitGuinierY;SimFitGuinierRY;SimFitGuinierSY;SimFitSphereY;SimFitSpheroidY;"
@@ -2141,7 +2225,7 @@ static Function IR3J_SaveResultsToFolder()
 	Wave/Z ModelInt = root:Packages:Irena:SimpleFits:ModelLogLogInt
 	Wave/Z ModelQ = root:Packages:Irena:SimpleFits:ModelLogLogQ
 	//others can be created via Simple polots as needed... 
-	if(!WaveExists(modelInt)||!WaveExists(ModelQ)&&!StringMatch(SimpleModel, "Invariant" ))
+	if(!WaveExists(modelInt)||!WaveExists(ModelQ)&&!StringMatch(SimpleModel, "Invariant" )&&!StringMatch(SimpleModel, "1DCorrelation" ))
 		return 0			//cannot do anything, bail out. 
 	endif
 	//note, there is nothing to do here for : 
@@ -2232,10 +2316,34 @@ static Function IR3J_SaveResultsToFolder()
 			InvariantResult = Invariant
 			InvariantResultcm4 = InvariantIrena
 			break
-//		case "Volume Size Distribution":	// nothing to do here...
-//			break
-//		case "Number Size Distribution":	// nothing to do here...
-//			break
+		case  "1DCorrelation":
+			NoteWithResults+="1DCorrelation method="+Corr1DMethod+";"+"Zmax="+num2str(Zmax)+";"
+			NoteWithResults+="1DCorrWavelength="+num2str(Corr1DWavelength)+";"
+			NoteWithResults+=OldNote
+			generation=IN2G_FindAVailableResultsGen("Corr1DZ_", DataFolderName)
+			Wave ZWave = root:Packages:Irena:SimpleFits:ZWave
+			Duplicate/O ZWave, $(DataFolderName+"Corr1DZ_"+num2str(generation))
+			Wave ResultX=$(DataFolderName+"Corr1DZ_"+num2str(generation))
+			//	Duplicate/O ZwaveTemp, ZWave
+			If(StringMatch(Corr1DMethod, "Anisotropic (abs, Strobl)")) 								
+				//Strobl approach
+				Wave Kwave = root:Packages:Irena:SimpleFits:Kwave
+				Duplicate/O Kwave, $(DataFolderName+"Corr1DK_"+num2str(generation))
+				Wave ResultY = $(DataFolderName+"Corr1DK_"+num2str(generation))
+			ElseIf(StringMatch(Corr1DMethod, "Anisotropic (norm)"))								
+				//Roe approach for anisotropic data
+				Wave GammaA_wave = root:Packages:Irena:SimpleFits:GammaA_wave
+				Duplicate/O GammaA_wave, $(DataFolderName+"Corr1DGammaA_"+num2str(generation))
+				Wave ResultY = $(DataFolderName+"Corr1DGammaA_"+num2str(generation))
+			ElseIf(StringMatch(Corr1DMethod, "Isotropic (norm)"))							
+				//Roe approach for isotropic data
+				Wave GammaI_wave = root:Packages:Irena:SimpleFits:GammaI_wave
+				Duplicate/O GammaI_wave, $(DataFolderName+"Corr1DGammaI_"+num2str(generation))
+				Wave ResultY = $(DataFolderName+"Corr1DGammaI_"+num2str(generation))
+			EndIf
+			Note /K/NOCR ResultY, NoteWithResults
+			Note /K/NOCR ResultX, NoteWithResults
+			break
 		default:			// optional default expression executed
 			Abort "Unknown data type, cannot save the data"
 	endswitch	
@@ -2291,15 +2399,6 @@ static Function IR3J_SaveResultsToWaves()
 	NVAR InvContrast 		= root:Packages:Irena:SimpleFits:InvContrast
 	NVAR InvVolumeFraction = root:Packages:Irena:SimpleFits:InvVolumeFraction
 
-//	NVAR VOlSD_Rg					=root:Packages:Irena:SimpleFits:VOlSD_Rg
-//	NVAR VolSD_Volume				=root:Packages:Irena:SimpleFits:VolSD_Volume
-//	NVAR VolSD_MeanDiameter		=root:Packages:Irena:SimpleFits:VolSD_MeanDiameter
-//	NVAR VolSD_MedianDiameter	=root:Packages:Irena:SimpleFits:VolSD_MedianDiameter
-//	NVAR VOlSD_ModeDiamater		=root:Packages:Irena:SimpleFits:VOlSD_ModeDiamater
-//	NVAR NumSD_NumPartPerCm3		=root:Packages:Irena:SimpleFits:NumSD_NumPartPerCm3
-//	NVAR NumSD_MeanDiameter		=root:Packages:Irena:SimpleFits:NumSD_MeanDiameter
-//	NVAR NumSD_MedianDiameter	=root:Packages:Irena:SimpleFits:NumSD_MedianDiameter
-//	NVAR NumSD_ModeDiamater		=root:Packages:Irena:SimpleFits:NumSD_ModeDiamater
 	Wave/Z ModelInt = root:Packages:Irena:SimpleFits:ModelLogLogInt
 	Wave/Z ModelQ = root:Packages:Irena:SimpleFits:ModelLogLogQ
 	//others can be created via Simple polots as needed... 
@@ -2475,53 +2574,9 @@ static Function IR3J_SaveResultsToWaves()
 		SpheroidQmax[curlength] 			= DataQEnd
 		SpheroidChiSquare[curlength] 	= AchievedChiSquare
 		IR3J_GetTableWithresults()
-//	elseif(stringmatch(SimpleModel,"Volume Size Distribution"))
-//		//tabulate data for Porod
-//		NewDATAFolder/O/S root:VolSizeDistResults
-//		Wave/Z Rg
-//		if(!WaveExists(Rg))
-//			make/O/N=0 Rg, VolumeFraction, MeanDiaVolDist, ModeDiaVolDist, MeadianDiaVolDist, TimeWave, TemperatureWave, PercentWave, OrderWave
-//			make/O/N=0/T SampleName
-//			SetScale/P x 0,1,"A", Rg, MeanDiaVolDist, ModeDiaVolDist, MeadianDiaVolDist
-//			SetScale/P x 0,1,"Fraction", VolumeFraction		
-//		endif
-//		curlength = numpnts(Rg)
-//		redimension/N=(curlength+1) SampleName,Rg, VolumeFraction, MeanDiaVolDist, ModeDiaVolDist, MeadianDiaVolDist, TimeWave, TemperatureWave, PercentWave, OrderWave 
-//		SampleName[curlength] 			= DataFolderName
-//		TimeWave[curlength]				=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzmin")
-//		TemperatureWave[curlength]  	=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzC")
-//		PercentWave[curlength] 			=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzpct")
-//		OrderWave[curlength]				= 	IN2G_IdentifyNameComponent(DataFolderName, "_xyz")
-//		Rg[curlength] 						= VOlSD_Rg
-//		VolumeFraction[curlength]		= VolSD_Volume
-//		MeanDiaVolDist[curlength] 		= VolSD_MeanDiameter
-//		ModeDiaVolDist[curlength]		= VOlSD_ModeDiamater
-//		MeadianDiaVolDist[curlength]	= VolSD_MedianDiameter
-//
-//		//IR3J_GetTableWithresults()
-//	elseif(stringmatch(SimpleModel,"Number Size Distribution"))
-//		//tabulate data for Porod
-//		NewDATAFolder/O/S root:NumbSizeDistResults
-//		Wave/Z NumPartsPercm3
-//		if(!WaveExists(NumPartsPercm3))	
-//			make/O/N=0 NumPartsPercm3, MeanDiaNumDist, ModeDiaNumDist, MeadianDiaNumDist, TimeWave, TemperatureWave, PercentWave, OrderWave
-//			make/O/N=0/T SampleName
-//			SetScale/P x 0,1,"A", MeanDiaNumDist, ModeDiaNumDist, MeadianDiaNumDist
-//			SetScale/P x 0,1,"1/cm3", NumPartsPercm3		
-//		endif
-//		curlength = numpnts(NumPartsPercm3)
-//		redimension/N=(curlength+1) SampleName, NumPartsPercm3, MeanDiaNumDist, ModeDiaNumDist, MeadianDiaNumDist, TimeWave, TemperatureWave, PercentWave, OrderWave 
-//		SampleName[curlength] 			= DataFolderName
-//		TimeWave[curlength]				=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzmin")
-//		TemperatureWave[curlength]  	=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzC")
-//		PercentWave[curlength] 			=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzpct")
-//		OrderWave[curlength]				= 	IN2G_IdentifyNameComponent(DataFolderName, "_xyz")
-//		NumPartsPercm3[curlength] 		= NumSD_NumPartPerCm3
-//		MeanDiaNumDist[curlength] 		= NumSD_MeanDiameter
-//		ModeDiaNumDist[curlength]		= NumSD_ModeDiamater
-//		MeadianDiaNumDist[curlength]	= NumSD_MedianDiameter
-//
-//		IR3J_GetTableWithresults()
+	else
+		print "This model : "+SimpleModel+" cannot be stored in waves, there are no suitable results"
+
 	endif
 	
 end
@@ -2589,24 +2644,8 @@ static Function IR3J_GetTableWithResults()
 				IR3J_InvResultsTableFnct() 
 			endif 
 			break
-//		case "Volume Size Distribution":	// execute if case matches expression
-//			DoWindow IR3J_VolSDResultsTable
-//			if(V_Flag)
-//				DoWindow/F IR3J_VolSDResultsTable
-//			else
-//				IR3J_VolumeSDResTblFnct() 
-//			endif 
-//			break
-//		case "Number Size Distribution":	// execute if case matches expression
-//			DoWindow IR3J_NumberSDResultsTable
-//			if(V_Flag)
-//				DoWindow/F IR3J_NumberSDResultsTable
-//			else
-//				IR3J_NumberSDResTblFnct() 
-//			endif 
-//			break
-
 		default:			// optional default expression executed
+			print "This model : "+SimpleModel+" cannot be stored in waves, there are no suitable results"
 
 	endswitch
 
@@ -2987,6 +3026,15 @@ Function IR3J_PopMenuProc(pa) : PopupMenuControl
 				InvBackgModel = popStr
 				IR3J_InvFitBackground()
 			endif			
+			
+			if(StringMatch(pa.ctrlName, "Corr1DMethodSel" ))
+				SVAR Corr1DMethod = root:Packages:Irena:SimpleFits:Corr1DMethod
+				Corr1DMethod = popStr
+				IR3J_Calculate1DCorrelation()
+			endif			
+
+							
+
 			break
 		case -1: // control being killed
 			break
@@ -3003,6 +3051,7 @@ static Function IR3J_SetupControlsOnMainpanel()
 	
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SVAR SimpleModel = root:Packages:Irena:SimpleFits:SimpleModel
+	SVAR Corr1DMethod = root:Packages:Irena:SimpleFits:Corr1DMethod
 	DoWindow IR3J_SimpleFitsPanel
 	if(V_Flag)
 
@@ -3027,6 +3076,9 @@ static Function IR3J_SetupControlsOnMainpanel()
 		SetVariable InvContrast, disable=1
 		SetVariable InvVolumeFraction, disable=1
 		SetVariable InvariantIrena, disable=1
+		PopupMenu Corr1DMethodSel, disable=1
+		Setvariable Corr1DZmax, disable=1
+		Setvariable Corr1DWavelength, disable=1
 		
 
 		strswitch(SimpleModel)	// string switch
@@ -3063,7 +3115,10 @@ static Function IR3J_SetupControlsOnMainpanel()
 				SetVariable InvVolumeFraction, disable=0
 				SetVariable InvariantIrena, disable=0
 				break
-
+			case "1DCorrelation":	// execute if case matches expression
+				PopupMenu Corr1DMethodSel, disable=0
+				Setvariable Corr1DZmax, disable=0
+				Setvariable Corr1DWavelength, disable=0
 
 			default:			// optional default expression executed
 
@@ -3317,7 +3372,7 @@ End
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-Function IR3J_InvCalculateInvariant()
+Function IR3J_CalculateInvariant()
 
 	dfref oldDF
 	OldDf = GetDataFolderDFR
@@ -3442,6 +3497,122 @@ end
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
+//*****************************************************************************************************************
+Function IR3J_Calculate1DCorrelation()
+
+	dfref oldDF
+	OldDf = GetDataFolderDFR
+	setDataFolder root:Packages:Irena:SimpleFits:
+	NVAR DataQEnd = 	root:Packages:Irena:SimpleFits:DataQEnd
+	NVAR DataQstart = 	root:Packages:Irena:SimpleFits:DataQstart
+	NVAR DataQEndPoint = root:Packages:Irena:SimpleFits:DataQEndPoint
+	NVAR DataQstartPoint = root:Packages:Irena:SimpleFits:DataQstartPoint
+	SVAR Corr1DMethod = root:Packages:Irena:SimpleFits:Corr1DMethod
+	NVAR Zmax = root:Packages:Irena:SimpleFits:Corr1DZmax
+	//SVAR ListOfCorr1DMethod = "Anisotropic (abs, Strobl);Anisotropic (norm);Isotropic (norm);"
+
+	Wave IntWave = root:Packages:Irena:SimpleFits:OriginalDataIntWave
+	Wave QWave = root:Packages:Irena:SimpleFits:OriginalDataQWave
+	
+	DoWIndow IR3J_LogLogDataDisplay
+	if(V_Flag!=1)
+		return 0
+	endif
+
+	//Create output waves for integration
+	Duplicate/Free/R=[DataQstartPoint,DataQEndPoint] IntWave, IntWaveTemp, KwaveTemp,integrand,integrand_int, rwave_eu,rwave_meu
+	Duplicate/Free/R=[DataQstartPoint,DataQEndPoint] IntWave, GammawaveTemp,upper,lower,upper_int,lower_int
+	Duplicate/Free/R=[DataQstartPoint,DataQEndPoint] Qwave, QwaveTemp, ZwaveTemp, be,X2T
+
+	Variable index,counter
+
+	//Create wave of Z values from 0 to Zmax
+	index = numpnts(ZwaveTemp)-1
+	ZwaveTemp = x*Zmax/index						
+
+	//Convert I(q) from units of cm^-1 to electron units (See Roe, pp. 12-13)
+	//Need wavelength, use 1.542 for Cu-ka in Angstroms.
+	//Calculating be is almost pointless b/c be is almost exactly equal to re
+	//Need to convert units of rwave_eu into mol e- TWICE.  Can only do once here b/c
+	//IGOR can't handle number size.
+	X2T = 2*asin(1.542*QwaveTemp/4/pi)				
+	be = (2.81794e-13)*sqrt((1+cos(X2T))/2)		//in units of cm
+	rwave_eu = IntWaveTemp/be^2						//in units of (# electrons)^2/cm^3
+	rwave_meu = rwave_eu/6.022e23					//Convert from electrons to mol e- (first time)
+		
+	//Create a loop that calculates K(z) or Gamma(z) for each value of z in zwave.
+	counter = 0
+	Do
+		//Strobl approach
+		If(StringMatch(Corr1DMethod, "Anisotropic (abs, Strobl)")) 								
+			Integrand = 4*pi*QwaveTemp^2*rwave_meu*cos(QwaveTemp*ZwaveTemp[counter])
+			Integrate/T Integrand /X=QwaveTemp/D=Integrand_int
+			KwaveTemp[counter]=Integrand_int[index]/(2*pi)^3
+		
+		//Roe approach for anisotropic data
+		ElseIf(StringMatch(Corr1DMethod, "Anisotropic (norm)"))								
+			Upper = IntWaveTemp*cos(QwaveTemp*ZwaveTemp[counter])
+			Integrate/T Upper /X=QwaveTemp/D=Upper_int
+			Lower = IntWaveTemp
+			Integrate/T Lower /X=QwaveTemp/D=Lower_int
+			GammawaveTemp[counter]=Upper_int[index]/Lower_int[index]
+		
+		//Roe approach for isotropic data
+		ElseIf(StringMatch(Corr1DMethod, "Isotropic (norm)"))							
+			Upper = QwaveTemp^2*IntWaveTemp*cos(QwaveTemp*ZwaveTemp[counter])
+			Integrate/T Upper /X=QwaveTemp/D=Upper_int
+			Lower = QwaveTemp^2*IntWaveTemp
+			Integrate/T Lower /X=QwaveTemp/D=Lower_int
+			GammawaveTemp[counter]=Upper_int[index]/Lower_int[index]
+		
+		EndIf
+		counter = counter+1
+	While(counter<=index)
+
+	//Correct intensity scaling
+	KwaveTemp = KwaveTemp*1e24							//Change units of q from 1/A to 1/cm (^3)
+	KwaveTemp = KwaveTemp/6.022e23						//Second conversion to mol e- from number e-
+	
+	//output in graph...
+	DoWindow IR3J_LinDataDisplay
+	if(V_Flag)
+		GetWindow IR3J_LinDataDisplay wsize
+	endif
+	KillWindow/Z IR3J_LinDataDisplay
+	IR3J_CreateCheckGraphs()
+	if(V_left+V_right+V_top+V_bottom >200)
+		moveWindow /W=IR3J_LinDataDisplay V_left, V_top,V_right, V_bottom
+	else
+		AutoPositionWindow/M=1/R=IR3J_LogLogDataDisplay IR3J_LinDataDisplay	
+	endif
+	Duplicate/O ZwaveTemp, ZWave
+	//Strobl approach
+	If(StringMatch(Corr1DMethod, "Anisotropic (abs, Strobl)")) 								
+		Duplicate/O KwaveTemp Kwave		
+		AppendToGraph/L/W=IR3J_LinDataDisplay Kwave vs ZWave
+		ModifyGraph/W=IR3J_LinDataDisplay log=0,standoff(left)=0
+		Label/W=IR3J_LinDataDisplay left "K(z) [(mol e\\S-\\M/cm\\S3\\M)\\S2\\M]"
+		Label/W=IR3J_LinDataDisplay bottom "z [A]"
+
+	//Roe approach for anisotropic data
+	ElseIf(StringMatch(Corr1DMethod, "Anisotropic (norm)"))								
+		Duplicate/O GammawaveTemp GammaA_wave			
+		AppendToGraph/L/W=IR3J_LinDataDisplay GammaA_wave vs ZWave
+		ModifyGraph/W=IR3J_LinDataDisplay log=0,standoff(left)=0
+		Label/W=IR3J_LinDataDisplay left "Gamma(z) (dimensionless)"
+		Label/W=IR3J_LinDataDisplay bottom "z [A]"
+
+	//Roe approach for isotropic data
+	ElseIf(StringMatch(Corr1DMethod, "Isotropic (norm)"))							
+		Duplicate/O GammawaveTemp GammaI_wave				
+		AppendToGraph/L/W=IR3J_LinDataDisplay GammaI_wave vs ZWave
+		ModifyGraph/W=IR3J_LinDataDisplay log=0,standoff(left)=0
+		Label/W=IR3J_LinDataDisplay left "Gamma(z) (dimensionless)"
+		Label/W=IR3J_LinDataDisplay bottom "z [A]"
+	EndIf
+	setDataFolder OldDf
+end
+
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
