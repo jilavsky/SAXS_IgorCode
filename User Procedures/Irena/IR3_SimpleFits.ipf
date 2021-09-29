@@ -752,6 +752,7 @@ Function IR3J_AppendDataToGraphModel()
 	variable startQp, endQp, tmpStQ
 
 	SVAR SimpleModel = root:Packages:Irena:SimpleFits:SimpleModel
+	SVAR DataFolderName = root:Packages:Irena:SimpleFits:DataFolderName
 	if(StringMatch(SimpleModel,"Guinier*") || StringMatch(SimpleModel,"Porod*"))		
 		Wave LinModelDataIntWave=root:Packages:Irena:SimpleFits:LinModelDataIntWave
 		Wave LinModelDataQWave=root:Packages:Irena:SimpleFits:LinModelDataQWave
@@ -761,6 +762,7 @@ Function IR3J_AppendDataToGraphModel()
 			AppendToGraph /W=IR3J_LinDataDisplay  LinModelDataIntWave  vs LinModelDataQWave
 			ErrorBars /W=IR3J_LinDataDisplay LinModelDataIntWave Y,wave=(LinModelDataEWave,LinModelDataEWave)		
 		endif
+		Legend/C/W=IR3J_LinDataDisplay/N=text0/F=0/A=RT "\\s(LinModelDataIntWave)"+DataFolderName 
 		NVAR DataQEnd = root:Packages:Irena:SimpleFits:DataQEnd
 		NVAR DataQstart = root:Packages:Irena:SimpleFits:DataQstart
 		NVAR DataQEndPoint = root:Packages:Irena:SimpleFits:DataQEndPoint
@@ -843,6 +845,7 @@ Function IR3J_AppendDataToGraphLogLog()
 	Wave OriginalDataIntWave=root:Packages:Irena:SimpleFits:OriginalDataIntWave
 	Wave OriginalDataQWave=root:Packages:Irena:SimpleFits:OriginalDataQWave
 	Wave OriginalDataErrorWave=root:Packages:Irena:SimpleFits:OriginalDataErrorWave
+	SVAR DataFolderName = root:Packages:Irena:SimpleFits:DataFolderName
 	CheckDisplayed /W=IR3J_LogLogDataDisplay OriginalDataIntWave
 	if(!V_flag)
 		AppendToGraph /W=IR3J_LogLogDataDisplay  OriginalDataIntWave  vs OriginalDataQWave
@@ -852,6 +855,7 @@ Function IR3J_AppendDataToGraphLogLog()
 		ErrorBars /W=IR3J_LogLogDataDisplay OriginalDataIntWave Y,wave=(OriginalDataErrorWave,OriginalDataErrorWave)		
 	endif
 	RemoveFromGraph/Z/W=IR3J_LogLogDataDisplay IntegrantInt, InvBckgWave, InvariantIntWaveCorr
+	Legend/C/W=IR3J_LogLogDataDisplay/N=text0/F=0/A=RT "\\s(OriginalDataIntWave)"+DataFolderName 
 	ModifyGraph /W=IR3J_LogLogDataDisplay mirror=1
 	// for "Size Distribution" use linear left axis.  
 	SVAR SimpleModel = root:Packages:Irena:SimpleFits:SimpleModel
@@ -1903,6 +1907,7 @@ Function IR3J_CalculateModel()
 	SVAR SimpleModel 				= 	root:Packages:Irena:SimpleFits:SimpleModel
 	NVAR UseSMRData					=	root:Packages:Irena:SimpleFits:UseSMRData
 	NVAR SlitLength					=	root:Packages:Irena:SimpleFits:SlitLength
+	SVAR DataFolderName			= 	root:Packages:Irena:SimpleFits:DataFolderName
 
 	Duplicate/O/R=[DataQstartPoint,DataQEndPoint] OriginalDataQWave, ModelLogLogQ, ModelLogLogInt, NormalizedResidualLogLogQ
 	Duplicate/O/R=[DataQstartPoint,DataQEndPoint] OriginalDataIntWave, NormalizedResidualLogLog, ZeroLineResidualLogLog
@@ -3509,6 +3514,7 @@ Function IR3J_Calculate1DCorrelation()
 	NVAR DataQstartPoint = root:Packages:Irena:SimpleFits:DataQstartPoint
 	SVAR Corr1DMethod = root:Packages:Irena:SimpleFits:Corr1DMethod
 	NVAR Zmax = root:Packages:Irena:SimpleFits:Corr1DZmax
+	SVAR DataFolderName = root:Packages:Irena:SimpleFits:DataFolderName
 	//SVAR ListOfCorr1DMethod = "Anisotropic (abs, Strobl);Anisotropic (norm);Isotropic (norm);"
 
 	Wave IntWave = root:Packages:Irena:SimpleFits:OriginalDataIntWave
@@ -3569,6 +3575,18 @@ Function IR3J_Calculate1DCorrelation()
 		counter = counter+1
 	While(counter<=index)
 
+	Print "1D correlation function calculated for ",DataFolderName
+	//Strobl approach
+	If(StringMatch(Corr1DMethod, "Anisotropic (abs, Strobl)")) 								
+		Print "Method: anisotropic scattering with absolute units (Strobl)."		
+	//Roe approach for anisotropic data
+	ElseIf(StringMatch(Corr1DMethod, "Anisotropic (norm)"))								
+		Print "Method: anisotropic scattering, normalized (Roe, Vonk & Kortleve)"		
+	//Roe approach for isotropic data
+	ElseIf(StringMatch(Corr1DMethod, "Isotropic (norm)"))							
+		Print "Method: isotropic scattering, normalized (Roe, Vonk & Kortleve)"		
+	EndIf
+
 	//Correct intensity scaling
 	KwaveTemp = KwaveTemp*1e24							//Change units of q from 1/A to 1/cm (^3)
 	KwaveTemp = KwaveTemp/6.022e23						//Second conversion to mol e- from number e-
@@ -3587,28 +3605,38 @@ Function IR3J_Calculate1DCorrelation()
 	endif
 	Duplicate/O ZwaveTemp, ZWave
 	//Strobl approach
-	If(StringMatch(Corr1DMethod, "Anisotropic (abs, Strobl)")) 								
+	If(StringMatch(Corr1DMethod, "Anisotropic (abs, Strobl)")) 			
+		DoWindow/T IR3J_LinDataDisplay,"Corr. Func. Aniso. Scat. abs. Strobl : K vs Z"					
 		Duplicate/O KwaveTemp Kwave		
 		AppendToGraph/L/W=IR3J_LinDataDisplay Kwave vs ZWave
 		ModifyGraph/W=IR3J_LinDataDisplay log=0,standoff(left)=0
 		Label/W=IR3J_LinDataDisplay left "K(z) [(mol e\\S-\\M/cm\\S3\\M)\\S2\\M]"
 		Label/W=IR3J_LinDataDisplay bottom "z [A]"
+		ModifyGraph log(left)=0,log(bottom)=0,tick=2,tick(left)=2,zero(left)=2,standoff(left)=0
+		Legend/C/N=text0/F=0/A=RT "\\s(Kwave) "+DataFolderName 
 
 	//Roe approach for anisotropic data
 	ElseIf(StringMatch(Corr1DMethod, "Anisotropic (norm)"))								
+		DoWindow/T IR3J_LinDataDisplay,"Corr. Func. Aniso. Scat. norm. (Roe, Vonk & Kortleve) : GammaA vs Z"					
 		Duplicate/O GammawaveTemp GammaA_wave			
 		AppendToGraph/L/W=IR3J_LinDataDisplay GammaA_wave vs ZWave
 		ModifyGraph/W=IR3J_LinDataDisplay log=0,standoff(left)=0
 		Label/W=IR3J_LinDataDisplay left "Gamma(z) (dimensionless)"
 		Label/W=IR3J_LinDataDisplay bottom "z [A]"
+		ModifyGraph log(left)=0,log(bottom)=0,tick=2,tick(left)=2,zero(left)=2,standoff(left)=0
+		Legend/C/N=text0/F=0/A=RT "\\s(Kwave) "+DataFolderName 
 
 	//Roe approach for isotropic data
 	ElseIf(StringMatch(Corr1DMethod, "Isotropic (norm)"))							
+		DoWindow/T IR3J_LinDataDisplay,"Corr. Func. Iso. Scat. norm. (Roe, Vonk & Kortleve) : GammaI vs Z"					
 		Duplicate/O GammawaveTemp GammaI_wave				
 		AppendToGraph/L/W=IR3J_LinDataDisplay GammaI_wave vs ZWave
 		ModifyGraph/W=IR3J_LinDataDisplay log=0,standoff(left)=0
 		Label/W=IR3J_LinDataDisplay left "Gamma(z) (dimensionless)"
 		Label/W=IR3J_LinDataDisplay bottom "z [A]"
+		ModifyGraph log(left)=0,log(bottom)=0,tick=2,tick(left)=2,zero(left)=2,standoff(left)=0
+		Legend/C/N=text0/F=0/A=RT "\\s(Kwave) "+DataFolderName 
+
 	EndIf
 	setDataFolder OldDf
 end
