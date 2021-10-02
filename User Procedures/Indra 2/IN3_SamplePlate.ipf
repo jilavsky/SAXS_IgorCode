@@ -1,18 +1,19 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version = 1.05
+#pragma version = 1.06
 #pragma IgorVersion=8.03
 
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2019, Argonne National Laboratory
+//* Copyright (c) 2005 - 2021, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
 //this is tool to setup Sample Plates for USAXS, survey sample positions, and generate Command files. 
 
+//1.06 add Import Image for iamge of sample plate. Straightens parralax and trims based on user corner selection and dimensions provided. 
 //1.05 added Append to command file
 //1.04 modifications to beamline survey with epics controls. 
 //1.03 Remove for MatrixOP /NTHR=0 since it is applicable to 3D matrices only 
@@ -1921,6 +1922,9 @@ static Function IN3S_Initialize()
 	if(WAXSScanTime<3)
 		WAXSScanTime = 20
 	endif
+	//kill potentially old stuff here
+	killwaves/Z imageWave, M_RGB2Gray, PlateImageTemp
+
 	SetDataFolder OldDf
 end
 
@@ -2767,6 +2771,7 @@ Function IN3S_ImportImageOfPlate()
 	ImageTransform rgb2gray  imageWave
 	Wave M_RGB2Gray
 	Duplicate/O M_RGB2Gray, PlateImageTemp
+	killwaves/Z imageWave, M_RGB2Gray
 	//set values for the variables, for now 0,0 is in top left corner... 
 	xRT = dimsize(PlateImageTemp,0)*0.9
 	xRB = dimsize(PlateImageTemp,0)*0.9
