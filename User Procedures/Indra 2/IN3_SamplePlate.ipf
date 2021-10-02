@@ -149,19 +149,20 @@ Function IN3S_MainPanel()
 		PopupMenu SelectSavedSet,mode=1,value= #"\"---;\"+IN3S_GenStringOfSets()"
 		Button LoadSavedSet,pos={10,135},size={180,17}, proc=IN3S_ButtonProc,title="Load saved Positions Set", help={"Loads postions set saved before"}
 	
-		TitleBox Info3 title="\Zr120Templates : ",pos={320,35},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0
+		TitleBox Info3 title="\Zr120Templates : ",pos={300,32},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0
 		SVAR SelectedPlateName=root:Packages:SamplePlateSetup:SelectedPlateName
-		PopupMenu NewPlateTemplate,pos={300,55},size={330,21},proc=IN3S_PopMenuProc,title="Template :", help={"Pick Plate template"}
+		PopupMenu NewPlateTemplate,pos={300,50},size={330,21},proc=IN3S_PopMenuProc,title="Template :", help={"Pick Plate template"}
 		PopupMenu NewPlateTemplate,mode=1,popvalue=SelectedPlateName, fColor=(1,16019,65535)
 		PopupMenu NewPlateTemplate,value="9x9 Acrylic/magnetic plate;NMR Acrylic plate;Old Style Al Plate;NMR Tubes holder;NMR tubes heater;Generic Grid holder;Image;AgBehenateLaB6;"
-		Button PopulateTable,pos={300,85},size={120,17}, proc=IN3S_ButtonProc,title="Populate Table", help={"Creates new set of positions"}
-		Button CreateImage,pos={440,85},size={120,17}, proc=IN3S_ButtonProc,title="Create image", help={"Creates new set of positions"}
-		Button BeamlineSurvey,pos={440,105},size={120,17}, proc=IN3S_ButtonProc,title="Beamline Survey", help={"This opens GUI for survey at the beamline"}
+		Button PopulateTable,pos={300,75},size={120,17}, proc=IN3S_ButtonProc,title="Populate Table", help={"Creates new set of positions"}
+		Button CreateImage,pos={440,75},size={120,17}, proc=IN3S_ButtonProc,title="Create image", help={"Creates new set of positions"}
+		Button ImportImage,pos={440,92},size={120,17}, proc=IN3S_ButtonProc,title="Import image", help={"Import image as Template"}
+		Button BeamlineSurvey,pos={440,110},size={120,17}, proc=IN3S_ButtonProc,title="Beamline Survey", help={"This opens GUI for survey at the beamline"}
 
-		TitleBox Info4 title="\Zr120Current set name : ",pos={300,110},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0
+		TitleBox Info4 title="\Zr110Current set name : ",pos={300,110},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0
 		SetVariable UserNameForSampleSet,pos={300,130},size={270,20}, proc=IN3S_SetVarProc,title="Set Name: "
 		Setvariable UserNameForSampleSet,fStyle=2, variable=root:Packages:SamplePlateSetup:UserNameForSampleSet, help={"Name for these samples"}
-		Button SavePositionSet,pos={400,150},size={160,19}, proc=IN3S_ButtonProc,title="Save Position Set", help={"Saves set of positions with user name"}
+		Button SavePositionSet,pos={420,148},size={160,19}, proc=IN3S_ButtonProc,title="Save Position Set", help={"Saves set of positions with user name"}
 		
    		TabControl TableTabs  pos={0,160},size={590,430},tabLabel(0)="Sample Table", value= 0, proc=IN3S_TableTabsTabProc
 	    TabControl TableTabs  tabLabel(1)="Option Controls"
@@ -896,6 +897,15 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 					IN3S_AddTagToImage(-4)	//remove all drawings, if needed	
 				endif
 			endif
+
+			if(StringMatch(ba.ctrlName, "TrimImportedImage" ))
+				IN3S_TrimAndStraightenImage()
+			endif
+
+			if(StringMatch(ba.ctrlName, "ImportImage" ))
+				IN3S_ImportImageOfPlate()
+			endif
+
 			if(StringMatch(ba.ctrlName, "DisplayHookFunction" ))
 				//DisplayProcedure "IN3S_ExportHookFunction"
 				IN3_InsertHookIntoMainProc()
@@ -2730,6 +2740,243 @@ static Function IN3S_CreateNMRTubes(PlateImage, Centers, Scaling)
 	//and return back to the code. 
 	PlateImage = 128 - (ShrunkImageThresh/2)
 end
+
+//************************************************************************************************************
+//************************************************************************************************************
+Function IN3S_ImportImageOfPlate()
+	// imports the image in here: root:Packages:SamplePlatesAvailable:PlateImage
+	// and allows user to remvoe parralax and trim, set dimensions. 
+	
+	DFrEF OldDf=GetDataFolderDFR()
+	setdatafolder root:Packages:SamplePlatesAvailable
+	KillWindow/Z SamplePlateImageDrawing
+	NVAR Scaling = root:Packages:SamplePlatesAvailable:Acrylic9x9PlateScale
+	//need variables here, this may go in Init routine later
+	variable HorSize, VertSize
+	variable/g xRT, xRB, xLT, xLB
+	variable/g yRT, yRB, yLT, yLB
+	variable/g xDimension
+	variable/g yDimension
+	//import the image somehwere
+	ImageLoad/T=any/O
+	if(V_Flag!=1)
+		abort
+	endif
+	string/g LoadedImageName=S_fileName
+	wave imageWave = $(LoadedImageName)
+	ImageTransform rgb2gray  imageWave
+	Wave M_RGB2Gray
+	Duplicate/O M_RGB2Gray, PlateImageTemp
+	//set values for the variables, for now 0,0 is in top left corner... 
+	xRT = dimsize(PlateImageTemp,0)*0.9
+	xRB = dimsize(PlateImageTemp,0)*0.9
+	xLT = dimsize(PlateImageTemp,0)*0.1
+	xLB = dimsize(PlateImageTemp,0)*0.2
+	yRT = dimsize(PlateImageTemp,1)*0.1
+	yRB = dimsize(PlateImageTemp,1)*0.9
+	yLT = dimsize(PlateImageTemp,1)*0.2
+	yLB = dimsize(PlateImageTemp,1)*0.8
+	if((xDimension+yDimension)<50)
+		xDimension = 200	
+		yDimension = 100
+	endif
+
+	//make image, get user input here so we can trim the image and return it back... 
+	KillWindow/Z TrimCorrectImageDrawing
+	NewImage/K=1/N=TrimCorrectImageDrawing root:Packages:SamplePlatesAvailable:PlateImageTemp
+	Cursor/W=TrimCorrectImageDrawing/C=(65535,0,0)/H=0/I/P/S=1/T={1,1,1}/NUML=1 A, PlateImageTemp, xRT, yRT  
+	Cursor/W=TrimCorrectImageDrawing/C=(65535,0,0)/H=0/I/P/S=1/T={1,2,2}/NUML=2 B, PlateImageTemp, xRB, yRB  
+	Cursor/W=TrimCorrectImageDrawing/C=(65535,0,0)/H=0/I/P/S=1/T={1,3,3}/NUML=3 C, PlateImageTemp, xLT, yLT  
+	Cursor/W=TrimCorrectImageDrawing/C=(65535,0,0)/H=0/I/P/S=1/T={1,4,4}/NUML=4 D, PlateImageTemp, xLB, yLB  
+	ControlBar /T/W=TrimCorrectImageDrawing 80
+	TitleBox LeftTop title="\Zr120Left top (C) : ",pos={10,5},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0
+	SetVariable xLT,pos={10,25},size={90,20}, disable=2, noedit=1,limits={-inf,inf,0},noproc ,title="Xpos = "
+	Setvariable xLT,fStyle=2, variable=root:Packages:SamplePlatesAvailable:xLT, help={"This is x postion of C corner"}
+	SetVariable yLT,pos={10,45},size={90,20}, disable=2, noedit=1,limits={-inf,inf,0},noproc ,title="Ypos = "
+	Setvariable yLT,fStyle=2, variable=root:Packages:SamplePlatesAvailable:yLT, help={"This is y postion of C corner"}
+
+	TitleBox LeftBot title="\Zr120Left bot (D) : ",pos={150,5},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0
+	SetVariable xLB,pos={150,25},size={90,20}, disable=2, noedit=1,limits={-inf,inf,0},noproc ,title="Xpos = "
+	Setvariable xLB,fStyle=2, variable=root:Packages:SamplePlatesAvailable:xLB, help={"This is x postion of D corner"}
+	SetVariable yLB,pos={150,45},size={90,20}, disable=2, noedit=1,limits={-inf,inf,0},noproc ,title="Ypos = "
+	Setvariable yLB,fStyle=2, variable=root:Packages:SamplePlatesAvailable:yLB, help={"This is y postion of D corner"}
+
+	TitleBox Dimensions title="\Zr120Dimensions[mm]: ",pos={260,30},size={150,15},frame=0,fColor=(0,0,65535),labelBack=0
+	SetVariable xDimension,pos={270,5},size={200,20}, noedit=0,limits={50,500,10},noproc,bodyWidth=70, title="Horizontal [mm] "
+	Setvariable xDimension,fStyle=2, variable=root:Packages:SamplePlatesAvailable:xDimension, help={"This is x dimension in mm of C corner"}
+	SetVariable yDimension,pos={270,55},size={200,20}, noedit=0,limits={50,500,10},noproc,bodyWidth=70,title="Vertical    [mm] "
+	Setvariable yDimension,fStyle=2, variable=root:Packages:SamplePlatesAvailable:yDimension, help={"This is y dimension in mm of C corner"}
+
+	Button TrimImportedImage,pos={400,30},size={120,17}, proc=IN3S_ButtonProc,title="Trim image", help={"Trims the image"}
+
+	TitleBox RightBot title="\Zr120Right bot (B) : ",pos={550,5},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0
+	SetVariable xRB,pos={550,25},size={90,20}, disable=2, noedit=1,limits={-inf,inf,0},noproc ,title="Xpos = "
+	Setvariable xRB,fStyle=2, variable=root:Packages:SamplePlatesAvailable:xRB, help={"This is x postion of B corner"}
+	SetVariable yRB,pos={550,45},size={90,20}, disable=2, noedit=1,limits={-inf,inf,0},noproc ,title="Ypos = "
+	Setvariable yRB,fStyle=2, variable=root:Packages:SamplePlatesAvailable:yRB, help={"This is y postion of B corner"}
+
+	TitleBox RightTop title="\Zr120Right top (A) : ",pos={690,5},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0
+	SetVariable xRT,pos={690,25},size={90,20}, disable=2, noedit=1,limits={-inf,inf,0},noproc ,title="Xpos = "
+	Setvariable xRT,fStyle=2, variable=root:Packages:SamplePlatesAvailable:xRT, help={"This is x postion of A corner"}
+	SetVariable yRT,pos={690,45},size={90,20}, disable=2, noedit=1,limits={-inf,inf,0},noproc ,title="Ypos = "
+	Setvariable yRT,fStyle=2, variable=root:Packages:SamplePlatesAvailable:yRT, help={"This is y postion of A corner"}
+
+	SetWindow TrimCorrectImageDrawing, hook(CursorsMoved) = IN3S_MyCursorsMovedHook	// Install window hook
+
+	SetDataFolder OldDf
+
+end
+//************************************************************************************************************
+//************************************************************************************************************
+
+Function IN3S_TrimAndStraightenImage()
+	
+	
+	DFrEF OldDf=GetDataFolderDFR()
+	setdatafolder root:Packages:SamplePlatesAvailable
+	wave ImageIn = root:Packages:SamplePlatesAvailable:PlateImageTemp
+	
+	NVAR xRT=root:Packages:SamplePlatesAvailable:xRT
+	NVAR xRB=root:Packages:SamplePlatesAvailable:xRB
+	NVAR xLT=root:Packages:SamplePlatesAvailable:xLT
+	NVAR xLB=root:Packages:SamplePlatesAvailable:xLB
+	
+	NVAR yRT=root:Packages:SamplePlatesAvailable:yRT
+	NVAR yRB=root:Packages:SamplePlatesAvailable:yRB
+	NVAR yLT=root:Packages:SamplePlatesAvailable:yLT
+	NVAR yLB=root:Packages:SamplePlatesAvailable:yLB
+
+	NVAR xDimension=root:Packages:SamplePlatesAvailable:xDimension
+	NVAR yDimension=root:Packages:SamplePlatesAvailable:yDimension
+	
+	SVAR LoadedImageName=root:Packages:SamplePlatesAvailable:LoadedImageName
+	
+	variable x1,x2,x3,x4,y1,y2,y3,y4
+	x1 = xRT
+	x2 = xRB
+	x3 = xLT
+	x4 = xLB
+	y1 = yRT
+	y2 = yRB
+	y3 = yLT
+	y4 = yLB
+	
+	variable Scaling = 10	//10 points/mm. 0.1 mm/pixel. 
+	variable Pwidth
+	variable NumPx = xDimension*Scaling
+	variable NumPy = yDimension*Scaling
+	Pwidth = DimSize(ImageIn,1)/NumPy
+	make/O/N=(NumPx, NumPy) PlateImage
+	SetScale/I x 0,xDimension,"mm", PlateImage
+	SetScale/I y 0,yDimension,"mm", PlateImage
+
+	//now we need to fill this image with interpolated lines... 
+	make/N=(NumPx)/O/FREE xwave, ywave
+	make/N=(NumPy)/O/FREE dummy
+	MatrixOP/O/free pWave=indexRows(xWave)
+
+	MultiThread dummy=IN3S_TrimImgCalcOneLine(p,x1,x2,x3,x4,y1,y2,y3,y4,NumPx-1,NumPy-1,ImageIn,PlateImage, pWave, Pwidth)
+	
+	//	//create plate drawing. 	
+	KillWIndow/Z SamplePlateImageDrawing
+	PauseUpdate
+	NewImage/K=1/N=SamplePlateImageDrawing root:Packages:SamplePlatesAvailable:PlateImage
+	DoWindow/T SamplePlateImageDrawing,"Image of "+LoadedImageName
+	//ModifyImage PlateImage ctab= {0,256,Grays,1}
+	ModifyGraph margin(left)=28,margin(bottom)=28,margin(top)=28,margin(right)=28
+	SetAxis/R left (yDimension+0.125),-0.125
+	SetAxis/R top (xDimension+0.125),-0.125
+	Label left "\\Zr133millimeters from top right corner"
+	Label top "\\Zr133millimeters from top right corner"
+	ModifyGraph grid=1
+	ModifyGraph mirror=3
+	ModifyGraph nticks(left)=22,nticks(top)=22
+	ModifyGraph minor=1
+	ModifyGraph standoff=0
+	ModifyGraph tkLblRot(left)=90
+	ModifyGraph btLen=3
+	ModifyGraph tlOffset=-2
+	DoUpdate
+	SetWindow SamplePlateImageDrawing  hook(ImageHook)=IN3S_PlateImageHook
+
+	SetDataFolder OldDf
+	
+End
+//************************************************************************************************************
+//************************************************************************************************************
+
+Function IN3S_MyCursorsMovedHook(s)
+	STRUCT WMWinHookStruct &s
+	
+	Variable hookResult = 0	// 0 if we do not handle event, 1 if we handle it.
+	NVAR xRT=root:Packages:SamplePlatesAvailable:xRT
+	NVAR xRB=root:Packages:SamplePlatesAvailable:xRB
+	NVAR xLT=root:Packages:SamplePlatesAvailable:xLT
+	NVAR xLB=root:Packages:SamplePlatesAvailable:xLB
+	
+	NVAR yRT=root:Packages:SamplePlatesAvailable:yRT
+	NVAR yRB=root:Packages:SamplePlatesAvailable:yRB
+	NVAR yLT=root:Packages:SamplePlatesAvailable:yLT
+	NVAR yLB=root:Packages:SamplePlatesAvailable:yLB
+	
+	switch(s.eventCode)
+		case 7:				// Cursron moved... 
+			//print s.cursorName
+			//print s.pointNumber
+			//print s.yPointNumber
+			strswitch(s.cursorName)
+				case "A":
+					xRT = s.pointNumber
+					yRT = s.yPointNumber
+					break
+				case "B":
+					xRB = s.pointNumber
+					yRB = s.yPointNumber
+					break
+				case "C":
+					xLT = s.pointNumber
+					yLT = s.yPointNumber
+					break
+				case "D":
+					xLB = s.pointNumber
+					yLB = s.yPointNumber	
+					break
+			endswitch	
+			
+			hookResult =1
+			break
+	endswitch
+
+	return hookResult		// 0 if nothing done, else 1
+End
+
+//************************************************************************************************************
+//************************************************************************************************************
+
+ThreadSafe static function IN3S_TrimImgCalcOneLine(i,x1,x2,x3,x4,y1,y2,y3,y4,NumPx,NumPy,M_RGB2Gray,DestImage,pWave, Pwidth)
+	Variable i,x1,x2,x3,x4,y1,y2,y3,y4,NumPx,NumPy, Pwidth
+	Wave M_RGB2Gray,DestImage,pWave
+
+
+		Variable xfrac = i/(NumPy)
+		Variable xstart = (1-xfrac)*x1 + xfrac*x2
+		Variable ystart = (1-xfrac)*y1 + xfrac*y2
+		Variable xend	=  (1-xfrac)*x3 + xfrac*x4
+		Variable yend	=  (1-xfrac)*y3 + xfrac*y4
+		Variable xScale=(xend-xstart)/(NumPx)
+		Variable yScale=(yend-ystart)/(NumPx)
+
+		MatrixOP/O/FREE xwave=xstart+pWave*xScale		//
+		MatrixOP/O/FREE ywave=ystart+pWave*yScale
+		ImageLineProfile/V xWave=xwave, yWave=ywave, srcwave=M_RGB2Gray, width=Pwidth
+
+		Wave W_ImageLineProfile
+		//DestImage[][i]=W_ImageLineProfile[p]
+		//MatrixOP/O DestImage=setCol(DestImage,i,W_ImageLineProfile)
+		ImageTransform/G=(i)/D=W_ImageLineProfile putCol DestImage
+End
+//************************************************************************************************************
+//************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
