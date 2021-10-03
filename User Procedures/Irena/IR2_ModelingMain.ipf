@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.32
+#pragma version=1.33
 
 
 
@@ -11,6 +11,7 @@ Constant IR2LversionNumber = 1.25
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.33 add Disk as form factor for size distribution. 
 //1.32 add Unified Fit Form Factor to MassFractals. 
 //1.31 added ability to save individual pop data when running from Scripting tool. COnverted to rtGlobals=3, which may cause some issues... 
 //1.30 Combined together with IR2L_NLSQFfunctions

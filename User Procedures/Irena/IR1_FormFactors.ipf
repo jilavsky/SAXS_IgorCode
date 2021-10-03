@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
 //#pragma rtGlobals=1	// Use modern global access method.
-#pragma version=2.29
+#pragma version=2.30
 
 Constant AlwaysRecalculateFF = 0			//set to 1 to recalculate always the FF. 
 #define UseXOPforFFCalcs					//comment out to prevent use of xops
@@ -12,6 +12,7 @@ Constant AlwaysRecalculateFF = 0			//set to 1 to recalculate always the FF.
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.30 added Disk as form factor. 
 //2.29 remove Unified fit form factors from form factor listings, code stays, but shoudl not be used anymore. Let's see if someone complains. 
 //2.28 added controls for debugging (at the top) and added Cylinder and Spheroid as optional XOP form factor.
 //2.27 fixed IR1T_CreateAveVolumeWave, IR1T_CreateAveSurfaceAreaWave  to have all form factors, do nto foget to fix next time when adding new FF
@@ -102,8 +103,7 @@ Function IR1T_InitFormFactors()
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:FormFactorCalc
 	
-	//string/g ListOfFormFactors="Spheroid;Cylinder;CylinderAR;CoreShell;CoreShellShell;CoreShellCylinder;User;Integrated_Spheroid;Unified_Sphere;Unified_Rod;Unified_RodAR;Unified_Disk;Unified_Tube;Fractal Aggregate;"
-	string/g ListOfFormFactors="Spheroid;Cylinder;CylinderAR;CoreShell;CoreShellShell;CoreShellCylinder;User;Integrated_Spheroid;Fractal Aggregate;"
+	string/g ListOfFormFactors="Spheroid;Cylinder;CylinderAR;Disk;CoreShell;CoreShellShell;CoreShellCylinder;User;Integrated_Spheroid;Fractal Aggregate;"
 	ListOfFormFactors+="NoFF_setTo1;SphereWHSLocMonoSq;Janus CoreShell Micelle 1;Janus CoreShell Micelle 2;Janus CoreShell Micelle 3;CoreShellPrecipitate;"//Unified_Sphere;"//"
 #if (exists("ParallelepipedX")&&defined(UseXOPforFFCalcs))
 	ListOfFormFactors+="---NIST XOP : ;RectParallelepiped;"
@@ -203,6 +203,7 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 
 		//Cylinder				Length=ParticlePar1
 		//CylinderAR				AspectRatio=ParticlePar1
+		//Disk						Diameter = ParticlePar1  - thickness is the controlled parameter... 
 		//Unified_Disk			thickness = ParticlePar1
 		//Unified_Rod				length = ParticlePar1
 		//Unified_RodAR			AspectRatio = ParticlePar1
@@ -472,9 +473,9 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 						Gmatrix[][i]=TempWave[p]							//and here put it into G wave
 					endfor
 			elseif (cmpstr(ParticleModel,"CylinderAR")==0)						// cylinder
-					For (i=0;i<N;i+=1)										//calculate the G matrix in columns!!!
-						currentR=R_dist[i]								//this is current radius
-						length=2*ParticlePar1*currentR						//and this is length - aspect ratio * currrentR * 2
+					For (i=0;i<N;i+=1)													//calculate the G matrix in columns!!!
+						currentR=R_dist[i]												//this is current radius
+						length=2*ParticlePar1*currentR								//and this is length - aspect ratio * currrentR * 2
 						tempVal1=IR1T_StartOfBinInDiameters(R_dist,i)
 						tempVal2=IR1T_EndOfBinInDiameters(R_dist,i)
 #if (Exists("CylinderFormX")&&defined(UseXOPforFFCalcs))
@@ -497,6 +498,16 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 						multithread TempWave=IR1_CalcIntgCylinderFFPnts(Q_vec[p],currentR,VolumePower,tempVal1,tempVal2, length)		//here we calculate one column of data
 #endif
 						//TempWave*=IR1T_SphereVolume(currentR)		//----------	Volume included in the above procedure due to integration
+						Gmatrix[][i]=TempWave[p]							//and here put it into G wave
+					endfor
+			elseif (cmpstr(ParticleModel,"Disk")==0)						// cylinder
+					For (i=0;i<N;i+=1)											//calculate the G matrix in columns!!!
+						currentR=	ParticlePar1									//this is current radius, in this model this is huge...
+						length=R_dist[i]										//and this is length = thickness of the disk 
+						tempVal1=IR1T_StartOfBinInDiameters(R_dist,i)
+						tempVal2=IR1T_EndOfBinInDiameters(R_dist,i)
+												// IR1_CalcIntgDiskFFPnts(Qvalue,radius,VolumePower,LengthMin,LengthMax,Length)	
+						multithread TempWave=IR1_CalcIntgDiskFFPnts(Q_vec[p],currentR,VolumePower,tempVal1,tempVal2, length)		//here we calculate one column of data
 						Gmatrix[][i]=TempWave[p]							//and here put it into G wave
 					endfor
 			elseif (cmpstr(ParticleModel,"Unified_Disk")==0 || cmpstr(ParticleModel,"Unified_Disc")==0)						// Unified disk
@@ -1532,6 +1543,50 @@ threadsafe  static Function IR1_CalcIntgCylinderFFPnts(Qvalue,radius,VolumePower
 	return result
 
 end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+
+threadsafe  static Function IR1_CalcIntgDiskFFPnts(Qvalue,radius,VolumePower,LengthMin,LengthMax,Length)		//we have to integrate from 0 to 1 over cos(th)
+	variable Qvalue, Length,radius,LengthMin,LengthMax,VolumePower				//and integrate over points in QR...
+
+	variable QL=Qvalue*Length				//OK, these are just some limiting values
+	Variable QLMin=Qvalue*LengthMin
+	variable QLMax=Qvalue*LengthMax
+	variable tempResult
+	variable result=0							//here we will stash the results in each point and then divide them by number of points
+	
+	variable numbOfSteps=floor(3+abs((10*(QLMax-QLMin)/pi)))		//depending on relationship between QR and pi, we will take at least 3
+	if (numbOfSteps>60)											//steps in QR - and maximum 60 steps. Therefore we will get reaasonable average 
+		numbOfSteps=60											//over the QR space. 
+	endif
+	variable step=(QLMax-QLMin)/(numbOfSteps-1)					//step in QR
+	variable stepL=(LengthMax-LengthMin)/(numbOfSteps-1)			//step in R associated with above, we need this to calculate volume
+	variable i
+
+	Make/D/O/N=181/FREE IntgWave					//change 8/26/2011: changed to /Free and reduced number of point to 181, 500 seems really too much for 90 degrees integration
+	SetScale/I x 0,(pi/2),"", IntgWave
+	variable tempLength
+
+	For (i=0;i<numbOfSteps;i+=1)											//here we go through number of points in R in the whole interval...
+
+		tempLength=LengthMin+i*stepL
+
+		IntgWave=IR1T_CalcCylinderFFPoints(Qvalue,radius,tempLength, x)		//this calculates for each diameter and Q value wave of results for various theta angles
+		IntgWave=IntgWave^2																//get second power of this before integration
+		IntgWave=IntgWave*sin(x)															//multiply by sin alpha which is x from 0 to 90 deg
+		tempResult=4 * area(IntgWave, 0,(pi/2))										//and here we integrate over alpha
+
+		tempResult*=(IR1T_CylinderVolume(radius,tempLength))^VolumePower		//multiply by volume of cylinder squared
+	
+		result+=tempResult												//and add the values together...
+	endFor
+	result/=numbOfSteps													//this averages the values obtained over the interval....
+
+	return result
+
+end
+
 
 
 //*****************************************************************************************************************
@@ -2184,6 +2239,11 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 		FitP3=0
 		FitP4=0
 		FitP5=0
+	elseif(stringmatch(CurFF,"Disk"))
+		FitP2=0
+		FitP3=0
+		FitP4=0
+		FitP5=0
 	elseif(stringmatch(CurFF,"CoreShell"))
 		FitP5=0
 	elseif(stringmatch(CurFF,"CoreShellPrecipitate"))
@@ -2310,6 +2370,8 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 	elseif(stringmatch(CurrentFF,"CylinderAR"))
 		//CylinderAR				AspectRatio=ParticlePar1
 		SetVariable P1Value, title="Aspect ratio = ", help={"Aspect ratio of the cylinder. Length / radius"} 
+	elseif(stringmatch(CurrentFF,"Disk"))
+		SetVariable P1Value, title="Disk radius = ", help={"Disk radius, it should be large value. "} 
 	elseif(stringmatch(CurrentFF,"Unified_Disk"))
 		SetVariable P1Value, title="Thickness = ", help={"Thickness of the disk in same units as radius"} 
 	elseif(stringmatch(CurrentFF,"RectParallelepiped"))
@@ -2744,7 +2806,7 @@ Function/T IR1T_IdentifyFFParamName(FormFactorName,ParameterOrder)
 	SetDataFolder root:Packages:FormFactorCalc
 	string FFParamName=""
 	
-	Make/O/T/N=5 Spheroid,Cylinder,CylinderAR,CoreShell,CoreShellCylinder,User,Integrated_Spheroid
+	Make/O/T/N=5 Spheroid,Cylinder,CylinderAR,Disk,CoreShell,CoreShellCylinder,User,Integrated_Spheroid
 	Make/O/T/N=5 Algebraic_Globules,Algebraic_Rods,Algebraic_Disks,Unified_Sphere,Unified_Rod
 	Make/O/T/N=5 Unified_RodAR,Unified_Disk,Unified_Tube,'Fractal Aggregate', NoFF_setTo1, CoreShellPrecipitate
 	Make/O/T/N=5 SphereWHSLocMonoSq, 'Janus CoreShell Micelle 1','Janus CoreShell Micelle 2','Janus CoreShell Micelle 3' 
@@ -2760,6 +2822,7 @@ Function/T IR1T_IdentifyFFParamName(FormFactorName,ParameterOrder)
 	NoFF_setTo1		={"","","","",""}
 	Cylinder			={"Length","","","",""}
 	CylinderAR			={"Aspect ratio","","","",""}
+	Disk				={"Radius","","","",""}
 	CoreShell			={"Shell thickness","Core rho","Shell rho","Solvent rho",""}
 	CoreShellShell		={"Shell 1 thickness","Shell 1 thickness","Solvent rho","Core rho","Shell 1 rho","Shell 2 rho"}
 	CoreShellCylinder	= {"Length","Wall thickness","Core rho","Shell rho","Solvant rho"}
@@ -2846,6 +2909,8 @@ Function IR1T_CreateAveVolumeWave(AveVolumeWave,Distdiameters,DistShapeModel,Par
 				tempVolume+=IR1T_CylinderVolume(tempRadius, Par1)
 			elseif(cmpstr(DistShapeModel,"cylinderAR")==0)										//cylinder volume = pi* r^2 * length
 				tempVolume+=IR1T_CylinderVolume(tempRadius, 2*Par1*tempRadius)
+			elseif(cmpstr(DistShapeModel,"Disk")==0)										//cylinder volume = pi* r^2 * length
+				tempVolume+=IR1T_CylinderVolume(Par1, tempRadius)
 			elseif(cmpstr(DistShapeModel,"CoreShellCylinder")==0)							//CoreShellCylinder volume = pi* (r+CoreShellCylinder wall thickness)^2 * length
 				SVAR CoreShellVolumeDefinition = root:Packages:FormFactorCalc:CoreShellVolumeDefinition
 				tempVolume+=IR1T_TubeVolume(tempRadius,Par1,Par2, CoreShellVolumeDefinition)
@@ -2951,6 +3016,8 @@ Function IR1T_CreateAveSurfaceAreaWave(AveSurfaceAreaWave,Distdiameters,DistShap
 					tempSurface+=2*pi*tempRadius^2 + (Par1 * pi * tempRadius)
 			elseif(cmpstr(DistShapeModel,"cylinderAR")==0)										//Par 1 = aspect ratio
 					tempSurface+=2*pi*tempRadius^2 + ((Par1*tempRadius)*2 * pi * tempRadius)
+			elseif(cmpstr(DistShapeModel,"Disk")==0)										//Par 1 = aspect ratio
+					tempSurface+=2*pi*Par1^2 + (Par1*2 * pi * tempRadius)
 			elseif(cmpstr(DistShapeModel,"CoreShellCylinder")==0)												//Par 1 = length, Par 2 = wall thickness... Assume two surfaces together...
 					tempSurface+=2*pi*((tempRadius+Par2)^2 - tempRadius^2) + (Par1 * pi * tempRadius) + (Par1 * pi * (tempRadius+Par2))
 			elseif(cmpstr(DistShapeModel,"Unified_tube")==0)										//Par 1 = length, Par 2 = wall thickness... Assume two surfaces together..
