@@ -13,7 +13,7 @@
 
 //this is tool to setup Sample Plates for USAXS, survey sample positions, and generate Command files. 
 
-//1.06 add Import Image for iamge of sample plate. Straightens parralax and trims based on user corner selection and dimensions provided. 
+//1.06 add Import Image for iamge of sample plate. Straightens paralax and trims based on user corner selection and dimensions provided. 
 //1.05 added Append to command file
 //1.04 modifications to beamline survey with epics controls. 
 //1.03 Remove for MatrixOP /NTHR=0 since it is applicable to 3D matrices only 
@@ -38,9 +38,9 @@
 
 //************************************************************************************************************
 
-constant IN3_SamplePlateSetupVersion=1
+constant IN3_SamplePlateSetupVersion=1.01
 constant IN3SBeamlineSurveyEpicsMonTicks = 15 
-constant IN3SBeamlineSurveyDevelopOn = 0
+constant IN3SBeamlineSurveyDevelopOn = 1
 //  values for beamtime estimate, last calibrated using BS on 7/31/2021 JIL (used 15 scan records BS).
 //  result is about 2 minutes more than real time. 
 constant IN3BmSrvUSAXSOverhead 		= 10		//overhead for flyscan
@@ -71,6 +71,7 @@ Function IN3S_SampleSetupMain()
 
 	IN3S_Initialize()
 	IN3S_CreateDefaultPlates()
+	KillWindow/Z TrimCorrectImageDrawing
 	IN3S_CreateTablesForPlates(0, 0)
 	IN3S_MainPanel()
 	ING2_AddScrollControl()
@@ -746,6 +747,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 				NVAR SelectedRow=root:Packages:SamplePlateSetup:SelectedRow
 				SVAR SelectedSampleName=root:Packages:SamplePlateSetup:SelectedSampleName
 				Wave/T ListWV = root:Packages:SamplePlateSetup:LBCommandWv
+				Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
 				NVAR SampleThickness=root:Packages:SamplePlateSetup:SampleThickness
 				NVAR SampleXTAR=root:Packages:SamplePlateSetup:SampleXTAR
 				NVAR SampleYTAR=root:Packages:SamplePlateSetup:SampleYTAR
@@ -755,7 +757,9 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 				if(row>=0&& row<DimSize(ListWV, 0))
 					SelectedRow=row
 					SelectedSampleName = ListWV[SelectedRow][0]
-					ListBox CommandsList, win=SamplePlateSetup, selrow=SelectedRow
+					//ListBox CommandsList, win=SamplePlateSetup, selrow=SelectedRow
+					LBSelectionWv[][0]=2
+					LBSelectionWv[SelectedRow][0]=3
 					SampleXTable = str2num(ListWV[SelectedRow][1])
 					SampleYTable = str2num(ListWV[SelectedRow][2])
 					SampleThickness = str2num(ListWV[SelectedRow][3])
@@ -878,7 +882,10 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 					IN3S_CreateTablesForPlates(NumberOfSamplesToCreate, 1)
 					SVAR NewPlateName = root:Packages:SamplePlateSetup:UserNameForSampleSet
 					NewPlateName = "NewSampleSet"+num2str(abs(round(gnoise(100))))
-					ListBox CommandsList win=SamplePlateSetup, selRow=0					
+					//ListBox CommandsList win=SamplePlateSetup, selRow=0					
+					Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
+					LBSelectionWv[][0]=2
+					LBSelectionWv[0][0]=3
 					IN3S_AddTagToImage(0)		
 					SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 					WarningForUser = "Created a new set of positions" 
@@ -887,6 +894,7 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 				endif
 			endif
 			if(StringMatch(ba.ctrlName, "CreateImage" ))
+				KillWindow/Z TrimCorrectImageDrawing
 				SVAR SelectedPlateName = root:Packages:SamplePlateSetup:SelectedPlateName
 				IN3S_DrawImageOfPlate(SelectedPlateName)
 				AutoPositionWindow/M=0 /R=SamplePlateSetup SamplePlateImageDrawing
@@ -904,6 +912,7 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 			endif
 
 			if(StringMatch(ba.ctrlName, "ImportImage" ))
+				KillWindow/Z TrimCorrectImageDrawing
 				IN3S_ImportImageOfPlate()
 			endif
 
@@ -917,7 +926,15 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 				//populate table with positions
 				DoAlert/T="This will delete your existing data" 1,  "New Sample positions will be created and existing one deleted, Do you want to continue?"
 				if(V_Flag==1)	//yes...
+					KillWindow/Z TrimCorrectImageDrawing
 					SVAR SelectedPlateName=root:Packages:SamplePlateSetup:SelectedPlateName
+					NVAR USAXSAll=root:Packages:SamplePlateSetup:USAXSAll
+					NVAR SAXSAll=root:Packages:SamplePlateSetup:SAXSAll
+					NVAR WAXSAll=root:Packages:SamplePlateSetup:WAXSAll
+					USAXSAll= 1
+					SAXSAll = 1
+					WAXSAll = 1
+					Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
 					strswitch (SelectedPlateName) 
 						case "9x9 Acrylic/magnetic plate":	 
 							Wave Centers = root:Packages:SamplePlatesAvailable:Acrylic9x9PlateCenters
@@ -932,7 +949,8 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 							SVAR NewPlateName = root:Packages:SamplePlateSetup:UserNameForSampleSet
 							NewPlateName = "AcrylicPlateSet"+num2str(abs(round(gnoise(100))))
 							//select first row
-							ListBox CommandsList win=SamplePlateSetup, selRow=1					
+							LBSelectionWv[][0]=2
+							LBSelectionWv[0][0]=3
 							SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 							WarningForUser = "Created a new set of positions for "+ SelectedPlateName
 							IN3S_EstimateRunTime()
@@ -950,7 +968,9 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 							SVAR NewPlateName = root:Packages:SamplePlateSetup:UserNameForSampleSet
 							NewPlateName = "AcrylicPlateSet"+num2str(abs(round(gnoise(100))))
 							//select first row
-							ListBox CommandsList win=SamplePlateSetup, selRow=1					
+							//ListBox CommandsList win=SamplePlateSetup, selRow=1					
+							LBSelectionWv[][0]=2
+							LBSelectionWv[0][0]=3
 							SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 							WarningForUser = "Created a new set of positions for "+ SelectedPlateName
 							IN3S_EstimateRunTime()
@@ -1035,7 +1055,9 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 							LBCommandWv[1][0]=""
 							SVAR NewPlateName = root:Packages:SamplePlateSetup:UserNameForSampleSet
 							NewPlateName = "GenericPlateSet"+num2str(abs(round(gnoise(100))))
-							ListBox CommandsList win=SamplePlateSetup, selRow=1					
+							//ListBox CommandsList win=SamplePlateSetup, selRow=1					
+							LBSelectionWv[][0]=2
+							LBSelectionWv[0][0]=3
 							SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 							WarningForUser = "Created a new set of positions for "+ SelectedPlateName
 							IN3S_EstimateRunTime()
@@ -1146,6 +1168,7 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 			endif
 
 			if(StringMatch(ba.ctrlName, "BeamlineSurvey" ))
+				KillWindow/Z TrimCorrectImageDrawing
 				IN3S_BeamlineSurvey()
 			endif
 			if(StringMatch(ba.ctrlName, "GetHelp" ))
@@ -1268,7 +1291,9 @@ Function IN3S_CheckProc(cba) : CheckBoxControl
 						IN3S_AddTagToImage(V_Flag)	
 					else
 						IN3S_AddTagToImage(0)	//remove all drawings, if needed	
-						ListBox CommandsList, win=SamplePlateSetup, selRow= 0
+						LBSelectionWv[][0]=2
+						LBSelectionWv[0][0]=3
+						//ListBox CommandsList, win=SamplePlateSetup, selRow= 0
 					endif
 				endif
 			endif
@@ -1823,7 +1848,7 @@ static Function/T IN3S_ExportMacroFile(UseUsername, AppendToExisting)
 			IN3S_WriteCommandFile(0,1)		//this creates notebook with commands, 	
 			SVAR nbl=root:Packages:SamplePlateSetup:NotebookName
 		endif
-		SaveNotebook /P=UserDesktop/ENCG=1/S=6 $(nbl)  as UseCmdName
+		SaveNotebook /P=UserDesktop/ENCG=1/S=6/O $(nbl)  as UseCmdName
 	endif
 	SVAR nbl=root:Packages:SamplePlateSetup:NotebookName
 	KillWindow/Z $(nbl)
@@ -2217,7 +2242,9 @@ static Function IN3S_InsertDeleteLines(InsertDelete, row, newLines)	//InsertDele
 		else
 			LBSelectionWv[row][6]=32
 		endif
-		ListBox CommandsList win=SamplePlateSetup, selRow=row					
+		//ListBox CommandsList win=SamplePlateSetup, selRow=row					
+		LBSelectionWv[][0]=2
+		LBSelectionWv[row][0]=3
 		SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 		WarningForUser = "Inserted row number "+ num2str(row)
 	elseif(InsertDelete==2)					//delete, easier...
@@ -2225,7 +2252,9 @@ static Function IN3S_InsertDeleteLines(InsertDelete, row, newLines)	//InsertDele
 			DeletePoints /M=0 row, 1, LBSelectionWv, LBCommandWv
 			variable newrow
 			newrow = row<(dimSize(LBCommandWv,0))?row : row-1
-			ListBox CommandsList win=SamplePlateSetup, selRow=newrow					
+			//ListBox CommandsList win=SamplePlateSetup, selRow=newrow					
+			LBSelectionWv[][0]=2
+			LBSelectionWv[newrow][0]=3
 			SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 			WarningForUser = "Deleted row number "+ num2str(row)
 		else
@@ -2238,7 +2267,9 @@ static Function IN3S_InsertDeleteLines(InsertDelete, row, newLines)	//InsertDele
 		InsertPoints row, 1, LBSelectionWv, LBCommandWv
 		LBCommandWv[row][] 		= tempLBCommandWv[0][q]
 		LBSelectionWv[row][] 	= tempLBSelectionWv[0][q]
-		ListBox CommandsList win=SamplePlateSetup, selRow=row+1					
+		//ListBox CommandsList win=SamplePlateSetup, selRow=row+1					
+		LBSelectionWv[][0]=2
+		LBSelectionWv[row+1][0]=3
 		SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 		WarningForUser = "Duplicated row number "+ num2str(row)
 	elseif(InsertDelete==4)					//add line at the end
@@ -2266,7 +2297,9 @@ static Function IN3S_InsertDeleteLines(InsertDelete, row, newLines)	//InsertDele
 		else
 			LBSelectionWv[Curlength, ][6]=32
 		endif
-		ListBox CommandsList win=SamplePlateSetup, selRow=Curlength					
+		//ListBox CommandsList win=SamplePlateSetup, selRow=Curlength					
+		LBSelectionWv[][0]=2
+		LBSelectionWv[Curlength][0]=3
 		SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 		WarningForUser = "Added row at the end "
 	endif
@@ -2414,11 +2447,12 @@ static Function IN3S_WritePositionInTable(mouseVert, mouseHor)
 	
 	ypos = VertMin + VertRange *(mouseVert-margtop)/(versize)
 	
-	//find selected row, else create a new line and put there. 
-	ControlInfo /W=SamplePlateSetup CommandsList
-	if(V_Value>=0&&V_Value<dimSize(LBCommandWv,0))
-		LBCommandWv[V_Value][1]=num2str(xpos)
-		LBCommandWv[V_Value][2]=num2str(ypos)
+	//FindLevel  /EDGE=1 /P/Q  LBSelectionWv, 0.5
+	variable SelectedRow = IN3S_FindFirstSelectedRow()
+	//ControlInfo /W=SamplePlateSetup CommandsList
+	if(SelectedRow>=0&&SelectedRow<dimSize(LBCommandWv,0))
+		LBCommandWv[SelectedRow][1]=num2str(xpos)
+		LBCommandWv[SelectedRow][2]=num2str(ypos)
 	else
 		SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 		WarningForUser = "Could not records values for this positon, no row selected" 
@@ -2427,6 +2461,15 @@ static Function IN3S_WritePositionInTable(mouseVert, mouseHor)
 	
 end
 //*****************************************************************************************************************
+static Function IN3S_FindFirstSelectedRow()
+
+	Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
+	string ListOfSelRows=IN3S_CreateListOfRows(LBSelectionWv)
+	variable firstSelectedRow = str2num(StringFromList(ItemsInList(ListOfSelRows)-1, ListOfSelRows))
+	firstSelectedRow = numtype(firstSelectedRow)==0 ? firstSelectedRow : 0 
+	return firstSelectedRow
+end
+
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 static Function IN3S_AddTagToImage(row)	//add one tag if row is number, all if -1 or DisplayAllSamplesInImage=1
@@ -2519,13 +2562,15 @@ Function IN3S_PlateImageHook(s)
 			case 3: // mouse down
 				if (s.eventMod & 0x10)	// rightclick
 					string items
+					Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
 					items = "Write position;Add Line with positions;Igor right click cmds;"
 						PopupContextualMenu items
 						// V_flag is index of user selected item    
 						switch (V_flag)
 							case 1:	// "Write position"
 								IN3S_WritePositionInTable(s.mouseLoc.v, s.mouseLoc.h)
-								ControlInfo /W=SamplePlateSetup CommandsList
+								//ControlInfo /W=SamplePlateSetup CommandsList
+								variable V_Value=IN3S_FindFirstSelectedRow()
 								IN3S_AddTagToImage(V_Value)
 								variable serrow=V_Value
 								//sync to Bealine setup, if exists...
@@ -2542,7 +2587,9 @@ Function IN3S_PlateImageHook(s)
 									if(serrow>=0)
 										SelectedRow=serrow
 										SelectedSampleName = ListWV[SelectedRow][0]
-										ListBox CommandsList, win=SamplePlateSetup, selrow=SelectedRow
+										//ListBox CommandsList, win=SamplePlateSetup, selrow=SelectedRow
+										LBSelectionWv[][0]=2
+										LBSelectionWv[SelectedRow][0]=3
 										SampleXTable = str2num(ListWV[SelectedRow][1])
 										SampleYTable = str2num(ListWV[SelectedRow][2])
 										SampleThickness = str2num(ListWV[SelectedRow][3])
@@ -2557,10 +2604,15 @@ Function IN3S_PlateImageHook(s)
 							case 2:	// "Add Line with positions"
 								IN3S_InsertDeleteLines(4, 0,1)
 								//now select the line. 
+								variable SelRow2
 								Wave/T listWave=root:Packages:SamplePlateSetup:LBCommandWv
-								ListBox CommandsList, win=SamplePlateSetup, selRow= dimSize(listWave,0)-1
+								SelRow2 = dimSize(listWave,0)-1
+								Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
+								LBSelectionWv[][0]=2
+								LBSelectionWv[SelRow2][0]=3
+								ListBox CommandsList, win=SamplePlateSetup, selRow= SelRow2
 								IN3S_WritePositionInTable(s.mouseLoc.v, s.mouseLoc.h)
-								IN3S_AddTagToImage(dimSize(listWave,0)-1)
+								IN3S_AddTagToImage(SelRow2)
 								//sync to Bealine setup, if exists...
 								DoWIndow BeamlinePlateSetup
 								if(V_Flag)
@@ -2575,7 +2627,9 @@ Function IN3S_PlateImageHook(s)
 									if(dimSize(listWave,0)-1>=0)
 										SelectedRow=dimSize(listWave,0)-1
 										SelectedSampleName = ListWV[SelectedRow][0]
-										ListBox CommandsList, win=SamplePlateSetup, selrow=SelectedRow
+										//ListBox CommandsList, win=SamplePlateSetup, selrow=SelectedRow
+										LBSelectionWv[][0]=2
+										LBSelectionWv[SelectedRow][0]=3
 										SampleXTable = str2num(ListWV[SelectedRow][1])
 										SampleYTable = str2num(ListWV[SelectedRow][2])
 										SampleThickness = str2num(ListWV[SelectedRow][3])
@@ -2925,11 +2979,12 @@ Function IN3S_MyCursorsMovedHook(s)
 	NVAR yLB=root:Packages:SamplePlatesAvailable:yLB
 	
 	switch(s.eventCode)
-		case 7:				// Cursron moved... 
+		case 7:				// cursor moved is 7... 
 			//print s.cursorName
 			//print s.pointNumber
 			//print s.yPointNumber
 			strswitch(s.cursorName)
+				hookResult =1
 				case "A":
 					xRT = s.pointNumber
 					yRT = s.yPointNumber
@@ -2947,8 +3002,6 @@ Function IN3S_MyCursorsMovedHook(s)
 					yLB = s.yPointNumber	
 					break
 			endswitch	
-			
-			hookResult =1
 			break
 	endswitch
 
@@ -3001,7 +3054,8 @@ Function IN3S_BeamlineSurvey()
 	//
 	Wave/T ListWV = root:Packages:SamplePlateSetup:LBCommandWv
 	NVAR SelectedRow=root:Packages:SamplePlateSetup:SelectedRow
-	ControlInfo/W=SamplePlateSetup CommandsList
+	//ControlInfo/W=SamplePlateSetup CommandsList
+	variable V_Value=IN3S_FindFirstSelectedRow()
 	if(V_Value>=0 && V_Value<DimSize(ListWV,0)-1)
 		SelectedRow = V_Value
 	else
@@ -3016,8 +3070,11 @@ Function IN3S_BeamlineSurvey()
 	NVAR SampleYTable = root:Packages:SamplePlateSetup:SampleYTable
 	NVAR SampleXRBV=root:Packages:SamplePlateSetup:SampleXRBV
 	NVAR SampleYRBV=root:Packages:SamplePlateSetup:SampleYRBV
+	Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
 	SelectedSampleName = ListWV[SelectedRow][0]
-	ListBox CommandsList, win=SamplePlateSetup, selrow=SelectedRow
+	//ListBox CommandsList, win=SamplePlateSetup, selrow=SelectedRow
+	LBSelectionWv[][0]=2
+	LBSelectionWv[SelectedRow][0]=3
 	SampleXTable = str2num(ListWV[SelectedRow][1])
 	SampleYTable = str2num(ListWV[SelectedRow][2])
 	SampleThickness = str2num(ListWV[SelectedRow][3])
@@ -3238,14 +3295,15 @@ Function IN3S_BeamlineSurveyPanel()
 		Button SetSYAs00,pos={260,405},size={70,15}, proc=IN3S_SurveyButtonProc,title="Set SY 0",fSize=14, help={"Sets current position as 0,0"}
 		Button SetSYAs00 fColor=(65535,32768,32768)
 
-		Button STOPMotors,pos={10,445},size={105,30}, proc=IN3S_SurveyButtonProc,title="STOP motors",fSize=14, help={"STOP ALL MOTORS MOVEMENT"}
+		Button SyncMotors,pos={10,425},size={105,15}, proc=IN3S_SurveyButtonProc,title="Sync w/epics",fSize=14, help={"Sync all motors positons with epics"}
+		Button STOPMotors,pos={10,450},size={105,30}, proc=IN3S_SurveyButtonProc,title="STOP motors",fSize=14, help={"STOP ALL MOTORS MOVEMENT"}
 		Button STOPMotors fColor=(65535,32768,32768)
 
 		Button OpenSlitsLarge,pos={250,425},size={135,20}, proc=IN3S_SurveyButtonProc,title="Open Slits Large",fSize=14, help={"Open slits as large as possible"}
 		Button OpenSlitsUSAXS,pos={250,450},size={135,20}, proc=IN3S_SurveyButtonProc,title="USAXS Slits",fSize=14, help={"Open Slits for USAXS"}
 		Button OpenSlitsSWAXS,pos={250,475},size={135,20}, proc=IN3S_SurveyButtonProc,title="SWAXS Slits",fSize=14, help={"Open Slits for SAXS/WAXS"}
 
-		TitleBox Info5 title="\Zr110NOTE: row numbering is 0 based...",size={355,20},pos={5,480},frame=0,fColor=(0,0,65535),labelBack=0
+		TitleBox Info5 title="\Zr110NOTE: row numbering is 0 based...",size={355,20},pos={5,485},frame=0,fColor=(0,0,65535),labelBack=0
 
 	endif
 
@@ -3283,7 +3341,10 @@ Function IN3S_SurveySetVarProc(sva) : SetVariableControl
 				endif
 				SelectedRow=SelectedRow+1
 				SelectedSampleName = ListWV[SelectedRow][0]
-				ListBox CommandsList, win=SamplePlateSetup, selrow=SelectedRow
+				//ListBox CommandsList, win=SamplePlateSetup, selrow=SelectedRow
+				Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
+				LBSelectionWv[][0]=2
+				LBSelectionWv[SelectedRow][0]=3
 				SampleXTable = str2num(ListWV[SelectedRow][1])
 				SampleYTable = str2num(ListWV[SelectedRow][2])
 				SampleThickness = str2num(ListWV[SelectedRow][3])
@@ -3337,6 +3398,9 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 //			NVAR CurentSY=root:Packages:SamplePlateSetup:SampleYTAR
 			NVAR SampleXTAR = root:Packages:SamplePlateSetup:SampleXTAR
 			NVAR SampleYTAR = root:Packages:SamplePlateSetup:SampleYTAR
+			NVAR SampleXRBV = root:Packages:SamplePlateSetup:SampleXRBV
+			NVAR SampleYRBV = root:Packages:SamplePlateSetup:SampleYRBV
+			Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
 			if(StringMatch(ba.ctrlName, "MoveSXLow"))		
 				SampleXTAR = SampleXTAR-SXStep
 				IN3S_MoveMotorInEpics("SX",SampleXTAR)			
@@ -3376,6 +3440,20 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 				SampleYTAR = 0
 				IN3S_MoveMotorInEpics("SX",SampleXTAR)
 				IN3S_MoveMotorInEpics("SY",SampleYTAR)
+			endif
+			if(StringMatch(ba.ctrlName, "SyncMotors"))
+#if(exists("pvOpen")==4)
+				variable SxPV, SyPV
+				pvOpen/Q SxPV, "9idcLAX:m58:c2:m1.RBV"
+				pvOpen/Q SyPV, "9idcLAX:m58:c2:m2.RBV"
+				SampleXTAR = IN3S_GetMotorPositions(SxPV)
+				SampleYTAR = IN3S_GetMotorPositions(SyPV)
+				SampleXRBV = IN3S_GetMotorPositions(SxPV)
+				SampleYRBV = IN3S_GetMotorPositions(SyPV)
+				pvWait 5
+				pvClose SxPV
+				pvClose SyPV
+#endif
 			endif
 			variable InstrumentUsed
 			if(StringMatch(ba.ctrlName, "SetSXAs00"))
@@ -3492,7 +3570,8 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 					SelWv[][0]=2
 					SelWv[SelectedRow]=3
 					SelectedSampleName = ListWV[SelectedRow][0]
-					//ListBox CommandsList, win=SamplePlateSetup, selrow=SelectedRow
+					//LBSelectionWv[][0]=2
+					//LBSelectionWv[SelectedRow][0]=3
 					SampleXTable = str2num(ListWV[SelectedRow][1])
 					SampleYTable = str2num(ListWV[SelectedRow][2])
 					SampleThickness = str2num(ListWV[SelectedRow][3])
@@ -3522,7 +3601,8 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 				SelWv[][0]=2
 				SelWv[SelectedRow]=3
 				SelectedSampleName = ListWV[SelectedRow][0]
-				//ListBox CommandsList, win=SamplePlateSetup, selrow=SelectedRow
+				//LBSelectionWv[][0]=2
+				//LBSelectionWv[SelectedRow][0]=3
 				SampleXTable = str2num(ListWV[SelectedRow][1])
 				SampleYTable = str2num(ListWV[SelectedRow][2])
 				SampleThickness = str2num(ListWV[SelectedRow][3])
