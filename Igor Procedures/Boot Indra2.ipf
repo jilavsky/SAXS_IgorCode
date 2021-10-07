@@ -1,8 +1,11 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.985
-#pragma IgorVersion=8.03
+#pragma version = 1.99
+#pragma IgorVersion=8.04
 
-//1.985  beta
+//1.99   October2021 release
+//				Sample Survey tool
+//				Step scanning in BlueSky and other associated changes. 
+//				Removed lots of old code for USAXS, its not working anyway. 	
 //1.98   September2020 release. 
 //1.97   February 2020 release. 
 //1.96   December 2018, updates 64 bit OSX xops, changes and fixes for 2018-03 cycle and general improvements. 

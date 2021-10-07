@@ -1,17 +1,19 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
-#pragma IgorVersion=8.03   //requires Igor version 8.03 or higher
-#pragma version = 1.985
+#pragma IgorVersion=8.04   //requires Igor version 8.03 or higher
+#pragma version = 1.99
 
-constant CurrentIndraVersionNumber = 1.985
+constant CurrentIndraVersionNumber = 1.99
 //*************************************************************************\
 //* Copyright (c) 2005 - 2021, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.985   beta 
-//			Removed lots of old code for USAXS, its not working anyway. 	
+//1.999   beta 
+//				Sample Survey tool
+//				Step scanning in BlueSky and other associated changes. 
+//				Removed lots of old code for USAXS, its not working anyway. 	
 //1.98		require Igor 8.03, no testing for Igor 7 anymore. 
 //			step scanning from BS still not fully supported, needs more developement. 
 //1.976 	Beta version after February2020 release
@@ -528,11 +530,11 @@ End
 
 Function IN2_AboutPanel()
 	PauseUpdate    		// building window...
-	NewPanel/K=1 /W=(173.25,101.75,500,302) as "About_Indra_2_Macros"
+	NewPanel/K=1 /W=(173.25,101.75,550,270) as "About_Indra_2_Macros"
 	DoWindow/C About_Indra_2_Macros
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 18,fstyle= 1,textrgb= (16384,28160,65280)
-	DrawText 10,37,"Indra 2 macros for Igor Pro 8.03+"
+	DrawText 10,37,"Indra 2 macros for Igor Pro 8.04 & 9.x"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
 	DrawText 52,64,"@ Jan Ilavsky, 2021"
 	DrawText 49,103,"release "+num2str(CurrentIndraVersionNumber)

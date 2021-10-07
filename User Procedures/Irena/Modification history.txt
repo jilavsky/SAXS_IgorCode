@@ -4,24 +4,30 @@ Jan Ilavsky, ilavsky@aps.anl.gov
 
 ************************************
 This set of macros is developed for analysis data of USAXS, SAXS, and WAXS data from various instruments. 
-It runs on Wavemetrics Igor Pro version 8.03 and higher.
+It runs on Wavemetrics Igor Pro version 8.04 and higher.
 
 
 Modification history:
 ********************************************
-2.701 - TBA
+2.71 10/10/2021
+Igor 9 compatible. 
 Fix All tools using the new Multi-GUI (MultiPlot, Simple Fits, bioSAXS...) to handle data with liberal names, apparently that was forgotten.  
 New tools:
 System Specific models - this is replacement of Analytical models with new GUI. Mostly working. Needs testing and may be add more functionality. 
 Analyze Results - new tool with new GUI for analysis of results Irena produces. For now, Size distributions. Replaced Analyze Size Distribution tool. Can be extended as needed. 
 Data Manipulation III - WIP, not finished yet. Multi sample selection tool and ability to modify data. Can delete data (finished). 
+Simple Fits & Analysis tool - added 1D correlation model. 
 All - changed wrong spelling Ploting into correct Plotting. This may leave some windows opened on restart. 
 Fixed all fixed length wave names (hopefully). Now should use long names if user chooses so in Configuration for all waves and folders. 
 Merge data tool - fix use of long folder names. It was not following user choice on use of long names. Add merging parameters into the wave note. 
 Merge data tool - Added Optimization method: "Optimize Overlap, trim Data1" when data122 are trimmed at the very start of overlap, removing noise at overlap. 
 Unified fit - fixed fitting problem when "Link B to G/Rg/P?" was selected, code was not refreshing calculated B during fitting. Caused misfits.  
+Unified fit - set automatically k as P varies, this reduces clutter on GUI and behaves more reasonable. 
 Multi data plotting tool - added Contour plot and Waterfall plot. 
 Export data tool - add option to export SAXS/WAXS data against Q, d, or Two theta. 
+Form factor - add disk form factor with thickness as dimension. 
+Structure factor - added Distorted crystal SF. 
+ASCII export - fix export of USAXS data to ASCII which failed to export correct Q values.  
 
 
 2.70  9/3/2020
@@ -33,7 +39,7 @@ WAXS - added "Distance correction" for sticks. Tweaks calculated 2Theta angle us
 Fractals - added optional use of Unified Fit Sphere form factor. This removes high-q Bessel function oscillations which are not reasonable for most cases. 
 Added Multi Data Plot tool, new tool to plot quickly many data sets. New ipf file... 
 Added Metadata Browser tool, enables relatively easy extraction of values from metadata in wave notes. 
-Added Basic fits + Simple Analysis tool, new tool and new capabilities. Guinier, Porod, Sphere and Spheroid, more to come as needed
+Added Simple Fits & Analysis tool, new tool and new capabilities. Guinier, Porod, Sphere and Spheroid, more to come as needed
 Added group of bioSAS tools - specialized simple import, data averaging and buffer subtraction, etc. Linked to menu also some existing tools for other functions bioSAS needs. 
 tools: Import ASCII, Average/Subtract/Scale tool, and PDDF + Molecular weight calculator. Uses ATSAS to get PDDF. 
 Added Concentration series extrapolation tool, it is BioSAXs tool. 

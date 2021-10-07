@@ -1,11 +1,11 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.835
-#pragma IgorVersion=8.03
+#pragma version=1.84
+#pragma IgorVersion=8.04
 
 //DO NOT renumber Main files every time, these are main release numbers...
 
-constant CurrentNikaVersionNumber = 1.835
+constant CurrentNikaVersionNumber = 1.84
 constant FixBackgroundOversubScale=1.05			//this is used to fix oversubtracted background. Adds FixBackgroundOversubScale*abs(V_min) to all intensity value. 
 constant NikaNumberOfQCirclesDisp=15
 //*************************************************************************\
@@ -14,8 +14,8 @@ constant NikaNumberOfQCirclesDisp=15
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.835 	current beta version
-//			minor changes. 
+//1.84 	Ocotber2021 version
+//			Fixes for some loaders where users found failures.  
 //1.83		require Igor 8.03 now. Not testing Igor 7 anymore. 
 //			Improve NXcanSAS 2D calibrated data import for NSLS-SMI beamline. 
 //1.826 	Beta version after February2020 release
@@ -348,11 +348,11 @@ end
 Function NI1_AboutPanel()
 	KillWIndow/Z About_Nika_1_Macros
  	PauseUpdate    		// building window...
-	NewPanel/K=1 /W=(173.25,101.75,490,370) as "About_Nika_1_Macros"
+	NewPanel/K=1 /W=(173.25,101.75,550,340) as "About_Nika_1_Macros"
 	DoWindow/C About_Nika_1_Macros
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 18,fstyle= 1,textrgb= (16384,28160,65280)
-	DrawText 10,37,"Nika 1 macros for Igor Pro 8.03+"
+	DrawText 10,37,"Nika 1 macros for Igor Pro 8.04 & 9.x"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
 	DrawText 52,64,"@ ANL, 2021"
 	DrawText 49,103,"Release "+num2str(CurrentNikaVersionNumber)
@@ -361,9 +361,9 @@ Function NI1_AboutPanel()
 
 	DrawText 11,190,"Set of macros to convert 2D SAS images"
 	DrawText 11,210,"into 1 D data"
-	DrawText 11,230,"     "
-	DrawText 11,250," "
-	DrawText 11,265,"Igor 7.05 & 8.0x compatible"
+	//DrawText 11,230,"     "
+	//DrawText 11,250," "
+	//DrawText 11,265,"Igor 8.04 & 9.x compatible"
 end
 
 //*****************************************************************************************************************

@@ -4,14 +4,17 @@ Jan Ilavsky, ilavsky@aps.anl.gov
 
 ************************************
 This set of macros is developed for data reduction of SAXS and WAXS area detector data. 
-It runs on Wavemetrics Igor Pro version 8.03 and higher.
+It runs on Wavemetrics Igor Pro version 8.04 and higher.
 
 
 
 Modification history:
 ********************************************
-1.831 beta
+1.84 10/10/2021
+Igor 9 compatible. 
 Fixed all fixed length wave names (hopefully). Now should use long names if user chooses so in Configuration for all waves and folders. 
+Fixed edf importer which developed bugs over time due to changes in detector software. 
+Add new Eiger detector dimensions to Pilatus detector options. 
 
 1.83  9/3/2020
 Require Igor 8.03 or higher. 

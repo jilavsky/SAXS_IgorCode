@@ -40,7 +40,7 @@
 
 constant IN3_SamplePlateSetupVersion=1.01
 constant IN3SBeamlineSurveyEpicsMonTicks = 15 
-constant IN3SBeamlineSurveyDevelopOn = 1
+constant IN3SBeamlineSurveyDevelopOn = 0
 //  values for beamtime estimate, last calibrated using BS on 7/31/2021 JIL (used 15 scan records BS).
 //  result is about 2 minutes more than real time. 
 constant IN3BmSrvUSAXSOverhead 		= 10		//overhead for flyscan
@@ -155,7 +155,7 @@ Function IN3S_MainPanel()
 		SVAR SelectedPlateName=root:Packages:SamplePlateSetup:SelectedPlateName
 		PopupMenu NewPlateTemplate,pos={300,50},size={330,21},proc=IN3S_PopMenuProc,title="Template :", help={"Pick Plate template"}
 		PopupMenu NewPlateTemplate,mode=1,popvalue=SelectedPlateName, fColor=(1,16019,65535)
-		PopupMenu NewPlateTemplate,value="9x9 Acrylic/magnetic plate;NMR Acrylic plate;Old Style Al Plate;NMR Tubes holder;NMR tubes heater;Generic Grid holder;Image;AgBehenateLaB6;"
+		PopupMenu NewPlateTemplate,value="9x9 Acrylic/magnetic plate;NMR Acrylic plate;Old Style Al Plate;NMR Tubes holder;NMR tubes heater;Generic Grid holder;AgBehenateLaB6;"
 		Button PopulateTable,pos={300,75},size={120,17}, proc=IN3S_ButtonProc,title="Populate Table", help={"Creates new set of positions"}
 		Button CreateImage,pos={440,75},size={120,17}, proc=IN3S_ButtonProc,title="Create image", help={"Creates new set of positions"}
 		Button ImportImage,pos={440,92},size={120,17}, proc=IN3S_ButtonProc,title="Import image", help={"Import image as Template"}
@@ -1873,7 +1873,7 @@ static Function IN3S_Initialize()
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O USAXS
 	NewDataFolder/O/S SamplePlateSetup
-	NewDataFolder/O root:AvailableSamplePlates
+	//NewDataFolder/O root:AvailableSamplePlates
 
 	string ListOfVariables
 	string ListOfStrings

@@ -127,36 +127,38 @@ end
 
 Function IR2T_LoadFFDescription()
 
-	//try to open Igor help file first and only if that fails call pdf file...
-	DisplayHelpTopic /Z "Form Factors & Structure factors"
-	if(V_Flag)
+		BrowseURL "http://saxs-igorcodedocs.readthedocs.io/"+ManualVersionString+"Irena/FormStructureFactors.html"
 
-		string WhereIsManual
-		string WhereAreProcedures=RemoveEnding(FunctionPath(""),"IR1_FormFactors.ipf")
-		String manualPath = ParseFilePath(5,"FormFactorList.pdf","*",0,0)
-       	String cmd 
-		if (stringmatch(IgorInfo(3), "*Macintosh*"))
-	             //  manualPath = "User Procedures:Irena:Irena manual.pdf"
-	               sprintf cmd "tell application \"Finder\" to open \"%s\"",WhereAreProcedures+manualPath
-	               ExecuteScriptText cmd
-	      		if (strlen(S_value)>2)
-	//			DoAlert 0, S_value
-			endif	
-		else 
-			//manualPath = "User Procedures\Irena\Irena manual.pdf"
-			//WhereIsIgor=WhereIsIgor[0,1]+"\\"+IN2G_ChangePartsOfString(WhereIsIgor[2,inf],":","\\")
-			WhereAreProcedures=ParseFilePath(5,WhereAreProcedures,"*",0,0)
-			whereIsManual = "\"" + WhereAreProcedures+manualPath+"\""
-			NewNotebook/F=0 /N=NewBatchFile
-			Notebook NewBatchFile, text=whereIsManual//+"\r"
-			SaveNotebook/O NewBatchFile as SpecialDirPath("Temporary", 0, 1, 0 )+"StartFormFactors.bat"
-			KillWIndow/Z NewBatchFile
-			ExecuteScriptText "\""+SpecialDirPath("Temporary", 0, 1, 0 )+"StartFormFactors.bat\""
-		endif
-	else
-		//help file found, but let's make sure it is visible
-		DoIgorMenu "Control", "Retrieve Window"
-	endif
+	//try to open Igor help file first and only if that fails call pdf file...
+//	DisplayHelpTopic /Z "Form Factors & Structure factors"
+//	if(V_Flag)
+//
+//		string WhereIsManual
+//		string WhereAreProcedures=RemoveEnding(FunctionPath(""),"IR1_FormFactors.ipf")
+//		String manualPath = ParseFilePath(5,"FormFactorList.pdf","*",0,0)
+//       	String cmd 
+//		if (stringmatch(IgorInfo(3), "*Macintosh*"))
+//	             //  manualPath = "User Procedures:Irena:Irena manual.pdf"
+//	               sprintf cmd "tell application \"Finder\" to open \"%s\"",WhereAreProcedures+manualPath
+//	               ExecuteScriptText cmd
+//	      		if (strlen(S_value)>2)
+//	//			DoAlert 0, S_value
+//			endif	
+//		else 
+//			//manualPath = "User Procedures\Irena\Irena manual.pdf"
+//			//WhereIsIgor=WhereIsIgor[0,1]+"\\"+IN2G_ChangePartsOfString(WhereIsIgor[2,inf],":","\\")
+//			WhereAreProcedures=ParseFilePath(5,WhereAreProcedures,"*",0,0)
+//			whereIsManual = "\"" + WhereAreProcedures+manualPath+"\""
+//			NewNotebook/F=0 /N=NewBatchFile
+//			Notebook NewBatchFile, text=whereIsManual//+"\r"
+//			SaveNotebook/O NewBatchFile as SpecialDirPath("Temporary", 0, 1, 0 )+"StartFormFactors.bat"
+//			KillWIndow/Z NewBatchFile
+//			ExecuteScriptText "\""+SpecialDirPath("Temporary", 0, 1, 0 )+"StartFormFactors.bat\""
+//		endif
+//	else
+//		//help file found, but let's make sure it is visible
+//		DoIgorMenu "Control", "Retrieve Window"
+//	endif
 end
 
 

@@ -6,14 +6,16 @@ Jan Ilavsky, ilavsky@aps.anl.gov
 
 ************************************
 This set of macros is developed for data reduction of USAXS data obtained on APS USAXS instrument beamline instrument. 
-It runs on Wavemetrics Igor Pro version 8.03 and higher.
+It runs on Wavemetrics Igor Pro version 8.04 and higher.
 
 
 Modification history:
 _____________________________________________________________________________________
-1.981
+1.99 10/10/2021
 Fixed all fixed length wave names (hopefully). Now should use long names if user chooses so in Configuration for all waves and folders. 
-Sample Survey tool -  multiple row selection enabled, Clipboard now handles multiple rows. Manual updated. 
+Sample Survey tool -  multiple row selection enabled, Clipboard now handles multiple rows. Manual updated. Added ability to import image from jpg/tiff/gif... files
+Minor changes to various setting to make user life easier.
+Step scanning in BlueSky (uses Nexus file) now fully supported and well tested. 
 
 
 1.98 9/3/2020

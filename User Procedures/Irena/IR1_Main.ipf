@@ -1,11 +1,11 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
 #pragma version=2.705
-#pragma IgorVersion=8.03
+#pragma IgorVersion=8.04
 
 //DO NOT renumber Main files every time, these are main release numbers...
 //define manual date and release verison 
-constant CurrentIrenaVersionNumber = 2.705		//change version of Boot Irena1 modeling.ipf to get proper check version. 
+constant CurrentIrenaVersionNumber = 2.71		//change version of Boot Irena1 modeling.ipf to get proper check version. 
 
 //*************************************************************************
 //* Copyright (c) 2005 - 2021, Argonne National Laboratory
@@ -13,7 +13,7 @@ constant CurrentIrenaVersionNumber = 2.705		//change version of Boot Irena1 mode
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************
 
-//2.705	Beta version after September 2020 release. 
+//2.71		October 2021 release. 
 //			New MultisamplePlotting tool
 //			Add replacement for Analytical models: System Specific models
 //			Add repalcement for Evaluate Size Distributions : Analyze Results tool
@@ -261,8 +261,8 @@ Menu "SAS"
 			help={"Opens Irena web page in the browser "}
 			"Open Irena web manual", IN2G_OpenWebManual("")
 			help={"Opens Irena web manual in default web browser."}
-			"Open Form and Structure Factor description", IR2T_LoadFFDescription()
-			help={"Opens Description of included form factors and structure factors"}
+			"Open Form and Structure Factor web page", IR2T_LoadFFDescription()
+			help={"Opens Description of included form factors and structure factors in web browser"}
 			"Open Irena manuscript", IR2_GetIrenaManuscript()
 			help={"Open or download using ftp and open Irena J. Appl. Cryst manuscript"}
 			//"---"
@@ -871,7 +871,7 @@ Function IR1_AboutPanel()
 	NewPanel/K=1 /W=(173.25,50,580,460)/N=About_Irena_1_Macros as "About Irena Macros"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 20,fstyle= 1,textrgb= (16384,28160,65280)
-	DrawText 23,30,"Irena macros for Igor Pro 8.03+"
+	DrawText 23,30,"Irena macros for Igor Pro 8.04 & 9.x"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
 	DrawText 100,60,"@ ANL, 2021"
 	DrawText 10,80,"release "+num2str(CurrentIrenaVersionNumber)
@@ -1913,8 +1913,8 @@ Function IR2C_CheckIrenaUpdate(CalledFromMenu)
 			IN2G_SaveIrenaGUIPackagePrefs(0)
 			IN2G_GetAndDisplayUpdateMessage()
 	endif
-	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))<7.05)
-			DoAlert /T="Igor update message :"  0, "Igor has been updated to version 7.05 or higher. Please, update your Igor to the latest version."  
+	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))<8.04)
+			DoAlert /T="Igor update message :"  0, "Igor has been updated to version 8.04 or higher. Please, update your Igor to the latest version."  
 			BrowseURL "http://www.wavemetrics.com/support/versions.htm"
 	endif
 	
