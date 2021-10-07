@@ -17,12 +17,46 @@
 			<Package>xop32bit</Package>
 			<Package>xop64bit</Package>
 		</KnownPackages>
-		<current_release>September2020</current_release>
+		<current_release>October2021</current_release>
 		<current_beta_release>July2021Beta</current_beta_release>
 	</VersionCheck>
 
 
 	<InstallerConfig>
+		<release name="October2021">
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/refs/tags/October2021.zip</SourceFileAddress>
+			<Package>
+				<name>Irena</name>
+				<version>2.71</version>
+				<PackageList>IrenaPckg.xml</PackageList>
+				<VersionCheckFile>Boot Irena1 modeling.ipf</VersionCheckFile>
+			</Package>
+			<Package>
+				<name>Nika</name>
+				<version>1.84</version>
+				<PackageList>NikaPckg.xml</PackageList>
+				<VersionCheckFile>Boot Nika.ipf</VersionCheckFile>
+			</Package>
+			<Package>
+				<name>Indra</name>
+				<version>1.99</version>
+				<PackageList>IndraPckg.xml</PackageList>
+				<VersionCheckFile>Boot Indra2.ipf</VersionCheckFile>
+			</Package>
+			<Package>
+				<name>xop32bit</name>
+				<version>1</version>
+				<PackageList>xopPckg32.xml</PackageList>
+				<VersionCheckFile>IrenaNikaXop32Ver.ipf</VersionCheckFile>
+			</Package>
+			<Package>
+				<name>xop64bit</name>
+				<version>2</version>
+				<PackageList>xopPckg64.xml</PackageList>
+				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
+			</Package>
+			<VersionComment>October 2021. Igor 9.x and 8.04.</VersionComment>
+		</release>
 		<release name="September2020">
 			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/September2020.zip</SourceFileAddress>
 			<Package>
