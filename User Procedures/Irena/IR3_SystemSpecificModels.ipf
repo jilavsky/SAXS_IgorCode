@@ -1,7 +1,7 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version=1.01
+#pragma version=1.02
 
 
 //*************************************************************************\
@@ -12,6 +12,7 @@
 
 
 //version notes:
+//	1.02 add Hermans, HybridHermans, and Unified Born Green models. https://doi.org/10.1016/j.polymer.2021.124281
 //	1.01 add handling of USAXS M_... waves 
 //	1.0 Original release, 1/2/2021
 
@@ -19,12 +20,17 @@
 //this is now System Specific Models, replacement for Analytical models. 
 // SysSpecModels = short name of package
 // IR3S = working prefix, short (e.g., IR3DM) 
-// add IR3S_MainCheckVersion to Irena aftercompile hook function correctly
+// add IR3S_MainCheckVersion to Irena after compile hook function correctly
 //To add model in System Specific Models, follow these instructions:
-//	add model parameters in ... needs to be finished... 
+//	add model parameters in  
+//IR3S_InitSysSpecModels()
+//IR3S_SetInitialValues()
+//IR3S_SysSpecModelsPanelFnct()
+//IR3S_AutoRecalculateModelData(0)
+//			IR3S_CalculateModel(OriginalIntensity,OriginalQvector,0)
 
 
-constant IR3SversionNumber = 1			//SysSpecModels panel version number
+constant IR3SversionNumber = 1.02			//SysSpecModels panel version number
 constant IR3SSetVariableStepRatio = 0.05	//when we change SetVariable, this is how much the step changes. 
 constant IR3SSetVariableLowLimRatio = 0.2	//when we change value in model, this is how low limit is scaled. 
 constant IR3SSetVariableHighLimRatio = 5	//when we change value in model, this is how high limit is scaled. 
@@ -76,58 +82,51 @@ end
 //*****************************************************************************************************************
 //	UpdateAutomatically
 //	Unified... 
-//	ListOfVariablesUF="UseUnified;UnifRgCO;LinkUnifRgCO;"
-//	ListOfVariablesUF+="UnifPwrlawP;FitUnifPwrlawP;UnifPwrlawPLL;UnifPwrlawPHL;UnifPwrlawPError;"
-//	ListOfVariablesUF+="UnifPwrlawB;FitUnifPwrlawB;UnifPwrlawBLL;UnifPwrlawBHL;UnifPwrlawBError;"
-//	ListOfVariablesUF+="UnifRg;FitUnifRg;UnifRgLL;UnifRgHL;UnifRgError;"
-//	ListOfVariablesUF+="UnifG;FitUnifG;UnifGLL;UnifGHL;UnifGError;"
+//	ListOfVariablesUF="UseUnified;"
 
-//	//Debye-Bueche parameters	
-//	ListOfVariables+="DBPrefactor;DBEta;DBcorrL;DBWavelength;UseDB;"
-//	ListOfVariables+="DBEtaError;DBcorrLError;"
-//	ListOfVariables+="FitDBPrefactor;FitDBEta;FitDBcorrL;"
-//	ListOfVariables+="DBPrefactorHL;DBEtaHL;DBcorrLHL;"
-//	ListOfVariables+="DBPrefactorLL;DBEtaLL;DBcorrLLL;"
-//	//Teubner-Strey Model
-//	ListOfVariables+="TSPrefactor;FitTSPrefactor;TSPrefactorHL;TSPrefactorLL;TSPrefactorError;UseTS;"
-//	ListOfVariables+="TSAvalue;FitTSAvalue;TSAvalueHL;TSAvalueLL;TSAvalueError;"
-//	ListOfVariables+="TSC1Value;FitTSC1Value;TSC1ValueHL;TSC1ValueLL;TSC1ValueError;"
-//	ListOfVariables+="TSC2Value;FitTSC2Value;TSC2ValueHL;TSC2ValueLL;TSC2ValueError;"
-//	ListOfVariables+="TSCorrelationLength;TSCorrLengthError;TSRepeatDistance;TSRepDistError;"
-//	//Benedetti-Ciccariello Coated Porous media Porods oscillations
-//	ListOfVariables+="BCPorodsSpecSurfArea;BCSolidScatLengthDensity;BCVoidScatLengthDensity;BCLayerScatLengthDens;"
-//	ListOfVariables+="BCCoatingsThickness;UseCiccBen;"
-//	ListOfVariables+="BCLayerScatLengthDensHL;BCLayerScatLengthDensLL;FitBCLayerScatLengthDens;"
-//	ListOfVariables+="BCCoatingsThicknessHL;BCCoatingsThicknessLL;FitBCCoatingsThickness;"
-//	ListOfVariables+="BCPorodsSpecSurfAreaHL;BCPorodsSpecSurfAreaLL;FitBCPorodsSpecSurfArea;"
-//	ListOfVariables+="BCPorodsSpecSurfAreaError;BCCoatingsThicknessError;BCLayerScatLengthDensError;"
+//	WaveParamsValues={"Value","Fit?","LowLimit","HighLimit","FitError"}
 
-//  DBPrefactor 	- ModelVarPar1
-//  DBEta 		- ModelVarPar2
-//  DBcorrL 		- ModelVarPar3
-//  DBWavelength - ModelVarPar4
+//	//Unified fit, 4 paramegers, G, Rg, P, B + 2 not fitted parameters, UnifRgCO;LinkUnifRgCO
+//	Wave UnifiedPar = root:Packages:Irena:SysSpecModels:UnifiedPar
+//	UnifiedParNames = {"G","Rg","B","P","UnifRgCO","LinkUnifRgCO"}
+//
+//
+//	//Teubner-Strey, 4 paramegers + 2 calculated parameters (never fitted)
+//	Wave TSPar = root:Packages:Irena:SysSpecModels:TSPar
+//	TSParNames = {"Prefactor","A","C1","C2","CorrLength","RepeatDistance"}
+//
+//
+//	//Debye-Bueche, 3 paramegers + 1 calculated parameters (never fitted)
+//	Wave DBPar = root:Packages:Irena:SysSpecModels:DBPar
+//	DBParNames = {"Prefactor","CorrLength","Eta","Wavelength"}
+//
+//
+//	//Benedetti-Ciccariello 3 paramegers + 2 calculated parameters (never fitted)
+//	Wave BCPar = root:Packages:Irena:SysSpecModels:BCPar
+//	BCParNames = {"PorodsSpecSurfArea", "CoatingsThickness","LayerScatLengthDens","SolidScatLengthDensity","VoidScatLengthDensity"}
+//
+// 	HermansPar
+//	HermansPar			//Hermans 4 parameters
+//	HermansParNames = {"AmorphousThickness","SigmaAmorphous","LamellaeThickness","LamellaeSigma","Bvalue"}
+//
+//	Hybrid Hermans model. https://doi.org/10.1016/j.polymer.2021.124281
+//	Wave HybHermansPar 	= 	root:Packages:Irena:SysSpecModels:HybHermansPar
+//	HybHermansParNames = {"AmorphousThickness","SigmaAmorphous","LamellaeThickness","LamellaeSigma","Bvalue","G2","Rg2","LinkRGCO"}
+//
+//	Unified Born Green model. https://doi.org/10.1016/j.polymer.2021.124281, Formula 8
+//	Wave UBGPar 	= 	root:Packages:Irena:SysSpecModels:UBGPar
+//	UBGParNames = {"Rg1","B1","pack","CorDist","StackIrreg","kI"}
 
-//  TSPrefactor
-//  TSAvalue
-//  TSC1Value
-//  TSC2Value
-//  TSCorrelationLength	- noedit
-//  TSRepeatDistance - noedit
 
-//	BCPorodsSpecSurfArea
-//  BCSolidScatLengthDensity - no fit
-//  BCVoidScatLengthDensity
-//  BCLayerScatLengthDens
-//  BCCoatingsThickness
 
 ////************************************************************************************************************
 ////************************************************************************************************************
 Function IR3S_SysSpecModelsPanelFnct()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	PauseUpdate    		// building window...
-	NewPanel /K=1 /W=(2.25,43.25,530,815) as "System Specific Models"
+	NewPanel /K=1 /W=(2.25,43.25,560,815) as "System Specific Models"
 	DoWIndow/C IR3S_SysSpecModelsPanel
-	TitleBox MainTitle title="System Specific Models",pos={140,2},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},fSize=22,fColor=(0,0,52224)
+	TitleBox MainTitle title="System Specific Models - Dev!",pos={140,2},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},fSize=22,fColor=(0,0,52224)
 	string UserDataTypes=""
 	string UserNameString=""
 	string XUserLookup=""
@@ -140,7 +139,7 @@ Function IR3S_SysSpecModelsPanelFnct()
 	Setvariable DataQEnd, variable=root:Packages:Irena:SysSpecModels:DataQEnd, limits={-inf,inf,0}
 	SetVariable DataQstart,pos={290,110},size={190,15}, proc=IR3S_SetVarProc,title="Q min "
 	Setvariable DataQstart, variable=root:Packages:Irena:SysSpecModels:DataQstart, limits={-inf,inf,0}
-	SetVariable DataFolderName,noproc,title=" ",pos={260,160},size={270,17},frame=0, fstyle=1,valueColor=(0,0,65535)
+	SetVariable DataFolderName,noproc,title=" ",pos={260,145},size={260,20},frame=0, fstyle=1,fSize=11,valueColor=(0,0,65535)
 	Setvariable DataFolderName, variable=root:Packages:Irena:SysSpecModels:DataFolderName, noedit=1
 
 	Button SelectAll,pos={187,680},size={80,15}, proc=IR3S_ButtonProc,title="SelectAll", help={"Select All data in Listbox"}
@@ -150,33 +149,40 @@ Function IR3S_SysSpecModelsPanelFnct()
 	PopupMenu ModelSelected,mode=1,popvalue=ModelSelected,value= #"root:Packages:Irena:SysSpecModels:ListOfModels" 
 
 	//	here will be model variables/controls... These will be attached to specific variables later... 
-	SetVariable ModelVarPar1,pos={340,200},size={110,17},title="ModelVarPar1",proc=IR3S_SetVarProc, disable=1, bodywidth=70,limits={0,inf,1}, help={"ModelVarPar1"}
-	CheckBox FitModelVarPar1,pos={470,200},size={79,14},noproc,title="Fit?", help={"Fit this parameter?"}, disable=1
-	SetVariable ModelVarPar2,pos={340,225},size={110,17},title="ModelVarPar2",proc=IR3S_SetVarProc, disable=1, bodywidth=70,limits={0,inf,1}, help={"ModelVarPar3"}
-	CheckBox FitModelVarPar2,pos={470,225},size={79,14},noproc,title="Fit?", help={"Fit this parameter?"}, disable=1
-	SetVariable ModelVarPar3,pos={340,250},size={110,17},title="ModelVarPar3",proc=IR3S_SetVarProc, disable=1, bodywidth=70,limits={0,inf,1}, help={"ModelVarPar3"}
-	CheckBox FitModelVarPar3,pos={470,250},size={79,14},noproc,title="Fit?", help={"Fit this parameter?"}, disable=1
-	SetVariable ModelVarPar4,pos={340,275},size={110,17},title="ModelVarPar3",proc=IR3S_SetVarProc, disable=1, bodywidth=70,limits={0,inf,1}, help={"ModelVarPar3"}
-	CheckBox FitModelVarPar4,pos={470,275},size={79,14},noproc,title="Fit?", help={"Fit this parameter?"}, disable=1
-	SetVariable ModelVarPar5,pos={340,300},size={110,17},title="ModelVarPar4",proc=IR3S_SetVarProc, disable=1, bodywidth=70,limits={0,inf,1}, help={"ModelVarPar4"}
-	CheckBox FitModelVarPar5,pos={470,300},size={79,14},noproc,title="Fit?", help={"Fit this parameter?"}, disable=1
-	SetVariable ModelVarPar6,pos={340,325},size={110,17},title="ModelVarPar5",proc=IR3S_SetVarProc, disable=1, bodywidth=70,limits={0,inf,1}, help={"ModelVarPar5"}
-	CheckBox FitModelVarPar6,pos={470,325},size={79,14},noproc,title="Fit?", help={"Fit this parameter?"}, disable=1
+	SetVariable ModelVarPar1,pos={340,190},size={110,17},title="ModelVarPar1",proc=IR3S_SetVarProc, disable=1, bodywidth=70,limits={0,inf,1}, help={"ModelVarPar1"}
+	CheckBox FitModelVarPar1,pos={470,190},size={79,14},proc=IR3S_FitCheckProc,title="Fit?", help={"Fit this parameter?"}, disable=1
+	SetVariable ModelVarPar2,pos={340,210},size={110,17},title="ModelVarPar2",proc=IR3S_SetVarProc, disable=1, bodywidth=70,limits={0,inf,1}, help={"ModelVarPar2"}
+	CheckBox FitModelVarPar2,pos={470,210},size={79,14},proc=IR3S_FitCheckProc,title="Fit?", help={"Fit this parameter?"}, disable=1
+	SetVariable ModelVarPar3,pos={340,230},size={110,17},title="ModelVarPar3",proc=IR3S_SetVarProc, disable=1, bodywidth=70,limits={0,inf,1}, help={"ModelVarPar3"}
+	CheckBox FitModelVarPar3,pos={470,230},size={79,14},proc=IR3S_FitCheckProc,title="Fit?", help={"Fit this parameter?"}, disable=1
+	SetVariable ModelVarPar4,pos={340,250},size={110,17},title="ModelVarPar4",proc=IR3S_SetVarProc, disable=1, bodywidth=70,limits={0,inf,1}, help={"ModelVarPar4"}
+	CheckBox FitModelVarPar4,pos={470,250},size={79,14},proc=IR3S_FitCheckProc,title="Fit?", help={"Fit this parameter?"}, disable=1
+	SetVariable ModelVarPar5,pos={340,270},size={110,17},title="ModelVarPar5",proc=IR3S_SetVarProc, disable=1, bodywidth=70,limits={0,inf,1}, help={"ModelVarPar5"}
+	CheckBox FitModelVarPar5,pos={470,270},size={79,14},proc=IR3S_FitCheckProc,title="Fit?", help={"Fit this parameter?"}, disable=1
+	SetVariable ModelVarPar6,pos={340,290},size={110,17},title="ModelVarPar6",proc=IR3S_SetVarProc, disable=1, bodywidth=70,limits={0,inf,1}, help={"ModelVarPar6"}
+	CheckBox FitModelVarPar6,pos={470,290},size={79,14},proc=IR3S_FitCheckProc,title="Fit?", help={"Fit this parameter?"}, disable=1
+	SetVariable ModelVarPar7,pos={340,310},size={110,17},title="ModelVarPar7",proc=IR3S_SetVarProc, disable=1, bodywidth=70,limits={0,inf,1}, help={"ModelVarPar7"}
+	CheckBox FitModelVarPar7,pos={470,310},size={79,14},proc=IR3S_FitCheckProc,title="Fit?", help={"Fit this parameter?"}, disable=1
 
-	Button ModelButton1,pos={300,340},size={100,15}, proc=IR3S_ButtonProc, title="Button1", help={""}, disable=1
 
-	SetVariable ModelVarPar1LL,pos={270,365},size={80,17},title=" ",noproc, disable=1, bodywidth=70,limits={0,inf,1}, help={"Lower fitting limit Var1"}
-	SetVariable ModelVarPar1UL,pos={360,365},size={120,17},title=" ",noproc, disable=1, bodywidth=70,limits={0,inf,1}, help={"Upper fitting limit Var1"}
-	SetVariable ModelVarPar2LL,pos={270,385},size={80,17},title=" ",noproc, disable=1, bodywidth=70,limits={0,inf,1}, help={"Lower fitting limit Var2"}
-	SetVariable ModelVarPar2UL,pos={360,385},size={120,17},title=" ",noproc, disable=1, bodywidth=70,limits={0,inf,1}, help={"Upper fitting limit Var2"}
-	SetVariable ModelVarPar3LL,pos={270,405},size={80,17},title=" ",noproc, disable=1, bodywidth=70,limits={0,inf,1}, help={"Lower fitting limit Var1"}
-	SetVariable ModelVarPar3UL,pos={360,405},size={120,17},title=" ",noproc, disable=1, bodywidth=70,limits={0,inf,1}, help={"Upper fitting limit Var1"}
-	SetVariable ModelVarPar4LL,pos={270,425},size={80,17},title=" ",noproc, disable=1, bodywidth=70,limits={0,inf,1}, help={"Lower fitting limit Var1"}
-	SetVariable ModelVarPar4UL,pos={360,425},size={120,17},title=" ",noproc, disable=1, bodywidth=70,limits={0,inf,1}, help={"Upper fitting limit Var1"}
-	SetVariable ModelVarPar5LL,pos={270,445},size={80,17},title=" ",noproc, disable=1, bodywidth=70,limits={0,inf,1}, help={"Lower fitting limit Var1"}
-	SetVariable ModelVarPar5UL,pos={360,445},size={120,17},title=" ",noproc, disable=1, bodywidth=70,limits={0,inf,1}, help={"Upper fitting limit Var1"}
-	SetVariable ModelVarPar6LL,pos={270,465},size={80,17},title=" ",noproc, disable=1, bodywidth=70,limits={0,inf,1}, help={"Lower fitting limit Var1"}
-	SetVariable ModelVarPar6UL,pos={360,465},size={120,17},title=" ",noproc, disable=1, bodywidth=70,limits={0,inf,1}, help={"Upper fitting limit Var1"}
+	SetVariable ModelVarPar1LL,pos={260,335},size={60,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Lower fitting limit Var1"}
+	SetVariable ModelVarPar1UL,pos={340,335},size={100,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Upper fitting limit Var1"}
+	SetVariable ModelVarPar2LL,pos={260,355},size={60,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Lower fitting limit Var2"}
+	SetVariable ModelVarPar2UL,pos={340,355},size={100,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Upper fitting limit Var2"}
+	SetVariable ModelVarPar3LL,pos={260,375},size={60,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Lower fitting limit Var3"}
+	SetVariable ModelVarPar3UL,pos={340,375},size={100,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Upper fitting limit Var3"}
+	SetVariable ModelVarPar4LL,pos={260,395},size={60,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Lower fitting limit Var4"}
+	SetVariable ModelVarPar4UL,pos={340,395},size={100,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Upper fitting limit Var4"}
+	SetVariable ModelVarPar5LL,pos={260,415},size={60,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Lower fitting limit Var5"}
+	SetVariable ModelVarPar5UL,pos={340,415},size={100,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Upper fitting limit Var5"}
+	SetVariable ModelVarPar6LL,pos={260,435},size={60,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Lower fitting limit Var6"}
+	SetVariable ModelVarPar6UL,pos={340,435},size={100,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Upper fitting limit Var6"}
+	SetVariable ModelVarPar7LL,pos={260,455},size={60,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Lower fitting limit Var7"}
+	SetVariable ModelVarPar7UL,pos={340,455},size={100,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Upper fitting limit Var7"}
+
+	Button ModelButton1,pos={470,345},size={80,20}, proc=IR3S_ButtonProc, title="Button1", help={""}, disable=0
+	Button ModelButton2,pos={470,370},size={80,20}, proc=IR3S_ButtonProc, title="Button2", help={""}, disable=0
+	Button ModelButton3,pos={470,395},size={80,20}, proc=IR3S_ButtonProc, title="Button3", help={""}, disable=0
 
 
 	//here is Unified level + background. 
@@ -184,25 +190,28 @@ Function IR3S_SysSpecModelsPanelFnct()
 	CheckBox UseUnified,variable= root:Packages:Irena:SysSpecModels:UseUnified, help={"Add one level unified level to model data?"}
 	NVAR UseUnified = root:Packages:Irena:SysSpecModels:UseUnified
 	Button EstimateUF,pos={380,480},size={100,15}, proc=IR3S_ButtonProc
+	//	UnifiedNames = {"G","Rg","B","P","RgCO", "LinkRgCO"}
 	Button EstimateUF, title="Estimate slope", help={"Fit power law to estimate slope of low q region"}, disable=!(UseUnified)
 	SetVariable UnifG,pos={270,500},size={110,17},title="G       ",proc=IR3S_SetVarProc, disable=!(UseUnified), bodywidth=70
-	SetVariable UnifG,limits={0,inf,1},value= root:Packages:Irena:SysSpecModels:UnifG, help={"G for Unified level Rg"}
+	SetVariable UnifG,limits={0,inf,1},value= root:Packages:Irena:SysSpecModels:UnifiedPar[0][0], help={"G for Unified level Rg"}
 	SetVariable UnifRg,pos={270,520},size={110,17},title="Rg     ",proc=IR3S_SetVarProc, disable=!(UseUnified), bodywidth=70
-	SetVariable UnifRg,limits={0,inf,1},value= root:Packages:Irena:SysSpecModels:UnifRg, help={"Rg for Unified level"}	
+	SetVariable UnifRg,limits={0,inf,1},value= root:Packages:Irena:SysSpecModels:UnifiedPar[1][0], help={"Rg for Unified level"}	
 	SetVariable UnifPwrlawB,pos={270,540},size={110,17},title="B       ",proc=IR3S_SetVarProc, disable=!(UseUnified), bodywidth=70
-	SetVariable UnifPwrlawB,limits={0,inf,1},value= root:Packages:Irena:SysSpecModels:UnifPwrlawB, help={"Prefactor for low-Q power law slope"}
+	SetVariable UnifPwrlawB,limits={0,inf,1},value= root:Packages:Irena:SysSpecModels:UnifiedPar[2][0], help={"Prefactor for low-Q power law slope"}
 	SetVariable UnifPwrlawP,pos={270,560},size={110,17},title="P       ",proc=IR3S_SetVarProc, disable=!(UseUnified), bodywidth=70
-	SetVariable UnifPwrlawP,limits={0,5,0.1},value= root:Packages:Irena:SysSpecModels:UnifPwrlawP, help={"Power law slope of low-Q region"}
+	SetVariable UnifPwrlawP,limits={0,5,0.1},value= root:Packages:Irena:SysSpecModels:UnifiedPar[3][0], help={"Power law slope of low-Q region"}
 	SetVariable UnifRgCO,pos={270,580},size={110,17},title="RgCO  ",proc=IR3S_SetVarProc, disable=!(UseUnified), bodywidth=70
-	SetVariable UnifRgCO,limits={0,inf,10},value= root:Packages:Irena:SysSpecModels:UnifRgCO, help={"Rg cutt off for low-Q region"}
+	SetVariable UnifRgCO,limits={0,inf,10},value= root:Packages:Irena:SysSpecModels:UnifiedPar[4][0], help={"Rg cutt off for low-Q region"}
 	SetVariable SASBackground,pos={270,610},size={150,16},proc=IR3S_SetVarProc,title="SAS Background", help={"Background of SAS"}, bodywidth=70
 	SetVariable SASBackground,limits={-inf,Inf,1},variable= root:Packages:Irena:SysSpecModels:SASBackground
 
-	CheckBox FitUnifG,pos={400,500},size={79,14},noproc,title="Fit?", variable= root:Packages:Irena:SysSpecModels:FitUnifG, help={"Fit this parameter?"}, disable=!(UseUnified)
-	CheckBox FitUnifRg,pos={400,520},size={79,14},noproc,title="Fit?", variable= root:Packages:Irena:SysSpecModels:FitUnifRg, help={"Fit this parameter?"}, disable=!(UseUnified)
-	CheckBox FitUnifPwrlawB,pos={400,540},size={79,14},noproc,title="Fit?", variable= root:Packages:Irena:SysSpecModels:FitUnifPwrlawB, help={"Fit this parameter?"}, disable=!(UseUnified)
-	CheckBox FitUnifPwrlawP,pos={400,560},size={79,14},noproc,title="Fit?", variable= root:Packages:Irena:SysSpecModels:FitUnifPwrlawP, help={"Fit this parameter?"}, disable=!(UseUnified)
-	CheckBox LinkUnifRgCO,pos={400,580},size={79,14},proc=IR3S_MainPanelCheckProc,title="Link?", variable= root:Packages:Irena:SysSpecModels:LinkUnifRgCO, help={"Link this RgCO to model feature size?"}, disable=!(UseUnified)
+	Wave UnifiedPar = root:Packages:Irena:SysSpecModels:UnifiedPar
+	//UnifiedParNames = {"G","Rg","B","P","UnifRgCO"}, "LinkUnifRgCO"= [4][1] aka Fit
+	CheckBox FitUnifG,pos={400,500},size={79,14},proc=IR3S_FitCheckProc,title="Fit?", value= UnifiedPar[0][1], help={"Fit this parameter?"}, disable=!(UseUnified)
+	CheckBox FitUnifRg,pos={400,520},size={79,14},proc=IR3S_FitCheckProc,title="Fit?", value= UnifiedPar[1][1], help={"Fit this parameter?"}, disable=!(UseUnified)
+	CheckBox FitUnifPwrlawB,pos={400,540},size={79,14},proc=IR3S_FitCheckProc,title="Fit?", value= UnifiedPar[2][1], help={"Fit this parameter?"}, disable=!(UseUnified)
+	CheckBox FitUnifPwrlawP,pos={400,560},size={79,14},proc=IR3S_FitCheckProc,title="Fit?", value= UnifiedPar[3][1], help={"Fit this parameter?"}, disable=!(UseUnified)
+	CheckBox LinkUnifRgCO,pos={400,580},size={79,14},proc=IR3S_FitCheckProc,title="Link?", value= UnifiedPar[4][1], help={"Link this RgCO to model feature size?"}, disable=!(UseUnified)
 	CheckBox FitSASBackground,pos={450,610},size={79,14},noproc,title="Fit?", variable= root:Packages:Irena:SysSpecModels:FitSASBackground, help={"Fit this parameter?"}
 
 
@@ -245,9 +254,25 @@ static Function IR3S_SetupControlsOnMainpanel()
 	
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SVAR ModelSelected = root:Packages:Irena:SysSpecModels:ModelSelected
+	NVAR UseUnified = root:Packages:Irena:SysSpecModels:UseUnified
+	Wave DBPar = root:Packages:Irena:SysSpecModels:DBPar
+	//DBParNames = {"Prefactor","CorrLength","Eta","Wavelength"}
+	Wave TSPar = root:Packages:Irena:SysSpecModels:TSPar
+	//TSParNames = {"Prefactor","A","C1","C2","CorrLength","RepeatDistance"}
+	Wave BCPar = root:Packages:Irena:SysSpecModels:BCPar
+	//BCParNames = {"PorodsSpecSurfArea", "CoatingsThickness","LayerScatLengthDens","SolidScatLengthDensity","VoidScatLengthDensity"}
+	Wave HermansPar 	= 	root:Packages:Irena:SysSpecModels:HermansPar
+	//HermansParNames = {"AmorphousThickness","SigmaAmorphous","LamellaeThickness","LamellaeSigma","Bvalue"}
+	Wave HybHermansPar 	= 	root:Packages:Irena:SysSpecModels:HybHermansPar
+	//HybHermansParNames = {"AmorphousThickness","SigmaAmorphous","LamellaeThickness","LamellaeSigma","Bvalue","G2","Rg2"}
+	Wave UBGPar 	= 	root:Packages:Irena:SysSpecModels:UBGPar
+	//UBGParNames = {"Rg1","B1","pack","CorrDist","StackIrreg","kI"}
 	DoWindow IR3S_SysSpecModelsPanel
 	if(V_Flag)
-		NVAR UseUnified = root:Packages:Irena:SysSpecModels:UseUnified
+		//force useUnfiied when using Hybrid Hermans model
+		if(StringMatch(ModelSelected, "Hybrid Hermans" ))
+			UseUnified = 1
+		endif
 		Button EstimateUF win=IR3S_SysSpecModelsPanel,disable=!(UseUnified)
 		SetVariable UnifG win=IR3S_SysSpecModelsPanel,disable=!(UseUnified)
 		SetVariable UnifRg win=IR3S_SysSpecModelsPanel,disable=!(UseUnified)
@@ -262,109 +287,249 @@ static Function IR3S_SetupControlsOnMainpanel()
 
 		strswitch(ModelSelected)	// string switch
 			case "Debye-Bueche":	// execute if case matches expression
-				NVAR DBPrefactor = root:Packages:Irena:SysSpecModels:DBPrefactor
-				NVAR DBEta=root:Packages:Irena:SysSpecModels:DBEta
-				NVAR DBcorrL=root:Packages:Irena:SysSpecModels:DBcorrL
-				NVAR DBWavelength=root:Packages:Irena:SysSpecModels:DBWavelength
-				SetVariable ModelVarPar1 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:DBPrefactor ,title="Scale         ", disable=1, limits={0.01,inf,IR3SSetVariableStepRatio*DBPrefactor}, help={"Scale for Debye-Bueche model"}
-				SetVariable ModelVarPar2 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:DBEta ,title="Eta           ", disable=0, limits={0.01,inf,IR3SSetVariableStepRatio*DBEta}, help={"ETA for Debye-Bueche model"}
-				SetVariable ModelVarPar3 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:DBcorrL ,title="Corr Length", disable=0, limits={0.01,inf,IR3SSetVariableStepRatio*DBcorrL}, help={"Correlation length for Debye-Bueche model"}
-				SetVariable ModelVarPar4 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:DBWavelength ,title="Wavelength", disable=0, limits={0.01,inf,IR3SSetVariableStepRatio*DBWavelength}, help={"Wavelength for Debye-Bueche model"}
+				//DBParNames = {"Prefactor","CorrLength","Eta","Wavelength"}
+				//NVAR DBPrefactor = root:Packages:Irena:SysSpecModels:DBPrefactor
+				//NVAR DBEta=root:Packages:Irena:SysSpecModels:DBEta
+				//NVAR DBcorrL=root:Packages:Irena:SysSpecModels:DBcorrL
+				//NVAR DBWavelength=root:Packages:Irena:SysSpecModels:DBWavelength
+				SetVariable ModelVarPar1 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:DBPar[0][0] ,title="Scale         ", disable=1, limits={0.01,inf,IR3SSetVariableStepRatio*DBPar[0][0]}, help={"Scale for Debye-Bueche model"}
+				SetVariable ModelVarPar2 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:DBPar[2][0] ,title="Eta           ", disable=0, limits={0.01,inf,IR3SSetVariableStepRatio*DBPar[2][0]}, help={"ETA for Debye-Bueche model"}
+				SetVariable ModelVarPar3 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:DBPar[1][0] ,title="Corr Length", disable=0, limits={0.01,inf,IR3SSetVariableStepRatio*DBPar[1][0]}, help={"Correlation length for Debye-Bueche model"}
+				SetVariable ModelVarPar4 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:DBPar[3][0] ,title="Wavelength", disable=0, limits={0.01,inf,IR3SSetVariableStepRatio*DBPar[3][0]}, help={"Wavelength for Debye-Bueche model"}
 				SetVariable ModelVarPar5 win=IR3S_SysSpecModelsPanel, disable=1, noedit=0
 				SetVariable ModelVarPar6 win=IR3S_SysSpecModelsPanel, disable=1, noedit=0
+				SetVariable ModelVarPar7 win=IR3S_SysSpecModelsPanel, disable=1, noedit=0
 
-				CheckBox FitModelVarPar1 win=IR3S_SysSpecModelsPanel,variable= root:Packages:Irena:SysSpecModels:FitDBPrefactor, disable=1
-				CheckBox FitModelVarPar2 win=IR3S_SysSpecModelsPanel,variable= root:Packages:Irena:SysSpecModels:FitDBEta, disable=0
-				CheckBox FitModelVarPar3 win=IR3S_SysSpecModelsPanel,variable= root:Packages:Irena:SysSpecModels:FitDBcorrL, disable=0
-				CheckBox FitModelVarPar4 win=IR3S_SysSpecModelsPanel,variable= root:Packages:Irena:SysSpecModels:FitDBWavelength, disable=1
+				CheckBox FitModelVarPar1 win=IR3S_SysSpecModelsPanel,value= DBPar[0][1], disable=1 	//variable= root:Packages:Irena:SysSpecModels:FitDBPrefactor, disable=1
+				CheckBox FitModelVarPar2 win=IR3S_SysSpecModelsPanel,value= DBPar[2][1], disable=0
+				CheckBox FitModelVarPar3 win=IR3S_SysSpecModelsPanel,value= DBPar[1][1], disable=0
+				CheckBox FitModelVarPar4 win=IR3S_SysSpecModelsPanel,value= DBPar[3][1], disable=1
 				CheckBox FitModelVarPar5 win=IR3S_SysSpecModelsPanel,disable=1
 				CheckBox FitModelVarPar6 win=IR3S_SysSpecModelsPanel,disable=1
+				CheckBox FitModelVarPar7 win=IR3S_SysSpecModelsPanel,disable=1
 
-				Button ModelButton1 win=IR3S_SysSpecModelsPanel, title="Estimate corrL", help={"Estimate Correlation length"}, disable=0
+				Button ModelButton1 win=IR3S_SysSpecModelsPanel, title="", help={""}, disable=1
+				Button ModelButton2 win=IR3S_SysSpecModelsPanel, title="", help={""}, disable=1
+				Button ModelButton3 win=IR3S_SysSpecModelsPanel, title="", help={""}, disable=1
 
-				SetVariable ModelVarPar1LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:DBPrefactorLL ,title=" ", disable=1, limits={0.01,inf,0}, help={"Lower limit for Scale for Debye-Bueche model"}
-				SetVariable ModelVarPar1UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:DBPrefactorHL ,title="< Scale < ", disable=1, limits={0.01,inf,0}, help={"High limit for Scale for Debye-Bueche model"}
-				SetVariable ModelVarPar2LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:DBEtaLL ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for ETA for Debye-Bueche model"}
-				SetVariable ModelVarPar2UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:DBEtaHL ,title="< Eta < ", disable=0, limits={0.01,inf,0}, help={"High limit for ETA for Debye-Bueche model"}
-				SetVariable ModelVarPar3LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:DBcorrLLL ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for Correlation length for Debye-Bueche model"}
-				SetVariable ModelVarPar3UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:DBcorrLHL ,title="< CorL < ", disable=0, limits={0.01,inf,0}, help={"High limit for Correlation length for Debye-Bueche model"}
+				SetVariable ModelVarPar1LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:DBPar[0][2] ,title=" ", disable=1, limits={0.01,inf,0}, help={"Lower limit for Scale for Debye-Bueche model"}
+				SetVariable ModelVarPar1UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:DBPar[0][3] ,title="< Scale < ", disable=1, limits={0.01,inf,0}, help={"High limit for Scale for Debye-Bueche model"}
+				SetVariable ModelVarPar2LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:DBPar[2][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for ETA for Debye-Bueche model"}
+				SetVariable ModelVarPar2UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:DBPar[2][3] ,title="< Eta < ", disable=0, limits={0.01,inf,0}, help={"High limit for ETA for Debye-Bueche model"}
+				SetVariable ModelVarPar3LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:DBPar[1][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for Correlation length for Debye-Bueche model"}
+				SetVariable ModelVarPar3UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:DBPar[1][3] ,title="< CorL < ", disable=0, limits={0.01,inf,0}, help={"High limit for Correlation length for Debye-Bueche model"}
 				SetVariable ModelVarPar4LL win=IR3S_SysSpecModelsPanel,disable=1
 				SetVariable ModelVarPar4UL win=IR3S_SysSpecModelsPanel,disable=1
 				SetVariable ModelVarPar5LL win=IR3S_SysSpecModelsPanel, disable=1
 				SetVariable ModelVarPar5UL win=IR3S_SysSpecModelsPanel, disable=1
 				SetVariable ModelVarPar6LL win=IR3S_SysSpecModelsPanel, disable=1
 				SetVariable ModelVarPar6UL win=IR3S_SysSpecModelsPanel, disable=1
+				SetVariable ModelVarPar7LL win=IR3S_SysSpecModelsPanel, disable=1
+				SetVariable ModelVarPar7UL win=IR3S_SysSpecModelsPanel, disable=1
 				break		// exit from switch
 			case "Treubner-Strey":	// execute if case matches expression
-				NVAR TSPrefactor 	= 	root:Packages:Irena:SysSpecModels:TSPrefactor
-				NVAR TSAvalue		=	root:Packages:Irena:SysSpecModels:TSAvalue
-				NVAR TSC1Value		=	root:Packages:Irena:SysSpecModels:TSC1Value
-				NVAR TSC2Value		=	root:Packages:Irena:SysSpecModels:TSC2Value
-				NVAR TSCorrelationLength	=	root:Packages:Irena:SysSpecModels:TSCorrelationLength
-				NVAR TSRepeatDistance		=	root:Packages:Irena:SysSpecModels:TSRepeatDistance
-				SetVariable ModelVarPar1 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:TSPrefactor ,title="Scale         ", disable=0, limits={0.01,inf,IR3SSetVariableStepRatio*TSPrefactor}, help={"Scale for Treubner-Strey model"}
-				SetVariable ModelVarPar2 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:TSAvalue ,title="A par         ", disable=0, limits={0.01,inf,IR3SSetVariableStepRatio*TSAvalue}, help={"A parameter for Treubner-Strey model"}
-				SetVariable ModelVarPar3 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:TSC1Value ,title="TC1 par       ", disable=0, limits={0.01,inf,IR3SSetVariableStepRatio*TSC1Value}, help={"TC1 parameter for Treubner-Strey model"}
-				SetVariable ModelVarPar4 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:TSC2Value ,title="TC2 par       ", disable=0, limits={0.01,inf,IR3SSetVariableStepRatio*TSC2Value}, help={"TC2 parameter for Treubner-Strey model"}
-				SetVariable ModelVarPar5 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:TSCorrelationLength ,title="Corr length  ", disable=0, noedit=1, limits={-INF,inf,0}, help={"Calculated Correlation Length parameter for Treubner-Strey model"}
-				SetVariable ModelVarPar6 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:TSRepeatDistance ,title="Repeat Dist.  ", disable=0,noedit=1, limits={-inf,inf,0}, help={"Calculated Repeat distance for Treubner-Strey model"}
+				//Teubner-Strey, 4 paramegers + 2 calculated parameters (never fitted)
+				//TSParNames = {"Prefactor","A","C1","C2","CorrLength","RepeatDistance"}
+				//NVAR TSPrefactor 	= 	root:Packages:Irena:SysSpecModels:TSPrefactor
+				//NVAR TSAvalue		=	root:Packages:Irena:SysSpecModels:TSAvalue
+				//NVAR TSC1Value		=	root:Packages:Irena:SysSpecModels:TSC1Value
+				//NVAR TSC2Value		=	root:Packages:Irena:SysSpecModels:TSC2Value
+				//NVAR TSCorrelationLength	=	root:Packages:Irena:SysSpecModels:TSCorrelationLength
+				//NVAR TSRepeatDistance		=	root:Packages:Irena:SysSpecModels:TSRepeatDistance
+				SetVariable ModelVarPar1 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:TSPar[0][0] ,title="Scale         ", disable=0, limits={0.01,inf,IR3SSetVariableStepRatio*TSPar[0][0]}, help={"Scale for Treubner-Strey model"}
+				SetVariable ModelVarPar2 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:TSPar[1][0] ,title="A par         ", disable=0, limits={0.01,inf,IR3SSetVariableStepRatio*TSPar[1][0]}, help={"A parameter for Treubner-Strey model"}
+				SetVariable ModelVarPar3 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:TSPar[2][0] ,title="TC1 par       ", disable=0, limits={-inf,inf,IR3SSetVariableStepRatio*TSPar[2][0]}, help={"TC1 parameter for Treubner-Strey model"}
+				SetVariable ModelVarPar4 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:TSPar[3][0] ,title="TC2 par       ", disable=0, limits={0.01,inf,IR3SSetVariableStepRatio*TSPar[3][0]}, help={"TC2 parameter for Treubner-Strey model"}
+				SetVariable ModelVarPar5 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:TSPar[4][0] ,title="Corr length  ", disable=0, noedit=1, limits={-INF,inf,0}, help={"Calculated Correlation Length parameter for Treubner-Strey model"}
+				SetVariable ModelVarPar6 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:TSPar[5][0] ,title="Repeat Dist.  ", disable=0,noedit=1, limits={-inf,inf,0}, help={"Calculated Repeat distance for Treubner-Strey model"}
+				SetVariable ModelVarPar7 win=IR3S_SysSpecModelsPanel, disable=1, noedit=0
 
-				CheckBox FitModelVarPar1 win=IR3S_SysSpecModelsPanel,variable= root:Packages:Irena:SysSpecModels:FitTSPrefactor, disable=0
-				CheckBox FitModelVarPar2 win=IR3S_SysSpecModelsPanel,variable= root:Packages:Irena:SysSpecModels:FitTSAvalue, disable=0
-				CheckBox FitModelVarPar3 win=IR3S_SysSpecModelsPanel,variable= root:Packages:Irena:SysSpecModels:FitTSC1Value, disable=0
-				CheckBox FitModelVarPar4 win=IR3S_SysSpecModelsPanel,variable= root:Packages:Irena:SysSpecModels:FitTSC2Value, disable=0
+				CheckBox FitModelVarPar1 win=IR3S_SysSpecModelsPanel,value= TSPar[0][1], disable=0
+				CheckBox FitModelVarPar2 win=IR3S_SysSpecModelsPanel,value= TSPar[1][1], disable=0
+				CheckBox FitModelVarPar3 win=IR3S_SysSpecModelsPanel,value= TSPar[2][1], disable=0
+				CheckBox FitModelVarPar4 win=IR3S_SysSpecModelsPanel,value= TSPar[3][1], disable=0
 				CheckBox FitModelVarPar5 win=IR3S_SysSpecModelsPanel, disable=1
 				CheckBox FitModelVarPar6 win=IR3S_SysSpecModelsPanel, disable=1
+				CheckBox FitModelVarPar7 win=IR3S_SysSpecModelsPanel,disable=1
 				
 				Button ModelButton1 win=IR3S_SysSpecModelsPanel, title="Estimate corrL", help={"Estimate Correlation length"}, disable=1
+				Button ModelButton2 win=IR3S_SysSpecModelsPanel, title="", help={""}, disable=1
+				Button ModelButton3 win=IR3S_SysSpecModelsPanel, title="", help={""}, disable=1
 
-				SetVariable ModelVarPar1LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:TSPrefactorLL ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for Scale for Treubner-Strey model"}
-				SetVariable ModelVarPar1UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:TSPrefactorHL ,title="< Scale < ", disable=0, limits={0.01,inf,0}, help={"High limit for Scale for Treubner-Strey model"}
-				SetVariable ModelVarPar2LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:TSAvalueLL ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for A for Treubner-Strey model"}
-				SetVariable ModelVarPar2UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:TSAvalueHL ,title="< A par < ", disable=0, limits={0.01,inf,0}, help={"High limit for A for Treubner-Strey model"}
-				SetVariable ModelVarPar3LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:TSC1ValueLL ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for TC1 for Treubner-Strey model"}
-				SetVariable ModelVarPar3UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:TSC1ValueHL ,title="< TC1 < ", disable=0, limits={0.01,inf,0}, help={"High limit for TC1 for Treubner-Strey model"}
-				SetVariable ModelVarPar4LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:TSC2ValueLL ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for TC2 for Treubner-Strey model"}
-				SetVariable ModelVarPar4UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:TSC2ValueHL ,title="< TC2 < ", disable=0, limits={0.01,inf,0}, help={"High limit for TC2 for Treubner-Strey model"}
+				SetVariable ModelVarPar1LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:TSPar[0][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for Scale for Treubner-Strey model"}
+				SetVariable ModelVarPar1UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:TSPar[0][3] ,title="< Scale < ", disable=0, limits={0.01,inf,0}, help={"High limit for Scale for Treubner-Strey model"}
+				SetVariable ModelVarPar2LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:TSPar[1][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for A for Treubner-Strey model"}
+				SetVariable ModelVarPar2UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:TSPar[1][3] ,title="< A par < ", disable=0, limits={0.01,inf,0}, help={"High limit for A for Treubner-Strey model"}
+				SetVariable ModelVarPar3LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:TSPar[2][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for TC1 for Treubner-Strey model"}
+				SetVariable ModelVarPar3UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:TSPar[2][3] ,title="< TC1 < ", disable=0, limits={0.01,inf,0}, help={"High limit for TC1 for Treubner-Strey model"}
+				SetVariable ModelVarPar4LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:TSPar[3][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for TC2 for Treubner-Strey model"}
+				SetVariable ModelVarPar4UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:TSPar[3][3] ,title="< TC2 < ", disable=0, limits={0.01,inf,0}, help={"High limit for TC2 for Treubner-Strey model"}
 				SetVariable ModelVarPar5LL win=IR3S_SysSpecModelsPanel, disable=1
 				SetVariable ModelVarPar5UL win=IR3S_SysSpecModelsPanel, disable=1
 				SetVariable ModelVarPar6LL win=IR3S_SysSpecModelsPanel, disable=1
 				SetVariable ModelVarPar6UL win=IR3S_SysSpecModelsPanel, disable=1
+				SetVariable ModelVarPar7LL win=IR3S_SysSpecModelsPanel, disable=1
+				SetVariable ModelVarPar7UL win=IR3S_SysSpecModelsPanel, disable=1
 				break
 			case "Benedetti-Ciccariello":	// execute if case matches expression
-				NVAR BCPorodsSpecSurfArea 	= 	root:Packages:Irena:SysSpecModels:BCPorodsSpecSurfArea
-				NVAR BCSolidScatLengthDensity 	= 	root:Packages:Irena:SysSpecModels:BCSolidScatLengthDensity
-				NVAR BCVoidScatLengthDensity 	= 	root:Packages:Irena:SysSpecModels:BCVoidScatLengthDensity
-				NVAR BCLayerScatLengthDens 	= 	root:Packages:Irena:SysSpecModels:BCLayerScatLengthDens
-				NVAR BCCoatingsThickness 		= 	root:Packages:Irena:SysSpecModels:BCCoatingsThickness
-				SetVariable ModelVarPar1 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:BCPorodsSpecSurfArea ,title="Porod Surface     ", disable=0, limits={0.01,inf,IR3SSetVariableStepRatio*BCPorodsSpecSurfArea}, help={"Porod Surface [cm2/cm3] for Benedetti-Ciccariello model"}
-				SetVariable ModelVarPar2 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:BCSolidScatLengthDensity ,title="Solid SLD [10^10]", disable=0, limits={-inf,inf,BCSolidScatLengthDensity*IR3SSetVariableStepRatio}, help={"Solid SLD * 10^10 for Benedetti-Ciccariello model"}
-				SetVariable ModelVarPar3 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:BCVoidScatLengthDensity ,title="Void/Sol SLD     ", disable=0, limits={-inf,inf,BCVoidScatLengthDensity*IR3SSetVariableStepRatio}, help={"Void or solvent SLD parameter for Benedetti-Ciccariello model"}
-				SetVariable ModelVarPar4 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:BCLayerScatLengthDens ,title="Layer SLD [10^10]", disable=0, limits={-inf,inf,IR3SSetVariableStepRatio*BCLayerScatLengthDens}, help={"Layer SLD for Benedetti-Ciccariello model"}
-				SetVariable ModelVarPar5 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:BCCoatingsThickness ,title="Layer thick [A]   ", disable=0, noedit=0, limits={1,inf,BCCoatingsThickness*IR3SSetVariableStepRatio}, help={"Thickness of the layer for Benedetti-Ciccariello model"}
+				//Benedetti-Ciccariello 3 paramegers + 2 calculated parameters (never fitted)
+				//BCParNames = {"PorodsSpecSurfArea", "CoatingsThickness","LayerScatLengthDens","SolidScatLengthDensity","VoidScatLengthDensity"}
+				//NVAR BCPorodsSpecSurfArea 	= 	root:Packages:Irena:SysSpecModels:BCPorodsSpecSurfArea
+				//NVAR BCSolidScatLengthDensity 	= 	root:Packages:Irena:SysSpecModels:BCSolidScatLengthDensity
+				//NVAR BCVoidScatLengthDensity 	= 	root:Packages:Irena:SysSpecModels:BCVoidScatLengthDensity
+				//NVAR BCLayerScatLengthDens 	= 	root:Packages:Irena:SysSpecModels:BCLayerScatLengthDens
+				//NVAR BCCoatingsThickness 		= 	root:Packages:Irena:SysSpecModels:BCCoatingsThickness
+				SetVariable ModelVarPar1 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:BCPar[0][0] ,title="Porod Surface     ", disable=0, limits={0.01,inf,IR3SSetVariableStepRatio*BCPar[0][0]}, help={"Porod Surface [cm2/cm3] for Benedetti-Ciccariello model"}
+				SetVariable ModelVarPar2 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:BCPar[3][0] ,title="Solid SLD [10^10]", disable=0, limits={-inf,inf,IR3SSetVariableStepRatio*BCPar[3][0]}, help={"Solid SLD * 10^10 for Benedetti-Ciccariello model"}
+				SetVariable ModelVarPar3 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:BCPar[4][0] ,title="Void/Sol SLD     ", disable=0, limits={-inf,inf,BCPar[4][0]*IR3SSetVariableStepRatio}, help={"Void or solvent SLD parameter for Benedetti-Ciccariello model"}
+				SetVariable ModelVarPar4 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:BCPar[2][0] ,title="Layer SLD [10^10]", disable=0, limits={-inf,inf,IR3SSetVariableStepRatio*BCPar[2][0]}, help={"Layer SLD for Benedetti-Ciccariello model"}
+				SetVariable ModelVarPar5 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:BCPar[1][0] ,title="Layer thick [A]   ", disable=0, noedit=0, limits={1,inf,BCPar[1][0]*IR3SSetVariableStepRatio}, help={"Thickness of the layer for Benedetti-Ciccariello model"}
 				SetVariable ModelVarPar6 win=IR3S_SysSpecModelsPanel,title="", disable=1, noedit=0
+				SetVariable ModelVarPar7 win=IR3S_SysSpecModelsPanel, disable=1, noedit=0
 
-				CheckBox FitModelVarPar1 win=IR3S_SysSpecModelsPanel,variable= root:Packages:Irena:SysSpecModels:FitBCPorodsSpecSurfArea, disable=0
-				CheckBox FitModelVarPar2 win=IR3S_SysSpecModelsPanel,variable= root:Packages:Irena:SysSpecModels:FitBCSolidScatLengthDensity, disable=1
-				CheckBox FitModelVarPar3 win=IR3S_SysSpecModelsPanel,variable= root:Packages:Irena:SysSpecModels:FitBCVoidScatLengthDensity, disable=1
-				CheckBox FitModelVarPar4 win=IR3S_SysSpecModelsPanel,variable= root:Packages:Irena:SysSpecModels:FitBCLayerScatLengthDens, disable=0
-				CheckBox FitModelVarPar5 win=IR3S_SysSpecModelsPanel,variable= root:Packages:Irena:SysSpecModels:FitBCCoatingsThickness, disable=0
+				CheckBox FitModelVarPar1 win=IR3S_SysSpecModelsPanel,value= BCPar[0][1], disable=0
+				CheckBox FitModelVarPar2 win=IR3S_SysSpecModelsPanel,value= BCPar[3][1], disable=1
+				CheckBox FitModelVarPar3 win=IR3S_SysSpecModelsPanel,value= BCPar[4][1], disable=1
+				CheckBox FitModelVarPar4 win=IR3S_SysSpecModelsPanel,value= BCPar[2][1], disable=0
+				CheckBox FitModelVarPar5 win=IR3S_SysSpecModelsPanel,value= BCPar[1][1], disable=0
 				CheckBox FitModelVarPar6 win=IR3S_SysSpecModelsPanel, disable=1
+				CheckBox FitModelVarPar7 win=IR3S_SysSpecModelsPanel,disable=1
 
-				Button ModelButton1 win=IR3S_SysSpecModelsPanel, title="Estimate corrL", help={"Estimate Correlation length"}, disable=1
+				Button ModelButton1 win=IR3S_SysSpecModelsPanel, title="", help={""}, disable=1
+				Button ModelButton2 win=IR3S_SysSpecModelsPanel, title="", help={""}, disable=1
+				Button ModelButton3 win=IR3S_SysSpecModelsPanel, title="", help={""}, disable=1
 
-				SetVariable ModelVarPar1LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:BCPorodsSpecSurfAreaLL ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for Porod Surface Benedetti-Ciccariello model"}
-				SetVariable ModelVarPar1UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:BCPorodsSpecSurfAreaHL ,title="< Por S < ", disable=0, limits={0.01,inf,0}, help={"High limit for Porod Surface for Benedetti-Ciccariello model"}
-				SetVariable ModelVarPar2LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:BCSolidScatLengthDensityLL ,title=" ", disable=1, limits={0.01,inf,0}, help={"Lower limit for Solid SLD for Benedetti-Ciccariello model"}
-				SetVariable ModelVarPar2UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:BCSolidScatLengthDensityHL ,title="< S SLD < ", disable=1, limits={0.01,inf,0}, help={"High limit for Solid  SLD for Benedetti-Ciccariello model"}
-				SetVariable ModelVarPar3LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:BCVoidScatLengthDensityLL ,title=" ", disable=1, limits={0.01,inf,0}, help={"Lower limit for Void/Solvent for Benedetti-Ciccariello model"}
-				SetVariable ModelVarPar3UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:BCVoidScatLengthDensityHL ,title="< V SLD < ", disable=1, limits={0.01,inf,0}, help={"High limit for Void/Solvent for Benedetti-Ciccariello model"}
-				SetVariable ModelVarPar4LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:BCLayerScatLengthDensLL ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for Layer SLD for Benedetti-Ciccariello model"}
-				SetVariable ModelVarPar4UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:BCLayerScatLengthDensHL ,title="< L SLD < ", disable=0, limits={0.01,inf,0}, help={"High limit for Layer SLD for Benedetti-Ciccariello model"}
-				SetVariable ModelVarPar5LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:BCCoatingsThicknessLL ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for Layer thickness for Benedetti-Ciccariello model"}
-				SetVariable ModelVarPar5UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:BCCoatingsThicknessHL ,title="< Thick < ", disable=0, limits={0.01,inf,0}, help={"High limit for Layer thickness for Benedetti-Ciccariello model"}
+				SetVariable ModelVarPar1LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:BCPar[0][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for Porod Surface Benedetti-Ciccariello model"}
+				SetVariable ModelVarPar1UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:BCPar[0][3] ,title="< Por S < ", disable=0, limits={0.01,inf,0}, help={"High limit for Porod Surface for Benedetti-Ciccariello model"}
+				SetVariable ModelVarPar2LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:BCPar[3][2] ,title=" ", disable=1, limits={0.01,inf,0}, help={"Lower limit for Solid SLD for Benedetti-Ciccariello model"}
+				SetVariable ModelVarPar2UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:BCPar[3][3] ,title="< S SLD < ", disable=1, limits={0.01,inf,0}, help={"High limit for Solid  SLD for Benedetti-Ciccariello model"}
+				SetVariable ModelVarPar3LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:BCPar[4][2] ,title=" ", disable=1, limits={0.01,inf,0}, help={"Lower limit for Void/Solvent for Benedetti-Ciccariello model"}
+				SetVariable ModelVarPar3UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:BCPar[4][3] ,title="< V SLD < ", disable=1, limits={0.01,inf,0}, help={"High limit for Void/Solvent for Benedetti-Ciccariello model"}
+				SetVariable ModelVarPar4LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:BCPar[2][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for Layer SLD for Benedetti-Ciccariello model"}
+				SetVariable ModelVarPar4UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:BCPar[2][3] ,title="< L SLD < ", disable=0, limits={0.01,inf,0}, help={"High limit for Layer SLD for Benedetti-Ciccariello model"}
+				SetVariable ModelVarPar5LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:BCPar[1][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for Layer thickness for Benedetti-Ciccariello model"}
+				SetVariable ModelVarPar5UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:BCPar[1][3] ,title="< Thick < ", disable=0, limits={0.01,inf,0}, help={"High limit for Layer thickness for Benedetti-Ciccariello model"}
 				SetVariable ModelVarPar6LL win=IR3S_SysSpecModelsPanel, disable=1
 				SetVariable ModelVarPar6UL win=IR3S_SysSpecModelsPanel, disable=1
+				SetVariable ModelVarPar7LL win=IR3S_SysSpecModelsPanel, disable=1
+				SetVariable ModelVarPar7UL win=IR3S_SysSpecModelsPanel, disable=1
+				break
+			case "Hermans":	// execute if case matches expression
+				//	HermansParNames = {"AmorphousThickness","SigmaAmorphous","LamellaeThickness","LamellaeSigma","Bvalue"}
+				//	WaveParamsValues={"Value","LowLimit","HighLimit","FitError"}
+				// 	variables HermansAmThFit, HermansAmSigFit, HermansLamThFit, HermansLamSigFit, HermansBvalFit 
+
+				SetVariable ModelVarPar1 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HermansPar[0][0] ,title="Amorphous Thickness ", disable=0, limits={0.01,inf,IR3SSetVariableStepRatio*HermansPar[0][0]}, help={"Thickness of amorphous phase [A]"}
+				SetVariable ModelVarPar2 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HermansPar[1][0] ,title="Am. Thick. Sigma    ", disable=0, limits={-inf,inf,IR3SSetVariableStepRatio*HermansPar[1][0]}, help={"Sigma for amorphous thickness"}
+				SetVariable ModelVarPar3 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HermansPar[2][0] ,title="Lamellae Thickness  ", disable=0, limits={-inf,inf,IR3SSetVariableStepRatio*HermansPar[2][0]}, help={"Thickness of cryst. Lamellae [A]"}
+				SetVariable ModelVarPar4 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HermansPar[3][0] ,title="Lam. Thick. Sigma   ", disable=0, limits={-inf,inf,IR3SSetVariableStepRatio*HermansPar[3][0]}, help={"Sigma for cryst. Lamellae thickness"}
+				SetVariable ModelVarPar5 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HermansPar[4][0] ,title="B value             ", disable=0, noedit=0, limits={1,inf,IR3SSetVariableStepRatio*HermansPar[4][0]}, help={"B value "}
+				SetVariable ModelVarPar6 win=IR3S_SysSpecModelsPanel, disable=1, noedit=0
+				SetVariable ModelVarPar7 win=IR3S_SysSpecModelsPanel, disable=1, noedit=0
+
+				CheckBox FitModelVarPar1 win=IR3S_SysSpecModelsPanel,value= HermansPar[0][1], disable=0
+				CheckBox FitModelVarPar2 win=IR3S_SysSpecModelsPanel,value= HermansPar[0][1], disable=0
+				CheckBox FitModelVarPar3 win=IR3S_SysSpecModelsPanel,value= HermansPar[0][1], disable=0
+				CheckBox FitModelVarPar4 win=IR3S_SysSpecModelsPanel,value= HermansPar[0][1], disable=0
+				CheckBox FitModelVarPar5 win=IR3S_SysSpecModelsPanel,value= HermansPar[0][1], disable=0
+				CheckBox FitModelVarPar6 win=IR3S_SysSpecModelsPanel,disable=1
+				CheckBox FitModelVarPar7 win=IR3S_SysSpecModelsPanel,disable=1
+
+				Button ModelButton1 win=IR3S_SysSpecModelsPanel, title="", help={""}, disable=1
+				Button ModelButton2 win=IR3S_SysSpecModelsPanel, title="", help={""}, disable=1
+				Button ModelButton3 win=IR3S_SysSpecModelsPanel, title="", help={""}, disable=1
+
+				SetVariable ModelVarPar1LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HermansPar[0][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for Thickness of amorphous phase"}
+				SetVariable ModelVarPar1UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HermansPar[0][3] ,title="< Am Th < ", disable=0, limits={0.01,inf,0}, help={"High limit for Thickness of amorphous phase"}
+				SetVariable ModelVarPar2LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HermansPar[1][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for Sigma for amorphous thickness"}
+				SetVariable ModelVarPar2UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HermansPar[1][3] ,title="< Sigma < ", disable=0, limits={0.01,inf,0}, help={"High limit Sigma for amorphous thickness"}
+				SetVariable ModelVarPar3LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HermansPar[2][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for Thickness of cryst. Lamellae"}
+				SetVariable ModelVarPar3UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HermansPar[2][3] ,title="< Lam Th < ", disable=0, limits={0.01,inf,0}, help={"High limit for Thickness of cryst. Lamellae"}
+				SetVariable ModelVarPar4LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HermansPar[3][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for Sigma for cryst. Lamellae thickness"}
+				SetVariable ModelVarPar4UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HermansPar[3][3] ,title="< Sigma < ", disable=0, limits={0.01,inf,0}, help={"High limit for Sigma for cryst. Lamellae thickness"}
+				SetVariable ModelVarPar5LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HermansPar[4][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for B value"}
+				SetVariable ModelVarPar5UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HermansPar[4][3] ,title="< B value < ", disable=0, limits={0.01,inf,0}, help={"High limit for B value"}
+				SetVariable ModelVarPar6LL win=IR3S_SysSpecModelsPanel, disable=1
+				SetVariable ModelVarPar6UL win=IR3S_SysSpecModelsPanel, disable=1
+				SetVariable ModelVarPar7LL win=IR3S_SysSpecModelsPanel, disable=1
+				SetVariable ModelVarPar7UL win=IR3S_SysSpecModelsPanel, disable=1
+				break
+				
+			case "Hybrid Hermans":	// execute if case matches expression
+				//	HybHermansParNames = {"AmorphousThickness","SigmaAmorphous","LamellaeThickness","LamellaeSigma","Bvalue","G2","Rg2","LinkRGCO"}
+				SetVariable ModelVarPar1 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HybHermansPar[0][0] ,title="Amorphous Thickness ", disable=0, limits={0.01,inf,IR3SSetVariableStepRatio*HybHermansPar[0][0]}, help={"Thickness of amorphous phase [A]"}
+				SetVariable ModelVarPar2 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HybHermansPar[1][0] ,title="Am. Thick. Sigma    ", disable=0, limits={-inf,inf,IR3SSetVariableStepRatio*HybHermansPar[1][0]}, help={"Sigma for amorphous thickness"}
+				SetVariable ModelVarPar3 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HybHermansPar[2][0] ,title="Lamellae Thickness  ", disable=0, limits={-inf,inf,IR3SSetVariableStepRatio*HybHermansPar[2][0]}, help={"Thickness of cryst. Lamellae [A]"}
+				SetVariable ModelVarPar4 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HybHermansPar[3][0] ,title="Lam. Thick. Sigma   ", disable=0, limits={-inf,inf,IR3SSetVariableStepRatio*HybHermansPar[3][0]}, help={"Sigma for cryst. Lamellae thickness"}
+				SetVariable ModelVarPar5 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HybHermansPar[4][0] ,title="B value             ", disable=0, noedit=0, limits={1,inf,IR3SSetVariableStepRatio*HybHermansPar[4][0]}, help={"B value "}
+				SetVariable ModelVarPar6 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HybHermansPar[5][0] ,title="G2 value            ", disable=0, noedit=0, limits={1,inf,IR3SSetVariableStepRatio*HybHermansPar[5][0]}, help={"B value "}
+				SetVariable ModelVarPar7 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HybHermansPar[6][0] ,title="Rg2 value           ", disable=0, noedit=0, limits={1,inf,IR3SSetVariableStepRatio*HybHermansPar[6][0]}, help={"B value "}
+
+				CheckBox FitModelVarPar1 win=IR3S_SysSpecModelsPanel,value= HybHermansPar[0][1], disable=0
+				CheckBox FitModelVarPar2 win=IR3S_SysSpecModelsPanel,value= HybHermansPar[1][1], disable=0
+				CheckBox FitModelVarPar3 win=IR3S_SysSpecModelsPanel,value= HybHermansPar[2][1], disable=0
+				CheckBox FitModelVarPar4 win=IR3S_SysSpecModelsPanel,value= HybHermansPar[3][1], disable=0
+				CheckBox FitModelVarPar5 win=IR3S_SysSpecModelsPanel,value= HybHermansPar[4][1], disable=0
+				CheckBox FitModelVarPar6 win=IR3S_SysSpecModelsPanel,value= HybHermansPar[5][1], disable=0
+				CheckBox FitModelVarPar7 win=IR3S_SysSpecModelsPanel,value= HybHermansPar[6][1], disable=0
+
+				Button ModelButton1 win=IR3S_SysSpecModelsPanel, title="", help={""}, disable=1
+				Button ModelButton2 win=IR3S_SysSpecModelsPanel, title="", help={""}, disable=1
+				Button ModelButton3 win=IR3S_SysSpecModelsPanel, title="", help={""}, disable=1
+
+				SetVariable ModelVarPar1LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HybHermansPar[0][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for Thickness of amorphous phase"}
+				SetVariable ModelVarPar1UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HybHermansPar[0][3] ,title="< Am Th < ", disable=0, limits={0.01,inf,0}, help={"High limit for Thickness of amorphous phase"}
+				SetVariable ModelVarPar2LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HybHermansPar[1][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for Sigma for amorphous thickness"}
+				SetVariable ModelVarPar2UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HybHermansPar[1][3] ,title="< Sigma < ", disable=0, limits={0.01,inf,0}, help={"High limit Sigma for amorphous thickness"}
+				SetVariable ModelVarPar3LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HybHermansPar[2][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for Thickness of cryst. Lamellae"}
+				SetVariable ModelVarPar3UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HybHermansPar[2][3] ,title="< Lam Th < ", disable=0, limits={0.01,inf,0}, help={"High limit for Thickness of cryst. Lamellae"}
+				SetVariable ModelVarPar4LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HybHermansPar[3][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for Sigma for cryst. Lamellae thickness"}
+				SetVariable ModelVarPar4UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HybHermansPar[3][3] ,title="< Sigma < ", disable=0, limits={0.01,inf,0}, help={"High limit for Sigma for cryst. Lamellae thickness"}
+				SetVariable ModelVarPar5LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HybHermansPar[4][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for B value"}
+				SetVariable ModelVarPar5UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HybHermansPar[4][3] ,title="< B value < ", disable=0, limits={0.01,inf,0}, help={"High limit for B value"}
+				SetVariable ModelVarPar6LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HybHermansPar[5][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for G2 value"}
+				SetVariable ModelVarPar6UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HybHermansPar[5][3] ,title="< G2 value < ", disable=0, limits={0.01,inf,0}, help={"High limit for G2 value"}
+				SetVariable ModelVarPar7LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HybHermansPar[6][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for Rg2 value"}
+				SetVariable ModelVarPar7UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:HybHermansPar[6][3] ,title="< Rg2 value < ", disable=0, limits={0.01,inf,0}, help={"High limit for Tg2 value"}
+				break
+				
+			case "Unified Born Green":	// execute if case matches expression
+				//UBGParNames = {"Rg1","B1","pack","CorDist","StackIrreg","kI"}
+
+				SetVariable ModelVarPar1 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:UBGPar[0][0] ,title="Rg1    [A]", disable=0, limits={0.01,inf,IR3SSetVariableStepRatio*UBGPar[0][0]}, help={"Rg1 [A]"}
+				SetVariable ModelVarPar2 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:UBGPar[1][0] ,title="B1 [cm\\S-1\\MA\\S-4\\M]", disable=0, limits={-inf,inf,IR3SSetVariableStepRatio*UBGPar[1][0]}, help={"B1"}
+				SetVariable ModelVarPar3 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:UBGPar[2][0] ,title="Pack     ", disable=0, limits={-inf,inf,IR3SSetVariableStepRatio*UBGPar[2][0]}, help={"Pack value"}
+				SetVariable ModelVarPar4 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:UBGPar[3][0] ,title="Corr Dist ξ [A]", disable=0, limits={-inf,inf,IR3SSetVariableStepRatio*UBGPar[3][0]}, help={"Mesh (see paper)"}
+				SetVariable ModelVarPar5 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:UBGPar[4][0] ,title="Stack Irreg δ ", disable=0, noedit=0, limits={1,inf,IR3SSetVariableStepRatio*UBGPar[4][0]}, help={"Del (see paper) "}
+				SetVariable ModelVarPar6 win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:UBGPar[5][0] ,title="k\\BI             ", disable=0, noedit=0, limits={1,inf,IR3SSetVariableStepRatio*UBGPar[5][0]}, help={"kI (see paper) "}
+				SetVariable ModelVarPar7 win=IR3S_SysSpecModelsPanel, disable=1, noedit=0
+
+				CheckBox FitModelVarPar1 win=IR3S_SysSpecModelsPanel,value= UBGPar[0][1], disable=0
+				CheckBox FitModelVarPar2 win=IR3S_SysSpecModelsPanel,value= UBGPar[1][1], disable=0
+				CheckBox FitModelVarPar3 win=IR3S_SysSpecModelsPanel,value= UBGPar[2][1], disable=0
+				CheckBox FitModelVarPar4 win=IR3S_SysSpecModelsPanel,value= UBGPar[3][1], disable=0
+				CheckBox FitModelVarPar5 win=IR3S_SysSpecModelsPanel,value= UBGPar[4][1], disable=0
+				CheckBox FitModelVarPar6 win=IR3S_SysSpecModelsPanel,value= UBGPar[5][1], disable=0
+				CheckBox FitModelVarPar7 win=IR3S_SysSpecModelsPanel,disable=1
+
+				Button ModelButton1 win=IR3S_SysSpecModelsPanel, title="", help={""}, disable=1
+				Button ModelButton2 win=IR3S_SysSpecModelsPanel, title="", help={""}, disable=1
+				Button ModelButton3 win=IR3S_SysSpecModelsPanel, title="", help={""}, disable=1
+
+				SetVariable ModelVarPar1LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:UBGPar[0][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for Rg1"}
+				SetVariable ModelVarPar1UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:UBGPar[0][3] ,title="< Rg1 <  ", disable=0, limits={0.01,inf,0}, help={"High limit for Rg1"}
+				SetVariable ModelVarPar2LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:UBGPar[1][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for G1"}
+				SetVariable ModelVarPar2UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:UBGPar[1][3] ,title="< B1 <   ", disable=0, limits={0.01,inf,0}, help={"High limit G1"}
+				SetVariable ModelVarPar3LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:UBGPar[2][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for Pack"}
+				SetVariable ModelVarPar3UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:UBGPar[2][3] ,title="< Pack <  ", disable=0, limits={0.01,inf,0}, help={"High limit for Pack"}
+				SetVariable ModelVarPar4LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:UBGPar[3][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for Mesh"}
+				SetVariable ModelVarPar4UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:UBGPar[3][3] ,title=" < ξ <    ", disable=0, limits={0.01,inf,0}, help={"High limit for Sigma for Mesh"}
+				SetVariable ModelVarPar5LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:UBGPar[4][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for Del"}
+				SetVariable ModelVarPar5UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:UBGPar[4][3] ,title="< δ <    ", disable=0, limits={0.01,inf,0}, help={"High limit for Del"}
+				SetVariable ModelVarPar6LL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:UBGPar[4][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for kI"}
+				SetVariable ModelVarPar6UL win=IR3S_SysSpecModelsPanel,value=root:Packages:Irena:SysSpecModels:UBGPar[4][3] ,title="< k\\BI \\M<    ", disable=0, limits={0.01,inf,0}, help={"High limit for kI"}
+				SetVariable ModelVarPar7LL win=IR3S_SysSpecModelsPanel, disable=1
+				SetVariable ModelVarPar7UL win=IR3S_SysSpecModelsPanel, disable=1
 				break
 				
 			default:			// optional default expression executed
@@ -381,7 +546,11 @@ static Function IR3S_SetupControlsOnMainpanel()
 				CheckBox FitModelVarPar4 win=IR3S_SysSpecModelsPanel, disable=1
 				CheckBox FitModelVarPar5 win=IR3S_SysSpecModelsPanel, disable=1
 				CheckBox FitModelVarPar6 win=IR3S_SysSpecModelsPanel, disable=1
+				CheckBox FitModelVarPar7 win=IR3S_SysSpecModelsPanel,disable=1
+				SetVariable ModelVarPar7 win=IR3S_SysSpecModelsPanel, disable=1, noedit=0
 				Button ModelButton1 win=IR3S_SysSpecModelsPanel, disable=1
+				Button ModelButton2 win=IR3S_SysSpecModelsPanel, disable=1
+				Button ModelButton3 win=IR3S_SysSpecModelsPanel, disable=1
 				SetVariable ModelVarPar1LL win=IR3S_SysSpecModelsPanel, disable=1
 				SetVariable ModelVarPar1UL win=IR3S_SysSpecModelsPanel, disable=1
 				SetVariable ModelVarPar2LL win=IR3S_SysSpecModelsPanel, disable=1
@@ -394,11 +563,173 @@ static Function IR3S_SetupControlsOnMainpanel()
 				SetVariable ModelVarPar5UL win=IR3S_SysSpecModelsPanel, disable=1
 				SetVariable ModelVarPar6LL win=IR3S_SysSpecModelsPanel, disable=1
 				SetVariable ModelVarPar6UL win=IR3S_SysSpecModelsPanel, disable=1
+				SetVariable ModelVarPar7LL win=IR3S_SysSpecModelsPanel, disable=1
+				SetVariable ModelVarPar7UL win=IR3S_SysSpecModelsPanel, disable=1
 				
 				
 		endswitch
 	endif
 end
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+Function IR3S_FitCheckProc(cba) : CheckBoxControl
+	STRUCT WMCheckboxAction &cba
+
+	switch( cba.eventCode )
+		case 2: // mouse up
+			Variable checked = cba.checked
+			SVAR ModelSelected = root:Packages:Irena:SysSpecModels:ModelSelected
+			//	WaveParamsValues={"Value","Fit?","LowLimit","HighLimit","FitError"}
+			Wave DBPar = root:Packages:Irena:SysSpecModels:DBPar
+			//DBParNames = {"Prefactor","CorrLength","Eta","Wavelength"}
+			Wave TSPar = root:Packages:Irena:SysSpecModels:TSPar
+			//TSParNames = {"Prefactor","A","C1","C2","CorrLength","RepeatDistance"}
+			Wave BCPar = root:Packages:Irena:SysSpecModels:BCPar
+			//BCParNames = {"PorodsSpecSurfArea", "CoatingsThickness","LayerScatLengthDens","SolidScatLengthDensity","VoidScatLengthDensity"}
+			Wave HermansPar 	= 	root:Packages:Irena:SysSpecModels:HermansPar
+			//HermansParNames = {"AmorphousThickness","SigmaAmorphous","LamellaeThickness","LamellaeSigma","Bvalue"}
+			Wave HybHermansPar 	= 	root:Packages:Irena:SysSpecModels:HybHermansPar
+			//HybHermansParNames = {"AmorphousThickness","SigmaAmorphous","LamellaeThickness","LamellaeSigma","Bvalue","G2","Rg2"}
+			Wave UBGPar 	= 	root:Packages:Irena:SysSpecModels:UBGPar
+			//UBGParNames = {"Rg1","B1","pack","CorrDist","StackIrreg","kI"}
+		strswitch(ModelSelected)	// string switch
+			case "Unified Born Green":	// execute if case matches expression
+				if(StringMatch(cba.ctrlName, "FitModelVarPar1" ))
+					UBGPar[0][1] = checked
+				endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar2" ))
+					UBGPar[1][1] = checked
+				endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar3" ))
+					UBGPar[2][1] = checked
+				endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar4" ))
+					UBGPar[3][1] = checked
+				endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar5" ))
+					UBGPar[4][1] = checked
+				endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar6" ))
+					UBGPar[5][1] = checked
+				endif
+				break		// exit from switch
+			case "Debye-Bueche":	// execute if case matches expression
+				if(StringMatch(cba.ctrlName, "FitModelVarPar1" ))
+					DBPar[0][1] = checked
+				endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar2" ))
+					DBPar[1][1] = checked
+				endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar3" ))
+					DBPar[2][1] = checked
+				endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar4" ))
+					DBPar[3][1] = checked
+				endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar5" ))
+					DBPar[4][1] = checked
+				endif
+				break		// exit from switch
+			case "Hermans":	// execute if case matches expression
+				if(StringMatch(cba.ctrlName, "FitModelVarPar1" ))
+					HermansPar[0][1] = checked
+				endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar2" ))
+					HermansPar[1][1] = checked
+				endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar3" ))
+					HermansPar[2][1] = checked
+				endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar4" ))
+					HermansPar[3][1] = checked
+				endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar5" ))
+					HermansPar[4][1] = checked
+				endif
+				break		// exit from switch
+			case "Treubner-Strey":	// execute if case matches expression
+				if(StringMatch(cba.ctrlName, "FitModelVarPar1" ))
+					TSPar[0][1] = checked
+				endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar2" ))
+					TSPar[1][1] = checked
+				endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar3" ))
+					TSPar[2][1] = checked
+				endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar4" ))
+					TSPar[3][1] = checked
+				endif
+				break		// exit from switch
+			case "Benedetti-Cicariello":	// execute if case matches expression
+				if(StringMatch(cba.ctrlName, "FitModelVarPar1" ))
+					BCPar[0][1] = checked
+				endif
+				//if(StringMatch(cba.ctrlName, "FitModelVarPar2" ))
+				//	BCPar[1][1] = checked
+				//endif
+				//if(StringMatch(cba.ctrlName, "FitModelVarPar3" ))
+				//	BCPar[2][1] = checked
+				//endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar4" ))
+					BCPar[3][1] = checked
+				endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar5" ))
+					BCPar[4][1] = checked
+				endif
+				break		// exit from switch
+			case "Hybrid Hermans":	// execute if case matches expression
+				if(StringMatch(cba.ctrlName, "FitModelVarPar1" ))
+					HybHermansPar[0][1] = checked
+				endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar2" ))
+					HybHermansPar[1][1] = checked
+				endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar3" ))
+					HybHermansPar[2][1] = checked
+				endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar4" ))
+					HybHermansPar[3][1] = checked
+				endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar5" ))
+					HybHermansPar[4][1] = checked
+				endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar6" ))
+					HybHermansPar[5][1] = checked
+				endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar7" ))
+					HybHermansPar[6][1] = checked
+				endif
+				break		// exit from switch
+			endswitch
+			//handle Unified controls
+			Wave UnifiedPar = root:Packages:Irena:SysSpecModels:UnifiedPar
+		//UnifiedParNames = {"G","Rg","B","P","UnifRgCO"}, "LinkUnifRgCO"= [4][1] aka Fit
+			if(StringMatch(cba.ctrlName, "FitUnifG" ))
+				UnifiedPar[0][1]=checked
+			endif
+			if(StringMatch(cba.ctrlName, "FitUnifRg" ))
+				UnifiedPar[1][1]=checked
+			endif
+			if(StringMatch(cba.ctrlName, "FitUnifPwrlawB" ))
+				UnifiedPar[2][1]=checked
+			endif
+			if(StringMatch(cba.ctrlName, "FitUnifPwrlawP" ))
+				UnifiedPar[3][1]=checked
+			endif
+			if(StringMatch(cba.ctrlName, "LinkUnifRgCO" ))
+				UnifiedPar[4][1]=checked
+				IR3S_SetRGCOAsNeeded()
+				IR3S_AutoRecalculateModelData(0)				
+			endif
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -414,11 +745,6 @@ Function IR3S_MainPanelCheckProc(cba) : CheckBoxControl
 			endif
 			if(StringMatch(cba.ctrlName, "RecalculateAutomatically" ))
 				IR3S_AutoRecalculateModelData(0)
-			endif
-			if(StringMatch(cba.ctrlName, "LinkUnifRgCO" ))
-				NVAR UnifRgCO = root:Packages:Irena:SysSpecModels:UnifRgCO
-				IR3S_SetRGCOAsNeeded()
-				IR3S_AutoRecalculateModelData(0)				
 			endif
 			if(StringMatch(cba.ctrlName, "HideTagsAlways" ))
 				IR3S_AttachTags(1)
@@ -473,15 +799,21 @@ Function IR3S_ButtonProc(ba) : ButtonControl
 				IR3S_SaveResultsToFolder(0)
 			endif
 
-
+			string ParamName
 			if(stringmatch(ba.ctrlName,"ReverseFit"))
 				Wave/Z BackupFitValues = root:Packages:Irena:SysSpecModels:BackupFitValues
 				Wave/Z/T CoefNames = root:Packages:Irena:SysSpecModels:CoefNames
 				variable i
 				if(WaveExists(BackupFitValues)&&WaveExists(CoefNames))
-					For(i=0;i<(numpnts(CoefNames));i+=1)
-						NVAR RestoreValue=$("root:Packages:Irena:SysSpecModels:"+CoefNames[i])
-						RestoreValue=BackupFitValues[i]
+					for (i=0;i<numpnts(CoefNames);i+=1)
+					ParamName=StringFromList(0,CoefNames[i],";")
+					if(StringMatch(ParamName, "SASBackground" ))
+						NVAR SASBackground = root:Packages:Irena:SysSpecModels:SASBackground
+						SASBackground = BackupFitValues[i]
+					else
+						Wave TempParam=$("root:Packages:Irena:SysSpecModels:"+ParamName)
+						TempParam[str2num(StringFromList(1,CoefNames[i],";"))][0]=BackupFitValues[i]	
+					endif
 					endfor
 				endif
 				IR3S_AutoRecalculateModelData(1)
@@ -575,6 +907,7 @@ Function IR3S_SetVarProc(sva) : SetVariableControl
 			NVAR DataQEnd=root:Packages:Irena:SysSpecModels:DataQEnd
 			NVAR DataQEndPoint = root:Packages:Irena:SysSpecModels:DataQEndPoint
 			NVAR DataQstartPoint = root:Packages:Irena:SysSpecModels:DataQstartPoint
+			variable Indx
 			
 			if(stringmatch(sva.ctrlName,"DataQEnd"))
 				WAVE OriginalDataQWave = root:Packages:Irena:SysSpecModels:OriginalDataQWave
@@ -604,13 +937,17 @@ Function IR3S_SetVarProc(sva) : SetVariableControl
 				// 1 	change step t0 fraction of value
 				// 2 	change limits for the variable... 
 				// 3	recalculate 
-				SetVariable $(sva.ctrlName) win=IR3S_SysSpecModelsPanel,limits={0,inf,IR3SSetVariableStepRatio*sva.dval} 
+				if(StringMatch(sva.vName, "TSPar[2]" ))
+					SetVariable $(sva.ctrlName) win=IR3S_SysSpecModelsPanel,limits={-inf ,inf,abs(IR3SSetVariableStepRatio*sva.dval)} 
+				else
+					SetVariable $(sva.ctrlName) win=IR3S_SysSpecModelsPanel,limits={0 ,inf,abs(IR3SSetVariableStepRatio*sva.dval)} 
+				endif
 				// sva.vName contains name of variable
-				NVAR/Z LowLimVal = $("root:Packages:Irena:SysSpecModels:"+sva.vName+"LL")
-				NVAR/Z HighLimVal = $("root:Packages:Irena:SysSpecModels:"+sva.vName+"HL")
-				if(NVAR_Exists(LowLimVal) && NVAR_Exists(HighLimVal))
-					LowLimVal = sva.dval * IR3SSetVariableLowLimRatio
-					HighLimVal = sva.dval * IR3SSetVariableHighLimRatio
+				Wave/Z CntrlWv=sva.svwave
+				Indx = str2num(stringFromList(1,sva.vName,"["))			//Wname[0]
+				if(WaveExists(CntrlWv))
+					CntrlWv[Indx][2] = sva.dval * IR3SSetVariableLowLimRatio
+					CntrlWv[Indx][3] = sva.dval * IR3SSetVariableHighLimRatio
 				endif
 				IR3S_AutoRecalculateModelData(0)
 			endif
@@ -623,11 +960,11 @@ Function IR3S_SetVarProc(sva) : SetVariableControl
 			endif
 			if(stringmatch(sva.ctrlName,"UnifG") ||stringmatch(sva.ctrlName,"UnifRg")||stringmatch(sva.ctrlName,"UnifPwrlawB")||stringmatch(sva.ctrlName,"UnifPwrlawP")||stringmatch(sva.ctrlName,"UnifRgCO")||stringmatch(sva.ctrlName,"SASBackground") )
 				SetVariable $(sva.ctrlName) win=IR3S_SysSpecModelsPanel,limits={0,inf,IR3SSetVariableStepRatio*sva.dval} 
-				NVAR/Z LowLimVal = $("root:Packages:Irena:SysSpecModels:"+sva.vName+"LL")
-				NVAR/Z HighLimVal = $("root:Packages:Irena:SysSpecModels:"+sva.vName+"HL")
-				if(NVAR_Exists(LowLimVal) && NVAR_Exists(HighLimVal))
-					LowLimVal = sva.dval * IR3SSetVariableLowLimRatio
-					HighLimVal = sva.dval * IR3SSetVariableHighLimRatio
+				Wave/Z CntrlWv=sva.svwave
+				Indx = str2num(stringFromList(1,sva.vName,"["))			//Wname[0]
+				if(WaveExists(CntrlWv))
+					CntrlWv[Indx][2] = sva.dval * IR3SSetVariableLowLimRatio
+					CntrlWv[Indx][3] = sva.dval * IR3SSetVariableHighLimRatio
 				endif
 				IR3S_AutoRecalculateModelData(0)
 			endif
@@ -721,7 +1058,7 @@ Function IR3S_CopyAndAppendData(FolderNameStr)
 			Duplicate/O SourceErrorWv, OriginalDataErrorWave
 		else
 			Duplicate/O SourceIntWv, OriginalDataErrorWave
-			OriginalDataErrorWave = 0
+			OriginalDataErrorWave = 0.02*SourceIntWv		//set to 2% error. Fails with errors=0
 		endif
 		if(WaveExists(SourcedQWv))
 			Duplicate/O SourcedQWv, OriginalDatadQWave
@@ -738,34 +1075,22 @@ Function IR3S_CopyAndAppendData(FolderNameStr)
 		else
 			UseSlitSmearedData=0
 		endif
-		IR3S_RecoverParameters()
+		//get wavelength, if present in In tensity wave note
+		variable wavelength
+		wavelength = numberByKey("Wavelength", note(OriginalDataIntWave), "=",";")
+		if(numtype(wavelength)==0)
+			if(wavelength>0)
+				Wave DBPar = root:Packages:Irena:SysSpecModels:DBPar
+				//DBParNames = {"Prefactor","CorrLength","Eta","Wavelength"}
+				DBPar[3][0]=wavelength
+			endif
+		endif
+		
+		//IR3S_RecoverParameters()	TBA - needs to be fixed for waves
 		IR3S_CreateSysSpecModelsGraphs()
-		//clear obsolete data:
-		//		Wave/Z NormRes1=root:Packages:Irena:SimpleFits:NormalizedResidualLinLin
-		//		Wave/Z NormRes2=root:Packages:Irena:SimpleFits:NormalizedResidualLogLog
-		//		if(WaveExists(NormRes1))
-		//			NormRes1=0
-		//		endif
-		//		if(WaveExists(NormRes2))
-		//			NormRes2=0
-		//		endif
-		//		//done cleaning... 
-		//		DoWIndow IR3S_LogLogDataDisplay
-		//		if(V_Flag)
-		//			RemoveFromGraph /W=IR3J_LogLogDataDisplay /Z NormalizedResidualLogLog
-		//			DoWIndow/F IR3J_LogLogDataDisplay
-		//		endif
-		//		DoWIndow IR3J_LinDataDisplay
-		//		if(V_Flag)
-		//			RemoveFromGraph /W=IR3J_LinDataDisplay /Z NormalizedResidualLinLin
-		//			DoWIndow/F IR3J_LinDataDisplay
-		//		endif
 		pauseUpdate
 		IR3S_AppendDataToGraphLogLog()
 		IR3S_AutoRecalculateModelData(0)
-		//		//now this deals with linearized data, if needed...
-		//		IR3J_CreateLinearizedData()
-		//		IR3J_AppendDataToGraphModel()
 		DoUpdate
 		print "Added Data from folder : "+DataFolderName
 	SetDataFolder oldDf
@@ -940,37 +1265,93 @@ static Function IR3S_InitSysSpecModels()
 	ListOfVariablesBG="SASBackground;FitSASBackground;SASBackgroundLL;SASBackgroundHL;SASBackgroundError;"
 
 	//Unified level
-	ListOfVariablesUF="UseUnified;UnifRgCO;LinkUnifRgCO;"
-	ListOfVariablesUF+="UnifPwrlawP;FitUnifPwrlawP;UnifPwrlawPLL;UnifPwrlawPHL;UnifPwrlawPError;"
-	ListOfVariablesUF+="UnifPwrlawB;FitUnifPwrlawB;UnifPwrlawBLL;UnifPwrlawBHL;UnifPwrlawBError;"
-	ListOfVariablesUF+="UnifRg;FitUnifRg;UnifRgLL;UnifRgHL;UnifRgError;"
-	ListOfVariablesUF+="UnifG;FitUnifG;UnifGLL;UnifGHL;UnifGError;"
+	ListOfVariablesUF="UseUnified;"
+	//	ListOfVariablesUF+="UnifPwrlawP;FitUnifPwrlawP;UnifPwrlawPLL;UnifPwrlawPHL;UnifPwrlawPError;"
+	//	ListOfVariablesUF+="UnifPwrlawB;FitUnifPwrlawB;UnifPwrlawBLL;UnifPwrlawBHL;UnifPwrlawBError;"
+	//	ListOfVariablesUF+="UnifRg;FitUnifRg;UnifRgLL;UnifRgHL;UnifRgError;"
+	//	ListOfVariablesUF+="UnifG;FitUnifG;UnifGLL;UnifGHL;UnifGError;"
 	//Debye-Bueche parameters	
-	ListOfVariablesDB="DBPrefactor;FitDBPrefactor;DBPrefactorHL;DBPrefactorLL;"
-	ListOfVariablesDB+="DBcorrL;FitDBcorrL;DBcorrLLL;DBcorrLHL;DBcorrLError;"
-	ListOfVariablesDB+="DBEta;FitDBEta;DBEtaLL;DBEtaHL;DBEtaError;"
-	ListOfVariablesDB+="DBWavelength;"
-	ListOfVariablesDB+=""
+	//ListOfVariablesDB="DBPrefactor;FitDBPrefactor;DBPrefactorHL;DBPrefactorLL;"
+	//ListOfVariablesDB+="DBcorrL;FitDBcorrL;DBcorrLLL;DBcorrLHL;DBcorrLError;"
+	///ListOfVariablesDB+="DBEta;FitDBEta;DBEtaLL;DBEtaHL;DBEtaError;"
+	//ListOfVariablesDB+="DBWavelength;"
+	ListOfVariablesDB=""
 	//Teubner-Strey Model
-	ListOfVariablesTS="TSPrefactor;FitTSPrefactor;TSPrefactorHL;TSPrefactorLL;TSPrefactorError;"
-	ListOfVariablesTS+="TSAvalue;FitTSAvalue;TSAvalueHL;TSAvalueLL;TSAvalueError;"
-	ListOfVariablesTS+="TSC1Value;FitTSC1Value;TSC1ValueHL;TSC1ValueLL;TSC1ValueError;"
-	ListOfVariablesTS+="TSC2Value;FitTSC2Value;TSC2ValueHL;TSC2ValueLL;TSC2ValueError;"
-	ListOfVariablesTS+="TSCorrelationLength;TSCorrLengthError;TSRepeatDistance;TSRepDistError;"
+	//ListOfVariablesTS="TSPrefactor;FitTSPrefactor;TSPrefactorHL;TSPrefactorLL;TSPrefactorError;"
+	//ListOfVariablesTS+="TSAvalue;FitTSAvalue;TSAvalueHL;TSAvalueLL;TSAvalueError;"
+	//ListOfVariablesTS+="TSC1Value;FitTSC1Value;TSC1ValueHL;TSC1ValueLL;TSC1ValueError;"
+	//ListOfVariablesTS+="TSC2Value;FitTSC2Value;TSC2ValueHL;TSC2ValueLL;TSC2ValueError;"
+	//ListOfVariablesTS+="TSCorrelationLength;TSCorrLengthError;TSRepeatDistance;TSRepDistError;"
 	//Benedetti-Ciccariello Coated Porous media Porods oscillations
-	ListOfVariablesBC ="BCVoidScatLengthDensity;BCSolidScatLengthDensity;"
-	ListOfVariablesBC+="BCLayerScatLengthDens;BCLayerScatLengthDensHL;BCLayerScatLengthDensLL;FitBCLayerScatLengthDens;BCLayerScatLengthDensError;"
-	ListOfVariablesBC+="BCCoatingsThickness;BCCoatingsThicknessHL;BCCoatingsThicknessLL;FitBCCoatingsThickness;BCCoatingsThicknessError;"
-	ListOfVariablesBC+="BCPorodsSpecSurfArea;FitBCPorodsSpecSurfArea;BCPorodsSpecSurfAreaHL;BCPorodsSpecSurfAreaLL;BCPorodsSpecSurfAreaError;"
+	ListOfVariablesBC = ""//"BCVoidScatLengthDensity;BCSolidScatLengthDensity;"
+	//ListOfVariablesBC+="BCLayerScatLengthDens;BCLayerScatLengthDensHL;BCLayerScatLengthDensLL;FitBCLayerScatLengthDens;BCLayerScatLengthDensError;"
+	//ListOfVariablesBC+="BCCoatingsThickness;BCCoatingsThicknessHL;BCCoatingsThicknessLL;FitBCCoatingsThickness;BCCoatingsThicknessError;"
+	//ListOfVariablesBC+="BCPorodsSpecSurfArea;FitBCPorodsSpecSurfArea;BCPorodsSpecSurfAreaHL;BCPorodsSpecSurfAreaLL;BCPorodsSpecSurfAreaError;"
 	
-	SVAR ListOfVariablesBC = root:Packages:Irena:SysSpecModels:ListOfVariablesBC
-	SVAR ListOfVariablesTS = root:Packages:Irena:SysSpecModels:ListOfVariablesTS
-	SVAR ListOfVariablesDB = root:Packages:Irena:SysSpecModels:ListOfVariablesDB
-	SVAR ListOfVariablesUF = root:Packages:Irena:SysSpecModels:ListOfVariablesUF
-	SVAR ListOfVariablesBG = root:Packages:Irena:SysSpecModels:ListOfVariablesBG
-	SVAR ListOfVariablesMain = root:Packages:Irena:SysSpecModels:ListOfVariablesMain
+	//	SVAR ListOfVariablesBC = root:Packages:Irena:SysSpecModels:ListOfVariablesBC
+	//	SVAR ListOfVariablesTS = root:Packages:Irena:SysSpecModels:ListOfVariablesTS
+	//	SVAR ListOfVariablesDB = root:Packages:Irena:SysSpecModels:ListOfVariablesDB
+	//	SVAR ListOfVariablesUF = root:Packages:Irena:SysSpecModels:ListOfVariablesUF
+	//	SVAR ListOfVariablesBG = root:Packages:Irena:SysSpecModels:ListOfVariablesBG
+	//	SVAR ListOfVariablesMain = root:Packages:Irena:SysSpecModels:ListOfVariablesMain
 	
 	ListOfVariables = ListOfVariablesMain+ListOfVariablesUF+ ListOfVariablesDB+ ListOfVariablesTS+ ListOfVariablesBC+ListOfVariablesBG
+	// new, use waves for parameters. Let's see if it is better
+	make/O/T/N=(5) WaveParamsValues		//this is names for columns 
+	WaveParamsValues={"Value","Fit?","LowLimit","HighLimit","FitError"}
+	//Unified fit, 4 paramegers, G, Rg, P, B + 1 not fitted parameter, UnifRgCO, LinkUnifRgCO is [4][1], aka Fit
+	make/O/N=(5,5) UnifiedPar			//Parameters
+	make/O/T/N=(5) UnifiedParNames		//Names for Unified fit parameters. 
+	wave/T UnifiedParNames
+	UnifiedParNames = {"G","Rg","B","P","UnifRgCO"}
+
+	//Teubner-Strey, 4 paramegers + 2 calculated parameters (never fitted)
+	make/O/N=(6,5) TSPar			//
+	make/O/T/N=(6) TSParNames		// 
+	wave/T TSParNames
+	TSParNames = {"Prefactor","A","C1","C2","CorrLength","RepeatDistance"}
+
+	//Debye-Bueche, 3 paramegers + 1 calculated parameters (never fitted)
+	make/O/N=(4,5) DBPar			//
+	make/O/T/N=(4) DBParNames		// 
+	wave/T DBParNames
+	DBParNames = {"Prefactor","CorrLength","Eta","Wavelength"}
+
+	//Benedetti-Ciccariello 3 paramegers + 2 calculated parameters (never fitted)
+	make/O/N=(5,5) BCPar			//
+	make/O/T/N=(5) BCParNames		// 
+	wave/T BCParNames
+	BCParNames = {"PorodsSpecSurfArea","CoatingsThickness","LayerScatLengthDens","SolidScatLengthDensity","VoidScatLengthDensity"}
+
+
+	// Hermans model. https://doi.org/10.1016/j.polymer.2021.124281
+	//Hermans model for crystalline polymers, https://doi.org/10.1016/j.polymer.2021.124281
+	// Hermans has five parameters [0] is amorphous thickness (or lamellae thickness); [1] is sigma for a Gaussian distribution of amorphous
+	//[2] is the lamellar thickness; [3] is sigma; [4] is the Bval. Background is generic parameter for all. 
+	make/O/N=(5,5) HermansPar			//Hermans 4 parameters
+	make/O/T/N=(5) HermansParNames		//Names for Hermans 4 parameters. 
+	HermansParNames = {"AmorphousThickness","SigmaAmorphous","LamellaeThickness","LamellaeSigma","Bvalue"}
+
+	// Hybrid Hermans model. https://doi.org/10.1016/j.polymer.2021.124281
+	//wHybridHermans has has 7 parameters + LinkRGCO to UF + Unified fit we already have.  
+	//[0] is amorphous thickness (or lamellae thickness); [1] is sigma for a Gaussian distribution of amorphous
+	//[2] is the lamellar thickness; [3] is sigma; [4] is the Bval
+	//[5] is G2; [6] is Rg2  // - these need to use Unfied fit which we already have...  [8] is G3; [9] is Rg3; [10] is B3; [11] is P3
+	make/O/N=(7,5) HybHermansPar			//Hermans 4 parameters
+	make/O/T/N=(7) HybHermansParNames		//Names for Hermans 4 parameters. 
+	HybHermansParNames = {"AmorphousThickness","SigmaAmorphous","LamellaeThickness","LamellaeSigma","Bvalue","G2","Rg2"}
+
+	// Unified Born Green model. https://doi.org/10.1016/j.polymer.2021.124281, Formula 8
+	//Fit parameters Rg1,B1,pack,mesh,del,kI
+	//UBGParNames = {"Rg1","B1","pack","CorDist","StackIrreg","kI"}
+	make/O/N=(6,5) UBGPar			//Hermans 4 parameters
+	make/O/T/N=(6) UBGParNames		//Names for Hermans 4 parameters. 
+	UBGParNames = {"Rg1","B1","pack","CorDist","StackIrreg","kI"}
+	//mesh = CorrDist [A]
+	//kI= interfacial broadening parameter (𝑘I) 
+	//del = staking irregularity factor (𝛿), typ ~ 0
+
+	
 	
 	//and here we create them
 	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
@@ -1001,7 +1382,7 @@ static Function IR3S_InitSysSpecModels()
 		endif
 	endfor		
 	SVAR ListOfModels
-	ListOfModels="---;Debye-Bueche;Treubner-Strey;Benedetti-Ciccariello;"
+	ListOfModels="---;Debye-Bueche;Treubner-Strey;Benedetti-Ciccariello;Hermans;Hybrid Hermans;Unified Born Green;"
 	SVAR ModelSelected
 	if(strlen(ModelSelected)<1)
 		ModelSelected="---"
@@ -1029,131 +1410,150 @@ static Function IR3S_SetInitialValues()
 	NVAR UseSlitSmearedData=root:Packages:Irena:SysSpecModels:UseSlitSmearedData
 	NVAR SlitLength=root:Packages:Irena:SysSpecModels:SlitLength
 
-	NVAR DBPrefactor=root:Packages:Irena:SysSpecModels:DBPrefactor
-	NVAR DBPrefactorLL=root:Packages:Irena:SysSpecModels:DBPrefactorLL
-	NVAR DBPrefactorHL=root:Packages:Irena:SysSpecModels:DBPrefactorHL
+	//Unified
+	Wave UnifiedPar = root:Packages:Irena:SysSpecModels:UnifiedPar
+	//	UnifiedNames = {"G","Rg","B","P", "UnifRgCO","LinkUnifRgCO"}
+	if(UnifiedPar[0][0]<1)		//not initialized
+		UnifiedPar[][1] = 0		//Fit?
+		if(UnifiedPar[1][0]<=0)	//Rg
+			UnifiedPar[1][0]=1e10
+			UnifiedPar[0][0] = 0
+			UnifiedPar[1][2]=1
+			UnifiedPar[1][3]=1.1e10
+		endif
+		if(UnifiedPar[0][0]<0)	//G
+			UnifiedPar[0][0]=0
+			UnifiedPar[0][2]=1e-10
+			UnifiedPar[0][3]=1e10
+		endif
+		if(UnifiedPar[0][0]==0)		//G
+			UnifiedPar[1][0]=1e10
+		endif
+		if(UnifiedPar[3][0]==0)		//P
+			UnifiedPar[3][0]=3
+			UnifiedPar[3][2]=1
+			UnifiedPar[3][3]=4
+		endif
+		if(UnifiedPar[2][0]==0)		//B
+			UnifiedPar[2][0]=1
+			UnifiedPar[2][2]=1e-10
+			UnifiedPar[2][3]=1e10
+		endif
+		UnifiedPar[][4] = 0		//reset errors
+	endif
 
-	NVAR DBEta=root:Packages:Irena:SysSpecModels:DBEta
-	NVAR DBEtaLL=root:Packages:Irena:SysSpecModels:DBEtaLL
-	NVAR DBEtaHL=root:Packages:Irena:SysSpecModels:DBEtaHL
-
-	NVAR DBcorrL=root:Packages:Irena:SysSpecModels:DBcorrL
-	NVAR DBcorrLLL=root:Packages:Irena:SysSpecModels:DBcorrLLL
-	NVAR DBcorrLHL=root:Packages:Irena:SysSpecModels:DBcorrLHL
-
-	NVAR UnifPwrlawP=root:Packages:Irena:SysSpecModels:UnifPwrlawP
-	NVAR UnifPwrlawPLL=root:Packages:Irena:SysSpecModels:UnifPwrlawPLL
-	NVAR UnifPwrlawPHL=root:Packages:Irena:SysSpecModels:UnifPwrlawPHL
-
-	NVAR UnifPwrlawB=root:Packages:Irena:SysSpecModels:UnifPwrlawB
-	NVAR UnifPwrlawBLL=root:Packages:Irena:SysSpecModels:UnifPwrlawBLL
-	NVAR UnifPwrlawBHL=root:Packages:Irena:SysSpecModels:UnifPwrlawBHL
-	//Rg
-	NVAR UnifRg=root:Packages:Irena:SysSpecModels:UnifRg
-	NVAR UnifRgLL=root:Packages:Irena:SysSpecModels:UnifRgLL
-	NVAR UnifRgHL=root:Packages:Irena:SysSpecModels:UnifRgHL
-	//RGPref
-	NVAR UnifG=root:Packages:Irena:SysSpecModels:UnifG
-	NVAR UnifGLL=root:Packages:Irena:SysSpecModels:UnifGLL
-	NVAR UnifGHL=root:Packages:Irena:SysSpecModels:UnifGHL
-	//TSPref
-	NVAR TSPrefactor=root:Packages:Irena:SysSpecModels:TSPrefactor
-	NVAR TSPrefactorLL=root:Packages:Irena:SysSpecModels:TSPrefactorLL
-	NVAR TSPrefactorHL=root:Packages:Irena:SysSpecModels:TSPrefactorHL
-	//TSA
-	NVAR TSAvalue=root:Packages:Irena:SysSpecModels:TSAvalue
-	NVAR TSAvalueLL=root:Packages:Irena:SysSpecModels:TSAvalueLL
-	NVAR TSAvalueHL=root:Packages:Irena:SysSpecModels:TSAvalueHL
-	//TSC1
-	NVAR TSC1Value=root:Packages:Irena:SysSpecModels:TSC1Value
-	NVAR TSC1ValueLL=root:Packages:Irena:SysSpecModels:TSC1ValueLL
-	NVAR TSC1ValueHL=root:Packages:Irena:SysSpecModels:TSC1ValueHL
-	//TSC2
-	NVAR TSC2Value=root:Packages:Irena:SysSpecModels:TSC2Value
-	NVAR TSC2ValueLL=root:Packages:Irena:SysSpecModels:TSC2ValueLL
-	NVAR TSC2ValueHL=root:Packages:Irena:SysSpecModels:TSC2ValueHL
-	//Ciccariellos tool
-	NVAR BCPorodsSpecSurfArea=root:Packages:Irena:SysSpecModels:BCPorodsSpecSurfArea
-	NVAR BCSolidScatLengthDensity=root:Packages:Irena:SysSpecModels:BCSolidScatLengthDensity
-	NVAR BCVoidScatLengthDensity=root:Packages:Irena:SysSpecModels:BCVoidScatLengthDensity
-	NVAR BCLayerScatLengthDens=root:Packages:Irena:SysSpecModels:BCLayerScatLengthDens
-//	NVAR BCCoatingsThickness=root:Packages:Irena:SysSpecModels:BCCoatingsThickness
+	//Treubner-Strey
+	Wave TSPar = root:Packages:Irena:SysSpecModels:TSPar
+	//TSParNames = {"Prefactor","A","C1","C2","CorrLength","RepeatDistance"}
+	if(TSPar[0][0]<=0)		//TSPrefactor
+		TSPar[0][0]=1
+		TSPar[0][2]=1e-10
+		TSPar[0][3]=1e10
+	endif
+	if(TSPar[1][0]==0)			//TSAvalue
+		TSPar[1][0]=0.1
+		TSPar[1][2]=-1e10
+		TSPar[1][3]=1e10
+	endif
+	if(TSPar[2][0]==0)		//TSC1Value
+		TSPar[2][0]=-30
+		TSPar[2][2]=-1e10
+		TSPar[2][3]=1e10
+	endif
+	if(TSPar[3][0]==0)		//TSC2Value
+		TSPar[3][0]=5000
+		TSPar[3][2]=-1e10
+		TSPar[3][3]=1e10
+	endif
+	TSPar[][4] = 0
 	
-	NVAR DBWavelength=root:Packages:Irena:SysSpecModels:DBWavelength
+	//Debye-Bueche
+	Wave DBPar = root:Packages:Irena:SysSpecModels:DBPar
+	//DBParNames = {"Prefactor","CorrLength","Eta","Wavelength"}
+	if(DBPar[0][0]==0)	//DBPrefactor
+		DBPar[0][0] = 1
+		DBPar[0][2] = 1e-10
+		DBPar[0][3] = 1e10
+	endif
+	if(DBPar[2][0]==0)	//DBEta
+		DBPar[2][0]=1
+		DBPar[2][2]=1e-6
+		DBPar[2][3]=1e6
+	endif
+	if(DBPar[1][0]==0)		//DBcorrL
+		DBPar[1][0]=200
+		DBPar[1][2]=2
+		DBPar[1][3]=1e6
+	endif
+	if(DBPar[3][0]==0)		//DBWavelength
+		DBPar[3][0]=1
+	endif
+	//NVAR DBWavelength=root:Packages:Irena:SysSpecModels:DBWavelength
+	DBPar[][4] = 0
+		
+	//Hermans, https://doi.org/10.1016/j.polymer.2021.124281, table 2
+	Wave HermansPar = root:Packages:Irena:SysSpecModels:HermansPar
+	if(HermansPar[0][0]<1)		//not initialized
+		HermansPar[0][0] = 47	//amorph thick
+		HermansPar[1][0] = 23	//amorph sigma
+		HermansPar[2][0] = 146	//lamel thick
+		HermansPar[3][0] = 58	//Lamel sigma
+		HermansPar[4][0] = 0.0001	//Bval
+		HermansPar[][1] = 0		//Fit?
+		HermansPar[][2] = 0.05*HermansPar[p][0]	//low limit
+		HermansPar[][3] =  20*HermansPar[p][0]	//high limit
+	endif
+	HermansPar[][4] = 0		//reset errors
 
+	//Hybrid Hermans, https://doi.org/10.1016/j.polymer.2021.124281, table 2
+	Wave HybHermansPar = root:Packages:Irena:SysSpecModels:HybHermansPar
+	if(HybHermansPar[0][0]<1)		//not initialized
+		HybHermansPar[0][0] = 47	//amorph thick
+		HybHermansPar[1][0] = 23	//amorph sigma
+		HybHermansPar[2][0] = 146	//lamel thick
+		HybHermansPar[3][0] = 65	//Lamel sigma
+		HybHermansPar[4][0] = 0.0001		//Bval
+		HybHermansPar[5][0] = 20		//G2
+		HybHermansPar[6][0] = 120	//Rg2
+		HybHermansPar[][2] = 0.05*HybHermansPar[p][0]		//low limit
+		HybHermansPar[][3] = 20*HybHermansPar[p][0]	//high limit
+	endif
+	HybHermansPar[][4] = 0		//reset errors
+
+
+	// Unified Born Green model. https://doi.org/10.1016/j.polymer.2021.124281, table 3
+	Wave UBGPar 	= 	root:Packages:Irena:SysSpecModels:UBGPar
+	//UBGParNames = {"Rg1","B1","pack","CorDist","StackIrreg","kI"}
+	if(UBGPar[0][0]<1)		//not initialized
+		UBGPar[0][0] = 100		//Rg1
+		UBGPar[1][0] = 0.1		//B1
+		UBGPar[2][0] = 168		//pack
+		UBGPar[3][0] = 242		//CorrDist
+		UBGPar[4][0] = 0.17	//del
+		UBGPar[5][0] = 0.02	//kI
+		UBGPar[][1] = 0		//unFit all. 
+		UBGPar[][2] = 0.05*UBGPar[p][0]		//low limit
+		UBGPar[][3] = 20*UBGPar[p][0]	//high limit
+	endif
+		
+	Wave BCPar = root:Packages:Irena:SysSpecModels:BCPar
+	//BCParNames = {"PorodsSpecSurfArea", "CoatingsThickness","LayerScatLengthDens","SolidScatLengthDensity","VoidScatLengthDensity"}
+	if(BCPar[0][0]<=0)			//BCPorodsSpecSurfArea
+		BCPar[0][0] =1e4
+	endif
+	if(BCPar[2][0]<=0)
+		BCPar[2][0] = 19.32			//this is value for silica 
+	endif
+	BCPar[][4] = 0
+	
 	NVAR DelayBetweenProcessing=root:Packages:Irena:SysSpecModels:DelayBetweenProcessing
 	if(DelayBetweenProcessing<0)
 		DelayBetweenProcessing=0
 	endif
-	if(UnifRg<=0)
-		UnifRg=1e10
-		UnifG = 0
-		UnifRgLL=1
-		UnifRgHL=1.1e10
-	endif
-	if(UnifG<0)
-		UnifG=0
-		UnifGLL=1e-10
-		UnifGHL=1e10
-	endif
-	if(UnifG==0)
-		UnifRg=1e10
-	endif
-
-	if(TSPrefactor<=0)
-		TSPrefactor=1
-		TSPrefactorLL=1e-10
-		TSPrefactorHL=1e10
-	endif
-
-	if(TSAvalue==0)
-		TSAvalue=0.1
-		TSAvalueLL=-1e10
-		TSAvalueHL=1e10
-	endif
-	if(TSC1Value==0)
-		TSC1Value=-30
-		TSC1ValueLL=-1e10
-		TSC1ValueHL=1e10
-	endif
-	if(TSC2Value==0)
-		TSC2Value=5000
-		TSC2ValueLL=-1e10
-		TSC2ValueHL=1e10
-	endif
-
 
 	//CurrentTab=0
 	if(SlitLength==0)
 		SlitLength = 1 
-	endif
-	if(DBPrefactor==0)
-		DBPrefactor = 1
-		DBPrefactorLL = 1e-10
-		DBPrefactorHL = 1e10
-	endif
-	if(DBEta==0)
-		DBEta=1
-		DBEtaLL=1e-6
-		DBEtaHL=1e6
-	endif
-	if(DBcorrL==0)
-		DBcorrL=200
-		DBcorrLLL=2
-		DBcorrLHL=1e6
-	endif
-	if(UnifPwrlawP==0)
-		UnifPwrlawP=3
-		UnifPwrlawPLL=1
-		UnifPwrlawPHL=4
-	endif
-	if(UnifPwrlawB==0)
-		UnifPwrlawB=1
-		UnifPwrlawBLL=1e-10
-		UnifPwrlawBHL=1e10
-	endif
-	if(DBWavelength==0)
-		DBWavelength=1
 	endif
 	//if (UseQRSData)
 	//	UseIndra2data=0
@@ -1162,14 +1562,6 @@ static Function IR3S_SetInitialValues()
 		FitSASBackground=1
 	endif
 	
-	
-	if(BCPorodsSpecSurfArea<=0)
-		BCPorodsSpecSurfArea=1e4
-	endif
-	if(BCSolidScatLengthDensity<=0)
-		BCSolidScatLengthDensity=19.32			//this is value for silica 
-	endif
-
 	UpdateAutomatically=0
 
 	setDataFolder oldDF
@@ -1200,148 +1592,195 @@ static Function IR3S_FitSysSpecificModels()
 	NVAR SASBackground = root:Packages:Irena:SysSpecModels:SASBackground
 	NVAR UseUnified = root:Packages:Irena:SysSpecModels:UseUnified
 	SVAR ModelSelected = root:Packages:Irena:SysSpecModels:ModelSelected
-	strswitch(ModelSelected)	// string switch
-		case "Debye-Bueche":	// execute if case matches expression
-			ListOfVariablesToCheck="DBEta;DBcorrL;"			//these cannot be fitted anyway: DBPrefactor (=1, not needed...),DBWavelength
-			break
-		case "Treubner-Strey":	// execute if case matches expression
-			ListOfVariablesToCheck="TSPrefactor;TSAvalue;TSC1Value;TSC2Value;"
-			break
-		case "Benedetti-Ciccariello":	// execute if case matches expression
-			ListOfVariablesToCheck="BCPorodsSpecSurfArea;BCLayerScatLengthDens;BCCoatingsThickness;"
-			break
-	endswitch
-	if(UseUnified)
-		ListOfVariablesToCheck+="UnifPwrlawP;UnifPwrlawB;UnifRg;UnifG;"
-	endif
-	
+
+
+
+	Wave UnifiedPar = root:Packages:Irena:SysSpecModels:UnifiedPar
+	//UnifiedParNames = {"G","Rg","B","P","UnifRgCO"}, "LinkUnifRgCO"= [4][1] aka Fit
+	Wave DBPar = root:Packages:Irena:SysSpecModels:DBPar
+	//DBParNames = {"Prefactor","CorrLength","Eta","Wavelength"}
+	Wave TSPar = root:Packages:Irena:SysSpecModels:TSPar
+	//TSParNames = {"Prefactor","A","C1","C2","CorrLength","RepeatDistance"}
+	Wave BCPar = root:Packages:Irena:SysSpecModels:BCPar
+	//BCParNames = {"PorodsSpecSurfArea", "CoatingsThickness","LayerScatLengthDens","SolidScatLengthDensity","VoidScatLengthDensity"}
+	Wave HermansPar 	= 	root:Packages:Irena:SysSpecModels:HermansPar
+	//HermansParNames = {"AmorphousThickness","SigmaAmorphous","LamellaeThickness","LamellaeSigma","Bvalue"}
+	Wave HybHermansPar 	= 	root:Packages:Irena:SysSpecModels:HybHermansPar
+	//HybHermansParNames = {"AmorphousThickness","SigmaAmorphous","LamellaeThickness","LamellaeSigma","Bvalue","G2","Rg2"}
+	Wave UBGPar 	= 	root:Packages:Irena:SysSpecModels:UBGPar
+	//UBGParNames = {"Rg1","B1","pack","CorrDist","StackIrreg","kI"}
+	//	WaveParamsValues={"Value","Fit?","LowLimit","HighLimit","FitError"}
+
+	variable i
+	//reset errrors
+	UnifiedPar[][4]=0
+	DBPar[][4]=0
+	TSPar[][4]=0
+	BCPar[][4]=0
+	HermansPar[][4]=0
+	HybHermansPar[][4]=0
+	UBGPar[][4]=0
+
 	if (FitSASBackground)		//are we fitting background?
 		curLen = (numpnts(W_coef))
 		Redimension /N=((curLen+1),2) Gen_Constraints
 		Redimension /N=(curLen+1) W_coef, CoefNames, BackupFitValues
 		W_Coef[curLen]		=	SASBackground
 		BackupFitValues[curLen]=	SASBackground
-		CoefNames[curLen]	=	"SASBackground"
-		Gen_Constraints[curLen][0] = SASBackground/10
-		Gen_Constraints[curLen][1] = SASBackground*10
+		CoefNames[curLen]	=	"SASBackground;"
+		//Gen_Constraints[curLen][0] = SASBackground/10
+		//Gen_Constraints[curLen][1] = SASBackground*10
 		FullListOfVariablesToCheck+="SASBackground;"
 	endif
-	variable i
-	For(i=0;i<ItemsInList(ListOfVariablesToCheck);i+=1)
-		NVAR Fitme = $("Fit"+StringFromList(i, ListOfVariablesToCheck))
-		NVAR varMe = $(StringFromList(i, ListOfVariablesToCheck))
-		NVAR varMeLL = $(StringFromList(i, ListOfVariablesToCheck)+"LL")
-		NVAR varMeHL = $(StringFromList(i, ListOfVariablesToCheck)+"HL")
-		if (Fitme)		//are we fitting background?
-			curLen = (numpnts(W_coef))
-			Redimension /N=(curLen+1) W_coef, CoefNames, BackupFitValues
-			W_Coef[curLen]		= varMe
-			BackupFitValues[curLen]=	varMe
-			CoefNames[curLen]	=StringFromList(i, ListOfVariablesToCheck)
-			if(varMeLL<varMe && varMe>varMeHL)
-				Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
-				T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(varMeLL)}
-				T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(varMeHL)}		
-				Redimension /N=((curLen+1),2) Gen_Constraints
-				Gen_Constraints[curLen][0] = varMeLL
-				Gen_Constraints[curLen][1] = varMeHL
-			endif
-		endif
-	endfor
-	FullListOfVariablesToCheck+=ListOfVariablesToCheck
-	//	IR2H_ResetErrors()
+	strswitch(ModelSelected)	// string switch
+		case "Debye-Bueche":	// execute if case matches expression
+			For(i=0;i<4;i+=1)	//only first 4 parameters are fittable. 
+				if(DBPar[i][1]>0.5)	//fit? 
+					curLen = (numpnts(W_coef))
+					Redimension /N=(curLen+1) W_coef, CoefNames, BackupFitValues
+					W_Coef[curLen]			= DBPar[i][0]
+					BackupFitValues[curLen]	=	DBPar[i][0]
+					CoefNames[curLen]	  	=   "DBPar;"+num2str(i)+";"
+					if(DBPar[i][2]<DBPar[i][0] && DBPar[i][0]<DBPar[i][3])
+						Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
+						T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(DBPar[i][2])}
+						T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(DBPar[i][3])}		
+						//Redimension /N=((curLen+1),2) Gen_Constraints
+						//Gen_Constraints[curLen][0] = varMeLL
+						//Gen_Constraints[curLen][1] = varMeHL
+					endif
+				endif
+			endfor
+			break
+		case "Treubner-Strey":	// execute if case matches expression
+			//TSParNames = {"Prefactor","A","C1","C2","CorrLength","RepeatDistance"}
+			//ListOfVariablesToCheck="TSPrefactor;TSAvalue;TSC1Value;TSC2Value;"
+			For(i=0;i<4;i+=1)	//only first 4 parameters are fittable. 
+				if(TSPar[i][1]>0.5)	//fit? 
+					curLen = (numpnts(W_coef))
+					Redimension /N=(curLen+1) W_coef, CoefNames, BackupFitValues
+					W_Coef[curLen]			= TSPar[i][0]
+					BackupFitValues[curLen]	=	TSPar[i][0]
+					CoefNames[curLen]	  	=   "TSPar;"+num2str(i)+";"
+					if(TSPar[i][2]<TSPar[i][0] && TSPar[i][0]<TSPar[i][3])
+						Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
+						T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(TSPar[i][2])}
+						T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(TSPar[i][3])}		
+					endif
+				endif
+			endfor
+			break
+		case "Benedetti-Ciccariello":	// execute if case matches expression
+			//BCParNames = {"PorodsSpecSurfArea", "CoatingsThickness","LayerScatLengthDens","SolidScatLengthDensity","VoidScatLengthDensity"}
+			//ListOfVariablesToCheck="BCPorodsSpecSurfArea;BCLayerScatLengthDens;BCCoatingsThickness;"
+			For(i=0;i<3;i+=1)	//only first 4 parameters are fittable. 
+				if(BCPar[i][1]>0.5)	//fit? 
+					curLen = (numpnts(W_coef))
+					Redimension /N=(curLen+1) W_coef, CoefNames, BackupFitValues
+					W_Coef[curLen]			= BCPar[i][0]
+					BackupFitValues[curLen]	=	BCPar[i][0]
+					CoefNames[curLen]	  	=   "BCPar;"+num2str(i)+";"
+					if(BCPar[i][2]<BCPar[i][0] && BCPar[i][0]<BCPar[i][3])
+						Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
+						T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(BCPar[i][2])}
+						T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(BCPar[i][3])}		
+					endif
+				endif
+			endfor
+			break
+		case "Hermans":	// execute if case matches expression
+			//HermansParNames = {"AmorphousThickness","SigmaAmorphous","LamellaeThickness","LamellaeSigma","Bvalue"}
+			For(i=0;i<5;i+=1)	//only first 5 parameters are fittable. 
+				if(HermansPar[i][1]>0.5)	//fit? 
+					curLen = (numpnts(W_coef))
+					Redimension /N=(curLen+1) W_coef, CoefNames, BackupFitValues
+					W_Coef[curLen]			= HermansPar[i][0]
+					BackupFitValues[curLen]	=	HermansPar[i][0]
+					CoefNames[curLen]	  	=   "HermansPar;"+num2str(i)+";"
+					if(HermansPar[i][2]<HermansPar[i][0] && HermansPar[i][0]<HermansPar[i][3])
+						Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
+						T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(HermansPar[i][2])}
+						T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(HermansPar[i][3])}		
+					endif
+				endif
+			endfor
+			break
+		case "Hybrid Hermans":	// execute if case matches expression
+			//HybHermansParNames = {"AmorphousThickness","SigmaAmorphous","LamellaeThickness","LamellaeSigma","Bvalue","G2","Rg2"}
+			For(i=0;i<7;i+=1)	//only first 5 parameters are fittable. 
+				if(HybHermansPar[i][1]>0.5)	//fit? 
+					curLen = (numpnts(W_coef))
+					Redimension /N=(curLen+1) W_coef, CoefNames, BackupFitValues
+					W_Coef[curLen]			= HybHermansPar[i][0]
+					BackupFitValues[curLen]	=	HybHermansPar[i][0]
+					CoefNames[curLen]	  	=   "HybHermansPar;"+num2str(i)+";"
+					if(HybHermansPar[i][2]<HybHermansPar[i][0] && HybHermansPar[i][0]<HybHermansPar[i][3])
+						Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
+						T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(HybHermansPar[i][2])}
+						T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(HybHermansPar[i][3])}		
+					endif
+				endif
+			endfor
+			break
+		case "Unified Born Green":	// execute if case matches expression
+			//UBGParNames = {"Rg1","B1","pack","CorrDist","StackIrreg","kI"}
+			For(i=0;i<6;i+=1)	//only first 5 parameters are fittable. 
+				if(UBGPar[i][1]>0.5)	//fit? 
+					curLen = (numpnts(W_coef))
+					Redimension /N=(curLen+1) W_coef, CoefNames, BackupFitValues
+					W_Coef[curLen]			= UBGPar[i][0]
+					BackupFitValues[curLen]	=	UBGPar[i][0]
+					CoefNames[curLen]	  	=   "UBGPar;"+num2str(i)+";"
+					if(UBGPar[i][2]<UBGPar[i][0] && UBGPar[i][0]<UBGPar[i][3])
+						Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
+						T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(UBGPar[i][2])}
+						T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(UBGPar[i][3])}		
+					endif
+				endif
+			endfor
+			break
+	endswitch
+	if(UseUnified)
+		//ListOfVariablesToCheck+="UnifPwrlawP;UnifPwrlawB;UnifRg;UnifG;"
+			//UnifiedParNames = {"G","Rg","B","P","UnifRgCO","LinkUnifRgCO"}
+			For(i=0;i<4;i+=1)	//only first 5 parameters are fittable. 
+				if(UnifiedPar[i][1]>0.5)	//fit? 
+					curLen = (numpnts(W_coef))
+					Redimension /N=(curLen+1) W_coef, CoefNames, BackupFitValues
+					W_Coef[curLen]			= UnifiedPar[i][0]
+					BackupFitValues[curLen]	=	UnifiedPar[i][0]
+					CoefNames[curLen]	  	=   "UnifiedPar;"+num2str(i)+";"
+					if(UnifiedPar[i][2]<UnifiedPar[i][0] && UnifiedPar[i][0]<UnifiedPar[i][3])
+						Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
+						T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(UnifiedPar[i][2])}
+						T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(UnifiedPar[i][3])}		
+					endif
+				endif
+			endfor
+	endif
+	
 	For(i=0;i<itemsInList(FullListOfVariablesToCheck);i+=1)
 		NVAR ValError = $(StringFromList(i, FullListOfVariablesToCheck)+"Error")
 		ValError = 0	
 	endfor
-	
+	if(numpnts(W_Coef)<1)
+		Abort "Nothing to fit" 
+	endif
 	
 	DoWindow /F IR3S_LogLogDataDisplay
 	wave/Z OriginalDataIntWave=root:Packages:Irena:SysSpecModels:OriginalDataIntWave
-	if(!WaveExists(OriginalDataIntWave))//wave does nto exist, user probably did nto ccreate data yet.
+	if(!WaveExists(OriginalDataIntWave))//wave does not exist, user probably did not create data yet.
 		abort
 	endif
 	Wave OriginalDataQWave=root:Packages:Irena:SysSpecModels:OriginalDataQWave
 	Wave OriginalDataErrorWave=root:Packages:Irena:SysSpecModels:OriginalDataErrorWave
+	NVAR AchievedChiSquare=root:Packages:Irena:SysSpecModels:AchievedChiSquare
 	
 	Variable V_chisq
 	Duplicate/O W_Coef, E_wave, CoefficientInput
 	E_wave=W_coef/20
 	string HoldStr=""
-				//	For(i=0;i<numpnts(W_Coef);i+=1)
-				//		HoldStr+="0"
-				//	endfor
-				//
-				////	IR2H_RecordResults("before")
-				//	
-				//	if(UseGeneticOptimization)
-				//		//and now the fit...
-				//		if (strlen(csrWave(A))!=0 && strlen(csrWave(B))!=0)		//cursors in the graph
-				//			//check that cursors are actually on hte right wave...
-				//			//make sure the cursors are on the right waves..
-				//			if (cmpstr(CsrWave(A, "IR2H_LogLogPlotGels"),"IntensityOriginal")!=0)
-				//				Cursor/P/W=IR2H_LogLogPlotGels A  OriginalIntensity  binarysearch(OriginalQvector, CsrXWaveRef(A) [pcsr(A, "IR2H_LogLogPlotGels")])
-				//			endif
-				//			if (cmpstr(CsrWave(B, "IR2H_LogLogPlotGels"),"IntensityOriginal")!=0)
-				//				Cursor/P /W=IR2H_LogLogPlotGels B  OriginalIntensity  binarysearch(OriginalQvector,CsrXWaveRef(B) [pcsr(B, "IR2H_LogLogPlotGels")])
-				//			endif
-				//			Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalIntensity, FitIntensityWave		
-				//			Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalQvector, FitQvectorWave
-				//			Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalError, FitErrorWave
-				//			//***Catch error issues
-				//			wavestats/Q FitErrorWave
-				//			if(V_Min<1e-20)
-				//				Print "Warning: Looks like you have some very small uncertainties (ERRORS). Any point with uncertaitny (error) < = 0 is masked off and not fitted. "
-				//				Print "Make sure your uncertainties are all LARGER than 0 for ALL points." 
-				//			endif
-				//			if(V_avg<=0)
-				//				Print "Note: these are uncertainties after scaling/processing. Did you accidentally scale uncertainties by 0 ? " 
-				//				Abort "Uncertainties (ERRORS) make NO sense. Points with uncertainty (error) <= 0 are not fitted and this causes troubles. Fix uncertainties and try again. See history area for more details."
-				//			endif
-				//			//***End of Catch error issues
-				//			//FuncFit /N/Q IR2H_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1/E=E_wave /D /C=T_Constraints 
-				//#if Exists("gencurvefit")
-				//			Duplicate/O FitIntensityWave, GenMaskWv
-				//			GenMaskWv=1
-				//		  	gencurvefit  /I=1 /W=FitErrorWave /M=GenMaskWv /N /TOL=0.001 /K={50,20,0.7,0.5} /X=FitQvectorWave IR2H_FitFunction, FitIntensityWave  , W_Coef, HoldStr, Gen_Constraints  	
-				//#else
-				//			Abort "Genetic Optimization xop NOT installed. Install xop support and then try again"
-				//#endif
-				//		else
-				//			Duplicate/O OriginalIntensity, FitIntensityWave		
-				//			Duplicate/O OriginalQvector, FitQvectorWave
-				//			Duplicate/O OriginalError, FitErrorWave
-				//			//***Catch error issues
-				//			wavestats/Q FitErrorWave
-				//			if(V_Min<1e-20)
-				//				Print "Warning: Looks like you have some very small uncertainties (ERRORS). Any point with uncertaitny (error) < = 0 is masked off and not fitted. "
-				//				Print "Make sure your uncertainties are all LARGER than 0 for ALL points." 
-				//			endif
-				//			if(V_avg<=0)
-				//				Print "Note: these are uncertainties after scaling/processing. Did you accidentally scale uncertainties by 0 ? " 
-				//				Abort "Uncertainties (ERRORS) make NO sense. Points with uncertainty (error) <= 0 are not fitted and this causes troubles. Fix uncertainties and try again. See history area for more details."
-				//			endif
-				//			//***End of Catch error issues
-				//			//FuncFit /N/Q IR2H_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1 /E=E_wave/D /C=T_Constraints	
-				//#if Exists("gencurvefit")
-				//		  	gencurvefit  /I=1 /W=FitErrorWave /M=GenMaskWv /N /TOL=0.001 /K={50,20,0.7,0.5} /X=FitQvectorWave IR2H_FitFunction, FitIntensityWave  , W_Coef, HoldStr, Gen_Constraints  	
-				//#else
-				//			Abort "Genetic Optimization xop NOT installed. Install xop support and then try again"
-				//#endif
-				//		endif
-				////		if (V_FitError!=0)	//there was error in fitting
-				////			IR2H_ResetParamsAfterBadFit()
-				////			Abort "Fitting error, check starting parameters and fitting limits" 
-				////		endif
-				//		//this now records the errors for fitted parameters into the appropriate variables
-				//		Wave W_sigma=root:Packages:Gels_Modeling:W_sigma
-				//	
-				//		For(i=0;i<(numpnts(CoefNames));i+=1)
-				//			OneErrorName="root:Packages:Gels_Modeling:"+CoefNames[i]+"Error"
-				//			NVAR Error=$(OneErrorName)
-				//			Error=W_sigma[i]
-				//		endfor
-				//	else		
+	string ParamName
 		//least squares...
 		Variable V_FitError=0			//This should prevent errors from being generated
 		//and now the fit...
@@ -1365,18 +1804,33 @@ static Function IR3S_FitSysSpecificModels()
 			FuncFit /N/Q IR3S_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1 /E=E_wave/D /C=T_Constraints	
 		endif
 		if (V_FitError!=0)	//there was error in fitting
-			//	IR2H_ResetParamsAfterBadFit()
-			For(i=0;i<(numpnts(CoefNames));i+=1)
-				NVAR RestoreValue=$("root:Packages:Irena:SysSpecModels:"+CoefNames[i])
-				RestoreValue=BackupFitValues[i]
+			AchievedChiSquare = 0
+			for (i=0;i<numpnts(CoefNames);i+=1)
+				ParamName=StringFromList(0,CoefNames[i],";")
+				if(StringMatch(ParamName, "SASBackground" ))
+					NVAR SASBackground = root:Packages:Irena:SysSpecModels:SASBackground
+					SASBackground = BackupFitValues[i]
+				else
+					Wave TempParam=$("root:Packages:Irena:SysSpecModels:"+ParamName)
+					TempParam[str2num(StringFromList(1,CoefNames[i],";"))][0]=BackupFitValues[i]	
+				endif
 			endfor
-			Abort "Fitting error, Parameters resutored before failure. Check starting parameters and fitting limits" 
+			Print "Warning - Fitting error, Parameters resutored before failure. Check starting parameters and fitting limits" 
+			IR3S_AutoRecalculateModelData(1)
+			setDataFolder OldDf
+			return 0
 		endif
 		//this now records the errors for fitted parameters into the appropriate variables
 		Wave W_sigma=W_sigma
-		For(i=0;i<(numpnts(CoefNames));i+=1)
-			NVAR Error=$("root:Packages:Irena:SysSpecModels:"+CoefNames[i]+"Error")
-			Error=W_sigma[i]
+		for (i=0;i<numpnts(CoefNames);i+=1)
+			ParamName=StringFromList(0,CoefNames[i],";")
+			if(StringMatch(ParamName, "SASBackground" ))
+				NVAR BackgroundError = root:Packages:Irena:SysSpecModels:SASBackgroundError
+				BackgroundError = W_sigma[i]
+			else
+				Wave TempParam=$("root:Packages:Irena:SysSpecModels:"+ParamName)
+				TempParam[str2num(StringFromList(1,CoefNames[i],";"))][4]=W_sigma[i]	
+			endif
 		endfor
 		//	endif
 		NVAR AchievedChiSquare=root:Packages:Irena:SysSpecModels:AchievedChiSquare
@@ -1401,13 +1855,19 @@ Function IR3S_FitFunction(w,yw,xw) : FitFunc
 	//CurveFitDialog/ q
 	//CurveFitDialog/ Coefficients 21 - up to, but never used
 	Wave/T CoefNames=root:Packages:Irena:SysSpecModels:CoefNames		//text wave with names of parameters
+	//CoefNames[curLen]	  	=   "DBPar;"+num2str(i)+";"
 	variable i, NumOfParam
 	NumOfParam=numpnts(CoefNames)
 	string ParamName=""
 	for (i=0;i<NumOfParam;i+=1)
-		ParamName=CoefNames[i]
-		Nvar TempParam=$("root:Packages:Irena:SysSpecModels:"+ParamName)
-		TempParam=w[i]	
+		ParamName=StringFromList(0,CoefNames[i],";")
+		if(StringMatch(ParamName, "SASBackground" ))
+			NVAR SASBackground = root:Packages:Irena:SysSpecModels:SASBackground
+			SASBackground = w[i]
+		else
+			Wave TempParam=$("root:Packages:Irena:SysSpecModels:"+ParamName)
+			TempParam[str2num(StringFromList(1,CoefNames[i],";"))][0]=w[i]	
+		endif
 	endfor
 	IR3S_CalculateModel(yw,xw,1)
 	Wave resultWv=root:Packages:Irena:SysSpecModels:ModelIntensity
@@ -1487,10 +1947,12 @@ static Function IR3S_EstimateCorrL()
 	//SetAxis/W=IR2H_SI_Q2_PlotGels left 0.3*OriginalSqrtIntN1[cursA],2*OriginalSqrtIntN1[cursB] 
 	CurveFit line  OriginalSqrtIntN1[cursA,cursB] /X=OriginalQ2 /W=OriginalSqrtErrN1 /I=1 /D 
 	//ModifyGraph/W=IR2H_SI_Q2_PlotGels mode(fit_OriginalSqrtIntN1)=0
-	NVAR corrL=root:Packages:Irena:SysSpecModels:DBcorrL
-	NVAR DBEta=root:Packages:Irena:SysSpecModels:DBEta
+	//NVAR corrL=root:Packages:Irena:SysSpecModels:DBcorrL
+	//NVAR DBEta=root:Packages:Irena:SysSpecModels:DBEta
+	Wave DBPar = root:Packages:Irena:SysSpecModels:DBPar
+	//DBParNames = {"Prefactor","CorrLength","Eta","Wavelength"}
 	Wave W_coef
-	corrL = sqrt(W_coef[1]/W_coef[0])
+	DBPar[1][0] = sqrt(W_coef[1]/W_coef[0])
 	IR3S_AutoRecalculateModelData(1)
 	Wave DBModelInt=root:Packages:Irena:SysSpecModels:DBModelInt
 	variable AveModel, AveData
@@ -1498,7 +1960,7 @@ static Function IR3S_EstimateCorrL()
 	AveData = V_avg
 	wavestats/Q/R=[cursA,cursB] DBModelInt
 	AveModel = V_avg
-	DBEta *= sqrt(AveData/AveModel)
+	DBPar[2][0] *= sqrt(AveData/AveModel)
 	IR3S_AutoRecalculateModelData(1)
 
 end
@@ -1527,15 +1989,17 @@ static Function IR3S_EstimateLowQslope()
 	T_Constraints={"K2<-1","K2>-5"}
 	CurveFit/Q power  OriginalIntensity[cursA,cursB] /X=OriginalQvector /W=OriginalError /I=1 /C=T_Constraints	
 	NVAR UseSlitSmearedData=root:Packages:Irena:SysSpecModels:UseSlitSmearedData
-	NVAR LowQslope=root:Packages:Irena:SysSpecModels:UnifPwrlawP
-	NVAR LowQPrefactor=root:Packages:Irena:SysSpecModels:UnifPwrlawB
+	Wave UnifiedPar = root:Packages:Irena:SysSpecModels:UnifiedPar
+	//UnifiedParNames = {"G","Rg","B","P","UnifRgCO"}, "LinkUnifRgCO"= [4][1] aka Fit
+	//NVAR LowQslope=root:Packages:Irena:SysSpecModels:UnifPwrlawP
+	//NVAR LowQPrefactor=root:Packages:Irena:SysSpecModels:UnifPwrlawB
 	Wave W_coef
 	if(UseSlitSmearedData)
-		LowQslope = -(W_coef[2] - 1)
-		LowQPrefactor = W_coef[1]
+		UnifiedPar[3][0] = -(W_coef[2] - 1)
+		UnifiedPar[2][0] = W_coef[1]
 	else
-		LowQslope = -W_coef[2]
-		LowQPrefactor = W_coef[1]
+		UnifiedPar[3][0] = -W_coef[2]
+		UnifiedPar[2][0] = W_coef[1]
 	endif
 	IR3S_GraphModelData()
 	Wave OriginalIntensity=root:Packages:Irena:SysSpecModels:OriginalDataIntWave
@@ -1545,7 +2009,7 @@ static Function IR3S_EstimateLowQslope()
 	AveData = V_avg
 	wavestats/Q/R=[cursA,cursB] ModelIntensity
 	AveModel = V_avg
-	LowQPrefactor *= (AveData/AveModel)
+	UnifiedPar[2][0] *= (AveData/AveModel)
 	IR3S_GraphModelData()
 	setDataFolder oldDf
 end
@@ -1611,24 +2075,45 @@ end
 static FUnction IR3S_SetRGCOAsNeeded()
 
 	SVAR ModelSelected = root:Packages:Irena:SysSpecModels:ModelSelected
+
+	Wave UnifiedPar = root:Packages:Irena:SysSpecModels:UnifiedPar
+	//UnifiedParNames = {"G","Rg","B","P","UnifRgCO"}, "LinkUnifRgCO"= [4][1] aka Fit
+	Wave DBPar = root:Packages:Irena:SysSpecModels:DBPar
+	//DBParNames = {"Prefactor","CorrLength","Eta","Wavelength"}
+	Wave TSPar = root:Packages:Irena:SysSpecModels:TSPar
+	//TSParNames = {"Prefactor","A","C1","C2","CorrLength","RepeatDistance"}
+	Wave BCPar = root:Packages:Irena:SysSpecModels:BCPar
+	//BCParNames = {"PorodsSpecSurfArea", "CoatingsThickness","LayerScatLengthDens","SolidScatLengthDensity","VoidScatLengthDensity"}
+	Wave HermansPar 	= 	root:Packages:Irena:SysSpecModels:HermansPar
+	//HermansParNames = {"AmorphousThickness","SigmaAmorphous","LamellaeThickness","LamellaeSigma","Bvalue"}
+	Wave HybHermansPar 	= 	root:Packages:Irena:SysSpecModels:HybHermansPar
+	//HybHermansParNames = {"AmorphousThickness","SigmaAmorphous","LamellaeThickness","LamellaeSigma","Bvalue","G2","Rg2"}
+	Wave UBGPar 	= 	root:Packages:Irena:SysSpecModels:UBGPar
+	//UBGParNames = {"Rg1","B1","pack","CorrDist","StackIrreg","kI"}
 	
-	NVAR LinkUnifRgCO	=root:Packages:Irena:SysSpecModels:LinkUnifRgCO
-	NVAR UnifRgCO		=root:Packages:Irena:SysSpecModels:UnifRgCO
-	NVAR DBcorrL		=root:Packages:Irena:SysSpecModels:DBcorrL
-	NVAR LinkUnifRgCO	=root:Packages:Irena:SysSpecModels:LinkUnifRgCO
-	NVAR TSAvalue		=root:Packages:Irena:SysSpecModels:TSAvalue
-	NVAR TSC1Value		=root:Packages:Irena:SysSpecModels:TSC1Value
-	NVAR TSC2Value		=root:Packages:Irena:SysSpecModels:TSC2Value
-	if(LinkUnifRgCO)
+	//NVAR LinkUnifRgCO	=root:Packages:Irena:SysSpecModels:LinkUnifRgCO
+	//NVAR UnifRgCO		=root:Packages:Irena:SysSpecModels:UnifRgCO
+	//NVAR DBcorrL		=root:Packages:Irena:SysSpecModels:DBcorrL
+	//NVAR TSAvalue		=root:Packages:Irena:SysSpecModels:TSAvalue
+	//NVAR TSC1Value		=root:Packages:Irena:SysSpecModels:TSC1Value
+	//NVAR TSC2Value		=root:Packages:Irena:SysSpecModels:TSC2Value
+	if(UnifiedPar[4][1])
 		if(StringMatch(ModelSelected, "Debye-Bueche") )
-			UnifRgCO=DBcorrL
+			UnifiedPar[4][0]=DBPar[1][0]
 		elseif(StringMatch(ModelSelected, "Treubner-Strey") )
-			UnifRgCO = 1/sqrt(0.5*sqrt(TSAvalue/TSC2Value)+TSC1Value/4/TSC2Value)
+			//UnifiedPar[5][0] = 1/sqrt(0.5*sqrt(TSAvalue/TSC2Value)+TSC1Value/4/TSC2Value)
+			UnifiedPar[4][0] = 1/sqrt(0.5*sqrt(TSPar[1][0]/TSPar[3][0])+TSPar[2][0]/4/TSPar[3][0])
+		elseif(StringMatch(ModelSelected, "Hybrid Hermans") )
+			UnifiedPar[4][0] = HybHermansPar[6][0]
+		elseif(StringMatch(ModelSelected, "Hermans") )
+			UnifiedPar[4][0] = HermansPar[0][0]+HermansPar[2][0]
+		elseif(StringMatch(ModelSelected, "Unified Born Green") )
+			UnifiedPar[4][0] = UBGPar[0][0]//+UBGPar[3][0]
 		else
-			UnifRgCO = 0
+			UnifiedPar[4][0] = 0
 		endif
 	else
-		//UnifRgCO = 0
+		//UnifiedPar[4][0] = 0
 	endif
 
 end
@@ -1644,66 +2129,44 @@ static Function IR3S_CalculateModel(OriginalIntensity,OriginalQvector, calledFro
 	setDataFolder root:Packages:Irena:SysSpecModels
 
 	
-	Duplicate/O OriginalIntensity, ModelIntensity,ModelIntensityQ4,ModelIntensityQ3, DebyBuecheIntensity, UnifiedFitIntensity, UnsmearedModelIntensity, DBModelIntSqrtN1, TreubnerStreyIntensity
-	Duplicate/O OriginalIntensity, CiccBenModelIntensity, UnifiedModelInt, DBModelInt, TSModelInt, CBModelInt
+	Duplicate/O OriginalIntensity, ModelIntensity,ModelIntensityQ4,ModelIntensityQ3, DBModelIntSqrtN1
+	Duplicate/Free OriginalIntensity, CiccBenModelIntensity, UnifiedModelInt, HermansModelIntensity,  DebyBuecheIntensity, UnifiedFitIntensity, UnsmearedModelIntensity,TreubnerStreyIntensity
+	Duplicate/O OriginalIntensity, DBModelInt, TSModelInt, CBModelInt, HerModelInt
 	Duplicate/O OriginalQvector, DBModelQvector, QstarVector
 	DebyBuecheIntensity=0
 	UnifiedFitIntensity=0
 	UnsmearedModelIntensity=0
 	TreubnerStreyIntensity=0
 	CiccBenModelIntensity=0
+	HermansModelIntensity = 0
 	
+	NVAR UseUnified=root:Packages:Irena:SysSpecModels:UseUnified
 	NVAR UseSlitSmearedData=root:Packages:Irena:SysSpecModels:UseSlitSmearedData
 	NVAR SlitLength=root:Packages:Irena:SysSpecModels:SlitLength
 	NVAR SASBackground=root:Packages:Irena:SysSpecModels:SASBackground
-	NVAR DBPrefactor=root:Packages:Irena:SysSpecModels:DBPrefactor
-	NVAR DBEta=root:Packages:Irena:SysSpecModels:DBEta
-	NVAR DBcorrL=root:Packages:Irena:SysSpecModels:DBcorrL
-	NVAR UnifPwrlawP=root:Packages:Irena:SysSpecModels:UnifPwrlawP
-	NVAR UnifPwrlawB=root:Packages:Irena:SysSpecModels:UnifPwrlawB
-	NVAR UnifRgCO=root:Packages:Irena:SysSpecModels:UnifRgCO
-	NVAR UnifRg=root:Packages:Irena:SysSpecModels:UnifRg
-	
-	NVAR DBWavelength=root:Packages:Irena:SysSpecModels:DBWavelength
-	NVAR SASBackground=root:Packages:Irena:SysSpecModels:SASBackground
-	NVAR UseUnified=root:Packages:Irena:SysSpecModels:UseUnified
-	NVAR TSPrefactor=root:Packages:Irena:SysSpecModels:TSPrefactor
-	NVAR TSAvalue=root:Packages:Irena:SysSpecModels:TSAvalue
-	NVAR TSC1Value=root:Packages:Irena:SysSpecModels:TSC1Value
-	NVAR TSC2Value=root:Packages:Irena:SysSpecModels:TSC2Value
-	NVAR UnifG=root:Packages:Irena:SysSpecModels:UnifG
-	NVAR TSCorrelationLength=root:Packages:Irena:SysSpecModels:TSCorrelationLength
-	NVAR TSRepeatDistance=root:Packages:Irena:SysSpecModels:TSRepeatDistance
-	
-	NVAR BCPorodsSpecSurfArea=root:Packages:Irena:SysSpecModels:BCPorodsSpecSurfArea			//[cm2/cm3]
-	NVAR BCSolidScatLengthDensity=root:Packages:Irena:SysSpecModels:BCSolidScatLengthDensity		//N1 [10^10 cm^-2]
-	NVAR BCVoidScatLengthDensity=root:Packages:Irena:SysSpecModels:BCVoidScatLengthDensity		//N2 [10^10 cm^-2]
-	NVAR BCLayerScatLengthDens=root:Packages:Irena:SysSpecModels:BCLayerScatLengthDens		//N3 [10^10 cm^-2]
-	NVAR BCCoatingsThickness=root:Packages:Irena:SysSpecModels:BCCoatingsThickness				//[A]
-	NVAR SlitLength = root:Packages:Irena:SysSpecModels:SlitLength	
-	NVAR UseSlitSmearedData = root:Packages:Irena:SysSpecModels:UseSlitSmearedData	
-
 	SVAR ModelSelected = root:Packages:Irena:SysSpecModels:ModelSelected
-	NVAR LinkUnifRgCO=root:Packages:Irena:SysSpecModels:LinkUnifRgCO
+	//NVAR LinkUnifRgCO=root:Packages:Irena:SysSpecModels:LinkUnifRgCO
 	IR3S_SetRGCOAsNeeded()
-		//	if(StringMatch(ModelSelected, "Debye-Bueche") )
-		//		UnifRgCO=DBcorrL
-		//	elseif(StringMatch(ModelSelected, "Treubner-Strey") )
-		////		TSCorrelationLength = 1/sqrt(0.5*sqrt(TSAvalue/TSC2Value)+TSC1Value/4/TSC2Value)
-		////		UnifRgCO=TSCorrelationLength
-		//	endif
-	// first Debye-Bueche theory
-	//I(q) = (4*pi*K*eta^2*corrL^2)/(1+q^2*corrL^2)^2
-	//K = 8*pi^2*n^2*lambda^-4
-	// q = (4*pi*n/lambda)* sin(theta/2).
-	//n=1
-	//correction 2012/08, Fan realized, that the theory has DBCorrL in 3rd power in the numerator.
-	//correct formula should be: DebyBuecheIntensity = DBPrefactor*(4*pi*DBK*DBeta^2*DBcorrL^3)/(1+OriginalQvector^2*DBcorrL^2)^2
-	//not DebyBuecheIntensity = DBPrefactor*(4*pi*DBK*DBeta^2*DBcorrL^2)/(1+OriginalQvector^2*DBcorrL^2)^2
-	//                                                                                              ^^^
-	//It is bit puzzling with the Wavelength which does not seem to be part of Hamoud's writeup on this, but assume it is 3rd power for now. 
 
-	if(UseUnified)			//Unified level
+	Wave UnifiedPar = root:Packages:Irena:SysSpecModels:UnifiedPar
+	//UnifiedParNames = {"G","Rg","B","P","UnifRgCO"}, "LinkUnifRgCO"= [4][1] aka Fit
+	Wave DBPar = root:Packages:Irena:SysSpecModels:DBPar
+	//DBParNames = {"Prefactor","CorrLength","Eta","Wavelength"}
+	Wave TSPar = root:Packages:Irena:SysSpecModels:TSPar
+	//TSParNames = {"Prefactor","A","C1","C2","CorrLength","RepeatDistance"}
+	Wave BCPar = root:Packages:Irena:SysSpecModels:BCPar
+	//BCParNames = {"PorodsSpecSurfArea", "CoatingsThickness","LayerScatLengthDens","SolidScatLengthDensity","VoidScatLengthDensity"}
+	Wave HermansPar 	= 	root:Packages:Irena:SysSpecModels:HermansPar
+	//HermansParNames = {"AmorphousThickness","SigmaAmorphous","LamellaeThickness","LamellaeSigma","Bvalue"}
+	Wave HybHermansPar 	= 	root:Packages:Irena:SysSpecModels:HybHermansPar
+	//HybHermansParNames = {"AmorphousThickness","SigmaAmorphous","LamellaeThickness","LamellaeSigma","Bvalue","G2","Rg2"}
+	Wave UBGPar 	= 	root:Packages:Irena:SysSpecModels:UBGPar
+	//UBGParNames = {"Rg1","B1","pack","CorrDist","StackIrreg","kI"}
+
+	variable UnifRg = UnifiedPar[1][0], UnifG = UnifiedPar[0][0], UnifPwrlawB = UnifiedPar[2][0]
+	variable UnifPwrlawP = UnifiedPar[3][0]
+	variable UnifRgCO = UnifiedPar[4][0]
+	if(UseUnified && !StringMatch(ModelSelected, "Hybrid Hermans" ))			//Unified level
 		QstarVector=OriginalQvector/(erf(OriginalQvector*UnifRg/sqrt(6)))^3	
 		UnifiedFitIntensity=UnifG*exp(-OriginalQvector^2*UnifRg^2/3)+(UnifPwrlawB/QstarVector^UnifPwrlawP)* exp(-UnifRgCO^2 * OriginalQvector^2/3)
 		//UnifiedFitIntensity = UnifPwrlawB * OriginalQvector^(-1*UnifPwrlawP)
@@ -1712,21 +2175,37 @@ static Function IR3S_CalculateModel(OriginalIntensity,OriginalQvector, calledFro
 	endif
 
 	//debye-bueche
-	variable DBK = 8 * pi^2 * DBWavelength^(-4)		
+	variable DBWavelength =DBPar[3][0] , DBPrefactor =DBPar[0][0], DBEta =DBPar[2][0], DBcorrL =DBPar[1][0]
+	//DBParNames = {"Prefactor","CorrLength","Eta","Wavelength"}
 	if(StringMatch(ModelSelected, "Debye-Bueche" ))
+		// first Debye-Bueche theory
+		//I(q) = (4*pi*K*eta^2*corrL^2)/(1+q^2*corrL^2)^2
+		//K = 8*pi^2*n^2*lambda^-4
+		// q = (4*pi*n/lambda)* sin(theta/2).
+		//n=1
+		//correction 2012/08, Fan realized, that the theory has DBCorrL in 3rd power in the numerator.
+		//correct formula should be: DebyBuecheIntensity = DBPrefactor*(4*pi*DBK*DBeta^2*DBcorrL^3)/(1+OriginalQvector^2*DBcorrL^2)^2
+		//not DebyBuecheIntensity = DBPrefactor*(4*pi*DBK*DBeta^2*DBcorrL^2)/(1+OriginalQvector^2*DBcorrL^2)^2
+		//                                                                                              ^^^
+		//It is bit puzzling with the Wavelength which does not seem to be part of Hamoud's writeup on this, but assume it is 3rd power for now. 
 		//DebyBuecheIntensity = DBPrefactor*(4*pi*DBK*DBeta^2*DBcorrL^2)/(1+OriginalQvector^2*DBcorrL^2)^2
+		variable DBK = 8 * pi^2 * DBWavelength^(-4)		
 		DebyBuecheIntensity = DBPrefactor*(4*pi*DBK*DBeta^2*DBcorrL^3)/(1+OriginalQvector^2*DBcorrL^2)^2			//changed 2012/08
 	else
 		DebyBuecheIntensity = 0
 	endif
 
 	//Treubner-Strey
+	variable TSPrefactor=TSPar[0][0], TSAvalue=TSPar[1][0], TSC1Value=TSPar[2][0], TSC2Value=TSPar[3][0]
+	//TSParNames = {"Prefactor","A","C1","C2","CorrLength","RepeatDistance"}
 	if(StringMatch(ModelSelected, "Treubner-Strey" ))
 		TreubnerStreyIntensity = TSPrefactor / (TSAvalue + TSC1Value * OriginalQvector^2 + TSC2Value* OriginalQvector^4)
-		TSCorrelationLength = 1/sqrt(0.5*sqrt(TSAvalue/TSC2Value)+TSC1Value/4/TSC2Value)
+		//TSCorrelationLength = 1/sqrt(0.5*sqrt(TSAvalue/TSC2Value)+TSC1Value/4/TSC2Value)
+		TSPar[4][0] = 1/sqrt(0.5*sqrt(TSAvalue/TSC2Value)+TSC1Value/4/TSC2Value)
 		//	xi = 0.5*sqrt(a2/c2) + c1/4/c2
 		//	xi = 1/sqrt(xi)
-		TSRepeatDistance = 2*pi/sqrt(0.5*sqrt(TSAvalue/TSC2Value) - TSC1Value/4/TSC2Value)
+		//TSRepeatDistance = 2*pi/sqrt(0.5*sqrt(TSAvalue/TSC2Value) - TSC1Value/4/TSC2Value)
+		TSPar[5][0] = 2*pi/sqrt(0.5*sqrt(TSAvalue/TSC2Value) - TSC1Value/4/TSC2Value)
 		//	dd = 0.5*sqrt(a2/c2) - c1/4/c2
 		//	dd = 1/sqrt(dd)
 		//	dd *=2*Pi
@@ -1734,17 +2213,19 @@ static Function IR3S_CalculateModel(OriginalIntensity,OriginalQvector, calledFro
 		TreubnerStreyIntensity=0	
 	endif
 
-	//Ciccariello's  coated porous media
-	//nu = (n13 - n32)/n12
-	//where n13 =  N1 - N3 etc. 
-	// nu = (n13 - n32)/n12 = (N1-2N2+N3)/(N1-N2) 
-	variable n12 = BCSolidScatLengthDensity*1e10 - BCVoidScatLengthDensity*1e10
-	variable NuValue = ((BCSolidScatLengthDensity - 2*BCLayerScatLengthDens + BCVoidScatLengthDensity))/(BCSolidScatLengthDensity - BCVoidScatLengthDensity)
-	variable ALpha = (1 + NuValue^2)/2
-	variable Rnu = (1-NuValue^2)/(1+NuValue^2)
-	//COMMON...
-	//pinhole data or data with finite slit length
+	//Benedetti-Ciccariello's  coated porous media
+	variable BCSolidScatLengthDensity=BCPar[3][0] , BCVoidScatLengthDensity=BCPar[4][0], BCPorodsSpecSurfArea=BCPar[0][0]
+	variable BCCoatingsThickness=BCPar[1][0], BCLayerScatLengthDens =BCPar[2][0] 
+	Wave BCPar = root:Packages:Irena:SysSpecModels:BCPar
+	//BCParNames = {"PorodsSpecSurfArea", "CoatingsThickness","LayerScatLengthDens","SolidScatLengthDensity","VoidScatLengthDensity"}
 	if(StringMatch(ModelSelected, "Benedetti-Ciccariello" ))
+		//nu = (n13 - n32)/n12
+		//where n13 =  N1 - N3 etc. 
+		// nu = (n13 - n32)/n12 = (N1-2N2+N3)/(N1-N2) 
+		variable n12 = BCSolidScatLengthDensity*1e10 - BCVoidScatLengthDensity*1e10
+		variable NuValue = ((BCSolidScatLengthDensity - 2*BCLayerScatLengthDens + BCVoidScatLengthDensity))/(BCSolidScatLengthDensity - BCVoidScatLengthDensity)
+		variable ALpha = (1 + NuValue^2)/2
+		variable Rnu = (1-NuValue^2)/(1+NuValue^2)
 		if(!UseSlitSmearedData||(UseSlitSmearedData&&numtype(SlitLength)==0))								//Ciccariello's  coated porous media
 			//and now I(q) = (2*pi*n12^2*alpha*BCPorodsSpecSurfArea / Q^4) * [1+Rnu*cos(Q*BCCoatingsThickness)]+BCMicroscDensFluctuations
 			//print (2*pi*n12^2*alpha*BCPorodsSpecSurfArea / (OriginalQvector[120]^4*1e32))		
@@ -1752,17 +2233,24 @@ static Function IR3S_CalculateModel(OriginalIntensity,OriginalQvector, calledFro
 		else
 			CiccBenModelIntensity=0
 		endif
+	else
+		CiccBenModelIntensity=0
 	endif
-	//	//and now deal with infinite slit length case for  Benedetti-Ciccariello model
-	//	if(UseCiccBen&&(UseSlitSmearedData&&numtype(SlitLength)!=0))								//Ciccariello's  coated porous media
-	//		//print (pi^2*n12^2*alpha*BCPorodsSpecSurfArea / (OriginalQvector[120]^3*1e32))	
-	//		CiccBenModelIntensity = (pi^2*n12^2*alpha*BCPorodsSpecSurfArea / (OriginalQvector^3*1e32)) * (1+Rnu*IR2H_CiccBenFiFunction(OriginalQvector*BCCoatingsThickness))
-	//		ModelIntensity= CiccBenModelIntensity
-	//		CBModelInt = CiccBenModelIntensity
-	//	endif
 	
+	//Hermans
+	//Hybrid Hermans
+	//Unified Born Green
+	if(StringMatch(ModelSelected, "Hermans" ))
+		HermansModelIntensity = IR3S_Hermans(HermansPar,OriginalQvector[p])
+	elseif(StringMatch(ModelSelected, "Hybrid Hermans" ))
+		HermansModelIntensity = IR3S_HybridHermans(HybHermansPar,UnifiedPar, OriginalQvector[p])
+	elseif(StringMatch(ModelSelected, "Unified Born Green" ))
+		HermansModelIntensity = IR3S_UBG(UBGPar,OriginalQvector[p])
+	else
+		HermansModelIntensity=0	
+	endif
 	
-	UnsmearedModelIntensity = DebyBuecheIntensity + UnifiedFitIntensity + TreubnerStreyIntensity + CiccBenModelIntensity + SASBackground
+	UnsmearedModelIntensity = DebyBuecheIntensity + UnifiedFitIntensity + TreubnerStreyIntensity + CiccBenModelIntensity + HermansModelIntensity+ SASBackground
 	//slit smear with finite slit length...
 	if(UseSlitSmearedData&&numtype(SlitLength)==0)
 		//print "slit smeared"
@@ -1780,6 +2268,10 @@ static Function IR3S_CalculateModel(OriginalIntensity,OriginalQvector, calledFro
 			if(sum(CiccBenModelIntensity)>0)
 				IR1B_SmearData(CiccBenModelIntensity, OriginalQvector, slitLength, CBModelInt)
 			endif
+			if(sum(HerModelInt)>0)
+				IR1B_SmearData(HermansModelIntensity, OriginalQvector, slitLength, HerModelInt)
+			endif
+
 		endif
 	else
 		ModelIntensity= UnsmearedModelIntensity	
@@ -1787,6 +2279,7 @@ static Function IR3S_CalculateModel(OriginalIntensity,OriginalQvector, calledFro
 		UnifiedModelInt = UnifiedFitIntensity
 		TSModelInt = TreubnerStreyIntensity
 		CBModelInt = CiccBenModelIntensity
+		HerModelInt = HermansModelIntensity
 	endif
 
 	Duplicate/O OriginalQvector, OriginalQvector4, OriginalQvector3
@@ -1799,8 +2292,123 @@ static Function IR3S_CalculateModel(OriginalIntensity,OriginalQvector, calledFro
 	setDataFolder OldDf
 end
 //*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
 
 
+static Function IR3S_HybridHermans(wHybridHermans,wUnif, qval)
+	wave wHybridHermans, wUnif
+	variable qval
+	// Hybrid Hermans model. https://doi.org/10.1016/j.polymer.2021.124281
+	//wHybridHermans has 7 parameters + Unified fit we already have. 
+	// [0] is amorphous thickness (or lamellae thickness); [1] is sigma for a Gaussian distribution of amorphous
+	//[2] is the lamellar thickness; [3] is sigma; [4] is the Bval
+	//[5] is G2; [6] is Rg2  
+	// Others need to be from wUnif  8[0] is G3; 9[1] is Rg3; 10[2] is B3; 11[3] is P3
+	//UnifiedParNames = {"G","Rg","B","P","UnifRgCO","LinkUnifRgCO"}
+	//abort "Need to fix this to handle everyhitng"
+	//will need to apss in the Unified fit par wave also...
+	Variable G2=abs(wHybridHermans[5][0]),Rg2=abs(wHybridHermans[6][0])
+	Variable G3=abs(wUnif[0][0]),Rg3=abs(wUnif[1][0]),B3=abs(wUnif[2][0]),P3=abs(wUnif[3][0])
+	variable amoth=abs(wHybridHermans[0][0]),amosig=abs(wHybridHermans[1][0]),cryth=abs(wHybridHermans[2][0]),crysig=abs(wHybridHermans[3][0])
+	//variable/g gcutoff//use level 2 to cutoff level 3? 1 = yes; 2 = no
+	variable cutoff=wUnif[4][1]
+	Variable/C cv_i=cmplx(0,1)
+	Variable qstar2 = qval/(erf(1.06*qval*abs(Rg2)/sqrt(6)))^3,qstar3 = qval/(erf(1.06*qval*abs(Rg3)/sqrt(6)))^3
+	//qstar2=qval
+	if(P3>3)//For non-fractal level 3
+		qstar3 = qval/(erf(qval*abs(Rg3)/sqrt(6)))^3
+	endif
+	variable sval=qstar2/(2*pi)
+	variable/C H1=exp(2*pi*cv_i*amoth*sval-2*pi^2*amosig^2*sval^2)
+	variable/C H2=exp(2*pi*cv_i*cryth*sval-2*pi^2*crysig^2*sval^2)
+	variable Bs = abs(wHybridHermans[4])/(2*pi)^4
+	variable int=(Bs/(sval^4))*Real((1-H1)*(1-H2)/(1-H1*H2))
+	//add level 2 Guinier
+	Int+=G2*exp(-abs(Rg2)^2*qval^2/3)
+	//add level 3
+	if(cutoff==1)//use level 2 to cutoff level 3
+		wUnif[4][0]=Rg2
+		Int+=G3*exp(-abs(Rg3)^2*qval^2/3)+B3*exp(-abs(Rg2)^2*qval^2/3)*qstar3^(-abs(P3))
+	else //no cutoff for the power-law
+		Int+=G3*exp(-abs(Rg3)^2*qval^2/3)+B3*qstar3^(-abs(P3))
+	endif
+	return(Int)
+End
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+
+static Function IR3S_Hermans(wHermans,qval)
+	wave wHermans;variable qval
+	// Hermans model. https://doi.org/10.1016/j.polymer.2021.124281
+	//wHermans has five parameters [0] is amorphous thickness (or lamellae thickness); [1] is sigma for a Gaussian distribution of amorphous
+	//[2] is the lamellar thickness; [3] is sigma; [4] is the Bval
+	
+	Variable/C cv_i=cmplx(0,1)
+	variable sval=qval/(2*pi)
+	variable/C H1=exp(2*pi*cv_i*wHermans[0][0]*sval-2*pi^2*wHermans[1][0]^2*sval^2)
+	variable/C H2=exp(2*pi*cv_i*wHermans[2][0]*sval-2*pi^2*wHermans[3][0]^2*sval^2)
+	variable Bs = wHermans[4][0]/(2*pi)^4
+	variable intensity=(Bs/(sval^4))*Real((1-H1)*(1-H2)/(1-H1*H2))
+	return(intensity)
+End
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+
+static Function IR3S_UBG(wUBG,qval)
+	wave wUBG
+	variable qval
+	// Unified Born Green model. https://doi.org/10.1016/j.polymer.2021.124281, Formula 8
+	//Fit parameters Rg1,B1,pack,mesh,del,kI
+	//variable bkg=abs(wUBG[0])
+	variable Rg1=abs(wUBG[0][0])
+	variable B1=abs(wUBG[1][0])
+	variable pack=abs(wUBG[2][0])
+	variable mesh=abs(wUBG[3][0])
+	variable del=abs(wUBG[4][0])
+	variable kI=abs(wUBG[5][0])
+	variable Rad=sqrt(pack*mesh*Rg1/(4))
+	//Calculate I(q) no correlations
+	variable G1 = B1*Rg1^4*Rad/(2*Rg1+Rad)
+	variable B2=2*G1/(Rg1^2)
+	variable qstar1=qval/(erf(qval*abs(Rg1)/sqrt(6)))^3
+	variable Rg2=sqrt(Rad^2/2+Rg1^2/3)
+	variable qstar2=qval/(erf(qval*abs(Rg2)/sqrt(6)))^3
+	variable G2=G1*(Rad/Rg1)^2
+	variable theResult=G1*exp(-qval^2*Rg1^2/3)+B1*(qstar1)^(-4)
+	theResult+=G2*exp(-qval^2*Rg2^2/3)+(exp(-qval^2*Rg1^2/3)*B2*qstar2^(-2))
+	//add correlations and only modify the qval in the structure factor
+	qval=qval*exp(del*(qval-2*pi/mesh)/qval)
+	if(pack!=0)
+		variable corrnum=qval*mesh
+		variable angle,Slocal=0,count3=0,gNoIters=20
+		variable DelAngle=Pi/(2*gNoIters)
+		variable sumtheta=0,theta=0
+		if(gNoIters==1)
+			theResult/=(1+pack*(sin(corrnum)/(corrnum))*exp(-(corrnum)^2*kI))
+		else
+			do
+				angle=Count3*DelAngle
+				if(cos(angle)==0)
+					theta=1	
+				else
+					theta=sin(corrnum*cos(angle))/(corrnum*cos(angle))
+				endif
+				sumtheta+=theta*pi/2
+				count3+=1
+				while(count3<gNoIters)
+					theResult/=(1+pack*(sumtheta/gNoIters)*exp(-(corrnum)^2*kI))
+				endif
+	endif
+	Return(theResult)
+End
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 static Function IR3S_SaveResultsToWaves()
@@ -1818,49 +2426,37 @@ static Function IR3S_SaveResultsToWaves()
 	variable i
 	SVAR DataFolderName = root:Packages:Irena:SysSpecModels:DataFolderName
 	SVAR ModelSelected = root:Packages:Irena:SysSpecModels:ModelSelected
-	SVAR ListOfVariablesBC = root:Packages:Irena:SysSpecModels:ListOfVariablesBC
-	SVAR ListOfVariablesTS = root:Packages:Irena:SysSpecModels:ListOfVariablesTS
-	SVAR ListOfVariablesDB = root:Packages:Irena:SysSpecModels:ListOfVariablesDB
-	SVAR ListOfVariablesUF = root:Packages:Irena:SysSpecModels:ListOfVariablesUF
-	SVAR ListOfVariablesBG = root:Packages:Irena:SysSpecModels:ListOfVariablesBG
-	SVAR ListOfVariablesMain = root:Packages:Irena:SysSpecModels:ListOfVariablesMain
-	ListOfVariables += ListOfVariablesMain+ListOfVariablesUF
 	string TargetFolder
 	strswitch(ModelSelected)	// string switch
 		case "Debye-Bueche":	// execute if case matches expression
-			ListOfVariables+=ListOfVariablesDB
 			TargetFolder="DebyeBuecheResults"
 			break
 		case "Treubner-Strey":	// execute if case matches expression
 			//Teubner-Strey Model
-			ListOfVariables+=ListOfVariablesTS
 			TargetFolder="TreubnerStreyResults"
 			break
 		case "Benedetti-Ciccariello":	// execute if case matches expression
 			//Ciccariello Coated Porous media Porods oscillations
-			ListOfVariables+=ListOfVariablesBC
 			TargetFolder="BenedettiCiccarielloResults"
 			break
+		case "Hermans":	// execute if case matches expression
+			TargetFolder="HermansResults"
+			break
+		case "Hybrid Hermans":	// execute if case matches expression
+			TargetFolder="HybHermansResults"
+			break
+		case "Unified Born Green":	// execute if case matches expression
+			TargetFolder="UBGResults"
+			break
 	endswitch
-	//now clean up data names we do not want to save 
-	ListOfVariables = GrepList(ListOfVariables, "^Fit",1)
-	ListOfVariables = GrepList(ListOfVariables, "LL$",1)
-	ListOfVariables = GrepList(ListOfVariables, "HL$",1)
-	ListOfVariables = GrepList(ListOfVariables, "DataQ|UseIndra2|UseQRS|Update",1)
-	ListOfVariables = GrepList(ListOfVariables, "Delay|Link|Save",1)
-	//this removed most of the crud users likely do not want... 
 	string ListOfStrings="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;"
 	NewDataFolder/O/S root:$(TargetFolder)
 	print "Saving results from "+ModelSelected+" in folder : "+TargetFolder
-	print "This folder has number of waves with results redy to be plotted or put in tables"
+	print "This folder has number of waves with results ready to be plotted or put in tables"
 	Wave/Z/T DataFolderNameWv
 	if(!WaveExists(DataFolderNameWv))
 		Make/O/N=0/T DataFolderNameWv, IntensityWaveNameWv, QWavenameWv, ErrorWaveNameWv
 		Make/O/N=0 TimeWave, TemperatureWave,PercentWave, OrderWave
-		For(i=0;i<itemsInList(ListOfVariables);i+=1)
-			TmpName = StringFromList(i, ListOfVariables)+"Wv"
-			Make/O/N=0 $(TmpName)
-		endfor
 	endif
 	variable curLength=numpnts(DataFolderNameWv)
 	For(i=0;i<itemsInList(ListOfStrings);i+=1)
@@ -1869,14 +2465,145 @@ static Function IR3S_SaveResultsToWaves()
 		redimension/N=(curLength+1) TmpStrWv
 		TmpStrWv[curLength] = TempStr
 	endfor
+
+	//variable oldnum
+	strswitch(ModelSelected)	// string switch
+		case "Debye-Bueche":	// execute if case matches expression
+			Wave DBPar = root:Packages:Irena:SysSpecModels:DBPar
+			Wave/T DBParNames = root:Packages:Irena:SysSpecModels:DBParNames
+			//DBParNames = {"Prefactor","CorrLength","Eta","Wavelength"}
+			For(i=0;i<DimSize(DBPar,0);i+=1)
+				Wave/Z TmpWv=$(DBParNames[i]+"Wv")
+				if(!WaveExists(TmpWv))
+					make/O/N=0 $(DBParNames[i]+"Wv"), $(DBParNames[i]+"ErrWv")
+				endif
+				Wave TmpWv=$(DBParNames[i]+"Wv")
+				Wave TmpWvErr=$(DBParNames[i]+"ErrWv")
+				//oldnum=numpnts(TmpWv)
+				Redimension /N=(curLength+1) TmpWv, TmpWvErr
+				TmpWv[curLength] 		= DBPar[i][0]
+				TmpWvErr[curLength] 	= DBPar[i][4]
+			endfor
+			break
+		case "Treubner-Strey":	// execute if case matches expression
+			//Teubner-Strey Model
+			Wave TSPar = root:Packages:Irena:SysSpecModels:TSPar
+			Wave/T TSParNames = root:Packages:Irena:SysSpecModels:TSParNames
+			//TSParNames = {"Prefactor","A","C1","C2","CorrLength","RepeatDistance"}
+			For(i=0;i<DimSize(TSPar,0);i+=1)
+				Wave/Z TmpWv=$(TSParNames[i]+"Wv")
+				if(!WaveExists(TmpWv))
+					make/O/N=0 $(TSParNames[i]+"Wv"), $(TSParNames[i]+"ErrWv")
+				endif
+				Wave TmpWv=$(TSParNames[i]+"Wv")
+				Wave TmpWvErr=$(TSParNames[i]+"ErrWv")
+				//oldnum=numpnts(TmpWv)
+				Redimension /N=(curLength+1) TmpWv, TmpWvErr
+				TmpWv[curLength] 		= TSPar[i][0]
+				TmpWvErr[curLength] 	= TSPar[i][4]
+			endfor
+			break
+		case "Benedetti-Ciccariello":	// execute if case matches expression
+			//Ciccariello Coated Porous media Porods oscillations
+			Wave BCPar = root:Packages:Irena:SysSpecModels:BCPar
+			Wave/T BCParNames = root:Packages:Irena:SysSpecModels:BCParNames
+			//BCParNames = {"PorodsSpecSurfArea", "CoatingsThickness","LayerScatLengthDens","SolidScatLengthDensity","VoidScatLengthDensity"}
+			For(i=0;i<DimSize(BCPar,0);i+=1)
+				Wave/Z TmpWv=$(BCParNames[i]+"Wv")
+				if(!WaveExists(TmpWv))
+					make/O/N=0 $(BCParNames[i]+"Wv"), $(BCParNames[i]+"ErrWv")
+				endif
+				Wave TmpWv=$(BCParNames[i]+"Wv")
+				Wave TmpWvErr=$(BCParNames[i]+"ErrWv")
+				//oldnum=numpnts(TmpWv)
+				Redimension /N=(curLength+1) TmpWv, TmpWvErr
+				TmpWv[curLength] 		= BCPar[i][0]
+				TmpWvErr[curLength] 	= BCPar[i][4]
+			endfor
+			break
+		case "Hermans":	// execute if case matches expression
+			Wave/T HermansParNames = root:Packages:Irena:SysSpecModels:HermansParNames
+			Wave HermansPar 	= 	root:Packages:Irena:SysSpecModels:HermansPar
+			//HermansParNames = {"AmorphousThickness","SigmaAmorphous","LamellaeThickness","LamellaeThicknessSigma","Bvalue"}
+			For(i=0;i<DimSize(HermansPar,0);i+=1)
+				Wave/Z TmpWv=$(HermansParNames[i]+"Wv")
+				if(!WaveExists(TmpWv))
+					make/O/N=0 $(HermansParNames[i]+"Wv"), $(HermansParNames[i]+"ErrWv")
+				endif
+				Wave TmpWv=$(HermansParNames[i]+"Wv")
+				Wave TmpWvErr=$(HermansParNames[i]+"ErrWv")
+				//oldnum=numpnts(TmpWv)
+				Redimension /N=(curLength+1) TmpWv, TmpWvErr
+				TmpWv[curLength] 		= HermansPar[i][0]
+				TmpWvErr[curLength] 	= HermansPar[i][4]
+			endfor
+			break
+		case "Hybrid Hermans":	// execute if case matches expression
+			Wave HybHermansPar 	= 	root:Packages:Irena:SysSpecModels:HybHermansPar
+			Wave/T HybHermansParNames 	= 	root:Packages:Irena:SysSpecModels:HybHermansParNames
+			//HybHermansParNames = {"AmorphousThickness","SigmaAmorphous","LamellaeThickness","LamellaeSigma","Bvalue","G2","Rg2"}
+			For(i=0;i<DimSize(HybHermansPar,0);i+=1)
+				Wave/Z TmpWv=$(HybHermansParNames[i]+"Wv")
+				if(!WaveExists(TmpWv))
+					make/O/N=0 $(HybHermansParNames[i]+"Wv"), $(HybHermansParNames[i]+"ErrWv")
+				endif
+				Wave TmpWv=$(HybHermansParNames[i]+"Wv")
+				Wave TmpWvErr=$(HybHermansParNames[i]+"ErrWv")
+				//oldnum=numpnts(TmpWv)
+				Redimension /N=(curLength+1) TmpWv, TmpWvErr
+				TmpWv[curLength] 		= HybHermansPar[i][0]
+				TmpWvErr[curLength] 	= HybHermansPar[i][4]
+			endfor
+			break
+		case "Unified Born Green":	// execute if case matches expression
+			Wave UBGPar 	= 	root:Packages:Irena:SysSpecModels:UBGPar
+			Wave/T UBGParNames 	= 	root:Packages:Irena:SysSpecModels:UBGParNames
+			//UBGParNames = {"Rg1","B1","pack","CorrDist","StackIrreg","kI"}
+			For(i=0;i<DimSize(UBGPar,0);i+=1)
+				Wave/Z TmpWv=$(UBGParNames[i]+"Wv")
+				if(!WaveExists(TmpWv))
+					make/O/N=0 $(UBGParNames[i]+"Wv"), $(UBGParNames[i]+"ErrWv")
+				endif
+				Wave TmpWv=$(UBGParNames[i]+"Wv")
+				Wave TmpWvErr=$(UBGParNames[i]+"ErrWv")
+				//oldnum=numpnts(TmpWv)
+				Redimension /N=(curLength+1) TmpWv, TmpWvErr
+				TmpWv[curLength] 		= UBGPar[i][0]
+				TmpWvErr[curLength] 	= UBGPar[i][4]
+			endfor
+			break
+	endswitch
+
+	NVAR UseUnified			= root:Packages:Irena:SysSpecModels:UseUnified
+	if(UseUnified)
+		Wave UnifiedPar = root:Packages:Irena:SysSpecModels:UnifiedPar
+		Wave/T UnifiedParNames = root:Packages:Irena:SysSpecModels:UnifiedParNames
+		//UnifiedParNames = {"G","Rg","B","P","UnifRgCO"}, "LinkUnifRgCO"= [4][1] aka Fit
+		For(i=0;i<DimSize(UnifiedPar,0);i+=1)
+			Wave/Z TmpWv=$(UnifiedParNames[i]+"Wv")
+			if(!WaveExists(TmpWv))
+				make/O/N=0 $(UnifiedParNames[i]+"Wv"), $(UnifiedParNames[i]+"ErrWv")
+			endif
+			Wave TmpWv=$(UnifiedParNames[i]+"Wv")
+			Wave TmpWvErr=$(UnifiedParNames[i]+"ErrWv")
+			//oldnum=numpnts(TmpWv)
+			Redimension /N=(curLength+1) TmpWv, TmpWvErr
+			TmpWv[curLength] 		= UnifiedPar[i][0]
+			TmpWvErr[curLength] 	= UnifiedPar[i][4]
+		endfor
+	endif	
+
+
+
+
 	
-	For(i=0;i<itemsInList(ListOfVariables);i+=1)
-		TempVarName = stringFromList(i,ListOfVariables)
-		NVAR TempVal = $("root:Packages:Irena:SysSpecModels:"+TempVarName)
-		Wave TmpWv = $(TempVarName+"Wv")
-		redimension/N=(curLength+1) TmpWv
-		TmpWv[curLength] = TempVal
-	endfor
+//	For(i=0;i<itemsInList(ListOfVariables);i+=1)
+//		TempVarName = stringFromList(i,ListOfVariables)
+//		NVAR TempVal = $("root:Packages:Irena:SysSpecModels:"+TempVarName)
+//		Wave TmpWv = $(TempVarName+"Wv")
+//		redimension/N=(curLength+1) TmpWv
+//		TmpWv[curLength] = TempVal
+//	endfor
 	//now create temperature, time etc if thisis in folder name stored... 
 	Wave TimeWave, TemperatureWave,PercentWave, OrderWave
 	redimension/N=(curlength+1) TimeWave, TemperatureWave,PercentWave, OrderWave
@@ -1920,44 +2647,101 @@ static Function IR3S_SaveResultsToFolder(DoNotAskUser)
 	Duplicate/O ModelIntensity, tempDBModelIntensity
 	Duplicate/O ModelQvector, tempDBModelQvector
 	string ListOfWavesForNotes="tempDBModelQvector;tempDBModelIntensity;"
-	string ListOfVariables=""
 	SVAR ModelSelected = root:Packages:Irena:SysSpecModels:ModelSelected
-	SVAR ListOfVariablesBC = root:Packages:Irena:SysSpecModels:ListOfVariablesBC
-	SVAR ListOfVariablesTS = root:Packages:Irena:SysSpecModels:ListOfVariablesTS
-	SVAR ListOfVariablesDB = root:Packages:Irena:SysSpecModels:ListOfVariablesDB
-	SVAR ListOfVariablesUF = root:Packages:Irena:SysSpecModels:ListOfVariablesUF
-	SVAR ListOfVariablesBG = root:Packages:Irena:SysSpecModels:ListOfVariablesBG
-	SVAR ListOfVariablesMain = root:Packages:Irena:SysSpecModels:ListOfVariablesMain
-	ListOfVariables += ListOfVariablesMain+ListOfVariablesUF
-	strswitch(ModelSelected)	// string switch
-		case "Debye-Bueche":	// execute if case matches expression
-			ListOfVariables+=ListOfVariablesDB
-			break
-		case "Treubner-Strey":	// execute if case matches expression
-			//Teubner-Strey Model
-			ListOfVariables+=ListOfVariablesTS
-			break
-		case "Benedetti-Ciccariello":	// execute if case matches expression
-			//Ciccariello Coated Porous media Porods oscillations
-			ListOfVariables+=ListOfVariablesBC
-			break
-	endswitch
 
-	
 	string ListOfStrings="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;"
 	variable i,j
 	For(j=0;j<ItemsInList(ListOfWavesForNotes);j+=1)
-		For(i=0;i<itemsInList(ListOfVariables);i+=1)
-			NVAR TempVal = $("root:Packages:Irena:SysSpecModels:"+stringFromList(i,ListOfVariables))
-			IN2G_AppendorReplaceWaveNote(stringFromList(j,ListOfWavesForNotes),"SysSpecModels_"+stringFromList(i,ListOfVariables),num2str(TempVal))
-		endfor
-	endfor
-	For(j=0;j<ItemsInList(ListOfWavesForNotes);j+=1)
 		For(i=0;i<itemsInList(ListOfStrings);i+=1)
 			SVAR TempStr = $("root:Packages:Irena:SysSpecModels:"+stringFromList(i,ListOfStrings))
-			IN2G_AppendorReplaceWaveNote(stringFromList(j,ListOfWavesForNotes),"SysSpecModels_"+stringFromList(i,ListOfStrings),TempStr)
+			IN2G_AppendorReplaceWaveNote(stringFromList(j,ListOfWavesForNotes),ModelSelected+"_"+stringFromList(i,ListOfStrings),TempStr)
 		endfor
 	endfor
+
+
+	strswitch(ModelSelected)	// string switch
+		case "Debye-Bueche":	// execute if case matches expression
+			Wave DBPar = root:Packages:Irena:SysSpecModels:DBPar
+			Wave/T DBParNames = root:Packages:Irena:SysSpecModels:DBParNames
+			//DBParNames = {"Prefactor","CorrLength","Eta","Wavelength"}
+			For(j=0;j<ItemsInList(ListOfWavesForNotes);j+=1)
+				For(i=0;i<DimSize(DBPar,0);i+=1)
+					IN2G_AppendorReplaceWaveNote(stringFromList(j,ListOfWavesForNotes),ModelSelected+"_"+DBParNames[i],num2str(DBPar[i][0]))
+					IN2G_AppendorReplaceWaveNote(stringFromList(j,ListOfWavesForNotes),ModelSelected+"Err_"+DBParNames[i],num2str(DBPar[i][4]))
+				endfor
+			endfor
+			break
+		case "Treubner-Strey":	// execute if case matches expression
+			//Teubner-Strey Model
+			Wave TSPar = root:Packages:Irena:SysSpecModels:TSPar
+			Wave/T TSParNames = root:Packages:Irena:SysSpecModels:TSParNames
+			//TSParNames = {"Prefactor","A","C1","C2","CorrLength","RepeatDistance"}
+			For(j=0;j<ItemsInList(ListOfWavesForNotes);j+=1)
+				For(i=0;i<DimSize(TSPar,0);i+=1)
+					IN2G_AppendorReplaceWaveNote(stringFromList(j,ListOfWavesForNotes),ModelSelected+"_"+TSParNames[i],num2str(TSPar[i][0]))
+					IN2G_AppendorReplaceWaveNote(stringFromList(j,ListOfWavesForNotes),ModelSelected+"Err_"+TSParNames[i],num2str(TSPar[i][4]))
+				endfor
+			endfor
+			break
+		case "Benedetti-Ciccariello":	// execute if case matches expression
+			//Ciccariello Coated Porous media Porods oscillations
+			Wave BCPar = root:Packages:Irena:SysSpecModels:BCPar
+			Wave/T BCParNames = root:Packages:Irena:SysSpecModels:BCParNames
+			//BCParNames = {"PorodsSpecSurfArea", "CoatingsThickness","LayerScatLengthDens","SolidScatLengthDensity","VoidScatLengthDensity"}
+			For(j=0;j<ItemsInList(ListOfWavesForNotes);j+=1)
+				For(i=0;i<DimSize(BCPar,0);i+=1)
+					IN2G_AppendorReplaceWaveNote(stringFromList(j,ListOfWavesForNotes),ModelSelected+"_"+BCParNames[i],num2str(BCPar[i][0]))
+					IN2G_AppendorReplaceWaveNote(stringFromList(j,ListOfWavesForNotes),ModelSelected+"Err_"+BCParNames[i],num2str(BCPar[i][4]))
+				endfor
+			endfor
+			break
+		case "Hermans":	// execute if case matches expression
+			Wave/T HermansParNames = root:Packages:Irena:SysSpecModels:HermansParNames
+			Wave HermansPar 	= 	root:Packages:Irena:SysSpecModels:HermansPar
+			//HermansParNames = {"AmorphousThickness","SigmaAmorphous","LamellaeThickness","LamellaeThicknessSigma","Bvalue"}
+			For(j=0;j<ItemsInList(ListOfWavesForNotes);j+=1)
+				For(i=0;i<DimSize(HermansPar,0);i+=1)
+					IN2G_AppendorReplaceWaveNote(stringFromList(j,ListOfWavesForNotes),ModelSelected+"_"+HermansParNames[i],num2str(HermansPar[i][0]))
+					IN2G_AppendorReplaceWaveNote(stringFromList(j,ListOfWavesForNotes),ModelSelected+"Err_"+HermansParNames[i],num2str(HermansPar[i][4]))
+				endfor
+			endfor
+			break
+		case "Hybrid Hermans":	// execute if case matches expression
+			Wave HybHermansPar 	= 	root:Packages:Irena:SysSpecModels:HybHermansPar
+			Wave/T HybHermansParNames 	= 	root:Packages:Irena:SysSpecModels:HybHermansParNames
+			//HybHermansParNames = {"AmorphousThickness","SigmaAmorphous","LamellaeThickness","LamellaeSigma","Bvalue","G2","Rg2"}
+			For(j=0;j<ItemsInList(ListOfWavesForNotes);j+=1)
+				For(i=0;i<DimSize(HybHermansPar,0);i+=1)
+					IN2G_AppendorReplaceWaveNote(stringFromList(j,ListOfWavesForNotes),ModelSelected+"_"+HybHermansParNames[i],num2str(HybHermansPar[i][0]))
+					IN2G_AppendorReplaceWaveNote(stringFromList(j,ListOfWavesForNotes),ModelSelected+"Err_"+HybHermansParNames[i],num2str(HybHermansPar[i][4]))
+				endfor
+			endfor
+			break
+		case "Unified Born Green":	// execute if case matches expression
+			Wave UBGPar 	= 	root:Packages:Irena:SysSpecModels:UBGPar
+			Wave/T UBGParNames 	= 	root:Packages:Irena:SysSpecModels:UBGParNames
+			//UBGParNames = {"Rg1","B1","pack","CorrDist","StackIrreg","kI"}
+			For(j=0;j<ItemsInList(ListOfWavesForNotes);j+=1)
+				For(i=0;i<DimSize(UBGPar,0);i+=1)
+					IN2G_AppendorReplaceWaveNote(stringFromList(j,ListOfWavesForNotes),ModelSelected+"_"+UBGParNames[i],num2str(UBGPar[i][0]))
+					IN2G_AppendorReplaceWaveNote(stringFromList(j,ListOfWavesForNotes),ModelSelected+"Err_"+UBGParNames[i],num2str(UBGPar[i][4]))
+				endfor
+			endfor
+			break
+	endswitch
+
+	NVAR UseUnified			= root:Packages:Irena:SysSpecModels:UseUnified
+	if(UseUnified)
+		Wave UnifiedPar = root:Packages:Irena:SysSpecModels:UnifiedPar
+		Wave/T UnifiedParNames = root:Packages:Irena:SysSpecModels:UnifiedParNames
+		//UnifiedParNames = {"G","Rg","B","P","UnifRgCO"}, "LinkUnifRgCO"= [4][1] aka Fit
+		For(j=0;j<ItemsInList(ListOfWavesForNotes);j+=1)
+			For(i=0;i<DimSize(UnifiedPar,0);i+=1)
+				IN2G_AppendorReplaceWaveNote(stringFromList(j,ListOfWavesForNotes),"UnifiedLevel_"+UnifiedParNames[i],num2str(UnifiedPar[i][0]))
+				IN2G_AppendorReplaceWaveNote(stringFromList(j,ListOfWavesForNotes),"UnifiedLevelErr_"+UnifiedParNames[i],num2str(UnifiedPar[i][4]))
+			endfor
+		endfor
+	endif	
 	
 	SVAR DataFolderName=root:Packages:Irena:SysSpecModels:DataFolderName
 	setDataFolder $DataFolderName
@@ -1995,6 +2779,7 @@ end
 
 static Function IR3S_SaveResultsToNotebook()
 
+	//TODO - fix for waves
 	NVAR SaveToNotebook=root:Packages:Irena:SysSpecModels:SaveToNotebook
 	if(SaveToNotebook<1)
 		return 0
@@ -2020,62 +2805,95 @@ static Function IR3S_SaveResultsToNotebook()
 	IR1_AppendAnyText("Model used: \t"+ModelSelected,0)	
 	string FittingResults="\r\r"
 
-	//Duplicate/O ModelIntensity, tempDBModelIntensity
-	//Duplicate/O ModelQvector, tempDBModelQvector
-	string ListOfWavesForNotes="tempDBModelQvector;tempDBModelIntensity;"
-	string ListOfVariables=""
-	SVAR ListOfVariablesBC = root:Packages:Irena:SysSpecModels:ListOfVariablesBC
-	SVAR ListOfVariablesTS = root:Packages:Irena:SysSpecModels:ListOfVariablesTS
-	SVAR ListOfVariablesDB = root:Packages:Irena:SysSpecModels:ListOfVariablesDB
-	SVAR ListOfVariablesUF = root:Packages:Irena:SysSpecModels:ListOfVariablesUF
-	SVAR ListOfVariablesBG = root:Packages:Irena:SysSpecModels:ListOfVariablesBG
-	SVAR ListOfVariablesMain = root:Packages:Irena:SysSpecModels:ListOfVariablesMain
-	ListOfVariables += ListOfVariablesMain+ListOfVariablesUF
 	strswitch(ModelSelected)	// string switch
 		case "Debye-Bueche":	// execute if case matches expression
-			ListOfVariables+=ListOfVariablesDB
-			NVAR DBPrefactor
-			NVAR DBEta
-			NVAR DBcorrL
-			NVAR DBEtaError
-			NVAR DBcorrLError
+			Wave DBPar = root:Packages:Irena:SysSpecModels:DBPar
+			//DBParNames = {"Prefactor","CorrLength","Eta","Wavelength"}
+			variable DBPrefactor	= DBPar[0][0]
+			variable DBEta			= DBPar[2][0]
+			variable DBcorrL		= DBPar[1][0]
+			variable DBEtaError		= DBPar[2][4]
+			variable DBcorrLError		= DBPar[1][4]
 			FittingResults+="Prefactor = "+num2str(DBPrefactor)+"\r"
 			FittingResults+="Eta = "+num2str(DBEta)+" +/- "+num2str(DBEtaError)+"\r"
 			FittingResults+="Correlation Length = "+num2str(DBcorrL)+" +/- "+num2str(DBcorrLError)+"\r"
 			break
 		case "Treubner-Strey":	// execute if case matches expression
 			//Teubner-Strey Model
-			ListOfVariables+=ListOfVariablesTS
-			NVAR TSPrefactor
-			NVAR TSCorrelationLength
-			NVAR TSRepeatDistance
+			Wave TSPar = root:Packages:Irena:SysSpecModels:TSPar
+			//TSParNames = {"Prefactor","A","C1","C2","CorrLength","RepeatDistance"}
+			variable TSPrefactor		= TSPar[0][0]
+			variable TSCorrelationLength= TSPar[4][0]
+			variable TSRepeatDistance	= TSPar[5][0]
+			variable TSPrefactorError	= TSPar[0][4]
+			variable TSCorrLengthError	= TSPar[4][4]
+			variable TSRepDistError		= TSPar[5][4]
 			FittingResults+="Prefactor = "+num2str(TSPrefactor)+"\r"
 			FittingResults+="Correlation Length = "+num2str(TSCorrelationLength)+"\r"
 			FittingResults+="Repeat distance = "+num2str(TSRepeatDistance)+"\r"
 			break
 		case "Benedetti-Ciccariello":	// execute if case matches expression
 			//Ciccariello Coated Porous media Porods oscillations
-			ListOfVariables+=ListOfVariablesBC
-			NVAR BCPorodsSpecSurfArea
-			NVAR BCLayerScatLengthDens
-			NVAR BCCoatingsThickness
-			NVAR BCPorodsSpecSurfAreaError
-			NVAR BCLayerScatLengthDensError
-			NVAR BCCoatingsThicknessError
+			Wave BCPar = root:Packages:Irena:SysSpecModels:BCPar
+			//BCParNames = {"PorodsSpecSurfArea", "CoatingsThickness","LayerScatLengthDens","SolidScatLengthDensity","VoidScatLengthDensity"}
+			variable BCPorodsSpecSurfArea		= BCPar[0][0]
+			variable BCLayerScatLengthDens		= BCPar[2][0]
+			variable BCCoatingsThickness		= BCPar[1][0]
+			variable BCPorodsSpecSurfAreaError	= BCPar[0][4]
+			variable BCLayerScatLengthDensError	= BCPar[2][4]
+			variable BCCoatingsThicknessError	= BCPar[1][4]
 			FittingResults+="Porod specific surface area [cm2/cm3]= "+num2str(BCPorodsSpecSurfArea)+" +/- "+num2str(BCPorodsSpecSurfAreaError)+"\r"
 			FittingResults+="Layer Thickness [A] = "+num2str(BCCoatingsThickness)+" +/- "+num2str(BCCoatingsThicknessError)+"\r"
 			FittingResults+="Layer Contrast [10^10 cm^-2]= "+num2str(BCLayerScatLengthDens)+" +/- "+num2str(BCLayerScatLengthDensError)+"\r"
 			break
+		case "Hermans":	// execute if case matches expression
+			Wave HermansPar 	= 	root:Packages:Irena:SysSpecModels:HermansPar
+			//HermansParNames = {"AmorphousThickness","SigmaAmorphous","LamellaeThickness","LamellaeThicknessSigma","Bvalue"}
+			FittingResults+= "Amorphous Thickness = "+num2str(HermansPar[0][0])+" A"+" +/- "+num2str(HermansPar[0][4])+"\r"
+			FittingResults+= "Am. Thick. Sigma = "+num2str(HermansPar[1][0])+" A"+" +/- "+num2str(HermansPar[1][4])+"\r"
+			FittingResults+= "Lamellae thickness = "+num2str(HermansPar[2][0])+" A"+" +/- "+num2str(HermansPar[2][4])+"\r"
+			FittingResults+= "Lam. thick. Sigma = "+num2str(HermansPar[3][0])+" A"+" +/- "+num2str(HermansPar[3][4])+"\r"
+			break
+		case "Hybrid Hermans":	// execute if case matches expression
+			Wave HybHermansPar 	= 	root:Packages:Irena:SysSpecModels:HybHermansPar
+			//HybHermansParNames = {"AmorphousThickness","SigmaAmorphous","LamellaeThickness","LamellaeSigma","Bvalue","G2","Rg2"}
+			FittingResults+= "Amorphous Thickness = "+num2str(HybHermansPar[0][0])+" A"+" +/- "+num2str(HybHermansPar[0][4])+"\r"
+			FittingResults+= "Am. Thick. Sigma = "+num2str(HybHermansPar[1][0])+" A"+" +/- "+num2str(HybHermansPar[1][4])+"\r"
+			FittingResults+= "Lamellae thickness = "+num2str(HybHermansPar[2][0])+" A"+" +/- "+num2str(HybHermansPar[2][4])+"\r"
+			FittingResults+= "Lam. thick. Sigma = "+num2str(HybHermansPar[3][0])+" A"+" +/- "+num2str(HybHermansPar[3][4])+"\r"
+			FittingResults+= "G2  = "+num2str(HybHermansPar[5][0])+" A"+" +/- "+num2str(HybHermansPar[5][4])+"\r"
+			FittingResults+= "Rg2 = "+num2str(HybHermansPar[6][0])+" A"+" +/- "+num2str(HybHermansPar[6][4])+"\r"
+			break
+		case "Unified Born Green":	// execute if case matches expression
+			Wave UBGPar 	= 	root:Packages:Irena:SysSpecModels:UBGPar
+			//UBGParNames = {"Rg1","B1","pack","CorrDist","StackIrreg","kI"}
+			FittingResults+= "Rg1 = "+num2str(UBGPar[0][0])+" A"+" +/- "+num2str(UBGPar[0][4])+"\r"
+			FittingResults+= "B1 = "+num2str(UBGPar[1][0])+" A"+" +/- "+num2str(UBGPar[1][4])+"\r"
+			FittingResults+= "Pack = "+num2str(UBGPar[2][0])+" A"+" +/- "+num2str(UBGPar[2][4])+"\r"
+			FittingResults+= "Corr Dist ξ = "+num2str(UBGPar[3][0])+" A"+" +/- "+num2str(UBGPar[3][4])+"\r"
+			FittingResults+= "Stack Irr  δ = "+num2str(UBGPar[4][0])+" A"+" +/- "+num2str(UBGPar[4][4])+"\r"
+			FittingResults+= "kI   = "+num2str(UBGPar[5][0])+" A"+" +/- "+num2str(UBGPar[5][4])+"\r"
+			break
+
+
 	endswitch
 	NVAR UseUnified
 	if(UseUnified)
 		FittingResults+="\rModeling also included low-q power-law slope\r"
-		NVAR UnifPwrlawP
-		NVAR UnifPwrlawB
-		NVAR UnifPwrlawPError
-		NVAR UnifPwrlawBError
-		FittingResults+="Low-Q Prefactor = "+num2str(UnifPwrlawB)+" +/- "+num2str(UnifPwrlawBError)+"\r"
-		FittingResults+="Low-Q slope = "+num2str(UnifPwrlawP)+" +/- "+num2str(UnifPwrlawPError)+"\r"
+		Wave UnifiedPar = root:Packages:Irena:SysSpecModels:UnifiedPar
+		//UnifiedParNames = {"G","Rg","B","P","UnifRgCO"}, "LinkUnifRgCO"= [4][1] aka Fit
+		variable UnifRg			= UnifiedPar[1][0]
+		variable UnifG			= UnifiedPar[0][0]
+		variable UnifGError		= UnifiedPar[0][4]
+		variable UnifRgError	= UnifiedPar[1][4]
+		variable UnifPwrlawP	= UnifiedPar[3][0]
+		variable UnifPwrlawB	= UnifiedPar[2][0]
+		variable UnifPwrlawPError	= UnifiedPar[3][4]
+		variable UnifPwrlawBError	= UnifiedPar[2][4]
+		FittingResults+="Low-Q G = "+num2str(UnifG)+" +/- "+num2str(UnifGError)+"\r"
+		FittingResults+="Low-Q Rg = "+num2str(UnifRg)+" +/- "+num2str(UnifRgError)+"\r"
+		FittingResults+="Low-Q B = "+num2str(UnifPwrlawB)+" +/- "+num2str(UnifPwrlawBError)+"\r"
+		FittingResults+="Low-Q P = "+num2str(UnifPwrlawP)+" +/- "+num2str(UnifPwrlawPError)+"\r"
 	endif
 	NVAR SASBackground
 	FittingResults+= "SAS background included = "+num2str(SASBackground)+"\r"
@@ -2101,6 +2919,9 @@ static Function IR3S_AttachTags(Attach)
 	Tag/W=IR3S_LogLogDataDisplay /K/N=CiccBenTag 
 	Tag/W=IR3S_LogLogDataDisplay /K/N=TStag 
 	Tag/W=IR3S_LogLogDataDisplay /K/N=UFTag 
+	Tag/W=IR3S_LogLogDataDisplay /K/N=UBGTag 
+	Tag/W=IR3S_LogLogDataDisplay /K/N=HermansTag 
+	Tag/W=IR3S_LogLogDataDisplay /K/N=HybHermansTag 
 
 	if(attach && !HideTagsAlways)	
 		SVAR DataFolderName		= root:Packages:Irena:SysSpecModels:DataFolderName
@@ -2108,18 +2929,19 @@ static Function IR3S_AttachTags(Attach)
 		wave OriginalQvector	= root:Packages:Irena:SysSpecModels:OriginalDataQWave
 		SVAR ModelSelected 		= root:Packages:Irena:SysSpecModels:ModelSelected
 		WAVE ModelIntensity 	= root:Packages:Irena:SysSpecModels:ModelIntensity
-		string LowQText, DBText, CiccBenTxt,TStxt
+		string LowQText, DBText, CiccBenTxt,TStxt, HermansTxt
 		variable attachPoint
-	
 	
 	
 		strswitch(ModelSelected)	// string switch
 			case "Debye-Bueche":	// execute if case matches expression
-				NVAR DBPrefactor	= root:Packages:Irena:SysSpecModels:DBPrefactor
-				NVAR DBEta			= root:Packages:Irena:SysSpecModels:DBEta
-				NVAR DBcorrL		= root:Packages:Irena:SysSpecModels:DBcorrL
-				NVAR DBEtaError		= root:Packages:Irena:SysSpecModels:DBEtaError
-				NVAR DBcorrLError		= root:Packages:Irena:SysSpecModels:DBcorrLError
+				Wave DBPar = root:Packages:Irena:SysSpecModels:DBPar
+				//DBParNames = {"Prefactor","CorrLength","Eta","Wavelength"}
+				variable DBPrefactor	= DBPar[0][0]
+				variable DBEta			= DBPar[2][0]
+				variable DBcorrL		= DBPar[1][0]
+				variable DBEtaError		= DBPar[2][4]
+				variable DBcorrLError		= DBPar[1][4]
 				findlevel /Q /P OriginalQvector, (pi/(2* DBcorrL))
 				attachPoint= numtype(V_levelX)==0 ? V_levelX : numpnts(OriginalQvector)/2
 				DBText = "\Z"+IN2G_LkUpDfltVar("LegendSize")+"Debye-Bueche model results\r"
@@ -2130,12 +2952,14 @@ static Function IR3S_AttachTags(Attach)
 				break
 			case "Treubner-Strey":	// execute if case matches expression
 				//Teubner-Strey Model
-				NVAR TSPrefactor		= root:Packages:Irena:SysSpecModels:TSPrefactor
-				NVAR TSCorrelationLength= root:Packages:Irena:SysSpecModels:TSCorrelationLength
-				NVAR TSRepeatDistance	= root:Packages:Irena:SysSpecModels:TSRepeatDistance
-				NVAR TSPrefactorError	= root:Packages:Irena:SysSpecModels:TSPrefactorError
-				NVAR TSCorrLengthError	= root:Packages:Irena:SysSpecModels:TSCorrLengthError
-				NVAR TSRepDistError		= root:Packages:Irena:SysSpecModels:TSRepDistError
+				Wave TSPar = root:Packages:Irena:SysSpecModels:TSPar
+				//TSParNames = {"Prefactor","A","C1","C2","CorrLength","RepeatDistance"}
+				variable TSPrefactor		= TSPar[0][0]
+				variable TSCorrelationLength= TSPar[4][0]
+				variable TSRepeatDistance	= TSPar[5][0]
+				variable TSPrefactorError	= TSPar[0][4]
+				variable TSCorrLengthError	= TSPar[4][4]
+				variable TSRepDistError		= TSPar[5][4]
 				findlevel /Q /P OriginalQvector, (pi/ (1.55*TSCorrelationLength))
 				attachPoint= numtype(V_levelX)==0 ? V_levelX : numpnts(OriginalQvector)/2
 				TStxt = "\Z"+IN2G_LkUpDfltVar("LegendSize")+"Teubner-Strey model results\r"
@@ -2146,12 +2970,14 @@ static Function IR3S_AttachTags(Attach)
 				break
 			case "Benedetti-Ciccariello":	// execute if case matches expression
 				//Ciccariello Coated Porous media Porods oscillations
-				NVAR BCPorodsSpecSurfArea		= root:Packages:Irena:SysSpecModels:BCPorodsSpecSurfArea
-				NVAR BCLayerScatLengthDens		= root:Packages:Irena:SysSpecModels:BCLayerScatLengthDens
-				NVAR BCCoatingsThickness		= root:Packages:Irena:SysSpecModels:BCCoatingsThickness
-				NVAR BCPorodsSpecSurfAreaError	= root:Packages:Irena:SysSpecModels:BCPorodsSpecSurfAreaError
-				NVAR BCLayerScatLengthDensError	= root:Packages:Irena:SysSpecModels:BCLayerScatLengthDensError
-				NVAR BCCoatingsThicknessError	= root:Packages:Irena:SysSpecModels:BCCoatingsThicknessError
+				Wave BCPar = root:Packages:Irena:SysSpecModels:BCPar
+				//BCParNames = {"PorodsSpecSurfArea", "CoatingsThickness","LayerScatLengthDens","SolidScatLengthDensity","VoidScatLengthDensity"}
+				variable BCPorodsSpecSurfArea		= BCPar[0][0]
+				variable BCLayerScatLengthDens		= BCPar[2][0]
+				variable BCCoatingsThickness		= BCPar[1][0]
+				variable BCPorodsSpecSurfAreaError	= BCPar[0][4]
+				variable BCLayerScatLengthDensError	= BCPar[2][4]
+				variable BCCoatingsThicknessError	= BCPar[1][4]
 				attachPoint=(pcsr(A,"IR3S_LogLogDataDisplay") +pcsr(B,"IR3S_LogLogDataDisplay"))/2
 				CiccBenTxt = "\Z"+IN2G_LkUpDfltVar("LegendSize")+"Ciccariello & Benedetti model results\r"
 				CiccBenTxt += "Sample name: "+DataFolderName+IntensityWaveName+"\r"
@@ -2168,17 +2994,60 @@ static Function IR3S_AttachTags(Attach)
 				//	Tag/W=IR2H_IQ4_Q_PlotGels /C/N=CiccBenTag OriginalIntQ4, attachPoint,CiccBenTxt
 				//endif
 				break
+			case "Hermans":	// execute if case matches expression
+				Wave HermansPar 	= 	root:Packages:Irena:SysSpecModels:HermansPar
+				//HermansParNames = {"AmorphousThickness","SigmaAmorphous","LamellaeThickness","LamellaeThicknessSigma","Bvalue"}
+				attachPoint=(pcsr(A,"IR3S_LogLogDataDisplay") +pcsr(B,"IR3S_LogLogDataDisplay"))/2
+				HermansTxt = "\Z"+IN2G_LkUpDfltVar("LegendSize")+"Hermans model results\r"
+				HermansTxt += "Sample name: "+DataFolderName+IntensityWaveName+"\r"
+				HermansTxt += "Amorphous Thickness = "+num2str(HermansPar[0][0])+" A"+" +/- "+num2str(HermansPar[0][4])+"\r"
+				HermansTxt += "Am. Thick. Sigma = "+num2str(HermansPar[1][0])+" A"+" +/- "+num2str(HermansPar[1][4])+"\r"
+				HermansTxt += "Lamellae thickness = "+num2str(HermansPar[2][0])+" A"+" +/- "+num2str(HermansPar[2][4])+"\r"
+				HermansTxt += "Lam. thick. Sigma = "+num2str(HermansPar[3][0])+" A"+" +/- "+num2str(HermansPar[3][4])
+				Tag/W=IR3S_LogLogDataDisplay /C/N=HermansTag ModelIntensity, attachPoint,HermansTxt
+				break
+			case "Hybrid Hermans":	// execute if case matches expression
+				Wave HybHermansPar 	= 	root:Packages:Irena:SysSpecModels:HybHermansPar
+				//HybHermansParNames = {"AmorphousThickness","SigmaAmorphous","LamellaeThickness","LamellaeSigma","Bvalue","G2","Rg2"}
+				attachPoint=(pcsr(A,"IR3S_LogLogDataDisplay") +pcsr(B,"IR3S_LogLogDataDisplay"))/2
+				HermansTxt = "\Z"+IN2G_LkUpDfltVar("LegendSize")+"Hybrid Hermans model results\r"
+				HermansTxt += "Sample name: "+DataFolderName+IntensityWaveName+"\r"
+				HermansTxt += "Amorphous Thickness = "+num2str(HybHermansPar[0][0])+" A"+" +/- "+num2str(HybHermansPar[0][4])+"\r"
+				HermansTxt += "Am. Thick. Sigma = "+num2str(HybHermansPar[1][0])+" A"+" +/- "+num2str(HybHermansPar[1][4])+"\r"
+				HermansTxt += "Lamellae thickness = "+num2str(HybHermansPar[2][0])+" A"+" +/- "+num2str(HybHermansPar[2][4])+"\r"
+				HermansTxt += "Lam. thick. Sigma = "+num2str(HybHermansPar[3][0])+" A"+" +/- "+num2str(HybHermansPar[3][4])
+				HermansTxt += "G2  = "+num2str(HybHermansPar[5][0])+" A"+" +/- "+num2str(HybHermansPar[5][4])+"\r"
+				HermansTxt += "Rg2 = "+num2str(HybHermansPar[6][0])+" A"+" +/- "+num2str(HybHermansPar[6][4])
+				Tag/W=IR3S_LogLogDataDisplay /C/N=HybHermansTag ModelIntensity, attachPoint,HermansTxt
+				break
+			case "Unified Born Green":	// execute if case matches expression
+				Wave UBGPar 	= 	root:Packages:Irena:SysSpecModels:UBGPar
+				//UBGParNames = {"Rg1","B1","pack","CorrDist","StackIrreg","kI"}
+				attachPoint=(pcsr(A,"IR3S_LogLogDataDisplay") +pcsr(B,"IR3S_LogLogDataDisplay"))/2
+				HermansTxt = "\Z"+IN2G_LkUpDfltVar("LegendSize")+"Unified Born Green results\r"
+				HermansTxt += "Sample name: "+DataFolderName+IntensityWaveName+"\r"
+				HermansTxt += "Rg1 = "+num2str(UBGPar[0][0])+" A"+" +/- "+num2str(UBGPar[0][4])+"\r"
+				HermansTxt += "B1 = "+num2str(UBGPar[1][0])+" A"+" +/- "+num2str(UBGPar[1][4])+"\r"
+				HermansTxt += "Pack = "+num2str(UBGPar[2][0])+" A"+" +/- "+num2str(UBGPar[2][4])+"\r"
+				HermansTxt += "Corr Dist ξ = "+num2str(UBGPar[3][0])+" A"+" +/- "+num2str(UBGPar[3][4])+"\r"
+				HermansTxt += "Stack Irr  δ = "+num2str(UBGPar[4][0])+" A"+" +/- "+num2str(UBGPar[4][4])+"\r"
+				HermansTxt += "k\\BI\\M"+"\Z"+IN2G_LkUpDfltVar("LegendSize")+"  = "+num2str(UBGPar[5][0])+" A"+" +/- "+num2str(UBGPar[5][4])
+				Tag/W=IR3S_LogLogDataDisplay /C/N=UBGTag ModelIntensity, attachPoint,HermansTxt
+				break
 		endswitch
+
 		NVAR UseUnified			= root:Packages:Irena:SysSpecModels:UseUnified
 		if(UseUnified)
-			NVAR UnifRg			= root:Packages:Irena:SysSpecModels:UnifRg
-			NVAR UnifG			= root:Packages:Irena:SysSpecModels:UnifG
-			NVAR UnifGError		= root:Packages:Irena:SysSpecModels:UnifGError
-			NVAR UnifRgError	= root:Packages:Irena:SysSpecModels:UnifRgError
-			NVAR UnifPwrlawP	= root:Packages:Irena:SysSpecModels:UnifPwrlawP
-			NVAR UnifPwrlawB	= root:Packages:Irena:SysSpecModels:UnifPwrlawB
-			NVAR UnifPwrlawPError	= root:Packages:Irena:SysSpecModels:UnifPwrlawPError
-			NVAR UnifPwrlawBError	= root:Packages:Irena:SysSpecModels:UnifPwrlawBError
+			Wave UnifiedPar = root:Packages:Irena:SysSpecModels:UnifiedPar
+			//UnifiedParNames = {"G","Rg","B","P","UnifRgCO"}, "LinkUnifRgCO"= [4][1] aka Fit
+			variable UnifRg			= UnifiedPar[1][0]
+			variable UnifG			= UnifiedPar[0][0]
+			variable UnifGError		= UnifiedPar[0][4]
+			variable UnifRgError	= UnifiedPar[1][4]
+			variable UnifPwrlawP	= UnifiedPar[3][0]
+			variable UnifPwrlawB	= UnifiedPar[2][0]
+			variable UnifPwrlawPError	= UnifiedPar[3][4]
+			variable UnifPwrlawBError	= UnifiedPar[2][4]
 			if((pi/ UnifRg)^2 > OriginalQvector[0])
 				findlevel /Q /P OriginalQvector, (pi/(2*UnifRg))
 				attachPoint=V_levelX
@@ -2205,6 +3074,7 @@ end
 //*****************************************************************************************************************
 static Function IR3S_RecoverParameters()
 
+	// TODO - fix this for waves!
 	NVAR DoNotTryRecoverData = root:Packages:Irena:SysSpecModels:DoNotTryRecoverData
 	if(DoNotTryRecoverData)
 		return 0

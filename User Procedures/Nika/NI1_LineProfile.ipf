@@ -1770,8 +1770,8 @@ Function NI1A_LineProf_CreateLP()
 		Wave W_ImageLineProfile = root:Packages:Convert2Dto1D:W_ImageLineProfile
 		Wave W_LineProfileStdv=root:Packages:Convert2Dto1D:W_LineProfileStdv
 		NVAR UseBatchProcessing=root:Packages:Convert2Dto1D:UseBatchProcessing
-		wavestats W_LineProfileStdv
-		if(V_numNaNs>(V_npnts/5))		//more than 20% of NaNs , this will nto work righ, repalce with stdDev
+		wavestats/Q W_LineProfileStdv
+		if(V_numNaNs>(V_npnts/5))		//more than 20% of NaNs , this will not work righ, repalce with stdDev
 			Print "NOTE: Too many NaNs in error calculations. Intensity error in this case is calculated as square root of intensity, which may be WRONG."
 			W_LineProfileStdv=sqrt(W_ImageLineProfile)
 		else	
@@ -1789,15 +1789,10 @@ Function NI1A_LineProf_CreateLP()
 		endif
 		//Now calculate the angle wave for ellipse but calculate for everything...
 		Duplicate/O W_ImageLineProfile, LineProfileAzAvalues
-//		LineProfileAzAvalues = atan2((W_LineProfileY[p]-BeamCenterY),(W_LineProfileX[p]-BeamCenterX))
-//		LineProfileAzAvalues*=180/pi
-////		LineProfileAzAvalues=360 - LineProfileAzAvalues
-//		LineProfileAzAvalues = LineProfileAzAvalues[p]>=0 ? LineProfileAzAvalues[p] : 360+LineProfileAzAvalues[p]
 		LineProfileAzAvalues = atan2((W_LineProfileY[p]-BeamCenterY),(BeamCenterX - W_LineProfileX[p]))
 		LineProfileAzAvalues*=180/pi
 		LineProfileAzAvalues+=180
-//		LineProfileAzAvalues = LineProfileAzAvalues[p]>=0 ? LineProfileAzAvalues[p] : 360+LineProfileAzAvalues[p]
-		// end of anlge wave creation...
+		// end of angle wave creation...
 		Duplicate/O W_ImageLineProfile, LineProfileIntensity, LineProfileQvalues
 		Duplicate/O W_LineProfileStdv, LineProfileIntSdev
 		Duplicate/O W_LineProfileX, LineProfileYValsPix, LineProfileQy		//note: I screwed up above, so this needs to be changed...

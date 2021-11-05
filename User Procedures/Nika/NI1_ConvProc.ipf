@@ -8204,7 +8204,7 @@ Function NI1_CalculateImageStatistics()
 					tmpsStr1 = "Raw image statistics:\r"
 				endif
 				Notebook $nb text=tmpsStr1
-				WaveStats  tmpCCDImageToConvert
+				WaveStats/Q  tmpCCDImageToConvert
 				Notebook $nb text="Image dimensions: "+num2str(DimSize(CCDImageToConvert, 0 ))+" x "+ num2str(DimSize(CCDImageToConvert, 1 ))+"\r"
 				Notebook $nb text="Nuber of pixels = "+num2str(V_npnts)+"\r"
 				Notebook $nb text="Average counts/pix = "+num2str(V_avg)+"\r"

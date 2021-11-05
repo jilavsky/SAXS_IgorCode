@@ -9,6 +9,7 @@
 
 
 constant NexusVersionNumber=1.05
+constant kPrintNexusrecord = 0			//set to 1 to print flood of Nexus parameters in history area. 
 
 // support of Nexus files
 
@@ -713,7 +714,7 @@ static Function NEXUS_ReadNXparameters(PathToNewData)
 		//removed Blank and empty values here: EmptyI0;BackgroundMeasTime;EmptyMeasurementTime;
 		SVAR ImageBeingLoaded=root:Packages:Convert2Dto1D:ImageBeingLoaded
 		//this will be Empty, Dark, sample, or ""
-		variable printRecords=1
+		variable printRecords=kPrintNexusrecord
 		NVAR/Z UseBatchProcessing=root:Packages:Convert2Dto1D:UseBatchProcessing
 		if(NVAR_Exists(UseBatchProcessing))
 			if(UseBatchProcessing)
@@ -797,7 +798,9 @@ Function/T NEXUS_ImportAFile(FilePathName,Filename)		//imports any Nexus (HDF5) 
 	NewDataFolder/O root:Packages:NexusImportTMP
 	string Status
 	PathInfo $(FilePathName)	
-	print S_Path
+	if(kPrintNexusrecord)
+		print S_Path
+	endif
 	//import the file
 	//Status = H5GW_ReadHDF5(FilePathName, "root:Packages:NexusImportTMP", Filename)
 	Status = H5GW_ReadHDF5("root:Packages:NexusImportTMP", S_path+Filename)
@@ -935,10 +938,8 @@ static Function/T NEXUS_FixStringNoteFormating(StringIn)
 	Metadata = ReplaceString(";;", Metadata, ";" )
 	Metadata = Metadata[1,inf]
 	Metadata = ReplaceString(" ", Metadata, "" )
-	//print Metadata
 	StringOut = ReplaceStringByKey("Metadata:TIFFImageDescription", StringIn, Metadata , "=", ";")
 	StringOut = ReplaceString("Metadata:TIFFImageDescription=", StringOut, "")
-	//print StringOut		
 	return StringOut
 end
 
@@ -1620,9 +1621,6 @@ Function NEXUS_WriteNx1DCanSASNika(SampleName, Iwv, dIwv, Qwv, dQwv, AppendToNam
 	NEXUS_HdfSaveAttrib("units","degree",tmpPath+"yaw", fileID)
 	NEXUS_HdfSaveDataVar("pitch",(VerticalTilt),tmpPath, fileID)
 	NEXUS_HdfSaveAttrib("units","degree",tmpPath+"pitch", fileID)
-
-
-	
 	HDF5CloseFile fileID  
 	print "Wrote 1D data "+SampleName+" into into Nexus/CanSAS file : "+Hdf5FileName
 end

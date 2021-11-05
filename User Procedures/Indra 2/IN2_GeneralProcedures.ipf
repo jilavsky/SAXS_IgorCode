@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.28
+#pragma version = 2.29
 #pragma IgorVersion = 8.03
 
 //control constants
@@ -17,9 +17,9 @@ Constant TypicalPanelHorizontalSize = 350
    //For releases uncomment the next line and set to correct version number:
 //Strconstant ManualVersionString = "en/1.4/"					//1.4 is December2018 release
 //Strconstant ManualVersionString = "en/1.5.1/"				//this was for September2020 release. 
-Strconstant ManualVersionString = "en/1.5.2/"				//this was for October 2021 release. 
+//Strconstant ManualVersionString = "en/1.5.2/"				//this was for October 2021 release. 
 //*** For development version uncomment next line, it points to latest (development) version of manuals:
-//Strconstant ManualVersionString = "en/latest/"		//this is for beta version, so it sees current version of manual. 
+Strconstant ManualVersionString = "en/latest/"		//this is for beta version, so it sees current version of manual. 
 strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan-ilavsky/IrenaNikaRecords/VersionCheck.php?"
 //this is probably useless... strconstant strConstVerCheckwwwAddress="http://usaxs.xray.aps.anl.gov/staff/ilavsky/IrenaNikaRecords/VersionCheck.php?"
 //constant useUserFileNames = 0			//this controls, if IN2G_ReturnUserSampleName(FolderPathToData) returns folder name (=0) or SmapleName (string, if exists, =1)
@@ -38,7 +38,8 @@ strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
-//2.28 Added tto IP9 right click browser option to duplicate folder or wave
+//2.29 Fixed IN2G_BrowserDuplicateItem() to handle liberal names. 
+//2.28 Added to IP9 right click browser option to duplicate folder or wave (IN2G_BrowserDuplicateItem())
 //2.27 added IN2G_ReturnLabelForAxis(WindowName, "bottom|top")
 //2.26 disabled IN2G_CheckScreenSize for IP9
 //2.25 added IN2G_AddWaveStatistics() to right click TopTrace menu. Adds wave stats results and lines with average, ave+sdev, ave-Sdev
@@ -590,7 +591,7 @@ end
 					Wave/Z w=$(BrowserSelStr)
 					if(DataFolderExists(BrowserSelStr))	
 						LastNameStr = StringFromList(ItemsInList(BrowserSelStr,":")-1,BrowserSelStr,":")
-						NewItemNameStr = RemoveFromList(LastNameStr, BrowserSelStr, ":")+LastNameStr+"_dup"
+						NewItemNameStr = RemoveFromList(LastNameStr, BrowserSelStr, ":")+PossiblyQUoteName(IN2G_RemoveExtraQuote(LastNameStr,1,1)+"_dup")
 						if(DataFolderExists(NewItemNameStr))
 							OrderNum=0
 							Do
@@ -607,7 +608,7 @@ end
 						DuplicateDataFolder $(OldItemStr), $(NewItemNameStr)
 					elseif(WaveExists(w))
 						LastNameStr = StringFromList(ItemsInList(BrowserSelStr,":")-1,BrowserSelStr,":")
-						NewItemNameStr = RemoveFromList(LastNameStr, BrowserSelStr, ":")+LastNameStr+"_dup"
+						NewItemNameStr = RemoveFromList(LastNameStr, BrowserSelStr, ":")+PossiblyQUoteName(IN2G_RemoveExtraQuote(LastNameStr,1,1)+"_dup")
 						Wave/Z oldWv=$(NewItemNameStr)
 						if(WaveExists(oldWv))
 							OrderNum=0

@@ -2355,6 +2355,8 @@ Function NI1_9IDCFindI0(SampleName)
 	variable I000 = NumberByKey(NI1_9IDCFindKeyStr("I0_cts_gated=", OldNote), OldNote  , "=" , ";")
 	variable I0gain = NumberByKey(NI1_9IDCFindKeyStr("I0_gain=", OldNote), OldNote  , "=" , ";")
 	//print SampleName+"   normalized I0 = "+num2str(I000 / I0gain)
+	//print "I0 gain = "+num2str(I0gain)
+	//print "I0 counts uncorrected = "+num2str(I000)
 	I000 = I000 / I0gain
 	if(numtype(I000)!=0)
 		Print "I0 value not found in the wave note of the sample file, setting to 1"

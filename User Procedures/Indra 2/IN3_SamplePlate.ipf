@@ -1,7 +1,7 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version = 1.06
+#pragma version = 1.07
 #pragma IgorVersion=8.03
 
 
@@ -13,6 +13,7 @@
 
 //this is tool to setup Sample Plates for USAXS, survey sample positions, and generate Command files. 
 
+//1.07 add IN3S_ImportFile which imports other command files. For nwo set for 12IDB command files. 
 //1.06 add Import Image for iamge of sample plate. Straightens paralax and trims based on user corner selection and dimensions provided. 
 //1.05 added Append to command file
 //1.04 modifications to beamline survey with epics controls. 
@@ -38,7 +39,7 @@
 
 //************************************************************************************************************
 
-constant IN3_SamplePlateSetupVersion=1.01
+constant IN3_SamplePlateSetupVersion=1.02
 constant IN3SBeamlineSurveyEpicsMonTicks = 15 
 constant IN3SBeamlineSurveyDevelopOn = 0
 //  values for beamtime estimate, last calibrated using BS on 7/31/2021 JIL (used 15 scan records BS).
@@ -157,14 +158,15 @@ Function IN3S_MainPanel()
 		PopupMenu NewPlateTemplate,mode=1,popvalue=SelectedPlateName, fColor=(1,16019,65535)
 		PopupMenu NewPlateTemplate,value="9x9 Acrylic/magnetic plate;NMR Acrylic plate;Old Style Al Plate;NMR Tubes holder;NMR tubes heater;Generic Grid holder;AgBehenateLaB6;"
 		Button PopulateTable,pos={300,75},size={120,17}, proc=IN3S_ButtonProc,title="Populate Table", help={"Creates new set of positions"}
-		Button CreateImage,pos={440,75},size={120,17}, proc=IN3S_ButtonProc,title="Create image", help={"Creates new set of positions"}
-		Button ImportImage,pos={440,92},size={120,17}, proc=IN3S_ButtonProc,title="Import image", help={"Import image as Template"}
+		Button ImportFile,pos={300,92},size={120,17}, proc=IN3S_ButtonProc,title="Import file", help={"Import file as new set of positions"}
+		Button CreateImage,pos={440,75},size={120,17}, proc=IN3S_ButtonProc,title="Create image", help={"Creates image for survey of sample positions"}
+		Button ImportImage,pos={440,92},size={120,17}, proc=IN3S_ButtonProc,title="Import image", help={"Import image for survey of sample positions"}
 		Button BeamlineSurvey,pos={440,110},size={120,17}, proc=IN3S_ButtonProc,title="Beamline Survey", help={"This opens GUI for survey at the beamline"}
 
 		TitleBox Info4 title="\Zr110Current set name : ",pos={300,110},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0
 		SetVariable UserNameForSampleSet,pos={300,130},size={270,20}, proc=IN3S_SetVarProc,title="Set Name: "
 		Setvariable UserNameForSampleSet,fStyle=2, variable=root:Packages:SamplePlateSetup:UserNameForSampleSet, help={"Name for these samples"}
-		Button SavePositionSet,pos={420,148},size={160,19}, proc=IN3S_ButtonProc,title="Save Position Set", help={"Saves set of positions with user name"}
+		Button SavePositionSet,pos={440,145},size={120,17}, proc=IN3S_ButtonProc,title="Save Position Set", help={"Saves set of positions with user name"}
 		
    		TabControl TableTabs  pos={0,160},size={590,430},tabLabel(0)="Sample Table", value= 0, proc=IN3S_TableTabsTabProc
 	    TabControl TableTabs  tabLabel(1)="Option Controls"
@@ -399,13 +401,91 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
   			NoSelectedRows = ItemsInList(ListOfSelRows)
   			
 			if (lba.eventMod & 0x10)	// rightclick
-				items = "Insert new lines;Delete selected lines;Duplicate selected Lines;Set lines as Blank;Set as Dist. Std. AgBehLaB6;Write same Name;"
+				//items = "Insert new lines;Delete selected lines;Duplicate selected Lines;Set lines as Blank;Set as Dist. Std. AgBehLaB6;Write same Name;"
+				//items += "Write same Thickness;Same Sx to all empty;Same Sy to all empty;Increment Sx from selected row;Increment Sy from selected row;"
+				//items += "Copy sel. rows to Clipboard;Paste Clipboard to sel. rows;Insert new rows with Clipboard vals.;"
+				items = "Copy sel. rows to Clipboard;Paste Clipboard to sel. rows;Insert new rows with Clipboard vals.;"
+				items += "Insert new lines;Delete selected lines;Duplicate selected Lines;Write same Name;"
 				items += "Write same Thickness;Same Sx to all empty;Same Sy to all empty;Increment Sx from selected row;Increment Sy from selected row;"
-				items += "Copy sel. rows to Clipboard;Paste Clipboard to sel. rows;Insert new rows with Clipboard vals.;"
+				items += "Add to Sx from selected row;Add to Sy from selected row;Set lines as Blank;Set as Dist. Std. AgBehLaB6;"
 				PopupContextualMenu items
 				// V_flag is index of user selected item    
 				switch (V_flag)
-					case 1:	// "Insert new line"
+					case 1:	// "Copy in Table Clipboard"
+						make/O/T/N=(NoSelectedRows) root:Packages:SamplePlateSetup:TableClipboardWv
+						Wave/T TableClipboardWv = root:Packages:SamplePlateSetup:TableClipboardWv
+						SVAR TableClipboard = root:Packages:SamplePlateSetup:TableClipboard
+						For(j=0;j<NoSelectedRows;j+=1)
+							tempRow = str2num(StringFromList(j, ListOfSelRows))
+							TableClipboard = "SampleName="+listWave[tempRow][0]+";"
+							TableClipboard += "SX="+listWave[tempRow][1]+";"
+							TableClipboard += "SY="+listWave[tempRow][2]+";"
+							TableClipboard += "TH="+listWave[tempRow][3]+";"
+							TableClipboard += "MD="+listWave[tempRow][4]+";"
+							TableClipboardWv[j] = TableClipboard
+						endfor
+						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+						WarningForUser = "Copied rows "+ListOfSelRows+ " in Clipboard" 
+						break;
+					case 2:	// "Paste Table Clipboard in a row"
+						Wave/T/Z TableClipboardWv = root:Packages:SamplePlateSetup:TableClipboardWv
+						//check we have clipboard...
+						if(!WaveExists(TableClipboardWv)||numpnts(TableClipboardWv)<1)
+							Abort "Nothing is stored in Clipboard"
+						endif
+						//check we have same number of lines selected. 
+						if(numpnts(TableClipboardWv)>1 && NoSelectedRows!=numpnts(TableClipboardWv))
+							Abort "Number of lines in Clipboard ("+num2str(numpnts(TableClipboardWv))+") does not match number of selected lines in table ("+num2str(NoSelectedRows)+")"
+						endif
+						//OK, now we should be able to do this... 
+						SVAR TableClipboard = root:Packages:SamplePlateSetup:TableClipboard
+						For(j=0;j<NoSelectedRows;j+=1)
+							if(numpnts(TableClipboardWv)>1)
+								TableClipboard = TableClipboardWv[j]
+							else
+								TableClipboard = TableClipboardWv[0]
+							endif
+							tempRow = str2num(StringFromList(j, ListOfSelRows))
+							listWave[tempRow][0] = StringByKey("SampleName", TableClipboard, "=" , ";")
+							listWave[tempRow][1] = StringByKey("SX", TableClipboard, "=" , ";")
+							listWave[tempRow][2] = StringByKey("SY", TableClipboard, "=" , ";")
+							listWave[tempRow][3] = StringByKey("TH", TableClipboard, "=" , ";")
+							listWave[tempRow][4] = StringByKey("USAXS", TableClipboard, "=" , ";")
+							listWave[tempRow][5] = StringByKey("SAXS", TableClipboard, "=" , ";")
+							listWave[tempRow][6] = StringByKey("WAXS", TableClipboard, "=" , ";")
+							listWave[tempRow][7] = StringByKey("MD", TableClipboard, "=" , ";")
+						endfor
+						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+						WarningForUser = "Pasted Clipboard vals. from org. rows "+ListOfSelRows
+						IN3S_EstimateRunTime()
+						TableIsSaved = 0
+						break;
+					case 3:	// "Insert New rows with Table Clipboard"
+						Wave/T/Z TableClipboardWv = root:Packages:SamplePlateSetup:TableClipboardWv
+						//check we have clipboard...
+						if(!WaveExists(TableClipboardWv)||numpnts(TableClipboardWv)<1)
+							Abort "Nothing is stored in Clipboard"
+						endif
+						SVAR TableClipboard = root:Packages:SamplePlateSetup:TableClipboard
+						For(j=0;j<numpnts(TableClipboardWv);j+=1)
+							TableClipboard = TableClipboardWv[j]
+							tempRow = firstSelectedRow+1
+							IN3S_InsertDeleteLines(1, tempRow,1)
+							listWave[tempRow][0] = StringByKey("SampleName", TableClipboard, "=" , ";")
+							listWave[tempRow][1] = StringByKey("SX", TableClipboard, "=" , ";")
+							listWave[tempRow][2] = StringByKey("SY", TableClipboard, "=" , ";")
+							listWave[tempRow][3] = StringByKey("TH", TableClipboard, "=" , ";")
+							listWave[tempRow][4] = StringByKey("USAXS", TableClipboard, "=" , ";")
+							listWave[tempRow][5] = StringByKey("SAXS", TableClipboard, "=" , ";")
+							listWave[tempRow][6] = StringByKey("WAXS", TableClipboard, "=" , ";")
+							listWave[tempRow][7] = StringByKey("MD", TableClipboard, "=" , ";")
+						endfor
+						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+						WarningForUser = "Inserted "+num2str(numpnts(TableClipboardWv))+" rows with Clipboard (org. rows: "+ListOfSelRows+") "
+						IN3S_EstimateRunTime()
+						TableIsSaved = 0
+						break;
+					case 4:	// "Insert new line"
 						For(j=0;j<ItemsInList(ListOfSelRows);j+=1)
 							tempRow = str2num(StringFromList(j, ListOfSelRows))
 							IN3S_InsertDeleteLines(1, tempRow,1)
@@ -414,7 +494,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 						IN3S_EstimateRunTime()
 						TableIsSaved = 0
 						break
-					case 2:	// "Delete selected lines"
+					case 5:	// "Delete selected lines"
 						For(j=0;j<ItemsInList(ListOfSelRows);j+=1)
 							tempRow = str2num(StringFromList(j, ListOfSelRows))
 							IN3S_InsertDeleteLines(2, tempRow,1)
@@ -423,7 +503,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 						IN3S_EstimateRunTime()
 						TableIsSaved = 0
 						break
-					case 3:	// "Duplicate selected Line"
+					case 6:	// "Duplicate selected Line"
 						For(j=0;j<ItemsInList(ListOfSelRows);j+=1)
 							tempRow = str2num(StringFromList(j, ListOfSelRows))
 							IN3S_InsertDeleteLines(3, tempRow,1)
@@ -432,29 +512,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 						IN3S_EstimateRunTime()
 						TableIsSaved = 0
 						break
-					case 4:	// "Set line as Blank"
-						For(j=0;j<ItemsInList(ListOfSelRows);j+=1)
-							tempRow = str2num(StringFromList(j, ListOfSelRows))
-							listWave[tempRow][0]="Blank"
-							listWave[tempRow][3]="0"
-						endfor
-						WarningForUser = "Set rows "+ListOfSelRows+" as Blank" 
-						IN3S_EstimateRunTime()
-						TableIsSaved = 0
-						break
-					case 5:	// "Set Line as Distance Standard"
-						For(j=0;j<ItemsInList(ListOfSelRows);j+=1)
-							tempRow = str2num(StringFromList(j, ListOfSelRows))
-							listWave[tempRow][0]="AgBehenateLaB6"
-							listWave[tempRow][3]="1"
-						endfor
-						WarningForUser = "Set rows "+ListOfSelRows+" as AgBehenateLaB6" 
-						NVAR USAXSAll=root:Packages:SamplePlateSetup:USAXSAll
-						USAXSAll=0
-						IN3S_EstimateRunTime()
-						TableIsSaved = 0
-						break
-					case 6:	// "Write same name"
+					case 7:	// "Write same name"
 						string NewSampleName="SampleName"
 						string FromWhere = "Selected Rows"
 						string AddOrderNumber = "No"
@@ -526,7 +584,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 						IN3S_EstimateRunTime()
 						TableIsSaved = 0
 						break;
-					case 7:	// "Write Same Thickness"
+					case 8:	// "Write Same Thickness"
 						variable newThickness
 						NVAR DefSaTh = root:Packages:SamplePlateSetup:DefaultSampleThickness
 						newThickness = DefSaTh
@@ -575,7 +633,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 						endfor
 						TableIsSaved = 0
 						break;						
-					case 8:	// "same sx to all empty"
+					case 9:	// "same sx to all empty"
 						variable  NewSxForAll=10
 						Prompt NewSxForAll, "Write same SX in all empty lines?"
 						DoPrompt /Help="Write same SX position for all empty SX?" "Default sx value for all", NewSxForAll
@@ -592,7 +650,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 						IN3S_EstimateRunTime()
 						TableIsSaved = 0
 						break;
-					case 9:	// "same sy to all empty"
+					case 10:	// "same sy to all empty"
 						variable  NewSyForAll=10
 						Prompt NewSyForAll, "Write same SY in all empty lines?"
 						DoPrompt /Help="Write same SY position for all empty SY?" "Default sy value for all", NewSyForAll
@@ -609,7 +667,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 						IN3S_EstimateRunTime()
 						TableIsSaved = 0
 						break;
-					case 10:	// "Increment Sx from selected row"
+					case 11:	// "Increment Sx from selected row"
 						variable  NewSxStep=10
 						variable sxstart
 						Prompt NewSxStep, "Increment SX from first selected row higher?"
@@ -626,11 +684,11 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 							listWave[i][1] = num2str(sxstart+(i-firstSelectedRow)*NewSxStep)
 						endfor
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
-						WarningForUser = "Calculated new sx for rown higher than : " +num2str(row) 
+						WarningForUser = "Calculated new sx for row higher than : " +num2str(row) 
 						IN3S_EstimateRunTime()
 						TableIsSaved = 0
 						break;
-					case 11:	// "Increment Sy from selected row"
+					case 12:	// "Increment Sy from selected row"
 						variable  NewSyStep=10
 						variable systart
 						Prompt NewSyStep, "Increment SY from selected row higher?"
@@ -651,80 +709,63 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 						IN3S_EstimateRunTime()
 						TableIsSaved = 0
 						break;
-					case 12:	// "Copy in Table Clipboard"
-						make/O/T/N=(NoSelectedRows) root:Packages:SamplePlateSetup:TableClipboardWv
-						Wave/T TableClipboardWv = root:Packages:SamplePlateSetup:TableClipboardWv
-						SVAR TableClipboard = root:Packages:SamplePlateSetup:TableClipboard
-						For(j=0;j<NoSelectedRows;j+=1)
-							tempRow = str2num(StringFromList(j, ListOfSelRows))
-							TableClipboard = "SampleName="+listWave[tempRow][0]+";"
-							TableClipboard += "SX="+listWave[tempRow][1]+";"
-							TableClipboard += "SY="+listWave[tempRow][2]+";"
-							TableClipboard += "TH="+listWave[tempRow][3]+";"
-							TableClipboard += "MD="+listWave[tempRow][4]+";"
-							TableClipboardWv[j] = TableClipboard
+					case 13:	// "Add to sx from first selected row"
+						variable  AddValue=0
+						Prompt AddValue, "Add value to Sx from first selected row ?"
+						DoPrompt /Help="Add value SX position for all higher rows?" "Add value to sx", AddValue
+						if(V_Flag)
+							abort
+						endif
+						//if(numtype(str2num(listWave[firstSelectedRow][1]))==0)
+						//	sxstart = str2num(listWave[firstSelectedRow][1])
+						//else
+						//	sxstart = 0
+						//endif
+						For(i=firstSelectedRow;i<DimSize(listWave,0);i+=1)
+							listWave[i][1] = num2str(str2num(listWave[i][1])+AddValue)
 						endfor
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
-						WarningForUser = "Copied rows "+ListOfSelRows+ " in Clipboard" 
-						break;
-					case 13:	// "Paste Table Clipboard in a row"
-						Wave/T/Z TableClipboardWv = root:Packages:SamplePlateSetup:TableClipboardWv
-						//check we have clipboard...
-						if(!WaveExists(TableClipboardWv)||numpnts(TableClipboardWv)<1)
-							Abort "Nothing is stored in Clipboard"
-						endif
-						//check we have same number of lines selected. 
-						if(numpnts(TableClipboardWv)>1 && NoSelectedRows!=numpnts(TableClipboardWv))
-							Abort "Number of lines in Clipboard ("+num2str(numpnts(TableClipboardWv))+") does not match number of selected lines in table ("+num2str(NoSelectedRows)+")"
-						endif
-						//OK, now we should be able to do this... 
-						SVAR TableClipboard = root:Packages:SamplePlateSetup:TableClipboard
-						For(j=0;j<NoSelectedRows;j+=1)
-							if(numpnts(TableClipboardWv)>1)
-								TableClipboard = TableClipboardWv[j]
-							else
-								TableClipboard = TableClipboardWv[0]
-							endif
-							tempRow = str2num(StringFromList(j, ListOfSelRows))
-							listWave[tempRow][0] = StringByKey("SampleName", TableClipboard, "=" , ";")
-							listWave[tempRow][1] = StringByKey("SX", TableClipboard, "=" , ";")
-							listWave[tempRow][2] = StringByKey("SY", TableClipboard, "=" , ";")
-							listWave[tempRow][3] = StringByKey("TH", TableClipboard, "=" , ";")
-							listWave[tempRow][4] = StringByKey("USAXS", TableClipboard, "=" , ";")
-							listWave[tempRow][5] = StringByKey("SAXS", TableClipboard, "=" , ";")
-							listWave[tempRow][6] = StringByKey("WAXS", TableClipboard, "=" , ";")
-							listWave[tempRow][7] = StringByKey("MD", TableClipboard, "=" , ";")
-						endfor
-						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
-						WarningForUser = "Pasted Clipboard vals. from org. rows "+ListOfSelRows
+						WarningForUser = "Calculated new sx for row higher than : " +num2str(row) 
 						IN3S_EstimateRunTime()
 						TableIsSaved = 0
 						break;
-					case 14:	// "Insert New rows with Table Clipboard"
-						Wave/T/Z TableClipboardWv = root:Packages:SamplePlateSetup:TableClipboardWv
-						//check we have clipboard...
-						if(!WaveExists(TableClipboardWv)||numpnts(TableClipboardWv)<1)
-							Abort "Nothing is stored in Clipboard"
+					case 14:	// "Add to sy from first selected row"
+						variable  AddValueY=0
+						Prompt AddValueY, "Add value to Sy from first selected row ?"
+						DoPrompt /Help="Add value Sy position for all higher rows?" "Add value to Sy", AddValueY
+						if(V_Flag)
+							abort
 						endif
-						SVAR TableClipboard = root:Packages:SamplePlateSetup:TableClipboard
-						For(j=0;j<numpnts(TableClipboardWv);j+=1)
-							TableClipboard = TableClipboardWv[j]
-							tempRow = firstSelectedRow+1
-							IN3S_InsertDeleteLines(1, tempRow,1)
-							listWave[tempRow][0] = StringByKey("SampleName", TableClipboard, "=" , ";")
-							listWave[tempRow][1] = StringByKey("SX", TableClipboard, "=" , ";")
-							listWave[tempRow][2] = StringByKey("SY", TableClipboard, "=" , ";")
-							listWave[tempRow][3] = StringByKey("TH", TableClipboard, "=" , ";")
-							listWave[tempRow][4] = StringByKey("USAXS", TableClipboard, "=" , ";")
-							listWave[tempRow][5] = StringByKey("SAXS", TableClipboard, "=" , ";")
-							listWave[tempRow][6] = StringByKey("WAXS", TableClipboard, "=" , ";")
-							listWave[tempRow][7] = StringByKey("MD", TableClipboard, "=" , ";")
+						For(i=firstSelectedRow;i<DimSize(listWave,0);i+=1)
+							listWave[i][2] = num2str(str2num(listWave[i][2])+AddValueY)
 						endfor
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
-						WarningForUser = "Inserted "+num2str(numpnts(TableClipboardWv))+" rows with Clipboard (org. rows: "+ListOfSelRows+") "
+						WarningForUser = "Calculated new sy for row higher than : " +num2str(row) 
 						IN3S_EstimateRunTime()
 						TableIsSaved = 0
 						break;
+					case 15:	// "Set line as Blank"
+						For(j=0;j<ItemsInList(ListOfSelRows);j+=1)
+							tempRow = str2num(StringFromList(j, ListOfSelRows))
+							listWave[tempRow][0]="Blank"
+							listWave[tempRow][3]="0"
+						endfor
+						WarningForUser = "Set rows "+ListOfSelRows+" as Blank" 
+						IN3S_EstimateRunTime()
+						TableIsSaved = 0
+						break
+					case 16:	// "Set Line as Distance Standard"
+						For(j=0;j<ItemsInList(ListOfSelRows);j+=1)
+							tempRow = str2num(StringFromList(j, ListOfSelRows))
+							listWave[tempRow][0]="AgBehenateLaB6"
+							listWave[tempRow][3]="1"
+						endfor
+						WarningForUser = "Set rows "+ListOfSelRows+" as AgBehenateLaB6" 
+						NVAR USAXSAll=root:Packages:SamplePlateSetup:USAXSAll
+						USAXSAll=0
+						IN3S_EstimateRunTime()
+						TableIsSaved = 0
+						break
 					default :	// "Sort"
 						//DataSelSortString = StringFromList(V_flag-1, items)
 						//PopupMenu SortOptionString,win=$(TopPanel), mode=1,popvalue=DataSelSortString
@@ -915,6 +956,10 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 				KillWindow/Z TrimCorrectImageDrawing
 				IN3S_ImportImageOfPlate()
 			endif
+			if(StringMatch(ba.ctrlName, "ImportFile" ))
+				//KillWindow/Z TrimCorrectImageDrawing
+				IN3S_ImportFile()
+			endif
 
 			if(StringMatch(ba.ctrlName, "DisplayHookFunction" ))
 				//DisplayProcedure "IN3S_ExportHookFunction"
@@ -931,6 +976,8 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 					NVAR USAXSAll=root:Packages:SamplePlateSetup:USAXSAll
 					NVAR SAXSAll=root:Packages:SamplePlateSetup:SAXSAll
 					NVAR WAXSAll=root:Packages:SamplePlateSetup:WAXSAll
+					SVAR NewPlateName = root:Packages:SamplePlateSetup:UserNameForSampleSet
+					SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 					USAXSAll= 1
 					SAXSAll = 1
 					WAXSAll = 1
@@ -946,12 +993,10 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 							LBCommandWv[][0]=""
 							LBCommandWv[0][0]="Empty for LaB6AgBehehnate"
 							LBCommandWv[1][0]="AirBlank"
-							SVAR NewPlateName = root:Packages:SamplePlateSetup:UserNameForSampleSet
 							NewPlateName = "AcrylicPlateSet"+num2str(abs(round(gnoise(100))))
 							//select first row
 							LBSelectionWv[][0]=2
 							LBSelectionWv[0][0]=3
-							SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 							WarningForUser = "Created a new set of positions for "+ SelectedPlateName
 							IN3S_EstimateRunTime()
 							break		// exit from switch
@@ -965,13 +1010,13 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 							LBCommandWv[][0]=""
 							LBCommandWv[0][0]="Empty for LaB6AgBehehnate"
 							LBCommandWv[1][0]="NMRTubeBlank"
-							SVAR NewPlateName = root:Packages:SamplePlateSetup:UserNameForSampleSet
+							//SVAR NewPlateName = root:Packages:SamplePlateSetup:UserNameForSampleSet
 							NewPlateName = "AcrylicPlateSet"+num2str(abs(round(gnoise(100))))
 							//select first row
 							//ListBox CommandsList win=SamplePlateSetup, selRow=1					
 							LBSelectionWv[][0]=2
 							LBSelectionWv[0][0]=3
-							SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+							//SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 							WarningForUser = "Created a new set of positions for "+ SelectedPlateName
 							IN3S_EstimateRunTime()
 							break		// exit from switch
@@ -985,10 +1030,10 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 							LBCommandWv[][0]=""
 							LBCommandWv[0][0]="Empty for LaB6AgBehehnate"
 							LBCommandWv[1][0]="AirBlank"
-							SVAR NewPlateName = root:Packages:SamplePlateSetup:UserNameForSampleSet
+							//SVAR NewPlateName = root:Packages:SamplePlateSetup:UserNameForSampleSet
 							NewPlateName = "AlPlateSet"+num2str(abs(round(gnoise(100))))
 							ListBox CommandsList win=SamplePlateSetup, selRow=1					
-							SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+							//SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 							WarningForUser = "Created a new set of positions for "+ SelectedPlateName
 							IN3S_EstimateRunTime()
 							break		// exit from switch
@@ -1000,10 +1045,10 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 							LBCommandWv[][0]=""
 							LBCommandWv[][1]=num2str(Centers[p][0])
 							LBCommandWv[][2]=num2str(Centers[p][1])
-							SVAR NewPlateName = root:Packages:SamplePlateSetup:UserNameForSampleSet
+							//SVAR NewPlateName = root:Packages:SamplePlateSetup:UserNameForSampleSet
 							NewPlateName = "NMRTubesSet"+num2str(abs(round(gnoise(100))))
 							ListBox CommandsList win=SamplePlateSetup, selRow=1					
-							SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+							//SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 							WarningForUser = "Created a new set of positions for "+ SelectedPlateName
 							IN3S_EstimateRunTime()
 							break		// exit from switch
@@ -1015,10 +1060,10 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 							LBCommandWv[][0]=""
 							LBCommandWv[][1]=num2str(Centers[p][0])
 							LBCommandWv[][2]=num2str(Centers[p][1])
-							SVAR NewPlateName = root:Packages:SamplePlateSetup:UserNameForSampleSet
+							//SVAR NewPlateName = root:Packages:SamplePlateSetup:UserNameForSampleSet
 							NewPlateName = "NMRTubesSet"+num2str(abs(round(gnoise(100))))
 							ListBox CommandsList win=SamplePlateSetup, selRow=1					
-							SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+							//SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 							WarningForUser = "Created a new set of positions for "+ SelectedPlateName
 							IN3S_EstimateRunTime()
 							break		// exit from switch
@@ -1058,7 +1103,7 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 							//ListBox CommandsList win=SamplePlateSetup, selRow=1					
 							LBSelectionWv[][0]=2
 							LBSelectionWv[0][0]=3
-							SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+							//SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 							WarningForUser = "Created a new set of positions for "+ SelectedPlateName
 							IN3S_EstimateRunTime()
 							break		// exit from switch
@@ -1073,11 +1118,11 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 							LBSelectionWv[][4]=32
 							LBSelectionWv[][5]=48
 							LBSelectionWv[][6]=48
-							SVAR NewPlateName = root:Packages:SamplePlateSetup:UserNameForSampleSet
+							//SVAR NewPlateName = root:Packages:SamplePlateSetup:UserNameForSampleSet
 							NewPlateName = "Standard"
-							NVAR USAXSAll=root:Packages:SamplePlateSetup:USAXSAll
+							//NVAR USAXSAll=root:Packages:SamplePlateSetup:USAXSAll
 							USAXSAll=0
-							SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+							//SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 							WarningForUser = "Created AgBehenateLaB6 and disabled USAXS"
 							break		// exit from switch
 						case "Image":	
@@ -2211,6 +2256,7 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
+//
 static Function IN3S_InsertDeleteLines(InsertDelete, row, newLines)	//InsertDelete = 1 for insert, 2 for delete
 	variable InsertDelete, row, newLines						//3 duplicate and add there, 4 add at the end. 
 	//newLines used only with InsertDelete=4 and is number of new lines. 
@@ -2505,7 +2551,7 @@ static Function IN3S_AddTagToImage(row)	//add one tag if row is number, all if -
 				CheckDisplayed /W=SamplePlateImageDrawing TagyLabel
 				if(V_Flag==0)
 					AppendToGraph /W=SamplePlateImageDrawing/T/L TagyLabel vs tagx
-					ModifyGraph mode=3,textMarker(TagyLabel)={TagNames,"default",0,0,4,0.00,0.00}
+					ModifyGraph mode=3,textMarker(TagyLabel)={TagNames,"default",0,20,4,0.00,0.00}
 				endif
 			else
 				removeFromGraph /Z/W=SamplePlateImageDrawing Tagy
@@ -2533,7 +2579,7 @@ static Function IN3S_AddTagToImage(row)	//add one tag if row is number, all if -
 			CheckDisplayed /W=SamplePlateImageDrawing TagyLabel
 			if(V_Flag==0)
 				AppendToGraph /W=SamplePlateImageDrawing/T/L TagyLabel vs tagx
-				ModifyGraph mode=3,textMarker(TagyLabel)={TagNames,"default",0,0,4,0.00,0.00}
+				ModifyGraph mode=3,textMarker(TagyLabel)={TagNames,"default",0,40,4,0.00,0.00}
 			endif
 		else
 			Wave/Z tagx=root:Packages:SamplePlateSetup:TagX
@@ -2799,6 +2845,95 @@ static Function IN3S_CreateNMRTubes(PlateImage, Centers, Scaling)
 	PlateImage = 128 - (ShrunkImageThresh/2)
 end
 
+//************************************************************************************************************
+//************************************************************************************************************
+Function  IN3S_ImportFile()			//thsi imports ASCII file, need to add otehr types of fioles as needed. 
+
+	DFrEF OldDf=GetDataFolderDFR()
+	setdatafolder root:Packages:SamplePlateSetup:
+
+	Wave/T LBCommandWv = root:Packages:SamplePlateSetup:LBCommandWv
+	Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
+	//Wave/T LBTtitleWv = root:Packages:SamplePlateSetup:LBTtitleWv
+	redimension/N=(400,8) LBCommandWv, LBSelectionWv
+	//initialize...
+	string/g ImportFileType
+	SVAR ImportFileType
+	if(strlen(ImportFileType)<1)
+		ImportFileType="12IDB command file"
+	endif
+	//import the the text file. 
+	variable refNum, i, imax, iused
+    String line, tmpStr, MDStart=""
+	if(StringMatch(ImportFileType, "12IDB command file" ))			//this is reading web created command files from 12IDB
+		open/R/F="????" refnum 
+		if(strlen(S_fileName)==0)
+			abort
+		endif
+		print "Importing 12IDB commands from file : "+S_fileName
+		SVAR SetName = root:Packages:SamplePlateSetup:UserNameForSampleSet
+		SetName = CleanupName(StringFromList(ItemsInList(S_fileName,":")-1, S_fileName, ":"), 0)
+		i=0;imax=0
+        FSetPos refnum,0
+		do
+        	FReadLine refnum, line
+			if(!StringMatch(line, "#*")&&strlen(line)>1)		//if does not start with #
+				//# sample_Name	sample_x	sample_y	ExposureTime	thickness(???)	sample_description
+				LBCommandWv[i][0] = CleanupName(StringFromList(0, line , ","), 0 , 40)
+				LBCommandWv[i][1] = StringFromList(1, line , ",")
+				LBCommandWv[i][2] = StringFromList(2, line , ",")
+				LBCommandWv[i][3] = StringFromList(4, line , ",")
+				//LBCommandWv[i][4] = StringFromList(3, line , ",")
+				//LBCommandWv[i][5] = StringFromList(3, line , ",")
+				//LBCommandWv[i][6] = StringFromList(3, line , ",")
+				//SG4M4, 78, 0, 1.0, 1, 1.5, 100x diluted short nanowires, pH=10, 1.5 M KCl
+				tmpStr = line
+				tmpStr = RemoveFromList(StringFromList(0, line , ","), tmpStr, ",")	//remove name
+				tmpStr = RemoveFromList(StringFromList(1, line , ","), tmpStr, ",")	//remove x
+				tmpStr = RemoveFromList(StringFromList(2, line , ","), tmpStr, ",")	//remove y
+				tmpStr = RemoveFromList(StringFromList(3, line , ","), tmpStr, ",")	//remove exposure time
+				tmpStr = RemoveFromList(StringFromList(4, line , ","), tmpStr, ",")	//remove thickness
+				tmpStr = RemoveEnding(tmpStr, "\r")
+				tmpStr = RemoveEnding(tmpStr, "\r\n")
+				LBCommandWv[i][7] = MDStart+"Sample description: "+tmpStr		//StringFromList(6, line , ",")		//this is MD for BS, ddi tno work with , used by users in description. 
+				i+=1
+			else
+				if(!(StringMatch(line, "#IP*") ||StringMatch(line, "# sample_Name*")||StringMatch(line, "#Holder*") ))
+					tmpStr = ReplaceString("#", line, "")
+					tmpStr = ReplaceString("^t", tmpStr, "")
+					MDStart+=RemoveEnding(tmpStr, "\r")+";"
+				endif
+			endif
+		while(strlen(line)>0)
+		close refnum		
+		LBSelectionWv[][0]=2
+		LBSelectionWv[][1]=2
+		LBSelectionWv[][2]=2
+		LBSelectionWv[][3]=2
+		NVAR USAXSAll = root:Packages:SamplePlateSetup:USAXSAll
+		if(USAXSAll)
+			LBSelectionWv[][4]=48
+		else
+			LBSelectionWv[][4]=32
+		endif
+		NVAR SAXSAll = root:Packages:SamplePlateSetup:SAXSAll
+		if(SAXSAll)
+			LBSelectionWv[][5]=48
+		else
+			LBSelectionWv[][5]=32
+		endif
+		NVAR WAXSAll = root:Packages:SamplePlateSetup:WAXSAll
+		if(WAXSAll)
+			LBSelectionWv[][6]=48
+		else
+			LBSelectionWv[][6]=32
+		endif
+	endif
+	redimension/N=(i,8) LBSelectionWv,LBCommandWv 
+	
+
+	SetDataFolder OldDf
+end
 //************************************************************************************************************
 //************************************************************************************************************
 Function IN3S_ImportImageOfPlate()

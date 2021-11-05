@@ -3,14 +3,14 @@
 #pragma IgorVersion=8.04   //requires Igor version 8.03 or higher
 #pragma version = 1.99
 
-constant CurrentIndraVersionNumber = 1.99
+constant CurrentIndraVersionNumber = 1.991
 //*************************************************************************\
 //* Copyright (c) 2005 - 2021, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.999   beta 
+//1.99   October2021 release 
 //				Sample Survey tool
 //				Step scanning in BlueSky and other associated changes. 
 //				Removed lots of old code for USAXS, its not working anyway. 	

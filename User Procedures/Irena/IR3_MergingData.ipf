@@ -1,6 +1,6 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
 #pragma version=1.22
-constant IR3DversionNumber = 1.21			//Data merging panel version number
+constant IR3DversionNumber = 1.23			//Data merging panel version number
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2021, Argonne National Laboratory
@@ -8,6 +8,7 @@ constant IR3DversionNumber = 1.21			//Data merging panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.23 added checkbox "Fix neg Ints?" (Fixnegatives) which switches off negative Intensity fix. Checked it adds background to make all ints positive, unchecked (default) removes negative points.
 //1.22 Fixed emberrassing errror when if both data sets were QRS, output waves were completely wrong named. 
 //1.21 Fixed IR3D_PresetOutputStrings to use long names setting in IP8 and higher, was limited to 26 characters + _mrg. 
 //		 Added Optimization method: "Optimize Overlap, trim Data1" when data1 are trimmed at the very start of overlap region, removing data 1 from the overlap region. 
@@ -130,9 +131,9 @@ Function IR3D_DataMergePanelFnct()
 	Button IsUSAXSSAXSdata, pos={140,117}, size={200,14}, title="Sort USAXS/SAXS/WAXS data", proc=IR3D_MergeButtonProc, help={"Sorts USAXS/SAXS?WAXS data to order proper pairs together. "}
 	Button GetHelp,pos={1030,2},size={100,15},fColor=(65535,32768,32768), proc=IR3D_MergeButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 
-	Checkbox DataAreSAXS, pos={825,48},size={76,14},title="SAXS (log/log)", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:DataAreSAXS
-	Checkbox DataAreWAXS, pos={825,62},size={76,14},title="WAXS (lin/lin)", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:DataAreWAXS
-
+	Checkbox DataAreSAXS, pos={825,28},size={76,14},title="SAXS (log/log)", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:DataAreSAXS, help={"Controls how data are displayed"}
+	Checkbox DataAreWAXS, pos={825,45},size={76,14},title="WAXS (lin/lin)", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:DataAreWAXS, help={"Controls how data are displayed"}
+	Checkbox Fixnegatives, pos={825,62},size={76,14},title="Fix Neg. Ints?", noproc, variable=root:Packages:Irena:SASDataMerging:Fixnegatives, help={"Unchecked = negative intensities are removed. Checked = background is added to make all ints positive"}
 
 	ListBox DataFolderSelection,pos={4,135},size={480,500}, mode=10
 	ListBox DataFolderSelection,listWave=root:Packages:Irena:SASDataMerging:ListOfAvailableData
@@ -276,7 +277,7 @@ Function IR3D_InitDataMerging()
 
 	ListOfVariables="UseIndra2Data1;UseQRSdata1;Indra2Data1SlitSmeared;Indra2Data1DSM;"
 	ListOfVariables+="UseIndra2Data2;UseQRSdata2;Indra2Data2SlitSmeared;Indra2Data2DSM;"
-	ListOfVariables+="DataAreSAXS;DataAreWAXS;"
+	ListOfVariables+="DataAreSAXS;DataAreWAXS;Fixnegatives;"
 	ListOfVariables+="Data1Background;Data2IntMultiplier;Data2Qshift;Data1Qshift;"
 	ListOfVariables+="Optim_Data1Background;Optim_Data2IntMultiplier;Optim_Data2Qshift;Optim_Data1Qshift;"
 	ListOfVariables+="IsUSAXSSAXSdata;ProcessMerge;ProcessMerge2;ProcessTest;"
@@ -2583,9 +2584,14 @@ Function IR3D_MergeDataOverlap()
 	Sort  ResultQ, ResultQ, ResultIntensity, ResultError, ResultdQ
 	print "Merged data with following parameters: Data 2 ScalingFct = "+num2str(Data2IntMultiplier)+" , Data 1 bckg = "+num2str(Data1Background)+" , Data 1 Q/d/tth shift = "+num2str(Data1Qshift)+", and Data 2 Q/d/tth shift = "+num2str(Data2Qshift)+" , ChiSquared = "+num2str(BestMinAchieved)
 	wavestats/Q ResultIntensity
+	NVAR Fixnegatives = root:Packages:Irena:SASDataMerging:Fixnegatives
 	if(V_min<0 && !InputNegative)
-		ResultIntensity-=V_min
-		print "After merging found negative intensity values, shifted data higher by adding more background of "+num2str(abs(V_min))
+		if(Fixnegatives)
+			ResultIntensity-=V_min
+			print "After merging found negative intensity values, shifted data higher by adding more background of "+num2str(abs(V_min))
+		else
+			IN2G_RemoveNANsFrom4Waves(ResultIntensity,ResultQ,ResultError,ResultdQ)
+		endif
 	endif
 	//EvaluatePar()
 	setDataFolder OldDf
