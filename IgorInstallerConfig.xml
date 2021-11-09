@@ -58,7 +58,7 @@
 			<VersionComment>October 2021. Igor 9.x and 8.04.</VersionComment>
 		</release>
 		<release name="September2020">
-			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/September2020.zip</SourceFileAddress>
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/refs/tags/September2020.zip</SourceFileAddress>
 			<Package>
 				<name>Irena</name>
 				<version>2.70</version>
@@ -92,7 +92,7 @@
 			<VersionComment>September 2020. Requires Igor 8.03 or higher.</VersionComment>
 		</release>
 		<release name="February2020">
-			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/February2020.zip</SourceFileAddress>
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/refs/tags/February2020.zip</SourceFileAddress>
 			<Package>
 				<name>Irena</name>
 				<version>2.69</version>
@@ -126,7 +126,7 @@
 			<VersionComment>Irena 2.69, Nika 1.82 and Indra 1.97 from 2/9/2020. Last Igor 7 release.</VersionComment>
 		</release>
 		<release name="December2018">
-			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/December2018.zip</SourceFileAddress>
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/refs/tags/December2018.zip</SourceFileAddress>
 			<Package>
 				<name>Irena</name>
 				<version>2.68</version>
@@ -160,7 +160,7 @@
 			<VersionComment>Irena 2.68, Nika 1.81 and Indra 1.96 from 12/7/2018. Adds xops version 2.0 critical for OSX Igor 8 users.</VersionComment>
 		</release>
 		<release name="July2018">
-			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/July2018.zip</SourceFileAddress>
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/refs/tags/July2018.zip</SourceFileAddress>
 			<Package>
 				<name>Irena</name>
 				<version>2.67</version>
@@ -194,7 +194,7 @@
 			<VersionComment>Versions of Irena 2.67, Nika 1.80 and Indra 1.95 from 7/5/2018.</VersionComment>
 		</release>
 		<release name="January2018">
-			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/January2018.zip</SourceFileAddress>
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/refs/tags/January2018.zip</SourceFileAddress>
 			<Package>
 				<name>Irena</name>
 				<version>2.66</version>
@@ -228,7 +228,7 @@
 			<VersionComment>Versions of Irena 2.66, Nika 1.79 and Indra 1.94 from 1/27/2018.</VersionComment>
 		</release>
 		<release name="November2017">
-			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/November2017.zip</SourceFileAddress>
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/refs/tags/November2017.zip</SourceFileAddress>
 			<Package>
 				<name>Irena</name>
 				<version>2.65</version>
@@ -262,7 +262,7 @@
 			<VersionComment>Versions of Irena 2.65, Nika 1.78 and Indra 1.93 from 11/05/2017.</VersionComment>
 		</release>
 		<release name="May2017">
-			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/May2017.zip</SourceFileAddress>
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/refs/tags/May2017.zip</SourceFileAddress>
 			<Package>
 				<name>Irena</name>
 				<version>2.64</version>
