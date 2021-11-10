@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.21
+#pragma version=1.22
 Constant IR2RversionNumber=1.19
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR2RversionNumber=1.19
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.22 fix GenCurveFit call, which was failing due to Exists("gencurvefit") returning 4 instead of 3 which was in the code. 
 //1.21 modified graph size control to use IN2G_GetGraphWidthHeight and associated settings. Should work on various display sizes. 
 //1.20 modified fitting to include Igor display with iterations /N=0/W=0
 //1.19 added getHelp button calling to www manual
@@ -2580,7 +2581,7 @@ static Function IR2R_SimpleToolFit()
 			else
 				Duplicate/O FitIntensityWave, GenMaskWv
 				GenMaskWv=1
-#if Exists("gencurvefit")==3
+#if Exists("gencurvefit")==4
 	  	gencurvefit  /M=GenMaskWv/MAT=0/N/D=tempFitWv /TOL=0.05 /K={50,20,0.7,0.5} /X=FitQvectorWave IR2R_ST_FitFunction, FitIntensityWave  , W_Coef, HoldStr, Gen_Constraints  	
 #else
 		Abort  "Genetic Optimization xop NOT installed. Install xop support and then try again"
@@ -2592,7 +2593,7 @@ static Function IR2R_SimpleToolFit()
 			else
 				Duplicate/O FitIntensityWave, GenMaskWv
 				GenMaskWv=1
-#if Exists("gencurvefit")==3
+#if Exists("gencurvefit")==4
 	  	//gencurvefit  /I=1 /W=FitErrorWave /M=GenMaskWv /N /TOL=0.001 /K={50,20,0.7,0.5} /X=FitQvectorWave IR2R_ST_FitFunction, FitIntensityWave  , W_Coef, HoldStr, Gen_Constraints  	
 	  	gencurvefit  /I=1/MAT=0/N /W=FitErrorWave/D=tempFitWv /M=GenMaskWv /TOL=0.05 /K={50,20,0.7,0.5} /X=FitQvectorWave IR2R_ST_FitFunction, FitIntensityWave  , W_Coef, HoldStr, Gen_Constraints  	
 #else
@@ -2623,7 +2624,7 @@ static Function IR2R_SimpleToolFit()
 			else
 				Duplicate/O FitIntensityWave, GenMaskWv
 				GenMaskWv=1
-#if Exists("gencurvefit")==3
+#if Exists("gencurvefit")==4
 	  	gencurvefit  /M=GenMaskWv/MAT=0/N/D=tempFitWv /TOL=0.05 /K={50,20,0.7,0.5} /X=FitQvectorWave IR2R_ST_FitFunction, FitIntensityWave  , W_Coef, HoldStr, Gen_Constraints  	
 #else
 		Abort  "Genetic Optimization xop NOT installed. Install xop support and then try again"
@@ -2635,7 +2636,7 @@ static Function IR2R_SimpleToolFit()
 			else
 				Duplicate/O FitIntensityWave, GenMaskWv
 				GenMaskWv=1
-#if Exists("gencurvefit")==3
+#if Exists("gencurvefit")==4
 	  	gencurvefit  /I=1 /W=FitErrorWave/MAT=0/Q/N/D=tempFitWv /M=GenMaskWv /TOL=0.05 /K={50,20,0.7,0.5} /X=FitQvectorWave IR2R_ST_FitFunction, FitIntensityWave  , W_Coef, HoldStr, Gen_Constraints  	
 #else
 		Abort  "Genetic Optimization xop NOT installed. Install xop support and then try again"

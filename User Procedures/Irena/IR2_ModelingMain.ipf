@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.33
+#pragma version=1.34
 
 
 
@@ -11,6 +11,7 @@ Constant IR2LversionNumber = 1.25
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.34 fix GenCurveFit call, which was failing due to Exists("gencurvefit") returning 4 instead of 3 which was in the code. 
 //1.33 add Disk as form factor for size distribution. 
 //1.32 add Unified Fit Form Factor to MassFractals. 
 //1.31 added ability to save individual pop data when running from Scripting tool. COnverted to rtGlobals=3, which may cause some issues... 
@@ -1951,7 +1952,7 @@ Function IR2L_Fitting(SkipDialogs)
 	//and now the fit...
 	if(NoFittingLimits)
 		if(UseGeneticOptimization)
-#if Exists("gencurvefit")==3
+#if Exists("gencurvefit")==4
 			Abort "Genetic optiomization cannot be used without fitting limits!"
 		  	//gencurvefit  /I=1 /W=EWvForFit /M=MaskWaveGenOpt /N /TOL=0.002 /K={50,20,0.7,0.5} /X=QWvForFit IR2L_FitFunction, IntWvForFit  , W_Coef, HoldStr, Gen_Constraints  	
 #else
@@ -1962,7 +1963,7 @@ Function IR2L_Fitting(SkipDialogs)
 		endif
 	else		//old code, use fitting limits
 		if(UseGeneticOptimization)
-#if Exists("gencurvefit")==3
+#if Exists("gencurvefit")==4
 		  	gencurvefit  /I=1 /W=EWvForFit /M=MaskWaveGenOpt /N /TOL=0.002 /K={50,20,0.7,0.5} /X=QWvForFit IR2L_FitFunction, IntWvForFit  , W_Coef, HoldStr, Gen_Constraints  	
 #else
 			Abort  "Genetic Optimization xop NOT installed. Install xop support and then try again"

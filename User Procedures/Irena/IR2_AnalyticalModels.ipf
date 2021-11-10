@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=4.16
+#pragma version=4.17
 Constant IR2HversionNumber = 4.13
 
 
@@ -9,6 +9,7 @@ Constant IR2HversionNumber = 4.13
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//4.17 fix GenCurveFit call, which was failing due to Exists("gencurvefit") returning 4 instead of 3 which was in the code. 
 //4.16 added check for errors = 0 
 //4.15 added display of units for Intensity
 //4.14 modified graph size control to use IN2G_GetGraphWidthHeight and associated settings. Should work on various display sizes. 
@@ -2423,7 +2424,7 @@ static Function IR2H_ConstructTheFittingCommand()
 			endif
 			//***End of Catch error issues
 			//FuncFit /N/Q IR2H_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1/E=E_wave /D /C=T_Constraints 
-#if Exists("gencurvefit")==3
+#if Exists("gencurvefit")==4
 			Duplicate/O FitIntensityWave, GenMaskWv
 			GenMaskWv=1
 		  	gencurvefit  /I=1 /W=FitErrorWave /M=GenMaskWv /N /TOL=0.001 /K={50,20,0.7,0.5} /X=FitQvectorWave IR2H_FitFunction, FitIntensityWave  , W_Coef, HoldStr, Gen_Constraints  	
@@ -2446,7 +2447,7 @@ static Function IR2H_ConstructTheFittingCommand()
 			endif
 			//***End of Catch error issues
 			//FuncFit /N/Q IR2H_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1 /E=E_wave/D /C=T_Constraints	
-#if Exists("gencurvefit")==3
+#if Exists("gencurvefit")==4
 		  	gencurvefit  /I=1 /W=FitErrorWave /M=GenMaskWv /N /TOL=0.001 /K={50,20,0.7,0.5} /X=FitQvectorWave IR2H_FitFunction, FitIntensityWave  , W_Coef, HoldStr, Gen_Constraints  	
 #else
 			Abort "Genetic Optimization xop NOT installed. Install xop support and then try again"

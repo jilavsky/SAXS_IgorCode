@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.19
+#pragma version = 1.20
 Constant IR2DversionNumber=1.15
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR2DversionNumber=1.15
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.20 fix GenCurveFit call, which was failing due to Exists("gencurvefit") returning 4 instead of 3 which was in the code. 
 //1.19 added units to Intensity
 //1.18 modified graph size control to use IN2G_GetGraphWidthHeight and associated settings. Should work on various display sizes. 
 //1.17 modified fitting to include Igor display with iterations /N=0/W=0
@@ -2428,7 +2429,7 @@ Function IR2D_Fitting()
 	Variable V_FitError=0			//This should prevent errors from being generated
 	//and now the fit...
 	if(UseGeneticOptimization)
-#if Exists("gencurvefit")==3
+#if Exists("gencurvefit")==4
 	  	gencurvefit  /I=1 /W=ErrorForFit /M=MaskWaveGenOpt /N /TOL=0.002 /K={50,20,0.7,0.5} /X=QvectorForFit IR2D_FitFunction, IntensityForFit  , W_Coef, HoldStr, Gen_Constraints  	
 #else
 //	  	GEN_curvefit("IR2D_FitFunction",W_Coef,IntensityForFit,HoldStr,x=QvectorForFit,w=ErrorForFit,c=Gen_Constraints, mask=MaskWaveGenOpt, popsize=20,k_m=0.7,recomb=0.5,iters=50,tol=0.002)	
