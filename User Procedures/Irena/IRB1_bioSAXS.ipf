@@ -1,6 +1,6 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.01
+#pragma version=1.02
 #pragma IgorVersion = 8.03
 
 
@@ -16,6 +16,7 @@ constant IRB1_PDDFInterfaceVersion = 0.1					//IRB1_PDDFInterfaceFunction versio
 //functions for bioSAXS community
 //
 //version summary 
+//1.02 fix bug in saving _sub data when names are not liberal names. 
 //1.01 add handling of USAXS M_... waves 
 //1.0 September2020 release
 //0.5 July 2020 version
@@ -1385,7 +1386,7 @@ static Function IRB1_DataManSubtractBufferOne()
 		if(StringMatch(OutFldrNm[strlen(OutFldrNm)-1], "'"))			//this is liberal name...
 				OutFldrNm = IN2G_removeExtraQuote(OutFldrNm,1,1) +"_sub'"
 		else
-				OutFldrNm = OutFldrNm+"_sub'"
+				OutFldrNm = OutFldrNm+"_sub"
 		endif	
 	endif
 	string FirstFolderShortName=StringFromList(ItemsInList(OutFldrNm, ":")-1, OutFldrNm, ":")
