@@ -662,7 +662,7 @@ Function IR3S_FitCheckProc(cba) : CheckBoxControl
 					TSPar[3][1] = checked
 				endif
 				break		// exit from switch
-			case "Benedetti-Cicariello":	// execute if case matches expression
+			case "Benedetti-Ciccariello":	// execute if case matches expression
 				//BCParNames = {"PorodsSpecSurfArea", "CoatingsThickness","LayerScatLengthDens","SolidScatLengthDensity","VoidScatLengthDensity"}
 				if(StringMatch(cba.ctrlName, "FitModelVarPar1" ))
 					BCPar[0][1] = checked

@@ -431,6 +431,8 @@ static Function Cromer_Initialize(Force)
 	NewDataFolder/O/S root:Packages:CromerCalculations
 
 	if (Force)
+		KillDataFolder/Z root:Packages:CromerCalculations
+		NewDataFolder/O/S root:Packages:CromerCalculations
 		Cromer_SetLookupLists()
 		Cromer_InitializeStrings()
 		Cromer_InitializeWaves()
@@ -446,18 +448,20 @@ static Function Cromer_Initialize(Force)
 	endif
 
 	//NOw check for Cromer database for selected strings we need
-	SVAR/Z '10'
-	SVAR/Z '25'
-	SVAR/Z '78'
-	if(!SVAR_Exists('10') ||!SVAR_Exists('25') ||!SVAR_Exists('78'))
+	//root:Packages:CromerCalculations:S32
+	SVAR/Z test1=$("root:Packages:CromerCalculations:S10")
+	SVAR/Z test2=$("root:Packages:CromerCalculations:S25")
+	SVAR/Z test3=$("root:Packages:CromerCalculations:S78")
+	if(!SVAR_Exists(test1) ||!SVAR_Exists(test2) ||!SVAR_Exists(test3))
 		Cromer_InitializeStrings()	
 	endif
 	
 	//NOw check for Cromer database for selected waves we need
-	Wave/Z '10Wv'
-	Wave/Z '25Wv'
-	Wave/Z '78Wv'
-	if(!WaveExists('10Wv') ||!WaveExists('25Wv') ||!WaveExists('78Wv'))
+	//root:Packages:CromerCalculations:'6Wv'
+	Wave/Z testw1=$("root:Packages:CromerCalculations:'10Wv'")
+	Wave/Z testw2=$("root:Packages:CromerCalculations:'25Wv'")
+	Wave/Z testw3=$("root:Packages:CromerCalculations:'78Wv'")
+	if(!WaveExists(testw1) ||!WaveExists(testw2) ||!WaveExists(testw3))
 		Cromer_InitializeWaves()
 	endif	
 	setDataFolder oldDf
@@ -551,7 +555,12 @@ static Function/C Cromer_Get_fp(AtomType, xK, ReturnWhat)
 		return fprime
 	endif
 	//here goes Whaqt John has done - saveing results in backup and reusing when fitting... Need to add later.
-	SVAR AtomInformation=$("root:Packages:CromerCalculations:S"+num2str(iz))
+	SVAR/Z AtomInformation=$("root:Packages:CromerCalculations:S"+num2str(iz))
+	if(!SVAR_Exists(AtomInformation))
+		Cromer_InitializeStrings()
+		SVAR AtomInformation=$("root:Packages:CromerCalculations:S"+num2str(iz))
+	endif
+	
 	//Wave CurElementWv=$(num2str(CurElementNumber)+"Wv")
 	//the idexes are: p - number of triplet lines, q - up to 11 numbers, r - in r=0 we have energies, in r=1 we have cross sections in barns
 	Wave CurElementWv=$("root:Packages:CromerCalculations:'"+num2str(iz)+"Wv'")
@@ -717,7 +726,8 @@ static Function Cromer_Get_f0(AtomName,Svector)
 	Wave/Z Cnumber=$("root:Packages:CromerCalculations:"+possiblyQuoteName(AtomName+"_c"))
 	
 	if (!WaveExists(Awave) || !WaveExists(Bwave) || !WaveExists(Cnumber))
-		Initialize_f0()
+		Cromer_InitializeStrings()
+		Initialize_f0(1)
 		Wave/Z Awave=$("root:Packages:CromerCalculations:"+possiblyQuoteName(AtomName+"_a"))
 		Wave/Z Bwave=$("root:Packages:CromerCalculations:"+possiblyQuoteName(AtomName+"_b"))
 		Wave/Z Cnumber=$("root:Packages:CromerCalculations:"+possiblyQuoteName(AtomName+"_c"))
@@ -1053,7 +1063,8 @@ end
 //********************************************************************************************************************************
 //		initialization routines for this package
 //********************************************************************************************************************************
-static Function Initialize_f0()
+static Function Initialize_f0(Force)
+	variable Force
 
 	DFref oldDf= GetDataFolderDFR()
 
@@ -1061,7 +1072,7 @@ static Function Initialize_f0()
 	NewDataFolder/O/S root:Packages:CromerCalculations
 	
 	Wave/Z H_a
-	if (WaveExists(H_a))
+	if (WaveExists(H_a)&&!Force)
 		return 0
 	endif
 	//********************************     H

@@ -2035,7 +2035,7 @@ Function/S NI1_12IDBProcessMetadata(which, MetadataString, LoadedWvHere)
 	string which, MetadataString
 	wave LoadedWvHere
 
-	//parse this string ad do what is needed...
+	//parse this string and do what is needed...
 	string NewWaveNote=""
 	string currentItemString
 	variable i, maxItems, includeMe
@@ -2044,13 +2044,13 @@ Function/S NI1_12IDBProcessMetadata(which, MetadataString, LoadedWvHere)
 	i = 0
 	//check that needed metadata are actually there or bail out on users...
 	if(StringMatch(which, "SAXS"))	//require SAXS data
-		if(!stringmatch("*SAXS Detector*", MetadataString))
+		if(!stringmatch(MetadataString, "*SAXS Detector*"))
 			DoAlert 0, "Metadata do not contain SAXS part"
 			return ""
 		endif
 	endif 
 	if(StringMatch(which, "WAXS"))	//require SAXS data
-		if(!stringmatch("*WAXS Detector*", MetadataString))
+		if(!stringmatch(MetadataString, "*WAXS Detector*"))
 			DoAlert 0,  "Metadata do not contain WAXS part"
 			return ""
 		endif

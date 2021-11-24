@@ -205,6 +205,7 @@ Function IR1K_ButtonProc(ctrlName) : ButtonControl
 	String ctrlName
 
 	if(cmpstr(ctrlName,"AnomalousCalc")==0)
+		IR1_ResetCromerDataBase()
 		DoWIndow IR1K_AnomCalcPnl
 		if(V_Flag)
 			DoWIndow/F IR1K_AnomCalcPnl

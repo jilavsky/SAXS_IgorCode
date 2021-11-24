@@ -1299,7 +1299,7 @@ Function IR3T_GenerateTwoPhaseSolid()
 		multithread PositiveAutoCorfnctGr = PositiveAutoCorfnctGr/NormalizeVal	
  		print "Using FFT to generate 2 phase solid, this is not optimized yet"
 		//here we can take over by use of FFT... 
-		Duplicate AutoCorfnctGr, PositiveAutoCorfnctGr
+		Duplicate/O AutoCorfnctGr, PositiveAutoCorfnctGr
 		PositiveAutoCorfnctGr = PositiveAutoCorfnctGr[p]>0 ? PositiveAutoCorfnctGr : 0 
 		IR3T_UseFFTtoGenerateMatrix(AutoCorfnctGr,PositiveAutoCorfnctGr, alfaValue, BoxResolution, BoxSideSize)
 
@@ -2287,8 +2287,8 @@ Function IR3T_FixGizmoDisplay()
 
 	DoWIndow TwoPhaseSolid3D
 	if(V_Flag)
-
-		ModifyGizmo ModifyObject=Solid,objectType=voxelgram,property={ valueRGBA,0,GizmoFillSolid,0.000015,0.195544,0.800000,1.000000}
+//		ModifyGizmo/N=TwoPhaseSolid3D ModifyObject=Solid,objectType=voxelgram,property={ valueRGBA,0,GizmoFillSolid,0.000015,0.195544,0.800000,1.000000}
+		print "I do nothing, Solid object does not exist for some reason"
 	endif
 end
 //*****************************************************************************************************************
