@@ -12,10 +12,11 @@
 constant IRB1_ImpBioSAXSASCIIVer = 0.2			//IRB1_ImportBioSAXSASCIIData tool version number. 
 constant IRB1_DataManipulation = 0.1							//IRB1_DataManipulation tool version number. 
 constant IRB1_SetVariableStepScaling = 0.01					//this is fraction of the value to which the step in SetVariable is set.  
-constant IRB1_PDDFInterfaceVersion = 0.1					//IRB1_PDDFInterfaceFunction version number
+constant IRB1_PDDFInterfaceVersion = 0.2					//IRB1_PDDFInterfaceFunction version number
 //functions for bioSAXS community
 //
 //version summary 
+//1.03 Fixed Guinier misspelling in PDDF tool. Requires restart, forced by bump in GUI version nmumber.  
 //1.02 fix bug in saving _sub data when names are not liberal names. 
 //1.01 add handling of USAXS M_... waves 
 //1.0 September2020 release
@@ -2745,7 +2746,7 @@ Function IRB1_PDDFRunGNOM()
 	Wave pddfPrr = $("wave"+num2str(NumLoadedWaves-2))
 	Wave pddfEr = $("wave"+num2str(NumLoadedWaves-1))
 	//five before that are:     S          J EXP       ERROR       J REG       I REG
-	Wave pddfModelIntGunier = $("wave"+num2str(NumLoadedWaves-4))
+	Wave pddfModelIntGuinier = $("wave"+num2str(NumLoadedWaves-4))
 	Wave pddfModelInt = $("wave"+num2str(NumLoadedWaves-5))
 	Wave pddfInputErr = $("wave"+num2str(NumLoadedWaves-6))
 	Wave pddfInputInt = $("wave"+num2str(NumLoadedWaves-7))
@@ -2753,7 +2754,7 @@ Function IRB1_PDDFRunGNOM()
 	//and this is the main part where thre are all columns.
 	//early part of column 1 and 5 are in 
 	Wave pddfQvecSt = $("wave"+num2str(NumLoadedWaves-10))					
-	Wave pddfModelIntGunierSt = $("wave"+num2str(NumLoadedWaves-9))
+	Wave pddfModelIntGuinierSt = $("wave"+num2str(NumLoadedWaves-9))
 	//great. how do we call this stuff??? 
 	//fix for unknown data, columnd 5 designated as pddfModelErr seems to have copy fo column 4 in it
 	//seems like extended model data to Q=0.
@@ -2774,11 +2775,11 @@ Function IRB1_PDDFRunGNOM()
 	Duplicate/O pddfPrr, pddfPr
 	Duplicate/O pddfEr, pddfPrError
 	//now the extetrapolated data
-	Make/O/N=(numpnts(pddfModelIntGunierSt)+numpnts(pddfModelIntGunier)), pddfQvecExtrap, pddfModelIntExtrap
-	pddfQvecExtrap[0,numpnts(pddfModelIntGunierSt)-1] = pddfQvecSt[p]
-	pddfQvecExtrap[numpnts(pddfModelIntGunierSt), ] = pddfQvec[p-numpnts(pddfModelIntGunierSt)]
-	pddfModelIntExtrap[0,numpnts(pddfModelIntGunierSt)-1] = pddfModelIntGunierSt[p]
-	pddfModelIntExtrap[numpnts(pddfModelIntGunierSt), ] = pddfModelIntGunier[p-numpnts(pddfModelIntGunierSt)]
+	Make/O/N=(numpnts(pddfModelIntGuinierSt)+numpnts(pddfModelIntGuinier)), pddfQvecExtrap, pddfModelIntExtrap
+	pddfQvecExtrap[0,numpnts(pddfModelIntGuinierSt)-1] = pddfQvecSt[p]
+	pddfQvecExtrap[numpnts(pddfModelIntGuinierSt), ] = pddfQvec[p-numpnts(pddfModelIntGuinierSt)]
+	pddfModelIntExtrap[0,numpnts(pddfModelIntGuinierSt)-1] = pddfModelIntGuinierSt[p]
+	pddfModelIntExtrap[numpnts(pddfModelIntGuinierSt), ] = pddfModelIntGuinier[p-numpnts(pddfModelIntGuinierSt)]
 	//now parse this into a document and alfa
 	Wave/T GNOMOutFileTextWave = root:Packages:Irena:PDDFInterface:GNOMOutFileTextWave 
 	//read values from out file...	

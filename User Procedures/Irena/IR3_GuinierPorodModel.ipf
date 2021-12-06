@@ -409,7 +409,7 @@ Function IR2GP_CalculateGPlevel(Qvector,Intensity,Par )
 	if(MidQRangePntMax>0)
 		Intensity[LowQRangePntMax+1,MidQRangePntMax] = Par.G/(Qvector[p]^Par.s1) * exp(-1 * Qvector[p]^2 * Par.Rg1^2 / (3-Par.s1))
 		Intensity[MidQRangePntMax+1,] = Dval / (Qvector[p]^Par.P)
-	elseif(MidQRangePntMax<0)
+	else			//if(MidQRangePntMax<0)	// 2021-12-06 this elseif causes issues in rare cases when Q2val=0. 
 		Intensity = Dval / (Qvector[p]^Par.P)
 	endif
 

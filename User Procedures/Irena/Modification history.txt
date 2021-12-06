@@ -9,6 +9,10 @@ It runs on Wavemetrics Igor Pro version 8.04 and higher.
 
 Modification history:
 ********************************************
+2.72 ???
+Fixed Anomalous Contrast calculator which failed to run in old experiments due to lookup tables incompatibility. Needed proper reinitialization. 
+
+
 2.71 10/10/2021
 Igor 9 compatible. 
 Fix All tools using the new Multi-GUI (MultiPlot, Simple Fits, bioSAXS...) to handle data with liberal names, apparently that was forgotten.  
