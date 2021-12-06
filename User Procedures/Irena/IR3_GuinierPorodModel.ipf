@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.11    	//this is Irena package Guinier-Porod model based on Hammouda's paper
+#pragma version=1.12    	//this is Irena package Guinier-Porod model based on Hammouda's paper
 Constant IR3GPversionNumber=1.08
 
 //*************************************************************************\
@@ -18,6 +18,7 @@ Constant IR3GPversionNumber=1.08
 
 
 //version history
+//1.12 Fixed fitting issue where fittung data in small Q range (at low-Q) failed. It was working for large Q range. FIxed by always calculating full data Q range and using subset for fitting. 
 //1.11 Added ability to export Level fits (Int-Q) which was missing before.  Adds Level0 which is simply flat background wave. 
 //1.10 2019-05 Testing, fixes for Correlation fitting parameters (were not fitted at all) and some fixes to Uncertainty evaluation, was misbehaving. 
 //		fixed some error messages and GUI. 
@@ -1146,7 +1147,7 @@ Function IR3GP_CalculateModelIntensity()
 	NVAR UseSMRData=root:Packages:Irena:GuinierPorod:UseSMRData
 	NVAR SlitLengthUnif=root:Packages:Irena:GuinierPorod:SlitLengthUnif
 	NVAR ActiveLevel=root:Packages:Irena:GuinierPorod:ActiveLevel
-	//clean old individual levels, so they arfe not in our way...
+	//clean old individual levels, so they are not in our way...
 	KillWaves/Z ModelIntGPLevel_1, ModelIntGPLevel_2, ModelIntGPLevel_3, ModelIntGPLevel_4, ModelIntGPLevel_5
 	Duplicate/O OriginalIntensity, ModelIntensity, ModelCurrentLevel
 	Redimension/D ModelIntensity
@@ -1164,7 +1165,7 @@ Function IR3GP_CalculateModelIntensity()
 		Wave ModelLevel = $("ModelIntGPLevel_"+num2str(i))
 		ModelIntensity+=TempIntensity
 	endfor		
-	//calculate currnetly diplasyed tab level. 
+	//calculate currently displayed tab level. 
 	if(ActiveLevel<=NumberOfLevels)	
 		IR3GP_CalculateOneLevelModelInt(OriginalQvector,ModelCurrentLevel, ActiveLevel)
 	endif
@@ -1205,25 +1206,34 @@ Function IR3GP_CalculateFitIntensity(Qvector, FitIntensity)
 
 	setDataFolder root:Packages:Irena:GuinierPorod
 	Wave OriginalIntensity=root:Packages:Irena:GuinierPorod:OriginalIntensity
+	Wave OriginalQvector=root:Packages:Irena:GuinierPorod:OriginalQvector	
 	NVAR NumberOfLevels=root:Packages:Irena:GuinierPorod:NumberOfLevels
 	NVAR UseSMRData=root:Packages:Irena:GuinierPorod:UseSMRData
 	NVAR SlitLengthUnif=root:Packages:Irena:GuinierPorod:SlitLengthUnif
 	NVAR ActiveLevel=root:Packages:Irena:GuinierPorod:ActiveLevel
 	FitIntensity=0
-	Duplicate/Free FitIntensity, tempIntensity
+	//NOTE: These fits fail if we do not use full Q range, missing high-Q breaks everything. 
+	//So we need to calculate full Q range and then pick the right subset... 
+	Duplicate/Free OriginalIntensity, tempIntensity, FitIntLocal		//Full Q range
+	FitIntLocal = 0
 	variable i
-	
-	for(i=1;i<=NumberOfLevels;i+=1)	// initialize variables;continue test
-		IR3GP_CalculateOneLevelModelInt(Qvector,TempIntensity, i)
-		FitIntensity+=TempIntensity
+	for(i=1;i<=NumberOfLevels;i+=1)
+		IR3GP_CalculateOneLevelModelInt(OriginalQvector,TempIntensity, i)
+		FitIntLocal+=TempIntensity
 	endfor			 
 	NVAR SASBackground=root:Packages:Irena:GuinierPorod:SASBackground
-	FitIntensity+=SASBackground		
+	FitIntLocal+=SASBackground		
 	if(UseSMRData)
-		duplicate/free FitIntensity, ModelIntensitySM
-		IR1B_SmearData(FitIntensity, Qvector, SlitLengthUnif, ModelIntensitySM)
-		FitIntensity=ModelIntensitySM
+		duplicate/free FitIntLocal, ModelIntensitySM
+		IR1B_SmearData(FitIntLocal, OriginalQvector, SlitLengthUnif, ModelIntensitySM)
+		FitIntLocal=ModelIntensitySM
 	endif
+	//OK, now we have model over the whole data Q range
+	//pick subset over fitted Q range
+	variable startP
+	startP = BinarySearch(OriginalQvector, Qvector[0])
+	FitIntensity = FitIntLocal[p+startP]
+	
 end
 
 ///******************************************************************************************
@@ -1643,7 +1653,7 @@ Function IR3GP_FitData(skipreset)
 	
 	Variable V_chisq, level
 	Duplicate/O W_Coef, E_wave, CoefficientInput
-	E_wave=W_coef/100
+	E_wave=W_coef/1000
 
 	Variable V_FitError=0			//This should prevent errors from being generated
 		variable NumParams=numpnts(CoefNames)

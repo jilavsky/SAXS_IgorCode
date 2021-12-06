@@ -11,6 +11,7 @@ Modification history:
 ********************************************
 2.72 ???
 Fixed Anomalous Contrast calculator which failed to run in old experiments due to lookup tables incompatibility. Needed proper reinitialization. 
+Fixed Guinier-Porod fitting where fitting small Q range was failing. 
 
 
 2.71 10/10/2021
