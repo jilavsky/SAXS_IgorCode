@@ -1674,37 +1674,42 @@ Function IR2Pr_PdfFitting(ctrlName) : ButtonControl			//this function is called 
 	IR2Pr_FinishSetupOfRegParam()					//finishes the setup of parametes
 	TextBox/K/N=MooreFitNote
 
-	NVAR SlitSmearedData=root:Packages:Irena_PDDF:UseSMRData	
-	if (SlitSmearedData)				//if we are working with slit smeared data
-		IR2Pr_ExtendQVecForSmearing()				//here we extend them by slitLength
-	endif		
-
-	//testing....	New Formfactor calculations Check that the G matrix actually exists. We need it... 
-	//we will setup only form factor G matrix G_matrixFF, which will be scaled by contrast later on...
-	Wave/Z G_matrix=root:Packages:Irena_PDDF:G_matrix
-	Wave Q_vec=root:Packages:Irena_PDDF:Q_vec
-	Wave R_distribution=root:Packages:Irena_PDDF:R_distribution
-	variable M=numpnts(Q_vec)
-	variable N=numpnts(R_distribution)
-	if(!WaveExists(G_matrix))
-		Make/D/O/N=(M,N) $("G_matrix")
-		Wave G_matrix=root:Packages:Irena_PDDF:G_matrix
-	endif	
-	//generate G matrix... 
-	IR2Pr_GenGmatrixForPDF(G_matrix,Q_vec,R_distribution)
-
-	//now handle the contarst by copying data into the G_matrix
-//		G_matrix=G_matrixFF * ScatteringContrast*1e20		//this multiplyies by scattering contrast
-	//done with G matrix processing, if it slit smeared let's fix it and that is all....
-	if (SlitSmearedData)				//if we are working with slit smeared data
-		IR2Pr_SmearGMatrix()							//here we smear the Columns in the G matrix
-		IR2Pr_ShrinkGMatrixAfterSmear()			//here we cut the G matrix back in length
-	endif		
-
 	NVAR UseRegularization=root:Packages:Irena_PDDF:UseRegularization
 	NVAR UseMoore=root:Packages:Irena_PDDF:UseMoore
+	NVAR SlitSmearedData=root:Packages:Irena_PDDF:UseSMRData	
 	if(UseMoore+UseRegularization !=1)
 		abort "Bad use variables in the IR2Pr_PdfFitting function"
+	endif
+	if(UseMoore && SlitSmearedData)
+		abort "Moore cannot use slit smeared data"
+	endif 
+
+	if(UseRegularization)
+		if (SlitSmearedData)				//if we are working with slit smeared data
+			IR2Pr_ExtendQVecForSmearing()				//here we extend them by slitLength
+		endif		
+	
+		//testing....	New Formfactor calculations Check that the G matrix actually exists. We need it... 
+		//we will setup only form factor G matrix G_matrixFF, which will be scaled by contrast later on...
+		Wave/Z G_matrix=root:Packages:Irena_PDDF:G_matrix
+		Wave Q_vec=root:Packages:Irena_PDDF:Q_vec
+		Wave R_distribution=root:Packages:Irena_PDDF:R_distribution
+		variable M=numpnts(Q_vec)
+		variable N=numpnts(R_distribution)
+		if(!WaveExists(G_matrix))
+			Make/D/O/N=(M,N) $("G_matrix")
+			Wave G_matrix=root:Packages:Irena_PDDF:G_matrix
+		endif	
+		//generate G matrix... 
+		IR2Pr_GenGmatrixForPDF(G_matrix,Q_vec,R_distribution)
+	
+		//now handle the contarst by copying data into the G_matrix
+	//		G_matrix=G_matrixFF * ScatteringContrast*1e20		//this multiplyies by scattering contrast
+		//done with G matrix processing, if it slit smeared let's fix it and that is all....
+		if (SlitSmearedData)				//if we are working with slit smeared data
+			IR2Pr_SmearGMatrix()							//here we smear the Columns in the G matrix
+			IR2Pr_ShrinkGMatrixAfterSmear()			//here we cut the G matrix back in length
+		endif		
 	endif
 	SVAR MethodRun=root:Packages:Irena_PDDF:MethodRun
 	MethodRun = ""

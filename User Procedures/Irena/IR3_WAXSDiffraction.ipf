@@ -55,7 +55,7 @@ end
 ///******************************************************************************************
 Function IR3W_WAXS()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 3,"Starting WAXS tool")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 3,"Starting WAXS tool")
 	IN2G_CheckScreenSize("width",1200)
 	IR3W_InitWAXS()
 	DoWIndow IR3W_WAXSPanel
@@ -67,7 +67,7 @@ Function IR3W_WAXS()
 	endif
 	IR3W_UpdateListOfAvailFiles()
 	IR3W_UpdatePDF4OfAvailFiles()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 3,"Finished WAXS tool")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 3,"Finished WAXS tool")
 end
 
 //************************************************************************************************************
@@ -246,7 +246,7 @@ Function IR3W_PDF4TabProc(tca) : TabControl
 	//DoWIndow/F IR3W_WAXSPanel 
 	switch( tca.eventCode )
 		case 2: // mouse up
-			IN2G_PrintDebugStatement(IrenaDebugLevel, 3,"Calling Tabcontrol procedure")
+			//IN2G_PrintDebugStatement(IrenaDebugLevel, 3,"Calling Tabcontrol procedure")
 			Variable tab = tca.tab
 			//tab0
 				TitleBox Info1 title="MultiPeak Fit",win=IR3W_WAXSPanel, disable=(tab!=0)
@@ -287,7 +287,7 @@ End
 //**********************************************************************************************************
 Function IR3W_ModifyPanelControls()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	if(DataFolderExists("root:Packages:MultiPeakFit2"))
 		PopupMenu MPFInitializeFromSetMenu, win=IR3W_WAXSPanel, disable=0
 	else
@@ -309,7 +309,7 @@ Function IR3W_BackgroundPopMenuProc(pa) : PopupMenuControl
 
 	switch( pa.eventCode )
 		case 2: // mouse up
-			IN2G_PrintDebugStatement(IrenaDebugLevel,5,GetRTStackInfo(1))
+			//IN2G_PrintDebugStatement(IrenaDebugLevel,5,GetRTStackInfo(1))
 			Variable popNum = pa.popNum
 			String popStr = pa.popStr
 			NVAR  DisplayBackg = root:Packages:Irena:WAXS:DisplayDataBackground		
@@ -333,7 +333,7 @@ End
 Function IR3W_InitWAXS()	
 
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()
 
 	string ListOfVariables
@@ -453,7 +453,7 @@ Function IR3W_WAXSCheckProc(cba) : CheckBoxControl
 
 	switch( cba.eventCode )
 		case 2: // mouse up
-			IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+			//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 			Variable checked = cba.checked
 			NVAR UseIndra2Data =  root:Packages:Irena:WAXS:UseIndra2Data
 			NVAR UseQRSData =  root:Packages:Irena:WAXS:UseQRSData
@@ -516,7 +516,7 @@ End
 Function IR3W_UpdateListOfAvailFiles()
 
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()
 
 	setDataFolder root:Packages:Irena:WAXS
@@ -568,7 +568,7 @@ end
 //**************************************************************************************
 Function IR3W_SortListOfAvailableFldrs()
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SVAR FolderSortString=root:Packages:Irena:WAXS:FolderSortString
 	Wave/T ListOfAvailableData=root:Packages:Irena:WAXS:ListOfAvailableData
 	Wave SelectionOfAvailableData=root:Packages:Irena:WAXS:SelectionOfAvailableData
@@ -780,7 +780,7 @@ Function IR3W_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 	Variable popNum
 	String popStr
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	if(stringmatch(ctrlName,"StartFolderSelection"))
 		//Update the listbox using start folde popStr
 		SVAR StartFolderName=root:Packages:Irena:WAXS:DataStartFolder
@@ -822,7 +822,7 @@ end
 //**************************************************************************************
 
 Function/S IR3W_InitMPF2FromMenuString()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()
 
 	setDataFolder root:Packages:MultiPeakFit2
@@ -858,7 +858,7 @@ Function IR3W_SetVarProc(sva) : SetVariableControl
 	switch( sva.eventCode )
 		case 1: // mouse up
 		case 2: // Enter key
-			IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+			//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 			if(stringmatch(sva.ctrlName,"FolderNameMatchString"))
 				IR3W_UpdateListOfAvailFiles()
 			endif
@@ -967,7 +967,7 @@ End
 //**************************************************************************************
 Function IR3W_WAXSDoubleClickAction(FoldernameStr)
 		string FoldernameStr
-		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+		//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		DoWindow IR3W_WAXSMainGraph
 		if(V_Flag==1)
 			DoWIndow/F IR3W_WAXSMainGraph
@@ -995,7 +995,7 @@ end
 //			if(V_Flag==1)
 //				DoWIndow/F IR3W_WAXSMainGraph
 //			endif
-//			IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+//			//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 //			FoldernameStr=listWave[row]
 //			IR3W_CopyAndAppendData(FoldernameStr)
 //			break
@@ -1020,7 +1020,7 @@ end
 Function IR3W_CopyAndAppendData(FolderNameStr)
 	string FolderNameStr
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()
 
 	SetDataFolder root:Packages:Irena:WAXS					//go into the folder
@@ -1143,7 +1143,7 @@ Function IR3W_ConvertXdataToTTH(Data2ThetaWave,DataD2ThetaWave,XaxisType,wavelen
 	//theta = (q * lamda / 4pi) * 180/pi [deg]
 	//asin(q * lambda /4pi) = theta
 	//d ~ 2*pi/Q
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 	if(XaxisType==0)
 		Abort "Unknown X axis type"
@@ -1168,7 +1168,7 @@ end
 //**********************************************************************************************************
 //Function IR3W_CreateLinearizedData()
 //
-//	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+//	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 //	DFref oldDf= GetDataFolderDFR()
 
 //	SetDataFolder root:Packages:Irena:WAXS					//go into the folder
@@ -1199,7 +1199,7 @@ end
 
 Function IR3W_GraphWAXSData()
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable WhichLegend=0
 	variable startTTHp, endTTHp, tmpStQ
 	Wave DataIntWave=root:Packages:Irena:WAXS:DataIntWave
@@ -1260,7 +1260,7 @@ end
 //**********************************************************************************************************
 Function IR3W_AddBackgroundToGraph()
 
-		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+		//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		DFref oldDf= GetDataFolderDFR()
 
 		setDataFOlder root:Packages:Irena:WAXS:
@@ -1319,7 +1319,7 @@ Function IR3W_AddBackgroundToGraph()
 			if(XaxisType>0)
 				IR3W_ConvertXdataToTTH(Background2ThetaWave,BackgroundD2ThetaWave,XaxisType,wavelength)		
 			else	//somethign went wrong
-				IN2G_PrintDebugStatement(IrenaDebugLevel, 0,"Incorrect background data found.")
+				//IN2G_PrintDebugStatement(IrenaDebugLevel, 0,"Incorrect background data found.")
 				KillWaves/Z BackgroundIntWave, Background2ThetaWave, BackgroundErrorWav, BackgroundD2ThetaWave
 				DisplayBackg=0
 			endif
@@ -1349,7 +1349,7 @@ end
 //Start Peak Fitting GUI for WAXS
 
 Function IR3W_StartMultiPeakGUIForWAXS()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	String yWName = "root:Packages:Irena:WAXS:DataIntWave"	
 	String xWName = "root:Packages:Irena:WAXS:Data2ThetaWave"
 	Wave/Z yw = $yWName
@@ -1416,7 +1416,7 @@ Function IR3W_WAXSButtonProc(ba) : ButtonControl
 	string WinNmWChild
 	switch( ba.eventCode )
 		case 2: // mouse up
-			IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+			//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 			// click code here
 			if(stringmatch(ba.ctrlname,"MultiPeakFittingStart"))
 				if(!DataFolderExists("root:Packages:MultiPeakFit2"))
@@ -1516,7 +1516,7 @@ End
 Function IR3W_MPF2ExtractParamsToTable(StartFolder)
 	string StartFolder
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable NumGraphs, i=0
 	variable curLength=0
 	WAVE/Z wv0 = $(StartFolder+possiblyquotename("All_Params"))
@@ -1571,7 +1571,7 @@ end
 Function IR3W_MPF2CreateBckgParTable()
 
 	//string WhichUnit		//Angle, - use only Dspacing
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()
 
 	string NewGraphName
@@ -1604,7 +1604,7 @@ end
 Function IR3W_MPF2ExtractBkcgsToTable(StartFolder)
 	string StartFolder
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable NumGraphs, i=0
 	variable curLength=0
 	WAVE/Z wv0 = $(StartFolder+possiblyquotename("Background_Params"))
@@ -1640,7 +1640,7 @@ end
 
 Function IR3W_MPF2CreateAllParTable()
 	//string WhichUnit		//Angle, - use only Dspacing
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()
 
 	string NewGraphName
@@ -1824,7 +1824,7 @@ Function IR3W_MPF2PanelHookFunction(s)
 	Variable hookResult = 0	// 0 if we do not handle event, 1 if we handle it.
 	switch(s.eventCode)
 		case 2:					// Keyboard event
-				IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+				//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 				ControlInfo/W=IR3W_WAXSPanel AnalysisTabs
 	
 				variable tab
@@ -1873,7 +1873,7 @@ end
 //**********************************************************************************************************
 
 Function IR3W_FitMultiPeakFit2ForWAXS()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 	WAVE/T/Z listWave = root:Packages:Irena:WAXS:ListOfAvailableData
 	WAVE/Z selWave = root:Packages:Irena:WAXS:SelectionOfAvailableData
@@ -1897,7 +1897,7 @@ end
 //**********************************************************************************************************
 
 static Function IR3W_DoMultiPeak2Fits()
-		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+		//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		NVAR MPF2CurrentFolderNumber = root:Packages:Irena:WAXS:MPF2CurrentFolderNumber	
 		setDataFolder $("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber))
 		STRUCT WMButtonAction s
@@ -1912,7 +1912,7 @@ end
 
 static function IR3W_SaveMultiPeakResults()
  
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	NVAR MPF2CurrentFolderNumber = root:Packages:Irena:WAXS:MPF2CurrentFolderNumber	
  	string Oldf=GetDataFolder(1)
  	setDataFolder $("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber))
@@ -2065,7 +2065,7 @@ Function IR3W_TabDelimitedResultsBtnProc(s) : ButtonControl
 	if (s.eventCode != 2)		// mouse-up in the control
 		return 0
 	endif
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	
 //	NVAR currentSetNumber = root:Packages:MultiPeakFit2:currentSetNumber
 //	String gname = WinName(0,1)
@@ -2259,7 +2259,7 @@ End
 
 Static Function IR3W_GetSetNumberFromWinName(windowName)
 	String windowName
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	
 	String windowWithData
 	
@@ -2283,7 +2283,7 @@ end
 
 static Function/S IR3W_FolderPathFromSetNumber(setnumber)
 	Variable setnumber
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")	
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")	
 	return "root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(setnumber)
 end
 //**********************************************************************************************************
@@ -2292,7 +2292,7 @@ end
 // ********* Jans Polynomial BASELINE *********
 Function/S IR3W_WAXSBckDATA_BLFuncInfo(InfoDesired)
 	Variable InfoDesired
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 	String info=""
 	switch(InfoDesired)
@@ -2326,7 +2326,7 @@ end
 //**********************************************************************************************************
 Function/S IR3W_WAXSPoly10_BLFuncInfo(InfoDesired)
 	Variable InfoDesired
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	String info=""
 	switch(InfoDesired)
 		case BLFuncInfo_ParamNames:
@@ -2412,7 +2412,7 @@ Function IR3W_GraphHookFunction(H_Struct)
 			NVAR DataTTHstart = root:Packages:Irena:WAXS:DataTTHstart
 			NVAR DataTTHEnd = root:Packages:Irena:WAXS:DataTTHEnd
 			if(stringmatch(cursorName,"A")&&stringmatch(H_Struct.eventName,"cursormoved"))
-				IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+				//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 				WAVE Data2ThetaWave = root:Packages:Irena:WAXS:Data2ThetaWave
 				if(!stringmatch(H_Struct.traceName,"DataIntWave"))
 					cursor /W=IR3W_WAXSMainGraph A, DataIntWave, 1
@@ -2429,7 +2429,7 @@ Function IR3W_GraphHookFunction(H_Struct)
 				endif
 			endif
 			if(stringmatch(cursorName,"B")&&stringmatch(H_Struct.eventName,"cursormoved"))
-				IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+				//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 				WAVE Data2ThetaWave = root:Packages:Irena:WAXS:Data2ThetaWave
 				WAVE DataIntWave = root:Packages:Irena:WAXS:DataIntWave
 				if(!stringmatch(H_Struct.traceName,"DataIntWave"))
@@ -2485,7 +2485,7 @@ EndMacro
 Function/S IR3W_PlotUpdateListsOfResults(ReturnWhat)
 	string ReturnWhat
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()
 
 	if(!DataFolderExists("root:WAXSFitResults"))
@@ -2516,7 +2516,7 @@ end
 
 
 Function IR3W_MPF2PlotPeakGraph()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()
 
 	SVAR MPF2PlotFolderStart = root:Packages:Irena:WAXS:MPF2PlotFolderStart
@@ -2568,7 +2568,7 @@ end
 
 Function IR3W_MPF2AppendDataToGraph(GraphName, DataWvName,StartFolder)
 	string GraphName, DataWvName, StartFolder
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Wave/Z WaveToAppend=$(DataWvName)
 	Wave/Z WaveToAppendD=$(DataWvName+"_d")
 	Wave/Z AreaWv = $(StartFolder+":"+PossiblyQuoteName(DataWvName+"_Area"))
@@ -2589,7 +2589,7 @@ end
 
 Function IR3W_MPF2PlotPeakParameters(WhichUnit)
 	string WhichUnit		//Angle, Dspacing
-		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+		//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()
 
 	string NewGraphName
@@ -2739,7 +2739,7 @@ end
 //**************************************************************************************
 Function IR3W_MPF2ExtractParamsToGraph(StartFolder, DataWvName)
 	string StartFolder, DataWvName
-		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+		//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 	variable NumGraphs, i
 
@@ -2782,7 +2782,7 @@ end
 //**************************************************************************************
 
 Function IR3W_PDF4AddManually()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()
 
 	string NewCardFullName
@@ -2853,7 +2853,7 @@ end
 //**************************************************************************************
 Function IR3W_ImportAMSData()
 	//for data from http://rruff.geo.arizona.edu/AMS/amcsd.php
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()
 
 	string NewCardFullName
@@ -2984,7 +2984,7 @@ end
 //**************************************************************************************
 
 Function IR3W_ImportPDF4xmlFile()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()
 
 	string NewCardFullName
@@ -3188,7 +3188,7 @@ end
 //**************************************************************************************
 //**************************************************************************************
 Function/T IR3W_PDF4CreateListOfCards()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string ListOfCards = IN2G_CreateListOfItemsInFolder("root:WAXS_PDF:", 2)
 	ListOfCards = GrepList(ListOfCards, "^((?!hklStr).)*$",0,";")
 	return ListOfCards
@@ -3198,7 +3198,7 @@ end
 //**************************************************************************************
 
 Function IR3W_UpdatePDF4OfAvailFiles()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()
 
 	string AvailableCards=""
@@ -3262,7 +3262,7 @@ end
 Function IR3W_PDF4ListBoxProc(lba) : ListBoxControl
 	STRUCT WMListboxAction &lba
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Variable/g row = lba.row
 	WAVE/T/Z listWave = lba.listWave
 	WAVE/Z selWave = lba.selWave
@@ -3320,7 +3320,7 @@ end
 
 Function IR3W_PDF4AddLines()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Wave/T listWave=root:Packages:Irena:WAXS:ListOfPDF4Data
 	Wave selWave=root:Packages:Irena:WAXS:SelectionOfPDF4Data
 	Wave ListOfPDF4DataColors = root:Packages:Irena:WAXS:ListOfPDF4DataColors
@@ -3362,7 +3362,7 @@ Function IR3W_PDF4AddTagsFromWave(graphName, traceName, labelWave, Cr, Cg, Cb )
 	String traceName
 	Wave/T labelWave
 	variable Cr, Cg, Cb
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
  
 	Wave w = TraceNameToWaveRef(graphName, traceName)
  
@@ -3379,7 +3379,7 @@ End
 
 static Function IR3W_WAXSCorForDistance()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()
 	
 	if(DataFolderExists("root:Packages:Irena:WAXSTemp"))	
@@ -3408,7 +3408,7 @@ end
 Function IR3W_PDF4AppendLinesToGraph(CardName, V_Red, V_Green, V_Blue)
 	string cardname
 	variable V_Red, V_Green, V_Blue
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()
 
 	NVAR  Wavelength = root:Packages:Irena:WAXS:Wavelength
@@ -3466,7 +3466,7 @@ end
 Function IR3W_PDF4SaveLoadDifPtnPnl()
 	DFref oldDf= GetDataFolderDFR()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SetDataFolder root:Packages:Irena:WAXS:
 	string PathToFiles=FunctionPath("")
 	PathToFiles = ReplaceString("IR3_WAXSDiffraction.ipf", PathToFiles , WAXSPDF4Location)
@@ -3536,7 +3536,7 @@ EndMacro
 //**************************************************************************************
 Function IR3W_PDF4ButtonProc(ba) : ButtonControl
 	STRUCT WMButtonAction &ba
-		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+		//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 	DFref oldDf= GetDataFolderDFR()
 
@@ -3624,7 +3624,7 @@ End
 //**************************************************************************************
 //**************************************************************************************
 Function IR3W_PDF4UpdateOutsideListBox()
-		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+		//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		Wave/T  ww=root:Packages:Irena:WAXS:SaveLoadPDFOutside
 		Wave  ww2=root:Packages:Irena:WAXS:SaveLoadPDFOutsideSel
 		string ListOfAvailablePDF2s
@@ -3643,7 +3643,7 @@ end
 //**************************************************************************************
 //**************************************************************************************
 Function IR3W_PDF4UpdateInsideListBox()
-		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+		//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		Wave/T  ww=root:Packages:Irena:WAXS:SaveLoadPDFInside
 		Wave  ww2=root:Packages:Irena:WAXS:SaveLoadPDFInsideSel
 		
@@ -3666,7 +3666,7 @@ end
 //**************************************************************************************
 Function IR3W_PDF4WriteDataOutXML(NewFileName)
 		string NewFileName
-		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+		//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		PathInfo WAXSPDF4Path
 		if(V_Flag==0)
 			abort
@@ -3691,7 +3691,7 @@ end
 
 Function/T IR3W_PDF4writePDFtoXMLstr(DataName)
 	string DataName
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	
 	wave ww=$("root:WAXS_PDF:"+possiblyquotename(DataName))
 	string NL="\r"
@@ -3745,7 +3745,7 @@ end
 
 Function IR3W_PDF4readPDFfromXML(NewFileName)
 	string NewFileName
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		
 		if(!DataFolderExists("root:WAXS_PDF"))
 			abort
@@ -3830,7 +3830,7 @@ end
 
 Function IR3W_PDF4parseXMLFileLine(line,InternalName)
 	string line,InternalName
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	
 	if(!DataFolderExists("root:WAXS_PDF"))
 		abort
@@ -3884,7 +3884,7 @@ end
 ////**************************************************************************************
 //
 //Function IR3W_PDF4AddFromLaueGo()
-//	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+//	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 //	DFref oldDf= GetDataFolderDFR()
 
 //	NewDataFolder/O/S root:WAXS_PDF 
@@ -3906,7 +3906,7 @@ end
 ////**********************************************************************************************************
 //
 //static Function IR3W_CheckOrLoadForLaueGo()
-//	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+//	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 //	if(exists("MakeLatticeParametersPanel"))		//aleready loaded...	
 //		Execute "MakeLatticeParametersPanel(\"\")"
 //		return 1
@@ -3940,7 +3940,7 @@ end
 ////**********************************************************************************************************
 ////********
 //Function IR3W_LaueGoProgressPanelF() : Panel
-//	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+//	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 //	PauseUpdate    		// building window...
 //	NewPanel /K=1/W=(593,358,1039,435) as "Checking for LaueGo Presence"
 //	DoWindow/C IR3W_LaueGoProgressPanel
@@ -3955,7 +3955,7 @@ end
 ////**********************************************************************************************************
 ////********
 //static Function IR3W_ListIgorProcFiles()
-//	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+//	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 //	GetFileFolderInfo/Q/Z/P=Igor "Igor Procedures"	
 //	if(V_Flag==0)
 //		IR3W_ListProcFiles(S_Path,1 )
@@ -3972,7 +3972,7 @@ end
 ////**********************************************************************************************************
 ////********
 //static Function IR3W_ListUserProcFiles()
-//	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+//	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 //	GetFileFolderInfo/Q/Z/P=Igor "User Procedures"	
 //	if(V_Flag==0)
 //		IR3W_ListProcFiles(S_Path,1)
@@ -3995,7 +3995,7 @@ end
 //static Function/S IR3W_GetIgorUserFilesPath()
 //	// This should be a Macintosh path but, because of a bug prior to Igor Pro 6.20B03
 //	// it may be a Windows path.
-//	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+//	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 //	String path = SpecialDirPath("Igor Pro User Files", 0, 0, 0)
 //	path = ParseFilePath(5, path, ":", 0, 0)
 //	return path
@@ -4006,7 +4006,7 @@ end
 //static Function IR3W_ListProcFiles(PathStr, resetWaves)
 //	string PathStr
 //	variable resetWaves
-//	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+//	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 //	
 //	String abortMessage	//HR Used if we have to abort because of an unexpected error
 //	

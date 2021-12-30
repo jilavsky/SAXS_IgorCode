@@ -45,7 +45,7 @@ Function IR3S_SysSpecModels()
 	KillWindow/Z IR3S_SysSpecModelsPanel
 	KillWindow/Z IR3S_LogLogDataDisplay
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	IN2G_CheckScreenSize("width",1200)
 	DoWIndow IR3S_SysSpecModelsPanel
 	if(V_Flag)
@@ -122,7 +122,7 @@ end
 ////************************************************************************************************************
 ////************************************************************************************************************
 Function IR3S_SysSpecModelsPanelFnct()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,560,815) as "System Specific Models"
 	DoWIndow/C IR3S_SysSpecModelsPanel
@@ -252,7 +252,7 @@ end
 
 static Function IR3S_SetupControlsOnMainpanel()
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SVAR ModelSelected = root:Packages:Irena:SysSpecModels:ModelSelected
 	NVAR UseUnified = root:Packages:Irena:SysSpecModels:UseUnified
 	Wave DBPar = root:Packages:Irena:SysSpecModels:DBPar
@@ -845,7 +845,7 @@ End
 
 static Function IR3S_FitSequenceOfData()
 
-		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+		//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		//warn user if not saving results...
 
 		NVAR SaveToNotebook=root:Packages:Irena:SysSpecModels:SaveToNotebook
@@ -1018,7 +1018,7 @@ End
 Function IR3S_CopyAndAppendData(FolderNameStr)
 	string FolderNameStr
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:SysSpecModels					//go into the folder
 		SVAR DataStartFolder=root:Packages:Irena:SysSpecModels:DataStartFolder
@@ -1108,7 +1108,7 @@ end
 
 static Function IR3S_AppendDataToGraphLogLog()
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	IR3S_CreateSysSpecModelsGraphs()
 	variable WhichLegend=0
 	string Shortname1
@@ -1184,7 +1184,7 @@ static Function IR3S_SyncCursorsTogether(traceName,CursorName,PointNumber)
 	string traceName,CursorName
 	variable PointNumber
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	IR3S_CreateSysSpecModelsGraphs()
 	NVAR DataQEnd = root:Packages:Irena:SysSpecModels:DataQEnd
 	NVAR DataQstart = root:Packages:Irena:SysSpecModels:DataQstart
@@ -1213,7 +1213,7 @@ end
 //**********************************************************************************************************
 static Function IR3S_CreateSysSpecModelsGraphs()
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable exists1=0
 	DoWIndow IR3S_LogLogDataDisplay
 	if(V_Flag)
@@ -1238,7 +1238,7 @@ end
 static Function IR3S_InitSysSpecModels()	
 
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()
 	variable i
 		

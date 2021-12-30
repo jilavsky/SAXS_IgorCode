@@ -612,7 +612,7 @@ end
 //******************************************************************************************************************************************************
 static Function IR3N_InitAnisotropicSystems()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()
 
 	NewDataFolder/O/S root:Packages

@@ -46,7 +46,7 @@ constant IRB1_PDDFInterfaceVersion = 0.2					//IRB1_PDDFInterfaceFunction versio
 //fix any bugs and functionality... 
 Function IRB1_ImportASCII()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	IN2G_CheckScreenSize("height",720)
 	DoWindow IRB1_ImportBioSAXSASCIIData
 	if(V_Flag)
@@ -208,7 +208,7 @@ end
 //************************************************************************************************************
 
 Function IRB1_ImportBioSAXSASCIIDataFnct() 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(3,40,430,760)/N=IRB1_ImportBioSAXSASCIIData as "Import Bio SAXS data"
 	TitleBox MainTitle title="\Zr200Import bioSAXS ASCII Data in Igor",pos={20,5},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={400,24},anchor=MC,fColor=(0,0,52224)
@@ -321,7 +321,7 @@ End
 //				Part of customized BioSAXS Import ASCII
 //************************************************************************************************************
 static Function IRB1_ImportDataFnct()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 	string TopPanel=WinName(0, 64)
 	DfRef OldDf=GetDataFolderDFR()
@@ -414,7 +414,7 @@ end
 //************************************************************************************************************
 static Function IRB1_InitializeImportData()
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DfRef OldDf=GetDataFolderDFR()
 	
 	NewDataFolder/O/S root:Packages
@@ -469,7 +469,7 @@ end
 //**********************************************************************************************************
 
 Function IRB1_PreviewDataFnct()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DfRef OldDf=GetDataFolderDFR()
 	
 	Wave/T WaveOfFiles    = root:Packages:Irena:ImportBioSAXSData:WaveOfFiles
@@ -529,7 +529,7 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 static Function IRB1_DataManPanelFnct()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,1195,800) as "BioSAXS data manipulation"
 	DoWIndow/C IRB1_DataManipulationPanel
@@ -657,7 +657,7 @@ Function IRB1_DataManTabProc(tca) : TabControl
 
 	switch( tca.eventCode )
 		case 2: // mouse up
-			IN2G_PrintDebugStatement(IrenaDebugLevel, 3,"Calling Tabcontrol procedure")
+			//IN2G_PrintDebugStatement(IrenaDebugLevel, 3,"Calling Tabcontrol procedure")
 			SVAR DataMatchString = root:Packages:Irena:BioSAXSDataMan:DataMatchString
 			NVAR InvertGrepSearch = root:Packages:Irena:BioSAXSDataMan:InvertGrepSearch
 			Variable tab = tca.tab
@@ -810,7 +810,7 @@ End
 //
 //static Function IRB1_DataManRemoveAllDataSets()
 //
-//	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+//	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 //	DfRef OldDf=GetDataFolderDFR()
 //	setDataFolder root:Packages:Irena:BioSAXSDataMan
 //	variable i, numTraces
@@ -830,7 +830,7 @@ End
 
 static Function IRB1_DataManAverageDataSetsts()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DfRef OldDf=GetDataFolderDFR()
 	setDataFolder root:Packages:Irena:BioSAXSDataMan
 	variable i, numTraces
@@ -915,7 +915,7 @@ end
 //**********************************************************************************************************
 Function IRB1_DataManAppendSelDtaSets()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable i
 	string FoldernameStr
 	PauseUpdate
@@ -941,7 +941,7 @@ end
 Function IRB1_DataManAppendOneDataSet(FolderNameStr)
 	string FolderNameStr
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DfRef OldDf=GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:BioSAXSDataMan					//go into the folder
 	//IR3D_SetSavedNotSavedMessage(0)
@@ -1058,7 +1058,7 @@ end
 
 static Function IRB1_DataManInitBioSAXS()	
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DfRef OldDf=GetDataFolderDFR()
 	string ListOfVariables
 	string ListOfStrings
@@ -1147,7 +1147,7 @@ end
 //cannot be static, called from panel. 
 Function/T IRB1_ListBufferScans()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	String AllDataFolders
 	AllDataFolders=IR3C_MultiGenStringOfFolders("Irena:BioSAXSDataMan", "root:",0, 1,0, 0,1)
 	SVAR BufferMatchString=root:Packages:Irena:BioSAXSDataMan:BufferMatchString
@@ -1212,7 +1212,7 @@ End
 
 static Function IRB1_DataManCopyAndScaleBuffer()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DfRef OldDf=GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:BioSAXSDataMan:
 	SVAR SelectedBufferFolder = root:Packages:Irena:BioSAXSDataMan:SelectedBufferFolder
@@ -1259,7 +1259,7 @@ end
 ///******************************************************************************************
 static Function IRB1_DataManSubtractBufferMany()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DfRef OldDf=GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:BioSAXSDataMan:
 	IN2G_RemoveDataFromGraph(topGraphStr = "IRB1_DataManipulationPanel#LogLogDataDisplay")
@@ -1284,7 +1284,7 @@ end
 
 static Function IRB1_DataManScaleMany()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DfRef OldDf=GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:BioSAXSDataMan:
 	IN2G_RemoveDataFromGraph(topGraphStr = "IRB1_DataManipulationPanel#LogLogDataDisplay")
@@ -1310,7 +1310,7 @@ end
 
 static Function IRB1_DataManSubtractBufferOne()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DfRef OldDf=GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:BioSAXSDataMan:
 	variable i, numTraces
@@ -1440,7 +1440,7 @@ end
 
 static Function IRB1_DataManScaleDataOne()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DfRef OldDf=GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:BioSAXSDataMan:
 	variable i, numTraces
@@ -1544,7 +1544,7 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 Function IRB1_PDDFPanelFnct()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,1210,800) as "PDDF-MW-Rg"
 	DoWIndow/C IRB1_PDDFInterfacePanel
@@ -2065,7 +2065,7 @@ End
 
 static Function IRB1_PDDFFitSequenceOfData()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		Wave SelectionOfAvailableData = root:Packages:Irena:PDDFInterface:SelectionOfAvailableData
 		Wave/T ListOfAvailableData = root:Packages:Irena:PDDFInterface:ListOfAvailableData
 		NVAR SleepBetweenDataProcesses=root:Packages:Irena:PDDFInterface:SleepBetweenDataProcesses
@@ -2526,7 +2526,7 @@ End
 //**********************************************************************************************************
 static Function IRB1_PDDFMakeResChi2()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DfRef OldDf=GetDataFolderDFR()
 	setDataFolder root:Packages:Irena:PDDFInterface
 	wave/Z pddfInputIntensity = root:Packages:Irena:PDDFInterface:pddfInputIntensity
@@ -2552,7 +2552,7 @@ end
 
 Function IRB1_PDDFRunGNOM()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DfRef OldDf=GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:PDDFInterface
 	//OK, these are existing data user wants to run ATSAS DATGNOM (formerly known as AUTOGNOM)
@@ -2856,7 +2856,7 @@ end
 
 static Function IRB1_PDDFRunIrenaPDDF()
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DfRef OldDf=GetDataFolderDFR()
 	//script old PDDF model here... 
 	//basically, need to run: IR2Pr_PdfFitting
@@ -2951,7 +2951,7 @@ static Function IRB1_PDDFAppendPDDFModel()
 	if(!V_Flag)
 		return 0
 	endif
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DfRef OldDf=GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:PDDFInterface					//go into the folder
 
@@ -2995,7 +2995,7 @@ end
 Function IRB1_PDDFAppendOneDataSet(FolderNameStr)
 	string FolderNameStr
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DfRef OldDf=GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:PDDFInterface					//go into the folder
 	SVAR DataStartFolder=root:Packages:Irena:PDDFInterface:DataStartFolder
@@ -3099,7 +3099,7 @@ static Function IRB1_PDDFRecordCursorPosition(traceName,CursorName,PointNumber)
 	string traceName,CursorName
 	variable PointNumber
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	NVAR DataQEnd = root:Packages:Irena:PDDFInterface:DataQEnd
 	NVAR DataQstart = root:Packages:Irena:PDDFInterface:DataQstart
 	NVAR DataQEndPoint = root:Packages:Irena:PDDFInterface:DataQEndPoint
@@ -3139,7 +3139,7 @@ end
 //**********************************************************************************************************
 static Function IRB1_PDDFInitialize()
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DfRef OldDf=GetDataFolderDFR()
 	
 	NewDataFolder/O/S root:Packages
@@ -3336,7 +3336,7 @@ end
 //**********************************************************************************************************
 static Function IRB1_PDDFSaveResultsToNotebook()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")	
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")	
 	DFref oldDf= GetDataFolderDFR()
 	setDataFolder root:Packages:Irena:PDDFInterface
 	NVAR SaveToFolder=root:Packages:Irena:PDDFInterface:SaveToFolder
@@ -3442,7 +3442,7 @@ end
 //**********************************************************************************************************
 static Function IRB1_PDDFSaveToWaves()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")	
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")	
 	DFref oldDf= GetDataFolderDFR()
 	NVAR SaveToFolder=root:Packages:Irena:PDDFInterface:SaveToFolder
 	NVAR SaveToNotebook=root:Packages:Irena:PDDFInterface:SaveToNotebook
@@ -3543,7 +3543,7 @@ end
 //*****************************************************************************************************************
 static Function IRB1_PDDFFitResultsTableFnct() : Table
 	PauseUpdate    		// building window...
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()	
 	if(!DataFolderExists("root:PDDFFitResults:"))
 		Abort "No PDDF Fit data exist."
@@ -3589,7 +3589,7 @@ EndMacro
 static Function IRB1_PDDFSaveResultsToFldr()
 	DFref oldDf= GetDataFolderDFR()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	setDataFolder root:Packages:Irena:PDDFInterface
 
 	NVAR SaveToFolder=root:Packages:Irena:PDDFInterface:SaveToFolder

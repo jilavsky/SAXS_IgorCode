@@ -5,7 +5,7 @@
 
 //DO NOT renumber Main files every time, these are main release numbers...
 //define manual date and release verison 
-constant CurrentIrenaVersionNumber = 2.711		//change version of Boot Irena1 modeling.ipf to get proper check version. 
+constant CurrentIrenaVersionNumber = 2.712		//change version of Boot Irena1 modeling.ipf to get proper check version. 
 
 //*************************************************************************
 //* Copyright (c) 2005 - 2021, Argonne National Laboratory
@@ -130,8 +130,8 @@ constant CurrentIrenaVersionNumber = 2.711		//change version of Boot Irena1 mode
 
 //report any problems to: ilavsky@aps.anl.gov
 //Comment for me: Limit yourself to less than 30 items in the menu, Windows are limited to 30 items. Note: "---" counts as one item!
-//comment - add these: 		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-//and these 						IN2G_PrintDebugStatement(IrenaDebugLevel, 0..5 ,"Error message")
+//comment - add these: 		//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+//and these 						//IN2G_PrintDebugStatement(IrenaDebugLevel, 0..5 ,"Error message")
 
 
 Menu "GraphMarquee", dynamic

@@ -106,7 +106,7 @@ constant SimpleFitsLinPlotMinScale = 0.8
 ///******************************************************************************************
 Function IR3J_SimpleFits()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	IN2G_CheckScreenSize("width",1200)
 	DoWIndow IR3J_SimpleFitsPanel
 	if(V_Flag)
@@ -143,11 +143,11 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 Function IR3J_SimpleFitsPanelFnct()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,530,800) as "Simple Fits & Analysis tool"
 	DoWIndow/C IR3J_SimpleFitsPanel
-	TitleBox MainTitle title="Simple Fists & Analysis tool",pos={120,2},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},fSize=22,fColor=(0,0,52224)
+	TitleBox MainTitle title="Simple Fits & Analysis tool",pos={120,2},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},fSize=22,fColor=(0,0,52224)
 	string UserDataTypes=""
 	string UserNameString=""
 	string XUserLookup=""
@@ -269,7 +269,7 @@ end
 //************************************************************************************************************
 Function IR3J_CreateCheckGraphs()
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable exists1=0
 	DoWIndow IR3J_LogLogDataDisplay
 	if(V_Flag)
@@ -316,7 +316,7 @@ end
 Function IR3J_InitSimpleFits()	
 
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()
 	string ListOfVariables
 	string ListOfStrings
@@ -601,7 +601,7 @@ End
 Function IR3J_CopyAndAppendData(FolderNameStr)
 	string FolderNameStr
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:SimpleFits					//go into the folder
 		SVAR DataStartFolder=root:Packages:Irena:SimpleFits:DataStartFolder
@@ -698,7 +698,7 @@ end
 //**********************************************************************************************************
 Function IR3J_CreateLinearizedData()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()
 
 	SetDataFolder root:Packages:Irena:SimpleFits					//go into the folder
@@ -746,7 +746,7 @@ end
 
 Function IR3J_AppendDataToGraphModel()
 	//this deals with lin-lin model. 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	IR3J_CreateCheckGraphs()
 	variable WhichLegend=0
 	variable startQp, endQp, tmpStQ
@@ -839,7 +839,7 @@ end
 
 Function IR3J_AppendDataToGraphLogLog()
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	IR3J_CreateCheckGraphs()
 	variable WhichLegend=0
 	Wave OriginalDataIntWave=root:Packages:Irena:SimpleFits:OriginalDataIntWave
@@ -992,7 +992,7 @@ end
 
 static Function IR3J_FitData()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SVAR SimpleModel = root:Packages:Irena:SimpleFits:SimpleModel
 	strswitch(SimpleModel)	// string switch
 		case "Guinier":				// Regular Guinier, aka: Sphere, globular. 
@@ -1043,7 +1043,7 @@ end
 
 static Function IR3J_FitSequenceOfData()
 
-		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+		//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		//warn user if not saving results...
 		NVAR SaveToNotebook=root:Packages:Irena:SimpleFits:SaveToNotebook
 		NVAR SaveToWaves=root:Packages:Irena:SimpleFits:SaveToWaves
@@ -1144,7 +1144,7 @@ static Function IR3J_SyncCursorsTogether(traceName,CursorName,PointNumber)
 	string traceName,CursorName
 	variable PointNumber
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	IR3J_CreateCheckGraphs()
 	NVAR DataQEnd = root:Packages:Irena:SimpleFits:DataQEnd
 	NVAR DataQstart = root:Packages:Irena:SimpleFits:DataQstart
@@ -1247,7 +1247,7 @@ end
 
 static Function IR3J_FitGuinier(which)
 	string which			//Sphere, Rod, Sheet
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	IR3J_CreateCheckGraphs()
 	DFref oldDf= GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:SimpleFits					//go into the folder
@@ -1508,7 +1508,7 @@ End
 
 static Function IR3J_FitPorod()
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	IR3J_CreateCheckGraphs()
 	DFref oldDf= GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:SimpleFits					//go into the folder
@@ -1581,7 +1581,7 @@ end
 
 Function IR3J_FitSizeDistribution(Which)
 	string Which			//"Volume" or "Number" 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	IR3J_CreateCheckGraphs()
 	DFref oldDf= GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:SimpleFits					//go into the folder
@@ -1668,7 +1668,7 @@ end
 
 static Function IR3J_FitSphere()
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	IR3J_CreateCheckGraphs()
 	DFref oldDf= GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:SimpleFits					//go into the folder
@@ -1767,7 +1767,7 @@ End
 
 static Function IR3J_FitSpheroid()
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	IR3J_CreateCheckGraphs()
 	DFref oldDf= GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:SimpleFits					//go into the folder
@@ -1878,7 +1878,7 @@ End
 //static
 Function IR3J_CalculateModel()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	IR3J_CreateCheckGraphs()
 	DFref oldDf= GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:SimpleFits					//go into the folder
@@ -2069,7 +2069,7 @@ end
 //**********************************************************************************************************
 static Function IR3J_SaveResultsToNotebook()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	NVAR SaveToNotebook=root:Packages:Irena:SimpleFits:SaveToNotebook
 	NVAR SaveToWaves=root:Packages:Irena:SimpleFits:SaveToWaves
 	NVAR SaveToFolder=root:Packages:Irena:SimpleFits:SaveToFolder
@@ -2189,7 +2189,7 @@ end
 //**********************************************************************************************************
 static Function IR3J_SaveResultsToFolder()
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()	
 	SetDataFolder root:Packages:Irena:SimpleFits								//go into the folder
 	NVAR SaveToFolder=root:Packages:Irena:SimpleFits:SaveToFolder
@@ -2358,7 +2358,7 @@ end
 //**********************************************************************************************************
 static Function IR3J_SaveResultsToWaves()
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()	
 	NVAR SaveToNotebook=root:Packages:Irena:SimpleFits:SaveToNotebook
 	NVAR SaveToWaves=root:Packages:Irena:SimpleFits:SaveToWaves
@@ -2590,7 +2590,7 @@ end
 
 static Function IR3J_GetTableWithResults()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SVAR SimpleModel 				= root:Packages:Irena:SimpleFits:SimpleModel
 	strswitch(SimpleModel)	// string switch
 		case "Guinier":	// execute if case matches expression
@@ -2660,7 +2660,7 @@ end
 
 Function IR3J_DeleteExistingModelResults()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SVAR SimpleModel 	= root:Packages:Irena:SimpleFits:SimpleModel
 	DoAlert /T="This is delete resutls warning" 1, "This will delete all existing results for model : "+SimpleModel+". Do you WANT to continue?"
 	if(V_Flag==1)
@@ -2755,7 +2755,7 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 static Function IR3J_GuinierFitResultsTableFnct() : Table
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DoWIndow IR3J_GuinierFitResultsTable
 	if(V_Flag)
 		DoWIndow/F IR3J_GuinierFitResultsTable 
@@ -2782,7 +2782,7 @@ static Function IR3J_GuinierFitResultsTableFnct() : Table
 EndMacro
 //*****************************************************************************************************************
 static Function IR3J_GuinRodFitResTblFnct() : Table
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DoWIndow IR3J_GuinierRodFitResultsTable
 	if(V_Flag)
 		DoWIndow/F IR3J_GuinierRodFitResultsTable 
@@ -2809,7 +2809,7 @@ static Function IR3J_GuinRodFitResTblFnct() : Table
 EndMacro
 //*****************************************************************************************************************
 static Function IR3J_GuinSheetFitResTblFnct() : Table
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DoWIndow IR3J_GuinierSheetFitResTable
 	if(V_Flag)
 		DoWIndow/F IR3J_GuinierSheetFitResTable 
@@ -2837,7 +2837,7 @@ EndMacro
 
 //*****************************************************************************************************************
 Function IR3J_PorodFitResultsTableFnct() : Table
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DoWIndow IR3J_PorodFitResultsTable
 	if(V_Flag)
 		DoWIndow/F IR3J_PorodFitResultsTable 
@@ -2866,7 +2866,7 @@ Function IR3J_PorodFitResultsTableFnct() : Table
 EndMacro
 //*****************************************************************************************************************
 Function IR3J_SphFFFitResTblFnct() : Table
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DoWIndow IR3J_SphereFFFitResultsTable
 	if(V_Flag)
 		DoWIndow/F IR3J_SphereFFFitResultsTable 
@@ -2895,7 +2895,7 @@ EndMacro
 //*****************************************************************************************************************
 
 Function IR3J_SpheroidFFFitResTblFnct() : Table
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DoWIndow IR3J_SpheroidFFFitResultsTable
 	if(V_Flag)
 		DoWIndow/F IR3J_SpheroidFFFitResultsTable 
@@ -2925,7 +2925,7 @@ EndMacro
 //*****************************************************************************************************************
 //
 //Function IR3J_VolumeSDResTblFnct() : Table
-//	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+//	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 //	DoWIndow IR3J_SpheroidFFFitResultsTable
 //	if(V_Flag)
 //		DoWIndow/F IR3J_SpheroidFFFitResultsTable 
@@ -2952,7 +2952,7 @@ EndMacro
 //*****************************************************************************************************************
 
 Function IR3J_InvResultsTableFnct() : Table
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DoWIndow IR3J_InvResultsTable
 	if(V_Flag)
 		DoWIndow/F IR3J_InvResultsTable 
@@ -2982,7 +2982,7 @@ EndMacro
 //
 //Function IR3J_NumberSDResTblFnct() : Table
 //	PauseUpdate    		// building window...
-//	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+//	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 //	String fldrSav0= GetDataFolder(1)
 //	if(!DataFolderExists("root:NumbSizeDistResults:"))
 //		Abort "No Number Size Distribution analysis data exist."
@@ -3054,7 +3054,7 @@ End
 
 static Function IR3J_SetupControlsOnMainpanel()
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SVAR SimpleModel = root:Packages:Irena:SimpleFits:SimpleModel
 	SVAR Corr1DMethod = root:Packages:Irena:SimpleFits:Corr1DMethod
 	DoWindow IR3J_SimpleFitsPanel

@@ -52,7 +52,7 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 Function IRB1_ConcSerPanelFnct()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,1195,800) as "Concentration series"
 	DoWIndow/C IRB1_ConcSeriesPanel
@@ -206,7 +206,7 @@ end
 Function IRB1_ConcSeriesListBoxProc(lba) : ListBoxControl
 	STRUCT WMListboxAction &lba
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Variable row = lba.row
 	WAVE/T/Z listWave = lba.listWave
 	WAVE/Z selWave = lba.selWave
@@ -875,7 +875,7 @@ Function IRB1_ConcSerCursorsSync(traceName,CursorName,PointNumber)
 	string traceName,CursorName
 	variable PointNumber
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	NVAR DataQEnd = root:Packages:Irena:ConcSerExtrap:DataQEnd
 	NVAR DataQstart = root:Packages:Irena:ConcSerExtrap:DataQstart
 	Wave IntWaveA=csrWaveref(A,"IRB1_ConcSeriesPanel#LogLogDataDisplay") 
@@ -1471,7 +1471,7 @@ End
 Function IRB1_ConcSeriesAppendOneDataSet(FolderNameStr)
 	string FolderNameStr
 	
-//	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+//	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 //	DfRef OldDf=GetDataFolderDFR()
 //	SetDataFolder root:Packages:Irena:BioSAXSDataMan					//go into the folder
 //	//IR3D_SetSavedNotSavedMessage(0)
@@ -1651,7 +1651,7 @@ end
 
 Function IRB1_ConcSerInitialize()	
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DfRef OldDf=GetDataFolderDFR()
 	string ListOfVariables
 	string ListOfStrings

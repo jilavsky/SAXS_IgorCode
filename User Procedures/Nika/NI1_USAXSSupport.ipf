@@ -149,17 +149,18 @@ Function NI1_9IDCConfigPanelFunction() : Panel
 	DoWindow/C NI1_9IDCConfigPanel
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 18,fstyle= 3,textrgb= (16385,16388,65535)
-	DrawText 10,25,"9ID-C (or 15ID-D) Nexus file configuration"
+	DrawText 10,25,"USAXS SAXS/WAXS Nexus file configuration"
 	
-	DrawText 10, 43, "SAXS : Pilatus 100k camera in USAXS (use with USAXS)"
-	DrawText 10, 60, "WAXS    : Pilatus 100k or 200kw WAXS used in USAXS/SAXS/WAXS configuration"
+	DrawText 10, 43, "SAXS : Pilatus 100k in USAXS/SAXS/WAXS"
+	DrawText 10, 60, "WAXS-Pilatus : default Pilatus 300kw in USAXS/SAXS/WAXS"
+	DrawText 10, 77, "WAXS-Dexela : rare Dexela 2315 in USAXS/SAXS/WAXS"
 	///DrawText 10, 77, "SAXS     : large SAXS camera in the 15ID-D (only SAXS, no USAXS)"
 	Checkbox SAXSSelection,pos={10,90},size={100,20}, variable=root:Packages:Convert2Dto1D:USAXSSAXSselector, proc=NI1_9IDCCheckProc
 	Checkbox SAXSSelection, title ="SAXS", help={"Use to configure Nika for SAXS"}
 	Checkbox USAXSWAXSselector,pos={120,90},size={100,20}, variable=root:Packages:Convert2Dto1D:USAXSWAXSselector, proc=NI1_9IDCCheckProc
-	Checkbox USAXSWAXSselector, title ="WAXS-Pilatus", help={"Use to configure Nika for WAXS using Pilatus"}
+	Checkbox USAXSWAXSselector, title ="WAXS-Pilatus (typ)", help={"Common detecctor - Use to configure Nika for WAXS using Pilatus"}
 	Checkbox USAXSWAXSDexselector,pos={230,90},size={100,20}, variable=root:Packages:Convert2Dto1D:USAXSWAXSDexselector, proc=NI1_9IDCCheckProc
-	Checkbox USAXSWAXSDexselector, title ="WAXS-Dexela", help={"Use to configure Nika for WAXS using Dexela"}
+	Checkbox USAXSWAXSDexselector, title ="WAXS-Dexela (rare)", help={"Rare detector - Use to configure Nika for WAXS using Dexela"}
 
 	Checkbox DisplayJPGFile,pos={370,90},size={100,20}, variable=root:Packages:Convert2Dto1D:DisplayJPGFile, noproc
 	Checkbox DisplayJPGFile, title ="Display JPG File", help={"Display jpg file if it was collected... "}

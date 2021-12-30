@@ -36,7 +36,7 @@ end
 /////******************************************************************************************
 Function IR3DM_DataManipulationIII()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	IN2G_CheckScreenSize("width",1200)
 	DoWIndow IR3DM_DataManIIIPanel
 	if(V_Flag)
@@ -73,7 +73,7 @@ end
 ////************************************************************************************************************
 ////************************************************************************************************************
 Function IR3DM_DataManIIIPanelFnct()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,530,800) as "Data Manipulation"
 	DoWIndow/C IR3DM_DataManIIIPanel
@@ -151,7 +151,7 @@ end
 
 static Function IR3DM_SetupControlsOnMainpanel()
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	//SVAR ManipulationSelected = root:Packages:Irena:DataManIII:ManipulationSelected
 	DoWindow IR3DM_DataManIIIPanel
 	if(V_Flag)
@@ -339,7 +339,7 @@ End
 //cannot be static, called from panel. 
 Function/T IR3DM_ListAllData()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	String AllDataFolders
 	NVAR UseIndra2Data=root:Packages:Irena:DataManIII:UseIndra2Data
 	NVAR UseQRSdata=root:Packages:Irena:DataManIII:UseQRSData
@@ -371,7 +371,7 @@ end
 static Function IR3DM_ProcessSequenceOfData(WhatToDO)
 		string WhatToDO
 		
-		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+		//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		//NVAR DelayBetweenProcessing=root:Packages:Irena:DataManIII:DelayBetweenProcessing
 		Wave SelectionOfAvailableData = root:Packages:Irena:DataManIII:SelectionOfAvailableData
 		Wave/T ListOfAvailableData = root:Packages:Irena:DataManIII:ListOfAvailableData
@@ -399,7 +399,7 @@ end
 Function IR3DM_DeleteData(FolderNameStr)
 	string FolderNameStr
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:DataManIII					//go into the folder
 		SVAR DataStartFolder=root:Packages:Irena:DataManIII:DataStartFolder
@@ -539,7 +539,7 @@ End
 Function IR3DM_CopyAndAppendDataToSubtract(FolderNameStr)
 	string FolderNameStr
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:DataManIII					//go into the folder
 
@@ -591,7 +591,7 @@ end
 Function IR3DM_CopyAndAppendData(FolderNameStr)
 	string FolderNameStr
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:DataManIII					//go into the folder
 	IR3DM_CreateDM3Graphs()
@@ -1021,7 +1021,7 @@ end
 
 Function IR3DM_AppendAveDataToGraphLogLog()
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable WhichLegend=0
 	string Shortname1, SubtractShortName, legendText
 
@@ -1062,7 +1062,7 @@ end
 
 Function IR3DM_AppendProcessDataToGraphLogLog()
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable WhichLegend=0
 	string Shortname1, SubtractShortName, legendText
 	Wave/Z Original_Intensity=root:Packages:Irena:DataManIII:Original_Intensity
@@ -1172,7 +1172,7 @@ static Function IR3DM_SyncCursorsTogether(traceName,CursorName,PointNumber)
 	string traceName,CursorName
 	variable PointNumber
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	IR3DM_CreateDM3Graphs()
 	NVAR DataQEnd = root:Packages:Irena:DataManIII:DataQEnd
 	NVAR DataQstart = root:Packages:Irena:DataManIII:DataQstart
@@ -1201,7 +1201,7 @@ end
 //**********************************************************************************************************
 Function IR3DM_CreateDM3Graphs()
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable exists1=0
 	NVAR DeleteData= root:Packages:Irena:DataManIII:DeleteData
 	if(DeleteData)
@@ -1231,7 +1231,7 @@ end
 Function IR3DM_InitDMIII()	
 
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()
 	string ListOfVariables
 	string ListOfStrings

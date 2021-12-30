@@ -18,7 +18,7 @@ Constant IR3GPversionNumber=1.08
 
 
 //version history
-//1.12 Fixed fitting issue where fittung data in small Q range (at low-Q) failed. It was working for large Q range. FIxed by always calculating full data Q range and using subset for fitting. 
+//1.12 Fixed fitting issue where fitting data in small Q range (at low-Q) failed. It was working for large Q range. FIxed by always calculating full data Q range and using subset for fitting. 
 //1.11 Added ability to export Level fits (Int-Q) which was missing before.  Adds Level0 which is simply flat background wave. 
 //1.10 2019-05 Testing, fixes for Correlation fitting parameters (were not fitted at all) and some fixes to Uncertainty evaluation, was misbehaving. 
 //		fixed some error messages and GUI. 

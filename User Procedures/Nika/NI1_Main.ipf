@@ -5,7 +5,7 @@
 
 //DO NOT renumber Main files every time, these are main release numbers...
 
-constant CurrentNikaVersionNumber = 1.841
+constant CurrentNikaVersionNumber = 1.842
 constant FixBackgroundOversubScale=1.05			//this is used to fix oversubtracted background. Adds FixBackgroundOversubScale*abs(V_min) to all intensity value. 
 constant NikaNumberOfQCirclesDisp=15
 //*************************************************************************\
@@ -99,7 +99,7 @@ Menu "SAS 2D"
 	"Configuration manager", NI1_GeometriesManager()
 	help={"This enables switching among multiple Nika geometries, such as distances or wavelengths"}
 	Submenu "Instrument configurations"
-		"9IDC or 15IDD USAXS-SAXS-WAXS", NI1_9IDCConfigureNika()
+		"9IDC USAXS-SAXS-WAXS", NI1_9IDCConfigureNika()
 		help={"Support for data from 9ID or9IDC (USAXS/SAXS) beamline at APS"}
 		"RSoXS ALS soft energy instrument", NI1_RSoXSCreateGUI()
 		help={"Support for data from ALS soft energy beamline"}

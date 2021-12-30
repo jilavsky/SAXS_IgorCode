@@ -2015,7 +2015,7 @@ end
 
 Function IN3_OnLineDataProcessing()	
 	//create global variables 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	String OldDf=GetDataFolder(1)
 	SetDataFOlder root:Packages:Indra3
 	NewDataFolder/O/S BckgMonitorParams
@@ -2098,7 +2098,7 @@ Function IN3_BackgrTaskButtonProc(ba) : ButtonControl
 
 	switch( ba.eventCode )
 		case 2: // mouse up
-			IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+			//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 			// click code here
 			if(stringmatch("StartBackgrTask",ba.ctrlName))
 				IN3_StartFolderWatchTask()
@@ -2123,7 +2123,7 @@ End
 
 Function IN3_StartFolderWatchTask()
 	//Variable numTicks = 5 * 60 // Run every two seconds (120 ticks) 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	NVAR BckgUpdateInterval= root:Packages:Indra3:BckgMonitorParams:BckgUpdateInterval
 		CtrlNamedBackground IN3_MonitorDataFolder, period=BckgUpdateInterval*60, proc=IN3_MonitorFldrBackground 
 		CtrlNamedBackground IN3_MonitorDataFolder, start
@@ -2138,7 +2138,7 @@ End
 //*************************************************************************************************
 
 Function IN3_StopFolderWatchTask()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
    CtrlNamedBackground IN3_MonitorDataFolder, stop
 	Printf "FolderWatch background task (\"IN3_MonitorDataFolder\") stopped\r"
 		SVAR BckgStatus = root:Packages:Indra3:BckgMonitorParams:BckgStatus
@@ -2154,7 +2154,7 @@ End
 Function IN3_BacgroundUpdatesPopMenuProc(pa) : PopupMenuControl
 	STRUCT WMPopupAction &pa
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	switch( pa.eventCode )
 		case 2: // mouse up
 			Variable popNum = pa.popNum
@@ -2182,7 +2182,7 @@ End
 Function IN3_BakcgroundCheckProc(cba) : CheckBoxControl
 	STRUCT WMCheckboxAction &cba
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	switch( cba.eventCode )
 		case 2: // mouse up
 			Variable checked = cba.checked
@@ -2216,7 +2216,7 @@ End
 Function IN3_MonitorFldrBackground(s) // This is the function that will be called periodically 
 	STRUCT WMBackgroundStruct &s
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	//this should monitor result of Refresh on the folder and grab the new data set and process it.
 	Wave/T ListOf2DSampleData=root:Packages:USAXS_FlyScanImport:WaveOfFiles
 	Wave ListOf2DSampleDataNumbers=root:Packages:USAXS_FlyScanImport:WaveOfSelections

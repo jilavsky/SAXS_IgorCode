@@ -135,7 +135,7 @@ end
 ///******************************************************************************************
 Function IR3B_MetadataBrowser()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	IN2G_CheckScreenSize("width",1000)
 	IN2G_CheckScreenSize("height",670)
 	DoWIndow IR3B_MetadataBrowserPanel
@@ -172,7 +172,7 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 Function IR3B_MetadataBrowserPanelFnct()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(5.25,43.25,800,820) as "Metadata Browser tool"
 	DoWIndow/C IR3B_MetadataBrowserPanel
@@ -256,7 +256,7 @@ end
 Function IR3B_ButtonProc(ba) : ButtonControl
 	STRUCT WMButtonAction &ba
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable i
 	string FoldernameStr
 	switch( ba.eventCode )
@@ -313,7 +313,7 @@ End
 Function IR3B_PopMenuProc(pa) : PopupMenuControl
 	STRUCT WMPopupAction &pa
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	String ctrlName=Pa.ctrlName
 	Variable popNum=Pa.popNum
 	String popStr=Pa.popStr
@@ -321,7 +321,7 @@ Function IR3B_PopMenuProc(pa) : PopupMenuControl
 	if(Pa.eventcode!=2)
 		return 0
 	endif
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	if(stringmatch(ctrlName,"ExtractFromFileName"))
 		//do something here
 		IR3B_AddToSelectedItems("Extract"+popStr,1)
@@ -337,7 +337,7 @@ end
 Function IR3B_SetVarProc(sva) : SetVariableControl
 	STRUCT WMSetVariableAction &sva
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable tempP
 	switch( sva.eventCode )
 		case 1: // mouse up
@@ -366,7 +366,7 @@ End
 Function IR3B_MultiListBoxProc(lba) : ListBoxControl
 	STRUCT WMListboxAction &lba
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Variable row = lba.row
 	WAVE/T/Z listWave = lba.listWave
 	WAVE/Z selWave = lba.selWave
@@ -411,7 +411,7 @@ End
 
 static Function IR3B_DisplayMetadataResults()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DfRef OldDf=GetDataFolderDFR()
 	SVAR FldrWithData=root:Packages:Irena:MetadataBrowser:SaveToFoldername
 	if(!DataFolderExists(FldrWithData))
@@ -449,7 +449,7 @@ end
 
 static Function IR3B_DeleteMetadataResults()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DfRef OldDf=GetDataFolderDFR()
 	DoAlert/T="Are you sure???" 1, "Extracted metadata waves will be deleted, are you REALLY sure you want to do this?"
 	if(V_Flag)
@@ -480,7 +480,7 @@ end
 //**************************************************************************************
 static Function IR3B_PlotSelectedResults()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DfRef OldDf=GetDataFolderDFR()
 	//get needed values... 
 	ControlInfo/W=IR3B_MetadataBrowserPanel PlotXWave
@@ -507,7 +507,7 @@ static Function IR3B_AddToSelectedItems(ItemToAddorRemove,Add)
 	string ItemToAddorRemove
 	variable Add			//Add=1 to add, 0 to remove
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string KeyName=StringFromList(0, ItemToAddorRemove, "=")
 	Wave/T listWave=root:Packages:Irena:MetadataBrowser:SeletectedItems
 	Wave selWave=root:Packages:Irena:MetadataBrowser:SelectionOfSelectedItems
@@ -538,7 +538,7 @@ end
 //**************************************************************************************
 Function IR3B_DoubleClickAction(FoldernameStr)
 		string FoldernameStr
-		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+		//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 		IR3B_DisplayWaveNote(FoldernameStr)
 end
@@ -548,7 +548,7 @@ end
 
 Function IR3B_MouseDownAction(FoldernameStr)
 		string FoldernameStr
-		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+		//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 		IR3B_DisplayWaveNote(FoldernameStr)
 end
@@ -557,7 +557,7 @@ end
 static Function 	IR3B_DisplayTestMetadataValues(ParameterSelected)
 	string ParameterSelected
 		
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DfRef OldDf=GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:MetadataBrowser					//go into the folder
 	string KeyName=StringFromList(0, ParameterSelected, "=")
@@ -612,7 +612,7 @@ end
 static Function/T IR3B_FindSpecificMetadata(FolderNameStr, KeyString)	
 	string FolderNameStr, KeyString
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SVAR DataFolderName=root:Packages:Irena:MetadataBrowser:DataFolderName
 	SVAR IntensityWaveName=root:Packages:Irena:MetadataBrowser:IntensityWaveName
 	string result=""
@@ -654,7 +654,7 @@ end
 static Function IR3B_ExtrMtdtFromOneFolder(FolderNameStr)
 	string FolderNameStr
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DfRef OldDf=GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:MetadataBrowser					//go into the folder
 	SVAR SaveToFoldername = root:Packages:Irena:MetadataBrowser:SaveToFoldername
@@ -778,7 +778,7 @@ end
 static Function IR3B_DisplayWaveNote(FolderNameStr)
 	string FolderNameStr
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DfRef OldDf=GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:MetadataBrowser					//go into the folder
 		SVAR DataStartFolder=root:Packages:Irena:MetadataBrowser:DataStartFolder
@@ -840,7 +840,7 @@ end
 //**********************************************************************************************************
 
 static Function IR3B_InitMetadataBrowser()	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DfRef OldDf=GetDataFolderDFR()
 	string ListOfVariables
 	string ListOfStrings

@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.08
+#pragma version=2.09
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2021, Argonne National Laboratory
@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.09 Fix bug with typo in dspacingWv wave name. 
 //2.08 Remove for MatrixOP /NTHR=0 since it is applicable to 3D matrices only 
 //2.07 Added Batch processing
 //2.06 fixes for rtGLobal=3
@@ -836,7 +837,7 @@ Function NI1_ImageLineProfileWindowProc(infoStr)
 			wave profile=root:Packages:NI1_ImProcess:LineProfile:profile
 			wave qvector=root:Packages:NI1_ImProcess:LineProfile:qvector
 			wave TwoTheta=root:Packages:NI1_ImProcess:LineProfile:TwoTheta
-			wave Dspacing=root:Packages:NI1_ImProcess:LineProfile:DspacingWv
+			wave Dspacing=root:Packages:NI1_ImProcess:LineProfile:Dspacing
 
 	SVAR imageGraphName=root:Packages:NI1_ImProcess:LineProfile:imageGraphName
 	if( StrSearch(infoStr,"EVENT:activate",0) >= 0 )
@@ -929,7 +930,7 @@ Function NI1_UpdateLineProfileGraph()
 			wave profile=root:Packages:NI1_ImProcess:LineProfile:profile
 			wave qvector=root:Packages:NI1_ImProcess:LineProfile:qvector
 			wave TwoTheta=root:Packages:NI1_ImProcess:LineProfile:TwoTheta
-			wave Dspacing=root:Packages:NI1_ImProcess:LineProfile:DspacingWv
+			wave Dspacing=root:Packages:NI1_ImProcess:LineProfile:Dspacing
 		if(cmpstr(imageGraphName,"SquareMapIntvsPixels")==0)
 			Button SaveCurrentLineout, disable=0, win=NI1_ImageLineProfileGraph
 			CheckBox DisplayPixles, disable=0, win=NI1_ImageLineProfileGraph

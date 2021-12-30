@@ -993,7 +993,7 @@ end
 //******************************************************************************************************************************************************
 Function IR3T_InitializeTwoPhaseSys()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()
 
 	NewDataFolder/O/S root:Packages
@@ -1033,7 +1033,7 @@ static Function IR3T_SetInitialValues()
 	//and here set default values...
 	//template: IR1A_SetInitialValues(enforce)
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()
 
 	setDataFolder root:Packages:TwoPhaseSolidModel

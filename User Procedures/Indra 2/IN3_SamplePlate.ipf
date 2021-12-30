@@ -375,7 +375,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 	STRUCT WMListboxAction &lba
 	//see IRB1_ConcSeriesListBoxProc
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Variable row = lba.row
 	Variable col = lba.col
 	WAVE/T/Z listWave = lba.listWave

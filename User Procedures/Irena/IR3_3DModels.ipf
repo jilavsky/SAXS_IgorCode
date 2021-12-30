@@ -1,8 +1,8 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.01
+#pragma version=1.03
 
-Constant IR3AMassFrAggVersionNumber 	= 1.02
+Constant IR3AMassFrAggVersionNumber 	= 1.03
 Constant IR3TPOVPDBVersionNumber 		= 1.00
 Constant IR3TTwoPhaseVersionNumber 	= 1.00
 
@@ -13,7 +13,7 @@ Constant IR3TTwoPhaseVersionNumber 	= 1.00
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-
+//1.03 added Optimized growth - gorws number of aggregates and searches for best matching one... 
 //1.02 added MultiParticleAttraction parameter. 
 //1.01 3dAggregate added ability ot grow N aggregates and Compare Stored graph
 //1.00 first version, added code for 3DMassFractalAggregate from Alex McGlassson 
@@ -250,68 +250,94 @@ Function IR3A_FractalAggregatePanel()
 	
 	//and this is new code
 	TitleBox Info1 title="\Zr160Unified results",pos={40,26},frame=0,fstyle=1, fixedSize=1,size={280,18},fColor=(0,0,52224)
-	TitleBox FakeLine1 title=" ",fixedSize=1,size={350,3},pos={16,215},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-	TitleBox Info2 title="\Zr160Model input parameters",pos={40,230},frame=0,fstyle=1, fixedSize=1,size={280,18},fColor=(0,0,52224)
-	SetVariable AggregateModeling,pos={10,260},size={190,16},noproc,title="Deg. of Agg. \"z\" (250) ", help={"Size of aggregate, degree of aggregation"}
+	TitleBox FakeLine1 title=" ",fixedSize=1,size={350,3},pos={16,205},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
+	TitleBox Info2 title="\Zr160Model input parameters",pos={10,215},frame=0,fstyle=1, fixedSize=1,size={280,18},fColor=(0,0,52224)
+	SetVariable AggregateModeling,pos={10,240},size={190,16},noproc,title="Deg. of Agg. \"z\" (250) ", help={"Size of aggregate, degree of aggregation"}
 	SetVariable AggregateModeling,limits={10,Inf,0},variable= root:Packages:AggregateModeling:DegreeOfAggregation, bodyWidth=50
-	SetVariable StickingProbability,pos={10,285},size={190,16},noproc,title="Sticking prob. (10-100) ", help={"Sticking probablility, 100 for DLA, less for RLA"}
+	SetVariable StickingProbability,pos={10,265},size={190,16},noproc,title="Sticking prob. (10-100) ", help={"Sticking probablility, 100 for DLA, less for RLA"}
 	SetVariable StickingProbability,limits={10,100,0},variable= root:Packages:AggregateModeling:StickingProbability, bodyWidth=50
-	SetVariable NumberOfTestPaths,pos={10,310},size={190,16},noproc,title="Max paths/end (1k-10k) ", help={"Max measured paths per end point for parameter evaluation. Larger = possibly longer times but is more precise"}
+	SetVariable NumberOfTestPaths,pos={10,290},size={190,16},noproc,title="Max paths/end (1k-10k) ", help={"Max measured paths per end point for parameter evaluation. Larger = possibly longer times but is more precise"}
 	SetVariable NumberOfTestPaths,limits={1000,100000,0},variable= root:Packages:AggregateModeling:NumberOfTestPaths, bodyWidth=50
 
-	SetVariable RgPrimary,pos={210,260},size={170,16},noproc,title="Primary Rg[A] (10) ", help={"Size of primary particle from which Aggregate is created"}
+	SetVariable RgPrimary,pos={210,240},size={170,16},noproc,title="Primary Rg[A] (10) ", help={"Size of primary particle from which Aggregate is created"}
 	SetVariable RgPrimary,limits={10,Inf,0},variable= root:Packages:AggregateModeling:RgPrimary, bodyWidth=50
-
-	PopupMenu AllowedNearDistance,pos={220,290},size={150,20},proc=IR3A_PopMenuProc,title="Sticking method:"
+	PopupMenu AllowedNearDistance,pos={230,260},size={150,20},proc=IR3A_PopMenuProc,title="Sticking method:"
 	PopupMenu AllowedNearDistance,help={"Which neighbors are allowed to stick"}
 	NVAR AllowedNearDistance=root:Packages:AggregateModeling:AllowedNearDistance
 	PopupMenu AllowedNearDistance,mode=1,popvalue=num2str(AllowedNearDistance), value="1;2;3;"
 
-	PopupMenu MParticleAttraction,pos={220,310},size={150,20},proc=IR3A_PopMenuProc,title="Multi Part. attr:"
+	PopupMenu MParticleAttraction,pos={230,280},size={150,20},proc=IR3A_PopMenuProc,title="Multi Part. attr:"
 	PopupMenu MParticleAttraction,help={"If there are more particles neaby, is chance of attaching? "}
 	SVAR MultiParticleAttraction=root:Packages:AggregateModeling:MultiParticleAttraction
 	PopupMenu MParticleAttraction,mode=1,popvalue=MultiParticleAttraction, value="Neutral;Attractive;Repulsive;Not allowed;"
 	
-	Button Grow1AggAll,pos={5,338},size={150,20}, proc=IR3A_PanelButtonProc,title="Grow 1 Agg, graph", help={"Perform all steps and generate 3D graph"}
-	Button GrowNAggAll,pos={165,338},size={150,20}, proc=IR3A_PanelButtonProc,title="Grow N Agg.", help={"Generate N aggregates randomly"}
 
-	PopupMenu NUmberOfTestAggregates,pos={320,338},size={150,20},proc=IR3A_PopMenuProc,title="N ="
+	//Growth Tabs definition
+	TabControl GrowthTabs,pos={2,310},size={387,170},proc=IR3A_GrowthTabProc
+	TabControl GrowthTabs,tabLabel(0)=" Grow One ",tabLabel(1)=" Grow many "
+	TabControl GrowthTabs,tabLabel(2)=" Find Best Growth "
+
+	Button Grow1AggAll,pos={15,335},size={150,18}, proc=IR3A_PanelButtonProc,title="Grow 1 Agg, graph", help={"Perform all steps and generate 3D graph"}
+	Button GrowNAggAll,pos={15,335},size={150,18}, proc=IR3A_PanelButtonProc,title="Grow N Agg.", help={"Generate N aggregates randomly"}
+	PopupMenu NUmberOfTestAggregates,pos={195,335},size={150,20},proc=IR3A_PopMenuProc,title="N ="
 	PopupMenu NUmberOfTestAggregates,help={"How many test aggregates to grow"}
 	NVAR NUmberOfTestAggregates=root:Packages:AggregateModeling:NUmberOfTestAggregates
 	PopupMenu NUmberOfTestAggregates,mode=1,popvalue=num2str(NUmberOfTestAggregates), value="5;10;20;30;50;"
 
+	Button GrowOptimizedAgg,pos={15,335},size={150,18}, proc=IR3A_PanelButtonProc,title="Grow Best Match Agg", help={"Try to find best aggregate for parameters below"}
 
-
+	SetVariable CurrentMisfitValue, pos={250,338}, size={120,20}, title="Misfit = ", help={"Current misfit between dmin/c of model and target"}, format="%.4f", fColor=(1,16019,65535),valueColor=(16385,16388,65535)
+	SetVariable CurrentMisfitValue, variable=root:Packages:AggregateModeling:CurrentMisfitValue, limits={-inf,inf,0},  disable=0,noedit=1,frame=0, bodyWidth=50,fstyle=1, fsize=11
 	//repeat the target values
-	SetVariable Target_dmin, pos={10,360}, size={100,20}, title="Target dmin = ", help={"Minimum dimension of the aggregate"}, format="%.2g",fColor=(1,16019,65535),valueColor=(16385,16388,65535)
-	SetVariable Target_dmin, variable=root:Packages:AggregateModeling:BrFract_dmin, noedit=1,limits={-inf,inf,0},  disable=0,noedit=1,frame=0, bodyWidth=50
-	SetVariable Target_c, pos={150,360}, size={100,20}, title="Target c =  ", help={"Connectivity dimension of the aggregate"}, format="%.2g", fColor=(1,16019,65535),valueColor=(16385,16388,65535)
-	SetVariable Target_c, variable=root:Packages:AggregateModeling:BrFract_c, noedit=1,limits={-inf,inf,0},  disable=0,noedit=1,frame=0, bodyWidth=50
-	SetVariable Target_df, pos={280,360}, size={100,20}, title="Target df = ", help={"Mass fractal dimension of the aggregate"}, format="%.2g", fColor=(1,16019,65535),valueColor=(16385,16388,65535)
-	SetVariable Target_df, variable=root:Packages:AggregateModeling:BrFract_df, noedit=1,limits={-inf,inf,0},  disable=0,noedit=1,frame=0, bodyWidth=50
+	SetVariable Target_dmin, pos={28,360}, size={120,20}, title="Target: dmin = ", help={"Minimum dimension of the aggregate"}, format="%.3g",fColor=(1,16019,65535),valueColor=(16385,16388,65535)
+	SetVariable Target_dmin, variable=root:Packages:AggregateModeling:BrFract_dmin, noedit=1,limits={-inf,inf,0},  disable=0,noedit=1,frame=0, bodyWidth=50, proc=IR3A_SetVarProc
+	SetVariable Target_c, pos={120,360}, size={120,20}, title="c =  ", help={"Connectivity dimension of the aggregate"}, format="%.3g", fColor=(1,16019,65535),valueColor=(16385,16388,65535)
+	SetVariable Target_c, variable=root:Packages:AggregateModeling:BrFract_c, limits={-inf,inf,0},  disable=0,noedit=1,frame=0, bodyWidth=50, proc=IR3A_SetVarProc
+	SetVariable Target_df, pos={265,360}, size={120,20}, title="Target df =  ", help={"Df value for target"}, format="%.3g", fColor=(1,16019,65535),valueColor=(16385,16388,65535)
+	SetVariable Target_df, variable=root:Packages:AggregateModeling:BrFract_df, limits={-inf,inf,0},  disable=0,noedit=1,frame=0, bodyWidth=50, proc=IR3A_SetVarProc
 
 	// here are resulting values
 	SetVariable dminValue,pos={40,380},size={100,20},noproc,title="dmin = ", help={"Minimum dimension of the aggregate"},limits={10,100,0}
-	SetVariable dminValue,variable= root:Packages:AggregateModeling:dminValue, bodyWidth=80, disable=0,noedit=1,frame=0, format="%.4f"
+	SetVariable dminValue,variable= root:Packages:AggregateModeling:dminValue, bodyWidth=80, disable=0,noedit=1,frame=0, format="%.3g"
 	SetVariable cValue,pos={150,380},size={100,20},noproc,title="c = ", help={"Connectivity dimension of the aggregate"},limits={10,100,0}
-	SetVariable cValue,variable= root:Packages:AggregateModeling:cValue, bodyWidth=80, disable=0,noedit=1,frame=0, format="%.4f"
-	SetVariable dfValue,pos={280,380},size={100,20},noproc,title="df = ", help={"Mass fractal dimension of the aggregate"},limits={10,100,0}, format="%.4f"
+	SetVariable cValue,variable= root:Packages:AggregateModeling:cValue, bodyWidth=80, disable=0,noedit=1,frame=0, format="%.3g"
+	SetVariable dfValue,pos={280,380},size={100,20},noproc,title="df = ", help={"Mass fractal dimension of the aggregate"},limits={0,3,0}, format="%.3g"
 	SetVariable dfValue,variable= root:Packages:AggregateModeling:dfValue, bodyWidth=80, disable=0,noedit=1,frame=0
+
+	SetVariable MaxNumTests,pos={60,380},size={100,20},proc=IR3A_SetVarProc,title="Max tries =   ", help={"Maximum number of tries"},limits={10,500,10}
+	SetVariable MaxNumTests,variable= root:Packages:AggregateModeling:MaxNumTests, bodyWidth=80, disable=0,frame=1, format="%.0f"
+	SetVariable MinSearchTargetValue,pos={250,380},size={100,20},noproc,title="Max misfit =   ", help={"Target fit value (see manual)"},limits={0.0001,1,0}, format="%.4f"
+	SetVariable MinSearchTargetValue,variable= root:Packages:AggregateModeling:MinSearchTargetValue, bodyWidth=80, disable=0,frame=1
+
+	Checkbox  VaryStickingProbability, pos={20,400}, size={50,15}, variable =root:packages:AggregateModeling:VaryStickingProbability
+	Checkbox  VaryStickingProbability, title="Vary Sticking Prob",mode=0, proc=IR3A_CheckProc
+	Checkbox  VaryStickingProbability, help={"Vary Sticking probability"}
+
+	SetVariable StickingProbMin,pos={150,400},size={100,20},noproc,title="Min = ", help={"Low limit of sticking probability"},limits={5,80,5}
+	SetVariable StickingProbMin,variable= root:Packages:AggregateModeling:StickingProbMin, bodyWidth=80, disable=0,frame=1, format="%.0f"
+	SetVariable StickingProbMax,pos={280,400},size={100,20},noproc,title="Max = ", help={"High limit of sticking probability"},limits={10,90,5}, format="%.0f"
+	SetVariable StickingProbMax,variable= root:Packages:AggregateModeling:StickingProbMax, bodyWidth=80, disable=0,frame=1
+
+	PopupMenu StickProbNumSteps,pos={20,420},size={150,20},proc=IR3A_PopMenuProc,title="N ="
+	PopupMenu StickProbNumSteps,help={"How many steps in Sticking Probability? "}
+	NVAR StickProbNumStepsNum=root:Packages:AggregateModeling:StickProbNumSteps
+	PopupMenu StickProbNumSteps,mode=1,popvalue=num2str(StickProbNumStepsNum), value="5;10;15;20;"
+	SetVariable TotalGrowthsPlanned,pos={20,445},size={210,16},noproc,title="Total number of growths = ", help={"How many growths will be tried... "},limits={0,inf,0}
+	SetVariable TotalGrowthsPlanned,variable= root:Packages:AggregateModeling:TotalGrowthsPlanned, disable=0,noedit=1,frame=0
 
 
 	SetVariable RValue,pos={40,400},size={100,16},noproc,title="R [A] = ", help={"R of the aggregate, Rg/dp"},limits={10,100,0}, format="%6.2f"
 	SetVariable RValue,variable= root:Packages:AggregateModeling:RxRgPrimaryValue, bodyWidth=80, disable=0,noedit=1,frame=0
 	SetVariable pValue,pos={150,400},size={100,16},noproc,title="p = ", help={"Short circuit path length"},limits={10,100,0}, format="%6.0f"
 	SetVariable pValue,variable= root:Packages:AggregateModeling:pValue, bodyWidth=80, disable=0,noedit=1,frame=0
-
 	SetVariable sValue,pos={280,400},size={100,16},noproc,title="s = ", help={"Connective path length of the aggregate"},limits={10,100,0}
 	SetVariable sValue,variable= root:Packages:AggregateModeling:sValue, bodyWidth=80, disable=0,noedit=1,frame=0, format="%6.0f"
 
 	SetVariable TrueStickingProbability pos={20,430},size={200,16},noproc,title="True Sticking Prob. [%] = ", help={"True Sticking Probability during aggregate growth"}
 	SetVariable TrueStickingProbability variable=root:Packages:AggregateModeling:TrueStickingProbability, noedit=1,frame=0,limits={10,100,0}, format="%2.2d"
 
-	Button Display3DMFASummary,pos={220,425},size={150,20}, proc=IR3A_PanelButtonProc,title="Summary Table", help={"Display summary for 3D Mass Fractal Aggregate"}
-	Button SaveAggregateData,pos={220,445},size={150,20}, proc=IR3A_PanelButtonProc,title="Store Current Aggregate", help={"Copy this aggregate with parameters in a folder"}
+	Button Display3DMFASummary,pos={220,423},size={150,18}, proc=IR3A_PanelButtonProc,title="Summary Notebook", help={"Display summary notebook for 3D Mass Fractal Aggregate"}
+	Button SaveAggregateData,pos={220,447},size={150,18}, proc=IR3A_PanelButtonProc,title="Store Current Aggregate", help={"Copy this aggregate with parameters in a folder"}
 	TitleBox FakeLine2 title=" ",fixedSize=1,size={330,3},pos={16,469},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 
 	TitleBox ListBoxTitle title="\Zr130Saved 3D Mass Fract aggregates",size={250,15},pos={5,480},frame=0,fColor=(0,0,52224)
@@ -320,21 +346,121 @@ Function IR3A_FractalAggregatePanel()
 	ListBox StoredAggregates pos={5,500}, size={250,145}
 	ListBox StoredAggregates listWave=Stored3DAggregates,mode=1,selRow=-1,selWave=Stored3DAggSelections
 	
-	Button Display1DData,pos={262,480},size={120,20}, proc=IR3A_PanelButtonProc,title="Display 1D Graph", help={"Display 1 D graph with Intensity vs Q for these data"}
-	Button Display3DMassFracGizmo,pos={262,505},size={120,20}, proc=IR3A_PanelButtonProc,title="Display 3D Graph", help={"Display Gizmo with 3D Mass Fractal Aggregate"}
-	Button Calculate1DIntensity,pos={262,530},size={120,20}, proc=IR3A_PanelButtonProc,title="Calculate 1D Int.", help={"Calculate using UF 1D intensity and append to graph"}
-	Button Model1DIntensity,pos={262,555},size={120,20}, proc=IR3A_PanelButtonProc,title="Monte Carlo 1D Int.", help={"Calculate using Monte Carlo 1D intensity and append to graph"}
-	Button CompareStoredResults,pos={262,580},size={120,20}, proc=IR3A_PanelButtonProc,title="Compare Stored", help={"Present statistcs on stored results"}
+	Button Display1DData,pos={262,480},size={120,18}, proc=IR3A_PanelButtonProc,title="Display 1D Graph", help={"Display 1 D graph with Intensity vs Q for these data"}
+	Button Display3DMassFracGizmo,pos={262,505},size={120,18}, proc=IR3A_PanelButtonProc,title="Display 3D Graph", help={"Display Gizmo with 3D Mass Fractal Aggregate"}
+	Button Calculate1DIntensity,pos={262,530},size={120,18}, proc=IR3A_PanelButtonProc,title="Calculate 1D Int.", help={"Calculate using UF 1D intensity and append to graph"}
+	Button Model1DIntensity,pos={262,555},size={120,18}, proc=IR3A_PanelButtonProc,title="Monte Carlo 1D Int.", help={"Calculate using Monte Carlo 1D intensity and append to graph"}
+	Button CompareStoredResults,pos={262,580},size={120,18}, proc=IR3A_PanelButtonProc,title="Compare Stored", help={"Present statistcs on stored results"}
 	Button DeleteStoredResults,pos={262,635},size={100,15}, proc=IR3A_PanelButtonProc,title="Delete all Stored", help={"Delete all stored results"}
 	//the above button works, but the results seem to take forever and do not look too good.  
-	IR3A_SetControlsInPanel()
+	//IR3A_SetControlsInPanel() - this is done by function called above anyway. 
 	IR3A_Create3DAggListForListbox()
 end
 
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
+Function IR3A_GrowthTabProc(tca) : TabControl
+	STRUCT WMTabControlAction &tca
+
+	switch( tca.eventCode )
+		case 2: // mouse up
+			Variable tab = tca.tab
+			IR3A_CalculateAggValues()
+			Button Grow1AggAll win=FractalAggregatePanel, disable=Tab!=0
+			Button GrowNAggAll win=FractalAggregatePanel, disable=Tab!=1
+			PopupMenu NUmberOfTestAggregates win=FractalAggregatePanel, disable=Tab!=1
+			Button GrowOptimizedAgg win=FractalAggregatePanel, disable=Tab!=2
+			if(tab==0 || tab==1)
+				SetVariable Target_dmin win=FractalAggregatePanel, noedit=1, disable=0, frame=0 
+				SetVariable Target_c win=FractalAggregatePanel, noedit=1, disable=0,frame=0 
+				SetVariable Target_df win=FractalAggregatePanel, noedit=1, disable=0,frame=0 
+				SetVariable dminValue win=FractalAggregatePanel, disable=0
+				SetVariable cValue win=FractalAggregatePanel, disable=0
+				SetVariable dfValue win=FractalAggregatePanel, disable=0
+				SetVariable RValue win=FractalAggregatePanel, disable=0
+				SetVariable pValue win=FractalAggregatePanel, disable=0
+				SetVariable sValue win=FractalAggregatePanel, disable=0
+				SetVariable TrueStickingProbability  win=FractalAggregatePanel, disable=0
+				Button Display3DMFASummary  win=FractalAggregatePanel, disable=0
+				Button SaveAggregateData  win=FractalAggregatePanel, disable=0
+				SetVariable MaxNumTests  win=FractalAggregatePanel, disable=1
+				SetVariable MinSearchTargetValue  win=FractalAggregatePanel, disable=1
+				Checkbox  VaryStickingProbability  win=FractalAggregatePanel, disable=1
+				SetVariable StickingProbMin  win=FractalAggregatePanel, disable=1
+				SetVariable StickingProbMax  win=FractalAggregatePanel, disable=1
+				SetVariable TotalGrowthsPlanned  win=FractalAggregatePanel, disable=1
+				PopupMenu StickProbNumSteps  win=FractalAggregatePanel, disable=1
+			elseif(tab==2)
+				NVAR Target_C=root:Packages:AggregateModeling:BrFract_c
+				NVAR Target_dmin = root:Packages:AggregateModeling:BrFract_dmin
+				if(numtype(Target_C)!=0)
+					Target_C = 1.6
+				endif
+				if(numtype(Target_dmin)!=0)
+					Target_dmin = 1.2
+				endif
+				SetVariable Target_dmin win=FractalAggregatePanel, noedit=0, disable=0,frame=1
+				SetVariable Target_c win=FractalAggregatePanel, noedit=0, disable=0,frame=1
+				SetVariable Target_df win=FractalAggregatePanel, noedit=1, disable=1,frame=0 
+				SetVariable dminValue win=FractalAggregatePanel, disable=1
+				SetVariable cValue win=FractalAggregatePanel, disable=1
+				SetVariable dfValue win=FractalAggregatePanel, disable=1
+				SetVariable RValue win=FractalAggregatePanel, disable=1
+				SetVariable pValue win=FractalAggregatePanel, disable=1
+				SetVariable sValue win=FractalAggregatePanel, disable=1
+				SetVariable TrueStickingProbability  win=FractalAggregatePanel, disable=1
+				Button Display3DMFASummary  win=FractalAggregatePanel, disable=1
+				Button SaveAggregateData  win=FractalAggregatePanel, disable=1
+
+
+				SetVariable MaxNumTests  win=FractalAggregatePanel, disable=0
+				SetVariable MinSearchTargetValue  win=FractalAggregatePanel, disable=0
+				Checkbox  VaryStickingProbability  win=FractalAggregatePanel, disable=0
+				SetVariable TotalGrowthsPlanned  win=FractalAggregatePanel, disable=0
+				NVAR Showme = root:packages:AggregateModeling:VaryStickingProbability
+				SetVariable StickingProbMin  win=FractalAggregatePanel, disable=!Showme
+				SetVariable StickingProbMax  win=FractalAggregatePanel, disable=!Showme
+				PopupMenu StickProbNumSteps  win=FractalAggregatePanel, disable=!Showme
+				
+			endif
+			
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
+
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
+
+Function IR3A_SetVarProc(sva) : SetVariableControl
+	STRUCT WMSetVariableAction &sva
+
+	switch( sva.eventCode )
+		case 1: // mouse up
+		case 2: // Enter key
+		case 3: // Live update
+			Variable dval = sva.dval
+			String sval = sva.sval
+//			NVAR dmin = root:Packages:AggregateModeling:BrFract_dmin
+//			NVAR cval = root:Packages:AggregateModeling:BrFract_c
+//			NVAR df = root:Packages:AggregateModeling:BrFract_df
+//			if(StringMatch(sva.ctrlName, "Target_dmin") || StringMatch(sva.ctrlName, "Target_c"))
+//				df = dmin * cval
+//			endif
+			//MaxNumTests needs simply this below run anyway... 
+			IR3A_CalculateAggValues()
+			
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
+
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
@@ -370,8 +496,8 @@ static Function IR3A_Create3DAggListForListbox()
 	if(NumOfFolders>1)
 		For(i=0;i<NumOfFolders-1;i+=1)
 			tempStr = StringFromList(i, CurrentList, ",")
-			Stored3DAggregatesPaths	[i+1] ="root:MassFractalAggregates:"+tempStr
-			Stored3DAggregates	[i+1] = num2str(i)+" : "+IR3A_BuildUser3DAggNames("root:MassFractalAggregates:"+tempStr)
+			Stored3DAggregatesPaths	[i+1] ="root:MassFractalAggregates:"+possiblyQUoteName(tempStr)
+			Stored3DAggregates	[i+1] = num2str(i)+" : "+IR3A_BuildUser3DAggNames("root:MassFractalAggregates:"+possiblyQUoteName(tempStr))
 		endfor	
 	endif
 	DoUpdate  /W=FractalAggregatePanel 
@@ -709,7 +835,7 @@ static Function IR3A_Calculate1DIntensity()
 	//proper scaling of model... 
 	variable QRg2 = 0.5*pi/Level2Rg
 	variable QRg1 = 1.5*pi/Level1Rg
-	print "Scaling Model to data using integral intensities in Q range from "+num2str(QRg2)+"  to "+num2str(QRg1)
+	//print "Scaling Model to data using integral intensities in Q range from "+num2str(QRg2)+"  to "+num2str(QRg1)
 	variable InvarModel=areaXY(A3DAgg1DQwave, Model3DAggIntensity, QRg2, QRg1)
 	variable InvarData=areaXY(QwaveOriginal, IntWaveOriginal, QRg2, QRg1)
 	Model3DAggIntensity*=InvarData/InvarModel
@@ -985,6 +1111,7 @@ static Function IR3A_DisplayAggNotebook(MassFractalAggregate, AppendToNotebook)
 		NVAR Target_dmin=root:Packages:AggregateModeling:BrFract_dmin
 		NVAR Target_c=root:Packages:AggregateModeling:BrFract_c
 		NVAR Target_df=root:Packages:AggregateModeling:BrFract_df
+		NVAR Misfit = root:Packages:AggregateModeling:CurrentMisfitValue
 		string ResultsLocation = GetWavesDataFolder(MassFractalAggregate, 1 )
 		string OldNote=note(MassFractalAggregate)
 		Notebook $nb selection={endOfFile,endOfFile}
@@ -1012,6 +1139,7 @@ static Function IR3A_DisplayAggNotebook(MassFractalAggregate, AppendToNotebook)
 		Notebook $nb ruler=Normal, text="dmin : \t\t Target : "+num2str(IN2G_roundSignificant(Target_dmin,3))+"\t\tResult : "+StringByKey("dmin", OldNote, "=", ";")+"\r"
 		Notebook $nb ruler=Normal, text="c : \t\t Target : "+num2str(IN2G_roundSignificant(Target_c,3))+"\t\tResult : "+StringByKey("c", OldNote, "=", ";")+"\r"
 		Notebook $nb ruler=Normal, text="df : \t\t Target : "+num2str(IN2G_roundSignificant(Target_df,3))+"\t\tResult : "+StringByKey("df", OldNote, "=", ";")+"\r"
+		Notebook $nb ruler=Normal, text="Final Misfit value : "+num2str(IN2G_roundSignificant(Misfit,3))+"\r"
 		Notebook $nb ruler=Normal, text="*************************************************************************************************   \r"
 		//	NoteText="Mass Fractal Aggregate created="+date()+", "+time()+";z="+num2str(DegreeOfAggregation)+";StickingProbability="+num2str(StickingProbability)+";StickingMethod="+num2str(AllowedNearDistance)
 		//	NoteText+=";R="+num2str(RValue)+";Rprimary="+num2str(RgPrimary)+";p="+num2str(pValue)
@@ -1046,11 +1174,12 @@ end
 
 
 
-static Function IR3A_Grow1MassFractAgreg()
+static Function IR3A_Grow1MassFractAgreg(Display3D)
+	variable Display3D
 
 	DFref oldDf= GetDataFolderDFR()
 
-	IR3A_InitializeMassFractAgg()
+	//IR3A_InitializeMassFractAgg()
 	SetDataFolder root:Packages:AggregateModeling
 	KillWIndow/Z MassFractalAggregateView
 	KillWIndow/Z MassFractalAggDataPlot
@@ -1066,7 +1195,7 @@ static Function IR3A_Grow1MassFractAgreg()
 	make/N=(DegreeOfAggregation)/O Distances 							// Distance between existing particles & new one. Needed by MakeAgg
 	variable StartTicks=ticks
 	variable Failed
-	print time()+"  Started Growing Aggregate and evaluation its structure " 
+	//print time()+"  Started Growing Aggregate and evaluation its structure " 
 	IR3A_MakeAgg(DegreeOfAggregation,MassFractalAggregate,StickingProbability,AllowedNearDistance)		// Agg is made with DegreeOfAggregation particles
 	//Failed = IR3A_Ends(MassFractalAggregate, breakOnFail)
 	//if(!Failed)
@@ -1075,11 +1204,13 @@ static Function IR3A_Grow1MassFractAgreg()
 	IR3A_EvaluateAggregateUsingMT()
 	Failed = IR3A_CalculateParametersMT()
 	if(!failed)
-		IR3A_GizmoViewScatterPlot(MassFractalAggregate)
+		if(Display3D)
+			IR3A_GizmoViewScatterPlot(MassFractalAggregate)
+		endif
 	else
-		Print "Failed to grow meaningful aggregate)"
+		Print "Failed to grow meaningful aggregate"
 	endif
-	print time()+"  Finished, done in "+num2str((ticks-StartTicks)/60)+" seconds" 	
+	//print time()+"  Finished, done in "+num2str((ticks-StartTicks)/60)+" seconds" 	
 	//else
 	//	print time()+"  Failed, Aggregate is too compact " 	
 	//endif
@@ -1096,14 +1227,14 @@ static FUnction IR3A_EvaluateAggregateUsingMT()
 
 	DFref oldDf= GetDataFolderDFR()
 	SetDataFolder root:Packages:AggregateModeling
-	print "****   Evaluating Aggregate structure    *****"
-	print "This may take anywhere from seconds to hours, depending on size and complexity of the aggregate." 
+	//print "****   Evaluating Aggregate structure    *****"
+	print "Evaluating Aggregate - This may take anywhere from seconds to hours, depending on size and complexity of the aggregate." 
 	wave ListOfNeighbors
 	wave NumberOfNeighbors
 	NVAR NumberOfTestPaths = root:Packages:AggregateModeling:NumberOfTestPaths
 	NVAR DegreeOfAggregation = root:Packages:AggregateModeling:DegreeOfAggregation
 
-	variable timerRefNum=StartMSTimer
+	variable StartTicks=ticks
 		//Make/O/N=(dimsize(ListOfNeighbors,0)) ListOfStarts
 		//Duplicate/O ListOfNeighbors, ListOfNeighborsForStarts
 		//	variable i, ij 
@@ -1121,16 +1252,16 @@ static FUnction IR3A_EvaluateAggregateUsingMT()
 	Duplicate/O ListOfStarts, ListOfNeighborsForStarts
 	//and these are neighbors fo each end point. 
 	ListOfNeighborsForStarts= ListOfNeighbors[ListOfStarts[p][0]]
-
+	//print dimsize(ListOfStarts,0)
 	//at this moment we have list of start points ListOfStarts and list of next points for each start point. 
 	//we can now start independent thread for each of pairs of ListOfStarts[i] as prior point and NumberOfNeighborsForStarts[i] as current point. 
 	Make/WAVE/O/N=(dimsize(ListOfStarts,0)) ListOfUniquePathListWvs
-	
+	//print "start MT evaluation"	
 	multithread ListOfUniquePathListWvs = IR3A_MT_WalkPathThread(ListOfNeighbors,NumberOfNeighbors,ListOfStarts[p], NumberOfTestPaths, DegreeOfAggregation)
 
-	variable microSeconds = StopMSTimer(timerRefNum)
+	variable seconds = ticks -StartTicks
 
-	Print "***** Evaluted  aggregate in sec : "+num2str(microSeconds/1e6) 	//takes needless time.. 
+	Print "***** Evaluted  aggregate in sec : "+num2str(seconds/60) 	//takes needless time.. 
 
 	setDataFOlder OldDf
 
@@ -1160,6 +1291,7 @@ static Function IR3A_CalculateParametersMT()
 	NVAR AllowedNearDistance=root:Packages:AggregateModeling:AllowedNearDistance
 	NVAR RxRgPrimaryValue=root:Packages:AggregateModeling:RxRgPrimaryValue
 	NVAR DegreeOfAggregation=root:Packages:AggregateModeling:DegreeOfAggregation
+	NVAR Misfit = root:Packages:AggregateModeling:CurrentMisfitValue
 	SVAR MultiParticleAttraction = root:Packages:AggregateModeling:MultiParticleAttraction //"Neutral;Attractive;Repulsive;Not allowed;"
 
 	variable failed=0
@@ -1234,35 +1366,37 @@ static Function IR3A_CalculateParametersMT()
 		sValue=(exp(ln(DegreeOfAggregation)/dminValue))
 	endif	
 
+	IR3A_CalculateAggValues()
+	
 	TrueStickingProbability = 100*DegreeOfAggregation/AttemptValue
 	variable PrimaryDiameter = 2*sqrt(5/3)*RgPrimary
 	variable NumStarts=numpnts(ListOfStarts)
 	RxRgPrimaryValue = RValue*PrimaryDiameter
 	print "***** Results listing ******"
-	print "Total number of end points is : "+num2str(NumStarts)
+	//print "Total number of end points is : "+num2str(NumStarts)
 	if(NumStarts<4)
 		print "Warning : This particle is too compact (too few ends) to make any sense"
 		failed = 1
 	endif
 	//print "Possible number of paths is : " +num2str(NumStarts*(NumStarts-1))
-	print "Total number of evaluated paths is : "+num2str(NumPathsFound)
-	print "Paths per end point is : "+num2str(PathperEndPoint)
+	//print "Total number of evaluated paths is : "+num2str(NumPathsFound)
+	//print "Paths per end point is : "+num2str(PathperEndPoint)
 	if(MaxNumPaths > NumberOfTestPaths-2)
 		print "Warning : Some path/end point numbers were limited by max endpoint choice. Results may not be valid, increase No of test paths for these conditions"
 	endif
-	print "Maximum length path is: "+num2str(MaxPathLength)
-	print "Weighted Average Path ="+num2str(pValue)
-	Print "Aggregate Rg [relative] = "+num2str(REnd)
-	Print "R primary particles [A] = "+num2str(PrimaryDiameter/2)
-	Print "Aggregate R [Angstroms] = "+num2str(RValue*PrimaryDiameter)
-	Print "z = "+num2str(DegreeOfAggregation)
-	Print "p = "+num2str(pValue)
-	Print "c = "+num2str(cValue)
-	Print "s = "+num2str(sValue)
-	Print "df = "+num2str(dfValue)
-	Print "dmin = "+num2str(dminValue)
-	Print "True Sticking Probability = "+num2str(100*DegreeOfAggregation/AttemptValue)+"%"
-	//Print "R [primary particles]= "+num2str(REnd)
+	print "Maximum length path is: \t\t\t\t"+num2str(MaxPathLength)
+	print "Weighted Average Path = \t\t\t\t"+num2str(pValue)
+	Print "Aggregate Rg [relative] = \t\t\t\t"+num2str(REnd)
+	Print "R primary particles [A] = \t\t\t\t"+num2str(PrimaryDiameter/2)
+	Print "Aggregate R [Angstroms] = \t\t\t\t"+num2str(RValue*PrimaryDiameter)
+	Print "z = \t\t\t\t\t"+num2str(DegreeOfAggregation)
+	Print "p = \t\t\t\t\t"+num2str(pValue)
+	Print "c = \t\t\t\t\t"+num2str(cValue)
+	Print "s = \t\t\t\t\t"+num2str(sValue)
+	Print "df = \t\t\t\t"+num2str(dfValue)
+	Print "dmin = \t\t\t\t"+num2str(dminValue)
+	Print "True Sticking Probability = \t\t"+num2str(100*DegreeOfAggregation/AttemptValue)+"%"
+	Print "Misfit value = \t\t\t\t"+num2str(Misfit)
 
 	//appned note to MassFractalAggregate
 	string NoteText
@@ -1271,6 +1405,7 @@ static Function IR3A_CalculateParametersMT()
 	NoteText+=";RxRgPrimaryValue="+num2str(RValue*PrimaryDiameter)+";s="+num2str(sValue)+";df="+num2str(IN2G_roundSignificant(dfValue,4))+";dmin="+num2str(IN2G_roundSignificant(dminValue,4))
 	NoteText+=";c="+num2str(IN2G_roundSignificant(cValue,4))+";True Sticking Probability="+num2str(100*DegreeOfAggregation/AttemptValue)
 	NoteText+=";MultiParticleAttraction="+MultiParticleAttraction+";MaximumPathLength="+num2str(MaxPathLength)+";MaxNumberOfPathsPerEnd="+num2str(MaxNumPaths)+";NumberOfEnds="+num2str(NumStarts)+";"
+	NoteText+=";Misfti="+num2str(Misfit)+";"
 
 	Wave MassFractalAggregate
 	Note MassFractalAggregate, NoteText
@@ -1400,7 +1535,7 @@ end
 static Function IR3A_GrowAggregate()
 	DFref oldDf= GetDataFolderDFR()
 
-	IR3A_InitializeMassFractAgg()
+	//IR3A_InitializeMassFractAgg()
 	SetDataFolder root:Packages:AggregateModeling
 
 	NVAR DegreeOfAggregation=root:Packages:AggregateModeling:DegreeOfAggregation
@@ -1423,7 +1558,7 @@ End
 //******************************************************************************************************************************************************
 static Function IR3A_InitializeMassFractAgg()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()
 
 	NewDataFolder/O/S root:Packages
@@ -1436,7 +1571,8 @@ static Function IR3A_InitializeMassFractAgg()
 	ListOfVariables+="pValue;dfValue;RValue;RxRgPrimaryValue;cValue;dminValue;sValue;AttemptValue;TrueStickingProbability;"
 	ListOfVariables+="SelectedLevel;SelectedQlevel;SelectedBlevel;CurrentResults;StoredResults;"
 	ListOfVariables+="BrFract_G2;BrFract_Rg2;BrFract_B2;BrFract_P2;BrFract_G1;BrFract_Rg1;BrFract_B1;BrFract_P1;BrFract_dmin;"
-	ListOfVariables+="BrFract_c;BrFract_z;BrFract_fBr;BrFract_fM;BrFract_df;"
+	ListOfVariables+="BrFract_c;BrFract_z;BrFract_fBr;BrFract_fM;BrFract_df;CurrentMisfitValue;"
+	ListOfVariables+="MaxNumTests;VaryStickingProbability;StickingProbMin;StickingProbMax;MinSearchTargetValue;StickProbNumSteps;TotalGrowthsPlanned;"
 	ListOfStrings="SlectedBranchedLevels;Model;BrFract_ErrorMessage;MultiParticleAttraction;"
 	Make/O/N=1/T Stored3DAggregates, Stored3DAggregatesPaths
 	Make/O/N=1 Stored3DAggSelections
@@ -1483,10 +1619,29 @@ static Function IR3A_InitializeMassFractAgg()
 		MultiParticleAttraction = "Neutral"
 	endif
 
-
 	NVAR NUmberOfTestAggregates
 	if(NUmberOfTestAggregates<5)
 		NUmberOfTestAggregates = 5
+	endif
+	NVAR MaxNumTests
+	if(MaxNumTests<1)
+		MaxNumTests = 10
+	endif
+	NVAR StickingProbMin
+	if(StickingProbMin<5)
+		StickingProbMin = 10
+	endif
+	NVAR StickingProbMax
+	if(StickingProbMax<10)
+		StickingProbMax = 90
+	endif
+	NVAR MinSearchTargetValue
+	if(MinSearchTargetValue<0.001)
+		MinSearchTargetValue = 0.05
+	endif
+	NVAR StickProbNumSteps
+	if(StickProbNumSteps<5)
+		StickProbNumSteps = 5
 	endif
 //	NVAR gdf, gR
 //	variable/g gp = mom2,gc=ln(DegreeOfAggregation)/ln(gp),gdmin=gdf/gc,gs=round(exp(ln(DegreeOfAggregation)/gdmin))
@@ -1806,9 +1961,9 @@ static Function IR3A_MakeAgg(DegreeOfAggregation,MassFractalAggregate,StickingPr
 			variable steps=trunc(DegreeOfAggregation/10)
 			steps = max(steps,100)
 			if(stuck==1 && IR3A_IsPXYZNOTinList3DWave(MassFractalAggregate,px,py,pz, aggct))	//added here to make sure we do not accidentally add existing particle. 
-				if(mod(aggct,steps)<1) ///round(DegreeOfAggregation/50))==aggct/round(DegreeOfAggregation/50))
-					Print time()+"  Added "+num2str(aggct)+" particles to the aggregate  "	//takes needless time.. 
-				endif
+				//if(mod(aggct,steps)<1) ///round(DegreeOfAggregation/50))==aggct/round(DegreeOfAggregation/50))
+				//	Print time()+"  Added "+num2str(aggct)+" particles to the aggregate  "	//takes needless time.. 
+				//endif
 				MassFractalAggregate[aggct][0]=px
 				MassFractalAggregate[aggct][1]=py
 				MassFractalAggregate[aggct][2]=pz
@@ -2513,6 +2668,7 @@ Function IR3A_PopMenuProc(pa) : PopupMenuControl
 				SelectedLevel = str2num(popStr[0,0])
 				SlectedBranchedLevels=popStr
 				IR3A_CalculateBranchedMassFr()
+				IR3A_CalculateAggValues()
 			endif
 			if(stringMatch(CtrlName,"IntensityDataName")||stringMatch(CtrlName,"SelectDataFolder"))
 				IR2C_PanelPopupControl(pa)		
@@ -2520,6 +2676,7 @@ Function IR3A_PopMenuProc(pa) : PopupMenuControl
 				IR3A_FindAvailableLevels()
 				IR3A_ClearVariables()
 				IR3A_CalculateBranchedMassFr()
+				IR3A_CalculateAggValues()
 			endif	
 			if(stringMatch(CtrlName,"AllowedNearDistance"))
 				NVAR AllowedNearDistance=root:Packages:AggregateModeling:AllowedNearDistance
@@ -2529,11 +2686,17 @@ Function IR3A_PopMenuProc(pa) : PopupMenuControl
 				NVAR NUmberOfTestAggregates=root:Packages:AggregateModeling:NUmberOfTestAggregates
 				NUmberOfTestAggregates = str2num(popStr)
 			endif
+			if(stringMatch(CtrlName,"StickProbNumSteps"))
+				NVAR StickProbNumSteps=root:Packages:AggregateModeling:StickProbNumSteps
+				StickProbNumSteps = str2num(popStr)
+				IR3A_CalculateAggValues()
+			endif
 			
 			if(stringMatch(CtrlName,"MParticleAttraction"))
 				SVAR MultiParticleAttraction=root:Packages:AggregateModeling:MultiParticleAttraction
 				MultiParticleAttraction = popStr
 			endif
+
 			break
 	endswitch
 
@@ -2805,11 +2968,15 @@ Function IR3A_CheckProc(cba) : CheckBoxControl
 			SVAR Model=root:Packages:AggregateModeling:Model
 			if(stringMatch(cba.ctrlName,"CurrentResults"))
 				StoredResults=!CurrentResults
+				IR3A_UpdatePanelValues()
 			endif
 			if(stringMatch(cba.ctrlName,"StoredResults"))
 				CurrentResults=!StoredResults
+				IR3A_UpdatePanelValues()
 			endif
-			IR3A_UpdatePanelValues()
+			if(stringMatch(cba.ctrlName,"VaryStickingProbability"))
+				IR3A_SetControlsInPanel()
+			endif
 			break
 	endswitch
 
@@ -2846,6 +3013,12 @@ static Function IR3A_SetControlsInPanel()
 		PopupMenu SelectDataFolder, win=FractalAggregatePanel, disable=CurrentResults
 		PopupMenu IntensityDataName, win=FractalAggregatePanel, disable=CurrentResults
 		Setvariable FolderMatchStr, win=FractalAggregatePanel, disable=CurrentResults
+		
+		ControlInfo/W=FractalAggregatePanel  GrowthTabs
+		STRUCT WMTabControlAction tca
+		tca.eventCode = 2
+		tca.tab=V_Value
+		IR3A_GrowthTabProc(tca)
 
 end
 
@@ -2898,8 +3071,117 @@ end
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
+Function IR3A_FindBestFitGrowth()
+	//will try to find best fit growth using random method... 
+	
+	
+	NVAR CurrentMisfitValue=root:Packages:AggregateModeling:CurrentMisfitValue		//misfit value of existing growth		
+	NVAR MaxNumTests=root:Packages:AggregateModeling:MaxNumTests					//max growth at specific condition
+	NVAR VaryStickingProbability=root:Packages:AggregateModeling:VaryStickingProbability
+	NVAR StickingProbMin=root:Packages:AggregateModeling:StickingProbMin
+	NVAR StickingProbMax=root:Packages:AggregateModeling:StickingProbMax
+	NVAR StickProbNumSteps=root:Packages:AggregateModeling:StickProbNumSteps
+	NVAR MinSearchTargetValue=root:Packages:AggregateModeling:MinSearchTargetValue
+	NVAR TotalGrowthsPlanned=root:Packages:AggregateModeling:TotalGrowthsPlanned
+	NVAR StickingProbability = root:Packages:AggregateModeling:StickingProbability
+	//NVAR MinSearchTargetValue=root:Packages:AggregateModeling:MinSearchTargetValue
+	variable MinMisfitFound=1e5
+	variable i, j, failed, NumStickProbSteps=0
+	variable StickProbStepValu=0
+	variable StickingProbabilityStart
+	variable OriginalStickingProbability
+	variable NumberOftestedAggregates=0
+	OriginalStickingProbability = StickingProbability
+	StickingProbabilityStart = StickingProbability
+	if(VaryStickingProbability)
+		NumStickProbSteps = StickProbNumSteps-1
+		StickProbStepValu = abs(StickingProbMax-StickingProbMin)/NumStickProbSteps
+		StickingProbabilityStart = StickingProbMin
+	endif
+	Variable startTicks, Seconds
+	startTicks = ticks
+	print "Starting run at : "+time()
+	For(j=0;j<=NumStickProbSteps;j+=1)
+		StickingProbability = StickingProbabilityStart+j*StickProbStepValu		//set new Sticking probability... 
+		sleep/T 1
+		//DoUpdate /W=FractalAggregatePanel
+		For(i=0;i<MaxNumTests;i+=1)															//iterate over number of growth as needed... 
+			failed = IR3A_Grow1MassFractAgreg(0)											//grow the aggregate
+			if(!failed)
+				NumberOftestedAggregates += 1
+				IR3A_CalculateAggValues()
+				if(CurrentMisfitValue < MinMisfitFound)						//found better fit than before... 
+					MinMisfitFound = CurrentMisfitValue
+					IR3A_StoreCurrentMassFractAgreg()
+					IR3A_Create3DAggListForListbox()
+					//print "Current misfit is : "+num2str(CurrentMisfitValue)
+					if(CurrentMisfitValue < MinSearchTargetValue)			//found fit better than what user wants, abort here and save it for user.
+						IR3A_Calculate1DIntensity()
+						IR3A_Display3DAggregate(1)
+						DoUpdate /W=FractalAggregatePanel
+						Seconds = ticks - startTicks
+						print "End run at : "+time()
+						print "   >>>>     SUCCESS!   FOUND RESULT WITH MISFIT LOWER THAN REQUESTED.  <<<<    "
+						print "   >>>>     Found Aggregate which matches the requested conditions <<<<    "
+						print "Tested "+num2str(NumberOftestedAggregates) +" aggregates, total time run [minutes]: "+num2str(Seconds/60/60)
+						StickingProbability = OriginalStickingProbability
+						return 1
+					endif
+				endif
+			endif
+		endfor
+	endfor
+	Seconds = ticks - startTicks
+	//Print microSeconds/10000, "microseconds per iteration"
+	print "End run at : "+time()
+
+	if(NumberOftestedAggregates)
+		//last selected one is the best... 
+		wave/T Stored3DAggregates= root:Packages:AggregateModeling:Stored3DAggregates
+		ListBox StoredAggregates win=FractalAggregatePanel, selRow= numpnts(Stored3DAggregates)-1
+		//ControlInfo /W=FractalAggregatePanel StoredAggregates
+		IR3A_CalculateAggValues()
+		IR3A_Calculate1DIntensity()
+		IR3A_Display3DAggregate(1)
+		DoUpdate /W=FractalAggregatePanel
+		print "   >>>>     FAILURE!      DID NOT FOUND RESULT WITH LOW ENOUGH MISFIT.  <<<<    "
+		print "   >>>>     Finished search, the best fit found is "+num2str(CurrentMisfitValue)+" Could not find better fit.  <<<<    "
+		print "Tested "+num2str(NumberOftestedAggregates) +" aggregates, total time run [minutes]: "+num2str(Seconds/60/60)
+	else		//did not find any...
+		print "   >>>>     Finished search, Could not grow any Aggregate, something si wrong.  <<<<    "
+	endif
+	StickingProbability = OriginalStickingProbability
+	return 0
+end
+
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
+
+static Function IR3A_CalculateAggValues()
+	
+	NVAR Misfit = root:Packages:AggregateModeling:CurrentMisfitValue
+	NVAR Target_C=root:Packages:AggregateModeling:BrFract_c
+	NVAR Target_dmin = root:Packages:AggregateModeling:BrFract_dmin
+	NVAR Model_Dmin=root:Packages:AggregateModeling:dminValue
+	NVAR Model_c = root:Packages:AggregateModeling:cValue
+	Misfit = (Target_C-Model_c)^2/(Target_C)^2 + (Target_dmin-Model_Dmin)^2/(Target_dmin)^2
+	NVAR TotalGrowthsPlanned = root:Packages:AggregateModeling:TotalGrowthsPlanned
+	NVAR MaxNumTests = root:Packages:AggregateModeling:MaxNumTests
+	NVAR StickProbNumSteps =root:Packages:AggregateModeling:StickProbNumSteps
+	TotalGrowthsPlanned = MaxNumTests * StickProbNumSteps
+	NVAR dmin = root:Packages:AggregateModeling:BrFract_dmin
+	NVAR cval = root:Packages:AggregateModeling:BrFract_c
+	NVAR df = root:Packages:AggregateModeling:BrFract_df
+	//if(StringMatch(sva.ctrlName, "Target_dmin") || StringMatch(sva.ctrlName, "Target_c"))
+	df = dmin * cval
+	//endif
+
+end
+
+
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+
 
 
 Function IR3A_PanelButtonProc(ba) : ButtonControl
@@ -2910,8 +3192,9 @@ Function IR3A_PanelButtonProc(ba) : ButtonControl
 		case 2: // mouse up
 			// click code here
 			if(stringmatch(ba.ctrlName,"Grow1AggAll"))
-				failed = IR3A_Grow1MassFractAgreg()
+				failed = IR3A_Grow1MassFractAgreg(0)
 				if(!failed)
+					IR3A_CalculateAggValues()
 					IR3A_Calculate1DIntensity()
 					IR3A_Display3DAggregate(1)
 					IR3A_Create3DAggListForListbox()
@@ -2921,16 +3204,20 @@ Function IR3A_PanelButtonProc(ba) : ButtonControl
 				NVAR NUmberOfTestAggregates=root:Packages:AggregateModeling:NUmberOfTestAggregates
 				variable i
 				For(i=0;i<NUmberOfTestAggregates;i+=1)
-					failed = IR3A_Grow1MassFractAgreg()
+					failed = IR3A_Grow1MassFractAgreg(0)
 					if(!failed)
+						IR3A_CalculateAggValues()
+						IR3A_Display3DAggregate(1)
 						IR3A_Calculate1DIntensity()
 						IR3A_StoreCurrentMassFractAgreg()
-						IR3A_Display3DAggregate(1)
 						IR3A_Create3DAggListForListbox()
 						print ">>>      Grown "+num2str(i+1)+" aggregate out of "+num2str(NUmberOfTestAggregates)
 					endif
 				endfor
 				print "   >>>>     Done Growing "+num2str(NUmberOfTestAggregates)+" aggregates <<<<    "
+			endif
+			if(stringmatch(ba.ctrlName,"GrowOptimizedAgg"))
+				IR3A_FindBestFitGrowth()
 			endif
 			if(stringmatch(ba.ctrlName,"Display3DMassFracGizmo"))
 				IR3A_Display3DAggregate(0)
@@ -3040,8 +3327,8 @@ static Function IR3A_CompareStoredResults()
 		redimension/N=(NumOfFolders) Stored3DAggSelections
 		Stored3DAggSelections = 0
 		setDataFolder root:Packages:AggregateModeling:
-		make/O/N=(NumOfFolders-1) IndexStoredResWave, dMinStoredResWave, cValStoredResWave, dfStoredResWave
-		make/O/N=(NumOfFolders-1) dMinTarget, cValTarget, dfTarget
+		make/O/N=(NumOfFolders-1) IndexStoredResWave, dMinStoredResWave, cValStoredResWave, dfStoredResWave, MisfitValWave
+		make/O/N=(NumOfFolders-1) dMinTarget, cValTarget, dfTarget, MisfitTarget
 		Wave IndexStoredResWave
 		Wave dMinStoredResWave
 		Wave cValStoredResWave
@@ -3059,6 +3346,7 @@ static Function IR3A_CompareStoredResults()
 			cValStoredResWave[i] = IR3A_Return3DAggParamVal("root:MassFractalAggregates:"+tempStr,"cval")
 			dMinStoredResWave[i] = IR3A_Return3DAggParamVal("root:MassFractalAggregates:"+tempStr,"dMin")
 			dfStoredResWave[i] = IR3A_Return3DAggParamVal("root:MassFractalAggregates:"+tempStr,"df")
+			MisfitValWave[i] = IR3A_Return3DAggParamVal("root:MassFractalAggregates:"+tempStr,"Misfit")
 		endfor	
 	endif
 	variable MinVal, MaxVal
@@ -3066,38 +3354,50 @@ static Function IR3A_CompareStoredResults()
 	NVAR dminTarg = root:Packages:AggregateModeling:BrFract_dmin
 	NVAR cTarg = root:Packages:AggregateModeling:BrFract_c
 	NVAR dfTarg = root:Packages:AggregateModeling:BrFract_df
+	NVAR MisFitTarg = root:Packages:AggregateModeling:MinSearchTargetValue
 	dMinTarget = dminTarg
 	cValTarget = cTarg
 	dfTarget = dfTarg
+	if(MisFitTarg<1e-4)
+		MisFitTarg = WaveMin(MisfitValWave)
+	endif
+	MisfitTarget = MisFitTarg
 	KillWIndow/Z AggStoredResultsOverview
 	
 	Display/W=(695,66,1292,720)/K=1/N=AggStoredResultsOverview dMinStoredResWave vs IndexStoredResWave as "Overview of the Stored 3D Aggregates" 
 	AppendToGraph dMinTarget vs IndexStoredResWave
 	AppendToGraph/L=cAxis cValStoredResWave,cValTarget vs IndexStoredResWave
 	AppendToGraph/L=dfAxis dfStoredResWave,dfTarget vs IndexStoredResWave
+	AppendToGraph/L=MisfitAxis MisfitValWave,MisfitTarget vs IndexStoredResWave
 	ModifyGraph mode(dMinStoredResWave)=3,mode(cValStoredResWave)=3,mode(dfStoredResWave)=3
 	ModifyGraph marker(dMinStoredResWave)=19,marker(cValStoredResWave)=17,marker(dfStoredResWave)=26
+	ModifyGraph mode(MisfitValWave)=3,marker(MisfitValWave)=29,rgb(MisfitValWave)=(0,0,0)
 	ModifyGraph lStyle(dMinTarget)=3,lStyle(cValTarget)=3,lStyle(dfTarget)=3
 	ModifyGraph rgb(cValStoredResWave)=(1,16019,65535),rgb(cValTarget)=(1,16019,65535)
 	ModifyGraph rgb(dfStoredResWave)=(3,52428,1),rgb(dfTarget)=(3,52428,1)
 	ModifyGraph lblPosMode(cAxis)=3
-	ModifyGraph lblPos(left)=63,lblPos(cAxis)=64,lblPos(dfAxis)=66
+	ModifyGraph lblPos(left)=64,lblPos(cAxis)=64,lblPos(dfAxis)=64,lblPos(MisfitAxis)=64
 	ModifyGraph lblLatPos(left)=-8,lblLatPos(cAxis)=-6,lblLatPos(dfAxis)=-6
+	ModifyGraph lblLatPos(MisfitAxis)=-6	
 	ModifyGraph freePos(cAxis)=0
 	ModifyGraph freePos(dfAxis)=0
-	ModifyGraph axisEnab(left)={0,0.31}
-	ModifyGraph axisEnab(cAxis)={0.35,0.64}
-	ModifyGraph axisEnab(dfAxis)={0.68,1}
+	ModifyGraph freePos(MisfitAxis)=0
+	ModifyGraph axisEnab(left)={0,0.24}
+	ModifyGraph axisEnab(cAxis)={0.26,0.49}
+	ModifyGraph axisEnab(dfAxis)={0.51,0.74}
+	ModifyGraph axisEnab(MisfitAxis)={0.76,1}
 	ModifyGraph mirror=1
 	ModifyGraph tick(bottom)=2
 	ModifyGraph tick(left)=1
 	ModifyGraph tick(cAxis)=1
 	ModifyGraph tick(dfAxis)=1
+	ModifyGraph lowTrip(MisfitAxis)=0.001
 	
 	Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"d\\Bmin"
 	Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Stored model index"
 	Label cAxis "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"c value"
 	Label dfAxis "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"df"
+	Label MisfitAxis "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Misfit"
 	wavestats/Q dMinStoredResWave
 	MinVal=min(V_min,dminTarg)*0.95
 	MaxVal=max(V_max,dminTarg)*1.05
@@ -3129,6 +3429,7 @@ static Function IR3A_CompareStoredResults()
 	DrawLine 0,0.67,1,0.67
 	DrawLine 0,0.34,1,0.34
 	string LegendText="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"\\s(dMinStoredResWave) d\\Bmin\r\\s(dMinTarget) d\\Bmin\\M  target\r\\s(cValStoredResWave) c\r\\s(cValTarget) c target\r\\s(dfStoredResWave) d\\Bf\r\\s(dfTarget) d\\Bf\\M target"
+	LegendText+=" \r\s(MisfitValWave) Misfit Values \r\\s(MisfitTarget) MisfitTarget"
 	Legend/C/N=LegendText/J/A=LT LegendText
 	setDataFOlder OldDf
 end	
@@ -3150,6 +3451,9 @@ static Function IR3A_Return3DAggParamVal(PathToFolder, ParName)
 	elseif(StringMatch(ParName, "df"))
 		NVAR df = dfValue
 		RetValue = df
+	elseif(StringMatch(ParName, "Misfit"))
+		NVAR Misfit = Misfit
+		RetValue = Misfit
 	else
 		RetValue = 0
 	endif
@@ -3178,10 +3482,11 @@ static Function IR3A_StoreCurrentMassFractAgreg()
 	NVAR OldsValue=root:Packages:AggregateModeling:sValue
 	NVAR OldAttemptValue=root:Packages:AggregateModeling:AttemptValue
 	NVAR AllowedNearDistance=root:Packages:AggregateModeling:AllowedNearDistance
+	NVAR OldMisfit = root:Packages:AggregateModeling:CurrentMisfitValue
 	Wave/Z MSF=root:Packages:AggregateModeling:MassFractalAggregate
 	if(WaveExists(MSF))
 		string NewFolderName
-		NewFolderName = "MFA_DOA_"+num2str(OldDegreeOfAggregation)+"_Stick_"+num2str(OldStickingProbability)+"_StickMeth_"+num2str(AllowedNearDistance)+"_"
+		NewFolderName = "MFA_DOA_"+num2str(trunc(OldDegreeOfAggregation))+"_Stick_"+num2str(trunc(OldStickingProbability))+"_StickMeth_"+num2str(trunc(AllowedNearDistance))+"_"
 		NewDataFolder/O/S root:MassFractalAggregates
 		NewFolderName = UniqueName(NewFolderName, 11, 0 )
 		NewDataFolder/O/S $(NewFolderName)
@@ -3196,6 +3501,7 @@ static Function IR3A_StoreCurrentMassFractAgreg()
 		variable/g sValue = OldsValue
 		variable/g AttemptValue = OldAttemptValue		
 		variable/g StickingMethod = AllowedNearDistance
+		variable/g Misfit = oldMisfit
 	endif
 	setDataFOlder OldDf
 
@@ -3326,7 +3632,7 @@ End
 //******************************************************************************************************************************************************
 Function IR3P_InitializePOVPDB()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()
 
 	NewDataFolder/O/S root:Packages
@@ -3451,7 +3757,7 @@ Function IR3P_Calculate1DDataFile()
 	SetDataFOlder $(CurrentFolderName)
 	Wave ThreeDVoxelGram = POVVoxelWave
 	NVAR voxelSize = root:packages:POVPDBImport:voxelSize
-	print "Warning = IR3P_Calculate1DDataFile needs to get VoxelSize fixzed, it is fixerd at 2A"
+	print "Warning = IR3P_Calculate1DDataFile needs to get VoxelSize fixed, it is fixed at 2A"
 	//variable NumRSteps=300
 	variable IsoValue = 0.5
 	variable Qmin = 0.001 

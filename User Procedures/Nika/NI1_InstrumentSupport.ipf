@@ -21,7 +21,7 @@
 
 
 Function NI1_RSoXSCreateGUI()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DoWIndow NI1A_Convert2Dto1DPanel
 	if(!V_Flag)
 		NI1A_Convert2Dto1DMainPanel()
@@ -42,7 +42,7 @@ end
 Function NI1_RSoXSFindI0File()
 	variable refNum, i
 	string LineContent
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	NVAR ColumnNamesLineNo = root:Packages:Nika_RSoXS:ColumnNamesLineNo
 	SVAR I0ColumnLabels = root:Packages:Nika_RSoXS:I0ColumnLabels
 	SVAR I0FileNamePath = root:Packages:Nika_RSoXS:I0FileNamePath
@@ -71,7 +71,7 @@ end
 
 Function NI1_RSoXSSetPanelControls()
 	DoWIndow RSoXSMainPanel
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	if(V_Flag)
 		SVAR I0DataToLoad=root:Packages:Nika_RSoXS:I0DataToLoad
 		SVAR I0ColumnLabels=root:Packages:Nika_RSoXS:I0ColumnLabels
@@ -90,7 +90,7 @@ end
 
 Function NI1_RSoXSLoadI0()
 	//this loads I0 records and deals with them. 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf=getDataFOlder(1)
 	setDataFolder root:Packages:Nika_RSoXS
 	SVAR I0FileNamePath = root:Packages:Nika_RSoXS:I0FileNamePath
@@ -161,7 +161,7 @@ end
 Function NI1_RSoXSFindCorrectionFactor(SampleName)
 	string sampleName
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Wave/Z w2D = root:Packages:Convert2Dto1D:CCDImageToConvert
 	if(!WaveExists(w2D))
 		Abort "Image file not found "  
@@ -182,7 +182,7 @@ end
 Function NI1_RSoXSFindNormalFactor(SampleName)
 	string sampleName
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Wave/Z w2D = root:Packages:Convert2Dto1D:CCDImageToConvert
 	if(!WaveExists(w2D))
 		Abort "Image file not found "  
@@ -212,7 +212,7 @@ end
 
 Function NI1_RSoXSInitialize()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf=GetDataFolder(1)
 	newDataFOlder/O root:Packages
 	newDataFolder/O/S root:Packages:Nika_RSoXS
@@ -495,7 +495,7 @@ end
 //************************************************************************************************************
 
 Function NI1_RSoXSConfigureNika()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 //				NVAR UseSampleTransmission = root:Packages:Convert2Dto1D:UseSampleTransmission
 //				NVAR UseEmptyField = root:Packages:Convert2Dto1D:UseEmptyField
@@ -557,7 +557,7 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 Function NI1_RSoXSCopyDarkOnImport()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Wave/Z DarkFieldData=root:Packages:Convert2Dto1D:DarkFieldData
 	if(WaveExists(DarkFieldData))
 		string oldNote=note(DarkFieldData)
@@ -574,7 +574,7 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 Function NI1_RSoXSRestoreDarkOnImport()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Wave CCDImageToConvert = root:Packages:Convert2Dto1D:CCDImageToConvert
 	string SampleNote=note(CCDImageToConvert)
 	variable SampleTime=NumberByKey("EXPOSURE", SampleNote , "=" , ";")
@@ -598,7 +598,7 @@ end
 //************************************************************************************************************
 
 Function NI1_RSoXSLoadHeaderValues()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Wave CCDImageToConvert = root:Packages:Convert2Dto1D:CCDImageToConvert
 	string SampleNote=note(CCDImageToConvert)
 	variable SampleTime=NumberByKey("EXPOSURE", SampleNote , "=" , ";")

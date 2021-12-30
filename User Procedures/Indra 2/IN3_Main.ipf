@@ -116,7 +116,7 @@ Function IN3_MainPanelNew()
 	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(22.25,43.25,445,860) as "USAXS data reduction"
 	DoWindow/C USAXSDataReduction
-	TitleBox Title title="\Zr170USAXS data reduction panel",pos={5,3},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428), anchor=MC
+	TitleBox Title title="\Zr170USAXS data reduction",pos={5,3},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428), anchor=MC
 	TitleBox Info1 title="\Zr100To limit range of data being used for subtraction, set cursor A",pos={10,708},frame=0,fstyle=1,anchor=MC, size={380,20},fColor=(1,4,52428)
 	TitleBox Info2 title="\Zr100 on first point and B on last point of either sample of blank data",pos={10,723},frame=0,fstyle=1, anchor=MC,size={380,20},fColor=(1,4,52428)
 	//some local controls
@@ -135,7 +135,7 @@ Function IN3_MainPanelNew()
 	Button GetHelp,pos={315,10},size={80,15},fColor=(65535,32768,32768), proc=IN3_InputPanelButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 	Button GetReadme,pos={315,27},size={80,15}, proc=IN3_InputPanelButtonProc,title="Read me", help={"Open Read me short instructions"}
 		
-	CheckBox IsBlank,pos={265,113},size={90,14},proc=IN3_MainPanelCheckBox,title="Proces as blank"
+	CheckBox IsBlank,pos={265,113},size={90,14},proc=IN3_MainPanelCheckBox,title="Process as blank"
 	CheckBox IsBlank,variable= root:Packages:Indra3:IsBlank, help={"Check, if you want to process this run as blank"}
 	CheckBox SmoothRCurveData,pos={360,113},size={90,14},proc=IN3_MainPanelCheckBox,title="Smooth"
 	CheckBox SmoothRCurveData,variable= root:Packages:Indra3:SmoothRCurveData, help={"Check, if you want to smooth these data"}
@@ -153,7 +153,7 @@ Function IN3_MainPanelNew()
 		Button SaveResults 
 		TitleBox SavedData pos={261,217}, title="  Data   are   saved  ", fColor=(0,0,0),labelBack=(47872,47872,47872),  frame=2,fixedSize=1,size={160,18}
 	endif
-	TitleBox RemoveFromNameTbx pos={260,240}, title="Remove From name (str):",size={150,15}
+	TitleBox RemoveFromNameTbx pos={260,240}, title="Remove from name (str):",size={150,15}
 	SetVariable RemoveFromNameString,pos={260,260},size={157,15},noproc,title=" "
 	SetVariable RemoveFromNameString,help={"String which will be removed from data name"}
 	SetVariable RemoveFromNameString,value= root:Packages:USAXS_FlyScanImport:RemoveFromNameString
@@ -1112,7 +1112,7 @@ Function IN3_MainPanel()
 	TitleBox Info1 title="\Zr100To limit range of data being used for subtraction, set cursor A",pos={5,565},frame=0,fstyle=1,anchor=MC, size={380,20},fColor=(1,4,52428)
 	TitleBox Info2 title="\Zr100 on first point and B on last point of either sample of blank data",pos={5,580},frame=0,fstyle=1, anchor=MC,size={380,20},fColor=(1,4,52428)
 	//some local controls
-	CheckBox IsBlank,pos={20,35},size={90,14},proc=IN3_MainPanelCheckBox,title="Proces as blank"
+	CheckBox IsBlank,pos={20,35},size={90,14},proc=IN3_MainPanelCheckBox,title="Process as blank"
 	CheckBox IsBlank,variable= root:Packages:Indra3:IsBlank, help={"Check, if you want to process this run as blank"}
 	Button GetHelp,pos={290,25},size={80,15},fColor=(65535,32768,32768), proc=IN3_InputPanelButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 	Button GetReadme,pos={290,40},size={80,15}, proc=IN3_InputPanelButtonProc,title="Read me", help={"Open Read me short instructions"}
