@@ -7,6 +7,20 @@ To use:
 4. Follow these instructions below to setup that specific Form factor
 
 
+### Core-Shell-Shell-Shell-sphere, January 2022
+This is modified version of NIST f3Shell, created by Jan Ilavsky in January 2022. Original author is Steven Kline from NIST. 
+
+USE in Irena :
+* In Modeling II select User form factor 
+* In panel put in "Name of ForFactor function this string:    FF_CoreThreeShell
+* In Panel put in Name of volume FF function this string:     FF_CoreThreeShellVolume
+* Read the code at the top, this is complicated. 
+* There are too many parameters for Irean GUI, some must be set as constants and cannot be fitted. Changing requires code modification. 
+* SLD values are implicitely multipled by 10^10cm^-2, so insert only a number. These are rhos not, delta-rho-square
+
+**In main panel set contrast = 1 !!!!! Contrasts are part of the form factor in this case.**
+
+
 ### Core Shell Ellipsoid, June 2018
 This is modified version of NIST CoreShellEllipsoid, created by Jan Ilavsky in June 2018. Original author is Steven Kline from NIST. 
 
@@ -17,7 +31,7 @@ USE in Irena :
 * Par1 is the aspect ratio which for ellipsoids are defiend as rotational objects with dimensions R x R x ARxR, note, AR=1 may fail. 
 * Par 2 is shell thickness in A, and it is the same thickness everywhere on the ellipsoid. 
 * Par3, 4 and 5 are contrasts as this is core shell system and contrasts are part of the form factor. 
-* Par3, 4 and 5 are implicitelyu multipled by 10^10cm^-2, so insert only a number. These are rhos not, delta-rho-square
+* Par3, 4 and 5 are implicitely multipled by 10^10cm^-2, so insert only a number. These are rhos not, delta-rho-square
 
 **In main panel set contrast = 1 !!!!! Contrasts are part of the form factor in this case.**
 
