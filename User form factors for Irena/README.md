@@ -12,10 +12,10 @@ This is modified version of NIST f3Shell, created by Jan Ilavsky in January 2022
 
 USE in Irena :
 * In Modeling II select User form factor 
-* In panel put in "Name of ForFactor function this string:    FF_CoreThreeShell
+* In panel put in "Name of Form Factor function this string:    FF_CoreThreeShell
 * In Panel put in Name of volume FF function this string:     FF_CoreThreeShellVolume
 * Read the code at the top, this is complicated. 
-* There are too many parameters for Irean GUI, some must be set as constants and cannot be fitted. Changing requires code modification. 
+* There are too many parameters for Irena GUI, some must be set as constants and cannot be fitted. Changing requires code modification. 
 * SLD values are implicitely multipled by 10^10cm^-2, so insert only a number. These are rhos not, delta-rho-square
 
 **In main panel set contrast = 1 !!!!! Contrasts are part of the form factor in this case.**
