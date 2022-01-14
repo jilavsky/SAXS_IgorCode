@@ -1555,7 +1555,7 @@ static Function IN3S_UpdateListOfSavedSets()
 	if(DataFolderExists("root:SavedSampleSets"))
 		SetDataFolder root:SavedSampleSets
 		DFrEF SavedSetsDRF=GetDataFolderDFR()
-		ListOfSavedSetsStr = DataFolderList("*", ";", SavedSetsDRF)
+		ListOfSavedSetsStr = IN2G_CreateListOfItemsInFolder("root:SavedSampleSets", 1)
 		variable NewLength=ItemsInList(ListOfSavedSetsStr)
 		redimension/N=(NewLength) ListOfSavedSetsWv, SelListOfSavedSetsWv
 		SelListOfSavedSetsWv = 0
