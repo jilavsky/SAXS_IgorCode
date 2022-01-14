@@ -5,7 +5,7 @@
 #include <TransformAxis1.2>
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2021, Argonne National Laboratory
+//* Copyright (c) 2005 - 2022, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -226,7 +226,7 @@ Function NI1A_AverageDataPerUserReq(orientation)
 	Multithread Intensity[1,numpnts(Intensity)-1] = (TempHistSum[p] - TempHistSum[p-1] )>0 ? sum(tempInt,TempHistSum[p-1],TempHistSum[p]) : 0
 	Multithread Error[1,numpnts(Error)-1] = sum(TempIntSqt,TempHistSum[p-1],TempHistSum[p])
 	
-//	//suggested by Wavemetrics another way... I am uinable to make this work at this time...
+//	//suggested by Wavemetrics another way... I am unable to make this work at this time...
 //		//Yes, MatrixOP is a possible solution.
 //		//First notice that your indexWave needs to be converted into a matrix using the following rule:
 //		//Initialize the matrix to zero.
@@ -255,7 +255,7 @@ Function NI1A_AverageDataPerUserReq(orientation)
 	else //now new code. Need to calculate standard deviation anyway... 
 		//variance  = (Error - (Intensity^2 / Histogram)) / (Histogram - 1)
 		//st deviation = sqrt(variance)
-		MatrixOp/O  Error = sqrt(abs(Error - (TempSumXi*TempSumXi / HistogramWv)) / (HistogramWv - 1))
+		MatrixOp/O  Error = sqrt(abs(Error - (TempSumXi*TempSumXi / HistogramWv)) / clip((HistogramWv - 1),1,inf))	//modified 2022-01-05, this clip shoudl avoid infs/Nans due to histrogramWv-1 being 0
 		if(ErrorCalculationsUseSEM)
 			//error_mean=stdDev/sqrt(Histogram)			use Standard error of mean...
 			MatrixOp/O  Error = Error /sqrt(HistogramWv)
@@ -270,10 +270,10 @@ Function NI1A_AverageDataPerUserReq(orientation)
 		OldNote+="UncertainityCalculationMethod=StandardErrorOfMean;"
 	endif
 	
-	//this fix is same for all - if there is only 1 point in the bin, simply use sqrt of intensity... Of course, this can be really wrong, since by now this is fully calibrated and hecne sqrt is useless... 
+	//this fix is same for all - if there is only 1 point in the bin, simply use sqrt of intensity... Of course, this can be really wrong, since by now this is fully calibrated and hence sqrt is useless... 
 	Error = (HistogramWv[p]>1)? Error[p] : sqrt(abs(Intensity[p]))		//for negative intensities this can give nan, so take abs(int)
 	//now handling of case where we have error=0, which is possible only if Intensity=0 for each point summed together.  
-	Error = Error[p]>0 ? Error[p] : NaN								//for Int=0 we could have error = 0 if all points ahve 0 intensity, which is degenerate case (bad masking). 
+	Error = Error[p]>0 ? Error[p] : NaN								//for Int=0 we could have error = 0 if all points have 0 intensity, which is degenerate case (bad masking). 
 	note Intensity, OldNote
 	note Error, OldNote
 	//remove first point - it contains all the masked points set to Q=0...
@@ -429,6 +429,7 @@ Function NI1A_CorrectDataPerUserReq(orientation)
 	Wave/Z DarkCurrentWave=root:Packages:Convert2Dto1D:DarkFieldData
 	Wave/Z MaskWave=root:Packages:Convert2Dto1D:M_ROIMask
 	Wave/Z Pix2DSensitivity=root:Packages:Convert2Dto1D:Pixel2DSensitivity
+	//Wave/Z SolAngCor2Dwave = root:Packages:Convert2Dto1D:SolAngCor2Dwave //2022-01 - this is not needed, 2D Solid angle correction is combination of SOlidAngle Correction AND geometry correction. 
 	//little checking here...
 	if(UseMask)
 		if(!WaveExists(MaskWave) || DimSize(MaskWave, 0)!=DimSize(DataWave, 0) || DimSize(MaskWave, 1)!=DimSize(DataWave, 1))
@@ -445,16 +446,22 @@ Function NI1A_CorrectDataPerUserReq(orientation)
 			abort "Empty data problem - either does not exist or has differnet dimensions that data "
 		endif
 	endif
-	if(UsePixelSensitivity&&!UseCalib2DData)
+	if(UsePixelSensitivity &&!UseCalib2DData)
 		if(!WaveExists(Pix2DSensitivity) || DimSize(Pix2DSensitivity, 0)!=DimSize(DataWave, 0) || DimSize(Pix2DSensitivity, 1)!=DimSize(DataWave, 1))
 			abort "Pix2D Sensitivity problem - either does not exist or has differnet dimensions that data "
 		endif
 	endif
+	//if(UseSolidAngle&&!UseCalib2DData)
+	//	if(!WaveExists(SolAngCor2Dwave))
+	//		abort "SOlid ANgle Correction wave does nto exist. Change some parameters to recalculate geometry and try again. "
+	//	endif
+	//endif
 
+	//MatrixOP/O/S   Calibrated2DDataSet = DataWave		// MatrixOP/O does NOT preserve wavenote...  
 	Duplicate/O DataWave,  Calibrated2DDataSet
 	
 	Wave Calibrated2DDataSet=root:Packages:Convert2Dto1D:Calibrated2DDataSet
-	redimension/S Calibrated2DDataSet
+	//redimension/S Calibrated2DDataSet		//2022-01 needed??? 
 	string OldNote=note(Calibrated2DDataSet)
 
 	variable tempVal
@@ -464,9 +471,9 @@ Function NI1A_CorrectDataPerUserReq(orientation)
 		if(UseCorrectionFactor)
 			CalibrationPrefactor*=CorrectionFactor
 		endif
-		if(UseSolidAngle)
+		if(UseSolidAngle)		//Combined with Gemoetry Correction this results in angle dependent solid angle correction.  
 			variable solidAngle =PixelSizeX/SampleToCCDDistance * PixelSizeY/SampleToCCDDistance
-			//print solidANgle
+			//print solidAngle
 			//fixed bug 10-13-2018, was multiplying by solid angle. not dividing.But we need to divide by solid angle - if the detector is further, we see less of area, 
 			//well, this is approximate, but should be just fine... my testing shows, that for 30mm far pixel with 0.3mm size the difference is less than 4e-4... Who cares?
 			CalibrationPrefactor/=solidAngle
@@ -479,12 +486,20 @@ Function NI1A_CorrectDataPerUserReq(orientation)
 			//this is potentially breaking calibration of prior experiments. Need User warning! 
 		endif
 	
-		Duplicate/O DataWave, tempDataWv, tempEmptyField
-		redimension/S tempDataWv, tempEmptyField
+		MatrixOP/O   tempDataWv = DataWave
+		MatrixOP/O   tempEmptyField = DataWave
+		//redimension/S tempDataWv, tempEmptyField - needed??? 
+		Wave tempDataWv
+		Wave tempEmptyField
+		tempEmptyField=0
 		
 		if(UsePixelSensitivity)
 			MatrixOP/O  tempDataWv=tempDataWv/Pix2DSensitivity
 		endif
+		//if(UseSolidAngle)		//2022-01 - this is not needed, 2D Solid angle correction is combination of SOlidAngle Correction AND geometry correction. 
+		//	MatrixOP/O  tempDataWv=tempDataWv/SolAngCor2Dwave
+		//endif
+
 		if(UseDarkField)
 			if(UseSampleMeasTime && UseDarkMeasTime)
 				if(UsePixelSensitivity)
@@ -537,7 +552,6 @@ Function NI1A_CorrectDataPerUserReq(orientation)
 				//print "Could not do corection for self absorption, wrong parameters" 
 			endif
 		endif
-		tempEmptyField=0
 		variable ScalingConstEF=1
 	
 		if(UseEmptyField)
@@ -815,7 +829,7 @@ Function  NI1A_GenerateGeometryCorr2DWave()
 	endif
 	//OK, we need to recalculate the GeometryCorrention, here is the procedure...
 	variable Ltemp = Wavelength / (4 * pi)
-	//NI1A_Create2DQWave(DataWave)			//creates 2-D Q wave - this must extsting by now... 
+	//NI1A_Create2DQWave(DataWave)			//creates 2-D Q wave - this must exist by now... 
 	wave Q2DWave = root:Packages:Convert2Dto1D:Q2DWave
 	MatrixOp/O  GeometryCorrection =  2 * asin(Q2DWave * Ltemp))
 	MatrixOp/O  GeometryCorrection = powR(cos(GeometryCorrection),3)
@@ -856,6 +870,7 @@ Function NI1A_CheckGeometryWaves(orientation)		//checks if current geometry wave
 	
 //	wave/Z Radius2DWave=root:Packages:Convert2Dto1D:Radius2DWave
 	wave/Z Q2DWave=root:Packages:Convert2Dto1D:Q2DWave
+	//wave/Z SolAngCor2Dwave=root:Packages:Convert2Dto1D:SolAngCor2Dwave				//2022-01 - this is not needed, 2D Solid angle correction is combination of SOlidAngle Correction AND geometry correction. 
 	wave/Z Rdistribution1D=$("root:Packages:Convert2Dto1D:Rdistribution1D_"+orientation)
 	wave/Z AnglesWave=root:Packages:Convert2Dto1D:AnglesWave
 	wave/Z LUT=$("root:Packages:Convert2Dto1D:LUT_"+orientation)
@@ -865,7 +880,7 @@ Function NI1A_CheckGeometryWaves(orientation)		//checks if current geometry wave
 	
 	//Check that the waves exist at all...
 	if (!WaveExists(Qvector) || !WaveExists(HistogramWv) || !WaveExists(LUT))
-		NI1A_Create2DQWave(DataWave)			//creates 2-D Q wave does not need to be run always...
+		NI1A_Create2DQWave(DataWave)					//creates 2-D Q wave and SolAngCor2Dwave does not need to be run always...
 		NI1A_Create2DAngleWave(DataWave)			//creates 2-D Azimuth Angle wave does not need to be run always...
 		NI1A_CreateLUT(orientation)					//creates 1D LUT, should not be run always....
 		//NI1A_CreateQvector(orientation)				//creates 2-D Q wave does not need to be run always...
@@ -1351,6 +1366,7 @@ Function NI1A_Create2DQWave(DataWave)
 		//microSeconds = StopMSTimer(timerRefNum)
 		//print microSeconds/10000, "MatrixOP"
 		//record for which geometry this Radius vector wave was created
+		//MatrixOp/O SolAngCor2Dwave = PixelSizeX*PixelSizeY/powR(SampleToCCDDistance*cos(Theta2DWave),2)
 	else
 		Theta2DWave[beamCenterX][beamCenterY] = NaN
 		Q2Dwave[beamCenterX][beamCenterY] = NaN

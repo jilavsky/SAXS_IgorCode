@@ -1,18 +1,19 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version = 1.07
+#pragma version = 1.08
 #pragma IgorVersion=8.03
 
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2021, Argonne National Laboratory
+//* Copyright (c) 2005 - 2022, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
 //this is tool to setup Sample Plates for USAXS, survey sample positions, and generate Command files. 
 
+//1.08 add Export list of saved sets. Increased version number of the panel.   
 //1.07 add IN3S_ImportFile which imports other command files. For nwo set for 12IDB command files. 
 //1.06 add Import Image for iamge of sample plate. Straightens paralax and trims based on user corner selection and dimensions provided. 
 //1.05 added Append to command file
@@ -39,7 +40,7 @@
 
 //************************************************************************************************************
 
-constant IN3_SamplePlateSetupVersion=1.02
+constant IN3_SamplePlateSetupVersion=1.08
 constant IN3SBeamlineSurveyEpicsMonTicks = 15 
 constant IN3SBeamlineSurveyDevelopOn = 0
 //  values for beamtime estimate, last calibrated using BS on 7/31/2021 JIL (used 15 scan records BS).
@@ -78,6 +79,7 @@ Function IN3S_SampleSetupMain()
 	ING2_AddScrollControl()
 	IN3_UpdatePanelVersionNumber("SamplePlateSetup", IN3_SamplePlateSetupVersion)
 	IN3S_FixUSWAXSForAll()
+	IN3S_UpdateListOfSavedSets()
 	IN3S_AddTagToImage(-4)	//remove all drawings, if needed	
 	SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 	WarningForUser = "Tool started... Report bugs and wishes to author!" 
@@ -169,7 +171,7 @@ Function IN3S_MainPanel()
 		Button SavePositionSet,pos={440,145},size={120,17}, proc=IN3S_ButtonProc,title="Save Position Set", help={"Saves set of positions with user name"}
 		
    		TabControl TableTabs  pos={0,160},size={590,430},tabLabel(0)="Sample Table", value= 0, proc=IN3S_TableTabsTabProc
-	    TabControl TableTabs  tabLabel(1)="Option Controls"
+	    TabControl TableTabs  tabLabel(1)="Option Controls",tabLabel(2)="Export Controls"
 		TitleBox Info20 title="\Zr080Use shift to select range of lines, ctrl/cmd select disjoint multiple lines",pos={5,590},size={400,10},frame=0,fColor=(0,0,65535),labelBack=0
 		//Tab 0
 			ListBox CommandsList,pos={8,185},size={573,395} //, special={0,0,1 }		//this will scale the width of column, users may need to slide right using slider at the bottom. 
@@ -202,6 +204,8 @@ Function IN3S_MainPanel()
 
 			Button DisplayHookFunction,pos={300,370},size={240,20}, proc=IN3S_ButtonProc,title="Display Hook Function", help={"Displays hook function for user"}
 
+			TitleBox Tab1Info1 title="\Zr130These values are used only for beamtime calculation. They are not exported in command file.",pos={30,420},size={550,15},frame=0,fstyle=1,fColor=(65535,0,0),labelBack=0
+
 			SetVariable USAXSScanTime,pos={30,440},size={250,20},limits={30,360,15}, proc=IN3S_SetVarProc,title="USAXS time for run time estimate = "
 			Setvariable USAXSScanTime,fStyle=2, variable=root:Packages:SamplePlateSetup:USAXSScanTime, help={"USAXS time from epics, used to calculate run time."}
 			SetVariable SAXSScanTime,pos={30,460},size={250,20},limits={1,60,5}, proc=IN3S_SetVarProc,title="SAXS time for run time estimate   = "
@@ -220,6 +224,24 @@ Function IN3S_MainPanel()
 			CheckBox DisplayUSWAXScntrls variable=root:Packages:SamplePlateSetup:DisplayUSWAXScntrls,  proc=IN3S_CheckProc
 			CheckBox DisplayAllSamplesInImage pos={340,250},size={90,20},title="Display all samples in image? ", help={"Add to image all defined sample positiosn"}
 			CheckBox DisplayAllSamplesInImage variable=root:Packages:SamplePlateSetup:DisplayAllSamplesInImage,  proc=IN3S_CheckProc
+		//Tab 2 Export controls
+			CheckBox ExportCurrentPosSet pos={120,187},size={120,20},title="Export Current set? ", help={"Check to export current set in the table only"}
+			CheckBox ExportCurrentPosSet variable=root:Packages:SamplePlateSetup:ExportCurrentPosSet,  proc=IN3S_CheckProc, mode=1
+			CheckBox ExportListOfPosSets pos={320,187},size={120,20},title="Export list of sets below? ", help={"Check to export list of sets per list below"}
+			CheckBox ExportListOfPosSets variable=root:Packages:SamplePlateSetup:ExportListOfPosSets,  proc=IN3S_CheckProc, mode=1
+
+			TitleBox Tab2Info1 title="\Zr110Drag saved position from here : ",pos={60,210},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0
+			TitleBox Tab2Info2 title="\Zr110Drop here in order of export : ",pos={350,210},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0
+			ListBox SourceBox,pos={20,230},size={250,300} , listwave=root:Packages:SamplePlateSetup:ListOfSavedSetsWv
+		    ListBox SourceBox, selwave=root:Packages:SamplePlateSetup:SelListOfSavedSetsWv, mode=9, focusring=0
+		    ListBox SourceBox, Proc=IN3S_DragDropListBoxProc
+		    ListBox TargetBox, pos={300,230},size={250,300}, listwave=root:Packages:SamplePlateSetup:ListOfWavesForExport
+		    ListBox TargetBox, selwave=root:Packages:SamplePlateSetup:SelListOfWavesForExport, mode=9, focusring=0
+		    ListBox TargetBox, Proc=IN3S_DragDropListBoxProc
+			TitleBox Tab2Info5 title="\Zr110Make sure you saved the current Positions set !!!! The button needs to be green. ",pos={100,540},size={550,15},frame=0,fstyle=1,fColor=(65535,0,0),labelBack=0
+			TitleBox Tab2Info3 title="Drag a Set from left to right listbox. You can use sets multiple times.",pos={120,555},size={550,15},frame=0,fColor=(0,0,65535),labelBack=0
+			TitleBox Tab2Info4 title="Delete a Set from right listbox with right click. ",pos={160,570},size={550,15},frame=0,fColor=(0,0,65535),labelBack=0
+				
 
 		//controls under the table
 		//save export
@@ -345,7 +367,21 @@ Function IN3S_TableTabsTabProc(tca) : TabControl
 			SetVariable WAXSScanTime,  win=SamplePlateSetup, disable=(tab!=1)
 			Button DisplayHookFunction,  win=SamplePlateSetup, disable=(tab!=1)
 			PopupMenu ExportOrderPop,  win=SamplePlateSetup, disable=(tab!=1)
+			TitleBox Tab1Info1,  win=SamplePlateSetup, disable=(tab!=1)
+			
+			CheckBox ExportCurrentPosSet,  win=SamplePlateSetup, disable=(tab!=2)
+			CheckBox ExportListOfPosSets,  win=SamplePlateSetup, disable=(tab!=2)
+			NVAR ExportListOfPosSets=root:Packages:SamplePlateSetup:ExportListOfPosSets
+			NVAR ExportCurrentPosSet=root:Packages:SamplePlateSetup:ExportCurrentPosSet
+			TitleBox Tab2Info1,  win=SamplePlateSetup, disable=(tab!=2||ExportCurrentPosSet)
+			TitleBox Tab2Info2,  win=SamplePlateSetup, disable=(tab!=2||ExportCurrentPosSet)
+			TitleBox Tab2Info3,  win=SamplePlateSetup, disable=(tab!=2||ExportCurrentPosSet)
+			TitleBox Tab2Info4,  win=SamplePlateSetup, disable=(tab!=2||ExportCurrentPosSet)
+			TitleBox Tab2Info5,  win=SamplePlateSetup, disable=(tab!=2||ExportCurrentPosSet)
+			ListBox SourceBox,  win=SamplePlateSetup, disable=(tab!=2||ExportCurrentPosSet)
+		    ListBox TargetBox,  win=SamplePlateSetup, disable=(tab!=2||ExportCurrentPosSet)
 			IN3S_EstimateRunTime()
+			IN3S_UpdateListOfSavedSets()
 			break
 		case -1: // control being killed
 			break
@@ -1150,7 +1186,7 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 				TableIsSaved = 0
 			endif
 			if(StringMatch(ba.ctrlName, "SavePositionSet" ))
-				IN3S_SaveCurrentSampleSet()				
+				IN3S_SaveCurrentSampleSet(0,1)				
 				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 				WarningForUser = "Saved set of positions"
 				TableIsSaved = 1
@@ -1290,6 +1326,23 @@ Function IN3S_CheckProc(cba) : CheckBoxControl
 			NVAR WAXSAll = root:Packages:SamplePlateSetup:WAXSAll
 			NVAR USAXSAll = root:Packages:SamplePlateSetup:USAXSAll
 			NVAR SAXSAll = root:Packages:SamplePlateSetup:SAXSAll
+			NVAR ExportCurrentPosSet = root:Packages:SamplePlateSetup:ExportCurrentPosSet
+			NVAR ExportListOfPosSets = root:Packages:SamplePlateSetup:ExportListOfPosSets
+			
+			STRUCT WMTabControlAction tca
+
+			if(stringmatch(cba.ctrlName,"ExportCurrentPosSet"))
+				ExportListOfPosSets = !ExportCurrentPosSet
+				tca.eventCode=2
+				tca.tab = 2
+				IN3S_TableTabsTabProc(tca)
+			endif
+			if(stringmatch(cba.ctrlName,"ExportListOfPosSets"))
+				ExportCurrentPosSet = !ExportListOfPosSets
+				tca.eventCode=2
+				tca.tab = 2
+				IN3S_TableTabsTabProc(tca)
+			endif
 			if(stringmatch(cba.ctrlName,"USAXSAll"))
 				if(USAXSAll)
 					LBSelectionWv[][4]=48
@@ -1385,14 +1438,20 @@ static Function IN3S_FixUSWAXSForAll()
 end
 //************************************************************************************************************
 //************************************************************************************************************
-static Function IN3S_LoadSavedSampleSet()
+static Function IN3S_LoadSavedSampleSet([folderToLoad])
+	string folderToLoad
 
 	DFrEF OldDf=GetDataFolderDFR()
-	ControlInfo /W=SamplePlateSetup  SelectSavedSet
-	string SelectedFolder=S_Value
-	if(StringMatch(SelectedFolder, "---" ))
-		SetDataFolder OldDf	
-		abort
+	string SelectedFolder
+	if(ParamIsDefault(folderToLoad))
+		ControlInfo /W=SamplePlateSetup  SelectSavedSet
+		SelectedFolder=S_Value
+		if(StringMatch(SelectedFolder, "---" ))
+			SetDataFolder OldDf	
+			abort
+		endif
+	else
+		SelectedFolder = folderToLoad
 	endif
 	if(DataFolderExists("root:SavedSampleSets:"))
 		setDataFolder root:SavedSampleSets:
@@ -1429,7 +1488,8 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 
-static Function IN3S_SaveCurrentSampleSet()
+static Function IN3S_SaveCurrentSampleSet(Overwrite, AddToList)
+	variable Overwrite, AddToList
 
 	DFrEF OldDf=GetDataFolderDFR()
 		Wave/T listWaveG   =  root:Packages:SamplePlateSetup:LBCommandWv
@@ -1442,7 +1502,7 @@ static Function IN3S_SaveCurrentSampleSet()
 		NewPlateName = CleanupName(NewPlateName, 1)  
 		newDatafolder/O/S root:SavedSampleSets
 		string newUniqueName
-		if(DataFolderExists(NewPlateName))
+		if(DataFolderExists(NewPlateName)&& !Overwrite)
 			DoAlert /T="This name is already used" 2, "Saved named set exists, Overwite(Yes) - Make Name unique (No) - Cancel"
 			if(V_Flag==3)
 				SetDataFolder OldDf
@@ -1454,7 +1514,10 @@ static Function IN3S_SaveCurrentSampleSet()
 				KillDataFolder $(newUniqueName)
 			endif	
 		else
-				newUniqueName = NewPlateName
+		 	newUniqueName = NewPlateName
+			if(Overwrite)
+				KillDataFolder/Z $(newUniqueName)
+			endif
 		endif
 		NewDataFOlder/O/S $(newUniqueName)
 		variable/g USAXSAll
@@ -1469,10 +1532,40 @@ static Function IN3S_SaveCurrentSampleSet()
 		print "Stored settings in folder "+GetDataFolder(1)
 		
 		PopupMenu SelectSavedSet,win=SamplePlateSetup, mode=1,value= #"\"---;\"+IN3S_GenStringOfSets()"
-
+		//add this to list in waves for multi export
+		if(AddToList)
+			IN3S_UpdateListOfSavedSets()
+			//Wave/T ListOfSavedSetsWv=root:Packages:SamplePlateSetup:ListOfSavedSetsWv
+			//Wave SelListOfSavedSetsWv=root:Packages:SamplePlateSetup:SelListOfSavedSetsWv
+			//variable OldLength=numpnts(ListOfSavedSetsWv)
+			//redimension/N=(OldLength+1) ListOfSavedSetsWv, SelListOfSavedSetsWv
+			//ListOfSavedSetsWv[OldLength] = newUniqueName
+		endif
 	SetDataFolder OldDf	
 end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+static Function IN3S_UpdateListOfSavedSets()
 
+	DFrEF OldDf=GetDataFolderDFR()
+	Wave/T ListOfSavedSetsWv=root:Packages:SamplePlateSetup:ListOfSavedSetsWv
+	Wave SelListOfSavedSetsWv=root:Packages:SamplePlateSetup:SelListOfSavedSetsWv
+	string ListOfSavedSetsStr
+	variable i
+	if(DataFolderExists("root:SavedSampleSets"))
+		SetDataFolder root:SavedSampleSets
+		DFrEF SavedSetsDRF=GetDataFolderDFR()
+		ListOfSavedSetsStr = DataFolderList("*", ";", SavedSetsDRF)
+		variable NewLength=ItemsInList(ListOfSavedSetsStr)
+		redimension/N=(NewLength) ListOfSavedSetsWv, SelListOfSavedSetsWv
+		SelListOfSavedSetsWv = 0
+		For(i=0;i<NewLength;i+=1)
+			ListOfSavedSetsWv[i] = stringFromList(i,ListOfSavedSetsStr)
+		endfor
+	else
+		redimension/N=(0) ListOfSavedSetsWv, SelListOfSavedSetsWv
+	endif
+end
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -1560,6 +1653,54 @@ end
 static Function IN3S_WriteCommandFile(show, AppendHeaders)
 	variable show, AppendHeaders
 
+	
+	//Options to export multiple saved sets of positions...
+	NVAR ExportCurrentPosSet=root:Packages:SamplePlateSetup:ExportCurrentPosSet
+	NVAR ExportListOfPosSets=root:Packages:SamplePlateSetup:ExportListOfPosSets
+	SVAR CurNameStr=root:Packages:SamplePlateSetup:UserNameForSampleSet
+	variable i
+	string CurFolder, TempFolder
+	curFolder=CurNameStr
+
+	if(ExportListOfPosSets)		//user wants to export multiple saved set...
+		Wave/T ListOfWavesForExport=root:Packages:SamplePlateSetup:ListOfWavesForExport
+		if(numpnts(ListOfWavesForExport)>0)
+			CurNameStr = "TempExportSetStored"
+			//save current, just in case
+			IN3S_SaveCurrentSampleSet(1,0)
+			//cleanup old notebook.
+			SVAR/Z nbl=root:Packages:SamplePlateSetup:NotebookName
+			if(!SVAR_Exists(nbl))
+				NewDataFolder/O root:Packages
+				NewDataFolder/O root:Packages:SamplePlateSetup 
+				String/G root:Packages:SamplePlateSetup:NotebookName=""
+				SVAR nbl=root:Packages:SamplePlateSetup:NotebookName
+				nbL="CommandFile"
+			endif
+			if ((strsearch(WinList("*",";","WIN:16"),nbL,0)!=-1))		///CommandFile notebook exists 
+				KillWindow/Z $(nbl)
+			endif
+			//cycle through the list
+			For(i=0;i<numpnts(ListOfWavesForExport);i+=1)
+				TempFolder = ListOfWavesForExport[i]
+				IN3S_LoadSavedSampleSet(folderToLoad=TempFolder)
+				IN3S_WriteCommandFileInternal(show, AppendHeaders,0)
+			endfor
+			IN3S_LoadSavedSampleSet(folderToLoad="TempExportSetStored")
+			KillDataFolder/Z root:SavedSampleSets:TempExportSetStored:		//clean up the temp saved data set. 
+			CurNameStr = curFolder
+		else
+			abort "Nothing is on the list here"
+		endif
+	elseif(ExportCurrentPosSet)
+		IN3S_WriteCommandFileInternal(show, AppendHeaders,1)
+	else
+		Abort "SOmething wrong with the code in IN3S_WriteCommandFile"
+	endif
+end
+//*****************************************************************************************************************
+static FUnction IN3S_WriteCommandFileInternal(show, AppendHeaders, KillIfFound)
+	variable show, AppendHeaders, KillIfFound
 	//create USAXS command file... For now as notebook and just display for user. 
 
 	DFrEF OldDf=GetDataFolderDFR()
@@ -1573,6 +1714,8 @@ static Function IN3S_WriteCommandFile(show, AppendHeaders)
 	SVAR UserNameForSampleSet = root:Packages:SamplePlateSetup:UserNameForSampleSet
 	NVAR RunExportHookFunction= root:Packages:SamplePlateSetup:RunExportHookFunction
 	SVAR/Z nbl=root:Packages:SamplePlateSetup:NotebookName
+	variable i, haveAnySWAXS, thickness
+	haveAnySWAXS = 0
 	if(!SVAR_Exists(nbl))
 		NewDataFolder/O root:Packages
 		NewDataFolder/O root:Packages:SamplePlateSetup 
@@ -1580,34 +1723,35 @@ static Function IN3S_WriteCommandFile(show, AppendHeaders)
 		SVAR nbl=root:Packages:SamplePlateSetup:NotebookName
 		nbL="CommandFile"
 	endif
-	if ((strsearch(WinList("*",";","WIN:16"),nbL,0)!=-1))		///CommandFile notebook exists 
+	if ((strsearch(WinList("*",";","WIN:16"),nbL,0)!=-1) && KillIfFound)		///CommandFile notebook exists 
 		KillWindow/Z $(nbl)
 	endif
-	variable i, haveAnySWAXS, thickness
-	haveAnySWAXS = 0
 	
-	NewNotebook/K=1/F=0/ENCG={3,0}/N=$nbl/V=1/W=(235.5,44.75,817.5,592.25) as nbl		
-	Notebook $nbl writeBOM = 0
-	if(AppendHeaders)
-		Notebook $nbl text="        CURRENT_EXPERIMENT_NAME \""+UserNameForSampleSet+"\"\r"
-		Notebook $nbl text="		# This file runs USAXS, SAXS and WAXS scans according to the syntax shown below\r"
-		Notebook $nbl text="		#       \r"
-		Notebook $nbl text="		# Scan Type      sx         sy   Thickness  Sample Name\r"
-		Notebook $nbl text="		# ------------------------------------------------------  \r"
-		Notebook $nbl text="		# USAXSscan    45.07       98.3     0      \"Water Blank\"\r"
-		Notebook $nbl text="		# saxsExp      45.07       98.3     0      \"Water Blank\"\r"
-		Notebook $nbl text="		# waxsExp      45.07       98.3     0      \"Water Blank\"  \r"
-		Notebook $nbl text="		#      Use a space (not a tab) to separate arguments (i.e., 45.07 <space> 98.3 in the examples above)\r"  
-		Notebook $nbl text="\r"
-		Notebook $nbl text="		# Run this file by typing the following command in the spec window:   USAXS> CollectData usaxs.mac \r"             
-		Notebook $nbl text="\r"                                   
-		Notebook $nbl text="		# Stop the run using the \"Stop after this scan?\" checkbox in USAXS user main intf  \r" 
-		Notebook $nbl text="		# and wait until the USAXS> prompt reappears\r"
-		Notebook $nbl text="\r"          
-		Notebook $nbl text="		############ PLACE ALL USER COMMANDS AFTER THIS LINE ############  \r"              
-		Notebook $nbl text="\r"
+	if ((strsearch(WinList("*",";","WIN:16"),nbL,0) <0))
+		NewNotebook/K=1/F=0/ENCG={3,0}/N=$nbl/V=1/W=(235.5,44.75,817.5,592.25) as nbl		
+		Notebook $nbl writeBOM = 0
+		if(AppendHeaders)
+			Notebook $nbl text="        CURRENT_EXPERIMENT_NAME \""+UserNameForSampleSet+"\"\r"
+			Notebook $nbl text="		# This file runs USAXS, SAXS and WAXS scans according to the syntax shown below\r"
+			Notebook $nbl text="		#       \r"
+			Notebook $nbl text="		# Scan Type      sx         sy   Thickness  Sample Name\r"
+			Notebook $nbl text="		# ------------------------------------------------------  \r"
+			Notebook $nbl text="		# USAXSscan    45.07       98.3     0      \"Water Blank\"\r"
+			Notebook $nbl text="		# saxsExp      45.07       98.3     0      \"Water Blank\"\r"
+			Notebook $nbl text="		# waxsExp      45.07       98.3     0      \"Water Blank\"  \r"
+			Notebook $nbl text="		#      Use a space (not a tab) to separate arguments (i.e., 45.07 <space> 98.3 in the examples above)\r"  
+			Notebook $nbl text="\r"
+			Notebook $nbl text="		# Run this file by typing the following command in the spec window:   USAXS> CollectData usaxs.mac \r"             
+			Notebook $nbl text="\r"                                   
+			Notebook $nbl text="		# Stop the run using the \"Stop after this scan?\" checkbox in USAXS user main intf  \r" 
+			Notebook $nbl text="		# and wait until the USAXS> prompt reappears\r"
+			Notebook $nbl text="\r"          
+			Notebook $nbl text="		############ PLACE ALL USER COMMANDS AFTER THIS LINE ############  \r"              
+			Notebook $nbl text="\r"
+		endif
 	endif
-	Notebook $nbl text="		#SAXS measurements \r"
+	Notebook $nbl text="		 \r"
+
    //and now we will write the commands... 
    //SAXS is first. 
    
@@ -1930,7 +2074,7 @@ static Function IN3S_Initialize()
 	ListOfVariables+="SampleXTable;SampleYTable;SurveySXStep;SurveySYStep;MoveWhenRowChanges;"
 	ListOfVariables+="RunExportHookFunction;"
 	ListOfVariables+="USAXSScanTime;SAXSScanTime;WAXSScanTime;CalculatedOverAllTime;NumberOfSamples;"
-	ListOfVariables+="TableIsSaved;"
+	ListOfVariables+="TableIsSaved;ExportCurrentPosSet;ExportListOfPosSets;"
 
 	ListOfStrings="SelectedPlateName;UserNameForSampleSet;UserName;WarningForUser;"
 	ListOfStrings+="SelectedSampleName;DefaultCommandFileName;TableClipboard;"
@@ -1942,6 +2086,12 @@ static Function IN3S_Initialize()
 	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
 		IN2G_CreateItem("string",StringFromList(i,ListOfStrings))
 	endfor	
+	//waves for multi table export...
+	Wave/Z/T ListOfSavedSetsWv
+	if(!WaveExists(ListOfSavedSetsWv))
+		make/O/N=0/T ListOfSavedSetsWv, ListOfWavesForExport
+		make/O/N=0 SelListOfSavedSetsWv, SelListOfWavesForExport
+	endif 
 	
 	NVAR USAXSAll
 	NVAR SAXSAll
@@ -1972,6 +2122,12 @@ static Function IN3S_Initialize()
 		ExportOrder="USAXS-SAXS-WAXS"
 	endif
 	
+	NVAR ExportCurrentPosSet
+	NVAR ExportListOfPosSets
+	if(ExportCurrentPosSet+ExportListOfPosSets!=1)
+		ExportCurrentPosSet=1
+		ExportListOfPosSets=0
+	endif
 	NVAR SurveySXStep
 	if(SurveySXStep<0.01)
 		SurveySXStep = 1
@@ -2350,6 +2506,174 @@ static Function IN3S_InsertDeleteLines(InsertDelete, row, newLines)	//InsertDele
 		WarningForUser = "Added row at the end "
 	endif
 end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//this is from //https://www.wavemetrics.com/code-snippet/listbox-drag-drop, version 1.60, 1-13-2022
+
+
+function IN3S_DragDropListBoxProc(STRUCT WMListboxAction &lba)
+    
+     
+    if(!(lba.eventCode & 0x03)) // neither mouseup nor mousedown
+        return 0
+    endif
+    
+    variable f = 72/PanelResolution(lba.win) // point/pixel
+    int dragStarted = strlen(GetUserData(lba.win, lba.ctrlName, "drag"))
+    string otherListBox = SelectString(cmpstr(lba.ctrlName, "SourceBox")==0, "SourceBox", "TargetBox")
+    string items
+    variable j
+       
+    if (lba.eventCode==2 && dragStarted) // mouseup, drag completed
+        // find whether mouse is within OTHER listbox
+        if(IN3S_isInControl(lba.mouseLoc, lba.win, otherListBox))
+            ControlInfo /W=$lba.win $otherListBox           
+            int beforeItem = round(V_startRow + (lba.mouseLoc.v-V_top/f)/V_rowHeight)
+            wave /SDFR=$S_DataFolder otherListBoxWave=$S_Value
+            beforeItem = limit(beforeItem, 0, numpnts(otherListBoxWave))
+            IN3S_copySelection(otherListBox, lba.selwave, lba.listwave, beforeItem)
+        endif
+        ListBox $lba.ctrlName, win=$lba.win, userdata(drag)=""
+    endif
+    //add right click to remove right column data
+    if(lba.eventCode==1 && lba.eventMod & 0x10)
+    	if(stringmatch(nameofWave(lba.listWave),"ListOfWavesForExport"))
+    		items = "DeleteRow;"
+    		PopupContextualMenu items
+ 			switch (V_flag)
+				case 1:	// "Delete row"
+					DeletePoints /M=0 lba.row, 1, lba.listWave, lba.selWave
+					break;
+				endswitch
+    	endif
+    endif
+
+    if(lba.eventCode==1 && dragStarted==0) // mousedown, new drag
+        if( lba.row < 0 || lba.row >= (DimSize(lba.listWave, 0)) )
+            return 0
+        endif
+        //this can be done only from right to left...
+        if(cmpstr(lba.ctrlName, "SourceBox"))
+        	return 0
+        endif
+        
+        int i, numBoxes, startrow, endrow, mode, fontSize
+       
+        // figure out visible rows
+        ControlInfo /W=$lba.win $lba.ctrlName
+        startrow = V_startRow
+        endrow = min(numpnts(lba.selwave)-1, startrow + ceil((V_height/f/V_rowHeight)-2))
+        // record current value of mode & fsize
+        string strMode, strFsize
+        SplitString/E=("mode=\s?([[:digit:]]+)") S_recreation, strMode
+        mode = strlen(strMode) ? str2num(strMode) : 1
+        SplitString/E=("fSize=\s?([[:digit:]]+)") S_recreation, strFsize
+        fontSize = strlen(strFsize) ? str2num(strFsize) : 9
+        // stops cell selection as mouse moves by setting mode=0
+        ListBox $lba.ctrlName, win=$lba.win, userdata(drag)="started", mode=0
+        // userdata(drag) indicates dragging is active, cleared on mouseup
+       
+        // create a titlebox for every visible selected item
+        numBoxes=0
+        string DBname, strTitle
+        variable height, width, top , left
+        for (i=startrow;i<endrow+1;i++)
+            if (lba.selwave[i] & 0x09)
+                wave /T listwave=lba.listWave
+                DBname = "DragBox" + num2str(numBoxes)
+                height = f*(V_rowHeight-1)
+                width = f*(lba.ctrlRect.right-lba.ctrlRect.left)
+                top = f*(lba.ctrlRect.top+(i-startrow)*V_rowHeight+1.5)
+                left = f*lba.ctrlRect.left
+                sprintf strTitle, "\\sa%+03d\\x%+03d %s", 3-(fontSize>12), (20-fontSize)*0.625, listwave[i]
+                TitleBox $DBname, win=$lba.win, title=strTitle, labelBack=(41760,52715,65482), pos={left, top}
+                TitleBox $DBname, win=$lba.win, fsize=fontSize, fixedSize=1, frame=0, size={width, height}
+                numBoxes ++
+            endif
+        endfor
+        
+        // save coordinates of other listbox
+        ControlInfo /W=$lba.win $otherListBox
+        struct rect pixelRect
+        pixelRect.left = v_left/f // point -> pixel
+        pixelRect.right = v_right/f
+        pixelRect.top = v_top/f
+        pixelRect.bottom = pixelRect.top + v_height/f
+
+        // monitor mouse movement until mouseup
+        variable dx, dy, buttondown
+        
+        do
+            GetMouse /W=$lba.win
+            buttondown = V_flag & 1
+            dx = v_left - lba.mouseLoc.h // pixels
+            dy = v_top - lba.mouseLoc.v // pixels
+            // keep current mouse position updated as mouse moves
+            lba.mouseLoc.h = v_left
+            lba.mouseLoc.v = v_top
+            
+            // move titleboxes with mouse                   
+            for(i=0; i<numBoxes; i++)
+                TitleBox /Z $"DragBox"+num2str(i), win=$lba.win, pos+={dx,dy}
+            endfor
+            
+            // draw focus ring when mouse is over other listbox
+            if (IN3S_pointInRect(lba.mouseLoc, pixelRect)) // all units are pixels
+                ListBox $otherListBox, win=$lba.win, focusRing=1
+                ModifyControl $otherListBox activate
+            else
+                ModifyControl $lba.ctrlName activate
+            endif
+            
+            DoUpdate /W=$lba.win
+        while(buttondown)
+
+        // clear titleboxes and return listboxes to normal mode
+        for(i=0; i<numBoxes; i++)
+            KillControl /W=$lba.win $"DragBox"+num2str(i)
+        endfor
+        ListBox $otherListBox, win=$lba.win, focusRing=0
+        ListBox $lba.ctrlName, win=$lba.win, mode=mode
+        ModifyControl $lba.ctrlName activate
+    endif // end of drag
+end
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+static function IN3S_copySelection(string toLB, wave selwave, wave /T listwave, variable beforeItem)
+       
+    Extract /free/T listwave, switchwave, (selwave & 0x09)
+    //Extract /O/T listwave, listwave, !(selwave & 0x09)		//this fremoves teh line from teh source, we want to keep it... 
+    //Extract /O selwave, selwave, !(selwave & 0x09)
+    wave destSelWave = root:Packages:SamplePlateSetup:SelListOfWavesForExport
+    wave/T  destListWave = root:Packages:SamplePlateSetup:ListOfWavesForExport 
+    destSelWave = 0
+    variable numItems = numpnts(switchwave)
+    InsertPoints beforeItem, numItems, destSelWave, destListWave
+    destSelWave[beforeItem, beforeItem+numItems-1] = 1
+    destListWave[beforeItem, beforeItem+numItems-1] = switchwave[p-beforeItem]
+end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+// point and rect structures must have same units
+static function IN3S_pointInRect(STRUCT point &pnt, STRUCT rect &r) 
+    return ( pnt.h>r.left && pnt.h<r.right && pnt.v>r.top && pnt.v<r.bottom )
+end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+static function IN3S_isInControl(STRUCT point &mouse, string strWin, string strCtrl)
+    ControlInfo /W=$strWin $strCtrl
+    variable f = 72/PanelResolution(strWin)
+    variable hpoint = mouse.h * f
+    variable vpoint = mouse.v * f   
+    return ( hpoint>V_left && hpoint<(V_right) && vpoint>V_top && vpoint<(V_top+V_height) )
+end
+
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************

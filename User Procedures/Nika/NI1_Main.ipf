@@ -9,7 +9,7 @@ constant CurrentNikaVersionNumber = 1.842
 constant FixBackgroundOversubScale=1.05			//this is used to fix oversubtracted background. Adds FixBackgroundOversubScale*abs(V_min) to all intensity value. 
 constant NikaNumberOfQCirclesDisp=15
 //*************************************************************************\
-//* Copyright (c) 2005 - 2021, Argonne National Laboratory
+//* Copyright (c) 2005 - 2022, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/

@@ -4,7 +4,7 @@
 #pragma version=1.22
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2021, Argonne National Laboratory
+//* Copyright (c) 2005 - 2022, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -1818,6 +1818,34 @@ Function NI1_12IDBLoadAndSetup()
 	NI1A_Convert2Dto1DMainPanel()
 	NI1BC_InitCreateBmCntrFile()
 	NI1_12IDBHowTo()
+
+	setDataFOlder root:Packages:Convert2Dto1D:
+	NI1A_ButtonProc("Select2DDataPath")
+	PathInfo Convert2Dto1DDataPath
+	string DataFilePath=S_path
+	NewPath/Q/O Convert2Dto1DEmptyDarkPath, S_path	
+	String DoingWhat= StringFromList(ItemsInList(DataFilePath,":")-1, DataFilePath,":")
+	//now we need to get idea, what the user wants to do. 
+	//Options: tif/nexus
+	//SAXS/WAXS ?
+	//Mask - which from selection or none? 
+	//Load parameters always or only first time. 
+	//now get user input and load parameters and mask...
+	NI1_12IDBGetUserInput()	
+	NVAR APS12IDBProcMethod				//0 for beamline method (no background), 1 for Nika standard (with background). 
+	NVAR APS12IDBReloadPars				//Parameterrs - 0 for not reloading calibration parameters, 1 for reload with each data file. 
+	SVAR APS12IDBDataType 				// = "12IDB_tif"		//default for tiff files. May change to Nexus later when that is standard. 
+	//SVAR APS12IDBMask 			// = "---"					//default for none. User needs to create one in Nika
+	//SVAR APS12IDBGeometry			//SAXS or WAXS? 
+	
+	SVAR DataFileExtension=root:Packages:Convert2Dto1D:DataFileExtension
+	SVAR BlankFileExtension=root:Packages:Convert2Dto1D:BlankFileExtension
+	BlankFileExtension = APS12IDBDataType
+	//select the right type of data
+	DataFileExtension = APS12IDBDataType
+	PopupMenu Select2DDataType win=NI1A_Convert2Dto1DPanel, popmatch= APS12IDBDataType
+
+	
 	//setup configuration hwo this will be dome here:
 	NVAR UseSampleTransmission = root:Packages:Convert2Dto1D:UseSampleTransmission
 	NVAR UseSampleThickness = root:Packages:Convert2Dto1D:UseSampleThickness
@@ -1838,43 +1866,67 @@ Function NI1_12IDBLoadAndSetup()
 	NVAR SampleToCCDdistance = root:Packages:Convert2Dto1D:SampleToCCDdistance
 	NVAR BeamCenterX = root:Packages:Convert2Dto1D:BeamCenterX
 	NVAR BeamCenterY = root:Packages:Convert2Dto1D:BeamCenterY
-	
-	UseSampleTransmission = 1
-	UseSampleThickness = 0
-	UseEmptyField = 1
-	UseI0ToCalibrate = 1
-	DoGeometryCorrection = 1
-	UseMonitorForEf = 1
-
-	UseSampleThicknFnct  =1
-	UseSampleTransmFnct = 1
-//	UseSampleThicknFnct =1
-	UseSampleMonitorFnct = 1
-	UseEmptyMonitorFnct = 1
+	NVAR UseCorrectionFactor = root:Packages:Convert2Dto1D:UseCorrectionFactor
+	NVAR CorrectionFactor = root:Packages:Convert2Dto1D:CorrectionFactor
+	NVAR UseSolidAngle = root:Packages:Convert2Dto1D:UseSolidAngle
 	SVAR SampleTransmFnct = root:Packages:Convert2Dto1D:SampleTransmFnct
 	SVAR SampleThicknFnct = root:Packages:Convert2Dto1D:SampleThicknFnct
 	SVAR SampleMonitorFnct = root:Packages:Convert2Dto1D:SampleMonitorFnct
 	SVAR EmptyMonitorFnct = root:Packages:Convert2Dto1D:EmptyMonitorFnct
 	
-	SampleTransmFnct = "NI1_12IDBGetTranmsission"
-	SampleMonitorFnct = "NI1_12IDBGetSampleI0" 
-	EmptyMonitorFnct = "NI1_12IDBGetEmptyI0"
-
-	setDataFOlder root:Packages:Convert2Dto1D:
-	NI1A_ButtonProc("Select2DDataPath")
-	PathInfo Convert2Dto1DDataPath
-	string DataFilePath=S_path
-	NewPath/Q/O Convert2Dto1DEmptyDarkPath, S_path	
-	String DoingWhat= StringFromList(ItemsInList(DataFilePath,":")-1, DataFilePath,":")
+	NVAR ErrorCalculationsUseSEM = root:Packages:Convert2Dto1D:ErrorCalculationsUseSEM
+	NVAR ErrorCalculationsUseStdDev = root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev
+	NVAR ErrorCalculationsUseOld = root:Packages:Convert2Dto1D:ErrorCalculationsUseOld
 	
-	SVAR DataFileExtension=root:Packages:Convert2Dto1D:DataFileExtension
-	SVAR BlankFileExtension=root:Packages:Convert2Dto1D:BlankFileExtension
-	BlankFileExtension = "12IDB_tif"
-	//select the right type of data
-	DataFileExtension = "12IDB_tif"
-	PopupMenu Select2DDataType win=NI1A_Convert2Dto1DPanel, popmatch= "12IDB_tif"
-	//now load mask...
-	NI1_12IDBLoadGoodPixMask()			  
+	ErrorCalculationsUseOld = 0
+	ErrorCalculationsUseStdDev = 0
+	ErrorCalculationsUseSEM = 1
+	
+	if(APS12IDBProcMethod)
+		UseSampleTransmission = 1
+		UseSampleThickness = 0
+		UseEmptyField = 1
+		UseI0ToCalibrate = 1
+		DoGeometryCorrection = 1
+		UseMonitorForEf = 1
+	
+		UseSampleThicknFnct  =1
+		UseSampleTransmFnct = 1
+	//	UseSampleThicknFnct =1
+		UseSampleMonitorFnct = 1
+		UseEmptyMonitorFnct = 1
+		
+		UseCorrectionFactor = 0
+		CorrectionFactor = 1
+		UseSolidAngle = 0
+		
+		SampleTransmFnct = "NI1_12IDBGetTranmsission"
+		SampleMonitorFnct = "NI1_12IDBGetSampleI0" 
+		EmptyMonitorFnct = "NI1_12IDBGetEmptyI0"
+	else //no background subtraction
+		UseSampleTransmission = 0
+		UseSampleThickness = 0
+		UseEmptyField = 0
+		UseI0ToCalibrate = 1
+		DoGeometryCorrection = 1
+		UseMonitorForEf = 0
+	
+		UseSampleThicknFnct  = 0
+		UseSampleTransmFnct = 0
+	//	UseSampleThicknFnct =1
+		UseSampleMonitorFnct = 1
+		UseEmptyMonitorFnct = 0
+
+		UseCorrectionFactor = 1
+		CorrectionFactor = 2.4e-06			//this should be fudge factor 12IDB is using to correct data to 0.1-100 intensity range... 
+		UseSolidAngle = 1						//thsi is needed for that fudge factor above. 
+		
+		SampleTransmFnct = ""
+		SampleMonitorFnct = "NI1_12IDBGetSampleBS" 
+		EmptyMonitorFnct = ""
+
+	endif
+
 	//now configure Nika to produce some data...
 	NVAR DisplayDataAfterProcessing = root:Packages:Convert2Dto1D:DisplayDataAfterProcessing
 	DisplayDataAfterProcessing=1
@@ -1892,16 +1944,23 @@ Function NI1_12IDBLoadAndSetup()
 	NVAR QvectorNumberPoints = root:Packages:Convert2Dto1D:QvectorNumberPoints
 	if(stringmatch(DoingWhat,"SAXS"))
 		QbinningLogarithmic=1
-		QvectorMaxNumPnts=0
-		QvectorNumberPoints = 600
+		//QvectorMaxNumPnts=0
+		//QvectorNumberPoints = 600
+		//these are set by configuration file now. 
 	else
 		//WAXS
 		QbinningLogarithmic=0
 		QvectorMaxNumPnts=1
 	endif
-	//send user to Empty/Dark tab
-	TabControl Convert2Dto1DTab win=NI1A_Convert2Dto1DPanel, value=3
-	NI1A_TabProc("NI1A_Convert2Dto1DPanel",3)	
+	if(APS12IDBProcMethod)
+		//send user to Empty/Dark tab
+		TabControl Convert2Dto1DTab win=NI1A_Convert2Dto1DPanel, value=3
+		NI1A_TabProc("NI1A_Convert2Dto1DPanel",3)	
+	else
+		//send user to Empty/Dark tab
+		TabControl Convert2Dto1DTab win=NI1A_Convert2Dto1DPanel, value=0
+		NI1A_TabProc("NI1A_Convert2Dto1DPanel",0)	
+	endif
 	setDataFolder OldDFf
 
 end
@@ -1909,6 +1968,242 @@ end
 
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+
+Function NI1_12IDBGetUserInput()			//todo: some error handling... 
+		//should be able to find mask in current working folder	
+	string OldDFf=GetDataFolder(1)
+	setDataFolder root:Packages:Convert2Dto1D:
+	NVAR UseMask = root:Packages:Convert2Dto1D:UseMask
+	//Init needed APS12IDB... Parameters 
+	variable/g APS12IDBProcMethod = 0				//0 for beamline method (no background), 1 for Nika standard (with background). 
+	variable/g APS12IDBReloadPars = 0				//Parameterrs - 0 for not reloading calibration parameters, 1 for reload with each data file. 
+	string/g APS12IDBDataType = "12IDB_tif"			//default for tiff files. May change to Nexus later when that is standard. 
+	//string/g APS12IDBMask = "---"					//default for none. User needs to create one in Nika
+	string/g APS12IDBGeometry = "SAXS"				//SAXS or WAXS? 
+	//Get what we are using here... 
+	PathInfo Convert2Dto1DDataPath
+	string DataFilePath=S_path
+	//here we know what we are processing... Either the last folder is SAXS or WAXS 
+	string UsingWhat=StringFromList(ItemsInList(DataFilePath,":")-1, DataFilePath,":")
+	if(StringMatch(UsingWhat, "SAXS"))
+		APS12IDBGeometry = "SAXS"
+	elseif(StringMatch(UsingWhat, "WAXS"))
+		APS12IDBGeometry = "WAXS"
+	else
+		abort "Wrong folder with data selected, this folder is not called SAXS or WAXS"
+	endif
+	//now what type of files are we using? 
+	string ListOfTifFiles=IndexedFile(Convert2Dto1DDataPath, -1, ".tif")
+	string ListOfHDF5Files=IndexedFile(Convert2Dto1DDataPath, -1, ".hdf")
+	if(itemsInList(ListOfTifFiles)>0)
+		APS12IDBDataType = "12IDB_tif"
+	elseif(itemsInList(ListOfHDF5Files)>0)
+		APS12IDBDataType = "Nexus"
+	else
+		abort "Unknown image data file type. Can read .tif or .hdf (Nexus) only."
+	endif
+	//get calibration files. 
+	//get the path to calibration and SAXS_mask2M.bmp or WAXS_mask2M.bpm, it is one level up...
+	string MaskPathStr= RemoveFromList(UsingWhat, DataFilePath,":")
+	NewPath/O/Q TempMaskUserPath, MaskPathStr
+	string ListOfCalibrations=GrepList(IndexedFile(TempMaskUserPath, -1, ".txt"), "(?i)calibration_parameters")
+	string SelectedCalibrationFile =RemoveEnding(GrepList(ListOfCalibrations,"(?i)"+UsingWhat), ";") 		//this now should be saxs_calibration_parameters or waxs_calibration_parameters
+	print SelectedCalibrationFile
+	//get the mask files... 
+	//mask may or may not exist, we need to get user to pick one or tell us it does not exist...
+	string ListOfBMPFiles=IndexedFile(TempMaskUserPath, -1, ".bmp")
+	string SelectedMaskFile = RemoveEnding(GrepList(ListOfBMPFiles,"(?i)"+UsingWhat),";")
+	
+	string LoadCalibration
+	string LoadMaskFile
+	string AlwaysReloadParameters
+	string ProcessingTypeStr
+	//dialog...
+	
+	Prompt LoadCalibration, "Load calibration from "+SelectedCalibrationFile+"?", popup, "Yes;No;"
+	if(strlen(SelectedMaskFile)>0)
+		Prompt LoadMaskFile, "Load BMP Mask file "+SelectedMaskFile+"?", popup, "Yes;No;"
+	else
+		Prompt LoadMaskFile, "No Mask file found", popup, "No;"
+	endif
+	Prompt ProcessingTypeStr, "Subtract Empty/background ?", popup, "No;Yes;"
+	Prompt AlwaysReloadParameters, "Reload geometry for each image ?", popup, "No;Yes;"
+	DoPrompt "Setup parameters", ProcessingTypeStr, LoadCalibration, AlwaysReloadParameters, LoadMaskFile
+	if(V_Flag)
+		abort
+	else
+		//setup processing method
+		if(stringMatch(ProcessingTypeStr,"Yes"))
+			APS12IDBProcMethod = 1			//subtract background (materials SAXS common). 
+		else
+			APS12IDBProcMethod = 0			//do not subtract background (bioSAXS common)
+		endif
+		//Reload metadata always? 
+		if(stringMatch(AlwaysReloadParameters,"Yes"))
+			APS12IDBReloadPars = 1			//reload metadata with each image? 
+		else
+			APS12IDBReloadPars = 0			//do not reload metadata with each image
+		endif
+		//mask... 
+	 	if(stringmatch(LoadMaskFile,"Yes"))
+			ImageLoad/T=bmp/Q/N=TMPBMPMask/Z/P=TempMaskUserPath SelectedMaskFile
+			if(V_Flag)
+				print ":Loaded succesfully mask file from "+MaskPathStr+SelectedMaskFile
+			else
+				DoALert/T="Could not load Mask file" 0, "Could not load selected file with mask, you need to create mask manually"
+				UseMask = 0
+			endif
+			Wave LoadedmaskImage = TMPBMPMask
+			ImageTransform rgb2gray LoadedmaskImage
+			Wave M_RGB2Gray
+			ImageTransform flipCols M_RGB2Gray			//this is correct flip needed...
+			DoWIndow CCDImageToConvertFig
+			if(V_Flag)
+				RemoveImage/W=CCDImageToConvertFig/Z  M_ROIMask
+			endif
+			KillWaves/Z M_ROIMask, TMPBMPMask
+			wavestats/Q M_RGB2Gray
+			M_RGB2Gray/=V_max				//normalize to be 1 or 0, seem to be 255
+			Rename M_RGB2Gray, M_ROIMask
+			UseMask = 1
+		else
+			Wave M_ROIMask
+			KillWaves/Z M_ROIMask
+			UseMask = 0
+			print "No Mask Loaded, user needs to setup their own "
+		endif
+		//parse the parameter file 
+	 	if(stringmatch(LoadCalibration,"Yes"))
+			NI1_12IDBLoadTXTMetadata(MaskPathStr, SelectedCalibrationFile)	
+		else
+			print "No calibration file loaded. You are on your own!!!" 
+		endif
+	endif
+
+
+	setDataFolder OldDFf	
+	return APS12IDBProcMethod
+end
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+Function/S NI1_12IDBLoadTXTMetadata(PathStr, FileNameToLoad)		
+	string PathStr, FileNameToLoad
+	
+	NewPath/O/Q/Z LogFilesPath, PathStr
+	variable refNum, err
+	string OneLineStr, MetadataString="", newWaveNOte=""
+	open/R/T="????"/P=LogFilesPath/Z refNum as FileNameToLoad
+	if(V_flag!=0)
+		close refNum
+		Abort "Metadata import failed"
+	else		//open succesful
+		Do
+			FreadLine refNum,OneLineStr
+			if(strlen(OneLineStr)<=0)
+				//break
+				err=1
+			endif
+			MetadataString+=OneLineStr+";"
+		while(err==0)
+		Close refNum
+	endif 
+	MetadataString = ReplaceString("%", MetadataString, "")
+	MetadataString = ReplaceString("\n", MetadataString, "")
+	MetadataString = ReplaceString("\r", MetadataString, "")
+	//MetadataString = ReplaceString(" ", MetadataString, "")
+	string currentItemString
+	variable i=0
+	do
+		currentItemString=StringFromList(i, MetadataString, ";")
+		i+=1
+		NI1_12IDBProcessTXTLine(currentItemString)
+	while(strlen(currentItemString)>0)
+end
+
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+Function NI1_12IDBProcessTXTLine(LineToProcess)
+	string LineToProcess
+	
+	if(StringMatch(LineToProcess, "*[*]*" ))
+		LineToProcess[strsearch(LineToProcess, " ", strsearch(LineToProcess, "[", 0))]=";" 
+		LineToProcess = ReplaceString("[", LineToProcess, "")
+		LineToProcess = ReplaceString("]", LineToProcess, "")
+	endif
+	
+	LineToProcess=ReplaceString(" ", LineToProcess, "")+";"
+	if(StringMatch(LineToProcess, "*row*" ))
+		variable/g APS12IDBtempRow = NumberByKey("row", LineToProcess, ":", ";")
+	endif
+	if(StringMatch(LineToProcess, "*col*" ))
+		variable/g APS12IDBtempCol = NumberByKey("col", LineToProcess, ":", ";")
+	endif
+	if(StringMatch(LineToProcess, "*pSize*" ))
+		NVAR PixelSizeX = root:Packages:Convert2Dto1D:PixelSizeX
+		NVAR PixelSizeY = root:Packages:Convert2Dto1D:PixelSizeY
+		PixelSizeX = NumberByKey("pSize", LineToProcess, ":", ";")
+		PixelSizeY = NumberByKey("pSize", LineToProcess, ":", ";")
+	endif
+	if(StringMatch(LineToProcess, "*SDD*" )&& !StringMatch(LineToProcess, "*SDDrel*" ))
+		NVAR SampleToCCDdistance = root:Packages:Convert2Dto1D:SampleToCCDdistance
+		SampleToCCDdistance = NumberByKey("SDD", LineToProcess, ":", ";")
+	endif
+	if(StringMatch(LineToProcess, "*BeamXY*" ))
+		NVAR BeamCenterX = root:Packages:Convert2Dto1D:BeamCenterX
+		NVAR BeamCenterY = root:Packages:Convert2Dto1D:BeamCenterY
+		NVAR/Z APS12IDBtempRow
+		if(!NVAR_Exists(APS12IDBtempRow))
+			variable/g APS12IDBtempRow
+			APS12IDBtempRow = 0
+		endif
+		//Again, THIS IS INVERTED...
+		string TempStr=StringByKey("BeamXY", LineToProcess+"p", ":", "p")
+		variable BCX, BCY
+		BCX = str2num(StringFromList(0,TempStr,";"))
+		BCY = str2num(StringFromList(1,TempStr,";"))
+		BeamCenterY = APS12IDBtempRow - BCY		
+		BeamCenterX = BCX
+	endif
+	if(StringMatch(LineToProcess, "*eng*" )&&!StringMatch(LineToProcess, "*wavelength*" )&&!StringMatch(LineToProcess, "*xeng*" ))
+		NVAR XrayEnergy = root:Packages:Convert2Dto1D:XrayEnergy
+		NVAR Wavelength = root:Packages:Convert2Dto1D:Wavelength
+		XrayEnergy = NumberByKey("eng", LineToProcess, ":", ";")
+		Wavelength = 12.39842/XrayEnergy
+	endif
+	if(StringMatch(LineToProcess, "*wavelength*" ))
+		NVAR Wavelength = root:Packages:Convert2Dto1D:Wavelength
+		Wavelength = NumberByKey("wavelength", LineToProcess, ":", ";")
+	endif
+	if(StringMatch(LineToProcess, "*yaw*" ))
+		NVAR VerticalTilt = root:Packages:Convert2Dto1D:VerticalTilt
+		//Again, THIS IS INVERTED...
+		VerticalTilt = -1* NumberByKey("yaw", LineToProcess, ":", ";")		
+	endif
+	if(StringMatch(LineToProcess, "*absIntCoeff*" ))
+		NVAR CorrectionFactor = root:Packages:Convert2Dto1D:CorrectionFactor
+		//Again, THIS IS INVERTED...
+		CorrectionFactor = 1e-6 * NumberByKey("absIntCoeff", LineToProcess, ":", ";")		
+	endif
+	if(StringMatch(LineToProcess, "*qNum*" ))
+		NVAR QvectorNumberPoints = root:Packages:Convert2Dto1D:QvectorNumberPoints
+		QvectorNumberPoints = NumberByKey("qNum", LineToProcess, ":", ";")		
+	endif
+	if(StringMatch(LineToProcess, "*qMin*" ))
+		NVAR UserQMin = root:Packages:Convert2Dto1D:UserQMin
+		UserQMin = NumberByKey("qMin", LineToProcess, ":", ";")		
+	endif
+	if(StringMatch(LineToProcess, "*qMax*" ))
+		NVAR UserQMax = root:Packages:Convert2Dto1D:UserQMax
+		UserQMax = NumberByKey("qMax", LineToProcess, ":", ";")		
+	endif
+
+	
+	
+end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 
@@ -1933,6 +2228,27 @@ Function NI1_12IDBGetTranmsission(fileName)
 	variable transmission = (SampleBeamStopDiode/SampleBeamStopI0)/(EmptyBeamStopDiode/EmptyBeamStopI0)
 	print "Found transmission = "+num2str(transmission)
 	return transmission
+end
+//*******************************************************************************************************************************************
+
+Function NI1_12IDBGetSampleBS(fileName)
+	string fileName
+	wave/Z CCDImageToConvert = root:Packages:Convert2Dto1D:CCDImageToConvert
+	//wave/Z EmptyData = root:Packages:Convert2Dto1D:EmptyData
+	if(!WaveExists(CCDImageToConvert))// || !WaveExists(EmptyData))
+		abort "Needed Image do not exist. Load Sample data before going further"
+	endif
+	string sampleNote=note(CCDImageToConvert)
+	sampleNote = ReplaceString(" ", sampleNote, "")
+	//string emptyNote=note(EmptyData)
+	//emptyNote = ReplaceString(" ", emptyNote, "")
+	//variable SampleBeamStopDiode=NumberByKey("Photodiode", sampleNote , ":" , ";")
+	//variable EmptyBeamStopDiode=NumberByKey("Photodiode", emptyNote , ":" , ";")
+	variable SampleBeamStopBS=NumberByKey("BS", sampleNote , ":" , ";")
+	//variable EmptyBeamStopI0=NumberByKey("I0", emptyNote , ":" , ";")
+	//variable I0Normalized = (SampleBeamStopDiode/SampleBeamStopI0)//(EmptyBeamStopDiode/EmptyBeamStopI0)
+	print "Found Sample BS = "+num2str(SampleBeamStopBS)
+	return SampleBeamStopBS
 end
 //*******************************************************************************************************************************************
 
@@ -2099,95 +2415,112 @@ Function NI1_12IDBProcessLine(LineToProcess, LoadedWvHere)
 	wave LoadedWvHere
 	
 	LineToProcess=ReplaceString(" ", LineToProcess, "")+";"
-	if(StringMatch(LineToProcess, "*PixelSize(mm)*" ))
-		NVAR PixelSizeX = root:Packages:Convert2Dto1D:PixelSizeX
-		NVAR PixelSizeY = root:Packages:Convert2Dto1D:PixelSizeY
-		PixelSizeX = NumberByKey("PixelSize(mm)", LineToProcess, ":", ";")
-		PixelSizeY = NumberByKey("PixelSize(mm)", LineToProcess, ":", ";")
-	endif
-	if(StringMatch(LineToProcess, "*Sample-to-detectorDistance(mm)*" ))
-		NVAR SampleToCCDdistance = root:Packages:Convert2Dto1D:SampleToCCDdistance
-		SampleToCCDdistance = NumberByKey("Sample-to-detectorDistance(mm)", LineToProcess, ":", ";")
-	endif
-	if(StringMatch(LineToProcess, "*BeamCenterX*" ))
-		NVAR BeamCenterX = root:Packages:Convert2Dto1D:BeamCenterX
-		BeamCenterX = NumberByKey("BeamCenterX", LineToProcess, ":", ";")
-	endif
-	if(StringMatch(LineToProcess, "*BeamCenterY*" ))
-		NVAR BeamCenterY = root:Packages:Convert2Dto1D:BeamCenterY
-		//Again, THIS IS INVERTED...
-		variable DimYSize=DimSize(LoadedWvHere, 1 )
-		BeamCenterY = DimYSize - NumberByKey("BeamCenterY", LineToProcess, ":", ";")		
-	endif
-	if(StringMatch(LineToProcess, "*X-rayEnergy(keV)*" ))
-		NVAR XrayEnergy = root:Packages:Convert2Dto1D:XrayEnergy
-		NVAR Wavelength = root:Packages:Convert2Dto1D:Wavelength
-		XrayEnergy = NumberByKey("X-rayEnergy(keV)", LineToProcess, ":", ";")
-		Wavelength = 12.39842/XrayEnergy
-	endif
-	if(StringMatch(LineToProcess, "*TiltAnglePitch(degree)*" ))
-		NVAR VerticalTilt = root:Packages:Convert2Dto1D:VerticalTilt
-		//Again, THIS IS INVERTED...
-		VerticalTilt = -1* NumberByKey("TiltAnglePitch(degree)", LineToProcess, ":", ";")		
+	NVAR APS12IDBReloadPars
+	if(APS12IDBReloadPars)
+		if(StringMatch(LineToProcess, "*PixelSize(mm)*" ))
+			NVAR PixelSizeX = root:Packages:Convert2Dto1D:PixelSizeX
+			NVAR PixelSizeY = root:Packages:Convert2Dto1D:PixelSizeY
+			PixelSizeX = NumberByKey("PixelSize(mm)", LineToProcess, ":", ";")
+			PixelSizeY = NumberByKey("PixelSize(mm)", LineToProcess, ":", ";")
+		endif
+		if(StringMatch(LineToProcess, "*Sample-to-detectorDistance(mm)*" ))
+			NVAR SampleToCCDdistance = root:Packages:Convert2Dto1D:SampleToCCDdistance
+			SampleToCCDdistance = NumberByKey("Sample-to-detectorDistance(mm)", LineToProcess, ":", ";")
+		endif
+		if(StringMatch(LineToProcess, "*BeamCenterX*" ))
+			NVAR BeamCenterX = root:Packages:Convert2Dto1D:BeamCenterX
+			BeamCenterX = NumberByKey("BeamCenterX", LineToProcess, ":", ";")
+		endif
+		if(StringMatch(LineToProcess, "*BeamCenterY*" ))
+			NVAR BeamCenterY = root:Packages:Convert2Dto1D:BeamCenterY
+			//Again, THIS IS INVERTED...
+			variable DimYSize=DimSize(LoadedWvHere, 1 )
+			BeamCenterY = DimYSize - NumberByKey("BeamCenterY", LineToProcess, ":", ";")		
+		endif
+		if(StringMatch(LineToProcess, "*X-rayEnergy(keV)*" ))
+			NVAR XrayEnergy = root:Packages:Convert2Dto1D:XrayEnergy
+			NVAR Wavelength = root:Packages:Convert2Dto1D:Wavelength
+			XrayEnergy = NumberByKey("X-rayEnergy(keV)", LineToProcess, ":", ";")
+			Wavelength = 12.39842/XrayEnergy
+		endif
+		if(StringMatch(LineToProcess, "*TiltAnglePitch(degree)*" ))
+			NVAR VerticalTilt = root:Packages:Convert2Dto1D:VerticalTilt
+			//Again, THIS IS INVERTED...
+			VerticalTilt = -1* NumberByKey("TiltAnglePitch(degree)", LineToProcess, ":", ";")		
+		endif
 	endif
 end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
-Function NI1_12IDBLoadGoodPixMask()			//todo: some error handling... 
-		//should be able to find mask in current working folder	
-	string OldDFf=GetDataFolder(1)
-	NVAR UseMask = root:Packages:Convert2Dto1D:UseMask
-	setDataFOlder root:Packages:Convert2Dto1D:
-	//get the path to SAXS_mask2M.bmp or WAXS_mask2M.bpm, it is one level up...
-	PathInfo Convert2Dto1DDataPath
-	string DataFilePath=S_path
-	string UsingWhat=StringFromList(ItemsInList(DataFilePath,":")-1, DataFilePath,":")
-	string MaskPathStr= RemoveFromList(UsingWhat, DataFilePath,":")
-	//mask may or may not exist, we need to get user to pick one or tell us it does not exist...
-	NewPath/O/Q TempMaskUserPath, MaskPathStr
-	string ListOfBMPFiles=IndexedFile(TempMaskUserPath, -1, ".bmp")
-	string SelectedMaskFile
-	if(strlen(ListOfBMPFiles)>0)
-		Prompt SelectedMaskFile, "Select BMP Mask file", popup, ListOfBMPFiles+"---;"
-		DoPrompt "Select Mask file", SelectedMaskFile
-		if(V_Flag || stringmatch(SelectedMaskFile,"---"))
-			print "User canceled mask file selection, continue without it"
-			UseMask = 0
-			return 0
-		endif
-		ImageLoad/T=bmp/Q/N=TMPBMPMask/Z/P=TempMaskUserPath SelectedMaskFile
-		if(V_Flag)
-			print ":Loaded succesfully mask file from "+MaskPathStr+SelectedMaskFile
-		else
-			DoALert/T="Could not load Mask file" 0, "Could not load selected file with mask, you need to create mask manually"
-			UseMask = 0
-			return 0
-		endif
-		Wave LoadedmaskImage = TMPBMPMask
-		ImageTransform rgb2gray LoadedmaskImage
-		Wave M_RGB2Gray
-		ImageTransform flipCols M_RGB2Gray			//this is correct flip needed...
-		DoWIndow CCDImageToConvertFig
-		if(V_Flag)
-			RemoveImage/W=CCDImageToConvertFig/Z  M_ROIMask
-		endif
-		KillWaves/Z M_ROIMask, TMPBMPMask
-		wavestats/Q M_RGB2Gray
-		M_RGB2Gray/=V_max				//normalize to be 1 or 0, seem to be 255
-		Rename M_RGB2Gray, M_ROIMask
-		UseMask = 1
-	else		//no mask file found
-		print "No BMP mask file found, continue without it"
-		UseMask = 0
-		return 0
-	endif
-
-
-
-
-	setDataFolder OldDFf	
-	return 1
-end
+//Function NI1_12IDBGetUserInput()			//todo: some error handling... 
+//		//should be able to find mask in current working folder	
+//	string OldDFf=GetDataFolder(1)
+//	NVAR UseMask = root:Packages:Convert2Dto1D:UseMask
+//	variable ProcessingTypeVal=0		//Processing type is : 0 use beamline processing (just reduction) or 1 subtract empty/background and reduce. 
+//	string ProcessingTypeStr="No"
+//	setDataFOlder root:Packages:Convert2Dto1D:
+//	//get the path to SAXS_mask2M.bmp or WAXS_mask2M.bpm, it is one level up...
+//	PathInfo Convert2Dto1DDataPath
+//	string DataFilePath=S_path
+//	string UsingWhat=StringFromList(ItemsInList(DataFilePath,":")-1, DataFilePath,":")
+//	string MaskPathStr= RemoveFromList(UsingWhat, DataFilePath,":")
+//	//mask may or may not exist, we need to get user to pick one or tell us it does not exist...
+//	NewPath/O/Q TempMaskUserPath, MaskPathStr
+//	string ListOfBMPFiles=IndexedFile(TempMaskUserPath, -1, ".bmp")
+//	string SelectedMaskFile
+//	if(strlen(ListOfBMPFiles)>0)
+//		Prompt SelectedMaskFile, "Select BMP Mask file", popup, ListOfBMPFiles+"---;"
+//		Prompt ProcessingTypeStr, "Subtract Empty/background", popup, "No;Yes;"
+//		DoPrompt "Select Mask/Method", ProcessingTypeStr, SelectedMaskFile
+//		if(V_Flag || stringmatch(SelectedMaskFile,"---"))
+//			print "User canceled mask file selection, continue without it"
+//			UseMask = 0
+//			if(stringMatch(ProcessingTypeStr,"Yes"))
+//				ProcessingTypeVal = 1
+//			endif
+//			return ProcessingTypeVal
+//		endif
+//		if(stringMatch(ProcessingTypeStr,"Yes"))
+//			ProcessingTypeVal = 1
+//		endif
+//		ImageLoad/T=bmp/Q/N=TMPBMPMask/Z/P=TempMaskUserPath SelectedMaskFile
+//		if(V_Flag)
+//			print ":Loaded succesfully mask file from "+MaskPathStr+SelectedMaskFile
+//		else
+//			DoALert/T="Could not load Mask file" 0, "Could not load selected file with mask, you need to create mask manually"
+//			UseMask = 0
+//			return ProcessingTypeVal
+//		endif
+//		Wave LoadedmaskImage = TMPBMPMask
+//		ImageTransform rgb2gray LoadedmaskImage
+//		Wave M_RGB2Gray
+//		ImageTransform flipCols M_RGB2Gray			//this is correct flip needed...
+//		DoWIndow CCDImageToConvertFig
+//		if(V_Flag)
+//			RemoveImage/W=CCDImageToConvertFig/Z  M_ROIMask
+//		endif
+//		KillWaves/Z M_ROIMask, TMPBMPMask
+//		wavestats/Q M_RGB2Gray
+//		M_RGB2Gray/=V_max				//normalize to be 1 or 0, seem to be 255
+//		Rename M_RGB2Gray, M_ROIMask
+//		UseMask = 1
+//	else		//no mask file found
+//		print "No BMP mask file found, continue without it"
+//		Prompt ProcessingTypeStr, "Subtract Empty/background", popup, "No;Yes;"
+//		DoPrompt "Select Method", SelectedMaskFile, ProcessingTypeStr
+//		if(stringMatch(ProcessingTypeStr,"Yes"))
+//			ProcessingTypeVal = 1
+//		endif
+//		UseMask = 0
+//		return ProcessingTypeVal
+//	endif
+//
+//
+//
+//
+//	setDataFolder OldDFf	
+//	return ProcessingTypeVal
+//end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 
@@ -2198,26 +2531,55 @@ Function NI1_12IDBHowTo()
 		DoWIndow/F APS12IDB_Instructions
 	else
 	String nb = "APS12IDB_Instructions"
-	NewNotebook/N=$nb/F=1/V=1/K=1/ENCG={1,1}/W=(1532,45,2246,823) as "APS12IDB_Instructions"
-	Notebook $nb defaultTab=36, magnification=125
+	NewNotebook/N=$nb/F=1/V=1/K=1/ENCG={1,1}/W=(114,125,820,855) as "APS12IDB_Instructions"
+	Notebook $nb defaultTab=10, magnification=125
 	Notebook $nb showRuler=1, rulerUnits=2, updating={1, 1}
 	Notebook $nb newRuler=Normal, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Helvetica",11,0,(0,0,0)}
 	Notebook $nb newRuler=Title, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Geneva",12,3,(0,0,0)}
-	Notebook $nb ruler=Title, text="Instructions for use of APS 12IDC special configuration\r"
-	Notebook $nb ruler=Normal, text="\r"
+	Notebook $nb ruler=Title, fSize=14, textRGB=(65535,0,0), text="Instructions for use of APS 12IDC special configuration\r"
+	Notebook $nb ruler=Normal, fSize=-1, textRGB=(0,0,0), text="\r"
 	Notebook $nb text="\r"
-	Notebook $nb text="1. Find path to your tif images\r"
+	Notebook $nb text="1. Find path to your data images. Pick folder - either \"SAXS\" or \"WAXS\" - with raw tiff or hdf5/Nexus fi"
+	Notebook $nb text="les, not other folders (e.g. not the Average folder). \r"
 	Notebook $nb text="\r"
-	Notebook $nb text="2. Mask and all configuration and calibration shoudl be read from meta files with metadata for each file"
-	Notebook $nb text=" automatically. \r"
+	Notebook $nb text="2. Code will find available data, calibrations, masks, and present dialog to choose to :\r"
+	Notebook $nb text="\ta. ", fStyle=1, text="Subtract Empty/background?", fStyle=-1
+	Notebook $nb text=" - this is basically data reduction method (see below)\r"
+	Notebook $nb text="\tb. ", fStyle=1, text="Load calibration from appropriate calibration file", fStyle=-1
+	Notebook $nb text=". If you choose not to, you need to calibrate everything yourself. \r"
+	Notebook $nb text="   c. ", fStyle=1, text="Choose to reload calibration from metadata with each loaded image", fStyle=-1
+	Notebook $nb text=". Rarely needed... This is useful when you may have data from different calibrations (e.g., distances, w"
+	Notebook $nb text="avelengths,...) in the same folder. Do NOT choose this option if you need to overwrite anything in calib"
+	Notebook $nb text="ration.  \r"
+	Notebook $nb text="   d. ", fStyle=1, text="Load appropriate mask", fStyle=-1
+	Notebook $nb text=", SAXS or WAXS, if found. If you choose not to, you need to design your own mask and switch masking on y"
+	Notebook $nb text="ourself. \r"
 	Notebook $nb text="\r"
-	Notebook $nb text="This needs a lot more testing!!!! \r"
+	Notebook $nb text="3. Continue, all should finish without any error messages.  \r"
+	Notebook $nb text="\r"
+	Notebook $nb fStyle=1, text="With default choices you will", fStyle=-1
+	Notebook $nb text=" : choose \"bioSAXS\" data processing, load calibration from xxxx_calibration_parameters.txt file, not rel"
+	Notebook $nb text="oad calibration with each new loaded image, and import appropriate existing mask.\r"
 	Notebook $nb text="\r"
 	Notebook $nb text="\r"
+	Notebook $nb fStyle=5, text="*** Data reduction methods ***\r"
+	Notebook $nb fStyle=-1, text="1. ", fStyle=1, text="Subtract Empty/Background = NO     ", fStyle=-1
+	Notebook $nb text=": reduces each image separately, normalized by transmitted counts (flux and transmission normalization) "
+	Notebook $nb text="and normalization factor, masked. Solvent/background sutraction needs to be done later. This is typical "
+	Notebook $nb text="for BioSAXS data when multiple images are collected per sample. Using Irena bioSAXS tools you can then a"
+	Notebook $nb text="verage multiple data together, subtracted these averaged data etc. This is default beamline processing a"
+	Notebook $nb text="nd typical for bioSAXS data.\r"
 	Notebook $nb text="\r"
-	Notebook $nb text="Jan Ilavsky, 2/27/2020\r"
+	Notebook $nb text="2. ", fStyle=1, text="Subtract Empty/Background = YES   :  ", fStyle=-1
+	Notebook $nb text="typical Nika processing for materials SAXS - solvent/background image is subtracted in Nika directly fro"
+	Notebook $nb text="m each image, with flux normalization for sample and background, transmission calculation etc. In this c"
+	Notebook $nb text="ase only ONE background image can be used at time, which may not be suitable if you have multiple images"
+	Notebook $nb text=" for background. \r"
+	Notebook $nb text="\r"
+	Notebook $nb text="Jan Ilavsky, 1/12/2021\r"
 	Notebook $nb text="\r"
 	Notebook $nb fStyle=2, text="Hint: watch history area for notes on what Nika has found and done. \r"
+
 	endif
 end
 
