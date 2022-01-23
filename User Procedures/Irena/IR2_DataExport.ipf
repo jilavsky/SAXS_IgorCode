@@ -724,6 +724,18 @@ Function IR2E_ExportTheData()
 		close/A
 		Duplicate/O TempY, NoteTempY
 		string OldNoteT=note(TempY)
+		//	wvlgth = NumberByKey("Nika_Wavelength", OldNoteT1 , "=", ";")
+		//	if(numtype(wvlgth)!=0)
+		//		wvlgth = NumberByKey("Wavelength", OldNoteT1 , "=", ";")
+		//		if(numtype(wvlgth)!=0)
+		//			Prompt wvlgth, "Wavelength not found, please, provide"
+		//			DoPrompt "Provide wavelength is A", wvlgth
+		//			if (V_Flag || numtype(wvlgth)!=0 || wvlgth<0.01)
+		//				return -1								// User canceled
+		//			endif	
+		//		endif
+		//	endif
+
 		note/K NoteTempY
 		note NoteTempY, OldNoteT+"Exported="+date()+" "+time()+";"
 		make/T/O WaveNoteWave
@@ -737,25 +749,8 @@ Function IR2E_ExportTheData()
 			if(HaveErrors)
 				Duplicate/O TempE, Uncertainty
 			endif
-			if(reduceOutputPrecision)
-				Redimension/S Qvector_A,Intensity
-				if(HaveErrors)
-					Redimension/S Uncertainty
-				endif
-			endif
 
 			OldNoteT1=note(Intensity)
-			wvlgth = NumberByKey("Nika_Wavelength", OldNoteT1 , "=", ";")
-			if(numtype(wvlgth)!=0)
-				wvlgth = NumberByKey("Wavelength", OldNoteT1 , "=", ";")
-				if(numtype(wvlgth)!=0)
-					Prompt wvlgth, "Wavelength not found, please, provide"
-					DoPrompt "Provide wavelength is A", wvlgth
-					if (V_Flag || numtype(wvlgth)!=0 || wvlgth<0.01)
-						return -1								// User canceled
-					endif	
-				endif
-			endif
 
 			//convert q tth or d into what is asked for... 
 			Duplicate/Free tempX, TempXConverted 
@@ -764,12 +759,21 @@ Function IR2E_ExportTheData()
 					TempXConverted = tempX
 				elseif(StringMatch(QWavename, "d_*") || StringMatch(QWavename, "'d_*"))		//d wave
 					//q = 2pi/d
-					TempXCOnverted = 2*pi / TempX
+					TempXConverted = 2*pi / TempX
 				else		//Two theta wave, convert to Q
 					//q = 4pi sin(theta)/lambda
+					wvlgth = IR2E_GetWavelength(OldNoteT1)
 					TempXConverted = 4*pi*sin(TempX/(2 * 180/pi)) / wvlgth
 				endif
 				Duplicate/O TempXConverted,Qvector_A
+				//reduce precision here... 
+				if(reduceOutputPrecision)
+					Redimension/S Qvector_A,Intensity
+					if(HaveErrors)
+						Redimension/S Uncertainty
+					endif
+				endif
+
 				if(HaveErrors)
 					Save/A=2/G/W/M="\r\n"/P=IR2E_ExportPath Qvector_A,Intensity,Uncertainty as FinalOutputName			
 				else
@@ -786,9 +790,17 @@ Function IR2E_ExportTheData()
 					//d = 2*pi/Q : 2pi/(4pi*sin(theta)/lambda)
 					//TTH = 114.592 * asin((2*pi/D) * wvlgth /(4*pi))	
 					//D = 2*pi/(4*pi)*sin(TTH/114.592)/wvlgth  
+					wvlgth = IR2E_GetWavelength(OldNoteT1)
 					TempXConverted = 1/(2*sin(TempX/(2 * 180/pi))/ wvlgth)
 				endif
 				Duplicate/O TempXConverted,Dspacing_A
+				//reduce precision here... 
+				if(reduceOutputPrecision)
+					Redimension/S Dspacing_A,Intensity
+					if(HaveErrors)
+						Redimension/S Uncertainty
+					endif
+				endif
 				if(HaveErrors)
 					Save/A=2/G/W/M="\r\n"/P=IR2E_ExportPath Dspacing_A,Intensity,Uncertainty as FinalOutputName			
 				else 
@@ -797,14 +809,23 @@ Function IR2E_ExportTheData()
 			elseif(ASCIIExportTTH)	//user wants Two Theta
 				if(StringMatch(QWavename, "q_*") || StringMatch(QWavename, "'q_*")||StringMatch(QWavename, "*_Qvec"))		//q wave
 					//TwoTheta = 2* asin(q * lambda /4pi)
+					wvlgth = IR2E_GetWavelength(OldNoteT1)
 					TempXCOnverted = 114.592 * asin(TempX * wvlgth /(4*pi))		
 				elseif(StringMatch(QWavename, "d_*") || StringMatch(QWavename, "'d_*"))		//d wave
 					//TwoTheta = 2* asin(q * lambda /4pi), Q = 2*pi/D
+					wvlgth = IR2E_GetWavelength(OldNoteT1)
 					TempXCOnverted = 114.592 * asin((2*pi/TempX) * wvlgth /(4*pi))		
 				else		//Two theta wave, convert to d
 					TempXConverted = tempX
 				endif
 				Duplicate/O TempXConverted,TwoTheta_Deg
+				//reduce precision here... 
+				if(reduceOutputPrecision)
+					Redimension/S TwoTheta_Deg,Intensity
+					if(HaveErrors)
+						Redimension/S Uncertainty
+					endif
+				endif
 				if(HaveErrors)
 					Save/A=2/G/W/M="\r\n"/P=IR2E_ExportPath TwoTheta_Deg,Intensity,Uncertainty as FinalOutputName			
 				else
@@ -857,22 +878,24 @@ Function IR2E_ExportTheData()
 		OldNoteT1=note(TempY)
 		note/K NoteTempY
 		note NoteTempY, OldNoteT1+"Exported="+date()+" "+time()+";"
-		wvlgth = NumberByKey("Nika_Wavelength", OldNoteT1 , "=", ";")
-		if(numtype(wvlgth)!=0)
-			wvlgth = NumberByKey("Wavelength", OldNoteT1 , "=", ";")
-			if(numtype(wvlgth)!=0)
-				Prompt wvlgth, "Wavelength not found, please, provide"
-				DoPrompt "Provide wavelength is A", wvlgth
-				if (V_Flag || numtype(wvlgth)!=0 || wvlgth<0.01)
-					return -1								// User canceled
-				endif	
-			endif
-		endif
+		//		wvlgth = NumberByKey("Nika_Wavelength", OldNoteT1 , "=", ";")
+		//		if(numtype(wvlgth)!=0)
+		//			wvlgth = NumberByKey("Wavelength", OldNoteT1 , "=", ";")
+		//			if(numtype(wvlgth)!=0)
+		//				Prompt wvlgth, "Wavelength not found, please, provide"
+		//				DoPrompt "Provide wavelength is A", wvlgth
+		//				if (V_Flag || numtype(wvlgth)!=0 || wvlgth<0.01)
+		//					return -1								// User canceled
+		//				endif	
+		//			endif
+		//		endif
 		//convert q or d into two theta as needed... 
 		Duplicate/Free tempX, TempXCOnverted 
 		if(StringMatch(QWavename, "q_*") || StringMatch(QWavename, "'q_*")||StringMatch(QWavename, "*_Qvec"))		//q wave
+			wvlgth = IR2E_GetWavelength(OldNoteT1)
 			TempXCOnverted = 2 * 180/pi * asin(TempX * wvlgth /(4*pi))		
 		elseif(StringMatch(QWavename, "d_*") || StringMatch(QWavename, "'d_*"))		//d wave
+			wvlgth = IR2E_GetWavelength(OldNoteT1)
 			TempXCOnverted = 2 * 180/pi * (wvlgth / (2*TempX))
 		else		//Two theta wave nothing needed...
 
@@ -884,6 +907,7 @@ Function IR2E_ExportTheData()
 			InsertPoints 0, 2, WaveNoteWave
 			InsertPoints numpnts(WaveNoteWave), 2, WaveNoteWave
 			WaveNoteWave[0] = "/*"
+			wvlgth = IR2E_GetWavelength(OldNoteT1)
 			WaveNoteWave[1] = HeaderSeparator+"wavelength = "+num2str(wvlgth)
 			WaveNoteWave[numpnts(WaveNoteWave)-2] = "# 2Theta  Intensity  Error"	
 			WaveNoteWave[numpnts(WaveNoteWave)-1] = "*/"	
@@ -925,6 +949,46 @@ end
 
 //*******************************************************************************************************************************
 //*******************************************************************************************************************************
+static Function IR2E_GetWavelength(OldNoteT1)
+	string OldNoteT1
+	
+	DFref oldDf= GetDataFolderDFR()
+	setDataFolder root:Packages:IR2_UniversalDataExport
+	variable wvlgth
+	NVAR/Z TempExportwvlgth	//this is buffer of wavelength value if users chooses to store it. 
+	string KeepwVlgth = "No"
+	
+	wvlgth = NumberByKey("Nika_Wavelength", OldNoteT1 , "=", ";")
+	if(numtype(wvlgth)!=0)
+		wvlgth = NumberByKey("Wavelength", OldNoteT1 , "=", ";")
+		if(numtype(wvlgth)!=0)
+			//check if we have stored one here... 
+			if(NVAR_Exists(TempExportwvlgth))
+				wvlgth = TempExportwvlgth	
+				print "*** Using previously user input wavelentgh of "+num2str(wvlgth)+" A for current data set. *** " 
+				print "If this is wrong, type in command line : \"Killvariables root:Packages:IR2_UniversalDataExport:TempExportwvlgth \"." 
+				print "*** And re-export the data, you will get wavelength input dialog again ***"
+			else
+				Prompt wvlgth, "Wavelength not found, please, provide"
+				Prompt KeepwVlgth, "Store for future use? Must be same for all data!", popup, "No;Yes;"
+				DoPrompt "Provide wavelength is A", wvlgth, KeepwVlgth
+				if (V_Flag || numtype(wvlgth)!=0 || wvlgth<0.01)
+					return -1								// User canceled
+				endif	
+				print "*** Using user input wavelentgh of "+num2str(wvlgth)+" A for current data set. *** " 
+				if(StringMatch(KeepwVlgth, "Yes"))
+					variable/g TempExportwvlgth
+					TempExportwvlgth = wvlgth
+					print "*** Stored user input wavelentgh of "+num2str(wvlgth)+" A for use for all data sets.  *** " 
+				endif
+			endif
+		endif
+	endif
+
+	setDataFolder oldDF
+	return wvlgth
+end
+
 //*******************************************************************************************************************************
 //*******************************************************************************************************************************
 //*******************************************************************************************************************************
