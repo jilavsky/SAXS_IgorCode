@@ -97,7 +97,7 @@ Function IN3_SmoothRData()
 	Wave PD_range = root:Packages:Indra3:PD_range
 	Wave R_Error = root:Packages:Indra3:R_Error
 	Wave MeasTime = root:Packages:Indra3:MeasTime
-	NVAR SmoothRCurveData=SmoothRCurveData
+	NVAR SmoothRCurveData = root:Packages:Indra3:SmoothRCurveData
 	if(SmoothRCurveData)
 		//firs remove NaNs as this is really difficult to deal with...
 		Duplicate/Free PD_range, tmpPD_range

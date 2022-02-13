@@ -4171,12 +4171,14 @@ end
 static Function IN3S_PutEpicsPv(PVAddress, target)	//note, this waits until motor is done moving...
 	string PVAddress
 	variable target
+	if(numtype(target)==0)			//prevent NaN sent to epics, it will accept it and move to crazy place. 
 #if(exists("pvOpen")==4)
-	variable sxRBV
-	pvOpen/T=5 sxRBV, PVAddress				// /T is timeout, should wait only this timeout. 
-	pvPutNumber/Q sxRBV, target				// /Q returns immediately, else waits until completion.  
-	pvClose sxRBV
+		variable sxRBV
+		pvOpen/T=5 sxRBV, PVAddress				// /T is timeout, should wait only this timeout. 
+		pvPutNumber/Q sxRBV, target				// /Q returns immediately, else waits until completion.  
+		pvClose sxRBV
 #endif	
+	endif
 end
 
 //*****************************************************************************************************************

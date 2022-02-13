@@ -3341,8 +3341,8 @@ Function IR3J_InvFitBackground()
 	endif
 	Wave/Z InvBckgWaveModel
 	if(WaveExists(InvBckgWaveModel))
-		CheckDisplayed /W=IR3J_LogLogDataDisplay IntWave, InvBckgWaveModel
-		if(V_Flag) 
+		CheckDisplayed /W=IR3J_LogLogDataDisplay InvBckgWaveModel
+		if(!V_Flag) 
 			AppendToGraph /W=IR3J_LogLogDataDisplay InvBckgWaveModel vs QWaveModel
 			ModifyGraph lstyle(InvBckgWaveModel)=3,rgb(InvBckgWaveModel)=(1,12815,52428)
 		endif
@@ -3388,7 +3388,10 @@ Function IR3J_CalculateInvariant()
 	NVAR DataQEndPoint = root:Packages:Irena:SimpleFits:DataQEndPoint
 	NVAR DataQstartPoint = root:Packages:Irena:SimpleFits:DataQstartPoint
 	SVAR InvBackgModel = root:Packages:Irena:SimpleFits:InvBackgModel
-	Wave IntWave = root:Packages:Irena:SimpleFits:OriginalDataIntWave
+	Wave/Z IntWave = root:Packages:Irena:SimpleFits:OriginalDataIntWave
+	if(!WaveExists(IntWave))	//not yet setup properly, abort.
+		return 0
+	endif
 	Wave QWave = root:Packages:Irena:SimpleFits:OriginalDataQWave
 	NVAR InvBckgMinQ = root:Packages:Irena:SimpleFits:InvBckgMinQ
 	NVAR InvBckgMaxQ = root:Packages:Irena:SimpleFits:InvBckgMaxQ

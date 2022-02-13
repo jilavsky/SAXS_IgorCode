@@ -1367,6 +1367,11 @@ Function IN3_MainPanel()
 	SetVariable RemoveDropoutsFraction,pos={200,545},size={180,22},title="Drp Int. fract. (0.1-0.7) =", frame=1
 	SetVariable RemoveDropoutsFraction,limits={0,1,0.1},variable= root:Packages:Indra3:RemoveDropoutsFraction, proc=IN3_ParametersChanged
 
+	//modify any parameetrs not for old spe scans
+	NVAR SmoothRCurveData = root:Packages:Indra3:SmoothRCurveData
+	CheckBox SmoothRCurveData,pos={10,590},size={150,14},title="Smooth?", proc=IN3_MainPanelCheckBox
+	CheckBox SmoothRCurveData,variable= root:Packages:Indra3:SmoothRCurveData, help={"Check, if you want to smooth the data when reducing it"}
+
 	CheckBox FindMinQForData,pos={10,610},size={150,14},title="Find MinQ automatically?", noproc
 	CheckBox FindMinQForData,variable= root:Packages:Indra3:FindMinQForData, help={"Check, if you want to locate min-q for data start"}
 	SetVariable MinQMinFindRatio,pos={200,610},size={150,22},title="I_S/I_Bl ratio =", frame=1
