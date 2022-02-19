@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 #pragma version=2.71
-Constant NI1AversionNumber = 2.71
+Constant NI1AversionNumber = 2.72
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2022, Argonne National Laboratory
@@ -9,6 +9,7 @@ Constant NI1AversionNumber = 2.71
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.72 add Use Transparent Beamstop transmission calculation
 //2.71 add Eiger types 
 //2.70 fixed Max number of points selection which did not account for Qmin and Qmax and was therefore producing too many points
 //2.70 added correction for self absorption. 
@@ -312,9 +313,9 @@ Function NI1A_Initialize2Dto1DConversion()
 
 	ListOfVariables+="Process_DisplayAve;Process_Individually;Process_Average;Process_AveNFiles;Process_ReprocessExisting;"
 	//and now the function calls variables
-	ListOfVariables+="UseSampleThicknFnct;UseSampleTransmFnct;UseSampleMonitorFnct;UseSampleCorrectFnct;UseSampleMeasTimeFnct;UseSampleNameFnct;"
+	ListOfVariables+="UseSampleThicknFnct;UseSampleTransmFnct;UseTranspBeamstop;UseSampleMonitorFnct;UseSampleCorrectFnct;UseSampleMeasTimeFnct;UseSampleNameFnct;"
 	ListOfVariables+="UseEmptyTimeFnct;UseBackgTimeFnct;UseEmptyMonitorFnct;"
-	ListOfVariables+="ProcessNImagesAtTime;SaveGSASdata;FIlesSortOrder;"
+	ListOfVariables+="ProcessNImagesAtTime;SaveGSASdata;FIlesSortOrder;TranspBSRadius;"
 	//errors control
 	ListOfVariables+="ErrorCalculationsUseOld;ErrorCalculationsUseStdDev;ErrorCalculationsUseSEM;"
 	//2DCalibratedDataInput & output
@@ -659,6 +660,12 @@ Function NI1A_Initialize2Dto1DConversion()
 	RemoveFirstNRows=0
 	RemoveLastNRows=0
 	
+	NVAR UseSampleTransmFnct
+	NVAR UseTranspBeamstop
+	if(UseSampleTransmFnct+UseTranspBeamstop>1)
+		UseSampleTransmFnct=0
+		UseTranspBeamstop=0
+	endif
 	
 	NVAR  DisplayRaw2DData
 	NVAR  DisplayProcessed2DData

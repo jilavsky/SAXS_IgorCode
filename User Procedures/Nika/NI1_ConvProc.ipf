@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.73
+#pragma version=2.74
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -10,6 +10,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.74 ~2022 sometimes. 
+//			added ability to calculate transmission using semi transparent beamstop. 
 //2.73 5-24-2021 changed resolution to be FWHM/2, same as USAXS and as expected by Modeling package and sasView. 
 //		modifed NI1A_CalculateQresolution to return FWHM and use only Q steps and Beam size. Pixel size used before is wrong, that is accounted for in Q stepping already, Nika cannot oversample in Q points. 
 //2.72 Remove for MatrixOP /NTHR=0 since it is applicable to 3D matrices only 
@@ -3153,9 +3155,10 @@ Function NI1A_LoadParamsUsingFncts(SelectedFileToLoad)
 		
 		NVAR UseSampleTransmission=root:Packages:Convert2Dto1D:UseSampleTransmission
 		NVAR UseSampleTransmFnct=root:Packages:Convert2Dto1D:UseSampleTransmFnct
+		NVAR UseTranspBeamstop = root:Packages:Convert2Dto1D:UseTranspBeamstop
 		SVAR SampleTransmFnct=root:Packages:Convert2Dto1D:SampleTransmFnct
 		NVAR SampleTransmission=root:Packages:Convert2Dto1D:SampleTransmission
-		if(UseSampleTransmission && UseSampleTransmFnct)
+		if(UseSampleTransmission && (UseSampleTransmFnct||UseTranspBeamstop))
 			Execute("root:Packages:Convert2Dto1D:temp ="+SampleTransmFnct+"(\""+SelectedFileToLoad+"\")")
 			if(numtype(temp)!=0 || temp<=0)// || temp >1.5)
 				Abort "Transmission function returned NaN or value <=0 or >1.5"
@@ -3939,6 +3942,11 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	CheckBox UseSampleTransmFnct,pos={15,380},size={50,14},title="Use fnct?",proc=NI1A_CheckProc
 	CheckBox UseSampleTransmFnct,help={"Check is transmission=Function(sampleName) for function name input."}
 	CheckBox UseSampleTransmFnct,variable= root:Packages:Convert2Dto1D:UseSampleTransmFnct
+
+	CheckBox UseTranspBeamstop,pos={75,380},size={50,14},title="Transp. Beamstop?",proc=NI1A_CheckProc
+	CheckBox UseTranspBeamstop,help={"Check if want to use calculation when using tsemi trasparent beamstop."}
+	CheckBox UseTranspBeamstop,variable= root:Packages:Convert2Dto1D:UseTranspBeamstop
+
 	SetVariable SampleTransmFnct,pos={93,380},size={300,16},title="Sa Transmis =", proc=NI1A_SetVarProcMainPanel
 	SetVariable SampleTransmFnct,help={"Input function name which returns transmission (0 - 1)."}
 	SetVariable SampleTransmFnct,limits={0,Inf,0.1},value= root:Packages:Convert2Dto1D:SampleTransmFnct
@@ -4774,6 +4782,7 @@ Function NI1A_TabProc(ctrlName,tabNum)
 
 	NVAR UseSampleThicknFnct= root:Packages:Convert2Dto1D:UseSampleThicknFnct
 	NVAR UseSampleTransmFnct= root:Packages:Convert2Dto1D:UseSampleTransmFnct
+	NVAR UseTranspBeamstop= root:Packages:Convert2Dto1D:UseTranspBeamstop
 	NVAR UseSampleMonitorFnct= root:Packages:Convert2Dto1D:UseSampleMonitorFnct
 	NVAR UseSampleMeasTimeFnct= root:Packages:Convert2Dto1D:UseSampleMeasTimeFnct
 	NVAR UseEmptyTimeFnct= root:Packages:Convert2Dto1D:UseEmptyTimeFnct
@@ -4842,9 +4851,10 @@ Function NI1A_TabProc(ctrlName,tabNum)
 	CheckBox UseSampleThicknFnct,disable=(tabNum!=1 || !UseSampleThickness||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
 	SetVariable SampleThicknFnct,disable=(tabNum!=1 || !UseSampleThickness || !UseSampleThicknFnct||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
 
-	SetVariable SampleTransmission,disable=(tabNum!=1 || !UseSampleTransmission || UseSampleTransmFnct||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
-	CheckBox UseSampleTransmFnct,disable=(tabNum!=1 || !UseSampleTransmission||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
-	SetVariable SampleTransmFnct,disable=(tabNum!=1 || !UseSampleTransmission || !UseSampleTransmFnct||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable SampleTransmission,disable=(tabNum!=1 || !UseSampleTransmission || UseSampleTransmFnct||UseCalib2DData||UseTranspBeamstop), win=NI1A_Convert2Dto1DPanel
+	CheckBox UseSampleTransmFnct,disable=(tabNum!=1 || !UseSampleTransmission||UseCalib2DData||UseTranspBeamstop), win=NI1A_Convert2Dto1DPanel
+	CheckBox UseTranspBeamstop,disable=(tabNum!=1 || !UseSampleTransmission||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable SampleTransmFnct,disable=(tabNum!=1 || !UseSampleTransmission || !UseSampleTransmFnct||UseCalib2DData || UseTranspBeamstop), win=NI1A_Convert2Dto1DPanel
 
 	SetVariable SampleI0,disable=(tabNum!=1 || (!UseI0ToCalibrate && !UseMonitorForEF) || UseSampleMonitorFnct||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
 	CheckBox UseSampleMonitorFnct,disable=(tabNum!=1 || (!UseI0ToCalibrate && !UseMonitorForEF)||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
@@ -5739,6 +5749,16 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 	if(cmpstr("UseSampleTransmFnct",ctrlName)==0)
 		SetVariable SampleTransmission,disable=(checked), win=NI1A_Convert2Dto1DPanel
 		SetVariable SampleTransmFnct,disable=(!checked), win=NI1A_Convert2Dto1DPanel
+		CheckBox UseTranspBeamstop,disable=(checked), win=NI1A_Convert2Dto1DPanel
+	endif
+	if(cmpstr("UseTranspBeamstop",ctrlName)==0)
+		NVAR UseSampleTransmFnct = root:Packages:Convert2Dto1D:UseSampleTransmFnct
+		SetVariable SampleTransmission,disable=(checked), win=NI1A_Convert2Dto1DPanel
+		SetVariable SampleTransmFnct,disable=(checked || !UseSampleTransmFnct), win=NI1A_Convert2Dto1DPanel
+		CheckBox UseSampleTransmFnct,disable=(checked), win=NI1A_Convert2Dto1DPanel
+		if(checked)
+			NI1A_SetupTransparentBeamstop()
+		endif
 	endif
 	
 	if(cmpstr("UseSampleMeasTimeFnct",ctrlName)==0)
@@ -5947,6 +5967,66 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 
 	setDataFolder OldDf
 End
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+
+Function NI1A_SetupTransparentBeamstop()
+	//sets up calculation for transparent beamstop use
+	//setup use of Function... 
+	SVAR SampleTransmFnct = root:Packages:Convert2Dto1D:SampleTransmFnct
+	SampleTransmFnct = "NI1A_CalcTransUsingTranspBS"
+	NVAR UseTranspBeamstop = root:Packages:Convert2Dto1D:UseTranspBeamstop
+	NVAR TranspBSRadius = root:Packages:Convert2Dto1D:TranspBSRadius
+	NVAR BCY = root:Packages:Convert2Dto1D:BeamCenterY
+	NVAR BCX = root:Packages:Convert2Dto1D:BeamCenterX
+	Wave/Z Sample = root:Packages:Convert2Dto1D:CCDImageToConvert
+	if(!WaveExists(Sample))
+		abort "Samples 2D image does not exist, load image in first and then setup this."
+	endif
+	//get redius in pixels from user through missing parameter dialog
+	variable BeamstopRadius = TranspBSRadius
+	Prompt BeamstopRadius, "Beamstop Radius [pixels] ?" 
+	DoPrompt /HELP="Input semi transparent beamstop radius" "Semi transparent beamstop radius input dialog", BeamstopRadius
+	if(V_Flag)
+		abort
+	endif
+	TranspBSRadius = BeamstopRadius
+	//now need to generate ROI for the image... 
+	///MatrixOP/O TranspBeamstopROI = Sample
+	Make /O/B/U/N=(DimSize(Sample,0),DimSize(Sample,1)) TranspBeamstopROI
+	TranspBeamstopROI = sqrt((p-BCX)^2+(q-BCY)^2)<TranspBSRadius ? 0 : 1
+	//done, this now has 0 in raneg of +/- BeamstopRadius from center. 
+	
+end
+
+
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+	//this function calculates the transmission for measurements with semi transparentl beamstop. 
+	//this is using Function name 
+Function NI1A_CalcTransUsingTranspBS(FileNameToLoad)
+	string FileNameToLoad
+	variable Transmission
+	Wave/Z Empty = root:Packages:Convert2Dto1D:EmptyData
+	Wave/Z Sample = root:Packages:Convert2Dto1D:CCDImageToConvert
+	Wave/Z TranspBeamstopROI = root:Packages:Convert2Dto1D:TranspBeamstopROI
+	if(!WaveExists(Empty)||!WaveExists(Sample))
+		abort "Sample or Empty image does not exist, load images first"
+	endif
+	if(!WaveExists(TranspBeamstopROI))
+		//needed ROI wave does not exist, create it
+		NI1A_SetupTransparentBeamstop()
+	endif
+	//ImageStats gives you average pixel value - V_avg - over ROI (region of interest)
+	//sample
+	ImageStats /R=TranspBeamstopROI Sample 
+	variable SampleI0avg = V_avg
+	ImageStats /R=TranspBeamstopROI Empty 
+	variable EmptyI0avg = V_avg
+	Transmission = SampleI0avg /EmptyI0avg  
+	return Transmission
+end
+
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
