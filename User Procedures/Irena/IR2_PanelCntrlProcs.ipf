@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
-#pragma version = 1.64
+#pragma version = 1.65
 
 
 //*************************************************************************\
@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.65 added SimpleFits Power Law
 //1.64 added SimpleFits 1DCorrelation results: Corr1DZ_N for X and Y are: Corr1DK_N or Corr1DGammaA_N or Corr1DGammaI_N
 //1.63 modified IR2C_ReturnKnownToolResults to enable downselection of results types. This makes AllowedResultsTypes parameter finally useful. From code pass "" if no downselection is needed. 
 //1.62 added System Speciifc data type in results. 
@@ -262,6 +263,7 @@ Function IR2C_InitControls(PckgDataFolder,PanelWindowName,AllowedIrenaTypes, All
 	AllCurrentlyAllowedTypes+="GuinierPorodFitIntensity;GuinierPorodIntLevel0;GuinierPorodIntLevel1;GuinierPorodIntLevel2;GuinierPorodIntLevel3;GuinierPorodIntLevel4;GuinierPorodIntLevel5;"
 	//Simple fits
 	AllCurrentlyAllowedTypes+="SimFitGuinierI;SimFitGuinierRI;SimFitGuinierSII;SimFitSphereI;SimFitSpheroidI;SimFitPorodI;Corr1DK;Corr1DGammaA;Corr1DGammaI;"
+	AllCurrentlyAllowedTypes+="SimFitPwrLawI;"
 
 	string/g AllKnownToolsResults
 	AllKnownToolsResults = "Unified Fit;Size Distribution;Modeling;Small-angle diffraction;Analytical models;Fractals;PDDF;Reflectivity;Guinier-Porod;Simple Fits;Evaluate Size Dist;System Specific Models;"
@@ -507,6 +509,7 @@ Function IR2C_InitControls(PckgDataFolder,PanelWindowName,AllowedIrenaTypes, All
 	ResultsDataTypesLookup+="SimFitSphereI:SimFitSphereQ;"
 	ResultsDataTypesLookup+="SimFitSpheroidI:SimFitSpheroidQ;"
 	ResultsDataTypesLookup+="SimFitPorodI:SimFitPorodQ;"
+	ResultsDataTypesLookup+="SimFitPwrLawI:SimFitPwrLawQ;"
 	ResultsDataTypesLookup+="Corr1DK:Corr1DZ;"
 	ResultsDataTypesLookup+="Corr1DGammaA:Corr1DZ;"
 	ResultsDataTypesLookup+="Corr1DGammaI:Corr1DZ;"

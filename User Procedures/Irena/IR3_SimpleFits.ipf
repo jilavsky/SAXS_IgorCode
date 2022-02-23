@@ -1,6 +1,6 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.15
-constant IR3JversionNumber = 0.5			//Simple Fit panel version number
+#pragma version=1.16
+constant IR3JversionNumber = 1.16			//Simple Fit panel version number
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2022, Argonne National Laboratory
@@ -11,6 +11,7 @@ constant IR3JversionNumber = 0.5			//Simple Fit panel version number
 constant SimpleFitsLinPlotMaxScale = 1.07
 constant SimpleFitsLinPlotMinScale = 0.8
 
+//1.16 	add Power Law fit. 
 //1.15 	add 1D Correlation function
 //1.14	 	add handling of USAXS M_... waves 
 //1.13 	Added SMR USAXS data (not QRS), checked (and fixed) Sphere and spheroid models. 
@@ -20,7 +21,7 @@ constant SimpleFitsLinPlotMinScale = 0.8
 
 
 //To add new function:
-//at this moment we have: 	ListOfSimpleModels="Guinier;Porod;Sphere;Spheroid;Guinier Rod;Guinier Sheet;1DCorrelation;"
+//at this moment we have: 	ListOfSimpleModels="Guinier;Porod;Sphere;Spheroid;Guinier Rod;Guinier Sheet;1DCorrelation;Power Law;"
 //IR3J_InitSimpleFits()	
 //			add to: ListOfSimpleModels list as new data type ("Guinier")
 //			add any new parameters, which will need to be fit. Keep in mind, all will be fit. 
@@ -182,6 +183,12 @@ Function IR3J_SimpleFitsPanelFnct()
 	Setvariable ScatteringContrast, variable=root:Packages:Irena:SimpleFits:ScatteringContrast, limits={1,inf,0}, help={"Scattering Contrast for the scatterers"}
 	SetVariable Porod_SpecificSurface,pos={290,290},size={220,15}, proc=IR3J_SetVarProc,title="Spec. Sfc area [cm2/cm3]", bodywidth=80, limits={0,inf,0}
 	Setvariable Porod_SpecificSurface, variable=root:Packages:Irena:SimpleFits:Porod_SpecificSurface, disable=0, noedit=1, help={"Porod constant"}
+	//Power Law
+	SetVariable PowerLawPref,pos={290,230},size={220,15}, proc=IR3J_SetVarProc,title="Pref (Int=B+Pref*Q^(-Exp))", bodywidth=80
+	Setvariable PowerLawPref, variable=root:Packages:Irena:SimpleFits:PowerLawPref, limits={1e-20,inf,0}, help={"Power law prefactor"}
+	SetVariable PowerLawExp,pos={290,260},size={220,15}, proc=IR3J_SetVarProc,title="Exp (Int=B+Pref*Q^(-Exp))", bodywidth=80
+	Setvariable PowerLawExp, variable=root:Packages:Irena:SimpleFits:PowerLawExp, limits={1,6,0.1}, help={"Power law exponent"}
+
 	//Sphere controls
 	SetVariable Sphere_ScalingConstant,pos={240,230},size={220,15}, proc=IR3J_SetVarProc,title="Scaling ", bodywidth=80
 	Setvariable Sphere_ScalingConstant, variable=root:Packages:Irena:SimpleFits:Sphere_ScalingConstant, limits={1e-20,inf,0}, help={"Scaling prefactor, I0"}
@@ -340,6 +347,7 @@ Function IR3J_InitSimpleFits()
 	ListOfVariables="UseIndra2Data1;UseQRSdata1;SlitLength;UseSMRData;"
 	ListOfVariables+="DataBackground;AchievedChiSquare;ScatteringContrast;"
 	ListOfVariables+="Guinier_Rg;Guinier_I0;"
+	ListOfVariables+="PowerLawPref;PowerLawExp;"
 	ListOfVariables+="Porod_Constant;Porod_SpecificSurface;Sphere_Radius;Sphere_ScalingConstant;"
 	ListOfVariables+="Spheroid_Radius;Spheroid_ScalingConstant;Spheroid_Beta;"
 	ListOfVariables+="ProcessManually;ProcessSequentially;OverwriteExistingData;AutosaveAfterProcessing;DelayBetweenProcessing;"
@@ -389,7 +397,7 @@ Function IR3J_InitSimpleFits()
 	endif
 	SVAR ListOfSimpleModels
 	ListOfSimpleModels="Guinier;Porod;Sphere;Spheroid;Guinier Rod;Guinier Sheet;"
-	ListOfSimpleModels+="Invariant;1DCorrelation;"
+	ListOfSimpleModels+="Invariant;1DCorrelation;Power Law;"
 	SVAR ListOfCorr1DMethod 
 	ListOfCorr1DMethod = "Anisotropic (abs, Strobl);Anisotropic (norm);Isotropic (norm);"
 	SVAR SimpleModel
@@ -399,6 +407,15 @@ Function IR3J_InitSimpleFits()
 	SVAR Corr1DMethod
 	if(strlen(Corr1DMethod)<1)
 		Corr1DMethod="Anisotropic (abs, Strobl)"
+	endif
+	
+	NVAR PowerLawPref
+	NVAR PowerLawExp
+	if(PowerLawPref<1e-20)
+		PowerLawPref=1
+	endif
+	if(PowerLawExp<1)
+		PowerLawExp=4
 	endif
 	
 	NVAR Guinier_Rg
@@ -577,6 +594,9 @@ Function IR3J_SetVarProc(sva) : SetVariableControl
 				IR3J_CalculateModel()
 			endif
 			if(stringmatch(sva.ctrlName,"Spheroid_Radius"))		//update model.. 
+				IR3J_CalculateModel()
+			endif
+			if(stringmatch(sva.ctrlName,"PowerLawPref")||stringmatch(sva.ctrlName,"PowerLawExp"))		//update model.. 
 				IR3J_CalculateModel()
 			endif
 			if(stringmatch(sva.ctrlName,"Corr1DZmax") || stringmatch(sva.ctrlName,"Corr1DWavelength") )		//update model.. 
@@ -1009,6 +1029,10 @@ static Function IR3J_FitData()
 			break		
 		case "Porod":				// Porod
 			IR3J_FitPorod()
+			IR3J_CalculateModel()		
+			break
+		case "Power Law":				// Porod
+			IR3J_FitPowerLaw()
 			IR3J_CalculateModel()		
 			break
 		case "Sphere":				// Sphere
@@ -1451,7 +1475,35 @@ Function IR3J_FitPorodSMR(w,yw,xw) : FitFunc
 	IR1B_SmearData(yw, xw, SlitLength, ywSM)
 	yw=ywSM	
 End
+//*****************************************************************************************************************
+Function IR3J_FitPowerLawSMR(w,yw,xw) : FitFunc
+	Wave w,yw,xw
+	NVAR SlitLength	 =	root:Packages:Irena:SimpleFits:SlitLength
+	duplicate/free yw, ywSM
+	yw = IR3J_PowerLawInLogLog(w,xw[p])
+	IR1B_SmearData(yw, xw, SlitLength, ywSM)
+	yw=ywSM	
+End
+//*************************************************************************************************************
+//*************************************************************************************************************
+Function IR3J_PowerLawInLogLog(w,Q) : FitFunc
+	Wave w
+	Variable Q
 
+	//CurveFitDialog/ These comments were created by the Curve Fitting dialog. Altering them will
+	//CurveFitDialog/ make the function less convenient to work with in the Curve Fitting dialog.
+	//CurveFitDialog/ Equation:
+	//CurveFitDialog/ f(Q) = PorodConst * Q^4 + Background
+	//CurveFitDialog/ End of Equation
+	//CurveFitDialog/ Independent Variables 1
+	//CurveFitDialog/ Q
+	//CurveFitDialog/ Coefficients 2
+	//CurveFitDialog/ w[0] = PorodConst
+	//CurveFitDialog/ w[1] = Exponent
+	//CurveFitDialog/ w[2] = Background
+
+	return w[0] * Q^(-w[1]) + w[2]
+End
 //*****************************************************************************************************************
 Function IR3J_FitGuinierSMR(w,yw,xw) : FitFunc
 	Wave w,yw,xw
@@ -1573,6 +1625,90 @@ static Function IR3J_FitPorod()
 	endif
 	SetDataFolder oldDf
 end
+
+//**********************************************************************************************************
+//**********************************************************************************************************
+
+static Function IR3J_FitPowerLaw()
+	
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	IR3J_CreateCheckGraphs()
+	DFref oldDf= GetDataFolderDFR()
+	SetDataFolder root:Packages:Irena:SimpleFits					//go into the folder
+	NVAR DataQEnd = root:Packages:Irena:SimpleFits:DataQEnd
+	NVAR DataQstart = root:Packages:Irena:SimpleFits:DataQstart
+	NVAR DataQEndPoint = root:Packages:Irena:SimpleFits:DataQEndPoint
+	NVAR DataQstartPoint = root:Packages:Irena:SimpleFits:DataQstartPoint
+
+	NVAR PowerLawPref = root:Packages:Irena:SimpleFits:PowerLawPref
+	NVAR PowerLawExp = root:Packages:Irena:SimpleFits:PowerLawExp
+	NVAR DataBackground=root:Packages:Irena:SimpleFits:DataBackground
+
+	NVAR AchievedChiSquare=root:Packages:Irena:SimpleFits:AchievedChiSquare
+	NVAR UseSMRData					=	root:Packages:Irena:SimpleFits:UseSMRData
+	NVAR SlitLength					=	root:Packages:Irena:SimpleFits:SlitLength
+	Wave/Z CursorAWave = CsrWaveRef(A, "IR3J_LogLogDataDisplay")
+	Wave/Z CursorBWave = CsrWaveRef(B, "IR3J_LogLogDataDisplay")
+	Wave CursorAXWave= CsrXWaveRef(A, "IR3J_LogLogDataDisplay")
+	Wave OriginalDataErrorWave=root:Packages:Irena:SimpleFits:OriginalDataErrorWave
+	Make/D/N=0/O W_coef, LocalEwave
+	Make/D/T/N=0/O T_Constraints
+	Wave/Z W_sigma
+	Redimension /N=3 W_coef, LocalEwave
+	Redimension/N=1 T_Constraints
+	T_Constraints[0] = {"K0 > 0"}
+	T_Constraints[1] = {"K1 > 1"}
+	if(PowerLawExp<1)
+		PowerLawExp = 3
+	endif
+	if(!WaveExists(CursorAWave)||!WaveExists(CursorBWave))
+		Abort "Cursors are not properly set on same wave"
+	endif
+	//make a good starting guesses:
+	if(UseSMRData)
+		PowerLawPref=CursorAWave[DataQstartPoint]/(CursorAXWave[DataQstartPoint]^(-3))
+	else
+		PowerLawPref=CursorAWave[DataQstartPoint]/(CursorAXWave[DataQstartPoint]^(-4))
+	endif
+	DataBackground=CursorAwave[DataQEndPoint]
+	W_coef = {PowerLawPref,PowerLawExp,DataBackground}
+	LocalEwave[0]=(PowerLawPref/20)
+	LocalEwave[1]=(PowerLawExp/20)
+	LocalEwave[2]=(DataBackground/20)
+
+	variable/g V_FitError=0			//This should prevent errors from being generated
+	if(UseSMRData)
+		FuncFit IR3J_FitPowerLawSMR W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /C=T_Constraints /W=OriginalDataErrorWave /I=1
+	else
+		FuncFit IR3J_PowerLawInLogLog W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /C=T_Constraints /W=OriginalDataErrorWave /I=1
+	endif
+	if (V_FitError==0)	// fitting was fine... 
+		Wave W_sigma
+		AchievedChiSquare = V_chisq/(DataQEndPoint-DataQstartPoint)
+		string QminRg, QmaxRg, AchiCHiStr
+		sprintf AchiCHiStr, "%2.2f",(AchievedChiSquare)
+		string TagText
+		TagText = "Fitted Power Law  "+"I(Q) = P * Q\S-Exp\M + back"+" \r P = "+num2str(W_coef[0])+"\r Exp = "+num2str(W_coef[1])+"\r Back = "+num2str(W_coef[2])
+		TagText +="\rχ\\S2\\M  = "+AchiCHiStr
+		string TagName= "PowerLaw_fit" 
+		Tag/C/W=IR3J_LogLogDataDisplay/N=$(TagName)/L=2/X=-15.00/Y=-15.00  $NameOfWave(CursorAWave), ((DataQstartPoint + DataQEndPoint)/2),TagText	
+		PowerLawPref=W_coef[0] 	//PC
+		PowerLawExp=W_coef[1] 	//PC
+		DataBackground=W_coef[2]		//Background
+	else
+		RemoveFromGraph/Z $("fit_"+NameOfWave(CursorAWave))
+		beep
+		Print "Fitting error, check starting parameters and fitting limits" 
+		PowerLawPref = 1 	//PC
+		PowerLawExp = 1
+		DataBackground=0	//Background
+		AchievedChiSquare = 0
+	endif
+	SetDataFolder oldDf
+end
+
+//*************************************************************************************************************
+//*************************************************************************************************************
 
 
 
@@ -1882,21 +2018,27 @@ Function IR3J_CalculateModel()
 	IR3J_CreateCheckGraphs()
 	DFref oldDf= GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:SimpleFits					//go into the folder
-	NVAR DataQEnd 					= 	root:Packages:Irena:SimpleFits:DataQEnd
-	NVAR DataQstart 				= 	root:Packages:Irena:SimpleFits:DataQstart
-	NVAR DataQEndPoint 			= 	root:Packages:Irena:SimpleFits:DataQEndPoint
-	NVAR DataQstartPoint 			= 	root:Packages:Irena:SimpleFits:DataQstartPoint
-	Wave OriginalDataIntWave		=	root:Packages:Irena:SimpleFits:OriginalDataIntWave
+	Wave/Z OriginalDataIntWave		=	root:Packages:Irena:SimpleFits:OriginalDataIntWave
+	if(!WaveExists(OriginalDataIntWave))
+		return 0
+	endif
+
 	Wave OriginalDataQWave		=	root:Packages:Irena:SimpleFits:OriginalDataQWave
 	Wave OriginalDataErrorWave	=	root:Packages:Irena:SimpleFits:OriginalDataErrorWave
 	Wave/Z LinModelDataIntWave	=	root:Packages:Irena:SimpleFits:LinModelDataIntWave
 	Wave/Z LinModelDataQWave		=	root:Packages:Irena:SimpleFits:LinModelDataQWave
 	Wave/Z LinModelDataEWave		=	root:Packages:Irena:SimpleFits:LinModelDataEWave
+	NVAR DataQEnd 					= 	root:Packages:Irena:SimpleFits:DataQEnd
+	NVAR DataQstart 				= 	root:Packages:Irena:SimpleFits:DataQstart
+	NVAR DataQEndPoint 			= 	root:Packages:Irena:SimpleFits:DataQEndPoint
+	NVAR DataQstartPoint 			= 	root:Packages:Irena:SimpleFits:DataQstartPoint
 	NVAR AchievedChiSquare		=	root:Packages:Irena:SimpleFits:AchievedChiSquare
 	NVAR Guinier_I0 				= 	root:Packages:Irena:SimpleFits:Guinier_I0
 	NVAR Guinier_Rg					=	root:Packages:Irena:SimpleFits:Guinier_Rg
 	NVAR Porod_Constant			=	root:Packages:Irena:SimpleFits:Porod_Constant
 	NVAR Porod_SpecificSurface	=	root:Packages:Irena:SimpleFits:Porod_SpecificSurface
+	NVAR PowerLawPref				=	root:Packages:Irena:SimpleFits:PowerLawPref
+	NVAR PowerLawExp				=	root:Packages:Irena:SimpleFits:PowerLawExp
 	NVAR ScatteringContrast		=	root:Packages:Irena:SimpleFits:ScatteringContrast
 	NVAR Sphere_Radius				=	root:Packages:Irena:SimpleFits:Sphere_Radius
 	NVAR Sphere_ScalingConstant	=	root:Packages:Irena:SimpleFits:Sphere_ScalingConstant
@@ -1971,6 +2113,16 @@ Function IR3J_CalculateModel()
 				ModelLinLinLogInt = ln(ModelLogLogInt*ModelLogLogQ^2)	
 			endif
 			break		
+		case "Power Law":						// Power Law
+			ModelLogLogInt = DataBackground+PowerLawPref * ModelLogLogQ^(-1*PowerLawExp)
+				//slit smearing,  
+				if(UseSMRData)
+					duplicate/free ModelLogLogInt, ModelLogLogIntSM
+					IR1B_SmearData(ModelLogLogInt, ModelLogLogQ, SlitLength, ModelLogLogIntSM)
+					ModelLogLogInt=ModelLogLogIntSM
+				endif
+				//end of slit smearing
+			break
 		case "Porod":						// Porod
 			Porod_SpecificSurface =Porod_Constant *1e32 / (2*pi*ScatteringContrast*1e20)
 			ModelLogLogInt = DataBackground+Porod_Constant * ModelLogLogQ^(-4)
@@ -2033,8 +2185,11 @@ Function IR3J_CalculateModel()
 			SetAxis/W=IR3J_LogLogDataDisplay /A/E=2 VertCrossing
 			ModifyGraph/W=IR3J_LogLogDataDisplay standoff=0
 			//Label/W=IR3J_LogLogDataDisplay VertCrossing "Norm res"
-			AppendToGraph /W=IR3J_LogLogDataDisplay /L=VertCrossing ZeroLineResidualLogLog vs NormalizedResidualLogLogQ
-			ModifyGraph/W=IR3J_LogLogDataDisplay rgb(ZeroLineResidualLogLog)=(0,0,0)
+			CheckDisplayed /W=IR3J_LogLogDataDisplay ZeroLineResidualLogLog
+			if(!V_Flag)
+				AppendToGraph /W=IR3J_LogLogDataDisplay /L=VertCrossing ZeroLineResidualLogLog vs NormalizedResidualLogLogQ
+				ModifyGraph/W=IR3J_LogLogDataDisplay rgb(ZeroLineResidualLogLog)=(0,0,0)
+			endif
 	endif
 	//now same, if we are using linearized data
 	if(UsingLinearizedModel)
@@ -2112,6 +2267,10 @@ static Function IR3J_SaveResultsToNotebook()
 	NVAR Zmax = root:Packages:Irena:SimpleFits:Corr1DZmax
 	NVAR Corr1DWavelength = root:Packages:Irena:SimpleFits:Corr1DWavelength
 
+	NVAR PowerLawPref = root:Packages:Irena:SimpleFits:PowerLawPref
+	NVAR PowerLawExp = root:Packages:Irena:SimpleFits:PowerLawExp
+	NVAR DataBackground=root:Packages:Irena:SimpleFits:DataBackground
+
 	Wave/Z ModelInt = root:Packages:Irena:SimpleFits:ModelLogLogInt
 	Wave/Z ModelQ = root:Packages:Irena:SimpleFits:ModelLogLogQ
 	//others can be created via Simple plots as needed... 
@@ -2144,6 +2303,12 @@ static Function IR3J_SaveResultsToNotebook()
 		IR1_AppendAnyText("\tPorod Constant [1/cm 1/A^4] = "+num2str(Porod_Constant),0)
 		IR1_AppendAnyText("\tSpecific Surface [cm2/cm3] = "+num2str(Porod_SpecificSurface),0)
 		IR1_AppendAnyText("\tContrast [10^20 cm^-4] = "+num2str(Porod_Constant),0)
+		IR1_AppendAnyText("\tBackground          = "+num2str(DataBackground),0)
+		IR1_AppendAnyText("Achieved Normalized chi-square = "+num2str(AchievedChiSquare),0)
+	elseif(stringmatch(SimpleModel,"Power Law"))
+		IR1_AppendAnyText("\tInt = Pref * Q^(-Exp) + Background",0)
+		IR1_AppendAnyText("\tPrefactor 				= "+num2str(PowerLawPref),0)
+		IR1_AppendAnyText("\tExponent 				= "+num2str(PowerLawExp),0)
 		IR1_AppendAnyText("\tBackground          = "+num2str(DataBackground),0)
 		IR1_AppendAnyText("Achieved Normalized chi-square = "+num2str(AchievedChiSquare),0)
 	elseif(stringmatch(SimpleModel,"Sphere"))
@@ -2224,6 +2389,10 @@ static Function IR3J_SaveResultsToFolder()
 	NVAR Zmax = root:Packages:Irena:SimpleFits:Corr1DZmax
 	NVAR Corr1DWavelength = root:Packages:Irena:SimpleFits:Corr1DWavelength
 
+	NVAR PowerLawPref = root:Packages:Irena:SimpleFits:PowerLawPref
+	NVAR PowerLawExp = root:Packages:Irena:SimpleFits:PowerLawExp
+	NVAR DataBackground=root:Packages:Irena:SimpleFits:DataBackground
+
 	//create new results names...
 	//AllCurrentlyAllowedTypes+="SimFitGuinierY;SimFitGuinierRY;SimFitGuinierSY;SimFitSphereY;SimFitSpheroidY;"
 	//save these waves here:
@@ -2285,6 +2454,17 @@ static Function IR3J_SaveResultsToFolder()
 			Duplicate/O ModelQ, $(DataFolderName+"SimFitPorodQ_"+num2str(generation))
 			Wave ResultInt=$(DataFolderName+"SimFitPorodI_"+num2str(generation))
 			Wave ResuldQ = $(DataFolderName+"SimFitPorodQ_"+num2str(generation))
+			Note /K/NOCR ResultInt, NoteWithResults
+			Note /K/NOCR ResuldQ, NoteWithResults
+			break	
+		case "Power Law":	// execute if case matches expression
+			NoteWithResults+="PowerLawPrefactor="+num2str(PowerLawPref)+";"+"PowerLawExponent="+num2str(PowerLawExp)+";"+"DataBackground="+num2str(DataBackground)+";"
+			NoteWithResults+=OldNote
+			generation=IN2G_FindAVailableResultsGen("SimFitPwrLawI_", DataFolderName)
+			Duplicate/O ModelInt, $(DataFolderName+"SimFitPwrLawI_"+num2str(generation))
+			Duplicate/O ModelQ, $(DataFolderName+"SimFitPwrLawQ_"+num2str(generation))
+			Wave ResultInt=$(DataFolderName+"SimFitPwrLawI_"+num2str(generation))
+			Wave ResuldQ = $(DataFolderName+"SimFitPwrLawQ_"+num2str(generation))
 			Note /K/NOCR ResultInt, NoteWithResults
 			Note /K/NOCR ResuldQ, NoteWithResults
 			break	
@@ -2403,6 +2583,11 @@ static Function IR3J_SaveResultsToWaves()
 	NVAR InvariantIrena 	= root:Packages:Irena:SimpleFits:InvariantIrena
 	NVAR InvContrast 		= root:Packages:Irena:SimpleFits:InvContrast
 	NVAR InvVolumeFraction = root:Packages:Irena:SimpleFits:InvVolumeFraction
+
+	NVAR PowerLawPref = root:Packages:Irena:SimpleFits:PowerLawPref
+	NVAR PowerLawExp = root:Packages:Irena:SimpleFits:PowerLawExp
+	NVAR DataBackground=root:Packages:Irena:SimpleFits:DataBackground
+
 
 	Wave/Z ModelInt = root:Packages:Irena:SimpleFits:ModelLogLogInt
 	Wave/Z ModelQ = root:Packages:Irena:SimpleFits:ModelLogLogQ
@@ -2530,6 +2715,30 @@ static Function IR3J_SaveResultsToWaves()
 		ScatteringContrastWave[curlength] = ScatteringContrast
 		PorodSpecificSurfaceWave[curlength] = Porod_SpecificSurface
 		IR3J_GetTableWithresults()
+	elseif(stringmatch(SimpleModel,"Power Law"))
+		//tabulate data for Porod
+		NewDATAFolder/O/S root:PowerLawFitResults
+		Wave/Z PwrLawPrefactor
+		if(!WaveExists(PwrLawPrefactor))
+			make/O/N=0 PwrLawPrefactor, PwrLawExponent, PwrLawBackground, PwrLawQmin, PwrLawQmax, PwrLawChiSquare, TimeWave, TemperatureWave, PercentWave, OrderWave 
+			make/O/N=0/T SampleName
+			//SetScale/P x 0,1,"1/cm 1/A^4", PorodConstant			//Unified fit GUI source
+			SetScale/P x 0,1,"1/A", PwrLawQmin, PwrLawQmax
+		endif
+		curlength = numpnts(PwrLawPrefactor)
+		redimension/N=(curlength+1) SampleName, PwrLawPrefactor, PwrLawExponent, PwrLawBackground, PwrLawQmin, PwrLawQmax, PwrLawChiSquare, TimeWave, TemperatureWave, PercentWave, OrderWave 
+		SampleName[curlength] = DataFolderName
+		TimeWave[curlength]				=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzmin")
+		TemperatureWave[curlength]  	=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzC")
+		PercentWave[curlength] 			=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzpct")
+		OrderWave[curlength]				= 	IN2G_IdentifyNameComponent(DataFolderName, "_xyz")
+		PwrLawPrefactor[curlength] 		= PowerLawPref
+		PwrLawExponent[curlength]		= PowerLawExp
+		PwrLawBackground[curlength]		= DataBackground
+		PwrLawQmin[curlength] 			= DataQstart
+		PwrLawQmax[curlength] 			= DataQEnd
+		PwrLawChiSquare[curlength] 		= AchievedChiSquare
+		IR3J_GetTableWithresults()
 	elseif(stringmatch(SimpleModel,"Sphere"))
 		//tabulate data for Porod
 		NewDATAFolder/O/S root:SphereFitResults
@@ -2625,6 +2834,14 @@ static Function IR3J_GetTableWithResults()
 				IR3J_PorodFitResultsTableFnct() 
 			endif 
 			break
+		case "Power Law":	// execute if case matches expression
+			DoWindow IR3J_PwrLawFitResultsTable
+			if(V_Flag)
+				DoWindow/F IR3J_PwrLawFitResultsTable
+			else
+				IR3J_PwrLawFitResultsTableFnct() 
+			endif 
+			break
 		case "Sphere":	// execute if case matches expression
 			DoWindow IR3J_SphereFFFitResultsTable
 			if(V_Flag)
@@ -2698,6 +2915,15 @@ Function IR3J_DeleteExistingModelResults()
 					KillDataFolder/Z root:PorodFitResults:
 					if(V_Flag!=0)
 						DoAlert/T="Could not delete data folder" 0, "Porod results folder root:PorodFitResults could not be deleted. It is likely used in some graph or table. Close graphs/tables and try again."
+					endif
+				endif
+				break
+			case "Power Law":	// execute if case matches expression
+				DoWindow/K/Z  IR3J_PwrLawFitResultsTable
+				if(DataFolderExists("root:PowerLawFitResults"))
+					KillDataFolder/Z root:PowerLawFitResults:
+					if(V_Flag!=0)
+						DoAlert/T="Could not delete data folder" 0, "Power Law results folder root:PowerLawFitResults could not be deleted. It is likely used in some graph or table. Close graphs/tables and try again."
 					endif
 				endif
 				break
@@ -2864,6 +3090,37 @@ Function IR3J_PorodFitResultsTableFnct() : Table
 		SetDataFolder fldrSav0
 	endif
 EndMacro
+//*****************************************************************************************************************
+Function IR3J_PwrLawFitResultsTableFnct() : Table
+	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	DoWIndow IR3J_PwrLawFitResultsTable
+	if(V_Flag)
+		DoWIndow/F IR3J_PwrLawFitResultsTable 
+	else
+		PauseUpdate    		// building window...
+		String fldrSav0= GetDataFolder(1)
+		if(!DataFolderExists("root:PowerLawFitResults:"))
+			Abort "No Power Law Fit data exist."
+		endif
+		SetDataFolder root:PowerLawFitResults:
+		Wave/T SampleName
+		Wave PwrLawPrefactor, PwrLawExponent, PwrLawBackground, PwrLawQmin, PwrLawQmax, PwrLawChiSquare, TimeWave, TemperatureWave, PercentWave, OrderWave
+		Edit/K=1/W=(576,346,1528,878)/N=IR3J_PwrLawFitResultsTable SampleName, PwrLawPrefactor, PwrLawExponent, PwrLawBackground, PwrLawChiSquare as "Power Law fitting results Table"
+		AppendToTable PwrLawQmin, PwrLawQmax
+		ModifyTable format(Point)=1,width(SampleName)=314,title(SampleName)="Sample Folder"
+		ModifyTable alignment(PwrLawPrefactor)=1,sigDigits(PwrLawPrefactor)=4,width(PwrLawPrefactor)=122
+		ModifyTable title(PwrLawPrefactor)="Prefactor"
+		ModifyTable alignment(PwrLawExponent)=1,sigDigits(PwrLawExponent)=4,width(PwrLawExponent)=122
+		ModifyTable title(PwrLawExponent)="Exponent", alignment(PwrLawBackground)=1,sigDigits(PwrLawBackground)=4
+		ModifyTable width(PwrLawBackground)=110,title(PwrLawBackground)="Background",alignment(PwrLawChiSquare)=1
+		ModifyTable sigDigits(PwrLawChiSquare)=4,width(PwrLawChiSquare)=106,title(PwrLawChiSquare)="Chi^2"
+		ModifyTable alignment(PwrLawQmax)=1,sigDigits(PwrLawQmax)=4,title(PwrLawQmax)="Qmax [1/A]"
+		ModifyTable alignment(PwrLawQmin)=1,sigDigits(PwrLawQmin)=4,width(PwrLawQmin)=94,title(PwrLawQmin)="Qmin [1/A]"
+		SetDataFolder fldrSav0
+	endif
+EndMacro
+
+
 //*****************************************************************************************************************
 Function IR3J_SphFFFitResTblFnct() : Table
 	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
@@ -3062,6 +3319,8 @@ static Function IR3J_SetupControlsOnMainpanel()
 
 		Setvariable Guinier_I0, disable=1
 		SetVariable Guinier_Rg, disable=1
+		Setvariable PowerLawPref, disable=1
+		SetVariable PowerLawExp, disable=1
 		SetVariable Porod_Constant, disable=1
 		Setvariable Sphere_ScalingConstant,  disable=1
 		SetVariable Sphere_Radius, disable=1
@@ -3090,6 +3349,11 @@ static Function IR3J_SetupControlsOnMainpanel()
 			case "Guinier":	// execute if case matches expression
 				Setvariable Guinier_I0, disable=0
 				SetVariable Guinier_Rg, disable=0
+				break		// exit from switch
+			case "Power Law":	// execute if case matches expression
+				Setvariable PowerLawPref, disable=0
+				SetVariable PowerLawExp, disable=0
+				SetVariable DataBackground,  disable=0
 				break		// exit from switch
 			case "Porod":	// execute if case matches expression
 				SetVariable Porod_Constant, disable=0

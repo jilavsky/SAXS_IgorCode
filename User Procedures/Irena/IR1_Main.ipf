@@ -520,14 +520,19 @@ end
 //line fit to data, requires X-Y data on lin or log scales. 
 Function IR2P_FitLineWithCursors()
 	string oldDf= GetDataFolder(1)
+	Wave/Z Xwave=CsrXWaveRef(A)
+	Wave/Z Ywave=CsrWaveRef(A)
+	Wave/Z YwaveB=CsrWaveRef(B)
+	if(!WaveExists(Xwave)&&!WaveExists(Ywave)&& !WaveExists(YwaveB))
+		Abort "Set cursors on data first, or these data do not have X and Y waves."
+	endif
 	NewDataFolder/O/S root:Packages:FittingData
 	string destwavename="fit_"+CsrWave(A)
 	CurveFit/Q/L=200 line CsrWaveRef(A)(xcsr(A),xcsr(B)) /X=CsrXWaveRef(A) /D 
 	Wave W_coef
 	Wave DestWave=$destwavename
-	Wave OrigXWave=CsrXWaveRef(A)
 	variable AttPoint
-	AttPoint = (OrigXWave[xcsr(A)]+OrigXWave[xcsr(B)])/2
+	AttPoint = (Xwave[xcsr(A)]+Xwave[xcsr(B)])/2
 	Tag/C/N=Curvefitres/F=0/A=MC $destwavename, AttPoint, "\Z"+IN2G_LkUpDfltVar("LegendSize")+"Linear fit parameters are: \ry="+num2str(W_coef[0])+"+ x *"+num2str(W_coef[1])
 	SetDataFolder $olddf
 end
@@ -538,14 +543,18 @@ end
 Function IR2P_FitPowerLawWithCursors()
 
 	string oldDf= GetDataFolder(1)
+	Wave/Z Xwave=CsrXWaveRef(A)
+	Wave/Z YwaveB=CsrWaveRef(B)
+	Wave/Z Ywave=CsrWaveRef(A)
+	if(!WaveExists(Xwave) && !WaveExists(Ywave) && !WaveExists(YwaveB))
+		Abort "Set cursors on data first, or these data do not have X and Y waves."
+	endif
 	NewDataFolder/O/S root:Packages:FittingData
 	string name="MyFitWave"
 	string LegendName="Curvefitres"
 	variable freeDestNum=IR2P_FindFreeDestWaveNumber(name)
 	name=name +num2istr(freeDestNum)
 	LegendName=LegendName+num2istr(freeDestNum)
-	Wave Xwave=$(getWavesDataFolder(CsrXWaveRef(A),2))
-	Wave Ywave=$(getWavesDataFolder(CsrWaveRef(A),2))
 	Duplicate/Free Ywave, LogYFitData
 	Duplicate/O Ywave, $name
 	Duplicate/Free Xwave, LogXFitData
