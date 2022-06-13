@@ -1138,6 +1138,8 @@ Function IR1I_CreateImportDataFolder(selectedFile)
 	NVAR TrunkateStart = root:packages:ImportData:TrunkateStart
 	NVAR TrunkateEnd = root:packages:ImportData:TrunkateEnd
 	SVAR RemoveStringFromName=root:Packages:ImportData:RemoveStringFromName
+	SVAR ExtensionStr=root:Packages:ImportData:DataExtension
+	string RealExtension
 
 	variable i
 	string tempFldrName, tempSelectedFile
@@ -1150,7 +1152,10 @@ Function IR1I_CreateImportDataFolder(selectedFile)
 			endif
 		else
 			if(!IncludeExtensionInName)
-				selectedFile = stringFromList(0,selectedFile,".")
+				//selectedFile = stringFromList(0,selectedFile,".")	//5-25-2022, this removes anything from first "."
+				RealExtension = stringFromList(ItemsInList(selectedFile, ".")-1,selectedFile,".")
+				//selectedFile = removeEnding(selectedFile,"."+ExtensionStr)	//this removed user provided extension
+				selectedFile = removeEnding(selectedFile,"."+RealExtension)		//this removes anything behind last "." in name. 
 			endif
 			selectedFile=IR1I_TrunkateName(selectedFile,TrunkateStart,TrunkateEnd,RemoveStringFromName)
 			selectedFile =IR1I_RemoveBadCharacters(selectedFile)

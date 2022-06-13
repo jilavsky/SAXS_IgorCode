@@ -402,11 +402,11 @@ static Function NI1_LoadOneFITS(refnum,dfName,doHeader,doHistory,doComment,doAut
 				if( gSkipData )
 					FStatus refnum
 					//FSetPos refnum,min(V_filePos+gDataBytes,V_logEOF)
-					if(!isBinTable)				//seems like if we read binatble, we can already moved in the file reading and do not need to skip the gbytes
+					if(!isBinTable)				//seems like if we read binatable, we can already moved in the file reading and do not need to skip the gbytes
 						FSetPos refnum,min(V_filePos+gDataBytes,V_logEOF)
 					endif
 				else
-					//this loads data stored with one mthod.  
+					//this loads data stored with one method.  
 					Wave data
 					FBinRead/B=2 refnum,data
 					//fix the data per standard

@@ -1,6 +1,6 @@
 #pragma rtGlobals=3			// Use modern global access method.
 #pragma IgorVersion=8.03  	//requires Igor version 8.03 or higher
-#pragma version=1.99
+#pragma version=2.0
 
 
 //*************************************************************************\
@@ -9,7 +9,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.99		October2021 release
+//2.00	 Added IN3_BlueSkyReader
+//1.99	 October2021 release
 //1.98 September2020 release. 
 //1.97 February 2020 release. 
 //1.96 December 2018 release. 
@@ -57,6 +58,10 @@
 #include "IN3_Rwave", version>=1
 #include "IN3_SupportFnct", version>=1.14
 #include "IN3_SamplePlate", version>=1.05
+#include "IN3_BlueSkyReader", version>=1.00
+
+
+
 #include "spec", version>=2.21
 //#include ":IN2_XtalCalculations", version>=1
 #include "IonChamber3.1", version>=3.1

@@ -537,7 +537,7 @@ Function NI1_9IDCButtonProc(ba) : ButtonControl
 				endif
 				if(found)
 					NI1BC_BmCntrButtonProc("CreateROIWorkImage")
-				endif		
+				endif				
 			endif
 
 
@@ -580,8 +580,8 @@ Function NI1_9IDCConfigNexus()
 	SVAR Current2DFileName = root:Packages:Convert2Dto1D:FileNameToLoad
 	variable beamline_support_version
 
-print StringByKey("data:model", OldNOte  , "=" , ";")
-print OldNOte
+//print StringByKey("data:model", OldNOte  , "=" , ";")
+//print OldNOte
 	if(stringMatch("9ID", StringByKey("instrument:source:facility_beamline", OldNOte  , "=" , ";")) && stringMatch("Pilatus", StringByKey("data:model", OldNOte  , "=" , ";")))	
 //		//9ID data from 2015 onwards... 
 //		Wavelength = NumberByKey(NI1_9IDCFindKeyStr("monochromator:wavelength=", OldNote), OldNote  , "=" , ";")
@@ -1174,6 +1174,21 @@ Function/S NI1_9IDCSetDefaultConfiguration()
 				BMFitBeamCenter = 1
 				NVAR BMRefNumberOfSectors = root:Packages:Convert2Dto1D:BMRefNumberOfSectors
 				BMRefNumberOfSectors = 360
+				if(WAXSDexelaSelected)
+					BMCalibrantD1LineWidth = 20
+					BMCalibrantD2LineWidth = 20
+					BMCalibrantD3LineWidth = 20
+					BMCalibrantD4LineWidth = 20
+					BMCalibrantD5LineWidth = 20
+					BMCalibrantD6LineWidth = 20
+					BMCalibrantD7LineWidth = 20
+					BMCalibrantD8LineWidth = 20
+					BMCalibrantD9LineWidth = 20
+					BMCalibrantD10LineWidth = 20
+					BMRefNumberOfSectors = 45
+				endif
+
+
 	elseif(SAXSSelected)
 				NVAR UseSectors = root:Packages:Convert2Dto1D:UseSectors
 				UseSectors = 1

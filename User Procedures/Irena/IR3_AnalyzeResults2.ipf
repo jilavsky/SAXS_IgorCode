@@ -117,19 +117,20 @@ Function IR3E_AnalyzeResultsPanelFnct()
 	CheckBox AnalysisCheckbox4,pos={400,217},size={79,14},noproc,title="TBA", help={""}
 	
 	SetVariable AnalysisInputPar1,pos={370,240},size={140,17},title="AnalysisInputPar1",proc=IR3E_SetVarProc, disable=1, bodywidth=90,limits={0,inf,1}, help={"AnalysisInputPar1"}
-	SetVariable AnalysisInputPar2,pos={370,263},size={140,17},title="AnalysisInputPar2",proc=IR3E_SetVarProc, disable=1, bodywidth=90,limits={0,inf,1}, help={"AnalysisInputPar1"}
-	SetVariable AnalysisInputPar3,pos={370,286},size={140,17},title="AnalysisInputPar3",proc=IR3E_SetVarProc, disable=1, bodywidth=90,limits={0,inf,1}, help={"AnalysisInputPar1"}
+	SetVariable AnalysisInputPar2,pos={370,263},size={140,17},title="AnalysisInputPar2",proc=IR3E_SetVarProc, disable=1, bodywidth=90,limits={0,inf,1}, help={"AnalysisInputPar2"}
+	SetVariable AnalysisInputPar3,pos={370,286},size={140,17},title="AnalysisInputPar3",proc=IR3E_SetVarProc, disable=1, bodywidth=90,limits={0,inf,1}, help={"AnalysisInputPar3"}
 	
 	
 	SetVariable AnalysisOutputPar1,pos={370,330},size={140,17},title="AnalysisOutputPar1",proc=IR3E_SetVarProc, disable=1, bodywidth=90,limits={0,inf,1}, help={"AnalysisOutputPar1"}
-	SetVariable AnalysisOutputPar2,pos={370,353},size={140,17},title="AnalysisOutputPar2",proc=IR3E_SetVarProc, disable=1, bodywidth=90,limits={0,inf,1}, help={"AnalysisOutputPar1"}
-	SetVariable AnalysisOutputPar3,pos={370,376},size={140,17},title="AnalysisOutputPar3",proc=IR3E_SetVarProc, disable=1, bodywidth=90,limits={0,inf,1}, help={"AnalysisOutputPar1"}
-	SetVariable AnalysisOutputPar4,pos={370,399},size={140,17},title="AnalysisOutputPar4",proc=IR3E_SetVarProc, disable=1, bodywidth=90,limits={0,inf,1}, help={"AnalysisOutputPar1"}
-	SetVariable AnalysisOutputPar5,pos={370,422},size={140,17},title="AnalysisOutputPar5",proc=IR3E_SetVarProc, disable=1, bodywidth=90,limits={0,inf,1}, help={"AnalysisOutputPar1"}
-	SetVariable AnalysisOutputPar6,pos={370,445},size={140,17},title="AnalysisOutputPar6",proc=IR3E_SetVarProc, disable=1, bodywidth=90,limits={0,inf,1}, help={"AnalysisOutputPar1"}
-	SetVariable AnalysisOutputPar7,pos={370,468},size={140,17},title="AnalysisOutputPar7",proc=IR3E_SetVarProc, disable=1, bodywidth=90,limits={0,inf,1}, help={"AnalysisOutputPar1"}
-	SetVariable AnalysisOutputPar8,pos={370,491},size={140,17},title="AnalysisOutputPar8",proc=IR3E_SetVarProc, disable=1, bodywidth=90,limits={0,inf,1}, help={"AnalysisOutputPar1"}
-	SetVariable AnalysisOutputPar9,pos={370,514},size={140,17},title="AnalysisOutputPar9",proc=IR3E_SetVarProc, disable=1, bodywidth=90,limits={0,inf,1}, help={"AnalysisOutputPar1"}
+	SetVariable AnalysisOutputPar2,pos={370,353},size={140,17},title="AnalysisOutputPar2",proc=IR3E_SetVarProc, disable=1, bodywidth=90,limits={0,inf,1}, help={"AnalysisOutputPar2"}
+	SetVariable AnalysisOutputPar3,pos={370,376},size={140,17},title="AnalysisOutputPar3",proc=IR3E_SetVarProc, disable=1, bodywidth=90,limits={0,inf,1}, help={"AnalysisOutputPar3"}
+	SetVariable AnalysisOutputPar4,pos={370,399},size={140,17},title="AnalysisOutputPar4",proc=IR3E_SetVarProc, disable=1, bodywidth=90,limits={0,inf,1}, help={"AnalysisOutputPar4"}
+	SetVariable AnalysisOutputPar5,pos={370,422},size={140,17},title="AnalysisOutputPar5",proc=IR3E_SetVarProc, disable=1, bodywidth=90,limits={0,inf,1}, help={"AnalysisOutputPar5"}
+	SetVariable AnalysisOutputPar6,pos={370,445},size={140,17},title="AnalysisOutputPar6",proc=IR3E_SetVarProc, disable=1, bodywidth=90,limits={0,inf,1}, help={"AnalysisOutputPar6"}
+	SetVariable AnalysisOutputPar7,pos={370,468},size={140,17},title="AnalysisOutputPar7",proc=IR3E_SetVarProc, disable=1, bodywidth=90,limits={0,inf,1}, help={"AnalysisOutputPar7"}
+	SetVariable AnalysisOutputPar8,pos={370,491},size={140,17},title="AnalysisOutputPar8",proc=IR3E_SetVarProc, disable=1, bodywidth=90,limits={0,inf,1}, help={"AnalysisOutputPar8"}
+	SetVariable AnalysisOutputPar9,pos={370,514},size={140,17},title="AnalysisOutputPar9",proc=IR3E_SetVarProc, disable=1, bodywidth=90,limits={0,inf,1}, help={"AnalysisOutputPar9"}
+	SetVariable AnalysisOutputPar10,pos={370,537},size={140,17},title="AnalysisOutputPar10",proc=IR3E_SetVarProc, disable=1, bodywidth=90,limits={0,inf,1}, help={"AnalysisOutputPar10"}
 
 
 	TitleBox Instructions1 title="\Zr100Double click to add data to graph",size={330,15},pos={4,680},frame=0,fColor=(0,0,65535),labelBack=0
@@ -192,6 +193,7 @@ Function IR3E_SetupControlsOnMainPanel()
 			SetVariable AnalysisOutputPar7,win=IR3E_AnalyzeResultsPanel,value=root:Packages:Irena:AnalyzeResults:SDFWHM   ,title="FWHM   [A]  ", disable=0,noedit=1, limits={0,inf,0}, help={"Calculated FWHM in between cursors"}
 			SetVariable AnalysisOutputPar8,win=IR3E_AnalyzeResultsPanel,value=root:Packages:Irena:AnalyzeResults:SDMIPsigma ,title="MIP sigma ", disable=0,noedit=0, limits={0,inf,0}, help={"Sigma typ 485 mN/m2 = dynes/cm, Radlinski, Oct 2007"}
 			SetVariable AnalysisOutputPar9,win=IR3E_AnalyzeResultsPanel,value=root:Packages:Irena:AnalyzeResults:SDMIPcosTheta ,title="MIP cos(theta) ", disable=0,noedit=1, limits={0,inf,0}, help={"Cos(theta) - surface tension typ -0.766, Radlinski, Oct 2007"}
+			SetVariable AnalysisOutputPar10,win=IR3E_AnalyzeResultsPanel,value=root:Packages:Irena:AnalyzeResults:SDRg 	  ,title="Rg [A]     ", disable=0,noedit=1, limits={0,inf,0}, help={"Rg for whole distribution [A]"}
 			Setvariable DataQEnd,win=IR3E_AnalyzeResultsPanel, title="Max size for analysis"
 			SetVariable DataQstart,win=IR3E_AnalyzeResultsPanel, title="Min size for analysis"
 		endif
@@ -389,7 +391,7 @@ static Function IR3E_AnalyzeSequenceOfData()
 		imax = numpnts(ListOfAvailableData)
 		For(i=0;i<imax;i+=1)
 			if(SelectionOfAvailableData[i]>0.5)		//data set selected
-				IR3J_CopyAndAppendData(ListOfAvailableData[i])
+				IR3E_CopyAndAppendData(ListOfAvailableData[i])
 				IR3E_RecalculateAnalysis()
 				IR3E_SaveResultsToNotebook()
 				IR3E_SaveResultsToWaves()
@@ -650,7 +652,7 @@ Function IR3E_InitAnalyzeResults()
 	string/g SDListOfVariables
 	ListOfVariables		="DataQEnd;DataQStart;DataQEndPoint;DataQstartPoint;ScatteringContrast;SaveToNotebook;SaveToFolder;SaveToWaves;DelayBetweenProcessing;"
 	//these are SizeDistribution 
-	SDListOfVariables 	="SDVolumeInRange;SDNumberDensity;SDSpecSurfaceArea;SDMean;SDMode;SDMedian;SDFWHM;"
+	SDListOfVariables 	="SDVolumeInRange;SDNumberDensity;SDSpecSurfaceArea;SDMean;SDMode;SDMedian;SDFWHM;SDRg;"
 	SDListOfVariables  +="SDMIPsigma;SDMIPcosTheta;SDMIPCreateCurves;SDCreateCumulativeCurves;InvertCumulativeDists;"
 	//
 	ListOfVariables = ListOfVariables+SDListOfVariables
@@ -774,6 +776,7 @@ end
 	NVAR SDMode 			= root:Packages:Irena:AnalyzeResults:SDMode
 	NVAR SDMedian 			= root:Packages:Irena:AnalyzeResults:SDMedian
 	NVAR SDFWHM 			= root:Packages:Irena:AnalyzeResults:SDFWHM
+	NVAR Rg = root:Packages:Irena:AnalyzeResults:SDRg
 
 	Wave DistributionWV	 = root:Packages:Irena:AnalyzeResults:OriginalYDataWave
 	Wave DimensionWV		 = root:Packages:Irena:AnalyzeResults:OriginalXDataWave
@@ -793,6 +796,7 @@ end
 		IR1_AppendAnyText("\tMode [A]			            = "+num2str(SDMode),0)
 		IR1_AppendAnyText("\tMedian [A]			            = "+num2str(SDMedian),0)
 		IR1_AppendAnyText("\tFWHM  [A]			            = "+num2str(SDFWHM),0)
+		IR1_AppendAnyText("\tRg  [A]			            = "+num2str(Rg),0)
 	//elseif(stringmatch(SimpleModel,"Guinier Rod"))
 		//IR1_AppendAnyText("\tRc                  = "+num2str(Guinier_Rg),0)
 		//IR1_AppendAnyText("\tI0                  = "+num2str(Guinier_I0),0)
@@ -837,6 +841,7 @@ Function IR3E_SaveResultsToFolder()
 	NVAR SDMode 			= root:Packages:Irena:AnalyzeResults:SDMode
 	NVAR SDMedian 			= root:Packages:Irena:AnalyzeResults:SDMedian
 	NVAR SDFWHM 			= root:Packages:Irena:AnalyzeResults:SDFWHM
+	NVAR Rg 				= root:Packages:Irena:AnalyzeResults:SDRg
 	Wave DistributionWV	 = root:Packages:Irena:AnalyzeResults:OriginalYDataWave
 	Wave DimensionWV		 = root:Packages:Irena:AnalyzeResults:OriginalXDataWave
 	SVAR  AnalysisMethodSelected = root:Packages:Irena:AnalyzeResults:AnalysisMethodSelected
@@ -927,8 +932,10 @@ Function IR3E_SaveResultsToWaves()
 	NVAR SDMode 			= root:Packages:Irena:AnalyzeResults:SDMode
 	NVAR SDMedian 			= root:Packages:Irena:AnalyzeResults:SDMedian
 	NVAR SDFWHM 			= root:Packages:Irena:AnalyzeResults:SDFWHM
+	NVAR RgVal = root:Packages:Irena:AnalyzeResults:SDRg
 	Wave DistributionWV	 = root:Packages:Irena:AnalyzeResults:OriginalYDataWave
 	Wave DimensionWV		 = root:Packages:Irena:AnalyzeResults:OriginalXDataWave
+	
 	SVAR  AnalysisMethodSelected = root:Packages:Irena:AnalyzeResults:AnalysisMethodSelected
 
 	variable curlength
@@ -937,16 +944,16 @@ Function IR3E_SaveResultsToWaves()
 		NewDATAFolder/O/S root:ResultsAnalysisSizeDist
 		Wave/Z VolumeFraction
 		if(!WaveExists(VolumeFraction))
-			make/O/N=0 VolumeFraction, NumberDensity,SpecificSurfaceArea,MeanWv,ModeWv,MeadianWV,FWHM, TimeWave, TemperatureWave, PercentWave, OrderWave, MinSize, MaxSize
+			make/O/N=0 VolumeFraction, NumberDensity,SpecificSurfaceArea,MeanWv,ModeWv,MeadianWV,FWHM,Rg, TimeWave, TemperatureWave, PercentWave, OrderWave, MinSize, MaxSize
 			make/O/N=0/T SampleName
-			SetScale/P x 0,1,"A", MinSize, MaxSize, MeanWv,ModeWv,MeadianWV,FWHM
+			SetScale/P x 0,1,"A", MinSize, MaxSize, MeanWv,ModeWv,MeadianWV,FWHM, Rg
 			SetScale/P x 0,1,"min", TimeWave
 			SetScale/P x 0,1,"C", TemperatureWave
 			SetScale/P x 0,1,"1/cm3", NumberDensity
 			SetScale/P x 0,1,"cm2/cm3", SpecificSurfaceArea			
 		endif
 		curlength = numpnts(VolumeFraction)
-		redimension/N=(curlength+1) SampleName,VolumeFraction, NumberDensity,SpecificSurfaceArea,MeanWv,ModeWv,MeadianWV,FWHM, TimeWave, TemperatureWave, PercentWave, OrderWave, MinSize, MaxSize 
+		redimension/N=(curlength+1) SampleName,VolumeFraction, NumberDensity,SpecificSurfaceArea,MeanWv,ModeWv,MeadianWV,FWHM,Rg, TimeWave, TemperatureWave, PercentWave, OrderWave, MinSize, MaxSize 
 		SampleName[curlength] = DataFolderName
 		TimeWave[curlength]				=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzmin")
 		TemperatureWave[curlength]  	=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzC")
@@ -959,6 +966,7 @@ Function IR3E_SaveResultsToWaves()
 		ModeWv[curlength] 				= SDMode
 		MeadianWV[curlength] 			= SDMedian
 		FWHM[curlength] 				= SDFWHM
+		Rg[curlength] 					= RgVal
 		MinSize[curlength] 				= DataQstart
 		MaxSize[curlength] 				= DataQEnd
 		IR3E_ResAnalSizeDistResultsTableFnct()
@@ -1002,16 +1010,16 @@ Function IR3E_ResAnalSizeDistResultsTableFnct() : Table
 		endif
 		SetDataFolder root:ResultsAnalysisSizeDist:
 		Wave/T SampleName
-		Wave VolumeFraction,NumberDensity,SpecificSurfaceArea, ModeWv,MeanWv,MeadianWV,MinSize,MaxSize,FWHM,OrderWave,PercentWave, TemperatureWave,TimeWave
+		Wave VolumeFraction,NumberDensity,SpecificSurfaceArea, ModeWv,MeanWv,MeadianWV,MinSize,MaxSize,FWHM,Rg, OrderWave,PercentWave, TemperatureWave,TimeWave
 		Edit/K=1/W=(329,500,1721,957)/N=IR3E_ResAnalSizeDistResultsTable  SampleName,VolumeFraction,NumberDensity,SpecificSurfaceArea as "Analysis of Size Distribution results"
-		AppendToTable ModeWv,MeanWv,MeadianWV,MinSize,MaxSize,FWHM,OrderWave,PercentWave
+		AppendToTable ModeWv,MeanWv,MeadianWV,MinSize,MaxSize,FWHM,Rg,OrderWave,PercentWave
 		AppendToTable TemperatureWave,TimeWave
 		ModifyTable format(Point)=1,width(SampleName)=188,title(SampleName)="Data Folder"
 		ModifyTable width(VolumeFraction)=106,title(VolumeFraction)="Vol. Fraction",width(NumberDensity)=92
 		ModifyTable title(NumberDensity)="Num. Dens [1/A]",width(SpecificSurfaceArea)=96
 		ModifyTable title(SpecificSurfaceArea)="Spec Sfc Area [cm2/cm3]",title(ModeWv)="Mode [A]"
 		ModifyTable title(MeanWv)="Mean [A]",title(MeadianWV)="Meadian [A]",title(MinSize)="Min [A]"
-		ModifyTable title(MaxSize)="Max [A]",title(FWHM)="FWHM [A]",title(OrderWave)="Order"
+		ModifyTable title(MaxSize)="Max [A]",title(FWHM)="FWHM [A]",title(Rg)="Rg [A]",title(OrderWave)="Order"
 		ModifyTable title(PercentWave)="%",title(TemperatureWave)="Temp. [C]",title(TimeWave)="Time [min]"
 		SetDataFolder oldDf
 	endif
@@ -1042,6 +1050,7 @@ Function IR3E_SDCalculateStatistics()
 	NVAR SDMode 			= root:Packages:Irena:AnalyzeResults:SDMode
 	NVAR SDMedian 			= root:Packages:Irena:AnalyzeResults:SDMedian
 	NVAR SDFWHM 			= root:Packages:Irena:AnalyzeResults:SDFWHM
+	NVAR Rg = root:Packages:Irena:AnalyzeResults:SDRg
 	
 	SVAR XwvName = root:Packages:Irena:AnalyzeResults:QWavename
 	SVAR YwvName = root:Packages:Irena:AnalyzeResults:IntensityWaveName
@@ -1053,6 +1062,22 @@ Function IR3E_SDCalculateStatistics()
 	//	GR1_NumberOrVolumeDist=stringByKey("SizesDataFrom", curNote,"=",";")+CsrAwaveName
 	Duplicate/Free/R=[StartPnt,EndPnt] DistributionWV, DistShort, DistShort2, DistDimShort, ParticleVolumes, ParticleSurface
 	Duplicate/Free/R=[StartPnt,EndPnt] DimensionWV, DimensionShort, DimensionShort2
+	//Rg calcualtion
+	if(stringmatch(YwvName,"*Volume*") || stringmatch(YwvName,"*VolDist*"))
+		Rg=IR2L_CalculateRg(DimensionShort,DistShort,1)		//Dimension is diameter, 3rd parameter is 1
+		if(stringmatch(XwvName,"*Radi*") )
+			Rg*=2							//convert radius calcaulted Rg to diameter calculated as needed.  
+		endif
+	endif
+	if (stringmatch(YwvName,"*Number*") || stringmatch(YwvName,"*NumDist*"))
+		IR1G_CreateAveVolSfcWvUsingNote(ParticleVolumes,DimensionShort,Note(ParticleVolumes),"Volume", popNumber)
+		DistShort2 = DistShort * ParticleVolumes				//this is volume distribution
+		Rg=IR2L_CalculateRg(DimensionShort,DistShort2,1)		//Dimension is diameter, 3rd parameter is 1
+		if(stringmatch(XwvName,"*Radi*") )
+			Rg*=2							//convert radius calcaulted Rg to diameter calculated as needed.  
+		endif
+	endif
+	//ednf of Rg calculation. 
 	DistDimShort = DistShort*DimensionShort
 	//	GR1_Mean=IR1G_CalculateMean(CsrWaveRef(A),CsrXWaveRef(A), pcsr(A),pcsr(B))
 	SDMean = areaXY(DimensionShort, DistDimShort,0,inf)/areaXY(DimensionShort, DistShort,0,inf)		//Sum P(R)*R*deltaR
@@ -1074,6 +1099,8 @@ Function IR3E_SDCalculateStatistics()
 	IN2G_IntegrateXY(DimensionShort, DistShort2)
 	WaveStats/Q DistShort2
 	SDMedian=DimensionShort[BinarySearchInterp(DistShort2, 0.5*V_max)]		//R for which cumulative probability=0.5
+	
+
 
 	//	GR1_Volume=IR1G_CalculateVolume(CsrWaveRef(A),CsrXWaveRef(A), pcsr(A),pcsr(B), CsrAwaveName)
 	if(stringmatch(YwvName,"*Volume*") || stringmatch(YwvName,"*VolDist*"))

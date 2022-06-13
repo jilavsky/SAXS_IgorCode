@@ -216,7 +216,7 @@ Menu "SAS"
 	help={"Simple reflectivity model using Parrat's recursive code."}
 	SubMenu "3D Models"
 		"Mass Fractal Aggregate", IR3A_MassFractalAggregate()
-		//"Two Phase Solids", IR3T_TwoPhaseSystem()
+		"Two Phase Solids", IR3T_TwoPhaseSystem()
 		"Display 3D data", IR3A_Display3DData()
 		"Import POV or PDB", IR3P_ImportPOVPDB()
 	end
@@ -680,9 +680,9 @@ Function IR2P_DrawLineOfRequiredSlope(LineSlope,YourNumber,qLabel,label1)
 	
 	SetDrawEnv xcoord= bottom,ycoord= left,save
 	variable X_start, Y_start
-	getAxis bottom
+	getAxis/Q bottom
 	X_start=ceil((floor(log(V_max))+floor(log(V_min)))/2)
-	getAxis left
+	getAxis/Q left
 	Y_start=ceil((ceil(log(V_max))+ceil(log(V_min)))/2)
 	if(lineslope==11)														//Vertical
 		drawline 10^(X_start),10^(Y_start),10^(X_start+1),10^(Y_start)

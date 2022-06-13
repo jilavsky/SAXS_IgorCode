@@ -928,8 +928,18 @@ Function IR3W_SetVarProc(sva) : SetVariableControl
 					DataD2ThetaWave=0
 				endif
 				Energy = 12.39842 / wavelength
-				XaxisType = 1
-				IR3W_ConvertXdataToTTH(Data2ThetaWave,DataD2ThetaWave,XaxisType,wavelength)
+				//change properly depending on type of data, 5-13-2022
+				if(stringMatch(NameOfWave(SourceQWv),"q*"))		//Q data 
+					XaxisType = 1
+					IR3W_ConvertXdataToTTH(Data2ThetaWave,DataD2ThetaWave,XaxisType,wavelength)
+				elseif(stringMatch(NameOfWave(SourceQWv),"d*"))	//d data
+					XaxisType = 2
+					IR3W_ConvertXdataToTTH(Data2ThetaWave,DataD2ThetaWave,XaxisType,wavelength)
+				else		//2theta, the code below does nothing actually. 
+					XaxisType = 3
+					IR3W_ConvertXdataToTTH(Data2ThetaWave,DataD2ThetaWave,XaxisType,wavelength)
+				endif
+				IR3W_PDF4AddLines()
 			endif
 			if(stringmatch(sva.ctrlName,"DistanceCorrection"))
 				IR3W_WAXSCorForDistance()
@@ -945,8 +955,18 @@ Function IR3W_SetVarProc(sva) : SetVariableControl
 					Duplicate/O SourceQWv, DataD2ThetaWave
 					DataD2ThetaWave=0
 				endif
-				XaxisType = 1
-				IR3W_ConvertXdataToTTH(Data2ThetaWave,DataD2ThetaWave,XaxisType,wavelength)
+				//change properly depending on type of data, 5-13-2022
+				if(stringMatch(NameOfWave(SourceQWv),"q*"))		//Q data 
+					XaxisType = 1
+					IR3W_ConvertXdataToTTH(Data2ThetaWave,DataD2ThetaWave,XaxisType,wavelength)
+				elseif(stringMatch(NameOfWave(SourceQWv),"d*"))	//d data
+					XaxisType = 2
+					IR3W_ConvertXdataToTTH(Data2ThetaWave,DataD2ThetaWave,XaxisType,wavelength)
+				else		//2theta, the code below does nothing actually. 
+					XaxisType = 3
+					IR3W_ConvertXdataToTTH(Data2ThetaWave,DataD2ThetaWave,XaxisType,wavelength)
+				endif
+				IR3W_PDF4AddLines()
 			endif
 
 			break
@@ -1098,6 +1118,17 @@ Function IR3W_CopyAndAppendData(FolderNameStr)
 		variable NoteVal
 		if(GrepString(DataNote, "(?i)energy"))		//found energy, primary info
 			NoteVal =  str2num(StringFromList(1,GrepList(DataNote, "(?i)energy"),"="))
+			if(numtype(NoteVal)!=0)
+				//2022-05-12 Bug due to Proposal with "energy" in title in metadata
+				//try again, may be there are  multiple energies and first one is in title...
+				NoteVal =  str2num(StringFromList(1,GrepList(DataNote, "(?i)Nika_XrayEnergy"),"="))
+			endif
+			if(numtype(NoteVal)!=0)
+				//2022-05-12 Bug due to Proposal with "energy" in title in metadata
+				//try again, may be there are  multiple energies and first one is in title...
+				NoteVal =  str2num(StringFromList(1,GrepList(DataNote, "(?i)monochromator:energy"),"="))
+			endif
+		
 			if(numtype(NoteVal)==0)
 				Energy = NoteVal
 				print "Found X-ray energy in the  wave note : "+num2str(Energy)
@@ -1679,8 +1710,8 @@ Function IR3W_MPF2CreateAllParTable()
 	SetDimLabel 1,1,d_ESD,ParamWv
 	SetDimLabel 1,2,Width,ParamWv
 	SetDimLabel 1,3,WidthESD,ParamWv
-	SetDimLabel 1,4,Height,ParamWv
-	SetDimLabel 1,5,HeightESD,ParamWv
+	SetDimLabel 1,4,AreaOrHeight,ParamWv
+	SetDimLabel 1,5,AreaOrHeightESD,ParamWv
 	SetDimLabel 1,6,h,ParamWv
 	SetDimLabel 1,7,k,ParamWv
 	SetDimLabel 1,8,l,ParamWv

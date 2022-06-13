@@ -513,7 +513,7 @@ static Function/T IR3A_BuildUser3DAggNames(PathToFolder)
 	SetDataFolder PathToFolder
 	NVAR DOA=DegreeOfAggregation
 	NVAR Stick=StickingProbability
-	NVAR SMeth=StickingMethod
+	//NVAR SMeth=StickingMethod
 	NVAR dMin=DminValue
 	NVAR df = dfValue
 	NVAR cval= cValue
@@ -580,7 +580,7 @@ end
 
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
-static Function IR3A_Append1DInMassFracAgg(IntensityWV,QvectorWV)
+Function IR3A_Append1DInMassFracAgg(IntensityWV,QvectorWV)
 	wave IntensityWV,QvectorWV
 
 	DoWIndow MassFractalAggDataPlot
@@ -609,8 +609,8 @@ static Function IR3A_Append1DInMassFracAgg(IntensityWV,QvectorWV)
 	SVAR DataFolderName = root:Packages:AggregateModeling:DataFolderName
 	if(strlen(DataFolderName)<4)
 		//this is non sensical case. Use Model3DAggIntensity to get proper normalization
-		Wave/Z IntWaveOriginal = root:Aggregate1DModel:Model3DAggIntensity
-		Wave/Z QwaveOriginal = root:Aggregate1DModel:A3DAgg1DQwave
+		Wave/Z IntWaveOriginal = root:Packages:Irena_UnifFit:Model3DAggIntensity
+		Wave/Z QwaveOriginal = root:Packages:Irena_UnifFit:A3DAgg1DQwave
 		if(!WaveExists(IntWaveOriginal))
 			abort
 		endif
@@ -939,8 +939,8 @@ static Function IR3A_Model1DIntensity()
 	variable Qmin = 0.5 * pi/AggSize 
 	variable Qmax = 6 * pi/PrimarySize
 	variable NumQSteps = 200
-	variable PrimarySphereRadius = 6		//this is RADIUS of sphere in voxels, not in angstroms. 
-	//Internally, each particle volume is made 10xx10x10, 8 seems to be value when the spheres are exactly touching in xy direction, 9 when in xyz direction. 
+	variable PrimarySphereRadius = 10		//this is RADIUS of sphere in voxels, not in angstroms. 
+	//Internally, each particle volume is made 10x10x10, 8 seems to be value when the spheres are exactly touching in xy direction, 9 when in xyz direction. 
 	Wave/Z ThreeDVoxelGram = Wave3DwithPrimaryShrunk  		//this is voxelgram shrunk to min size	
 	if(!WaveExists(ThreeDVoxelGram) || isInWorkFolder || recalculate3D)
 		//convert to voxelgram
@@ -963,7 +963,7 @@ static Function IR3A_Model1DIntensity()
 	SetScale /P x, 0, VoxelSize, "A" ,ThreeDVoxelGram
 	SetScale /P y, 0, VoxelSize, "A" ,ThreeDVoxelGram
 	SetScale /P z, 0, VoxelSize, "A" ,ThreeDVoxelGram
-	IR3T_CalcAutoCorelIntensity(ThreeDVoxelGram, IsoValue,  Qmin, Qmax, NumQSteps)
+	IR3T_CalcAutoCorelIntensity(ThreeDVoxelGram,  Qmin, Qmax, NumQSteps)
 	//these are autocorrelation calculated intensities... 
 	Wave AutoCorIntensityWv
 	Wave AutoCorQWv

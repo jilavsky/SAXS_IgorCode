@@ -35,13 +35,13 @@
 //	//3. Copies scaling to output wave, so if the 3DWave has correct x scaling, data have correct x dimension
 //	//4. creates Debye phase correlation function and its radii wave
 //	//these are resulting waves:
-//	// 	TwoPntCorrelationsWv				= two points correlatiton function, TwoPntCorrelationsWv[0] is volume fraction, x-scaling set based on voxel size
-//	//		TwoPntDebyePhCorrFnct				= Debye phase correlation function (TwoPntCorrelationsWv - TwoPntCorrelationsWv[0]^2, negative values = 0), x-scaling set as above
-//	//		TwoPntDebyePhCorrRadii			= Radii wave for TwoPntDebyePhCorrFnct
+//	// 	CorrelationsWv				= two points correlatiton function, CorrelationsWv[0] is volume fraction, x-scaling set based on voxel size
+//	//		DebyePhCorrFnct				= Debye phase correlation function (CorrelationsWv - CorrelationsWv[0]^2, negative values = 0), x-scaling set as above
+//	//		DebyePhCorrRadii			= Radii wave for DebyePhCorrFnct
 //	// 3DWave does not have to have same length side, but this has not been tested at all yet. 
 //	
 //	
-//	//result is in the sample folder in TwoPntCorrelationsWv which has x scaling set per scaling of input wave. 
+//	//result is in the sample folder in CorrelationsWv which has x scaling set per scaling of input wave. 
 //	Wave/Z My3DWv = root:Packages:TwoPhaseSolidModel:TwoPhaseSolidMatrix
 //	
 //	if(!WaveExists(My3DWv))
@@ -90,7 +90,7 @@
 //	rstep = ceil(rDim/100)
 //	variable MaxLength=max(pDim, qDim, rDim)
 //	//this is wave for results. 
-//	Make/O/N=(MaxLength) TwoPntCorrelationsWv
+//	Make/O/N=(MaxLength) CorrelationsWv
 //	variable i, j
 //
 //	//row (p index)
@@ -176,29 +176,29 @@
 //	//Correlate/AUTO needs rotation around end point
 //	DeletePoints 0, (numpnts(BeamCorrelations)/2),  BeamCorrelations
 //
-//	IR3T_Average3Waves(RowCorrelations,ColumnCorrelations,BeamCorrelations ,TwoPntCorrelationsWv)
+//	IR3T_Average3Waves(RowCorrelations,ColumnCorrelations,BeamCorrelations ,CorrelationsWv)
 //	KillWaves/Z RowCorrelations,ColumnCorrelations,BeamCorrelations
-////	Duplicate/O BeamCorrelations, TwoPntCorrelationsWv
-//	//redimension/N=(numpnts(TwoPntCorrelationsWv)/2) TwoPntCorrelationsWv
+////	Duplicate/O BeamCorrelations, CorrelationsWv
+//	//redimension/N=(numpnts(CorrelationsWv)/2) CorrelationsWv
 //	//normalize to volume fratcion as epxected
-//	Wavestats/Q TwoPntCorrelationsWv
-//	TwoPntCorrelationsWv = VOlumeFraction* TwoPntCorrelationsWv[p]/V_max 
+//	Wavestats/Q CorrelationsWv
+//	CorrelationsWv = VOlumeFraction* CorrelationsWv[p]/V_max 
 //	
-//	Duplicate/O TwoPntCorrelationsWv, TwoPntDebyePhCorrFnct, TwoPntDebyePhCorrRadii
-//	//??? TwoPntDebyePhCorrFnct =  TwoPntCorrelationsWv - VolumeFraction^2				//this converts this from TwoPointCor FUnction to Debye Phase Correlation function
-//	TwoPntDebyePhCorrFnct =  TwoPntCorrelationsWv + VolumeFraction^2				//this converts this from TwoPointCor FUnction to Debye Phase Correlation function
+//	Duplicate/O CorrelationsWv, DebyePhCorrFnct, DebyePhCorrRadii
+//	//??? DebyePhCorrFnct =  CorrelationsWv - VolumeFraction^2				//this converts this from TwoPointCor FUnction to Debye Phase Correlation function
+//	DebyePhCorrFnct =  CorrelationsWv + VolumeFraction^2				//this converts this from TwoPointCor FUnction to Debye Phase Correlation function
 //	//is the above negative or positive? I think it is positive, since the random chanse should be volumefraction^2 
 //	
-//	TwoPntDebyePhCorrFnct = TwoPntDebyePhCorrFnct[p]>0 ? TwoPntDebyePhCorrFnct : 0			//this needs to be non-negative... - note it should be bit more complicated, but this is OK for now... 
+//	DebyePhCorrFnct = DebyePhCorrFnct[p]>0 ? DebyePhCorrFnct : 0			//this needs to be non-negative... - note it should be bit more complicated, but this is OK for now... 
 //
-//	SetScale/P x 0,(pDelta),pUnits, TwoPntCorrelationsWv, TwoPntDebyePhCorrFnct				//assign x-scaling in A from 3D model. 
+//	SetScale/P x 0,(pDelta),pUnits, CorrelationsWv, DebyePhCorrFnct				//assign x-scaling in A from 3D model. 
 //	//Seems like this is distance distribution, not radius distribution... 
 //	//that is why we need the 1/2 there??? 
 //
-//	TwoPntDebyePhCorrRadii = pnt2x(TwoPntDebyePhCorrFnct, p )
+//	DebyePhCorrRadii = pnt2x(DebyePhCorrFnct, p )
 //	
 //	
-//	//Display/K=1 TwoPntCorrelationsWv
+//	//Display/K=1 CorrelationsWv
 //	//print (ticks-startTicks)/60
 //end
 ///******************************************************************************************************************************************
@@ -209,30 +209,25 @@
 // 3D voxelgram, 0 is empty space, 1 is particle 
 // checked on sphere model with voxel sizes 1, 2, and 4 A and it works. 
 
-Function IR3T_CalcAutoCorelIntensity(My3DWv, IsoValue, Qmin, Qmax, NumQSteps)
+Function IR3T_CalcAutoCorelIntensity(My3DWv, Qmin, Qmax, NumQSteps)
 	Wave My3DWv
-	variable IsoValue, Qmin, Qmax, NumQSteps
+	variable Qmin, Qmax, NumQSteps
 	//same as IR3T_CreatePDFIntensity 
-	//		old:   does the same thing as Function IR3T_Calc3DTwoPntCorrelation()
-	//					but uses 3DAutcorrelation
-	
-	print "IsoValue value in IR3T_CalcAutoCorelIntensity is for now not used." 
+	//old:   does the same thing as Function IR3T_Calc3DTwoPntCorrelation()
+	//			but uses 3DAutcorrelation
+	//			print "IsoValue value in IR3T_CalcAutoCorelIntensity is for now not used." 
 	setDataFOlder GetWavesDataFolder(My3DWv, 1 )
 	
 	//this code calculates Two-point autocorelation function on 3D wave. 
-	//1. Checks wave for sensibility. Needs wave with mostly 0 in it and 1 for minority phase, if needed, it will switch between 0 and 1 so it evaluates minority phase. 
-	//2. Calculates autocorelation in p, q, and r directions, at most 100x100 vectors in each direction (3x100*100 calculations).
+	//1. Checks wave for sensibility. Needs wave with 0 and 1; 1 is used for minority phase, 
+	//		if needed, it will switch between 0 and 1 so it evaluates minority phase. 
+	//2. Calculates autocorelation using FFT
 	//3. Copies scaling to output wave, so if the 3DWave has correct x scaling, data have correct x dimension
-	//4. creates Debye phase correlation function and its radii wave
-	//these are resulting waves:
-	// 	TwoPntCorrelationsWv				= two points correlatiton function, TwoPntCorrelationsWv[0] is volume fraction, x-scaling set based on voxel size
-	//		TwoPntDebyePhCorrFnct				= Debye phase correlation function (TwoPntCorrelationsWv - TwoPntCorrelationsWv[0]^2, negative values = 0), x-scaling set as above
-	//		TwoPntDebyePhCorrRadii			= Radii wave for TwoPntDebyePhCorrFnct
-	// 3DWave does not have to have same length side, but this has not been tested at all yet. 
-	//next it calculates Intensity vs Q vector same as IR3T_CreatePDFIntensity
+	//4. creates Debye phase correlation function and its radii wave, tweaks that to be sensible (0 at max R)
+	//5. calculates Intensity vs Q vector same as IR3T_CreatePDFIntensity
 	
-	//result is in the sample folder in TwoPntCorrelationsWv which has x scaling set per scaling of input wave. 
-	print "Check input wave and get dimension values. this can take a logng time. 512^3 wave takes ~30 seconds on fast computer"
+	//result is in the sample folder in CorrelationsWv which has x scaling set per scaling of input wave. 
+	print "1/5 Check input wave and get dimension values. This can take a long time. 512^3 wave takes ~30 seconds on fast computer"
 	//variable starttik=ticks
 	//Check  My3DWv
 	variable VolumeFraction
@@ -245,17 +240,17 @@ Function IR3T_CalcAutoCorelIntensity(My3DWv, IsoValue, Qmin, Qmax, NumQSteps)
 	if(V_avg>0.49)
 		MatrixPhase=1
 		VolumeFraction = 1-V_avg
-		Print "Two-point corelation function characterized minority phase. Minority phase is expressed by 0 in provided matrix" 
+		Print "Corelation function characterizes minority phase. Minority phase is expressed by 0 in provided 3D matrix" 
 	else
 		VolumeFraction = V_avg
-		Print "Two-point corelation function characterized minority phase. Minority phase is expressed by 1 in provided matrix" 
+		Print "Corelation function characterizes minority phase. Minority phase is expressed by 1 in provided 3D matrix" 
 	endif
 	variable pDim, qdim, rdim
 	variable pstep, qstep, rstep
 	pDim  = DimSize(My3DWv, 0 )
 	qDim  = DimSize(My3DWv, 1 )
 	rDim  = DimSize(My3DWv, 2 )
-	variable pDelta, qDelta, rDelta						//these should be voxel sides, if scaling is used for dimansions. 
+	variable pDelta, qDelta, rDelta	//these should be voxel sides, if scaling is used for dimansions. 
 	string pUnits, qUnits, rUnits
 	pUnits = WaveUnits(My3DWv, 0 )
 	qUnits = WaveUnits(My3DWv, 1 )
@@ -267,50 +262,46 @@ Function IR3T_CalcAutoCorelIntensity(My3DWv, IsoValue, Qmin, Qmax, NumQSteps)
 		Abort "This 3D object seems too small to evaluate, minimum dimensions are 50^3"
 	endif
 	if(pDelta!=qDelta || qDelta!=rDelta)
-		Abort "This 3D object seems to have different side scaling - voxel sides. You can only analyze object with cubical voxels."
+		Abort "This 3D object seems to have different voxel side dimensions. You can only analyze object with cubical voxels."
 	endif
-	Print "Preparation phase done, starting autocorrelation. This may be slow. "
+	Print "2/5 Preparation phase done, starting autocorrelation. This is typically slow. "
 	//calculate autocorelation 
-	IR3T_Autocorelate3D(My3DWv)
+	IR3T_Autocorelate3D(My3DWv,1)
 	wave AutoCorMatrix		//this is resulting autcorrelation wave
-	Print "Finished autocorrelation. Calculate Two Point Corelation function now."
+	//AutoCorMatrix has proper side scaling... 
+	Print "3/5 Finished autocorrelation. Calculate Debye Phase Correlation function now."
 	// Extract radial profile... 
-	IR3T_CalcRadialAveProfile3D(AutoCorMatrix)	
+	IR3T_CalcRadialAveProfile3D(AutoCorMatrix,0.5)	//for now - the 1 means step in distacne by single voxel. 
+	//need to try smaller steps. 
 	KillWaves/Z AutoCorMatrix
-	Wave RadialWaveProfile													//radial profile with the x voxel scaling... 
-	SetScale /P x, 0, pDelta, "A", RadialWaveProfile					//here we set x scaling to match input scaling of the 3D wave voxel size. 
-	Print "Finished Two Point Correlation function calculation. Finish by scaling."
-	Duplicate/free  RadialWaveProfile, TwoPntCorrelationsWv, TwoPntDebyePhCorrFnct, TwoPntDebyePhCorrRadii
-	KillWaves/Z RadialWaveProfile
-	//RadialWaveProfile[0] = 1 and at infinity is = VolumeFraction. 
-	
-	//scaling to match volume fraction needed, 
-	TwoPntCorrelationsWv = VOlumeFraction * (TwoPntCorrelationsWv - VOlumeFraction^2)
-
-	Duplicate/O TwoPntDebyePhCorrFnct, ModelFFTAutoCorelGr
-	
-
-	FindLevel/EDGE=2/Q/P TwoPntCorrelationsWv, 0
-	if(V_Flag==0)
-		//Duplicate/Free TwoPntCorrelationsWv, PDFWave, PrWave
-		//PrWave = RadialWaveProfile * x
-		//PDFWave = PrWave * x^2
-		//variable CalculatedRg=area(PDFWave,0,V_LevelX)/area(PrWave,0,V_LevelX)
-		//print "Calculated Rg [A] = "+num2str(CalculatedRg)
-		TwoPntCorrelationsWv[V_LevelX+1, ] = 0
-	endif
-
-	//the commented part below screwed up the results tremendously. Which is bit weird. In any case, TwoPntDebyePhCorrFnct = TwoPntCorrelationsWv works just fine. 
-	TwoPntDebyePhCorrFnct = TwoPntCorrelationsWv				// (VolumeFraction+VolumeFraction^2)*TwoPntCorrelationsWv + VolumeFraction^2				//this converts this from TwoPointCor Function to Debye Phase Correlation function
-																			//or is it: TwoPntDebyePhCorrFnct =  TwoPntCorrelationsWv - VolumeFraction^2	???
-	TwoPntDebyePhCorrRadii = pnt2x(TwoPntDebyePhCorrFnct, p )
-	//print (ticks-starttik)/60
-	
-	make/O/N=(NumQSteps)/D 	AutoCorIntensityWv, AutoCorQWv
+	Wave RadialDistanceProfile	//radial profile with the x in radius (Angstrom) scaling..., set in IR3T_CalcRadialAveProfile3D
+	//note, if we use stepping smaller than 1 voxel in IR3T_CalcRadialAveProfile3D, then some bins may have Nans in them since no data may be in that bin.
+	//this will need cleaning later. 
+	Print "4/5 Finished Debye Phase Correlation function calculation. Now calculating intensity"
+	Duplicate/O  RadialDistanceProfile, CorrelationsWv, DebyePhCorrFnct, DebyePhCorrRadii
+	KillWaves/Z RadialDistanceProfile
+	//RadialDistanceProfile[0] = 1 and at infinity is = 0, this matches Debye Phase Correlation Function requirements. 
+	//scaling to match volume fraction, this is standard Two-points-Correlation function, NOT DebyeCorrelationFunction! 
+	CorrelationsWv = VolumeFraction * (CorrelationsWv - VolumeFraction^2)
+	//Do NOT use CorrelationsWv for anything meaningful, just display and even there, may be not useful. 
+	//creater Radia for DebyePhCorrFnct
+	DebyePhCorrRadii = pnt2x(DebyePhCorrFnct, p)
+	//clean up Nans
+	IN2G_RemoveNaNsFrom2Waves(DebyePhCorrFnct, DebyePhCorrRadii)
+	//need to remove any 0 offset by scaling to 0 towards infinity...
+	//try using dampening function...
+	duplicate/Free DebyePhCorrRadii, tempweight
+	tempweight = p<(3*numpnts(tempweight)/4) ? 1 : 1 - ((DebyePhCorrRadii[p] - DebyePhCorrRadii[3*numpnts(tempweight)/4])/DebyePhCorrRadii[numpnts(tempweight)/4])^(2)
+	DebyePhCorrFnct = DebyePhCorrFnct * tempweight
+	//	//print (ticks-starttik)/60
+	//create output waves with resulting 1D Intensit
+	make/O/N=(NumQSteps)/D 	AutoCorIntensity, AutoCorQWv
 	AutoCorQWv =	Qmin + p*(Qmax-Qmin)/(NumQSteps-1)  
 	IN2G_ConvertTologspacing(AutoCorQWv,0)									//creates log-q spacing in the PDFQWv
-	//multithread AutoCorIntensityWv =  IR3T_CalcIntensityPDF(PDFQWv[p],PDFWave,RadiiWave)										//this is PDF from IR3T_CreatePDFIntensity
-	multithread AutoCorIntensityWv = IR3T_ConvertDACFToInt(TwoPntDebyePhCorrRadii,TwoPntDebyePhCorrFnct,AutoCorQWv)		//and this is equivalent using Autocoreelation function
+	//multithread AutoCorIntensity =  IR3T_CalcIntensityPDF(PDFQWv[p],PDFWave,RadiiWave)								//this is PDF from IR3T_CreatePDFIntensity
+	multithread AutoCorIntensity = abs(IR3T_ConvertDACFToInt(DebyePhCorrRadii,DebyePhCorrFnct,AutoCorQWv))		//and this is equivalent using Autocoreelation function
+	
+	Print "5/5 Calculated 1D intensity using Autocorrelation of 3D object."
 
 end
 //Function IR3T_CalcTwoPntsCorFIntensity()
@@ -323,8 +314,8 @@ end
 //	if(V_Flag)
 //		DoWIndow/F TwoPhaseSystemData
 //		//thsi should exist:
-//		Wave	TwoPntDebyePhCorrFnct	 = root:Packages:TwoPhaseSolidModel:TwoPntDebyePhCorrFnct			//= Debye phase correlation function (TwoPntCorrelationsWv - TwoPntCorrelationsWv[0]^2, negative values = 0), x-scaling set as above
-//		Wave	TwoPntDebyePhCorrRadii = root:Packages:TwoPhaseSolidModel:TwoPntDebyePhCorrRadii			//= Radii wave for TwoPntDebyePhCorrFnct
+//		Wave	DebyePhCorrFnct	 = root:Packages:TwoPhaseSolidModel:DebyePhCorrFnct			//= Debye phase correlation function (CorrelationsWv - CorrelationsWv[0]^2, negative values = 0), x-scaling set as above
+//		Wave	DebyePhCorrRadii = root:Packages:TwoPhaseSolidModel:DebyePhCorrRadii			//= Radii wave for DebyePhCorrFnct
 //		Wave/Z PDFQWv = root:Packages:TwoPhaseSolidModel:PDFQWv
 //		Wave/Z PDFIntensityWv = root:Packages:TwoPhaseSolidModel:PDFIntensityWv
 //		Wave ExtrapolatedIntensity = root:Packages:TwoPhaseSolidModel:ExtrapolatedIntensity
@@ -337,7 +328,7 @@ end
 //		NVAR Qmax = root:Packages:TwoPhaseSolidModel:HighQExtrapolationEnd
 //		//calculate intensity:
 //		Duplicate/O ExtrapolatedQvector, TwoPntModelIntensity, TwoPntModelQvec
-//		TwoPntModelIntensity = IR3T_ConvertDACFToInt(TwoPntDebyePhCorrRadii,TwoPntDebyePhCorrFnct,TwoPntModelQvec)	
+//		TwoPntModelIntensity = IR3T_ConvertDACFToInt(DebyePhCorrRadii,DebyePhCorrFnct,TwoPntModelQvec)	
 //		//to make Guinier here match, we need to do this... WHy?
 //	//	TwoPntModelQvec*=pi
 //		//end of why??? 
@@ -360,32 +351,45 @@ end
 ///******************************************************************************************************************************************
 ///******************************************************************************************************************************************
 
-Function IR3T_CalcRadialAveProfile3D(My3DWaveIn)
+Function IR3T_CalcRadialAveProfile3D(My3DWaveIn, minRadStep	)
 		wave My3DWaveIn
-		//this calculates radial profile of intensity for 3D Wave
-		//from the center
-		//may not be cube...  
+		variable minRadStep 		//this is minimum step in radii. normally 1, but we can try smaller numbers. 
+		//this calculates radial profile of intensity for 3D Wave = Autocorrelation function
+		//Distance in pixels ---  from the center  --- 
+		//does not have to be cube...  
 		variable pcen, qcen, rcen
-		wavestats/Q My3DWaveIn
+		wavestats/Q/P My3DWaveIn
 		pcen = V_maxRowLoc 
 		qcen = V_maxColLoc
 		rcen = V_maxLayerLoc
-		variable maxDist=DimSize(My3DWaveIn, 0 )
+		variable maxDist=floor(sqrt(DimSize(My3DWaveIn,0)^2+DimSize(My3DWaveIn,1)^2+DimSize(My3DWaveIn,2)^2))
 		variable VoxelSize=DimDelta(My3DWaveIn, 0)
 
-		//MatrixOp/Free/NTHR=0 My3DTempWv = My3DWaveIn
+		//create distance wave
 		MatrixOp/Free/NTHR=0 My3DDistacneWv = My3DWaveIn
+		//fill distance wave with distances from center
 		multithread My3DDistacneWv = sqrt((p-pcen)^2+(r-rcen)^2+(q-qcen)^2)
 		//make/Free/N=(numpnts(My3DDistacneWv)) My1DValuesWave, My1DDistanceWv
 		//MatrixOp/Free/NTHR=0 My1DValuesWave = My3DWaveIn				//this convert 3D wave in 1D wave.
 		//MatrixOp/Free/NTHR=0 My1DDistanceWv = My3DDistacneWv			//this convert 3D wave in 1D wave.
 		//Sort My1DDistanceWv, My1DDistanceWv, My1DValuesWave
-		make/Free/N=(10*maxDist) HistogramWvIndx, HistogramWv
-		Histogram /B={0,1,maxDist}/W=My3DWaveIn/Dest=HistogramWv  My3DDistacneWv
-		//Wave W_SqrtN		//this does not work with /W flag  
-		Histogram /B={0,1,maxDist}/Dest=HistogramWvIndx  My3DDistacneWv
+		//calculate radial distacne using histogram method
+		//this is 1D wave where we save number of voxels falling inside any specific bin
+		make/Free/N=(10*maxDist/minRadStep) HistogramWvIndx, HistogramWv
+		//this sorts My3DWaveIn into HistogramWv based on distances in My3DDistacneWv with bins from 0 to maxDist with bin size of 1
+		Histogram /B={0,minRadStep,maxDist}/W=My3DWaveIn/Dest=HistogramWv  My3DDistacneWv
+		//this creates number of distances in My3DDistacneWv into the bins stored in HistogramWvIndx
+		Histogram /B={0,minRadStep,maxDist}/Dest=HistogramWvIndx  My3DDistacneWv
+		//this averages HistogramWv by number of voxels saved in each bin. 
 		HistogramWv /= HistogramWvIndx
-		Duplicate/O HistogramWv, RadialWaveProfile
+		//create output wave RadialDistanceProfile
+		Duplicate/O HistogramWv, RadialDistanceProfile
+		//for now, this RadialDistanceProfile has scaling of minRadStep based on minRadStep used in Histogram.  
+		//need to change to real units, the real step is now minRadStep*VoxelSize
+		SetScale/P x 0,minRadStep*VoxelSize,"", RadialDistanceProfile		
+		//done, created RadialDistanceProfile with proper wave scaling to be in distacnes. 
+		//note, this may contain nans since some bins may have 0 points in them. This needs to be cleaned upstream. 
+		print "Created RadialDistanceProfile wave with proper distacne scaling"
 end
 		
 		
@@ -476,6 +480,10 @@ end
 // now for 3D solid where we have many particles this does not work. We get again scattering from teh box size and not from particle shapes... 
 // this is probably useful most for Fractal Aggregate and not for 3D solid...  
 
+//note: to prevent box size effects (3D solid mainly) we need to use trick where we extend the box and suround it with homogeneously filled pixels 
+// these pixels need to be set to mean value of pixels in original box. This smears the edges and shoudl supress the box scattering we have seen in other cases. 
+// this is trick from Larry and other places which can calculate scattering from image. 
+
 Function IR3T_CreatePDFIntensity(ThreeDVoxelGram, IsoValue, Qmin, Qmax, NumQSteps)
 	wave ThreeDVoxelGram
 	variable IsoValue, Qmin, Qmax, NumQSteps
@@ -513,6 +521,7 @@ Function IR3T_CreatePDFIntensity(ThreeDVoxelGram, IsoValue, Qmin, Qmax, NumQStep
 		Print "NO oversampling selected "
 		wave Use3DWave = ThreeDVoxelGram
 	endif
+	
 	
 	variable RadMin,RadMax	//for now, these are simply steps in voxels, we are now working with integer of pixel positions... 
 	RadMin = 0.5
@@ -720,7 +729,20 @@ Function IR3T_CreateSpheresStructure(Wave3DIn,sphereRadius, level)
 	if(NumberByKey("IGORVERS", IgorInfo(0))>8.02)			//there was bug in Igor 8.02 and before, this would crash Igor... 
 		ImageTransform/F=0 shrinkBox Wave3DwithPrimary
 		Wave M_shrunkCube
-		Duplicate/O M_shrunkCube, Wave3DwithPrimaryShrunk
+		variable maxP, maxQ,maxR
+		maxP = dimSize(M_shrunkCube,0)
+		maxQ = dimSize(M_shrunkCube,1)
+		maxR = dimSize(M_shrunkCube,2)
+		variable MaxDim=max(maxP, maxQ, maxR)	//find largest dimension
+		MaxDim = 2*ceil(MaxDim/2)												//make dimension even
+		Make/O/N=(MaxDim,MaxDim,MaxDim)/B Wave3DwithPrimaryShrunk		//make a new space for the data
+		variable poffset, roffset, qoffset
+		poffset = floor((MaxDim - dimSize(M_shrunkCube,0))/2)
+		qoffset = floor((MaxDim - dimSize(M_shrunkCube,1))/2)
+		roffset = floor((MaxDim - dimSize(M_shrunkCube,2))/2)
+		multithread Wave3DwithPrimaryShrunk[poffset,maxP+poffset-1][qoffset,maxQ+qoffset-1][roffset,maxR+roffset-1] = M_shrunkCube[p-poffset][q-qoffset][r-roffset]
+		Killwaves/Z 	M_shrunkCube
+		//Duplicate/O M_shrunkCube, Wave3DwithPrimaryShrunk
 	endif
 	print "Done with creating Voxelgram spherical structure in :"+num2str((ticks-startTicks)/60)
 end

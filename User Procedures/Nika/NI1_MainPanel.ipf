@@ -1436,7 +1436,8 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 				endif		
 				KillWaves/Z TextWv, LineProfQ, LineProfQy,LineProfQx, LineProfQz,LineProfileAz, LineProfIntensity, LineProfError
 			endif
-
+		NVAR DisplayData=root:Packages:Convert2Dto1D:DisplayDataAfterProcessing
+		if(StoreDataInIgor&&DisplayData)
 				SVAR LineProf_CurveType = root:Packages:Convert2Dto1D:LineProf_CurveType			
 				if(stringmatch(LineProf_CurveType,"Horizontal Line")||stringmatch(LineProf_CurveType,"GI_Horizontal Line"))
 					Wave Int=$("r_"+UseName)
@@ -1474,7 +1475,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 				dQvec[0]=dQvec[1]
 				dQvec[numpnts(Qvec)-1] = dQvec[numpnts(Qvec)-2] 
 				NEXUS_WriteNx1DCanSASNika(UserSampleName, Int, Err, Qvec, dQvec, CurOrient, OldNote)
-
+			endif
 			KillWaves/Z tempWv1234
 	else		//sectors profiles goes here. *****************
 		NI1A_RemoveInfNaNsFrom10Waves(Intensity,Qvector,Error,Qsmearing,TwoTheta,TwoThetaWidth,Dspacing,DspacingWidth,DistanceInmm, DistacneInmmWidth )	

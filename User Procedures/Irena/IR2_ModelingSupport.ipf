@@ -2225,7 +2225,7 @@ Function IR2L_Initialize()
 		//Fractals parameters - Mass
 	ListOfPopulationVariablesFR+="MassFrPhi;MassFrRadius;MassFrDv;MassFrKsi;MassFrBeta;MassFrEta;MassFrIntgNumPnts;"
 	ListOfPopulationVariablesFR+="MassFrPhiFit;MassFrRadiusFit;MassFrDvFit;MassFrKsiFit;MassFrUseUFFF;MassFrPDI;"
-	//ListOfPopulationVariables+="MassFrPhiError;MassFrRadiusError;MassFrDvError;MassFrKsiError;"
+	//ListOfPopulationVariables+="MassFrUseUFFF;"
 	ListOfPopulationVariablesFR+="MassFrPhiMin;MassFrRadiusMin;MassFrDvMin;MassFrKsiMin;"
 	ListOfPopulationVariablesFR+="MassFrPhiMax;MassFrRadiusMax;MassFrDvMax;MassFrKsiMax;"
 		
@@ -4694,7 +4694,13 @@ Function/S IR2L_ConfEvalBuildListOfParams(SetLimits)
 			elseif(stringMatch(Model,"Unified level"))
 				ListOfPopulationVariables+="Volume;"	
 				ListOfPopulationVariables+="UF_G;UF_Rg;UF_B;UF_P;UF_RGCO;"
-			else		//diffraction  peak
+			elseif(stringMatch(Model,"MassFractal"))
+				ListOfPopulationVariables+="MassFrPhi;"	
+				ListOfPopulationVariables+="MassFrRadius;MassFrDv;MassFrKsi;"
+			elseif(stringMatch(Model,"SurfaceFractal"))
+				ListOfPopulationVariables+="SurfFrSurf;"	
+				ListOfPopulationVariables+="SurfFrDS;SurfFrKsi;"
+			elseif(stringMatch(Model,"DiffractionPeak"))		//diffraction  peak
 				ListOfPopulationVariables+="DiffPeakPar1;DiffPeakPar2;DiffPeakPar3;DiffPeakPar4;DiffPeakPar5;"		
 			endif
 			SVAR StructureFactor=$("root:Packages:IR2L_NLSQF:StructureFactor_pop"+num2str(j))

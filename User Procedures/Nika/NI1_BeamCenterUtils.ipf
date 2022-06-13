@@ -689,11 +689,11 @@ Function NI1BC_DisplayCalibrantCircles()
 		variable i, radX, radY
 		if(BMCalibrantDisplayCircles)
 			For(i=1;i<=10;i+=1)
-				NVAR  BMUseCalibrantD=$("root:Packages:Convert2Dto1D:BMUseCalibrantD"+num2str(i))
+				NVAR BMUseCalibrantD=$("root:Packages:Convert2Dto1D:BMUseCalibrantD"+num2str(i))
 				NVAR BMCalibrantD=$("root:Packages:Convert2Dto1D:BMCalibrantD"+num2str(i))
 				NVAR BMCalibrantDLineWidth=$("root:Packages:Convert2Dto1D:BMCalibrantD"+num2str(i)+"LineWidth")
 		
-			      setDrawLayer/W=CCDImageForBmCntr ProgFront
+			   setDrawLayer/W=CCDImageForBmCntr ProgFront
 				if(BMUseCalibrantD)
 					if(stringMatch(AxisList("CCDImageForBmCntr"),"*top*"))
 						setdrawenv/W=CCDImageForBmCntr fillpat=0,xcoord=top,ycoord=left,save
@@ -791,47 +791,8 @@ Function/C NI1BC_FindTiltedPxPyValues(dspacing,direction)		//return complex valu
 	 variable px, py
 	DoWindow CCDImageForBmCntr
 	if(V_Flag)
-//		wave BmCntrCCDImg = root:Packages:Convert2Dto1D:BmCntrCCDImg
-//		 xmax = max(abs(BeamCenterX),abs(DimSize(BmCntrCCDImg, 0 ) - BeamCenterX))
-//		 ymax = max(abs(BeamCentery),abs(DimSize(BmCntrCCDImg, 1 ) - BeamCentery))
-
 	 	variable/C result= NI2T_CalculatePxPyWithTilts(TargetTheta, direction)
-
-//		if(real(result)>xmax || real(result)<0 || imag(result)>(ymax)||imag(result)<0)	//out if image already
-//				result=NaN
-//		endif
 		return result
-//		previousTheta = NI2T_CalculateThetaWithTilts2(BeamCenterX+Lradx* cos(direction),BeamCentery-Lrady* sin(direction))	//this is no-tilts theta, it should not be too far... 
-//			variable NewTheta
-//			if(PreviousTheta<TargetTheta)
-//				 for (i=1;i<(max(xmax,ymax));i+=1)		//this should make only as many steps as needed to get to the edge of the detector
-//				 	xval = BeamCenterX+(Lradx+i) * cos(direction)
-//				 	yval = BeamCenterY-(Lrady+i) * sin(direction)
-//				 	NewTheta = NI2T_CalculateThetaWithTilts2(xval,yval)
-//				 //	if(xval>DimSize(BmCntrCCDImg, 0 ) || xval<0 || yval>DimSize(BmCntrCCDImg, 1 )||yval<0)	//out if image already
-//				 //		print "returned NaN for :"+num2str(180*direction/pi)+"   "+num2str(i)+"   "+num2str(xval)+" and "+num2str(yval)
-//				 //		return NaN
-//				 	  if(NewTheta>=TargetTheta)
-//				 		px=xval
-//				 		py=yval
-//				 		return cmplx(px,py)
-//				 	endif
-//				 endfor
-//			else
-//				 for (i=1;i<(max(xmax,ymax));i+=1)		//this should make only as many steps as needed to get to the edge of the detector
-//				 	xval = BeamCenterX+(Lradx-i) * cos(direction)
-//				 	yval = BeamCenterY-(Lrady-i) * sin(direction)
-//				 	NewTheta = NI2T_CalculateThetaWithTilts2(xval,yval)
-//				 //	if(xval>DimSize(BmCntrCCDImg, 0 ) || xval<0 || yval>DimSize(BmCntrCCDImg, 1 )||yval<0)
-//				 //		print "returned NaN for :"+num2str(180*direction/pi)+"   "+num2str(i)+"   "+num2str(xval)+" and "+num2str(yval)
-//				 //		return NaN
-//				 	if(NewTheta<=TargetTheta)
-//				 		px=xval
-//				 		py=yval
-//				 		return cmplx(px,py)
-//				 	endif
-//				 endfor		
-//			endif
 	endif	
 	setDataFolder OldDf
 end
@@ -979,13 +940,12 @@ Function NI1BC_GetPixelFromDSpacing(dspacing, direction)
 	NVAR HorizontalTilt
 	NVAR VerticalTilt
 	//Ok, this should just return simple Bragg law with little trigonometry
-	//		
-	// wrong... pixelDist = 2 * SampleToCCDDistance * asin( Wavelength /(2* dspacing) )  
+			
 	pixelDist = SampleToCCDDistance *tan(2* asin( Wavelength /(2* dspacing) )  )
 	
-	if(cmpstr(direction,"X"))
+	if(stringmatch(direction,"X"))
 			pixelDist = pixelDist / PixelSizeX 
-	elseif(cmpstr(direction,"Y"))
+	elseif(stringmatch(direction,"Y"))
 			pixelDist = pixelDist / PixelSizeY 
 	else
 		pixelDist=0

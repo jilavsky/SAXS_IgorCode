@@ -2657,6 +2657,7 @@ static Function IR2R_SimpleToolFit()
 		Print "Achieved results of optimization"
 		Print "   "
 		Print "Data fitted : "+Dataname
+		Print "ChiSquare : "+num2str(V_chisq)
 		Print "   "
 		For(i=0;i<numpnts(W_coef);i+=1)
 			NVAR testVal=$(CoefNames[i])

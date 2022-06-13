@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=2.57
+#pragma version=2.58
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2022, Argonne National Laboratory
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.58 fix Eiger detecotr dimensions (lines ~800-850) - looks like dimensions of images were wrong and therefroe images did not look right. This related to tiff and cbf images, found on cbf images from user. 
 //2.57 fix reading of edf header. Works now for Xenocs Pilatus 300k header. Singificant changes due to changing line breaks characters. 
 //2.56 add Eiger detector support, tested on 16M background image. 
 //2.55 fix edf file Xenocs loading, they changed \r\n into \n only and that broke parsing header... 
@@ -690,7 +691,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 			close RefNum
 			PilskipBytes=strsearch(testLine, "\014\032\004\325" , 0)		//this is string I found in test images
 			if(PilskipBytes<5)	//string not found...
-				PilskipBytes=strsearch(testLine, "\012\026\004\213" , 0)	//thsi is per http://www.bernstein-plus-sons.com/software/CBF/doc/CBFlib.html#3.2.2 what should be there. Go figure... 
+				PilskipBytes=strsearch(testLine, "\012\026\004\213" , 0)	//this is per http://www.bernstein-plus-sons.com/software/CBF/doc/CBFlib.html#3.2.2 what should be there. Go figure... 
 			endif
 			if(PilskipBytes<5)
 				Abort "Failed to find start of binary section in the Cbf file"
@@ -821,13 +822,18 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
  	        elseif(stringmatch(PilatusType,"Eiger500k"))			//Eiger500k;Eiger1M;Eiger4M;Eiger9M;Eiger16M
  	             Redimension/N=(512,1028) Loadedwave0   
  	        elseif(stringmatch(PilatusType,"Eiger1M"))
- 	             Redimension/N=(1062,1028) Loadedwave0   
+ 	             //Redimension/N=(1062,1028) Loadedwave0
+ 	             Redimension/N=(1030,1065) Loadedwave0      	//4-18-2022 based on Decrtis pdf about Eiger det. 
  	        elseif(stringmatch(PilatusType,"Eiger4M"))
- 	             Redimension/N=(2162,2068) Loadedwave0   
+ 	             //Redimension/N=(2162,2068) Loadedwave0   
+ 	             Redimension/N=(2070,2167) Loadedwave0      	//4-18-2022 based on Decrtis pdf about Eiger det. 
  	        elseif(stringmatch(PilatusType,"Eiger9M"))
- 	             Redimension/N=(3262,3108) Loadedwave0   
+ 	             //Redimension/N=(3262,3108) Loadedwave0   
+ 	             Redimension/N=(3110,3269) Loadedwave0      	//4-18-2022 based on Decrtis pdf about Eiger det. 
  	        elseif(stringmatch(PilatusType,"Eiger16M"))
- 	            Redimension/N=(4362,4148) Loadedwave0   
+ 	            //Redimension/N=(4362,4148) Loadedwave0   //this does not seem to work for test Eigter 16M cbf file
+ 	            														//4-18-2022 based on Decrtis pdf about Eiger det. 
+ 	            Redimension/N=(4150,4371) Loadedwave0   	//this works for test 16M cbf. Are all images this way? 
  	        else
  	        	Abort "Unknown Pilatus Type"
  	        endif

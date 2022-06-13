@@ -1765,7 +1765,7 @@ Function NI1A_LineProf_CreateLP()
 		elseif(stringMatch(LineProf_CurveType,"Ellipse"))
 			NI1A_GenerEllipseLine(BeamCenterX,BeamCenterY,LineProf_EllipseAR,LineProf_DistanceFromCenter,yWave,xWave)
 		endif	
-		ImageLineProfile/S xWave=ywave, yWave=xwave, srcwave=MaskedQ2DWave , width= LineProf_Width
+		ImageLineProfile/S xWave=ywave, yWave=xwave, srcwave=MaskedQ2DWave , width= LineProf_Width				//why is here xwave and ywave swapped? ANy reason (5-3-2022)
 		Wave W_LineProfileX = root:Packages:Convert2Dto1D:W_LineProfileX
 		Wave W_LineProfileY = root:Packages:Convert2Dto1D:W_LineProfileY
 		Wave W_ImageLineProfile = root:Packages:Convert2Dto1D:W_ImageLineProfile

@@ -810,7 +810,7 @@ Function IN2G_ExtractInfoFromFldrname()
 	
 	DFref oldDf=GetDataFolderDFR()
 	setDataFolder GetWavesDataFolderDFR(SampleName)
-	make/O/N=(imax) TimeWave, TemperatureWave, PercentWave, OrderWave
+	make/O/N=(imax) TimeWave, TemperatureWave, PercentWave, OrderWave, NumWave
 	String DataFolderName
 	For(i=0;i<imax;i+=1)
 		DataFolderName = SampleName[i]
@@ -818,6 +818,7 @@ Function IN2G_ExtractInfoFromFldrname()
 		TemperatureWave[i] 	=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzC")
 		PercentWave[i] 			=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzpct")
 		OrderWave[i]				= 	IN2G_IdentifyNameComponent(DataFolderName, "_xyz")
+		NumWave[i]				= 	IN2G_IdentifyNameComponent(DataFolderName, "_xyz_")
 	endfor
 	//clean up and leave only thoser who contain some numbers in tehm. 
 	string ReportExisting=""
@@ -855,13 +856,21 @@ end
 
 
 Function IN2G_IdentifyNameComponent(NameStr, whichComp)
-		string NameStr, whichComp		//"_xyzC",  _xyzmin, _xyzpct, _xyz
+		string NameStr, whichComp		//"_xyzC",  _xyzmin, _xyzpct, _xyz, _xyz_
 		
 		string NameStrLoc=StringFromList(ItemsInList(NameStr, ":")-1, NameStr, ":"  )
 		string result="", tmpStr
 		variable i
 		if(StringMatch(whichComp, "_xyz"))
 			FOr(i=ItemsInList(NameStrLoc, "_")-1;i>=0;i-=1)
+				tmpStr = StringFromList(i, NameStrLoc, "_")
+				if(GrepString(tmpStr, "^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$"))
+					return str2num(tmpStr)
+				endif
+			endfor
+		endif
+		if(StringMatch(whichComp, "_xyz_"))
+			FOr(i=ItemsInList(NameStrLoc, "_")-2;i>=0;i-=1)
 				tmpStr = StringFromList(i, NameStrLoc, "_")
 				if(GrepString(tmpStr, "^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$"))
 					return str2num(tmpStr)

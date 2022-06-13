@@ -2064,7 +2064,10 @@ Function NI1A_CheckParametersForConv()
 	SVAR CCDFileExtension=root:Packages:Convert2Dto1D:CCDFileExtension
 	SVAR FileNameToLoad=root:Packages:Convert2Dto1D:FileNameToLoad
 	SVAR ColorTableName=root:Packages:Convert2Dto1D:ColorTableName
-	
+	//Nika really cannot handle no square pixels... Burried in Geometry corrections. 
+	if(abs(PixelSizeX-PixelSizeY)/abs(PixelSizeX+PixelSizeY)>0.001)
+		Abort "Nika cannot handle non sqaure pixels, CCD size X and Y must be the same"
+	endif
 	//now check the geometry...
 	if(SampleToCCDDistance<=0 || Wavelength<=0 || PixelSizeX<=0 || PixelSizeY<=0)
 		abort "Experiment geometry not setup correctly"
@@ -4853,7 +4856,7 @@ Function NI1A_TabProc(ctrlName,tabNum)
 
 	SetVariable SampleTransmission,disable=(tabNum!=1 || !UseSampleTransmission || UseSampleTransmFnct||UseCalib2DData||UseTranspBeamstop), win=NI1A_Convert2Dto1DPanel
 	CheckBox UseSampleTransmFnct,disable=(tabNum!=1 || !UseSampleTransmission||UseCalib2DData||UseTranspBeamstop), win=NI1A_Convert2Dto1DPanel
-	CheckBox UseTranspBeamstop,disable=(tabNum!=1 || !UseSampleTransmission||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	CheckBox UseTranspBeamstop,disable=(tabNum!=1 || !UseSampleTransmission||UseSampleTransmFnct||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
 	SetVariable SampleTransmFnct,disable=(tabNum!=1 || !UseSampleTransmission || !UseSampleTransmFnct||UseCalib2DData || UseTranspBeamstop), win=NI1A_Convert2Dto1DPanel
 
 	SetVariable SampleI0,disable=(tabNum!=1 || (!UseI0ToCalibrate && !UseMonitorForEF) || UseSampleMonitorFnct||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
@@ -5751,7 +5754,10 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 		SetVariable SampleTransmFnct,disable=(!checked), win=NI1A_Convert2Dto1DPanel
 		CheckBox UseTranspBeamstop,disable=(checked), win=NI1A_Convert2Dto1DPanel
 	endif
-	if(cmpstr("UseTranspBeamstop",ctrlName)==0)
+	//if(cmpstr("UseSampleTransmission",ctrlName)==0)
+	//endif
+
+	if(cmpstr("UseTranspBeamstop",ctrlName)==0||cmpstr("UseSampleTransmission",ctrlName)==0)
 		NVAR UseSampleTransmFnct = root:Packages:Convert2Dto1D:UseSampleTransmFnct
 		SetVariable SampleTransmission,disable=(checked), win=NI1A_Convert2Dto1DPanel
 		SetVariable SampleTransmFnct,disable=(checked || !UseSampleTransmFnct), win=NI1A_Convert2Dto1DPanel
@@ -5787,8 +5793,6 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 	endif
 
 
-	if(cmpstr("UseSampleTransmission",ctrlName)==0)
-	endif
 	if(cmpstr("UseSampleCorrectionFactor",ctrlName)==0)
 	endif
 	if(cmpstr("UseMask",ctrlName)==0)
@@ -7226,20 +7230,24 @@ Function/C NI2T_CalculatePxPyWithTilts(theta, direction)
 	variable px,py
 	NVAR BeamCenterX = root:Packages:Convert2Dto1D:BeamCenterX
 	NVAR BeamCenterY = root:Packages:Convert2Dto1D:BeamCenterY
-	px=  cos(direction)
-	py=  sin(direction)
-	variable GammaAngle=NI2T_CalculateGammaWithTilts(px,py)		//gamma angle
-	variable SDD
 	NVAR SampleToCCDDistance = root:Packages:Convert2Dto1D:SampleToCCDDistance	//in mm
 	NVAR PixelSizeX=root:Packages:Convert2Dto1D:PixelSizeX
 	NVAR PixelSizeY=root:Packages:Convert2Dto1D:PixelSizeY
-	SDD=SampleToCCDDistance/(0.5*(PixelSizeX+PixelSizeY))
+	//px=  cos(direction/PixelSizeX)
+	//py=  sin(direction/PixelSizeY)
+	px=  cos(direction)
+	py=  sin(direction)
+	variable GammaAngle=NI2T_CalculateGammaWithTilts(px,py)		//gamma angle
+	//variable SDD
+	//SDD=SampleToCCDDistance/(0.5*(PixelSizeX+PixelSizeY))
 	variable OtherAngle = pi - TwoTheta - GammaAngle
-	variable distance = SDD*sin(TwoTheta)/sin(OtherAngle)		//distance in pixels from beam center 
+	//variable distance = SDD*sin(TwoTheta)/sin(OtherAngle)		//distance in pixels from beam center, not pixel size aware!
+	variable distanceX = (SampleToCCDDistance/PixelSizeX)*sin(TwoTheta)/sin(OtherAngle)		//distance in pixels from beam center 
+	variable distanceY = (SampleToCCDDistance/PixelSizeY)*sin(TwoTheta)/sin(OtherAngle)		//distance in pixels from beam center 
 	//Question 1/8/2012... Should this be tangents? 
 	//variable distance = SDD*sin(TwoTheta)/sin(OtherAngle)		//distance in pixels from beam center 
-	variable pxR = BeamCenterX+distance*cos(direction)
-	variable pyR = BeamCenterY+distance*sin(direction)
+	variable pxR = BeamCenterX+distanceX*cos(direction)
+	variable pyR = BeamCenterY+distanceY*sin(direction)
 	
 	return cmplx(pxR,pyR)
 	
@@ -7479,7 +7487,7 @@ EndStructure
 //
 //End
 
-//thsi si with respect to beam center...
+//this si with respect to beam center...
 threadsafe Function NI2T_pixel2XYZ(d,px,py,xyz)					// convert pixel position to the beam line coordinate system
 	STRUCT NikadetectorGeometry, &d
 	Variable px,py									// pixel position on detector (full chip & zero based)
@@ -7535,7 +7543,7 @@ Function NI2T_ReadOrientationFromGlobals(d)						// sets d to the reference orie
 
 	// define Detector 0, located SDDmm directly behind the sample 
 	d.used = 1
-	d.Nx = NumPixX ;					d.Ny = NumPixX						// number of un-binned pixels in whole detector
+	d.Nx = NumPixX ;  d.Ny = NumPixX						// number of un-binned pixels in whole detector
 	d.sizeX = NumPixX*PixSizeX*1000;		d.sizeY = NumPixY*PixSizeY*1000		// outside size of detector (micron)
 
 // NOTE THE change here:
@@ -7548,7 +7556,7 @@ Function NI2T_ReadOrientationFromGlobals(d)						// sets d to the reference orie
 //	d.P[1]=(NumPixY/2 - BeamCntrY)*PixSizeX*1000			
 	d.P[0]=BeamCntrX		//put the beam center here....
 	d.P[1]=BeamCntrY		//put the beam center here... 	
-	d.P[2]=SDD	/(0.5 *(PixSizeX+PixSizeY))   			// offset to detector in pixels
+	d.P[2]=SDD/(0.5 *(PixSizeX+PixSizeY))   			// offset to detector in pixels, this is valid only for square pixels... 
 	d.timeMeasured = "This is basic setup with detector perpendicularly to beam SDD away"
 	d.geoNote = "Basic perpendicular orientation"
 	d.detectorID = "User defined"
@@ -7593,7 +7601,7 @@ Function NI2T_SaveOrientationToGlobals(d)						// sets d to the reference orient
 //	BeamCntrY = NumPixY/2 - (d.P[1]/(PixSizeY*1000))						//d.P[1]=(NumPixY/2 - BeamCntrY)*PixSizeX*1000			
 	BeamCntrX = d.P[0]						//	d.P[0]=beam center X
 	BeamCntrY = d.P[1]						//d.P[1]=beam center Y			
-	SDD= 		d.P[2]/1000						//d.P[2]=SDD*1000	  			// offset to detector (micron)
+	SDD= 		d.P[2]//1000						//d.P[2]=SDD*1000	  			// offset to detector (micron)
 	d.timeMeasured = "This is basic setup with detector perpendicularly to beam SDD away"
 	d.geoNote = "Basic perpendicular orientation"
 	d.detectorID = "User defined"
