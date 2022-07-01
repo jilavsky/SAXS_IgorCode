@@ -380,6 +380,12 @@ Function IN3S_TableTabsTabProc(tca) : TabControl
 			TitleBox Tab2Info5,  win=SamplePlateSetup, disable=(tab!=2||ExportCurrentPosSet)
 			ListBox SourceBox,  win=SamplePlateSetup, disable=(tab!=2||ExportCurrentPosSet)
 		    ListBox TargetBox,  win=SamplePlateSetup, disable=(tab!=2||ExportCurrentPosSet)
+		    // root:Packages:SamplePlateSetup:ExportListOfPosSets
+		    if(ExportListOfPosSets)
+		   	 	TabControl TableTabs tabLabel(2)="\\K(65535,0,0)USED! Export Controls"
+		   	else
+		   	 	TabControl TableTabs tabLabel(2)="\\K(0,0,0)Export Controls"
+		   	endif
 			IN3S_EstimateRunTime()
 			IN3S_UpdateListOfSavedSets()
 			break

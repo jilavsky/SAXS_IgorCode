@@ -1,18 +1,17 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version=1.02
+#pragma version=1.03
 
 
 constant IR3DMversionNumber = 1.02			//Data Manipulation III panel version number
 
 
 //Version notes:
+//1.03 fix IR3DM_AverageSaveData to be able to save liiberal names data (e.g., starting with numbers)
 //1.02 fix Process data - trim 
 //1.01 add handling of USAXS M_... waves 
 //1.00 first usable version. 
-
-//TODO: Need to add action function to Process data, for now it does not exist. 
 //
 /////******************************************************************************************
 /////******************************************************************************************
@@ -219,17 +218,18 @@ Function IR3DM_CheckProc(cba) : CheckBoxControl
 				endif
 				IR3DM_SetupControlsOnMainpanel()
 			endif
-			if(stringmatch(cba.ctrlName,"ProcessData"))
+			if(stringmatch(cba.ctrlName,"AverageData"))
 				DeleteData  = 0
-				AverageData =  !ProcessData
+				ProcessData =  !AverageData
 				if(!DeleteData)
 					IR3DM_CreateDM3Graphs()
 				endif
 				IR3DM_SetupControlsOnMainpanel()
 			endif
-			if(stringmatch(cba.ctrlName,"AverageData"))
+
+			if(stringmatch(cba.ctrlName,"ProcessData"))
 				DeleteData  = 0
-				ProcessData =  !AverageData
+				AverageData =  !ProcessData
 				if(!DeleteData)
 					IR3DM_CreateDM3Graphs()
 				endif
@@ -997,7 +997,7 @@ Function IR3DM_AverageSaveData()
 	endif
 	//and now I need to save the data
 	variable Overwrite = 0
-	OutFldrNm=SaveDataToFolderFull+SaveDataToFolder
+	OutFldrNm=SaveDataToFolderFull+possiblyQuoteName(SaveDataToFolder)
 	if(DataFolderExists(OutFldrNm)&&!Overwrite)
 		DoAlert /T="Folder for Average data exists" 1, "Folder "+OutFldrNm+" exists, do you want to overwrite?"
 		if(V_Flag!=1)
