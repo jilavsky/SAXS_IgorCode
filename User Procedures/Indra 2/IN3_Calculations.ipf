@@ -1374,6 +1374,7 @@ Function IN3_FitGaussTop(ctrlname) : Buttoncontrol			// calls the Gaussien fit
 		variable center = (PeakCenterFitStartPoint + PeakCenterFitEndPoint)/2
 		variable start = max(0,center - (center -PeakCenterFitStartPoint) *3 )
 		variable end1 = min(center + (PeakCenterFitEndPoint-center) *3, numpnts(Ar_encoder) )
+		end1 = (end1>=0) ? end1 : 0
 		SetScale/I x Ar_encoder[start], Ar_encoder[end1],"", PeakFitWave
 	endif
 	K0=0
@@ -1598,7 +1599,7 @@ Function IN3_FindlevelsWithNaNs(waveIn, LevelSearched, MaxLocation, LeftRight)
 		else
 			counter-=1
 		endif
-		if(numtype(waveIn[counter])==0)
+		if(counter<(numpnts(waveIn)-1) && numtype(waveIn[counter])==0)
 			LevelPoint = counter
 			if(waveIn[counter]>LevelSearched && counter>0 && Counter<numpnts(WaveIn)) //fix when cannot reach 50% or less value... 
 				LevelPoint = counter
@@ -1608,7 +1609,7 @@ Function IN3_FindlevelsWithNaNs(waveIn, LevelSearched, MaxLocation, LeftRight)
 				endif
 			endif
 		endif	
-	while (Done<1)	
+	while (Done<1 && counter>0 && counter<numpnts(waveIn)-1)	
 	return LevelPoint	
 end
 	

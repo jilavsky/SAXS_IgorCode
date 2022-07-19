@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
-#pragma version=2.11
+#pragma version=2.12
 Constant IRVversionNumber=2.11
 
 
@@ -10,6 +10,7 @@ Constant IRVversionNumber=2.11
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.12 Fix case when user sets Qc in Surface fractal outside their data range, which caused artifacts. 
 //2.11 add option to use Unified Spere form factor instead of Spheroid
 //2.10 comibed with IR1_FractalsFiting.ipf, IR1_FractalsInit.ipf, and IR1_FractalsCntrlPanel.ipf
 //2.06 added getHelp button calling to www manual 
@@ -1850,7 +1851,7 @@ Function IR1V_CalculateSfcFractal(which)
 	tempFractFitIntensity=0
 	tempFractFitIntensity = pi * Contrast* 1e20 * Ksi^4 *1e-32* Surface * exp(gammln(5-DS))	
 	tempFractFitIntensity *= sin((3-DS)* atan(Qvec*Ksi))/((1+(Qvec*Ksi)^2)^((5-DS)/2) * Qvec*Ksi)
-	if(Qc>0)
+	if(Qc>0 && Qc<Qvec[numpnts(Qvec)-2]) 	//7-14-2022 need to make sure Qc is smaller than max Q available... 
 			//h(Q) = C(xc - x)f(Q) + C(x - xc)g(Q).
 			//The transition from one behavior to another is determined by C.  
 			//For an infinitely sharp transition, C would be a Heaviside step function.  

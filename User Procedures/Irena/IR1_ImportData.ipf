@@ -1,12 +1,12 @@
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
-#pragma version=2.41
+#pragma version=2.42
 
 #if(IgorVersion()<9)  	//no need to include, Igor 9 has this by default.  
 #include <HDF5 Browser>
 #endif
 
 
-Constant IR1IversionNumber = 2.37
+Constant IR1IversionNumber = 2.42
 Constant IR1IversionNumber2 = 2.36
 Constant IR1IversionNumberNexus = 2.36
 Constant IR1TrimNameLength = 28
@@ -18,6 +18,7 @@ Constant IR1TrimNameLength = 28
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.42 added Force UTF-8 = /ENCG={1,4} to LoadWave commands to be able to import ASCII from 12IDB
 //2.41 fix for HDF5 changes in IP9
 //2.40 minor fixes for importing Slit smeared data. 
 //2.39 made long names capable for Igor 8 when user chooses. 
@@ -197,10 +198,10 @@ Proc IR1I_ImportSASASCIIData()
 	SetVariable NameMatchString,value= root:Packages:ImportData:NameMatchString
 
 
-	Button SelectAll,pos={5,396},size={100,20}, proc=IR1I_ButtonProc,title="Select All"
+	Button SelectAll,pos={5,396},size={80,17}, proc=IR1I_ButtonProc,title="Select All"
 	Button SelectAll,help={"Select all waves in the list"}
 
-	Button DeSelectAll,pos={120,396},size={100,20}, proc=IR1I_ButtonProc,title="Deselect All"
+	Button DeSelectAll,pos={100,396},size={80,17}, proc=IR1I_ButtonProc,title="Deselect All"
 	Button DeSelectAll,help={"Deselect all waves in the list"}
 
 
@@ -254,12 +255,14 @@ Proc IR1I_ImportSASASCIIData()
 	SetVariable FoundNWaves,help={"This is how many columns were found in the tested file"}, disable=2
 	SetVariable FoundNWaves,limits={0,Inf,0},value= root:Packages:ImportData:FoundNWaves
 
-	CheckBox QvectorInA,pos={240,340},size={16,14},proc=IR1I_CheckProc,title="Qvec units [A^-1]",variable= root:Packages:ImportData:QvectInA, help={"What units is Q in? Select if in Angstroems ^-1"}
-	CheckBox QvectorInNM,pos={240,355},size={16,14},proc=IR1I_CheckProc,title="Qvec units [nm^-1]",variable= root:Packages:ImportData:QvectInNM, help={"What units is Q in? Select if in nanometers ^-1. WIll be converted to inverse Angstroems"}
-	CheckBox CreateSQRTErrors,pos={240,370},size={16,14},proc=IR1I_CheckProc,title="Create SQRT Errors?",variable= root:Packages:ImportData:CreateSQRTErrors, help={"If input data do not contain errors, create errors as sqrt of intensity?"}
-	CheckBox CreatePercentErrors,pos={240,385},size={16,14},proc=IR1I_CheckProc,title="Create n% Errors?",variable= root:Packages:ImportData:CreatePercentErrors, help={"If input data do not contain errors, create errors as n% of intensity?, select how many %"}
-	SetVariable PercentErrorsToUse, pos={240,403}, size={100,20},title="Error %?:", proc=IR1I_setvarProc, disable=!(root:Packages:ImportData:CreatePercentErrors)
+	CheckBox QvectorInA,pos={210,340},size={16,14},proc=IR1I_CheckProc,title="Qvec units [A^-1]",variable= root:Packages:ImportData:QvectInA, help={"What units is Q in? Select if in Angstroems ^-1"}
+	CheckBox QvectorInNM,pos={210,355},size={16,14},proc=IR1I_CheckProc,title="Qvec units [nm^-1]",variable= root:Packages:ImportData:QvectInNM, help={"What units is Q in? Select if in nanometers ^-1. WIll be converted to inverse Angstroems"}
+	CheckBox CreateSQRTErrors,pos={210,370},size={16,14},proc=IR1I_CheckProc,title="Create SQRT Errors?",variable= root:Packages:ImportData:CreateSQRTErrors, help={"If input data do not contain errors, create errors as sqrt of intensity?"}
+	CheckBox CreatePercentErrors,pos={210,385},size={16,14},proc=IR1I_CheckProc,title="Create n% Errors?",variable= root:Packages:ImportData:CreatePercentErrors, help={"If input data do not contain errors, create errors as n% of intensity?, select how many %"}
+	SetVariable PercentErrorsToUse, pos={210,403}, size={100,20},title="Error %?:", proc=IR1I_setvarProc, disable=!(root:Packages:ImportData:CreatePercentErrors)
 	SetVariable PercentErrorsToUse value= root:packages:ImportData:PercentErrorsToUse,help={"Input how many percent error you want to create."}
+
+	CheckBox ForceUTF8,pos={340,340},size={16,14},proc=IR1I_CheckProc,title="UTF-8?",variable= root:Packages:ImportData:ForceUTF8, help={"Select if you have encoding problems"}
 
 
 	CheckBox UseFileNameAsFolder,pos={10,420},size={16,14},proc=IR1I_CheckProc,title="Use File Nms as Fldr Nms?",variable= root:Packages:ImportData:UseFileNameAsFolder, help={"Use names of imported files as folder names for the data?"}
@@ -1050,12 +1053,22 @@ Function IR1I_ImportOneFile(selectedFile)
 		
 	NVAR SkipNumberOfLines=root:Packages:ImportData:SkipNumberOfLines
 	NVAR SkipLines=root:Packages:ImportData:SkipLines	
+	NVAR ForceUTF8=root:Packages:ImportData:ForceUTF8	
+	
 		IR1I_KillAutoWaves()
 		//Variable err
 	if (SkipLines)
-		LoadWave/Q/A/D/G/L={0, SkipNumberOfLines, 0, 0, 0}/P=ImportDataPath  selectedfile
+		if(ForceUTF8)
+			LoadWave/Q/A/D/G/L={0, SkipNumberOfLines, 0, 0, 0}/P=ImportDataPath/ENCG={1,4}  selectedfile
+		else
+			LoadWave/Q/A/D/G/L={0, SkipNumberOfLines, 0, 0, 0}/P=ImportDataPath  selectedfile
+		endif
 	else
-		LoadWave/Q/A/D/G/P=ImportDataPath  selectedfile
+		if(ForceUTF8)
+			LoadWave/Q/A/D/G/P=ImportDataPath/ENCG={1,4}  selectedfile
+		else
+			LoadWave/Q/A/D/G/P=ImportDataPath  selectedfile
+		endif
 		//; err = GetRTError(0)	
 		//if (err != 0)
 		//	String message = GetErrMessage(err)
@@ -1323,12 +1336,23 @@ Function IR1I_TestImport()
 	
 	killWaves/Z wave0, wave1, wave2, wave3, wave4, wave5, wave6,wave7,wave8,wave9
 	
+	NVAR ForceUTF8=root:Packages:ImportData:ForceUTF8	
 	if (SkipLines)
-		LoadWave/Q/A/D/G/L={0, SkipNumberOfLines, 0, 0, 0}/P=ImportDataPath  selectedfile
-		FoundNWaves = V_Flag
+		if(ForceUTF8)
+			LoadWave/Q/A/D/G/L={0, SkipNumberOfLines, 0, 0, 0}/P=ImportDataPath/ENCG={1,4}  selectedfile
+			FoundNWaves = V_Flag
+		else
+			LoadWave/Q/A/D/G/L={0, SkipNumberOfLines, 0, 0, 0}/P=ImportDataPath  selectedfile
+			FoundNWaves = V_Flag
+		endif
 	else
-		LoadWave/Q/A/D/G/P=ImportDataPath  selectedfile
-		FoundNWaves = V_Flag
+		if(ForceUTF8)
+			LoadWave/Q/A/D/G/P=ImportDataPath/ENCG={1,4}  selectedfile
+			FoundNWaves = V_Flag
+		else
+			LoadWave/Q/A/D/G/P=ImportDataPath  selectedfile
+			FoundNWaves = V_Flag
+		endif
 	endif
 	wave wave0
 	NumOfPointsFound=numpnts(wave0)
@@ -1372,7 +1396,12 @@ Function IR1I_TestImportNotebook()
 	
 	//LoadWave/Q/A/G/P=ImportDataPath  selectedfile
 	KillWIndow/Z FilePreview
-	OpenNotebook /K=1 /N=FilePreview /P=ImportDataPath /R /V=1 selectedfile
+	NVAR ForceUTF8=root:Packages:ImportData:ForceUTF8
+	if(ForceUTF8)
+		OpenNotebook /K=1 /N=FilePreview/ENCG={1,4} /P=ImportDataPath /R /V=1 selectedfile
+	else
+		OpenNotebook /K=1 /N=FilePreview /P=ImportDataPath /R /V=1 selectedfile
+	endif
 	MoveWindow /W=FilePreview 450, 5, 1000, 400	
 	AutoPositionWindow/M=0 /R=$(TopPanel) FilePreview
 end
@@ -2237,7 +2266,7 @@ Function IR1I_InitializeImportData()
 	
 	ListOfStrings = "DataPathName;DataExtension;IntName;QvecName;ErrorName;NewDataFolderName;NewIntensityWaveName;DataTypeToImport;"
 	ListOfStrings+="NewQWaveName;NewErrorWaveName;NewQErrorWavename;NameMatchString;TooManyPointsWarning;RemoveStringFromName;"
-	ListOfVariables = "UseFileNameAsFolder;UseIndra2Names;UseQRSNames;DataContainErrors;UseQISNames;"
+	ListOfVariables = "UseFileNameAsFolder;UseIndra2Names;UseQRSNames;DataContainErrors;UseQISNames;ForceUTF8;"
 	ListOfVariables += "SlitSmearData;SlitLength;UsesasEntryNameAsFolder;UseTitleNameAsFolder;"	
 	ListOfVariables += "CreateSQRTErrors;Col1Int;Col1Qvec;Col1Err;Col1QErr;FoundNWaves;"	
 	ListOfVariables += "Col2Int;Col2Qvec;Col2Err;Col2QErr;Col3Int;Col3Qvec;Col3Err;Col3QErr;Col4Int;Col4Qvec;Col4Err;Col4QErr;"	

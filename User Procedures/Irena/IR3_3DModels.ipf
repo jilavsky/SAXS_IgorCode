@@ -1405,7 +1405,7 @@ static Function IR3A_CalculateParametersMT()
 	NoteText+=";RxRgPrimaryValue="+num2str(RValue*PrimaryDiameter)+";s="+num2str(sValue)+";df="+num2str(IN2G_roundSignificant(dfValue,4))+";dmin="+num2str(IN2G_roundSignificant(dminValue,4))
 	NoteText+=";c="+num2str(IN2G_roundSignificant(cValue,4))+";True Sticking Probability="+num2str(100*DegreeOfAggregation/AttemptValue)
 	NoteText+=";MultiParticleAttraction="+MultiParticleAttraction+";MaximumPathLength="+num2str(MaxPathLength)+";MaxNumberOfPathsPerEnd="+num2str(MaxNumPaths)+";NumberOfEnds="+num2str(NumStarts)+";"
-	NoteText+=";Misfti="+num2str(Misfit)+";"
+	NoteText+=";Misfit="+num2str(Misfit)+";"
 
 	Wave MassFractalAggregate
 	Note MassFractalAggregate, NoteText
@@ -3164,7 +3164,7 @@ static Function IR3A_CalculateAggValues()
 	NVAR Target_dmin = root:Packages:AggregateModeling:BrFract_dmin
 	NVAR Model_Dmin=root:Packages:AggregateModeling:dminValue
 	NVAR Model_c = root:Packages:AggregateModeling:cValue
-	Misfit = (Target_C-Model_c)^2/(Target_C)^2 + (Target_dmin-Model_Dmin)^2/(Target_dmin)^2
+	Misfit = sqrt(((Target_C-Model_c)^2/(Target_C)^2 + (Target_dmin-Model_Dmin)^2/(Target_dmin)^2)/2)
 	NVAR TotalGrowthsPlanned = root:Packages:AggregateModeling:TotalGrowthsPlanned
 	NVAR MaxNumTests = root:Packages:AggregateModeling:MaxNumTests
 	NVAR StickProbNumSteps =root:Packages:AggregateModeling:StickProbNumSteps

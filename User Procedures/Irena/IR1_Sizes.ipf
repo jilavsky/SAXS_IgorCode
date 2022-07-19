@@ -267,6 +267,8 @@ Function IR1R_SizesFitting(ctrlName) : ButtonControl			//this function is called
 	string OldDf
 	OldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Sizes
+	//remove CurrentResultSizeDistErrors wave if it exists
+	Killwaves/Z CurrentResultSizeDistErrors
 	
 	DoWindow/F IR1R_SizesInputGraph				//pulls the control graph, in case it is not the top...
 	DoUpdate/W=IR1R_SizesInputGraph
