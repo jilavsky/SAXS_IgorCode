@@ -1,7 +1,7 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version = 1.08
+#pragma version = 1.09
 #pragma IgorVersion=8.03
 
 
@@ -13,6 +13,7 @@
 
 //this is tool to setup Sample Plates for USAXS, survey sample positions, and generate Command files. 
 
+//1.09 Change PVs for 20IDB upgraded instrument. 
 //1.08 add Export list of saved sets. Increased version number of the panel.   
 //1.07 add IN3S_ImportFile which imports other command files. For nwo set for 12IDB command files. 
 //1.06 add Import Image for iamge of sample plate. Straightens paralax and trims based on user corner selection and dimensions provided. 
@@ -1283,10 +1284,11 @@ static Function IN3_InsertHookIntoMainProc()
 	    DisplayProcedure/W=Procedure			
 	    DoIgorMenu "Edit" "Select All"
 	    DoIgorMenu "Edit" "Copy"
-	    string existingProCode=GetScrapText()	// modify procedure code
-  		String newCode = existingProCode + "\r\roverride "+ProcedureText("IN3S_ExportHookFunction") // modify procedure code
-	    PutScrapText newCode				 	// new code in clipboard... 
-	    DoIgorMenu "Edit" "Paste"			 	//put in main proc window. 
+	    string existingProCode=GetScrapText()	// get current procedure code
+  		String newCode = existingProCode + "\r\roverride "+ProcedureText("IN3S_ExportHookFunction") 
+  												// this is existing + modified hook function code
+	    PutScrapText newCode				 	// put new code in clipboard... 
+	    DoIgorMenu "Edit" "Paste"			 	// put clipboard in main proc window. 
 	    PutScrapText currScrap               	// put previous scrap text back
 	    Execute/P/Q/Z "COMPILEPROCEDURES "   	// recompile all
 	    HideProcedures                       	// hide all procedure windows
@@ -3556,8 +3558,8 @@ Function IN3S_BeamlineSurvey()
 	//sync epics, RBV and TAR positions here
 #if(exists("pvOpen")==4)
 	variable SxPV, SyPV
-	pvOpen/Q SxPV, "9idcLAX:m58:c2:m1.RBV"
-	pvOpen/Q SyPV, "9idcLAX:m58:c2:m2.RBV"
+	pvOpen/Q SxPV, "9idcAERO:m8.RBV"
+	pvOpen/Q SyPV, "9idcAERO:m9.RBV"
 	pvWait 5
 	//this needs to be in background function and in 10Hz loop. 	
 	SampleXRBV = IN3S_GetMotorPositions(SxPV)
@@ -3629,8 +3631,8 @@ Function IN3S_BackgroundEpics(s) // This is the function that will be called per
 	NVAR SampleYRBV=root:Packages:SamplePlateSetup:SampleYRBV
 #if(exists("pvOpen")==4)
 	variable SxPV, SyPV
-	pvOpen/Q SxPV, "9idcLAX:m58:c2:m1.RBV"
-	pvOpen/Q SyPV, "9idcLAX:m58:c2:m2.RBV"
+	pvOpen/Q SxPV, "9idcAERO:m8.RBV"
+	pvOpen/Q SyPV, "9idcAERO:m9.RBV"
 	pvWait 5
 	//this needs to be in background function and in 10Hz loop. 	
 	SampleXRBV = IN3S_GetMotorPositions(SxPV)
@@ -3909,8 +3911,8 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 			if(StringMatch(ba.ctrlName, "SyncMotors"))
 #if(exists("pvOpen")==4)
 				variable SxPV, SyPV
-				pvOpen/Q SxPV, "9idcLAX:m58:c2:m1.RBV"
-				pvOpen/Q SyPV, "9idcLAX:m58:c2:m2.RBV"
+				pvOpen/Q SxPV, "9idcAERO:m8.RBV"
+				pvOpen/Q SyPV, "9idcAERO:m9.RBV"
 				SampleXTAR = IN3S_GetMotorPositions(SxPV)
 				SampleYTAR = IN3S_GetMotorPositions(SyPV)
 				SampleXRBV = IN3S_GetMotorPositions(SxPV)
@@ -3928,11 +3930,11 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 						abort "Instrument is collecting data, cannot move motors"
 					else	
 						//"SX"
-						IN3S_PutEpicsPv("9idcLAX:m58:c2:m1.SSET", 1)
+						IN3S_PutEpicsPv("9idcAERO:m8.SSET", 1)
 						sleep/T 10
-						IN3S_PutEpicsPv("9idcLAX:m58:c2:m1.VAL", 0)
+						IN3S_PutEpicsPv("9idcAERO:m8.VAL", 0)
 						sleep/T 10
-						IN3S_PutEpicsPv("9idcLAX:m58:c2:m1.SUSE", 1)
+						IN3S_PutEpicsPv("9idcAERO:m8.SUSE", 1)
 					endif
 				SampleXTAR = 0
 #endif
@@ -3944,11 +3946,11 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 						abort "Instrument is collecting data, cannot move motors"
 					else	
 						//"SY"
-						IN3S_PutEpicsPv("9idcLAX:m58:c2:m2.SSET", 1)
+						IN3S_PutEpicsPv("9idcAERO:m9.SSET", 1)
 						sleep/T 10
-						IN3S_PutEpicsPv("9idcLAX:m58:c2:m2.VAL", 0)
+						IN3S_PutEpicsPv("9idcAERO:m9.VAL", 0)
 						sleep/T 10
-						IN3S_PutEpicsPv("9idcLAX:m58:c2:m2.SUSE", 1)
+						IN3S_PutEpicsPv("9idcAERO:m9.SUSE", 1)
 					endif
 				SampleYTAR = 0
 #endif
@@ -3970,11 +3972,11 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 					if(InstrumentUsed)
 						abort "Instrument is collecting data, cannot move motors"
 					else	
-						//c2:m8 is Horizontal slit size
-						IN3S_PutEpicsPv("9idcLAX:m58:c2:m8.VAL", 2.5)
+						//c1:m8 is Horizontal slit size
+						IN3S_PutEpicsPv("9idcLAX:m58:c1:m8.VAL", 2.5)
 						IN3S_PutEpicsPv("9idcLAX:GSlit1H:size", 2.8)
-						//c2:m8 is Vertical slit size
-						IN3S_PutEpicsPv("9idcLAX:m58:c2:m7.VAL", 1.2)
+						//c1:m7 is Vertical slit size
+						IN3S_PutEpicsPv("9idcLAX:m58:c1:m7.VAL", 1.2)
 						IN3S_PutEpicsPv("9idcLAX:GSlit1V:size", 1.4)
 					endif
 #endif
@@ -3990,11 +3992,11 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 						VertSLit = IN3S_GetPVVariableValue("9idcLAX:USAXS_vslit_ap")
 						HorGuardSlit = IN3S_GetPVVariableValue("9idcLAX:USAXS_hgslit_ap")
 						VertGuardSlit = IN3S_GetPVVariableValue("9idcLAX:USAXS_vgslit_ap")
-						//c2:m8 is Horizontal slit size
-						IN3S_PutEpicsPv("9idcLAX:m58:c2:m8.VAL", HorSlit)
+						//c1:m8 is Horizontal slit size
+						IN3S_PutEpicsPv("9idcLAX:m58:c1:m8.VAL", HorSlit)
 						IN3S_PutEpicsPv("9idcLAX:GSlit1H:size", HorGuardSlit)
-						//c2:m8 is Vertical slit size
-						IN3S_PutEpicsPv("9idcLAX:m58:c2:m7.VAL", VertSLit)
+						//c1:m7 is Vertical slit size
+						IN3S_PutEpicsPv("9idcLAX:m58:c1:m7.VAL", VertSLit)
 						IN3S_PutEpicsPv("9idcLAX:GSlit1V:size", VertGuardSlit)
 					endif
 #endif
@@ -4009,11 +4011,11 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 						VertSLit = IN3S_GetPVVariableValue("9idcLAX:SAXS_vslit_ap")
 						HorGuardSlit = IN3S_GetPVVariableValue("9idcLAX:SAXS_hgslit_ap")
 						VertGuardSlit = IN3S_GetPVVariableValue("9idcLAX:SAXS_vgslit_ap")
-						//c2:m8 is Horizontal slit size
-						IN3S_PutEpicsPv("9idcLAX:m58:c2:m8.VAL", HorSlit)
+						//c1:m8 is Horizontal slit size
+						IN3S_PutEpicsPv("9idcLAX:m58:c1:m8.VAL", HorSlit)
 						IN3S_PutEpicsPv("9idcLAX:GSlit1H:size", HorGuardSlit)
-						//c2:m8 is Vertical slit size
-						IN3S_PutEpicsPv("9idcLAX:m58:c2:m7.VAL", VertSLit)
+						//c1:m8 is Vertical slit size
+						IN3S_PutEpicsPv("9idcLAX:m58:c1:m7.VAL", VertSLit)
 						IN3S_PutEpicsPv("9idcLAX:GSlit1V:size", VertGuardSlit)
 					endif
 #endif
@@ -4160,9 +4162,9 @@ static Function IN3S_MoveMotorInEpics(WhichMotor,MovePosition)
 		abort "Instrument is collecting data, cannot move motors"
 	else	
 		if(stringMatch(WhichMotor,"SX"))
-			IN3S_PutEpicsPv("9idcLAX:m58:c2:m1.VAL", MovePosition)
+			IN3S_PutEpicsPv("9idcAERO:m8.VAL", MovePosition)
 		elseif(stringMatch(WhichMotor,"SY"))
-			IN3S_PutEpicsPv("9idcLAX:m58:c2:m2.VAL", MovePosition)
+			IN3S_PutEpicsPv("9idcAERO:m9.VAL", MovePosition)
 		endif
 	endif
 #else

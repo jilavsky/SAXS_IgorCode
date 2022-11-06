@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=2.71
-Constant NI1AversionNumber = 2.72
+#pragma version=2.73
+Constant NI1AversionNumber = 2.73
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2022, Argonne National Laboratory
@@ -9,6 +9,8 @@ Constant NI1AversionNumber = 2.72
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.73 add ability to flip/rotate image after load to let users tweak image orientation. 
+		// modify NewMovie /CF=1 /F=(Movie_FrameRate)/I/Z to /CF=1 to reduce compression artifacts.  
 //2.72 add Use Transparent Beamstop transmission calculation
 //2.71 add Eiger types 
 //2.70 fixed Max number of points selection which did not account for Qmin and Qmax and was therefore producing too many points
@@ -342,6 +344,7 @@ Function NI1A_Initialize2Dto1DConversion()
 	ListOfStrings+="EmptyTimeFnct;BackgTimeFnct;EmptyMonitorFnct;"
 	ListOfStrings+="LineProf_CurveType;LineProf_KnownCurveTypes;RemoveStringFromName;"
 	ListOfStrings+="SampleNameMatchStr;EmptyDarkNameMatchStr;Movie_FileName;Movie_Last1DdataSet;"
+	ListOfStrings+="RotateFLipImageOnLoad;"
 	//2DCalibratedDataInput & output
 	ListOfStrings+="RebinCalib2DDataToPnts;Calib2DDataOutputFormat;"
 
@@ -405,6 +408,10 @@ Function NI1A_Initialize2Dto1DConversion()
 	endif
 	
 
+	SVAR RotateFLipImageOnLoad
+	if(strlen(RotateFLipImageOnLoad)<1)
+		RotateFLipImageOnLoad="No"
+	endif
 	SVAR RebinCalib2DDataToPnts
 	if(strlen(RebinCalib2DDataToPnts)<1)
 		RebinCalib2DDataToPnts="100x100"
@@ -2422,7 +2429,13 @@ Function NI1A_MovieOpenFile()
 	NVAR Movie_AppendAutomatically=root:Packages:Convert2Dto1D:Movie_AppendAutomatically
 	NVAR Movie_FileOpened=root:Packages:Convert2Dto1D:Movie_FileOpened
 	
-	NewMovie /F=(Movie_FrameRate)/I/Z
+	NewMovie /CF=1 /F=(Movie_FrameRate)/I/Z		//8-29-2022 added CF=1 (default is 200) to reduce compression artifacts. Ugh... 
+	//warning from Wvemetrics :
+	//On Windows (I haven't looked at the mac code), the compression factor you provide is used in this calculation:
+	//UINT32 bitRate= (VIDEO_WIDTH * VIDEO_HEIGHT * 24.0 * VIDEO_FPS_IN) / compressionFactor;		// this could overflow 32 bits if factor is small and size is large
+	//VIDEO_FPS_IN is 30 unless you use the /F flag.
+	//If you use /CF=1, you need to make sure that the width x height is < ~5.96 million, this is slightly above 2400x2400 pixels images.
+
 	if(V_Flag==-1)
 		abort
 	elseif(V_Flag!=0)

@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.07
+#pragma version=1.08
 #include <Peak AutoFind>
 
 
@@ -14,6 +14,7 @@ Constant IN3_TrimDoNOTremoveVibrations=0			//this controls if vibrations are fou
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+//1.08 fixed loading 20ID horizontally scanning step scan data. 
 //1.07 fixes for HDF5 changes in IP9, removed old FLyScan Import code (separate panel to import FS data which were then reduced by old USAXS `panel). Obsolete. 
 //1.06 added passing through NXMetadata, NXSample, NXInstrument, NXUser
 //1.05 added option to disable removing of raneg change transitional effects, constant IN3_RemoveRangeChangeEffects
@@ -815,7 +816,7 @@ end
 Function/T IN3_StepScanConvertToUSAXS(RawFolderWithData, origFileName)
 	string RawFolderWithData, origFileName
 
-print "Function IN3_StepScanConvertToUSAXS is not finished yet!"
+	//print "Function IN3_StepScanConvertToUSAXS is not finished yet!"
 
 	string OldDf=GetDataFolder(1)
 	setDataFolder RawFolderWithData
@@ -837,8 +838,12 @@ print "Function IN3_StepScanConvertToUSAXS is not finished yet!"
 	Wave I0GainW = :entry:data:I0_autorange_controls_reqrange
 	Wave UPDGainWv = :entry:data:upd_autorange_controls_reqrange
 	Wave ARWv 		= :entry:data:a_stage_r
-	Wave AYWv 		= :entry:data:a_stage_y
-	Wave DYWv 		= :entry:data:d_stage_y
+	Wave/Z AYWv 		= :entry:data:a_stage_x
+	Wave/Z DYWv 		= :entry:data:d_stage_x
+	if(!WaveExists(AYWv))	//this is old 9ID and before vertical scan
+		Wave AYWv 		= :entry:data:a_stage_y
+		Wave DYWv 		= :entry:data:d_stage_y
+	endif
 	Wave MRWv 		= :entry:data:m_stage_r
 	Wave SYWv 		= :entry:data:s_stage_y
 	//TimeWv in BS is in frequency counts. 1e7 counts/second
@@ -879,7 +884,10 @@ print "Function IN3_StepScanConvertToUSAXS is not finished yet!"
 	//these transmission values 
 	Wave/Z USAXSPinT_I0Counts=:entry:instrument:bluesky:streams:baseline:terms_USAXS_transmission_I0_counts:value
 	Wave/Z USAXSPinT_I0Gain=:entry:instrument:bluesky:streams:baseline:terms_USAXS_transmission_I0_gain:value
-	Wave/Z USAXSPinT_AyPosition=:entry:instrument:bluesky:streams:baseline:terms_USAXS_transmission_ay:value
+	Wave/Z USAXSPinT_AyPosition=:entry:instrument:bluesky:streams:baseline:terms_USAXS_transmission_ax:value
+	if(!WaveExists(USAXSPinT_AyPosition))	//this is old 9ID and before vertical scan
+		Wave/Z USAXSPinT_AyPosition=:entry:instrument:bluesky:streams:baseline:terms_USAXS_transmission_ay:value
+	endif
 	Wave/Z USAXSPinT_pinCounts=:entry:instrument:bluesky:streams:baseline:terms_USAXS_transmission_diode_counts:value
 	Wave/Z USAXSPinT_pinGain=:entry:instrument:bluesky:streams:baseline:terms_USAXS_transmission_diode_gain:value
 	Wave/Z USAXSPinT_Time= :entry:instrument:bluesky:streams:baseline:terms_USAXS_transmission_count_time:value
@@ -890,9 +898,14 @@ print "Function IN3_StepScanConvertToUSAXS is not finished yet!"
 	Wave/Z DCM_energyW=:entry:instrument:monochromator:energy
 	Wave SDDW=:entry:instrument:bluesky:metadata:SDD_mm
 	Wave SADW=:entry:instrument:bluesky:metadata:SAD_mm
-	Wave AYW=:entry:instrument:bluesky:metadata:ay0
 	Wave ArCenterW=:entry:instrument:bluesky:metadata:center
-	Wave DYW=:entry:instrument:bluesky:metadata:dy0
+	//new 20ID horizontal scan
+	Wave AYW=:entry:instrument:bluesky:metadata:ax0
+	Wave DYW=:entry:instrument:bluesky:metadata:dx0
+	if(!WaveExists(AYW))	//this is old 9ID and before vertical scan
+		Wave AYW=:entry:instrument:bluesky:metadata:ay0
+		Wave DYW=:entry:instrument:bluesky:metadata:dy0
+	endif
 	Wave ExponentW=:entry:instrument:bluesky:metadata:exponent
 	Wave FinishW=:entry:instrument:bluesky:metadata:finish
 	Wave IntervalsW=:entry:instrument:bluesky:metadata:intervals

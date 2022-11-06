@@ -1109,7 +1109,7 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 static Function/S NEXUS_FindSignalV2Data()
-	//check each wave in curren tfolder if it has signal= 1 in the wavenote
+	//check each wave in current folder if it has signal= 1 in the wavenote
 	////IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string WavenameStr=""
 	string objName
@@ -1144,7 +1144,7 @@ static Function/S NEXUS_FindAnySignalData()
 		endif
 		Wave TestWv = $(objName)
 		if(WaveDims(TestWv) == 2 || WaveDims(TestWv) == 3 || WaveDims(TestWv) ==4 )
-			//6-2017 added ability to handel higher dimensions, up to 4 dimensions allowed by standard
+			//6-2017 added ability to handle higher dimensions, up to 4 dimensions allowed by standard
 			WavenameStr = objName
 			break
 		endif

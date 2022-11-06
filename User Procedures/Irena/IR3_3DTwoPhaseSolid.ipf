@@ -649,10 +649,10 @@ Function IR3T_CalculateRg()
 		Variable V_FitError=0			//This should prevent errors from being generated
 		Redimension /N=2 W_coef, LocalEwave
 		Redimension/N=2 T_Constraints
-		T_Constraints[0] = {"K1 > 0"}
+		T_Constraints[0] = {"K1 > 10"}
 		T_Constraints[1] = {"K0 > 0"}
 
-		W_coef[0]=OriginalIntensity[CursorQstart] 	//G
+		W_coef[0]=OriginalIntensity[pcsr(A , "TwoPhaseSystemData")] 	//G
 		W_coef[1]=PI/((CursorQend + CursorQstart)/2)	//Rg
 
 		LocalEwave[0]=(W_coef[0]/20)

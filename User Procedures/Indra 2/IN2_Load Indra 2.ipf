@@ -64,7 +64,7 @@
 
 #include "spec", version>=2.21
 //#include ":IN2_XtalCalculations", version>=1
-#include "IonChamber3.1", version>=3.1
+#include "IonChamber3.3", version>=3.3
 
 #include "IR2_PanelCntrlProcs", version>=1.64
 #include "IRNI_NexusSupport", version>=1.17

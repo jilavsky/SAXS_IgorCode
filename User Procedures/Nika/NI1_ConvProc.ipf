@@ -12,6 +12,8 @@
 
 //2.74 ~2022 sometimes. 
 //			added ability to calculate transmission using semi transparent beamstop. 
+//			removed use of calibrated data, let's see if anyone complains. I do nto think there is any use for this. 
+//			add Transpose and flips for image after load. 
 //2.73 5-24-2021 changed resolution to be FWHM/2, same as USAXS and as expected by Modeling package and sasView. 
 //		modifed NI1A_CalculateQresolution to return FWHM and use only Q steps and Beam size. Pixel size used before is wrong, that is accounted for in Q stepping already, Nika cannot oversample in Q points. 
 //2.72 Remove for MatrixOP /NTHR=0 since it is applicable to 3D matrices only 
@@ -1865,7 +1867,7 @@ Function NI1A_ButtonProc(ctrlName) : ButtonControl
 		NewPath/C/O/M="Select path to your data" Convert2Dto1DDataPath
 		PathInfo Convert2Dto1DDataPath
 		SVAR MainPathInfoStr=root:Packages:Convert2Dto1D:MainPathInfoStr
-		MainPathInfoStr=S_path
+		MainPathInfoStr=S_path[strlen(S_path)-NikaLengthOfPathForPanelDisplay,strlen(S_path)-1]
 		TitleBox PathInfoStr, win =NI1A_Convert2Dto1DPanel, variable=MainPathInfoStr
 		NI1A_UpdateDataListBox()		
 	endif
@@ -3759,28 +3761,34 @@ Function NI1A_Convert2Dto1DPanelFnct()
 
 	TitleBox MainTitle title="\Zr1602D to 1D data conversion panel",pos={48,2},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428)
 	TitleBox Info1 title="\Zr120Select input data here",pos={5,72},frame=0,fstyle=1, size={130,20},fColor=(1,4,52428)
-	Button GetHelp,pos={335,5},size={80,15},fColor=(65535,32768,32768), proc=NI1A_ButtonProc,title="Get Help", help={"Open www manual page for this tool"}
+	Button GetHelp,pos={335,2},size={80,15},fColor=(65535,32768,32768), proc=NI1A_ButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 //first data selection part
 	Button Select2DDataPath,pos={5,30},size={140,20},proc=NI1A_ButtonProc,title="Select data path"
 	Button Select2DDataPath,help={"Select Data path where 2D data are"}
-	TitleBox PathInfoStr, pos={3,55}, size={350,20}, variable=root:Packages:Convert2Dto1D:MainPathInfoStr, frame=0, fstyle=2, fColor=(0,12800,32000)//,fSize=1.3
-	PopupMenu Select2DDataType,pos={290,30},size={111,21},proc=NI1A_PopMenuProc,title="Image type"
+	TitleBox PathInfoStr, pos={3,60}, size={300,20}, variable=root:Packages:Convert2Dto1D:MainPathInfoStr, frame=0, fstyle=2, fColor=(0,12800,32000)//,fSize=1.3
+	PopupMenu Select2DDataType,pos={290,20},size={111,21},proc=NI1A_PopMenuProc,title="Image type"
 	PopupMenu Select2DDataType,help={"Select type of 2D images being loaded"},value= #"root:Packages:Convert2Dto1D:ListOfKnownExtensions"
 	PopupMenu Select2DDataType,popmatch=DataFileExtension
-	CheckBox UseCalib2DData,pos={165,33},size={146,14},proc=NI1A_CheckProc,title="Calibrated 2D data?"
-	CheckBox UseCalib2DData,help={"Import 2D calibrated data, not raw image data"}
-	CheckBox UseCalib2DData,variable= root:Packages:Convert2Dto1D:UseCalib2DData
-	NVAR UseCalib2DData = root:Packages:Convert2Dto1D:UseCalib2DData
-	SVAR DataFileExtension = root:Packages:Convert2Dto1D:DataFileExtension
-	SVAR ListOfKnownCalibExtensions = root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions
-	if(UseCalib2DData)
-		DataFileExtension = StringFromList(0,ListOfKnownCalibExtensions)
-		PopupMenu Select2DDataType,mode=2,popvalue=DataFileExtension,value= #"root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions"
-	endif
+//	CheckBox UseCalib2DData,pos={165,33},size={146,14},proc=NI1A_CheckProc,title="Calibrated 2D data?"
+//	CheckBox UseCalib2DData,help={"Import 2D calibrated data, not raw image data"}
+//	CheckBox UseCalib2DData,variable= root:Packages:Convert2Dto1D:UseCalib2DData
+//	NVAR UseCalib2DData = root:Packages:Convert2Dto1D:UseCalib2DData
+//	SVAR DataFileExtension = root:Packages:Convert2Dto1D:DataFileExtension
+//	SVAR ListOfKnownCalibExtensions = root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions
+//	if(UseCalib2DData)
+//		DataFileExtension = StringFromList(0,ListOfKnownCalibExtensions)
+//		PopupMenu Select2DDataType,mode=2,popvalue=DataFileExtension,value= #"root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions"
+//	endif
 
-	CheckBox ReverseBinnedData,pos={298,50},size={146,14},proc=NI1A_CheckProc,title="Unbin if needed?"
-	CheckBox ReverseBinnedData,help={"Reverse binning if necessary?"}, disable=!(UseCalib2DData|| !StringMatch(DataFileExtension, "canSAS/Nexus"))
-	CheckBox ReverseBinnedData,variable= root:Packages:Convert2Dto1D:ReverseBinnedData
+//	CheckBox ReverseBinnedData,pos={165,50},size={146,14},proc=NI1A_CheckProc,title="Unbin if needed?"
+//	CheckBox ReverseBinnedData,help={"Reverse binning if necessary?"}, disable=!(UseCalib2DData|| !StringMatch(DataFileExtension, "canSAS/Nexus"))
+//	CheckBox ReverseBinnedData,variable= root:Packages:Convert2Dto1D:ReverseBinnedData
+
+	PopupMenu RotateFLipImageOnLoad,pos={285,40},size={111,13},proc=NI1A_PopMenuProc,title="Flip/Rotate: "
+	PopupMenu RotateFLipImageOnLoad,help={"Rotate/Flip image on import "}
+	SVAR RotateFLipImageOnLoad=root:Packages:Convert2Dto1D:RotateFLipImageOnLoad
+	PopupMenu RotateFLipImageOnLoad,value= "No;Transpose;FlipHor;FlipVert;Tran/FlipH;"
+	PopupMenu RotateFLipImageOnLoad,popmatch=RotateFLipImageOnLoad
 
 	CheckBox InvertImages,pos={150,73},size={146,14},proc=NI1A_CheckProc,title="Invert 0, 0 corner?"
 	CheckBox InvertImages,help={"Check to have 0,0 in left BOTTOM corner, uncheck to have 0,0 in left TOP corner. Only for newly loaded images!"}
@@ -4800,7 +4808,7 @@ Function NI1A_TabProc(ctrlName,tabNum)
 	SVAR DataFileExtension=root:Packages:Convert2Dto1D:DataFileExtension
 
 	//other control on the panel...
-	CheckBox ReverseBinnedData, disable=!(UseCalib2DData|| StringMatch(DataFileExtension, "canSAS/Nexus")), win=NI1A_Convert2Dto1DPanel	
+	//CheckBox ReverseBinnedData, disable=!(UseCalib2DData|| StringMatch(DataFileExtension, "canSAS/Nexus")), win=NI1A_Convert2Dto1DPanel	
 
  
 	//tab 0 controls
@@ -5515,24 +5523,24 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 		endif
 		NI1A_TabProc("",7)
 	endif
-	if(StringMatch("UseCalib2DData",ctrlName))
-		SVAR ListOfKnownExtensions = root:Packages:Convert2Dto1D:ListOfKnownExtensions
-		SVAR DataFileExtension = root:Packages:Convert2Dto1D:DataFileExtension
-		SVAR ListOfKnownCalibExtensions = root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions
-		if(checked)
-			DataFileExtension = stringfromlist(0,ListOfKnownCalibExtensions)
-			PopupMenu Select2DDataType,win=NI1A_Convert2Dto1DPanel, popvalue=DataFileExtension,value= #"root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions", mode=2
-		else
-			DataFileExtension = stringfromlist(0,ListOfKnownExtensions)
-			PopupMenu Select2DDataType,win=NI1A_Convert2Dto1DPanel, popvalue=DataFileExtension,value= #"root:Packages:Convert2Dto1D:ListOfKnownExtensions", mode=2				
-		endif
-		CheckBox ReverseBinnedData, disable=!(UseCalib2DData|| StringMatch(DataFileExtension, "canSAS/Nexus")), win=NI1A_Convert2Dto1DPanel	
-		if(ExpCalib2DData&&UseCalib2DData)
-			DoALert /T="Careful on this", 0, "Loading 2D Calibrated data and exporting them at the same time. You can overwrite your 2D data. Make sure you use different output formats or paths!"
-		endif
-		NI1A_TabProc("",0)
-		NI1A_UpdateDataListBox()
-	endif
+//	if(StringMatch("UseCalib2DData",ctrlName))
+//		SVAR ListOfKnownExtensions = root:Packages:Convert2Dto1D:ListOfKnownExtensions
+//		SVAR DataFileExtension = root:Packages:Convert2Dto1D:DataFileExtension
+//		SVAR ListOfKnownCalibExtensions = root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions
+//		if(checked)
+//			DataFileExtension = stringfromlist(0,ListOfKnownCalibExtensions)
+//			PopupMenu Select2DDataType,win=NI1A_Convert2Dto1DPanel, popvalue=DataFileExtension,value= #"root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions", mode=2
+//		else
+//			DataFileExtension = stringfromlist(0,ListOfKnownExtensions)
+//			PopupMenu Select2DDataType,win=NI1A_Convert2Dto1DPanel, popvalue=DataFileExtension,value= #"root:Packages:Convert2Dto1D:ListOfKnownExtensions", mode=2				
+//		endif
+//		//CheckBox ReverseBinnedData, disable=!(UseCalib2DData|| StringMatch(DataFileExtension, "canSAS/Nexus")), win=NI1A_Convert2Dto1DPanel	
+//		if(ExpCalib2DData&&UseCalib2DData)
+//			DoALert /T="Careful on this", 0, "Loading 2D Calibrated data and exporting them at the same time. You can overwrite your 2D data. Make sure you use different output formats or paths!"
+//		endif
+//		NI1A_TabProc("",0)
+//		NI1A_UpdateDataListBox()
+//	endif
 
 
 	if(StringMatch("LineProfileUseRAW",ctrlName))
@@ -8184,7 +8192,7 @@ Function NI1A_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 			endif
 		endif	
 		NEXUS_NikaCall(0)
-		CheckBox ReverseBinnedData,help={"Reverse binning if necessary?"}, disable=!(UseCalib2DData && StringMatch(DataFileExtension, "canSAS/Nexus"))
+		//CheckBox ReverseBinnedData,help={"Reverse binning if necessary?"}, disable=!(UseCalib2DData && StringMatch(DataFileExtension, "canSAS/Nexus"))
 	endif
 	if(cmpstr(ctrlName,"SelectBlank2DDataType")==0)
 		//set appropriate extension
@@ -8214,6 +8222,11 @@ Function NI1A_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 		FIlesSortOrder = popNum-1
 		NI1A_UpdateDataListBox()
 	endif
+	if(cmpstr(ctrlName,"RotateFLipImageOnLoad")==0)
+		SVAR RotateFLipImageOnLoad=root:Packages:Convert2Dto1D:RotateFLipImageOnLoad
+		RotateFLipImageOnLoad = popStr
+	endif
+	
 	
 	if(cmpstr(ctrlName,"LineProf_CurveType")==0)
 		//here we select start of the range...

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.15
+#pragma version=1.16
 
 Constant IR2MversionNumber = 1.13			//Data mining tool version number
 constant IR3BversionNumber = 0.1			//MetadataBrowser tool version number. 
@@ -10,6 +10,7 @@ constant IR3BversionNumber = 0.1			//MetadataBrowser tool version number.
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.16 fix extracting 1 digit data, was skipping due to bug. (could not extract for example 1). 
 //1.15 add handling of USAXS M_... waves 
 //1.14 added MetadataBrowser tool in this package,
 //1.13 GetHelp button
@@ -730,7 +731,7 @@ static Function IR3B_ExtrMtdtFromOneFolder(FolderNameStr)
 				TmpWv[NumberOfExtractedItems] = IN2G_IdentifyNameComponent(DataFolderName, "_xyzpct")
 		//done with special name based waves... 
 		else		///all others. 
-			if(strlen(ValueString)>1)			//if "", we cannot process it... 
+			if(strlen(ValueString)>0)			//if "", we cannot process it... //9-19-2022 fix from >1 to >0
 				if(GrepString(ValueString, "^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$"))		//this is number
 					CleanKeyName = CleanupName(KeyString[0,31], 0)
 					Wave/Z TmpWv=$(CleanKeyName)

@@ -16,7 +16,7 @@
 //1.81		October2021 release
 
 #include "NI1_InstrumentSupport",version>=1.22
-#include "NI1_HDF5Browser",version>=1.01
+//#include "NI1_HDF5Browser",version>=1.01
 #include "NI1_FileLoaders",version>=2.57
 #include "NI1_ConvProc", version>=2.73
 #include "NI1_BeamCenterUtils",version>=2.3

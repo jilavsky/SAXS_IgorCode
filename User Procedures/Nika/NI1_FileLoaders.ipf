@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=2.58
+#pragma version=2.60
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2022, Argonne National Laboratory
@@ -8,7 +8,9 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.58 fix Eiger detecotr dimensions (lines ~800-850) - looks like dimensions of images were wrong and therefroe images did not look right. This related to tiff and cbf images, found on cbf images from user. 
+//2.60 fix hdf5 plain file import, 2022-11-06, to handle 1st 2-3D data set in the file, difficult to support more flexible method. 
+//2.59 add ability to flip/rotate image after load to let users tweak image orientation. 
+//2.58 fix Eiger detector dimensions (lines ~800-850) - looks like dimensions of images were wrong and therefroe images did not look right. This related to tiff and cbf images, found on cbf images from user. 
 //2.57 fix reading of edf header. Works now for Xenocs Pilatus 300k header. Singificant changes due to changing line breaks characters. 
 //2.56 add Eiger detector support, tested on 16M background image. 
 //2.55 fix edf file Xenocs loading, they changed \r\n into \n only and that broke parsing header... 
@@ -30,7 +32,7 @@
 //2.39 removed Executes in preparation for Igor 7
 //2.38 fixe3d bug in reading calibrated 2D data found by Igor 7 beta. 
 //2.37 Created ADSC_A file type which has wavelength in A, not in nm as ADSC has. 
-//2.36 modified PilatusHookFunction and asdded ImportedImageHookFunction function called after any image is loaded so users can modify the images after load. 
+//2.36 modified PilatusHookFunction and added ImportedImageHookFunction function called after any image is loaded so users can modify the images after load. 
 //2.35 adds Pilatus Cbf compressed files (finally solved the problem)... 
 //2.34 adds ability to read 2D calibrated data format from NIST - NIST-DAT-128x128 pixels. For now there is also Qz, not sure what to do about it. 
 //2.33 can read and write calibrated canSAS/nexus files. Can write new files or append to existing one (2D data for now). 
@@ -345,7 +347,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		FileNameToLoad= FileName
 		pathInfo $(PathName)
 		string FullFileName=S_Path+FileName
-		string loadedWave=NI2_LoadGeneralHDFFile("Nika", FileName, PathName)
+		string loadedWave=NI2_LoadGeneralHDFFile("Nika", FileName, PathName, NewWaveName)
 		wave/Z LoadedWvHere=$(loadedWave)
 		if(!WaveExists(LoadedWvHere))
 			return 0
@@ -1340,6 +1342,34 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 	else
 		Abort "Uknown CCD image to load..."
 	endif
+	wave loadedwv=$(NewWaveName)
+	//7-25-2022 2.59 added ability to flip/rotate images if needed
+	// No;Transpose;FlipHor;FlipVert, Tran/FlipH
+	SVAR/Z RotateFLipImageOnLoad=root:Packages:Convert2Dto1D:RotateFLipImageOnLoad
+	if(SVAR_Exists(RotateFLipImageOnLoad))
+		strswitch(RotateFLipImageOnLoad)	// string switch
+			case "No":		// execute if case matches expression
+					//nothing needed here
+				break				// exit from switch
+			case "Transpose":	// execute if case matches expression
+				 MatrixOp/O loadedwv=loadedwv^t
+				break
+			case "FlipVert":	// execute if case matches expression
+				 MatrixOp/O loadedwv=reverseCols(loadedwv)
+				break
+			case "FlipHor":	// execute if case matches expression
+				 MatrixOp/O loadedwv=reverseRows(loadedwv)
+				break
+			case "Tran/FlipH":	// execute if case matches expression
+				 MatrixOp/O loadedwv=reverseRows(loadedwv^t)
+				break
+			default:			// optional default expression executed
+					//nothing needed here
+		endswitch
+	
+	endif
+	
+	
 	pathInfo $(PathName)
    if(exists("ImportedImageHookFunction")==6)
        Execute("ImportedImageHookFunction("+NewWaveName+")")
@@ -1365,7 +1395,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 	else
 		print "Loaded file   " +FileNameToLoad
 	endif
-//	print "Created wave note: "+NewNote
+	//add wave to the image. 
 	wave NewWv=$(NewWaveName)
 	note/K NewWv
 	note NewWv, newnote
@@ -2488,6 +2518,64 @@ Function NI1_LoadWinViewFile(fName, NewWaveName)
 	return LoadedOK
 End
 
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//modified 2022-11-06 to handle 1st 2-3D data set in the file, difficult to support more flexible method. 
+
+Function/S NI2_LoadGeneralHDFFile(CalledFrom, fileName, PathName, NewWaveName)
+	string CalledFrom,  fileName, PathName, NewWaveName
+	
+	string oldDf=GetDataFolder (1)
+	//2022-11-06 fix loading, make simple - load everything in temp folder, find first 2D data set, assume it is data copy where needed and dump the temp folder data. 
+	string Status=""
+
+#if Exists("HDF5OpenFile")	
+	//Need to create temp folder to handle the whole group of stuff here...
+	setDataFolder root:Packages:
+	NewDataFolder/O/S root:Packages:TempHDFLoad
+	KillWaves/A/Z												//clean the folder up
+	PathInfo/S $(PathName)									//find the path to data file
+	Status = H5GW_ReadHDF5("root:Packages:TempHDFLoad", S_path+Filename)
+	if(strlen(Status)>0)
+		print "HDF5 import failed, message: "+Status		//if not "" then error ocured, Handle somehow!
+		return ""
+	endif
+	String base_name = StringFromList(0,FileName,".")			//part of the name without extension - assumes only one "." in name, same as H5GW reader used. 
+	//now we have folder with data in root:Packages:TempHDFLoad:$(Filename) But without the extension... 
+	//let's find first 2D data set here...
+	SetDataFolder $("root:Packages:TempHDFLoad:"+base_name)					//this is where the hdf5 data now are in Igor
+	string ListOf2DData = IN2G_Find2DDataInFolderTree(GetDataFolder(1))	//this finds all 2-3D waves in this location. 
+	setDataFolder OldDf
+	//now we have list of 2D waves - or 3D waves as HDF5 waves are written as 1xNxM...
+	//Let's pick the first one, no idea if it is right but how to figure this out? 
+	//Need to check if we even found anything first...
+	if(ItemsInList(ListOf2DData,";")<1)
+		Print ">>>>  No 2D data set found in "+S_path+Filename+" data file. \rNOTE: Igor 8 seems unable to load data written as 64 bit integers. "
+		abort
+	endif
+	Wave Found2DWave = $(StringFromList(0,ListOf2DData))
+	//now we need to fix this from 3D (1xNxM) to 2D (NxM) waves
+	Duplicate/O Found2DWave, $(NewWaveName)
+	wave Nika2DWave=$(NewWaveName)
+	if(WaveDims(Nika2DWave)>2)
+		variable D0, D1,D2
+		D0=DimSize(Nika2DWave, 0)
+		D1=DimSize(Nika2DWave, 1)
+		D2=DimSize(Nika2DWave, 2)
+		if(D0==1)
+			Redimension /N=(D1, D2) Nika2DWave
+		elseif(D2==1)
+			Redimension /N=(D0, D1) Nika2DWave
+		endif
+		
+	endif
+	KillDataFolder/Z root:Packages:TempHDFLoad
+	
+	return NewWaveName
+#else
+	Abort "Hdf5 xop is not found. Reinstall xops using one of the Installers or link the hdf5.xop from Igor distribution to your Igor extensions folder"
+#endif
+end
 
 
 //*******************************************************************************************************************************************

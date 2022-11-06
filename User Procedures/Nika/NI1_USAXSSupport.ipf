@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.53
+#pragma version=1.54
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2022, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.54 added 20ID beamline to support, USAXS/SAXS/WAXS in 2022-2023
 //1.53 Added Dexela HDF5 support for WAXS, Fixed offset is read and set in NI1_9IDWFindI0, there is no function in Nika to set thsi dynamically. 
 //1.52 Added mask which can mask off low sensitivity pixels between tiles. 
 //1.51 added passing through NXMetadata, NXSample, NXInstrument, NXUser
@@ -579,10 +580,12 @@ Function NI1_9IDCConfigNexus()
 	string OldNOte=note(w2D)
 	SVAR Current2DFileName = root:Packages:Convert2Dto1D:FileNameToLoad
 	variable beamline_support_version
+	
+	string Beamline = StringByKey("instrument:source:facility_beamline", OldNOte  , "=" , ";")
 
 //print StringByKey("data:model", OldNOte  , "=" , ";")
 //print OldNOte
-	if(stringMatch("9ID", StringByKey("instrument:source:facility_beamline", OldNOte  , "=" , ";")) && stringMatch("Pilatus", StringByKey("data:model", OldNOte  , "=" , ";")))	
+	if( (stringMatch("9ID",Beamline)||stringMatch("20ID",Beamline)) && stringMatch("Pilatus", StringByKey("data:model", OldNOte  , "=" , ";")))	
 //		//9ID data from 2015 onwards... 
 //		Wavelength = NumberByKey(NI1_9IDCFindKeyStr("monochromator:wavelength=", OldNote), OldNote  , "=" , ";")
 //		XRayEnergy = 12.3984/Wavelength
@@ -1533,7 +1536,7 @@ Function/S NI1_9IDCSetDefaultConfiguration()
 				NewPath/O Convert2Dto1DEmptyDarkPath, pathInforStrL		
 				PathInfo Convert2Dto1DEmptyDarkPath
 				SVAR MainPathInfoStr=root:Packages:Convert2Dto1D:MainPathInfoStr
-				MainPathInfoStr = pathInforStrL
+				MainPathInfoStr = pathInforStrL[strlen(pathInforStrL)-NikaLengthOfPathForPanelDisplay,strlen(pathInforStrL)-1]
 
 				SVAR BmCntrFileType=root:Packages:Convert2Dto1D:BmCntrFileType
 				BmCntrFileType = "Nexus"

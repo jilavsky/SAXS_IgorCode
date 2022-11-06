@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.29
+#pragma version = 2.30
 #pragma IgorVersion = 8.03
 
 //control constants
@@ -38,6 +38,7 @@ strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
+//2.30 added IN2G_Find2DDataInFolderTree, needed to search for 2D images in imported HDF5 folder tree. 
 //2.29 Fixed IN2G_BrowserDuplicateItem() to handle liberal names. 
 //2.28 Added to IP9 right click browser option to duplicate folder or wave (IN2G_BrowserDuplicateItem())
 //2.27 added IN2G_ReturnLabelForAxis(WindowName, "bottom|top")
@@ -232,6 +233,8 @@ strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan
 //IN2G_CreateListOfItemsInFolder(datafolder, itemtype)
 //	Generates list of items in directory specified. 1-directories, 2-waves, 4 - variables, 8- strings
 //	
+//Function/S IN2G_Find2DDataInFolderTree(StartPath) 
+// finds 2 or 3D waves in folder tree, use to search for images in imported HDF5 data folder. 
 //
 //IN2G_FindFolderWithWaveTypes(startDF, levels, WaveTypes, LongShortType)
 //	Returns list of folders with waves of given type. Long (1) type is full path, short (0) is  only folder names.
@@ -561,6 +564,8 @@ end
 				// when the menu is first displayed.
 				IN2G_Display1vs2MenuString(0),/Q,IN2G_PlotBrowserSelectionXY(0)
 				IN2G_Display1vs2MenuString(1),/Q,IN2G_PlotBrowserSelectionXY(1)
+				IN2G_Append1vs2MenuString(0),/Q,IN2G_AppendBrowserSelectionXY(0)
+				IN2G_Append1vs2MenuString(1),/Q,IN2G_AppendBrowserSelectionXY(1)
 				IN2G_ShowTextWaveInfoMenuString(), /Q, IN2G_ExtractInfoFromFldrname()
 				IN2G_DisplayDuplicateItemStr(), /Q, IN2G_BrowserDuplicateItem()
 				"--"		
@@ -688,6 +693,32 @@ end
 					sprintf menuText, "Display %s vs %s", NameOfWave(w1), NameOfWave(w2)
 				endif
 				return menuText
+			End
+			//************************************************************************************************
+			// If reverse1and2 is false, do Display 1 vs 2
+			// If reverse1and2 is true, do Display 2 vs 1
+			Function/S IN2G_Append1vs2MenuString(Variable reverse1and2)
+				WAVE/Z w1, w2
+				if (reverse1and2 != (GetKeyState(0) != 0))
+					return ""
+				endif
+				
+				Variable twoNumericWavesSelected = IN2G_GetWave1AndWave2(w1, w2, reverse1and2)
+				String menuText = ""
+				if (twoNumericWavesSelected)
+					sprintf menuText, "AppendToGraph/W=%s %s vs %s", WinName(0,1), NameOfWave(w1), NameOfWave(w2)
+				endif
+				return menuText
+			End
+			//************************************************************************************************		
+			Function IN2G_AppendBrowserSelectionXY(Variable reverse1and2)
+				WAVE/Z w1, w2
+				Variable twoNumericWavesSelected = IN2G_GetWave1AndWave2(w1, w2, reverse1and2)
+				if (twoNumericWavesSelected)
+					AppendToGraph/W=$(WinName(0,1)) w1 vs w2 //as NameofWave(w1)+" vs "+NameofWave(w2)
+					//Label left (NameofWave(w1))
+					//Label bottom (NameofWave(w2))
+				endif
 			End
 			//************************************************************************************************		
 			Function IN2G_PlotBrowserSelectionXY(Variable reverse1and2)
@@ -6258,6 +6289,35 @@ End
 //	
 //end
 
+//**********************************************************************************************
+//**********************************************************************************************
+
+Function/S IN2G_Find2DDataInFolderTree(StartPath) 
+	string StartPath
+	
+	string ListOfCandidates=""
+	string ListOfFolderCandiates=""
+	ListOfFolderCandiates = IN2G_FindFolderWithWaveTypes(StartPath, 10, "*", 1)
+	variable i, j
+	string TempPath, TempListOfWaves, TmpWaveName
+	For(i=0;i<ItemsInList(ListOfFolderCandiates);i+=1)
+		TempPath = StringFromList(i, ListOfFolderCandiates)
+		SetDataFolder $(TempPath)
+		TempListOfWaves = StringByKey("WAVES", DataFolderDir(2), ":",";")
+		FOr(j=0;j<ItemsInList(TempListOfWaves,",");j+=1)
+			TmpWaveName = TempPath+StringFromList(j,TempListOfWaves,",")
+			Wave w= $(TmpWaveName)
+			if(waveType(w,1)==1)
+				//numeric wave
+				if(WaveDims(w)>1)
+					ListOfCandidates+=TmpWaveName+";"
+				endif
+			endif
+			
+		endfor
+	endfor 	
+	return ListOfCandidates
+end
 //**********************************************************************************************
 //**********************************************************************************************
 

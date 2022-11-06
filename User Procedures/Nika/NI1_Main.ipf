@@ -8,6 +8,7 @@
 constant CurrentNikaVersionNumber = 1.842
 constant FixBackgroundOversubScale=1.05			//this is used to fix oversubtracted background. Adds FixBackgroundOversubScale*abs(V_min) to all intensity value. 
 constant NikaNumberOfQCirclesDisp=15
+constant NikaLengthOfPathForPanelDisplay=100
 //*************************************************************************\
 //* Copyright (c) 2005 - 2022, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
@@ -105,7 +106,7 @@ Menu "SAS 2D"
 		help={"Support for data from ALS soft energy beamline"}
 		"APS 12ID-C SAXS with Gold Detector", NI1_12IDCLoadAndSetup()
 		help={"Support for data from APS 12ID-C camera"}
-		"APS 12ID-B SAXS-WAXS ", NI1_12IDBLoadAndSetup()
+		"APS 12ID-B SAXS-WAXS (Nexus or tiff)", NI1_12IDBLoadAndSetup()
 		help={"Support for data from APS 12ID-B camera"}		
 		"DND CAT", NI1_DNDConfigureNika()
 		help={"Support for data from DND CAT (5ID) beamline at APS"}
@@ -180,7 +181,7 @@ Function NI1_SetAllPathsInNIka()
 		PathInfo/S Convert2Dto1DEmptyDarkPath
 		NewPath/C/O/M="Select path to your data" Convert2Dto1DDataPath
 		PathInfo Convert2Dto1DDataPath
-		string pathInforStrL = S_Path
+		string pathInforStrL = S_path[strlen(S_path)-NikaLengthOfPathForPanelDisplay,strlen(S_path)-1]
 		NewPath/O/Q Convert2Dto1DEmptyDarkPath, pathInforStrL		
 		SVAR MainPathInfoStr=root:Packages:Convert2Dto1D:MainPathInfoStr
 		MainPathInfoStr = pathInforStrL

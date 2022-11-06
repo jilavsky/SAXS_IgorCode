@@ -1488,7 +1488,7 @@ static Function IRB1_DataManScaleDataOne()
 	if(StringMatch(OutFldrNm[strlen(OutFldrNm)-1], "'"))			//this is liberal name...
 			OutFldrNm = IN2G_removeExtraQuote(OutFldrNm,1,1) +"_scaled'"
 	else
-			OutFldrNm = OutFldrNm+"_scaled'"
+			OutFldrNm = OutFldrNm+"_scaled"
 	endif	
 
 
