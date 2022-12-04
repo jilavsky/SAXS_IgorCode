@@ -1,7 +1,7 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version=1.00
+#pragma version=1.01
 	//this is available ONLY, if JSONXOP is installed and json_functions.ipf is in User Procedures. 
 #if(exists("JSONXOP_GetValue")==4)
 #include "json_functions"
@@ -11,18 +11,23 @@ Menu "USAXS"
 	"Bluesky Plots", IR3BS_BlueSkyPlot()
 end
 
-//server address. 
-//strconstant ServerAddress="http://usaxscontrol:8000"
-strconstant ServerAddress="http://wow.xray.aps.anl.gov:8010"
 
-//some notes. See end of thsi file for how to talk to the server instructions
+//1.01 November 2022, Tiled 0.1.0a80 compatible, changed webGUI 
+//1.00 original version, kind of works
+//server address. 
+strconstant ServerAddress="http://usaxscontrol:8000"
+//strconstant ServerAddress="http://wow.xray.aps.anl.gov:8010"
+
+//some notes. See end of this file for how to talk to the server instructions
 //getting data from usaxscontrol seem to be issue. 
 //http://usaxscontrol:8000/node/full/9idc_usaxs%2F1e6c2ad1-055e-40e5-bbc0-7209317a2717?format=application%2Fx-hdf5
 //fails with Internal Server Error and asking for json does not work. Need to figure out how to get data from server.  
 // See tilted hints document. 
 //  http://usaxscontrol:8000/node/full/9idc_usaxs/16248ab5-1359-4242-8ec9-6fd66f8b5976/primary/data?format=json this gets out primary scan as json. 
 // http://usaxscontrol:8000/node/search/?filter[lookup][condition][key]=9idc_usaxs&sort=
+// documentation and testing http://usaxscontrol:8000/docs
 // retruns json where 
+// need to add this : "&filter[time_range][condition][timezone]=US/Central" into the querries to it works... 
 
 
 ///******************************************************************************************
@@ -41,8 +46,8 @@ Function IR3BS_BlueSkyPlot()
 	else
 		IR3BS_Init()
 		IR3BS_BlueSkyPlotPanelFnct()
-		//		setWIndow IR3L_MultiSamplePlotPanel, hook(CursorMoved)=IR3D_PanelHookFunction
-		//IR1_UpdatePanelVersionNumber("IR3L_MultiSamplePlotPanel", IR3LversionNumber,1)
+		//		setWIndow IR3BS_BlueSkyPlotPanel, hook(CursorMoved)=IR3D_PanelHookFunction
+		//IR1_UpdatePanelVersionNumber("IR3BS_BlueSkyPlotPanel", IR3LversionNumber,1)
 		//link it to top graph, if exists
 		//IR3L_SetStartConditions()
 	endif
@@ -56,7 +61,7 @@ Function IR3BS_InitServer()
 	
 	//get server info
 	//1. check how many catalogs we have on this is bluesky server
-	string TempAddress = ServerAddress+"/api/node/search/?fields=&sort="
+	string TempAddress = ServerAddress+"/api/v1/node/search/?fields=&sort="
 	variable jsonid, i
 	string TempJSONAdd, tempStr
 	string AllCatalogs=""
@@ -86,7 +91,7 @@ Function IR3BS_InitServer()
 	//overwrite, fails on old catalog:
 	//ListOfCatalogs=stringfromList(0,AllCatalogs)
 	ListOfCatalogs=AllCatalogs
-	CatalogUsed = stringfromList(0,grepList(AllCatalogs,"9idc_usaxs"))
+	CatalogUsed = stringfromList(0,grepList(AllCatalogs,"20idb_usaxs"))
 	//update panel, if exists
 	DoWIndow IR3BS_BlueSkyPlotPanel
 	if(V_flag)
@@ -223,9 +228,9 @@ Function IR3BS_BlueSkyPlotPanelFnct()
 	//string UserNameString=""
 	//string XUserLookup=""
 	//string EUserLookup=""
-	//IR2C_AddDataControls("Irena:MultiSamplePlot","IR3L_MultiSamplePlotPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
+	//IR2C_AddDataControls("Irena:MultiSamplePlot","IR3BS_BlueSkyPlotPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
 	Button GetHelp,pos={480,10},size={80,15},fColor=(65535,32768,32768), proc=IR3L_ButtonProc,title="Get Help", help={"Open www manual page for this tool"}
-	//IR3C_MultiAppendControls("Irena:MultiSamplePlot","IR3L_MultiSamplePlotPanel", "IR3L_DoubleClickAction","",0,1)
+	//IR3C_MultiAppendControls("Irena:MultiSamplePlot","IR3BS_BlueSkyPlotPanel", "IR3L_DoubleClickAction","",0,1)
 
 
 	SVAR ListOfCatalogs=root:Packages:Irena:BlueSkySamplePlot:ListOfCatalogs
@@ -264,10 +269,12 @@ Function IR3BS_BlueSkyPlotPanelFnct()
 	ListBox BlueSkyList userColumnResize=1,help={"Fill here list of samples, their positions, thickness etc. "}
 	//ListBox BlueSkyList titleWave=root:Packages:SamplePlateSetup:LBTtitleWv, frame= 2
 	//ListBox BlueSkyList widths={220,50,50,60,40,40,40,0}
-	ListBox BlueSkyList  mode=1 		// mode=1 for single row selection, 4 multiple disjoint rows (shift only), mode=9 for shift conigous+ctrl disjoint.  
+	ListBox BlueSkyList  mode=9 		// mode=1 for single row selection, 4 multiple disjoint rows (shift only), mode=9 for shift conigous+ctrl disjoint.  
 
 	//	//Plotting controls...
 	//	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={260,170},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
+
+	Button importSelected,pos={20,600},size={120,20}, proc=IR3BS_ButtonProc,title="Import Selected", help={"Import selected rows for further processing"}
 
 end
 
@@ -301,7 +308,7 @@ Function IN3BS_ListBoxMenuProc(lba) : ListBoxControl
 			break
 		case 3: // double click
 			//download the data
-			IN3BS_ImportDataAndPlot(row)
+			IN3BS_ImportDataAndPlot(row,0)
 			break
 		case 4: // cell selection
 
@@ -323,15 +330,31 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
-Function IN3BS_ImportDataAndPlot(selRow)
-	variable selRow
+Function IR3BS_ImportSelected()
+
+	Wave listWave=root:Packages:Irena:BlueSkySamplePlot:PrunedListOfAvailableData
+	Wave selWave=root:Packages:Irena:BlueSkySamplePlot:SelectionOfAvailableData
+	variable i
+	For(i=0;i<dimsize(listWave,0);i+=1)
+		if(selWave[i]>0)
+			IN3BS_ImportDataAndPlot(i,1)
+		endif
+	endfor  
+end
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+Function IN3BS_ImportDataAndPlot(selRow, saveTheData)
+	variable selRow, saveTheData
 	
+	string oldDf
+	oldDf = getDataFolder(1)
 	//Wave/T IDwave = root:Packages:Irena:BlueSkySamplePlot:IDwave
 	Wave/T PrunedListOfAvailableData =  root:Packages:Irena:BlueSkySamplePlot:PrunedListOfAvailableData
 	SVAR CatalogUsed=root:Packages:Irena:BlueSkySamplePlot:CatalogUsed
 	//http://usaxscontrol:8000/node/full/9idc_usaxs/16248ab5-1359-4242-8ec9-6fd66f8b5976/primary/data?format=json
 	
-	string TempAddress = ServerAddress+"/api/node/full/"+CatalogUsed+"/"
+	string TempAddress = ServerAddress+"/api/v1/node/full/"+CatalogUsed+"/"
 	TempAddress +=PrunedListOfAvailableData[selRow][2]+"/primary/data?format=json"
 	//print TempAddress
 	URLRequest/Z url=TempAddress
@@ -358,20 +381,29 @@ Function IN3BS_ImportDataAndPlot(selRow)
 	wave XdatFree = JSON_GetWave(jsonID, "/"+XdataKey)
 	JSONXOP_Release jsonId
 	//store data here and do something with them.
-
-
-
-	Duplicate/O DetFree,Detector
-	Duplicate/O XdatFree,Xdata
-	Killwindow/Z BlueSkyGrpah
-	
-	//display, for now this is simplistic way
-	Display/K=1  Detector vs Xdata as PrunedListOfAvailableData[selRow][1]+"     "+PrunedListOfAvailableData[selRow][0]
-	Label bottom XdataKey
-	Label left DetKey
-	DoWindow/C BlueSkyGrpah
-	AutoPositionWindow/R=IR3BS_BlueSkyPlotPanel  BlueSkyGrpah
-	
+	string tempScanName, DateTimeStr
+	if(saveTheData)	//store the data
+		//create location for the data... 
+		tempScanName=PrunedListOfAvailableData[selRow][0]
+		DateTimeStr =PrunedListOfAvailableData[selRow][1]
+		NewDataFolder/O/S root:ScanData
+		NewDataFolder/O/S $(CleanupName(tempScanName+"_"+DateTimeStr, 0))
+		Duplicate/O DetFree, Detector
+		Duplicate/O XdatFree, Xdata
+		setDataFolder oldDf
+	else	//just display tyhem without saving
+		Duplicate/O DetFree,Detector
+		Duplicate/O XdatFree,Xdata
+		Killwindow/Z BlueSkyGrpah
+		
+		//display, for now this is simplistic way
+		Display/K=1  Detector vs Xdata as PrunedListOfAvailableData[selRow][1]+"     "+PrunedListOfAvailableData[selRow][0]
+		Label bottom XdataKey
+		Label left DetKey
+		DoWindow/C BlueSkyGrpah
+		AutoPositionWindow/R=IR3BS_BlueSkyPlotPanel  BlueSkyGrpah
+	endif
+	setDataFolder oldDf
 end
 //************************************************************************************************************
 //************************************************************************************************************
@@ -396,7 +428,7 @@ Function IR3BS_SetVarProc(sva) : SetVariableControl
 		case -1: // control being killed
 			break
 	endswitch
-	DoWIndow/F IR3L_MultiSamplePlotPanel
+	DoWIndow/F IR3BS_BlueSkyPlotPanel
 	return 0
 End
 //**********************************************************************************************************
@@ -413,6 +445,9 @@ Function IR3BS_ButtonProc(ba) : ButtonControl
 			// click code here
 			if(stringmatch(ba.ctrlname,"Update"))
 				IR3BS_GetJSONScanData()
+			endif
+			if(stringmatch(ba.ctrlname,"importSelected"))
+				IR3BS_ImportSelected()
 			endif
 
 			break
@@ -452,12 +487,15 @@ FUnction IR3BS_GetJSONScanData()
 	SVAR ListOfCatalogs=root:Packages:Irena:BlueSkySamplePlot:ListOfCatalogs
 	SVAR CatalogUsed=root:Packages:Irena:BlueSkySamplePlot:CatalogUsed
 	NVAR NumberOfScansToImport=root:Packages:Irena:BlueSkySamplePlot:NumberOfScansToImport
+	if(NumberOfScansToImport>300)
+		NumberOfScansToImport=300		//limitation of Tiled 0.1.a80
+	endif
 	
 
 	//SERVER/node/search/CATALOG?page[offset]=0&filter[time_range][condition][since]=FROM_START_TIME&filter[time_range][condition][until]=BEFORE_END_TIME&sort=time
 	variable startTimeSec= date2secs((StartYear), (StartMonth), (StartDay)) - 2082844800	//convert to Python time 
 	variable endTimeSec = startTimeSec + NumOfHours*60*60
-	string TempAddress = ServerAddress+"/api/node/search/"
+	string TempAddress = ServerAddress+"/api/v1/node/search/"
 	string StartTimeStr, EndTimeStr
 	sprintf StartTimeStr, "%.15g" ,startTimeSec
 	sprintf EndTimeStr, "%.15g" ,endTimeSec
@@ -465,7 +503,8 @@ FUnction IR3BS_GetJSONScanData()
 	if(AllDates)
 		TempAddress +=CatalogUsed+"?page[offset]=00&page[limit]="+num2str(NumberOfScansToImport)+"&sort=time"
 	else
-		TempAddress +=CatalogUsed+"?page[offset]=00&page[limit]="+num2str(NumberOfScansToImport)+"&filter[time_range][condition][since]="+StartTimeStr+"&filter[time_range][condition][until]="+EndTimeStr+"&sort=time"
+		TempAddress +=CatalogUsed+"?page[offset]=00&page[limit]="+num2str(NumberOfScansToImport)+"&filter[time_range][condition][since]="+StartTimeStr+"&filter[time_range][condition][until]="+EndTimeStr
+		TempAddress +="&filter[time_range][condition][timezone]=US/Central&sort=time"
 	endif
 	//this fails on IP8:
 	//TempAddress +=StringFromList(0, ListOfCatalogs)+"?page[offset]=00&page[limit]=1000&filter[time_range][condition][since]="+num2str(startTimeSec, "%.15g")+"&filter[time_range][condition][until]="+num2str(endTimeSec, "%.15g")+"&sort=time"
