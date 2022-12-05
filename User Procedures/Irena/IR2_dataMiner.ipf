@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.16
+#pragma version=1.17
 
 Constant IR2MversionNumber = 1.13			//Data mining tool version number
 constant IR3BversionNumber = 0.1			//MetadataBrowser tool version number. 
@@ -10,6 +10,7 @@ constant IR3BversionNumber = 0.1			//MetadataBrowser tool version number.
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.17 fix DateTime extracted wave bug, cannot name wave DATETIME, need to use DatTimeW 
 //1.16 fix extracting 1 digit data, was skipping due to bug. (could not extract for example 1). 
 //1.15 add handling of USAXS M_... waves 
 //1.14 added MetadataBrowser tool in this package,
@@ -744,7 +745,7 @@ static Function IR3B_ExtrMtdtFromOneFolder(FolderNameStr)
 				else						//string, check if not date...
 					TimeInSeconds = IN2G_ConvertTimeStringToSecs(ValueString)
 					if(numtype(TimeInSeconds)==0)		//looks like time!
-						CleanKeyName = CleanupName(KeyString[0,24], 0)+"Time"
+						CleanKeyName = CleanupName(KeyString[0,24], 0)+"TimeW"
 						Wave/Z TmpTimeWv=$(CleanKeyName)
 						if(!WaveExists(TmpStrWv))
 							Make/O/N=(NumberOfExtractedItems+1) $(CleanKeyName)

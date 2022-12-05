@@ -953,6 +953,9 @@ Function/T IN3_StepScanConvertToUSAXS(RawFolderWithData, origFileName)
 
 	redimension/D MeasTime, Monitor, USAXS_PD
 	redimension/S PD_range, I0gain
+	//I0_gain is real gain, not gain number...
+	I0gain = 10^(I0gain[p]+5)
+	
 	//need to append the wave notes...
 	//PD range is 1 based in old code but 0 based here,
 	PD_range+=1
