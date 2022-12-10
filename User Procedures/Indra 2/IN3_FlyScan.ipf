@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.08
+#pragma version=1.09
 #include <Peak AutoFind>
 
 
@@ -14,6 +14,7 @@ Constant IN3_TrimDoNOTremoveVibrations=0			//this controls if vibrations are fou
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+//1.09 fix step scanning gain correction bug which resulted in problems when reducing data which had I0 variations. 
 //1.08 fixed loading 20ID horizontally scanning step scan data. 
 //1.07 fixes for HDF5 changes in IP9, removed old FLyScan Import code (separate panel to import FS data which were then reduced by old USAXS `panel). Obsolete. 
 //1.06 added passing through NXMetadata, NXSample, NXInstrument, NXUser
@@ -993,7 +994,7 @@ Function/T IN3_StepScanConvertToUSAXS(RawFolderWithData, origFileName)
 	UPDParameters="Vfc=100000;Gain1="+num2str(updG1[0])+";Gain2="+num2str(updG2[0])+";Gain3="+num2str(updG3[0])+";Gain4="+num2str(updG4[0])+";Gain5="+num2str(updG5[0])
 	UPDParameters+=";Bkg1="+num2str(updBkg1[0])+";Bkg2="+num2str(updBkg2[0])+";Bkg3="+num2str(updBkg3[0])+";Bkg4="+num2str(updBkg4[0])+";Bkg5="+num2str(updBkg5[0])
 	UPDParameters+=";Bkg1Err="+num2str(updBkgErr1[0])+";Bkg2Err="+num2str(updBkgErr2[0])+";Bkg3Err="+num2str(updBkgErr3[0])+";Bkg4Err="+num2str(updBkgErr4[0])+";Bkg5Err="+num2str(updBkgErr5[0])
-	UPDParameters+=";I0AmpDark=;I0AmpGain="+num2str(I0GainW[0])+";I00AmpGain="+num2str(I00GainW[0])+";UPDsize="+num2str(UPDsize[0])+";"
+	UPDParameters+=";I0AmpDark=;I0AmpGain="+num2str(10^(I0gainW[0]+5))+";I00AmpGain="+num2str(10^(I00gainW[0]+5))+";UPDsize="+num2str(UPDsize[0])+";"
 	string/g MeasurementParameters
 	MeasurementParameters="DCM_energy="+num2str(DCM_energyW[0])+";SAD="+num2str(SADW[0])+";SDD="+num2str(SDDW[0])+";thickness="+num2str(SampleThicknessW[0])+";"
 	MeasurementParameters+=";I0AmpDark=;I0AmpGain="+num2str(I0GainW[0])+";I00AmpGain="+num2str(I00GainW[0])+";"

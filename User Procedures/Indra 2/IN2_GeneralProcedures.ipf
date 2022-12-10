@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.30
+#pragma version = 2.31
 #pragma IgorVersion = 8.03
 
 //control constants
@@ -38,6 +38,7 @@ strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
+//2.31 fix IN2G_AddWaveStatistics to write statistics data in Y wave data folder. 
 //2.30 added IN2G_Find2DDataInFolderTree, needed to search for 2D images in imported HDF5 folder tree. 
 //2.29 Fixed IN2G_BrowserDuplicateItem() to handle liberal names. 
 //2.28 Added to IP9 right click browser option to duplicate folder or wave (IN2G_BrowserDuplicateItem())
@@ -4316,7 +4317,7 @@ end
 Function IN2G_AddWaveStatistics()
 
 	GetLastUserMenuInfo
-	Print S_graphName, S_traceName
+	//Print S_graphName, S_traceName
 	String topGraph = S_graphName
 	Wave Wv=TraceNameToWaveRef(S_graphName, S_traceName)
 	variable Aset=strlen(CsrInfo(A, S_graphName)) > 0
@@ -4334,7 +4335,8 @@ Function IN2G_AddWaveStatistics()
 	endif
 	StartPnt= min(tmpStart, tmpEnd)
 	EndPnt= max(tmpStart, tmpEnd)
-		
+	string OldDf=GetDataFolder(1)
+	SetDataFolder $(GetWavesDataFolder(Wv,1))
 	WaveStats/Q/R=[StartPnt,EndPnt] Wv
 				//V_sdev = 	IN2G_roundSignificant(V_sdev,2)
 	string TagText="Statistics on "+S_traceName+"\n"
@@ -4356,6 +4358,7 @@ Function IN2G_AddWaveStatistics()
 	if(V_Flag==0)
 		Wave/Z WvX = XWaveRefFromTrace(S_graphName, S_traceName)
 		if(WaveExists(WvX))
+			KillWaves/Z $(S_traceName+"_X")
 			Duplicate/O/R=[StartPnt,EndPnt] WvX, $(S_traceName+"_X")
 			Wave WvX2 = $(S_traceName+"_X")
 			AppendToGraph /W=$(S_graphName) MeanWv, MinWv, MaxWv vs WvX2
@@ -4365,6 +4368,7 @@ Function IN2G_AddWaveStatistics()
 		ModifyGraph /W=$(S_graphName) lstyle($(NameOfWave(MeanWv)))=11,lsize($(NameOfWave(MeanWv)))=2,rgb($(NameOfWave(MeanWv)))=(0,0,65535)
 		ModifyGraph /W=$(S_graphName) lstyle($(NameOfWave(MinWv)))=17,rgb($(NameOfWave(MinWv)))=(0,0,0),lstyle($(NameOfWave(MaxWv)))=17,rgb($(NameOfWave(MaxWv)))=(0,0,0)
 	endif
+	SetDataFolder OldDf
 end
 ////*****************************************************************************************************************
 ////*****************************************************************************************************************
