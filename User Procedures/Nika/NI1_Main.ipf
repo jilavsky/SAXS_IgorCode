@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.84
+#pragma version=1.85
 #pragma IgorVersion=8.04
 
 //DO NOT renumber Main files every time, these are main release numbers...
@@ -15,6 +15,7 @@ constant NikaLengthOfPathForPanelDisplay=100
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.85 	Fix NI1_SetAllPathsInNIka which failed to setup properly very long paths. 
 //1.84 	Ocotber2021 version
 //			Fixes for some loaders where users found failures.  
 //1.83		require Igor 8.03 now. Not testing Igor 7 anymore. 
@@ -173,7 +174,7 @@ end
 
 Function NI1_SetAllPathsInNIka()
 		DoWindow NI1A_Convert2Dto1DPanel
-		if(!V_Flag)		//does nto exists, quit
+		if(!V_Flag)		//does not exists, quit
 			NI1A_Convert2Dto1DMainPanel()
 		else
 			DoWIndow/F NI1A_Convert2Dto1DPanel
@@ -181,10 +182,11 @@ Function NI1_SetAllPathsInNIka()
 		PathInfo/S Convert2Dto1DEmptyDarkPath
 		NewPath/C/O/M="Select path to your data" Convert2Dto1DDataPath
 		PathInfo Convert2Dto1DDataPath
-		string pathInforStrL = S_path[strlen(S_path)-NikaLengthOfPathForPanelDisplay,strlen(S_path)-1]
+		string pathInforStrL = S_path	//[strlen(S_path)-NikaLengthOfPathForPanelDisplay,strlen(S_path)-1]
+		string pathInforStrS = S_path[strlen(S_path)-NikaLengthOfPathForPanelDisplay,strlen(S_path)-1]
 		NewPath/O/Q Convert2Dto1DEmptyDarkPath, pathInforStrL		
 		SVAR MainPathInfoStr=root:Packages:Convert2Dto1D:MainPathInfoStr
-		MainPathInfoStr = pathInforStrL
+		MainPathInfoStr = pathInforStrS
 		SVAR/Z BCPathInfoStr=root:Packages:Convert2Dto1D:BCPathInfoStr
 		if(!SVAR_Exists(BCPathInfoStr))
 			NI1BC_InitCreateBmCntrFile()

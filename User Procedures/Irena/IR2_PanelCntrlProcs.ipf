@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
-#pragma version = 1.65
+#pragma version = 1.66
 
 
 //*************************************************************************\
@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.66 add to USAXS combination of Detector=Xdata, this is for Tiled imported tune scans. Also fixed IR3C_GenStringOfFolders2
 //1.65 added SimpleFits Power Law
 //1.64 added SimpleFits 1DCorrelation results: Corr1DZ_N for X and Y are: Corr1DK_N or Corr1DGammaA_N or Corr1DGammaI_N
 //1.63 modified IR2C_ReturnKnownToolResults to enable downselection of results types. This makes AllowedResultsTypes parameter finally useful. From code pass "" if no downselection is needed. 
@@ -3493,14 +3494,15 @@ Function IR3C_SelectWaveNamesData(CntrlLocationG, SelectedDataFolderName)
 end
 //**************************************************************************************
 //**************************************************************************************
-Function/S IR2C_MultiSTartFolderSelection()
+Function/S IR2C_MultiSTartFolderSelection()		//this si specifically for only ONE MultiPlot tool...
 		string PopStringPath
 		SVAR ControlProcsLocations=root:Packages:IrenaControlProcs:ControlProcsLocations
 		string PanelName = WinName(0,64)
 		string CntrlLocation="root:Packages:"+StringByKey(PanelName, ControlProcsLocations,":",";")
 		NVAR UseIndra2=$(CntrlLocation+":UseIndra2Data")
 		NVAR UseQRSdata=$(CntrlLocation+":UseQRSdata")		
-		string OtherFolders=IR3C_GenStringOfFolders2(UseIndra2,UseQRSdata,2,1)
+		SVAR DataSubType = $(CntrlLocation+":DataSubType")	
+		string OtherFolders=IR3C_GenStringOfFolders2(UseIndra2,UseQRSdata,2,1, DataSubType = DataSubType)
 		OtherFolders=RemoveFromList("root:", OtherFolders , ";")
 		PopStringPath = "root:;"+OtherFolders
 		return PopStringPath
@@ -3705,7 +3707,7 @@ Function IR3C_InitMultiControls(PathToPackagesFolder, PanelName, DoubleClickFunc
 			DataSubTypeUSAXSList="DSM_Int;"
 		endif
 	else
-		DataSubTypeUSAXSList="DSM_Int;SMR_Int;R_Int;Blank_R_Int;USAXS_PD;Monitor;"
+		DataSubTypeUSAXSList="DSM_Int;SMR_Int;R_Int;Blank_R_Int;USAXS_PD;Monitor;Detector;"
 	endif
 	SVAR DataSubTypeResultsList
 	DataSubTypeResultsList="Size"
@@ -3713,7 +3715,7 @@ Function IR3C_InitMultiControls(PathToPackagesFolder, PanelName, DoubleClickFunc
 	DataSubType="DSM_Int"
 
 	SVAR QvecLookupUSAXS
-	QvecLookupUSAXS="R_Int=R_Qvec;Blank_R_Int=Blank_R_Qvec;SMR_Int=SMR_Qvec;DSM_Int=DSM_Qvec;USAXS_PD=Ar_encoder;Monitor=Ar_encoder;"
+	QvecLookupUSAXS="R_Int=R_Qvec;Blank_R_Int=Blank_R_Qvec;SMR_Int=SMR_Qvec;DSM_Int=DSM_Qvec;USAXS_PD=Ar_encoder;Monitor=Ar_encoder;Detector=Xdata;"
 	SVAR ErrorLookupUSAXS
 	ErrorLookupUSAXS="R_Int=R_Error;Blank_R_Int=Blank_R_error;SMR_Int=SMR_Error;DSM_Int=DSM_error;"
 	SVAR dQLookupUSAXS
@@ -4422,31 +4424,41 @@ end
 //**********************************************************************************************************
 
 
-Function/T IR3C_GenStringOfFolders2(UseIndra2Structure, UseQRSStructure, SlitSmearedData, AllowQRDataOnly)
+Function/T IR3C_GenStringOfFolders2(UseIndra2Structure, UseQRSStructure, SlitSmearedData, AllowQRDataOnly, [DataSubType])
 	variable UseIndra2Structure, UseQRSStructure, SlitSmearedData, AllowQRDataOnly
+	String DataSubType
 		//SlitSmearedData =0 for DSM data, 
 		//                          =1 for SMR data 
 		//                    and =2 for both
+		// DataSubType = this is subtype of USAXS data, Detector needs special handling... 
 		// AllowQRDataOnly=1 if Q and R data are allowed only (no error wave). For QRS data ONLY!
-	
+	string DataSubTypeLocal = "SMR_Int"
+	if(!paramIsDefault(DataSubType))
+		DataSubTypeLocal = DataSubType
+	endif
 	string ListOfQFolders
 	//	if UseIndra2Structure = 1 we are using Indra2 data, else return all folders 
 	string result
 	variable i
 	if (UseIndra2Structure)
-		if(SlitSmearedData==1)
-			result=IN2G_FindFolderWithWaveTypes("root:USAXS:", 10, "*SMR*", 1)
-		elseif(SlitSmearedData==2)
-			string tempStr=IN2G_FindFolderWithWaveTypes("root:USAXS:", 10, "*SMR*", 1)
-			result=IN2G_FindFolderWithWaveTypes("root:USAXS:", 10, "*DSM*", 1)+";"
-			for(i=0;i<ItemsInList(tempStr);i+=1)
-			//print stringmatch(result, "*"+StringFromList(i, tempStr,";")+"*")
-				if(stringmatch(result, "*"+StringFromList(i, tempStr,";")+"*")==0)
-					result+=StringFromList(i, tempStr,";")+";"
-				endif
-			endfor
-		else
-			result=IN2G_FindFolderWithWaveTypes("root:USAXS:", 10, "*DSM*", 1)
+		//These are standard USAXS types, 
+		if(StringMatch("SMR_Int,DSM_Int,R_Int,Blank_R_Int,Monitor,USAXS_PD", "*"+DataSubTypeLocal+"*"))
+			if(SlitSmearedData==1)
+				result=IN2G_FindFolderWithWaveTypes("root:USAXS:", 10, "*SMR*", 1)
+			elseif(SlitSmearedData==2)
+				string tempStr=IN2G_FindFolderWithWaveTypes("root:USAXS:", 10, "*SMR*", 1)
+				result=IN2G_FindFolderWithWaveTypes("root:USAXS:", 10, "*DSM*", 1)+";"
+				for(i=0;i<ItemsInList(tempStr);i+=1)
+				//print stringmatch(result, "*"+StringFromList(i, tempStr,";")+"*")
+					if(stringmatch(result, "*"+StringFromList(i, tempStr,";")+"*")==0)
+						result+=StringFromList(i, tempStr,";")+";"
+					endif
+				endfor
+			else
+				result=IN2G_FindFolderWithWaveTypes("root:USAXS:", 10, "*DSM*", 1)
+			endif
+		else //this is for non-standard (Tiled) data types. 
+			result=IN2G_FindFolderWithWaveTypes("root:", 10, DataSubTypeLocal, 1)
 		endif
 	elseif (UseQRSStructure)
 		make/N=0/FREE/T ResultingWave

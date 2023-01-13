@@ -15,7 +15,9 @@ end
 //1.01 November 2022, Tiled 0.1.0a80 compatible, changed webGUI 
 //1.00 original version, kind of works
 //server address. 
-strconstant ServerAddress="http://usaxscontrol:8000"
+//strconstant ServerAddress="http://usaxscontrol:8000"
+strconstant ServerAddress="http://usaxscontrol.xray.aps.anl.gov:8000"
+
 //strconstant ServerAddress="http://wow.xray.aps.anl.gov:8010"
 
 //some notes. See end of this file for how to talk to the server instructions
@@ -28,6 +30,10 @@ strconstant ServerAddress="http://usaxscontrol:8000"
 // documentation and testing http://usaxscontrol:8000/docs
 // retruns json where 
 // need to add this : "&filter[time_range][condition][timezone]=US/Central" into the querries to it works... 
+
+//this is very useful list of examples how querries are built:
+//https://github.com/BCDA-APS/bdp-tiled/blob/main/demo_client.ipynb
+//there are querries which allow finding specific text (sample name?) 
 
 
 ///******************************************************************************************
@@ -172,18 +178,20 @@ FUnction IR3BS_Init()
 		teststr =""
 	endfor		
 	NVAR StartYear
-	StartYear =2022
+	StartYear = str2num(StringFromList(0, Secs2Date(DateTime,-2),"-"))
 	NVAR StartMoth
-	StartMoth = 2
+	StartMoth = str2num(StringFromList(1, Secs2Date(DateTime,-2),"-"))
 	NVAR StartDay
-	StartDay =20
+	StartDay =str2num(StringFromList(2, Secs2Date(DateTime,-2),"-"))
 	NVAR NumOfHours
 	NumOfHours=24
 	NVAR NumberOfScansToImport
 	if(NumberOfScansToImport<10)
-		NumberOfScansToImport=1000
-		
+		NumberOfScansToImport=10000
 	endif
+	SVAR ListOfScanTypes
+	ListOfScanTypes = "tune_ar;tune_a2rp;tune_mr;tune_dx;tune_dy;all;"
+	
 //	ListOfStrings="DataMatchString;FolderSortString;FolderSortStringAll;"
 //	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
 //		SVAR teststr=$(StringFromList(i,ListOfStrings))
@@ -275,6 +283,10 @@ Function IR3BS_BlueSkyPlotPanelFnct()
 	//	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={260,170},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 
 	Button importSelected,pos={20,600},size={120,20}, proc=IR3BS_ButtonProc,title="Import Selected", help={"Import selected rows for further processing"}
+	Button importPlotSelected,pos={20,640},size={120,20}, proc=IR3BS_ButtonProc,title="Import & Plot Selected", help={"Import selected rows and plot"}
+
+	Button SelectAll,pos={420,600},size={120,20}, proc=IR3BS_ButtonProc,title="Select all ", help={"Select all "}
+	Button DeSelectAll,pos={420,640},size={120,20}, proc=IR3BS_ButtonProc,title="DeSelect all ", help={"Select all "}
 
 end
 
@@ -308,7 +320,7 @@ Function IN3BS_ListBoxMenuProc(lba) : ListBoxControl
 			break
 		case 3: // double click
 			//download the data
-			IN3BS_ImportDataAndPlot(row,0)
+			IN3BS_ImportDataAndPlot(row,0, 0)
 			break
 		case 4: // cell selection
 
@@ -330,22 +342,27 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
-Function IR3BS_ImportSelected()
+Function IR3BS_ImportSelected(PlotAll)
+	variable PlotAll
 
 	Wave listWave=root:Packages:Irena:BlueSkySamplePlot:PrunedListOfAvailableData
 	Wave selWave=root:Packages:Irena:BlueSkySamplePlot:SelectionOfAvailableData
 	variable i
 	For(i=0;i<dimsize(listWave,0);i+=1)
 		if(selWave[i]>0)
-			IN3BS_ImportDataAndPlot(i,1)
+			IN3BS_ImportDataAndPlot(i,1, PlotAll)
 		endif
 	endfor  
+	if(PlotAll)
+		IN2G_ColorTopGrphRainbow()
+		IN2G_LegendTopGrphFldr(12, 20, 1, 0)
+	endif
 end
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
-Function IN3BS_ImportDataAndPlot(selRow, saveTheData)
-	variable selRow, saveTheData
+Function IN3BS_ImportDataAndPlot(selRow, saveTheData, PlotAll)
+	variable selRow, saveTheData, PlotAll
 	
 	string oldDf
 	oldDf = getDataFolder(1)
@@ -355,7 +372,7 @@ Function IN3BS_ImportDataAndPlot(selRow, saveTheData)
 	//http://usaxscontrol:8000/node/full/9idc_usaxs/16248ab5-1359-4242-8ec9-6fd66f8b5976/primary/data?format=json
 	
 	string TempAddress = ServerAddress+"/api/v1/node/full/"+CatalogUsed+"/"
-	TempAddress +=PrunedListOfAvailableData[selRow][2]+"/primary/data?format=json"
+	TempAddress +=PrunedListOfAvailableData[selRow][3]+"/primary/data?format=json"
 	//print TempAddress
 	URLRequest/Z url=TempAddress
 	if(V_Flag!=0)
@@ -382,6 +399,7 @@ Function IN3BS_ImportDataAndPlot(selRow, saveTheData)
 	JSONXOP_Release jsonId
 	//store data here and do something with them.
 	string tempScanName, DateTimeStr
+	PauseUpdate
 	if(saveTheData)	//store the data
 		//create location for the data... 
 		tempScanName=PrunedListOfAvailableData[selRow][0]
@@ -390,19 +408,33 @@ Function IN3BS_ImportDataAndPlot(selRow, saveTheData)
 		NewDataFolder/O/S $(CleanupName(tempScanName+"_"+DateTimeStr, 0))
 		Duplicate/O DetFree, Detector
 		Duplicate/O XdatFree, Xdata
+		if(PlotAll)
+			DoWIndow BlueSkyGraph
+			if(V_Flag)
+				DoWIndow/F BlueSkyGraph
+			else
+				Display/K=1 as "Imported BlueSky data"
+				DoWindow/C BlueSkyGraph
+			endif
+			AppendtoGraph Detector vs Xdata
+			Label bottom XdataKey
+			Label left DetKey
+		endif
 		setDataFolder oldDf
-	else	//just display tyhem without saving
+	else	//just display them without saving
 		Duplicate/O DetFree,Detector
 		Duplicate/O XdatFree,Xdata
-		Killwindow/Z BlueSkyGrpah
+		Killwindow/Z BlueSkyGraph
 		
 		//display, for now this is simplistic way
 		Display/K=1  Detector vs Xdata as PrunedListOfAvailableData[selRow][1]+"     "+PrunedListOfAvailableData[selRow][0]
 		Label bottom XdataKey
 		Label left DetKey
-		DoWindow/C BlueSkyGrpah
-		AutoPositionWindow/R=IR3BS_BlueSkyPlotPanel  BlueSkyGrpah
+		DoWindow/C BlueSkyGraph
+		AutoPositionWindow/R=IR3BS_BlueSkyPlotPanel  BlueSkyGraph
 	endif
+	ResumeUpdate 
+	
 	setDataFolder oldDf
 end
 //************************************************************************************************************
@@ -447,7 +479,18 @@ Function IR3BS_ButtonProc(ba) : ButtonControl
 				IR3BS_GetJSONScanData()
 			endif
 			if(stringmatch(ba.ctrlname,"importSelected"))
-				IR3BS_ImportSelected()
+				IR3BS_ImportSelected(0)
+			endif
+			if(stringmatch(ba.ctrlname,"importPlotSelected"))
+				IR3BS_ImportSelected(1)
+			endif
+			if(stringmatch(ba.ctrlname,"SelectAll"))
+				Wave selWave=root:Packages:Irena:BlueSkySamplePlot:SelectionOfAvailableData
+				selWave = 1
+			endif
+			if(stringmatch(ba.ctrlname,"DeSelectAll"))
+				Wave selWave=root:Packages:Irena:BlueSkySamplePlot:SelectionOfAvailableData
+				selWave = 0
 			endif
 
 			break
@@ -486,114 +529,157 @@ FUnction IR3BS_GetJSONScanData()
 
 	SVAR ListOfCatalogs=root:Packages:Irena:BlueSkySamplePlot:ListOfCatalogs
 	SVAR CatalogUsed=root:Packages:Irena:BlueSkySamplePlot:CatalogUsed
+	SVAR ScanTypeToUse = root:Packages:Irena:BlueSkySamplePlot:ScanTypeToUse
 	NVAR NumberOfScansToImport=root:Packages:Irena:BlueSkySamplePlot:NumberOfScansToImport
-	if(NumberOfScansToImport>300)
-		NumberOfScansToImport=300		//limitation of Tiled 0.1.a80
-	endif
+	//if(NumberOfScansToImport>300)
+	//	NumberOfScansToImport=300		//limitation of Tiled 0.1.a80
+	//endif
 	
 
 	//SERVER/node/search/CATALOG?page[offset]=0&filter[time_range][condition][since]=FROM_START_TIME&filter[time_range][condition][until]=BEFORE_END_TIME&sort=time
-	variable startTimeSec= date2secs((StartYear), (StartMonth), (StartDay)) - 2082844800	//convert to Python time 
+	variable startTimeSec= date2secs((StartYear), (StartMonth), (StartDay)) - 2082844800 - Date2secs(-1,-1,-1) //convert to Python time and fix to UTC time which BS is using. 
 	variable endTimeSec = startTimeSec + NumOfHours*60*60
 	string TempAddress = ServerAddress+"/api/v1/node/search/"
 	string StartTimeStr, EndTimeStr
 	sprintf StartTimeStr, "%.15g" ,startTimeSec
 	sprintf EndTimeStr, "%.15g" ,endTimeSec
 	
-	if(AllDates)
-		TempAddress +=CatalogUsed+"?page[offset]=00&page[limit]="+num2str(NumberOfScansToImport)+"&sort=time"
-	else
-		TempAddress +=CatalogUsed+"?page[offset]=00&page[limit]="+num2str(NumberOfScansToImport)+"&filter[time_range][condition][since]="+StartTimeStr+"&filter[time_range][condition][until]="+EndTimeStr
-		TempAddress +="&filter[time_range][condition][timezone]=US/Central&sort=time"
-	endif
-	//this fails on IP8:
-	//TempAddress +=StringFromList(0, ListOfCatalogs)+"?page[offset]=00&page[limit]=1000&filter[time_range][condition][since]="+num2str(startTimeSec, "%.15g")+"&filter[time_range][condition][until]="+num2str(endTimeSec, "%.15g")+"&sort=time"
-	// default pagse limit is 100 -  page[offset]=0&page[limit]=1000 loads first 1000 scans. 
-	print TempAddress
-	URLRequest/Z url=TempAddress
-	if(V_Flag!=0)
-		abort "Server not available"
-	endif
-	JSONXOP_Parse/Z(S_serverResponse)
-	if(V_Flag!=0)
-		abort "Cannot parse server response"
-	endif
-	variable jsonId = V_Value
-	//print jsonID
-	//JSONXOP_Dump refNumJson
-	//print S_Value		-- prints the file in history and works. 
-
-	//this list how many items are in that address, this is how many data sets were returned in the json. 
-	//print JSON_GetArraySize(jsonID, "/data")
-
-	//this works for string keys in given location, not for single value
-	//JSONXOP_GetKeys jsonId, "/data/0", keyWave
-	//this reads value... Number: 
-	//JSONXOP_GetValue/T jsonId, "/data/0/id"
-	//print S_value
-	
-	//print JSON_GetType(jsonID, "/data/0/id")
-		//	0 Object
-		//	1 Array
-		//	2 Numeric
-		//	3 String
-		//	4 Boolean
-		//	5 Null
-		
-	//time conversion. Python uses January 1, 1970
-	//print/D date2secs(1970,1,1)
-	//while Igor is 1904. We need to add :  
-  	// date2secs(2022, 02, 20 ) - date2secs(1970,01,01) - Date2secs(-1,-1,-1)
-
-	
-	//let's list those which are plan "tune_a2rp"
-	variable numDataSets, i, j
-	string tempPlanName
-	numDataSets = JSON_GetArraySize(jsonID, "/data")
+	variable chunkToDownload = 250
+	variable OffsetStart=0
+	variable NumStepsNeeded = ceil(NumberOfScansToImport/chunkToDownload)
+	variable TempNumberOfScansToImport
+	variable i, done=0
+	variable numDataSets, i2, j, Oldrecords=0
+	string tempPlanName, tempMetadata
 	KillWaves/Z IDwave, PlanNameWave, TimeWave
-	make/O/N=(numDataSets)/T IDwave, PlanNameWave
-	make/O/N=(numDataSets)/D TimeWave			//must be double precision!
-	j=0
-	For(i=0;i<numDataSets;i+=1)
-		tempAddress = "/data/"+num2str(i)+"/attributes/metadata/start/plan_name"
-		tempPlanName = JSON_GetString(jsonID, tempAddress,ignoreErr=1) 
-		//if(!StringMatch(tempPlanName, "documentation_run"))
-		tempAddress = "/data/"+num2str(i)+"/id"
-		IDwave[j] = JSON_GetString(jsonID, tempAddress,ignoreErr=1)
-		PlanNameWave[j]=tempPlanName
-		tempAddress = "/data/"+num2str(i)+"/attributes/metadata/start/time"
-		//print/D JSON_GetVariable(jsonID, tempAddress)
-		TimeWave[j] = JSON_GetVariable(jsonID, tempAddress,ignoreErr=1) + date2secs(1970,01,01) + Date2secs(-1,-1,-1)
-		j+=1
-		//endif
-	endfor
-	JSONXOP_Release jsonId
+	make/O/N=(0)/T IDwave, PlanNameWave, MetadataStr
+	make/O/N=(0)/D TimeWave						//must be double precision!
 	
+	//need to split into smaller chunks (100) to downlad in pages.
+	For(i2=0;i2<NumStepsNeeded;i2+=1)
+		OffsetStart = i2*chunkToDownload
+		TempAddress = ServerAddress+"/api/v1/node/search/"			//this needs to be reset here... 
+		if(AllDates)
+			//TempAddress +=CatalogUsed+"?page[offset]=00&page[limit]="+num2str(NumberOfScansToImport)+"&sort=time"
+			TempAddress +=CatalogUsed+"?page[offset]="+num2str(OffsetStart)+"&page[limit]="+num2str(chunkToDownload)+"&sort=time"
+		else
+			TempAddress +=CatalogUsed+"?page[offset]="+num2str(OffsetStart)+"&page[limit]="+num2str(chunkToDownload)+"&filter[time_range][condition][since]="+StartTimeStr+"&filter[time_range][condition][until]="+EndTimeStr
+			if(!	StringMatch(ScanTypeToUse, "all"))
+				TempAddress +="&filter[eq][condition][key]=plan_name"
+				TempAddress +="&filter[eq][condition][value]=\""+ScanTypeToUse+"\""
+			endif
+			//&filter[scan_id][condition][scan_ids]=SCAN_ID
+			TempAddress +="&filter[time_range][condition][timezone]=US/Central&sort=time"
+			//note: sort=-time sorts in inverse chronological order. 
+			//example
+			//http://usaxscontrol:8000/api/v1/node/search/20idb_usaxs?page[offset]=0&page[limit]=100&filter[time_range][condition][since]=1671235200&filter[time_range][condition][until]=1671321600&filter[time_range][condition][timezone]=US/Central&sort=time
+			//http://usaxscontrol:8000/api/v1/node/search/20idb_usaxs?page[offset]=100&page[limit]=100&filter[time_range][condition][since]=1671235200&filter[time_range][condition][until]=1671321600&filter[time_range][condition][timezone]=US/Central&sort=time
+		endif
+		print TempAddress
+		URLRequest/Z url=TempAddress
+		if(V_Flag!=0)
+			abort "Server not available"
+		endif
+		JSONXOP_Parse/Z(S_serverResponse)
+		if(V_Flag!=0)
+			abort "Cannot parse server response"
+		endif
+		variable jsonId = V_Value
+		//print jsonID
+		//JSONXOP_Dump refNumJson
+		//print S_Value		-- prints the file in history and works. 
+	
+		//this list how many items are in that address, this is how many data sets were returned in the json. 
+		//print JSON_GetArraySize(jsonID, "/data")
+	
+		//this works for string keys in given location, not for single value
+		//JSONXOP_GetKeys jsonId, "/data/0", keyWave
+		//this reads value... Number: 
+		//JSONXOP_GetValue/T jsonId, "/data/0/id"
+		//print S_value
+		
+		//print JSON_GetType(jsonID, "/data/0/id")
+			//	0 Object
+			//	1 Array
+			//	2 Numeric
+			//	3 String
+			//	4 Boolean
+			//	5 Null
+			
+		//time conversion. Tiled uses January 1, 1970
+		//print/D date2secs(1970,1,1)
+		//while Igor is 1904. We need to add :  
+	  	// date2secs(2022, 02, 20 ) - date2secs(1970,01,01)			//this converts to UTC, which is not needed anymore... : - Date2secs(-1,-1,-1)
+	
+		
+		//let's list those which are plan "tune_a2rp"
+		numDataSets = JSON_GetArraySize(jsonID, "/data")
+		//KillWaves/Z IDwave, PlanNameWave, TimeWave
+		//make/O/N=(numDataSets)/T IDwave, PlanNameWave
+		//make/O/N=(numDataSets)/D TimeWave			//must be double precision!
+		Redimension/N=(Oldrecords+numDataSets) IDwave, PlanNameWave, TimeWave, MetadataStr
+		j=Oldrecords
+		For(i=0;i<numDataSets;i+=1)
+			tempAddress = "/data/"+num2str(i)+"/attributes/metadata/start/plan_name"
+			tempPlanName = JSON_GetString(jsonID, tempAddress,ignoreErr=1) 
+			//if(!StringMatch(tempPlanName, "documentation_run"))
+			tempAddress = "/data/"+num2str(i)+"/id"
+			IDwave[j] = JSON_GetString(jsonID, tempAddress,ignoreErr=1)
+			PlanNameWave[j]=tempPlanName
+			tempAddress = "/data/"+num2str(i)+"/attributes/metadata/start/time"
+			//print/D JSON_GetVariable(jsonID, tempAddress)
+			TimeWave[j] = JSON_GetVariable(jsonID, tempAddress,ignoreErr=1) + date2secs(1970,01,01)+ Date2secs(-1,-1,-1) 		//this is in Chicago time for User interface (+ Date2secs(-1,-1,-1))
+			//now metadata which can be used to scope down the data. 
+			MetadataStr[j] = ""
+			tempAddress = "/data/"+num2str(i)+"/attributes/metadata/start/detectors/0"
+			tempMetadata= JSON_GetString(jsonID, tempAddress,ignoreErr=1)
+			MetadataStr[j]+="Detector="+tempMetadata+";"
+			tempAddress = "/data/"+num2str(i)+"/attributes/metadata/start/motors/0"
+			tempMetadata= JSON_GetString(jsonID, tempAddress,ignoreErr=1)
+			MetadataStr[j]+="Axis="+tempMetadata+";"
+			//tempAddress = "/data/"+num2str(i)+"/attributes/metadata/start/motors/0"
+			//tempMetadata= JSON_GetString(jsonID, tempAddress,ignoreErr=1)
+			//MetadataStr[j]+="Axis="+tempMetadata+";"
+			j+=1
+		endfor
+		Oldrecords=j
+		JSONXOP_Release jsonId
+		if(numDataSets<1)
+			break
+		endif
+	endfor
 	//populate listbox
 	wave/T ListOfAvailableData = root:Packages:Irena:BlueSkySamplePlot:ListOfAvailableData
 	Wave SelectionOfAvailableData = root:Packages:Irena:BlueSkySamplePlot:SelectionOfAvailableData
-	redimension/N=(j,3) ListOfAvailableData 
+	redimension/N=(j,4) ListOfAvailableData 
 	redimension/N=(j) SelectionOfAvailableData 
 	SelectionOfAvailableData = 0
 	if(j>0)
 		ListOfAvailableData[][0] = PlanNameWave[p]
 		ListOfAvailableData[][1] = Secs2Date(TimeWave[p],-2)+"   "+Secs2Time(TimeWave[p],3)
-		ListOfAvailableData[][2] = IDwave[p]
+		ListOfAvailableData[][2] = MetadataStr[p]
+		ListOfAvailableData[][3] = IDwave[p]
 	endif
 	
 	//create list of scans available on server
-	SVAR ListOfScanTypes=root:Packages:Irena:BlueSkySamplePlot:ListOfScanTypes
-	SVAR ScanTypeToUse=root:Packages:Irena:BlueSkySamplePlot:ScanTypeToUse
-	ListOfScanTypes = ""
-	ScanTypeToUse = ""
-	For(i=0;i<DimSize(ListOfAvailableData,0);i+=1)
-		if(!StringMatch(ListOfScanTypes,"*"+ListOfAvailableData[i][0]+";*"))
-			ListOfScanTypes +=ListOfAvailableData[i][0]+";"
-		endif
-	endfor
-	if(strlen(ScanTypeToUse)<1 && DimSize(ListOfAvailableData,0)>0)
-		ScanTypeToUse = StringFromList(0, ListOfScanTypes)
-	endif
+//	SVAR ListOfScanTypes=root:Packages:Irena:BlueSkySamplePlot:ListOfScanTypes
+//	SVAR ScanTypeToUse=root:Packages:Irena:BlueSkySamplePlot:ScanTypeToUse
+//	string OldScanTypeToUse = ScanTypeToUse
+//	ListOfScanTypes = ""
+//	ScanTypeToUse = ""
+//	For(i=0;i<DimSize(ListOfAvailableData,0);i+=1)
+//		if(!StringMatch(ListOfScanTypes,"*"+ListOfAvailableData[i][0]+";*"))
+//			ListOfScanTypes +=ListOfAvailableData[i][0]+";"
+//		endif
+//	endfor
+//	if(strlen(ScanTypeToUse)<1 && DimSize(ListOfAvailableData,0)>0)
+//		ScanTypeToUse = StringFromList(0, ListOfScanTypes)
+//	endif
+//	if(strlen(OldScanTypeToUse)>1)
+//		if(StringMatch(ListOfScanTypes, "*"+OldScanTypeToUse+"*" ))
+//			ScanTypeToUse=OldScanTypeToUse
+//		endif	
+//	endif
 	
 	IR3BS_UdateListBoxScans()
 	
@@ -608,13 +694,16 @@ Function IR3BS_UdateListBoxScans()
 	//populate listbox
 	wave/T ListOfAvailableData = root:Packages:Irena:BlueSkySamplePlot:ListOfAvailableData
 	Wave/T PrunedListOfAvailableData  =root:Packages:Irena:BlueSkySamplePlot:PrunedListOfAvailableData
-	redimension/N=(0,3) PrunedListOfAvailableData
+	redimension/N=(0,4) PrunedListOfAvailableData
 	Wave SelectionOfAvailableData = root:Packages:Irena:BlueSkySamplePlot:SelectionOfAvailableData
 	//create list of scans available on server
 	SVAR ListOfScanTypes=root:Packages:Irena:BlueSkySamplePlot:ListOfScanTypes
 	SVAR ScanTypeToUse=root:Packages:Irena:BlueSkySamplePlot:ScanTypeToUse
-
-	Grep /A /E=(ScanTypeToUse)/GCOL=0  ListOfAvailableData as PrunedListOfAvailableData
+	if(!stringmatch(ScanTypeToUse,"all"))
+		Grep /A /E=(ScanTypeToUse)/GCOL=0  ListOfAvailableData as PrunedListOfAvailableData
+	else
+		Duplicate/O/T ListOfAvailableData, PrunedListOfAvailableData
+	endif
 	redimension/N=(DimSize(PrunedListOfAvailableData,0)) SelectionOfAvailableData 
 	SelectionOfAvailableData = 0
 

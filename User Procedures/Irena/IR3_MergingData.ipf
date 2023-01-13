@@ -957,6 +957,10 @@ Function IR3D_DataMergeListBoxProc(lba) : ListBoxControl
 			else
 				isData1or2=2
 			endif
+			//avoid error when user clicks outside active area...
+			if(row<0)
+				return 0
+			endif
 			FoldernameStr=listWave[row][col]
 			IR3D_CopyAndAppendData(isData1or2, FoldernameStr)
 			if(col==1&&!ProcessTest)		//this is second column of data

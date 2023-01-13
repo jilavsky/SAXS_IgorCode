@@ -10,7 +10,8 @@ Constant NI1AversionNumber = 2.73
 //*************************************************************************/
 
 //2.73 add ability to flip/rotate image after load to let users tweak image orientation. 
-		// modify NewMovie /CF=1 /F=(Movie_FrameRate)/I/Z to /CF=1 to reduce compression artifacts.  
+		// modify NewMovie /CF=1 /F=(Movie_FrameRate)/I/Z to /CF=CFfactor to reduce compression artifacts.  
+		// Try to calculate CF factor, see NI1A_MovieOpenFile() for explanation. 
 //2.72 add Use Transparent Beamstop transmission calculation
 //2.71 add Eiger types 
 //2.70 fixed Max number of points selection which did not account for Qmin and Qmax and was therefore producing too many points
@@ -2428,11 +2429,18 @@ Function NI1A_MovieOpenFile()
 	NVAR Movie_FrameRate=root:Packages:Convert2Dto1D:Movie_FrameRate
 	NVAR Movie_AppendAutomatically=root:Packages:Convert2Dto1D:Movie_AppendAutomatically
 	NVAR Movie_FileOpened=root:Packages:Convert2Dto1D:Movie_FileOpened
+	//figure out if we need different CF factor, see below. 
+	variable CFFactor=1
+	Wave/Z testImg=root:Packages:Convert2Dto1D:CCDImageToConvert
+	if(WaveExists(testImg))	// we have image...
+		CFFactor= ceil(DimSize(testImg, 0)*DimSize(testImg, 1))
+	endif
 	
-	NewMovie /CF=1 /F=(Movie_FrameRate)/I/Z		//8-29-2022 added CF=1 (default is 200) to reduce compression artifacts. Ugh... 
-	//warning from Wvemetrics :
+	NewMovie /CF=(CFFactor) /F=(Movie_FrameRate)/I/Z		//8-29-2022 added CF=1 (default is 200) to reduce compression artifacts. Ugh... 
+	//warning from Wavemetrics :
 	//On Windows (I haven't looked at the mac code), the compression factor you provide is used in this calculation:
 	//UINT32 bitRate= (VIDEO_WIDTH * VIDEO_HEIGHT * 24.0 * VIDEO_FPS_IN) / compressionFactor;		// this could overflow 32 bits if factor is small and size is large
+	// compressionFactor = ceil(VIDEO_WIDTH * VIDEO_HEIGHT/5e6 ) 
 	//VIDEO_FPS_IN is 30 unless you use the /F flag.
 	//If you use /CF=1, you need to make sure that the width x height is < ~5.96 million, this is slightly above 2400x2400 pixels images.
 

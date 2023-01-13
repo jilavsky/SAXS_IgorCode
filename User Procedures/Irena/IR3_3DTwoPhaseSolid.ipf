@@ -456,7 +456,9 @@ Function IR3T_Calc1DSASData()
 		variable MinMeaningfulQmin = 2*pi/BoxSideSize
 		//TheoreticalIntensityDACF
 		variable MaxMeaningfulPnt = BinarySearch(AutoCorQWv, MaxMeaningfulQmax)
-		AutoCorIntensity[MaxMeaningfulPnt, numpnts(AutoCorIntensity)-1] = nan
+		if(MaxMeaningfulPnt>0)
+			AutoCorIntensity[MaxMeaningfulPnt, numpnts(AutoCorIntensity)-1] = nan
+		endif
 		AutoCorIntensity[0, MinMeaningfulQmin] = nan
 		IN2G_RemoveNaNsFrom2Waves(AutoCorIntensity,AutoCorQWv)	
 

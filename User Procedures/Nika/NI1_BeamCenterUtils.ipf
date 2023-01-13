@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
-//#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.30
+#pragma version=2.31
+
 Constant NI1BCversionNumber = 2.25
 //*************************************************************************\
 //* Copyright (c) 2005 - 2022, Argonne National Laboratory
@@ -9,6 +9,7 @@ Constant NI1BCversionNumber = 2.25
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.31	 Fix Beam Center and Geometry correction which failed fitting when using Geometry correction. 
 //2.30 Remove for MatrixOP /NTHR=0 since it is applicable to 3D matrices only 
 //2.29 Fixed to accept tiff as tif extension.
 //2.28 fix autoscaling panel components. 
@@ -2424,6 +2425,16 @@ Function NI1BC_GetEvaluationPaths(CalibrantLine,numberOfSectors)
 					endif
 					Wave W_ImageLineProfile
 					if(BMUseGeometryCorr)
+						//need to check W_ImageLineProfile has same number of points as GeomCorrWv, seem s like routinely it has more...
+						variable LineProfNPS, WcoefNPS
+						LineProfNPS= numpnts(W_ImageLineProfile)
+						WcoefNPS = numpnts(GeomCorrWv)
+						if(LineProfNPS!=WcoefNPS)
+							Redimension/N=(LineProfNPS) GeomCorrWv
+							if(LineProfNPS > WcoefNPS)
+								GeomCorrWv[LineProfNPS-1]=GeomCorrWv[LineProfNPS-2]
+							endif
+						endif
 						W_ImageLineProfile=W_ImageLineProfile*GeomCorrWv
 					endif
 					wavestats/Q W_ImageLineProfile

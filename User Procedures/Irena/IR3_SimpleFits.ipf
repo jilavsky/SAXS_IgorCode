@@ -2245,6 +2245,7 @@ static Function IR3J_SaveResultsToNotebook()
 	NVAR Guinier_I0 				= root:Packages:Irena:SimpleFits:Guinier_I0
 	NVAR Guinier_Rg					=root:Packages:Irena:SimpleFits:Guinier_Rg
 	NVAR Porod_Constant			=root:Packages:Irena:SimpleFits:Porod_Constant
+	NVAR ScatteringContrast 		= root:Packages:Irena:SimpleFits:ScatteringContrast
 	NVAR Porod_SpecificSurface			=root:Packages:Irena:SimpleFits:Porod_SpecificSurface
 	NVAR ScatteringContrast			=root:Packages:Irena:SimpleFits:ScatteringContrast
 	NVAR Sphere_Radius				=root:Packages:Irena:SimpleFits:Sphere_Radius
@@ -2302,7 +2303,7 @@ static Function IR3J_SaveResultsToNotebook()
 	elseif(stringmatch(SimpleModel,"Porod"))
 		IR1_AppendAnyText("\tPorod Constant [1/cm 1/A^4] = "+num2str(Porod_Constant),0)
 		IR1_AppendAnyText("\tSpecific Surface [cm2/cm3] = "+num2str(Porod_SpecificSurface),0)
-		IR1_AppendAnyText("\tContrast [10^20 cm^-4] = "+num2str(Porod_Constant),0)
+		IR1_AppendAnyText("\tContrast [10^20 cm^-4] = "+num2str(ScatteringContrast),0)
 		IR1_AppendAnyText("\tBackground          = "+num2str(DataBackground),0)
 		IR1_AppendAnyText("Achieved Normalized chi-square = "+num2str(AchievedChiSquare),0)
 	elseif(stringmatch(SimpleModel,"Power Law"))
