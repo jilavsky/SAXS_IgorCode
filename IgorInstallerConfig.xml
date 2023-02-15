@@ -295,23 +295,23 @@
 			</Package>
 			<VersionComment>Versions of Irena 2.64, Nika 1.77 and Indra 1.92 from 5/1/2017.</VersionComment>
 		</release>
-		<release name="July2021Beta" beta="true">
-			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/refs/tags/July2021Beta.zip</SourceFileAddress>
+		<release name="February2023Beta" beta="true">
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/refs/tags/February2023Beta.zip</SourceFileAddress>
 			<Package>
 				<name>Irena</name>
-				<version>2.705</version>
+				<version>2.711</version>
 				<PackageList>IrenaPckg.xml</PackageList>
 				<VersionCheckFile>Boot Irena1 modeling.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>Nika</name>
-				<version>1.835</version>
+				<version>1.841</version>
 				<PackageList>NikaPckg.xml</PackageList>
 				<VersionCheckFile>Boot Nika.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>Indra</name>
-				<version>1.985</version>
+				<version>1.991</version>
 				<PackageList>IndraPckg.xml</PackageList>
 				<VersionCheckFile>Boot Indra2.ipf</VersionCheckFile>
 			</Package>
@@ -327,7 +327,7 @@
 				<PackageList>xopPckg64.xml</PackageList>
 				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
 			</Package>
-			<VersionComment>Beta release July 2021. Requires Igor 8.03 or higher.</VersionComment>
+			<VersionComment>Beta release February 2023. Requires Igor 8.04 or higher.</VersionComment>
 		</release>
 	</InstallerConfig>
 </IgorInstaller>
