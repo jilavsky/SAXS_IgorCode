@@ -704,6 +704,9 @@ Function NI1A_Initialize2Dto1DConversion()
 		LineProfileUseCorrData=0
 	endif
 	
+	//force 2DCalibrated data off, some users seem really creative
+	NVAR UseCalib2DData
+	UseCalib2DData = 0
 	//BSL files support...
 	//josh add: I added BSL sumoverframes and BSLlog 
 	setDataFolder root:Packages
