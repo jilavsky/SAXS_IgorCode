@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
-#pragma version=2.12
+#pragma version=2.13
 Constant IRVversionNumber=2.11
 
 
@@ -10,6 +10,7 @@ Constant IRVversionNumber=2.11
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.13 fix fitting where we had errors due to use of 200points destination wave. This is bug, we do not need dest wave at all. 
 //2.12 Fix case when user sets Qc in Surface fractal outside their data range, which caused artifacts. 
 //2.11 add option to use Unified Spere form factor instead of Spheroid
 //2.10 comibed with IR1_FractalsFiting.ipf, IR1_FractalsInit.ipf, and IR1_FractalsCntrlPanel.ipf
@@ -2880,7 +2881,7 @@ Function IR1V_ConstructTheFittingCommand()
 			Abort "Uncertainties (ERRORS) make NO sense. Points with uncertainty (error) <= 0 are not fitted and this causes troubles. Fix uncertainties and try again. See history area for more details."
 		endif
 		//***End of Catch error issues
-		FuncFit /N=0/W=0/Q IR1V_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1/E=E_wave /D /C=T_Constraints 
+		FuncFit /N=0/W=0/Q IR1V_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1/E=E_wave /C=T_Constraints 
 	else
 		Duplicate/O OriginalIntensity, FitIntensityWave		
 		Duplicate/O OriginalQvector, FitQvectorWave
@@ -2896,7 +2897,7 @@ Function IR1V_ConstructTheFittingCommand()
 			Abort "Uncertainties (ERRORS) make NO sense. Points with uncertainty (error) <= 0 are not fitted and this causes troubles. Fix uncertainties and try again. See history area for more details."
 		endif
 		//***End of Catch error issues
-		FuncFit /N=0/W=0/Q IR1V_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1 /E=E_wave/D /C=T_Constraints	
+		FuncFit /N=0/W=0/Q IR1V_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1 /E=E_wave /C=T_Constraints	
 	endif
 	if (V_FitError!=0)	//there was error in fitting
 		IR1V_ResetParamsAfterBadFit()
