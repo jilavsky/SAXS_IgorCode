@@ -690,29 +690,48 @@ Function NI1_9IDCCreateSAXSPixMask()
 
 	string OldDF=GetDataFolder(1)
 	SetDataFolder root:Packages:Convert2Dto1D
+	//figrue out when we collected data, 2023 or later, this should be CdTe detector which needs different mask. 
+	Wave/Z w2D = root:Packages:Convert2Dto1D:CCDImageToConvert
+	if(!WaveExists(w2D))
+		Abort "Load one Image file first so the tool can read the wave note information"  
+	endif
+	string OldNOte=note(w2D)
+	
+	Variable Year =	NumberByKey(NI1_9IDCFindKeyStr("start_time=", OldNote), OldNote  , "=" , ";")
+	
 	NVAR/Z UsePixSensitiveMask = root:Packages:Convert2Dto1D:UsePixSensitiveMask
 	if(!NVAR_Exists(UsePixSensitiveMask))
 		variable/g UsePixSensitiveMask=0
 	endif
 	Make/O/B/U/N=(195,487) M_ROIMask
 	M_ROIMask =1
-	M_ROIMask[][0,7]=0
-	M_ROIMask[86][17] = 0
-	M_ROIMask[58][112] = 0
-	if(UsePixSensitiveMask)
+	if(Year<2023)	//this is old Si detector
+		M_ROIMask[][0,7]=0
+		M_ROIMask[86][17] = 0
+		M_ROIMask[58][112] = 0
+		if(UsePixSensitiveMask)
+			M_ROIMask[][0,2]=0
+			M_ROIMask[][59,61] = 0
+			M_ROIMask[][120,122] = 0
+			M_ROIMask[][181,183] = 0
+			M_ROIMask[][240,244] = 0
+			M_ROIMask[][303,306] = 0
+			M_ROIMask[][364,366] = 0
+			M_ROIMask[][425,427] = 0
+			M_ROIMask[95,99][] = 0
+			M_ROIMask[0,2][] = 0
+			M_ROIMask[192,194][] = 0
+			M_ROIMask[][485,486] = 0
+	
+		endif
+	else	//CdTe
 		M_ROIMask[][0,2]=0
-		M_ROIMask[][59,61] = 0
-		M_ROIMask[][120,122] = 0
-		M_ROIMask[][181,183] = 0
-		M_ROIMask[][240,244] = 0
-		M_ROIMask[][303,306] = 0
-		M_ROIMask[][364,366] = 0
-		M_ROIMask[][425,427] = 0
-		M_ROIMask[95,99][] = 0
-		M_ROIMask[0,2][] = 0
-		M_ROIMask[192,194][] = 0
-		M_ROIMask[][485,486] = 0
-
+		M_ROIMask[][242,244]=0
+		if(UsePixSensitiveMask)
+			M_ROIMask[0,1][] = 0
+			M_ROIMask[193,194][] = 0
+			M_ROIMask[][485,486] = 0
+		endif
 	endif
 	
 	string notestr="MaskOffLowIntPoints:0;LowIntToMaskOff:0>// ;ITEMNO:0;\r"
