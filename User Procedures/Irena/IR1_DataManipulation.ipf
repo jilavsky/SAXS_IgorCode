@@ -4740,6 +4740,7 @@ Function IR3M_SubtractWave(FldrNamesTWv,SelFldrs,SubtrWvX,SubtrWvY,SubtrWvE,Xtmp
 				TempSubtractedYWv0123 = (tmpWvY[p]) - tempLogDataToSubtractAtrighQ[p]
 				//fix the note.
 				//NewWaveNote+=" from wave: "+GetWavesDataFolder(tmpWvY,2)+";"		
+				NewWaveNote = RealNote+NewWaveNote
 				Note/NOCR TempSubtractedYWv0123, NewWaveNote//+" from wave: "+GetWavesDataFolder(tmpWvY,2)+";"	
 				Note/NOCR TempSubtractedXWv0123, NewWaveNote//+" from wave: "+GetWavesDataFolder(tmpWvY,2)+";"
 				if(WaveExists(tmpWvE))

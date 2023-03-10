@@ -1,13 +1,16 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version=1.03
+#pragma version=1.04
 
 
 constant IR3DMversionNumber = 1.02			//Data Manipulation III panel version number
 
 
 //Version notes:
+//1.04 fixed bug when initialization did not set something right and data were saved in Packages folder instead data area. Fixed USAXS data names used for saving
+//		fixed subtraction, which did not work yet. Tested for USAXS data for now. 
+//		enabled SMR data
 //1.03 fix IR3DM_AverageSaveData to be able to save liiberal names data (e.g., starting with numbers)
 //1.02 fix Process data - trim 
 //1.01 add handling of USAXS M_... waves 
@@ -82,7 +85,7 @@ Function IR3DM_DataManIIIPanelFnct()
 	string XUserLookup=""
 	string EUserLookup=""
 	IR2C_AddDataControls("Irena:DataManIII","IR3DM_DataManIIIPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
-	IR3C_MultiAppendControls("Irena:DataManIII","IR3DM_DataManIIIPanel", "IR3DM_CopyAndAppendData","",1,0)
+	IR3C_MultiAppendControls("Irena:DataManIII","IR3DM_DataManIIIPanel", "IR3DM_CopyAndAppendData","",1,1)
 	//hide what is not needed
 	checkbox UseResults, disable=0
 	//OK, that is done
@@ -752,7 +755,7 @@ Function IR3DM_ProcessDataFunction(HowMany)
 	SVAR SaveDataToFolder = root:Packages:Irena:DataManIII:SaveDataToFolder
 	SVAR SaveDataToFolderFull = root:Packages:Irena:DataManIII:SaveDataToFolderFull
 	SVAR DataFolderName=root:Packages:Irena:DataManIII:DataFolderName
-	//let's trim if asked for...
+	//let's trim and subtract, if asked for...
 	NVAR TrimSelected=root:Packages:Irena:DataManIII:ProcessTrim
 	NVAR Subtract = root:Packages:Irena:DataManIII:ProcessSubtractData
 
@@ -762,6 +765,7 @@ Function IR3DM_ProcessDataFunction(HowMany)
 	Wave Original_dQ
 
 	NewNote = "Processed Data;"+date()+";"+time()+";"
+	string RealNote = note(Original_Intensity)
 	NVAR Qmax=root:Packages:Irena:DataManIII:DataQEnd
 	NVAR Qmin=root:Packages:Irena:DataManIII:DataQstart
 	variable StartP, EndP
@@ -774,17 +778,37 @@ Function IR3DM_ProcessDataFunction(HowMany)
 		Duplicate/O/R=[StartP,EndP] Original_Q, Modified_Q 
 		Duplicate/O/R=[StartP,EndP] Original_Errors, Modified_Errors 
 		Duplicate/O/R=[StartP,EndP] Original_dQ, Modified_dQ 
-		NewNote = "Data trimmed;StartQ="+num2str(Qmin)+";EndQ="+num2str(Qmax)+";"
+		NewNote += "Data trimmed;StartQ="+num2str(Qmin)+";EndQ="+num2str(Qmax)+";"
 	else
 		Duplicate/O Original_Intensity, Modified_Intensity 
 		Duplicate/O Original_Q, Modified_Q 
 		Duplicate/O Original_Errors, Modified_Errors 
 		Duplicate/O Original_dQ, Modified_dQ 
 	endif
-	
 	Wave Modified_Intensity = root:Packages:Irena:DataManIII:Modified_Intensity
 	Wave Modified_Q = root:Packages:Irena:DataManIII:Modified_Q
 	Wave Modified_Errors = root:Packages:Irena:DataManIII:Modified_Errors
+
+	if(Subtract)
+		SVAR SelectedFolderToSubtract = root:Packages:Irena:DataManIII:SelectedFolderToSubtract
+		NewNote +="Data modified by subtracting wave=" +SelectedFolderToSubtract+";"
+		Wave IntToSUb=root:Packages:Irena:DataManIII:OrigIntToSubtractWave
+		Wave QtoSUb = root:Packages:Irena:DataManIII:OrigQToSubtractWave
+		Wave ErrToSub = root:Packages:Irena:DataManIII:OrigErrorToSubtractWave
+		Duplicate/Free IntToSUb, WaveToSubtractLog
+		WaveToSubtractLog = log(IntToSUb)
+		//Duplicate/Free 	Modified_Q, TempSubtractedXWv0123
+		Duplicate/Free Modified_Intensity, tempLogDataToSubtractAtrighQ, TempSubtractedYWv
+		tempLogDataToSubtractAtrighQ = 10^ interp(Modified_Q[p], QtoSUb, WaveToSubtractLog )  		 //thsi is for non-negative intensity
+		TempSubtractedYWv = Modified_Intensity[p] - tempLogDataToSubtractAtrighQ[p]
+		Modified_Intensity = TempSubtractedYWv
+		if(WaveExists(Modified_Errors))
+			Duplicate/O Modified_Errors, TempSubtractedEWv0123
+			TempSubtractedEWv0123 = sqrt(Modified_Errors[p]^2 + (interp(Modified_Q[p], QtoSUb, ErrToSub ))^2)
+			Modified_Errors = TempSubtractedEWv0123
+		endif
+	endif
+	NewNote = RealNote+NewNote
 	Note /K/NOCR Modified_Intensity, NewNote
 	Note /K/NOCR Modified_Q, NewNote
 	Note /K/NOCR Modified_Errors, NewNote
@@ -829,6 +853,14 @@ Function IR3DM_SaveProcessDataFnct()
 	SVAR SaveDataToFolderFull = root:Packages:Irena:DataManIII:SaveDataToFolderFull
 	SVAR DataFolderName=root:Packages:Irena:DataManIII:DataFolderName
 
+	//need to make sure the data are stored in proper place. Assume this is parent folder for data we use. 
+	//this happens when we run mutliple data conversions at once. 
+	//in this case SaveDataToFolderFull in blank...
+	if(strlen(SaveDataToFolderFull)<1)
+		string FinalDataFoldrname=RemoveListItem(ItemsInList(SaveDataToFolder,":")-1, SaveDataToFolder, ":")
+		SaveDataToFolderFull = FinalDataFoldrname
+	endif
+
 	Wave Original_Intensity
 	Wave Original_Q
 	Wave Original_Errors
@@ -846,9 +878,15 @@ Function IR3DM_SaveProcessDataFnct()
 		//print GetDataFOlder(1)
 		NewDataFolder/O/S $(StringFromList(ItemsInList(SaveDataToFolder,":")-1, SaveDataToFolder, ":"))
 		print "Data saved in folder: "+GetDataFOlder(1)
-		Duplicate/O Modified_Intensity, $(IN2G_removeExtraQuote(IntensityWaveName,1,1) + AddExtension)
-		Duplicate/O Modified_Q, $(IN2G_removeExtraQuote(QWavename,1,1) + AddExtension)
-		Duplicate/O Modified_Errors, $(IN2G_removeExtraQuote(ErrorWaveName,1,1) + AddExtension)
+		if(UseIndra2Data)//USAXS data, do not add modified
+			Duplicate/O Modified_Intensity, $(IntensityWaveName)
+			Duplicate/O Modified_Q, $(QWavename)
+			Duplicate/O Modified_Errors, $(ErrorWaveName)
+		else
+			Duplicate/O Modified_Intensity, $(IN2G_removeExtraQuote(IntensityWaveName,1,1) + AddExtension)
+			Duplicate/O Modified_Q, $(IN2G_removeExtraQuote(QWavename,1,1) + AddExtension)
+			Duplicate/O Modified_Errors, $(IN2G_removeExtraQuote(ErrorWaveName,1,1) + AddExtension)
+		endif
 	else
 		Print "No data to save in IR3DM_SaveProcessDataFnct"
 	endif
@@ -1048,6 +1086,7 @@ Function IR3DM_AppendAveDataToGraphLogLog()
 		Label /W=IR3DM_DataManIIIDataDisplay bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q[A\\S-1\\M"+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 		//ErrorBars /W=IR3DM_DataManIIIDataDisplay $nameOfWave(AddIntWv) Y,wave=(AddErrorWv,AddErrorWv)		
 	endif
+	DoWIndow/F IR3DM_DataManIIIDataDisplay
 	//IN2G_LegendTopGrphFldr(str2num(IN2G_LkUpDfltVar("LegendSize")), 20, 1, 0, topGraphStr = "IR3DM_DataManIIIDataDisplay")
 	//IN2G_ColorTopGrphRainbow(topGraphStr="IR3DM_DataManIIIDataDisplay")
 //	NVAR DisplayErrorBars = root:Packages:Irena:BioSAXSDataMan:DisplayErrorBars

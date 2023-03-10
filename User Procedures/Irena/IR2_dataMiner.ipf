@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.17
+#pragma version=1.18
 
 Constant IR2MversionNumber = 1.13			//Data mining tool version number
 constant IR3BversionNumber = 0.1			//MetadataBrowser tool version number. 
@@ -10,6 +10,8 @@ constant IR3BversionNumber = 0.1			//MetadataBrowser tool version number.
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+
+//1.18 changed extracted number and time waves into double precision. Needed for time waves. 
 //1.17 fix DateTime extracted wave bug, cannot name wave DATETIME, need to use DatTimeW 
 //1.16 fix extracting 1 digit data, was skipping due to bug. (could not extract for example 1). 
 //1.15 add handling of USAXS M_... waves 
@@ -737,7 +739,7 @@ static Function IR3B_ExtrMtdtFromOneFolder(FolderNameStr)
 					CleanKeyName = CleanupName(KeyString[0,31], 0)
 					Wave/Z TmpWv=$(CleanKeyName)
 					if(!WaveExists(TmpWv))
-						Make/O/N=(NumberOfExtractedItems+1) $(CleanKeyName)
+						Make/O/D/N=(NumberOfExtractedItems+1) $(CleanKeyName)
 					endif
 					Wave TmpWv=$(CleanKeyName)
 					Redimension/N=(NumberOfExtractedItems+1) TmpWv
@@ -748,7 +750,7 @@ static Function IR3B_ExtrMtdtFromOneFolder(FolderNameStr)
 						CleanKeyName = CleanupName(KeyString[0,24], 0)+"TimeW"
 						Wave/Z TmpTimeWv=$(CleanKeyName)
 						if(!WaveExists(TmpStrWv))
-							Make/O/N=(NumberOfExtractedItems+1) $(CleanKeyName)
+							Make/O/D/N=(NumberOfExtractedItems+1) $(CleanKeyName)
 						endif
 						Wave TmpTimeWv=$(CleanKeyName)
 						Redimension/N=(NumberOfExtractedItems+1) TmpTimeWv
