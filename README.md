@@ -3,7 +3,7 @@ Irena, Nika, and Indra SAXS Igor code by Jan Ilavsky for Igor Pro 8.04 and highe
 
 **The current stable release version is October 2021. This version is for Igor Pro 8.04 and 9.0** 
 
-**The current beta release version is April 2023. This version is for Igor Pro 8.04 and 9.0** 
+**The current beta release version is April 2023. This version is for Igor Pro 8.04 and 9.0. Fixes Igor Pro 9.02 code change.** 
 
 **This code can be installed using Igor installer** from https://github.com/jilavsky/SAXS_IgorInstaller/tree/master/Igor_GitHub If you want to install one or more packages from here, download the latest version of 
 "GHInstaller_IrenaNika_vxxx.pxp" and use that to install. Direct link to the latest version of installer is : https://github.com/jilavsky/SAXS_IgorInstaller/blob/master/Igor_GitHub/GHInstaller_IrenaNika_v1.15.pxp?raw=true
