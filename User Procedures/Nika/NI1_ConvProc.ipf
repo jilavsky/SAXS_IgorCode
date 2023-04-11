@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.74
+#pragma version=2.75
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -10,6 +10,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.75 fix for TransformAxis1.2 Ticks change done at version 9.02
 //2.74 ~2022 sometimes. 
 //			added ability to calculate transmission using semi transparent beamstop. 
 //			removed use of calibrated data, let's see if anyone complains. I do nto think there is any use for this. 
@@ -7071,21 +7072,21 @@ Function NI1U_UpdateQAxisInImage()
 	string ImgRecreationStr=WinRecreation("CCDImageToConvertFig", 0 )
 	
 	//and now we need to add the transform axes to the image
-	//this is woraround to change in TransforAxis1.2 starting with Igor 6.21
+	//this is workaround to change in TransforAxis1.2 starting with Igor 9.02
 
-#if IgorVersion() >= 6.21
+#if IgorVersion() >= 9.02
+	if(stringmatch(ImgRecreationStr, "*MT_left*" ))
+		TicksForTransformAxis("CCDImageToConvertFig", "left",  7, 1, 5,"MT_left", 0,1,0)
+	endif
+	if(stringmatch(ImgRecreationStr, "*MT_top*" ))
+		TicksForTransformAxis("CCDImageToConvertFig", "top",  7, 1, 5,"MT_top",0 ,1,0)
+	endif
+#else
 	if(stringmatch(ImgRecreationStr, "*MT_left*" ))
 		TicksForTransformAxis("CCDImageToConvertFig", "left",  7, 1, 5,"MT_left", 0,1)
 	endif
 	if(stringmatch(ImgRecreationStr, "*MT_top*" ))
 		TicksForTransformAxis("CCDImageToConvertFig", "top",  7, 1, 5,"MT_top",0 ,1)
-	endif
-#else
-	if(stringmatch(ImgRecreationStr, "*MT_left*" ))
-		TicksForTransformAxis("CCDImageToConvertFig", "left",  7, 1, 5,"MT_left", 0)
-	endif
-	if(stringmatch(ImgRecreationStr, "*MT_top*" ))
-		TicksForTransformAxis("CCDImageToConvertFig", "top",  7, 1, 5,"MT_top",0 )
 	endif
 #endif
 end

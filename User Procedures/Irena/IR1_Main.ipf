@@ -5,7 +5,7 @@
 
 //DO NOT renumber Main files every time, these are main release numbers...
 //define manual date and release verison 
-constant CurrentIrenaVersionNumber = 2.712		//change version of Boot Irena1 modeling.ipf to get proper check version. 
+constant CurrentIrenaVersionNumber = 2.713		//change version of Boot Irena1 modeling.ipf to get proper check version. 
 
 //*************************************************************************
 //* Copyright (c) 2005 - 2022, Argonne National Laboratory
@@ -13,7 +13,8 @@ constant CurrentIrenaVersionNumber = 2.712		//change version of Boot Irena1 mode
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************
 
-//2.711	Developement version, 2021/11
+//2.713	April2023Beta, minor changes
+//2.711	Development version, 2021/11
 //			System specific models, added Hermans/UBG models for polymers. 
 //
 //2.71		October 2021 release. 
@@ -885,7 +886,7 @@ Function IR1_AboutPanel()
 	SetDrawEnv fsize= 20,fstyle= 1,textrgb= (16384,28160,65280)
 	DrawText 23,30,"Irena macros for Igor Pro 8.04 & 9.x"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
-	DrawText 100,60,"@ ANL, 2021"
+	DrawText 100,60,"@ ANL, 2023"
 	DrawText 10,80,"release "+num2str(CurrentIrenaVersionNumber)
 	DrawText 11,100,"To get help please contact: ilavsky@aps.anl.gov"
 	SetDrawEnv textrgb= (0,0,65535)

@@ -5,7 +5,7 @@
 
 //DO NOT renumber Main files every time, these are main release numbers...
 
-constant CurrentNikaVersionNumber = 1.842
+constant CurrentNikaVersionNumber = 1.843
 constant FixBackgroundOversubScale=1.05			//this is used to fix oversubtracted background. Adds FixBackgroundOversubScale*abs(V_min) to all intensity value. 
 constant NikaNumberOfQCirclesDisp=15
 constant NikaLengthOfPathForPanelDisplay=100
@@ -16,7 +16,9 @@ constant NikaLengthOfPathForPanelDisplay=100
 //*************************************************************************/
 
 //1.85 	Fix NI1_SetAllPathsInNIka which failed to setup properly very long paths. 
-//1.84 	Ocotber2021 version
+//			1.843 Fix IP9.02 issue with AxisTransform1.2 change. April2023Beta 
+//			1.842 February2023 Beta
+//1.84 	October2021 version
 //			Fixes for some loaders where users found failures.  
 //1.83		require Igor 8.03 now. Not testing Igor 7 anymore. 
 //			Improve NXcanSAS 2D calibrated data import for NSLS-SMI beamline. 
@@ -357,7 +359,7 @@ Function NI1_AboutPanel()
 	SetDrawEnv fsize= 18,fstyle= 1,textrgb= (16384,28160,65280)
 	DrawText 10,37,"Nika 1 macros for Igor Pro 8.04 & 9.x"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
-	DrawText 52,64,"@ ANL, 2021"
+	DrawText 52,64,"@ ANL, 2023"
 	DrawText 49,103,"Release "+num2str(CurrentNikaVersionNumber)
 	DrawText 11,136,"To get help please contact: ilavsky@aps.anl.gov"
 	DrawText 11,156,"https://usaxs.xray.aps.anl.gov/software-description"
