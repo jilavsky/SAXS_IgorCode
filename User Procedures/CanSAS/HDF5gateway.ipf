@@ -1,12 +1,12 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.04
+#pragma version=1.05
 #pragma IgorVersion = 7.00	// 7.00 or later is required for StringFromList offset parameter
 
 // In Igor Pro 8 and before, this requires the Wavemetrics "HDF5.xop" to be installed for IgorPro
 
 // #define DO_HDF5_GATEWAY_TIMING		// Define this to turn some timers on for debugging slow performance
 
-
+//1.05 JIL fixed loading files with "." in the path name (NOT the file name, just the path. Paths as C:\users\First.last\Data\whatever shoudl work now. 
 //1.04 is modfied by Howard Rodstein on 2021-06-02 to speed up loading data. 
 // 		 To speed up loading of large files, we started with the hdf5gateway.ipf from // https://github.com/prjemian/hdf5gateway on 2021-05-28.
 //		 modified by HR and JIL to handle liberal file names, but not liberal data names. That will be separate problem for sometimes in the future. 
@@ -458,8 +458,11 @@ Function/T H5GW_ReadHDF5(parentFolder, fileName, [hdf5Path])
 	endif
 	
 	//   read the data (too bad that HDF5LoadGroup does not read the attributes)
-	String base_name = StringFromList(0,FileName,".")
-	base_name = StringFromList(ItemsInList(base_name, ":")-1,base_name,":")
+	//String base_name = StringFromList(0,FileName,".")
+	//base_name = StringFromList(ItemsInList(base_name, ":")-1,base_name,":")
+	//fails with multiple "." in name, let's try this: 
+	String base_name = StringFromList(ItemsInList(FileName, ":")-1,FileName,":")
+	base_name = StringFromList(0,base_name,".")
 	//this is failing on liberal names, so let's use our own name, this should be used to read one file at time and then delete it anyway...
 	//base_name = "TmpImportNexusFile"
 	HDF5LoadGroup/Z/L=7/O/R/T=$base_name  :, fileID, hdf5Path		//	recursive

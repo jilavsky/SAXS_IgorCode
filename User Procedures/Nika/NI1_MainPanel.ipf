@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 #pragma version=2.73
-Constant NI1AversionNumber = 2.73
+Constant NI1AversionNumber = 2.74
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2022, Argonne National Laboratory
@@ -9,6 +9,7 @@ Constant NI1AversionNumber = 2.73
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.74 fix the fix from 2.73 where the CFFactor calculation had a bug. ugh... (line 2438)
 //2.73 add ability to flip/rotate image after load to let users tweak image orientation. 
 		// modify NewMovie /CF=1 /F=(Movie_FrameRate)/I/Z to /CF=CFfactor to reduce compression artifacts.  
 		// Try to calculate CF factor, see NI1A_MovieOpenFile() for explanation. 
@@ -2436,7 +2437,7 @@ Function NI1A_MovieOpenFile()
 	variable CFFactor=1
 	Wave/Z testImg=root:Packages:Convert2Dto1D:CCDImageToConvert
 	if(WaveExists(testImg))	// we have image...
-		CFFactor= ceil(DimSize(testImg, 0)*DimSize(testImg, 1))
+		CFFactor= ceil(DimSize(testImg, 0)*DimSize(testImg, 1)/5e6) 	//4-21-2023, seems to have missed the /5e6 to make CF 1 or 2. 
 	endif
 	
 	NewMovie /CF=(CFFactor) /F=(Movie_FrameRate)/I/Z		//8-29-2022 added CF=1 (default is 200) to reduce compression artifacts. Ugh... 

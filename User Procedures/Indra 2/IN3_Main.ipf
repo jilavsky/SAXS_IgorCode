@@ -586,7 +586,8 @@ Function/T IN3_USAXSScanLoadHdf5File2(LoadManyDataSets)
 				//we are in root:raw here
 				Wave/T/Z program_name = $(HDF5RawFolderWithData+"entry:program_name")
 				variable isStepScan, isFlyScan
-				if(StringMatch(program_name[0], "bluesky"))
+				if(StringMatch(program_name[0], "bluesky"))	//this is not good enough, we have BS running flyscans or step scans... 
+					
 					isStepScan = 1
 					isFlyScan = 0
 				elseif(StringMatch(program_name[0], "saveFlyData.py"))
