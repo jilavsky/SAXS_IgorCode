@@ -1,7 +1,8 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.84
+#pragma version = 1.85
 #pragma IgorVersion=8.04
 
+//1.85 	July2023 release
 //1.84		October2021 release, IP9 maintenance and other changes. 
 //1.83 	September2020 release
 //1.82		February 2020 release. Maintenance, many small changes. 

@@ -1,7 +1,8 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.99
+#pragma version = 2.00
 #pragma IgorVersion=8.04
 
+//2.00		July2023 release
 //1.99   October2021 release
 //				Sample Survey tool
 //				Step scanning in BlueSky and other associated changes. 
