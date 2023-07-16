@@ -1,18 +1,19 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
-#pragma version=2.71
+#pragma version=2.72
 #pragma IgorVersion=8.04
 
 //DO NOT renumber Main files every time, these are main release numbers...
 //define manual date and release verison 
-constant CurrentIrenaVersionNumber = 2.713		//change version of Boot Irena1 modeling.ipf to get proper check version. 
+constant CurrentIrenaVersionNumber = 2.72		//change version of Boot Irena1 modeling.ipf to get proper check version. 
 
 //*************************************************************************
-//* Copyright (c) 2005 - 2022, Argonne National Laboratory
+//* Copyright (c) 2005 - 2023, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************
 
+//2.72		July2023 release, minor changes, fix IP9.02 compatiblity
 //2.713	April2023Beta, minor changes
 //2.711	Development version, 2021/11
 //			System specific models, added Hermans/UBG models for polymers. 

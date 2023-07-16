@@ -17,9 +17,9 @@ Constant TypicalPanelHorizontalSize = 350
    //For releases uncomment the next line and set to correct version number:
 //Strconstant ManualVersionString = "en/1.4/"					//1.4 is December2018 release
 //Strconstant ManualVersionString = "en/1.5.1/"				//this was for September2020 release. 
-//Strconstant ManualVersionString = "en/1.5.2/"				//this was for October 2021 release. 
+Strconstant ManualVersionString = "en/1.5.3/"				//July2023 release. 
 //*** For development version uncomment next line, it points to latest (development) version of manuals:
-Strconstant ManualVersionString = "en/latest/"		//this is for beta version, so it sees current version of manual. 
+//Strconstant ManualVersionString = "en/latest/"		//this is for beta version, so it sees current version of manual. 
 strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan-ilavsky/IrenaNikaRecords/VersionCheck.php?"
 //this is probably useless... strconstant strConstVerCheckwwwAddress="http://usaxs.xray.aps.anl.gov/staff/ilavsky/IrenaNikaRecords/VersionCheck.php?"
 //constant useUserFileNames = 0			//this controls, if IN2G_ReturnUserSampleName(FolderPathToData) returns folder name (=0) or SmapleName (string, if exists, =1)
@@ -33,7 +33,7 @@ strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan
 // disabled IN2G_CheckScreenSize, not needed since IP9 can scale panels down. 
 //  
 //*************************************************************************\
-//* Copyright (c) 2005 - 2022, Argonne National Laboratory
+//* Copyright (c) 2005 - 2023, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/

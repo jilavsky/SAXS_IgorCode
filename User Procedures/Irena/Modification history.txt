@@ -9,9 +9,11 @@ It runs on Wavemetrics Igor Pro version 8.04 and higher.
 
 Modification history:
 ********************************************
-2.72 ???
+2.72 7/16/2023
 Fixed Anomalous Contrast calculator which failed to run in old experiments due to lookup tables incompatibility. Needed proper reinitialization. 
 Fixed Guinier-Porod fitting where fitting small Q range was failing. 
+Fixes for IP9.02 where Wavemetrics changed some internal code
+Minor fixes and improvements on new tools. 
 
 
 2.71 10/10/2021

@@ -1,16 +1,17 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
 #pragma IgorVersion=8.04   //requires Igor version 8.03 or higher
-#pragma version = 1.99
+#pragma version = 2.00
 
-constant CurrentIndraVersionNumber = 1.992
+constant CurrentIndraVersionNumber = 2.00
 //*************************************************************************\
-//* Copyright (c) 2005 - 2022, Argonne National Laboratory
+//* Copyright (c) 2005 - 2023, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//			1.992	- USAXS fixes for 20IDB operations. April2023Beta
+//2.00		July2023 release
+//				Minor fixes, USAXS fixes for 20IDB operations. April2023Beta
 //1.99   October2021 release 
 //				Sample Survey tool
 //				Step scanning in BlueSky and other associated changes. 

@@ -17,6 +17,13 @@
 //			Tested and fixed for Igor 8 beta version. 
 //2.65 Promoted requirements to 7.05 due to bug in HDF5 support at lower versions
 
+
+//*************************************************************************\
+//* Copyright (c) 2005 - 2023, Argonne National Laboratory
+//* This file is distributed subject to a Software License Agreement found
+//* in the file LICENSE that is included with this distribution. 
+//*************************************************************************/
+
 Menu "Macros", dynamic
 	//StrVarOrDefault("root:Packages:SASItem1Str","Load Irena SAS Macros"), LoadIrenaSASMacros()
 	IrenaMacrosMenuItem(1)

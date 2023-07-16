@@ -5,17 +5,17 @@
 
 //DO NOT renumber Main files every time, these are main release numbers...
 
-constant CurrentNikaVersionNumber = 1.843
+constant CurrentNikaVersionNumber = 1.85
 constant FixBackgroundOversubScale=1.05			//this is used to fix oversubtracted background. Adds FixBackgroundOversubScale*abs(V_min) to all intensity value. 
 constant NikaNumberOfQCirclesDisp=15
 constant NikaLengthOfPathForPanelDisplay=100
 //*************************************************************************\
-//* Copyright (c) 2005 - 2022, Argonne National Laboratory
+	//* Copyright (c) 2005 - 2023, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.85 	Fix NI1_SetAllPathsInNIka which failed to setup properly very long paths. 
+//1.85 	July2023 release, Fix NI1_SetAllPathsInNika which failed to setup properly very long paths. 
 //			1.843 Fix IP9.02 issue with AxisTransform1.2 change. April2023Beta 
 //			1.842 February2023 Beta
 //1.84 	October2021 version

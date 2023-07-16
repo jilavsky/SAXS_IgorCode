@@ -3,7 +3,7 @@
 #pragma version=2.26
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2022, Argonne National Laboratory
+//* Copyright (c) 2005 - 2023, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -55,44 +55,44 @@
 #include "IR1_Desmearing", version>=2.13
 #include "IR1_EvaluationGraph", version>=2.11
 #include "IR1_FormFactors", version>=2.30
-#include "IR1_Fractals", version>=2.11
-#include "IR1_ImportData", version>=2.41
-#include "IR1_Main", version>=2.70
+#include "IR1_Fractals", version>=2.13
+#include "IR1_ImportData", version>=2.42
+#include "IR1_Main", version>=2.72
 #include "IR1_PlottingToolI", version >=2.34
 #include "IR1_PlottingToolI2", version >=2.24
 #include "IR1_ScattContrast", version>=2.28
 #include "IR1_Sizes", version>=2.31
 #include "IR1_UnifiedFitFncts", version>=2.36
 #include "IR1_UnifiedFitPanel", version>=2.28
-#include "IR2_AnalyticalModels", version>=4.16
+#include "IR2_AnalyticalModels", version>=4.17
 #include "IR2_DataExport", version>=1.19
-#include "IR2_DataMiner", version >=1.15
-#include "IR2_ModelingMain", version>=1.33
+#include "IR2_DataMiner", version >=1.18
+#include "IR2_ModelingMain", version>=1.34
 #include "IR2_ModelingSupport", version>=1.52
-#include "IR2_PanelCntrlProcs", version>=1.64
-#include "IR2_PlotingToolII", version>=1.1
-#include "IR2_Reflectivity", version >=1.21
+#include "IR2_PanelCntrlProcs", version>=1.66
+#include "IR2_PlotingToolII", version>=1.10
+#include "IR2_Reflectivity", version >=1.22
 #include "IR2_ScriptingTool", version>=1.30
-#include "IR2_SmallAngleDiffraction", version>=1.19
+#include "IR2_SmallAngleDiffraction", version>=1.20
 #include "IR2_StructureFactors", version>=1.08
 #include "IR2_PDDF", version>=1.15
-#include "IR3_3DModels", version>=1.01
+#include "IR3_3DModels", version>=1.03
 #include "IR3_3DSupportFunctions", version>=1.00
 #include "IR3_3DTwoPhaseSolid", version>=1.02
 #include "IR3_Anisotropy", version>=1.00
-#include "IR3_GuinierPorodModel", version>=1.11
+#include "IR3_GuinierPorodModel", version>=1.12
 #include "IR3_MergingData", version>=1.22
 #include "IR3_MultiDataPlot", version>=1.05
-#include "IR3_SimpleFits", version>=1.15
+#include "IR3_SimpleFits", version>=1.16
 #include "IR3_WAXSDiffraction", version>=1.16
 #include "IR3_AnalyzeResults2", version>=0.2
 //bio tools
-#include "IRB1_bioSAXS", version>=1.01
+#include "IRB1_bioSAXS", version>=1.02
 #include "IRB1_EvaluationTools", version>=1.0
 
 //development versions
-#include "IR3_DataManipulationIII", version>=1.02
-#include "IR3_SystemSpecificModels", version>=1.01
+#include "IR3_DataManipulationIII", version>=1.04
+#include "IR3_SystemSpecificModels", version>=1.02
 
 
 
@@ -100,9 +100,9 @@
 #include "cansasXML_GUI", version>=1.04
 #include "cansasXML", version>=1.12
 
-#include "IN2_GeneralProcedures", version>=2.28
+#include "IN2_GeneralProcedures", version>=2.31
 
-#include "IRNI_NexusSupport", version>=1.14
+#include "IRNI_NexusSupport", version>=1.17
 
 //removed December 2018, need to delete them from distributions 
 //#include ":IR1_Unified_Panel_Fncts", version>=2.25

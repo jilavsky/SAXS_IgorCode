@@ -11,6 +11,10 @@ It runs on Wavemetrics Igor Pro version 8.04 and higher.
 
 Modification history:
 _____________________________________________________________________________________
+
+2.00 7/16/2023
+Maintenance, fixes for USAXS step scanning (Fall 2022 - Spring 2023, 20ID). 
+
 1.99 10/10/2021
 Fixed all fixed length wave names (hopefully). Now should use long names if user chooses so in Configuration for all waves and folders. 
 Sample Survey tool -  multiple row selection enabled, Clipboard now handles multiple rows. Manual updated. Added ability to import image from jpg/tiff/gif... files

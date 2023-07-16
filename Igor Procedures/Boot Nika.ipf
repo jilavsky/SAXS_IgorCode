@@ -19,6 +19,12 @@
 //1.78 Promoted requirements to 7.05 due to bug in HDF5 support at lower versions
 
 
+//*************************************************************************\
+//* Copyright (c) 2005 - 2023, Argonne National Laboratory
+//* This file is distributed subject to a Software License Agreement found
+//* in the file LICENSE that is included with this distribution. 
+//*************************************************************************/
+
 Menu "Macros"
 	StrVarOrDefault("root:Packages:Nika12DSASItem1Str","Load Nika 2D SAS macros"), LoadNika2DSASMacros()
 end

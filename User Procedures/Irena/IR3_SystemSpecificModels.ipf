@@ -5,7 +5,7 @@
 
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2022, Argonne National Laboratory
+//* Copyright (c) 2005 - 2023, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -1823,7 +1823,7 @@ static Function IR3S_FitSysSpecificModels()
 					TempParam[str2num(StringFromList(1,CoefNames[i],";"))][0]=BackupFitValues[i]	
 				endif
 			endfor
-			Print "Warning - Fitting error, Parameters resutored before failure. Check starting parameters and fitting limits" 
+			Print "Warning - Fitting error, Parameters restored to values before failure. Check starting parameters and fitting limits" 
 			IR3S_AutoRecalculateModelData(1)
 			setDataFolder OldDf
 			return 0

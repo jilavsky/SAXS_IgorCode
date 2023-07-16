@@ -10,6 +10,10 @@ It runs on Wavemetrics Igor Pro version 8.04 and higher.
 
 Modification history:
 ********************************************
+1.85 7/16/2023
+Fix for IP9.02
+minor improvements. 
+
 1.84 10/10/2021
 Igor 9 compatible. 
 Fixed all fixed length wave names (hopefully). Now should use long names if user chooses so in Configuration for all waves and folders. 
