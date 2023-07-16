@@ -17,7 +17,7 @@
 			<Package>xop32bit</Package>
 			<Package>xop64bit</Package>
 		</KnownPackages>
-		<current_release> July2023 </current_release>
+		<current_release>July2023</current_release>
 		<current_beta_release></current_beta_release>
 	</VersionCheck>
 
