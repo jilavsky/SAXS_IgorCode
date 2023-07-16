@@ -24,7 +24,7 @@
 
 	<InstallerConfig>
 		<release name="July2023">
-			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/refs/tags/July2023.zip</SourceFileAddress>
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/refs/tags/July2023a.zip</SourceFileAddress>
 			<Package>
 				<name>Irena</name>
 				<version>2.72</version>
