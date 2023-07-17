@@ -9,6 +9,7 @@ constant IR1DversionNumber = 2.61			//Data manipulation I panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.71 fixed DataMan1 handling of results with no errors. Errors are now faked and removed after processing. 
 //2.70 added option to propagate measurement errors through averaging, it is now default option, unless user picks another method. No need to chaneg GUI.  
 //2.69 fixed leftover RT global issues which threw errors on users due to incorrect search for high-q end of usabel data. Fixed positions on DMII after creation. 
 //2.68 handle weird case of DM I when data 1 is regular Q-I-S data set and data 2 are model data without error. Generate fake error here is the solution. 
@@ -1079,11 +1080,18 @@ static Function IR1D_ConvertData()
 	// the trouble is, that there may be a lot of other weird cases and I see no clear and easy way of catching them all... 
 	NVAR UseIndra2data1 = root:Packages:SASDataModificationTop:UseIndra2data
 	NVAR UseQRSdata1 = root:Packages:SASDataModificationTop:UseQRSdata
+	NVAR UseResults = root:Packages:SASDataModificationTop:UseResults
 	if((UseIndra2data1||UseQRSdata1)&&(!WaveExists(Error2))&&WaveExists(Error1))
 		Duplicate/O Intensity2, TempE2
 		TempE2 = 1e-8*Intensity2
 	endif
-	
+	// if we use Results, there are no Edata, we need to kill them. Set to 1 here, and zero at the end. 
+	if(UseResults)
+		Duplicate/O Intensity1, TempE1
+		TempE1 = Intensity1 * 0.1
+		Duplicate/O Intensity2, TempE2
+		TempE2 = Intensity2 * 0.1	
+	endif
 	
 	if (ReducePointNumber)
 		If (WaveExists(TempInt1)&&WaveExists(TempQ1)&&WaveExists(TempE1) &&(ReducePointNumberBy>0)&&(numpnts(TempInt1)/ReducePointNumberBy>5))
@@ -1493,6 +1501,10 @@ static Function IR1D_ConvertData()
 	else
 		Abort "Nothing to do... Select action by selecting checbox above"
 	endif
+	if(UseResults)
+		ResultsE = 0
+	endif
+	
 	KillWaves/Z TempInt1, TempInt2, TempQ1, TempQ2, TempE1, TempE2
 	KillWaves/Z TempIntLog2, TempIntInterp2
 	KillWaves/Z TempIntLog1, TempIntInterp1
@@ -1986,15 +1998,19 @@ static Function IR1D_RegraphData()
 	SVAR IntensityWaveName= root:Packages:SASDataModification:IntensityWaveName
 	SVAR DataFolderName2=root:Packages:SASDataModification:DataFolderName2
 	SVAR IntensityWaveName2=root:Packages:SASDataModification:IntensityWaveName2
+	//results have no error bars... 
+	NVAR UseResults = root:Packages:SASDataModificationTop:UseResults
+	NVAR UseResultsB = root:Packages:SASDataModificationBot:UseResults
+	
 	if (WaveExists(Intensity1)&& WaveExists(Qvector1))
 		AppendToGraph/W=IR1D_DataManipulationGraph Intensity1 vs Qvector1 
-		if (WaveExists(Error1))
+		if (WaveExists(Error1)&&!UseResults)
 			ErrorBars/W=IR1D_DataManipulationGraph Intensity1 Y,wave=(Error1,Error1)		
 		endif
 	endif
 	if (WaveExists(Intensity2)&& WaveExists(Qvector2))
 		AppendToGraph/W=IR1D_DataManipulationGraph Intensity2 vs Qvector2 
-		if (WaveExists(Error2))
+		if (WaveExists(Error2)&&!UseResultsB)
 			ErrorBars/W=IR1D_DataManipulationGraph Intensity2 Y,wave=(Error2,Error2)		
 		endif
 	endif
@@ -2188,6 +2204,9 @@ static Function IR1D_CopyDataLocally()
 	if (WaveExists(EWv1))
 		Duplicate/O EWv1, $("root:Packages:SASDataModification:Error1")
 		Duplicate/O EWv1, $("root:Packages:SASDataModification:OriginalError1")
+	else
+		KillWaves/Z root:Packages:SASDataModification:Error1
+		KillWaves/Z root:Packages:SASDataModification:OriginalError1
 	endif
 	if (WaveExists(IntWv2))
 		Duplicate/O IntWv2, $("root:Packages:SASDataModification:Intensity2")
@@ -2210,6 +2229,9 @@ static Function IR1D_CopyDataLocally()
 	if (WaveExists(EWv2))
 		Duplicate/O EWv2, $("root:Packages:SASDataModification:Error2")
 		Duplicate/O EWv2, $("root:Packages:SASDataModification:OriginalError2")
+	else
+		KillWaves/Z root:Packages:SASDataModification:Error2
+		KillWaves/Z root:Packages:SASDataModification:OriginalError2
 	endif
 	
 	string TmpUnits
