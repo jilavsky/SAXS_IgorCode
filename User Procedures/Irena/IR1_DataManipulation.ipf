@@ -1993,11 +1993,13 @@ static Function IR1D_RegraphData()
 	Wave/Z Intensity2=root:Packages:SASDataModification:Intensity2
 	Wave/Z Qvector2=root:Packages:SASDataModification:Qvector2
 	Wave/Z Error2=root:Packages:SASDataModification:Error2
+
+	SVAR DataFolderName=root:Packages:SASDataModificationTop:DataFolderName
+	SVAR IntensityWaveName= root:Packages:SASDataModificationTop:IntensityWaveName
+	SVAR QWavename=root:Packages:SASDataModificationTop:QWavename
 	
-	SVAR DataFolderName=root:Packages:SASDataModification:DataFolderName
-	SVAR IntensityWaveName= root:Packages:SASDataModification:IntensityWaveName
-	SVAR DataFolderName2=root:Packages:SASDataModification:DataFolderName2
-	SVAR IntensityWaveName2=root:Packages:SASDataModification:IntensityWaveName2
+	SVAR DataFolderName2=root:Packages:SASDataModificationBot:DataFolderName
+	SVAR IntensityWaveName2=root:Packages:SASDataModificationBot:IntensityWaveName
 	//results have no error bars... 
 	NVAR UseResults = root:Packages:SASDataModificationTop:UseResults
 	NVAR UseResultsB = root:Packages:SASDataModificationBot:UseResults
@@ -2025,14 +2027,22 @@ static Function IR1D_RegraphData()
 	ModifyGraph/Z/W=IR1D_DataManipulationGraph rgb[1]=(16384,16384,65280)
 	TextBox/W=IR1D_DataManipulationGraph/C/N=DateTimeTag/F=0/A=RB/E=2/X=2.00/Y=1.00 "\\Z07"+date()+", "+time()	
 	TextBox/W=IR1D_DataManipulationGraph/C/N=SampleNameTag/F=0/A=LB/E=2/X=2.00/Y=1.00 "\\Z07"+DataFolderName+IntensityWaveName+"\r"+DataFolderName2+IntensityWaveName2	
-
-	ModifyGraph/W=IR1D_DataManipulationGraph log=1
+	String LabelStr
+	if(UseResults)
+		LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+IntensityWaveName
+		Label/Z/W=IR1D_DataManipulationGraph left LabelStr
+		LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+QWavename
+		Label/Z/W=IR1D_DataManipulationGraph bottom LabelStr
+	
+	else
+		ModifyGraph/W=IR1D_DataManipulationGraph log=1
+		LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity [cm\\S-1\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
+		Label/Z/W=IR1D_DataManipulationGraph left LabelStr
+		LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
+		Label/Z/W=IR1D_DataManipulationGraph bottom LabelStr
+	endif
 	ModifyGraph/W=IR1D_DataManipulationGraph mirror=1
 
-	String LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity [cm\\S-1\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
-	Label/Z/W=IR1D_DataManipulationGraph left LabelStr
-	LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
-	Label/Z/W=IR1D_DataManipulationGraph bottom LabelStr
 //	Label/Z/W=IR1D_DataManipulationGraph left "Intensity [cm\\S-1\\M]"
 //	Label/Z/W=IR1D_DataManipulationGraph bottom "Q [A\\S-1\\M]"
 end
