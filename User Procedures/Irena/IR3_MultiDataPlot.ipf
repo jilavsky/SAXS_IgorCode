@@ -2225,9 +2225,11 @@ Function IR3L_OpenLabelCOntrols(String WindowNm)
 	Wave left_Position=$(Foldername+":left_Position")
 	KillWindow/Z LeftLabelsEditor
 	KillWindow/Z BottomLabelsEditor
-	Edit/K=1 left_Position, left_labels
+	Edit/K=1/W=(80,20,550,320) left_Position, left_labels
+	ModifyTable format(Point)=1,width(left_Position)=110,width(left_labels)=126
 	DoWindow/C/T LeftLabelsEditor,"Left Labels Editor "+WindowNm
-	Edit/K=1 Bottom_Position, Bottom_labels
+	Edit/K=1/W=(80,520,550,820) Bottom_Position, Bottom_labels
+	ModifyTable format(Point)=1,width(Bottom_Position)=128,width(Bottom_labels)=112
 	DoWindow/C/T BottomLabelsEditor,"Bottom Labels Editor "+WindowNm
 		
 	AutoPositionWindow/M=0/R=$WindowNm  LeftLabelsEditor
@@ -2289,22 +2291,16 @@ static function IR3L_CreateLabelControls(String WindowNm)
 	else			//lin scaling
 		minX = xWaveValues[0]
 		maxX = xWaveValues[numpnts(xWaveValues)-1]
-		minX = IN2G_NiceSignificant(minX,1,1)
-		maxX = IN2G_NiceSignificant(maxX,1,0)
+		//minX = IN2G_NiceSignificant(minX,1,1)
+		//maxX = IN2G_NiceSignificant(maxX,1,0)
 		difference = maxX -  minX
 		roughStep = difference/(BottomLabelNumPoints-1)		//this is rough step for exact num of points 
 		roundStep = IN2G_NiceSignificant(roughStep,1,0)
 		Bottom_Position = BinarySearchInterp(xWaveValues,(minX+p*roundStep))
+		Bottom_labels[][0] = num2str((xWaveValues[Bottom_Position[p]]))
 		//Bottom_Position[numpnts(Bottom_Position)-1]=xWaveValues[numpnts(xWaveValues)-1]
-		Bottom_labels[][0] = num2str(IN2G_NiceSignificant(xWaveValues[Bottom_Position[p]],2,0))
+		//Bottom_labels[numpnts(Bottom_Position)-1][0] = num2str((xWaveValues[Bottom_Position[p]]))
 	endif
-	
-	//Bottom_Position = round((p*(numpnts(xWaveValues)-1)/(BottomLabelNumPoints-1)))
-	//	if(XisLog)
-	//		Bottom_labels[][0] = num2str(10^xWaveValues[Bottom_Position[p]])
-	//	else
-	//		Bottom_labels[][0] = num2str(xWaveValues[Bottom_Position[p]])
-	//	endif
 	SetDataFolder saveDFR		// and restore
 end
 
