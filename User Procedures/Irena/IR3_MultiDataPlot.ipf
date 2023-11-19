@@ -1067,9 +1067,14 @@ Function IR3L_ButtonProc(ba) : ButtonControl
 					IR3L_ConvertXYto3DPlot(GraphWindowName, "Image")
 				endif
 			endif
-			if(stringmatch(ba.ctrlname,"OpenLabelEditors"))
+			if(stringmatch(ba.ctrlname,"CreateNewLabelsLeft"))
 				//open Label controls for Image type presentation. 
-				IR3L_CreateLabelControls(ba.win)
+				IR3L_CreateLabelControls(ba.win, "left")
+				IR3L_OpenLabelCOntrols(ba.win)
+			endif
+			if(stringmatch(ba.ctrlname,"CreateNewLabelsBottom"))
+				//open Label controls for Image type presentation. 
+				IR3L_CreateLabelControls(ba.win, "Bottom")
 				IR3L_OpenLabelCOntrols(ba.win)
 			endif
 
@@ -1677,7 +1682,8 @@ Function IR3L_ConvertXYto3DPlot(string WindowName, string WhichGraph)
 		//xwave values need to be log stepped, need to create a new distribution of points... 
 		xWaveValues = log(StartXTemp)+ p*(log(EndXTemp)- log(StartXTemp))/(numpnts(xWaveValues))
 		//need to create ticks waves
-		IR3L_CreateLabelControls(NewGraphName)
+		IR3L_CreateLabelControls(NewGraphName,"left")
+		IR3L_CreateLabelControls(NewGraphName,"bottom")
 		For(i=0;i<NumWaves;i+=1)
 			Wave TempXwave= XWaveRefFromTrace(WindowName, StringFromList(i, TraceNameListStr))
 			Wave TempYwave= TraceNameToWaveRef(WindowName, StringFromList(i, TraceNameListStr))
@@ -1693,7 +1699,8 @@ Function IR3L_ConvertXYto3DPlot(string WindowName, string WhichGraph)
 			MultiDataPlot3DWvData[][i]=tempYWaveIntp[p]
 		endfor
 	else //this is for linearly plotted Image and any Contour & Waterfall... 
-		IR3L_CreateLabelControls(NewGraphName)
+		IR3L_CreateLabelControls(NewGraphName,"left")
+		IR3L_CreateLabelControls(NewGraphName,"bottom")
 		For(i=0;i<NumWaves;i+=1)
 			Wave TempXwave= XWaveRefFromTrace(WindowName, StringFromList(i, TraceNameListStr))
 			Wave TempYwave= TraceNameToWaveRef(WindowName, StringFromList(i, TraceNameListStr))
@@ -1841,7 +1848,8 @@ Function IR3L_ConvertXYto3DPlot(string WindowName, string WhichGraph)
 		SetVariable BottomLabelNumPoints,size={120,100},pos={420,30},bodyWidth=50,title="Bot No Pnts:"
 		SetVariable BottomLabelNumPoints,format="%.0f", noproc, help={"Set Number of points for bottom axis"}
 		SetVariable BottomLabelNumPoints,limits={0,20,0},value= $(NewFldrName+":BottomLabelNumPoints")
-		Button OpenLabelEditors, pos={570,10}, size={100,20}, title="New Labels", proc=IR3L_ButtonProc		
+		Button CreateNewLabelsLeft, pos={570,10}, size={100,15}, title="New Left Ticks", proc=IR3L_ButtonProc, help={"Create new ticks/labels for left axis"}		
+		Button CreateNewLabelsBottom, pos={570,30}, size={100,15}, title="New Bottom Ticks", proc=IR3L_ButtonProc, help={"Create new ticks/labels for bottom axis"}	
 		Wave/T Bottom_labels,left_labels
 		Wave Bottom_Position, left_Position
 		ModifyGraph userticks(bottom)={Bottom_Position,Bottom_labels}
@@ -2239,7 +2247,7 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
-static function IR3L_CreateLabelControls(String WindowNm)
+static function IR3L_CreateLabelControls(String WindowNm, string WhichOne)
 
 	string Foldername
 	Foldername = "root:MultiDataPlot3DPlots:"+WindowNm
@@ -2255,52 +2263,63 @@ static function IR3L_CreateLabelControls(String WindowNm)
 	NVAR XisLog=$(Foldername+":XisLog")
 	NVAR LeftLabelNumPoints=$(Foldername+":LeftLabelNumPoints")
 	NVAR BottomLabelNumPoints=$(Foldername+":BottomLabelNumPoints")
-	Make/O/N=(BottomLabelNumPoints) Bottom_Position
-	Make/O/T/N=(BottomLabelNumPoints,2) Bottom_labels
-	Make/O/N=(LeftLabelNumPoints) left_Position
-	Make/O/T/N=(LeftLabelNumPoints,2) left_labels
-	Wave/T Bottom_labels,left_labels
-	Wave Bottom_Position, left_Position
-	Bottom_labels[][1]= "Major"
-	left_labels[][1]= "Major" 
-	//add labels, useless...
-	//SetDimLabel 0,-1,$("Position"),Bottom_Position, left_Position
-	//SetDimLabel 0,-1,$("Displayed Value"),Bottom_labels,left_labels
-	//SetDimLabel 1,-1,$("Label Type"),Bottom_labels,left_labels
-	left_Position = round(p*((NumWaves-1)/(LeftLabelNumPoints-1)))
-	left_labels[][0] = num2str(round(p*(NumWaves-1)/(LeftLabelNumPoints-1)))
-	//can bottom be done smarter? We need to find nice numbers and set positions and labels to nicer numbers... 
-	Duplicate/Free 	xWaveValues, ImageXValues
-	ImageXValues = p
-	variable minX, maxX, difference, roughStep, roundStep, ratio
-	if(XisLog)	//log scaling
-		//Duplicate/Free 	xWaveValues, PriorXvalues
-		//PriorXvalues = 10^xWaveValues		//this is now in real x
-		minX = xWaveValues[0]
-		maxX = xWaveValues[numpnts(xWaveValues)-1]
-		minX = log(IN2G_NiceSignificant(10^minX,1,1))
-		maxX = log(IN2G_NiceSignificant(10^maxX,1,0))		//these are nice values of q on log scale
-		difference = maxX -  minX
-		roughStep = difference/(BottomLabelNumPoints-1)		//this is rough step for exact num of points 
-		//roundStep = IN2G_NiceSignificant(roughStep,1,0)
-		Duplicate/Free Bottom_Position, Bottom_LabelsNice
-		Bottom_LabelsNice = log(IN2G_NiceSignificant(10^(minX+p*roughStep),1,0))		
-		Bottom_Position = ImageXValues[BinarySearchInterp(xWaveValues, Bottom_LabelsNice)]
-		//Bottom_Position[numpnts(Bottom_Position)-1]=ImageXValues[BinarySearchInterp(xWaveValues, log(maxX))] 
-		Bottom_labels[][0] = num2str(10^xWaveValues[Bottom_Position[p]])
-	else			//lin scaling
-		minX = xWaveValues[0]
-		maxX = xWaveValues[numpnts(xWaveValues)-1]
-		//minX = IN2G_NiceSignificant(minX,1,1)
-		//maxX = IN2G_NiceSignificant(maxX,1,0)
-		difference = maxX -  minX
-		roughStep = difference/(BottomLabelNumPoints-1)		//this is rough step for exact num of points 
-		roundStep = IN2G_NiceSignificant(roughStep,1,0)
-		Bottom_Position = BinarySearchInterp(xWaveValues,(minX+p*roundStep))
-		Bottom_labels[][0] = num2str((xWaveValues[Bottom_Position[p]]))
-		//Bottom_Position[numpnts(Bottom_Position)-1]=xWaveValues[numpnts(xWaveValues)-1]
-		//Bottom_labels[numpnts(Bottom_Position)-1][0] = num2str((xWaveValues[Bottom_Position[p]]))
+	
+	if(StringMatch(WhichOne, "left" ))
+		Make/O/N=(LeftLabelNumPoints) left_Position
+		Make/O/T/N=(LeftLabelNumPoints,2) left_labels
+		Wave/T left_labels
+		Wave left_Position
+		left_labels[][1]= "Major" 
+		left_Position = round(p*((NumWaves-1)/(LeftLabelNumPoints-1)))
+		left_labels[][0] = num2str(round(p*(NumWaves-1)/(LeftLabelNumPoints-1)))
+	
+	
 	endif
+	if(StringMatch(WhichOne, "Bottom" ))
+		Make/O/N=(BottomLabelNumPoints) Bottom_Position
+		Make/O/T/N=(BottomLabelNumPoints,2) Bottom_labels
+		Wave/T Bottom_labels
+		Wave Bottom_Position
+		Bottom_labels[][1]= "Major"
+		//can bottom be done smarter? We need to find nice numbers and set positions and labels to nicer numbers... 
+		Duplicate/Free 	xWaveValues, ImageXValues
+		ImageXValues = p
+		variable minX, maxX, difference, roughStep, roundStep, ratio
+		if(XisLog)	//log scaling
+			//Duplicate/Free 	xWaveValues, PriorXvalues
+			//PriorXvalues = 10^xWaveValues		//this is now in real x
+			minX = xWaveValues[0]
+			maxX = xWaveValues[numpnts(xWaveValues)-1]
+			minX = log(IN2G_NiceSignificant(10^minX,1,1))
+			maxX = log(IN2G_NiceSignificant(10^maxX,1,0))		//these are nice values of q on log scale
+			difference = maxX -  minX
+			roughStep = difference/(BottomLabelNumPoints-1)		//this is rough step for exact num of points 
+			//roundStep = IN2G_NiceSignificant(roughStep,1,0)
+			Duplicate/Free Bottom_Position, Bottom_LabelsNice
+			Bottom_LabelsNice = log(IN2G_NiceSignificant(10^(minX+p*roughStep),1,0))		
+			Bottom_Position = ImageXValues[BinarySearchInterp(xWaveValues, Bottom_LabelsNice)]
+			//Bottom_Position[numpnts(Bottom_Position)-1]=ImageXValues[BinarySearchInterp(xWaveValues, log(maxX))] 
+			Bottom_labels[][0] = num2str(10^xWaveValues[Bottom_Position[p]])
+		else			//lin scaling
+			minX = xWaveValues[0]
+			maxX = xWaveValues[numpnts(xWaveValues)-1]
+			//minX = IN2G_NiceSignificant(minX,1,1)
+			//maxX = IN2G_NiceSignificant(maxX,1,0)
+			difference = maxX -  minX
+			roughStep = difference/(BottomLabelNumPoints-1)		//this is rough step for exact num of points 
+			roundStep = IN2G_NiceSignificant(roughStep,1,0)
+			Bottom_Position = BinarySearchInterp(xWaveValues,(minX+p*roundStep))
+			Bottom_labels[][0] = num2str((xWaveValues[Bottom_Position[p]]))
+			//Bottom_Position[numpnts(Bottom_Position)-1]=xWaveValues[numpnts(xWaveValues)-1]
+			//Bottom_labels[numpnts(Bottom_Position)-1][0] = num2str((xWaveValues[Bottom_Position[p]]))
+		endif	
+	endif
+	
+	
+		//add labels, useless...
+		//SetDimLabel 0,-1,$("Position"),Bottom_Position, left_Position
+		//SetDimLabel 0,-1,$("Displayed Value"),Bottom_labels,left_labels
+		//SetDimLabel 1,-1,$("Label Type"),Bottom_labels,left_labels
 	SetDataFolder saveDFR		// and restore
 end
 
