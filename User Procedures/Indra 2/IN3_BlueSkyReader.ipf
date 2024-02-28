@@ -1,33 +1,80 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version=1.01
+#pragma version=1.03
+
 	//this is available ONLY, if JSONXOP is installed and json_functions.ipf is in User Procedures. 
 #if(exists("JSONXOP_GetValue")==4)
-#include "json_functions"
+
+//#include "json_functions"
+static Constant JSON_ZFLAG_DEFAULT = 0 
+static Constant JSON_QFLAG_DEFAULT = 1
+static Constant JSON_INVALID   = -1
+static Constant JSON_OBJECT    = 0
+static Constant JSON_ARRAY     = 1
+static Constant JSON_NUMERIC   = 2
+static Constant JSON_STRING    = 3
+static Constant JSON_BOOL      = 4
+static Constant JSON_NULL      = 5
+
 
 	// Add to menu if available. 
 Menu "USAXS"
 	"Bluesky Plots", IR3BS_BlueSkyPlot()
 end
-
-
+//1.03 Optimization & fixes January 2024, making it compatible to other catalogs also? 
+//1.02 December 2023, Tiled ??? compatible, major source changes. 
 //1.01 November 2022, Tiled 0.1.0a80 compatible, changed webGUI 
 //1.00 original version, kind of works
+
 //server address. 
-//strconstant ServerAddress="http://usaxscontrol:8000"
-strconstant ServerAddress="http://usaxscontrol.xray.aps.anl.gov:8000"
-
 //strconstant ServerAddress="http://wow.xray.aps.anl.gov:8010"
+//strconstant ServerAddress="http://usaxscontrol:8020"
+strconstant ServerAddress="http://usaxscontrol.xray.aps.anl.gov:8020"
+//strconstant ServerAddress="https://tiled-demo.blueskyproject.io"
+strconstant DefaultUSAXScatalog="idb_usaxs_retired_2023-12-05"		//set to name of default catalog, likely "usaxs" when in operations
 
-//some notes. See end of this file for how to talk to the server instructions
-//getting data from usaxscontrol seem to be issue. 
-//http://usaxscontrol:8000/node/full/9idc_usaxs%2F1e6c2ad1-055e-40e5-bbc0-7209317a2717?format=application%2Fx-hdf5
-//fails with Internal Server Error and asking for json does not work. Need to figure out how to get data from server.  
+
+//how to install tiled: https://github.com/BCDA-APS/tiled-template/blob/main/docs/create.md
+//Igor JSON xop:  	https://www.wavemetrics.com/node/20976
+//					https://docs.byte-physics.de/json-xop/getting_started.html#operations-and-functions
+//Comments: 
+//   https://github.com/jilavsky/SAXS_IgorCode/wiki/Reading-data-from-Tiled-server#traversing-to-catalog 
+//1-9-2024 this is desription on how tiled addresses data and metadata:
+	//The URLs are structured like 
+	///api/v1/VERB/NOUN
+	//
+	//where VERB is something like /search, /metadata/, /array/full. 
+	//
+	//	The trouble with NOUN is, that it is Catalog/Application dependent and can look mor eor less as anyone dreams up. 
+	//NOUN is fully up to the application, it would be 
+	///{uuid} or 
+	///{beamline}/{uuid} or 
+	///raw/{beamline}/{uuid} or 
+	///whatever/you/want.
+
+//	This means, that to figure this all out, we need to traverse the catalogs and figure out the path... 
+
+//	VERB = endpoint :
+//	The first path segment after /api/v1 tells us which "endpoint" in Tiled we are reaching. 
+//	The /search endpoint, previously called /node/search in older versions of Tiled, has never returned numerical data. 
+//	It describes the contents of its "children"---optionally filtered and sorted---broken into "pages" if the number of children is large.
+//
+//	If you want to download the data itself as JSON, and not just the description+links we can from /search replace /search with /node/full
+//
+//	As you say, we don't want to download too much data needlessly. We can explicitly choose which fields in this JSON payload to download using the field query parameter.
+//		https://tiled-demo.blueskyproject.io/api/v1/node/full/bmm/raw/f8c83910-4adb-4207-a465-9ff0ff0e9cd2/primary/data?format=json&field=dcm_energy&field=I0
+//old stuff, may be wrong! : 
+//This returns table of all parameters   http://usaxscontrol:8020/node/full/9idc_usaxs/08ba0941-1adb-499b-83e5-53a285a35abd/baseline/data
+// 3/2/22 11:04 AM Presentation on Tiled. Daniel Alan, BNL
+//						https://blueskyproject.io/tiled
+// Video: https://confluence.slac.stanford.edu/display/RAWG/DOE+BES+5+Light+Source+%285LS%29+Remote+Access+Working+Group
+// 	Here is good reference for queries;
+//					https://github.com/BCDA-APS/bdp-tiled/blob/main/demo_client.ipynb
 // See tilted hints document. 
-//  http://usaxscontrol:8000/node/full/9idc_usaxs/16248ab5-1359-4242-8ec9-6fd66f8b5976/primary/data?format=json this gets out primary scan as json. 
-// http://usaxscontrol:8000/node/search/?filter[lookup][condition][key]=9idc_usaxs&sort=
-// documentation and testing http://usaxscontrol:8000/docs
+//  http://usaxscontrol:8020/node/full/9idc_usaxs/16248ab5-1359-4242-8ec9-6fd66f8b5976/primary/data?format=json this gets out primary scan as json. 
+// http://usaxscontrol:8020/node/search/?filter[lookup][condition][key]=9idc_usaxs&sort=
+// documentation and testing http://usaxscontrol:8020/docs
 // retruns json where 
 // need to add this : "&filter[time_range][condition][timezone]=US/Central" into the querries to it works... 
 
@@ -35,6 +82,13 @@ strconstant ServerAddress="http://usaxscontrol.xray.aps.anl.gov:8000"
 //https://github.com/BCDA-APS/bdp-tiled/blob/main/demo_client.ipynb
 //there are querries which allow finding specific text (sample name?) 
 
+
+// here is discussion/support group https://mattermost.hzdr.de/bluesky/channels/tiled
+
+// Here is http solution to reduce amount of data getting back, which may eventually change
+// 		https://github.com/bluesky/tiled/issues/99
+//		https://jmespath.org
+//	this is example how to downscale what is returned...  'https://tiled-demo.blueskyproject.io/entries/bmm?page[limit]=3&select_metadata=summary&fields=metadata'
 
 ///******************************************************************************************
 ///******************************************************************************************
@@ -67,7 +121,8 @@ Function IR3BS_InitServer()
 	
 	//get server info
 	//1. check how many catalogs we have on this is bluesky server
-	string TempAddress = ServerAddress+"/api/v1/node/search/?fields=&sort="
+	//string TempAddress = ServerAddress+"/api/v1/node/search/?fields=&sort="
+	string TempAddress = ServerAddress+"/api/v1/search/?fields=&sort="
 	variable jsonid, i
 	string TempJSONAdd, tempStr
 	string AllCatalogs=""
@@ -97,7 +152,12 @@ Function IR3BS_InitServer()
 	//overwrite, fails on old catalog:
 	//ListOfCatalogs=stringfromList(0,AllCatalogs)
 	ListOfCatalogs=AllCatalogs
-	CatalogUsed = stringfromList(0,grepList(AllCatalogs,"20idb_usaxs"))
+	//By now we know how many catalogs we have, but not enough to find data in generic catalog.  
+	//set to USAXS default catalog, if we are looking for it. 	
+	CatalogUsed = stringfromList(0,grepList(AllCatalogs,DefaultUSAXScatalog)) 
+	if(strlen(CatalogUsed)<2)
+		CatalogUsed = "---"
+	endif
 	//update panel, if exists
 	DoWIndow IR3BS_BlueSkyPlotPanel
 	if(V_flag)
@@ -107,37 +167,7 @@ Function IR3BS_InitServer()
 		PopupMenu CatalogUsed,value=#"root:Packages:Irena:BlueSkySamplePlot:ListOfCatalogs",mode=1, popvalue=CatalogUsed
 		IR3BS_GetJSONScanData()
 		PopupMenu ScanTypeToUse,value=#"root:Packages:Irena:BlueSkySamplePlot:ListOfScanTypes",mode=1, popvalue=ScanTypeToUse
-
 	endif
-	//string 	ServerType =JSON_GetString(jsonID, tempAddress)
-
-	// TempAddress = ServerAddress+"/node/search/?filter[lookup][condition][key]=9idc_usaxs&sort="
-
-//		tempPlanName = JSON_GetString(jsonID, tempAddress) 
-
-	//this list how many items are in that address, this is how many data sets were returned in the json. 
-	//print JSON_GetArraySize(jsonID, "/data")
-
-	//this works for string keys in given location, not for single value
-	//JSONXOP_GetKeys jsonId, "/data/0", keyWave
-	//this reads value... Number: 
-	//JSONXOP_GetValue/T jsonId, "/data/0/id"
-	//print S_value
-	
-	//print JSON_GetType(jsonID, "/data/0/id")
-		//	0 Object
-		//	1 Array
-		//	2 Numeric
-		//	3 String
-		//	4 Boolean
-		//	5 Null
-		
-	//time conversion. Python uses January 1, 1970
-	//print/D date2secs(1970,1,1)
-	//while Igor is 1904. We need to add :  
-  	// date2secs(2022, 02, 20 ) - date2secs(1970,01,01) - Date2secs(-1,-1,-1)
-  	// converting date - offset change - correction to UTC
-
 end
 
 //**********************************************************************************************************
@@ -158,10 +188,10 @@ FUnction IR3BS_Init()
 
 	//here define the lists of variables and strings needed, separate names by ;...
 	ListOfStrings="ListOfCatalogs;CatalogUsed;ListOfScanTypes;ScanTypeToUse;"
-//	ListOfStrings+="DataStartFolder;DataMatchString;FolderSortString;FolderSortStringAll;"
+	ListOfStrings+="DetectorStr;XaxisStr;"
+	ListOfStrings+="Prefix;"
 
 	ListOfVariables="StartYear;StartMoth;StartDay;NumOfHours;AllDates;NumberOfScansToImport;"
-//	ListOfVariables="UseIndra2Data;UseQRSdata;UseResults;"
 
 	//and here we create them
 	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
@@ -191,30 +221,6 @@ FUnction IR3BS_Init()
 	endif
 	SVAR ListOfScanTypes
 	ListOfScanTypes = "tune_ar;tune_a2rp;tune_mr;tune_dx;tune_dy;all;"
-	
-//	ListOfStrings="DataMatchString;FolderSortString;FolderSortStringAll;"
-//	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
-//		SVAR teststr=$(StringFromList(i,ListOfStrings))
-//		if(strlen(teststr)<1)
-//			teststr =""
-//		endif
-//	endfor		
-//	ListOfStrings="DataStartFolder;"
-//	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
-//		SVAR teststr=$(StringFromList(i,ListOfStrings))
-//		if(strlen(teststr)<1)
-//			teststr ="root:"
-//		endif
-//	endfor		
-//	SVAR FolderSortStringAll
-//	FolderSortStringAll = "Alphabetical;Reverse Alphabetical;_xyz;_xyz.ext;Reverse _xyz;Reverse _xyz.ext;Sxyz_;Reverse Sxyz_;_xyzmin;_xyzC;_xyzpct;_xyz_000;Reverse _xyz_000;"
-//	SVAR DataSubTypeUSAXSList
-//	DataSubTypeUSAXSList="DSM_Int;SMR_Int;R_Int;Blank_R_Int;USAXS_PD;Monitor;"
-//	SVAR DataSubTypeResultsList
-//	DataSubTypeResultsList="Size"
-//	SVAR DataSubType
-//	DataSubType="DSM_Int"
-		
 
 	Make/O/T/N=(0,3) ListOfAvailableData, PrunedListOfAvailableData
 	Make/O/N=(0) SelectionOfAvailableData 
@@ -231,25 +237,17 @@ Function IR3BS_BlueSkyPlotPanelFnct()
 	NewPanel /K=1 /W=(5.25,43.25,605,820) as "BlueSky plotting tool"
 	DoWIndow/C IR3BS_BlueSkyPlotPanel
 	TitleBox MainTitle title="\Zr220BlueSky Data plotting tool",pos={140,1},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},fColor=(0,0,52224)
-								//	TitleBox FakeLine2 title=" ",fixedSize=1,size={330,3},pos={16,428},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-	//string UserDataTypes=""
-	//string UserNameString=""
-	//string XUserLookup=""
-	//string EUserLookup=""
-	//IR2C_AddDataControls("Irena:MultiSamplePlot","IR3BS_BlueSkyPlotPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
-	Button GetHelp,pos={480,10},size={80,15},fColor=(65535,32768,32768), proc=IR3L_ButtonProc,title="Get Help", help={"Open www manual page for this tool"}
-	//IR3C_MultiAppendControls("Irena:MultiSamplePlot","IR3BS_BlueSkyPlotPanel", "IR3L_DoubleClickAction","",0,1)
 
+	Button GetHelp,pos={480,10},size={80,15},fColor=(65535,32768,32768), proc=IR3L_ButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 
 	SVAR ListOfCatalogs=root:Packages:Irena:BlueSkySamplePlot:ListOfCatalogs
 	SVAR CatalogUsed=root:Packages:Irena:BlueSkySamplePlot:CatalogUsed
+	CatalogUsed = stringFromList(0,ListOfCatalogs)
 	PopupMenu CatalogUsed,pos={20,40},size={310,20},proc=IR3BS_PopMenuProc, title="Select Catalog",help={"Select one of available catalogs"}
 	PopupMenu CatalogUsed,value=#"root:Packages:Irena:BlueSkySamplePlot:ListOfCatalogs",mode=1, popvalue=CatalogUsed
 
-	Checkbox AllDates, variable=root:Packages:Irena:BlueSkySamplePlot:AllDates
-	CheckBox AllDates title="All data? ",pos={220,42},size={60,14},proc=IR3S_CheckProc
 	
-	SetVariable NumberOfScansToImport,pos={300,40},size={200,20}, proc=IR3BS_SetVarProc,title="Num of scans:", valueColor=(0,0,0),  limits={10,1000,50}
+	SetVariable NumberOfScansToImport,pos={330,40},size={160,20}, proc=IR3BS_SetVarProc,title="Num of scans:", valueColor=(0,0,0),  limits={10,1000,50}
 	Setvariable NumberOfScansToImport,fStyle=0, variable=root:Packages:Irena:BlueSkySamplePlot:NumberOfScansToImport, disable=0, frame=1, help={"This is Igor internal name for graph currently selected for controls"}
 	
 	//ListOfVariables="StartMoth;StartDay;NumOfHours;"
@@ -261,6 +259,9 @@ Function IR3BS_BlueSkyPlotPanelFnct()
 	Setvariable StartDay,fStyle=0, variable=root:Packages:Irena:BlueSkySamplePlot:StartDay, disable=0, frame=1, help={"This is Igor internal name for graph currently selected for controls"}
 	SetVariable NumOfHours,pos={370,70},size={100,20}, proc=IR3BS_SetVarProc,title="\Zr120Hours:", valueColor=(0,0,0)
 	Setvariable NumOfHours,fStyle=0, variable=root:Packages:Irena:BlueSkySamplePlot:NumOfHours, disable=0, frame=1, help={"This is Igor internal name for graph currently selected for controls"}
+
+	Checkbox AllDates, variable=root:Packages:Irena:BlueSkySamplePlot:AllDates
+	CheckBox AllDates title="All dates? ",pos={488,68},size={60,14},proc=IR3S_CheckProc
 
 	SVAR ListOfScanTypes=root:Packages:Irena:BlueSkySamplePlot:ListOfScanTypes
 	SVAR ScanTypeToUse=root:Packages:Irena:BlueSkySamplePlot:ScanTypeToUse
@@ -368,12 +369,18 @@ Function IN3BS_ImportDataAndPlot(selRow, saveTheData, PlotAll)
 	oldDf = getDataFolder(1)
 	//Wave/T IDwave = root:Packages:Irena:BlueSkySamplePlot:IDwave
 	Wave/T PrunedListOfAvailableData =  root:Packages:Irena:BlueSkySamplePlot:PrunedListOfAvailableData
-	SVAR CatalogUsed=root:Packages:Irena:BlueSkySamplePlot:CatalogUsed
-	//http://usaxscontrol:8000/node/full/9idc_usaxs/16248ab5-1359-4242-8ec9-6fd66f8b5976/primary/data?format=json
+	SVAR CatalogUsed=root:Packages:Irena:BlueSkySamplePlot:CatalogUsed		// this is name of catalog
+	SVAR Prefix = root:Packages:Irena:BlueSkySamplePlot:Prefix				// use this instead of catalog used
 	
-	string TempAddress = ServerAddress+"/api/v1/node/full/"+CatalogUsed+"/"
-	TempAddress +=PrunedListOfAvailableData[selRow][3]+"/primary/data?format=json"
-	//print TempAddress
+	//string TempAddress = ServerAddress+"/api/v1/search/"+CatalogUsed+"/"
+	string TempAddress = ServerAddress+"/api/v1/node/full/"+Prefix+"/"
+				//this provides ONLY data and is very small... 
+	//something to note. These return different parts of the data... Smaller or larger tree  
+	TempAddress +=PrunedListOfAvailableData[selRow][3]+"/primary/data?format=json"		//	this results in 267 lines with /search and ONLY data with /node/full <<<< 
+	//TempAddress +=PrunedListOfAvailableData[selRow][3]+"/primary?format=json"			// 	this results in 1300 lines with /search 
+	//TempAddress +=PrunedListOfAvailableData[selRow][3]+"?format=json"					//	this results in giant json with 7.6k lines with /search 
+	// 	selection above makes difference for data adresses.  
+	//Identify the data and get the url for the arrays...
 	URLRequest/Z url=TempAddress
 	if(V_Flag!=0)
 		abort "Server not available"
@@ -384,20 +391,85 @@ Function IN3BS_ImportDataAndPlot(selRow, saveTheData, PlotAll)
 		abort "Cannot parse server response"
 	endif
 	variable jsonId = V_Value
+	//if we need to check who the json looks like, this will dumpt the json to history as formatted string
 	//JSONXOP_Dump jsonId
+	//JSONXOP_Dump /IND=3 jsonID 	//this adds indents so one can read the damned thing. 
 	//print S_Value		//-- prints the file in history and works. 
-	wave/T Keys = JSON_GetKeys(jsonID, "")
+	//JSONXOP_Release jsonId
+	//abort
+
+	//these were populated in IR3BS_GetJSONScanData() and should contain names of x and y axes. 
+
+	wave/T Keys = JSON_GetKeys(jsonID, "")	//if we use /node/full, we get back only the data, no metadata... 
 	if(numpnts(Keys)<2)
 		JSONXOP_Release jsonId
 		abort "Cannot parse response, server not returning meanigful data yet"
-	endif
-	string DetKey = Keys[0]
-	string XdataKey = Keys[1]
+	endif	
+	//print keys		gives   '_free_'[0]= {"PD_USAXS","a_stage_r","a_stage_r_user_setpoint","scaler0_time"}
+	SVAR XaxisStr = root:Packages:Irena:BlueSkySamplePlot:XaxisStr
+	SVAR DetectorStr = root:Packages:Irena:BlueSkySamplePlot:DetectorStr
+	XaxisStr = Keys[1]
+	DetectorStr = Keys[0]
+	
 	//wave maxSize=JSON_GetMaxArraySize(jsonID, "/"+DetKey)
-	wave DetFree = JSON_GetWave(jsonID, "/"+DetKey)
-	wave XdatFree = JSON_GetWave(jsonID, "/"+XdataKey)
-	JSONXOP_Release jsonId
+	//data can these addressed like before with names ("id" or via numbers "0=time, 1=PD_USAXS, 3=a_stage_r
 	//store data here and do something with them.
+	wave DetFree = JSON_GetWave(jsonID, DetectorStr, ignoreErr=1)
+	wave XdatFree = JSON_GetWave(jsonID, XaxisStr, ignoreErr=1)
+	
+	JSONXOP_Release jsonId
+	
+	//	if using /search then TempAddress we get only metadata, but not data, in that case we can do following:  
+	// probe in metadata what is available and where, tehn load separately only data. 
+	// requires multipke reqiests and is therefore much shorter. 
+	// check the OneNote programming notes in Tiled, it is bit complciated.  
+			//	variable  numDataBlocks = JSON_GetVariable(jsonID, "/meta/count")
+			//	variable i
+			//	string ListOfDataStreams=""
+			//	For(i=0;i<numDataBlocks;i+=1)
+			//		ListOfDataStreams+=JSON_GetString(jsonID, "/data/"+num2str(i)+"/id")+";"
+			//		//print num2str(i)+"   =   "+JSON_GetString(jsonID, "/data/"+num2str(i)+"/id")
+			//	endfor 
+			//print ListOfDataStreams
+			//next idenitfy which data stream number is which array we want and read using the full url:
+			// get string from /data/X/links/full and append ?format=json to get json
+			// now we get more or less clear ASCII table with values from 0 to points-1 and we need to read those using getWave. 
+	
+			//this works with use of string TempAddress = ServerAddress+"/api/v1/search/"+CatalogUsed+"/" which means, the json does nto contain the data. 
+				//	variable tempIndex
+				//	//get index for detectors we want 
+				//	tempIndex = WhichListItem(DetectorStr, ListOfDataStreams)
+				//	string AddressOfDetector = JSON_GetString(jsonID,"/data/"+num2str(tempIndex)+"/links/full")+"?format=json"
+				//	tempIndex = WhichListItem(XaxisStr, ListOfDataStreams)
+				//	string AddressOfXdata = JSON_GetString(jsonID,"/data/"+num2str(tempIndex)+"/links/full")+"?format=json"
+				//	JSONXOP_Release jsonId
+				//	//now get the data
+				//	URLRequest/Z url=AddressOfDetector
+				//	if(V_Flag!=0)
+				//		abort "Server not available"
+				//	endif
+				//	JSONXOP_Parse/Z(S_serverResponse)
+				//	if(V_Flag!=0)
+				//		print S_serverResponse
+				//		abort "Cannot parse server response"
+				//	endif
+				//	jsonId = V_Value
+				//	wave DetFree = JSON_GetWave(jsonID, "", ignoreErr=1)
+				//	JSONXOP_Release jsonId
+				//
+				//	URLRequest/Z url=AddressOfXdata
+				//	if(V_Flag!=0)
+				//		abort "Server not available"
+				//	endif
+				//	JSONXOP_Parse/Z(S_serverResponse)
+				//	if(V_Flag!=0)
+				//		print S_serverResponse
+				//		abort "Cannot parse server response"
+				//	endif
+				//	jsonId = V_Value
+				//	wave XdatFree = JSON_GetWave(jsonID, "", ignoreErr=1)
+				//	JSONXOP_Release jsonId
+
 	string tempScanName, DateTimeStr
 	PauseUpdate
 	if(saveTheData)	//store the data
@@ -417,8 +489,9 @@ Function IN3BS_ImportDataAndPlot(selRow, saveTheData, PlotAll)
 				DoWindow/C BlueSkyGraph
 			endif
 			AppendtoGraph Detector vs Xdata
-			Label bottom XdataKey
-			Label left DetKey
+			Label bottom XaxisStr
+			Label left DetectorStr
+			AutoPositionWindow/R=IR3BS_BlueSkyPlotPanel  BlueSkyGraph
 		endif
 		setDataFolder oldDf
 	else	//just display them without saving
@@ -428,8 +501,8 @@ Function IN3BS_ImportDataAndPlot(selRow, saveTheData, PlotAll)
 		
 		//display, for now this is simplistic way
 		Display/K=1  Detector vs Xdata as PrunedListOfAvailableData[selRow][1]+"     "+PrunedListOfAvailableData[selRow][0]
-		Label bottom XdataKey
-		Label left DetKey
+		Label bottom XaxisStr
+		Label left DetectorStr
 		DoWindow/C BlueSkyGraph
 		AutoPositionWindow/R=IR3BS_BlueSkyPlotPanel  BlueSkyGraph
 	endif
@@ -502,8 +575,87 @@ End
 //**********************************************************************************************************
 //**********************************************************************************************************
 //************************************************************************************************************
+FUnction IR3BS_InitCatalog()
 
+	//here we do following:
+	//1. Aks for Catalog selected using querry similar to https://tiled-demo.blueskyproject.io/api/v1/metadata/bmm
+	//2  Pick FULL URL from returned Json and call that
+	//3. Pick from data 0 the search URL and get the part behind the search, which is the Prefix of the database.  
+	// in this example, we find: https://tiled-demo.blueskyproject.io/api/v1/search/bmm/raw
+	// and we pick Prefix = "/bmm/raw" which points to where to expect the data. 
+	setDataFolder root:Packages:Irena:BlueSkySamplePlot
+	SVAR Prefix = root:Packages:Irena:BlueSkySamplePlot:Prefix
+	SVAR CatalogUsed=root:Packages:Irena:BlueSkySamplePlot:CatalogUsed
+	if(StringMatch(CatalogUsed, "---" ))
+		Wave w1= root:Packages:Irena:BlueSkySamplePlot:SelectionOfAvailableData
+		Wave/T wt2= root:Packages:Irena:BlueSkySamplePlot:PrunedListOfAvailableData
+		Wave/T wt1= root:Packages:Irena:BlueSkySamplePlot:ListOfAvailableData
+		redimension/N=0 w1, wt1, wt2
+		abort 
+	endif
+	string TempAddress = ServerAddress+"/api/v1/metadata/"+CatalogUsed
+	
+	//print TempAddress
+	URLRequest/Z url=TempAddress
+	if(V_Flag!=0)
+		abort "Server not available"
+	endif
+	JSONXOP_Parse/Z(S_serverResponse)
+	if(V_Flag!=0)
+		abort "Cannot parse server response"
+	endif
+	variable jsonId = V_Value
+	//debug commands: 
+	//print jsonID
+	//JSONXOP_Dump/IND=3 jsonId
+	//print "*********************AAAAAA*******************************"
+	//print strlen(S_Value)		//-- prints the file in history and works. 
+	//print S_Value				//-- prints the file in history and works. 
+	
+	string	strLocation = "/data/links/search"				//for one WITH select_metadata
+	string NextURL = JSON_GetString(jsonID, strLocation,ignoreErr=1) 
+	TempAddress = NextURL
+	JSONXOP_Release jsonId
 
+	//print TempAddress
+	URLRequest/Z url=TempAddress
+	if(V_Flag!=0)
+		abort "Server not available"
+	endif
+	JSONXOP_Parse/Z(S_serverResponse)
+	if(V_Flag!=0)
+		abort "Cannot parse server response"
+	endif
+	jsonId = V_Value
+	//JSONXOP_Dump/IND=3 jsonId
+	//print "*********************AAAAAA*******************************"
+	//print strlen(S_Value)		//-- prints the file in history and works. 
+	//print S_Value				//-- prints the file in history and works. 
+
+	strLocation = "/data/0/links/search"				//for one WITH select_metadata
+	string FullPath = JSON_GetString(jsonID, strLocation,ignoreErr=1) 
+	JSONXOP_Release jsonId
+	//print FullPath
+	//now remove the search and anything before it and we have the new perfix. 
+	variable startPlace = WhichListItem("search", FullPath , "/" )
+	variable allParts = ItemsInList(FullPath ,"/")
+	variable i
+	string PrefixLoc=""
+	string tempStr=""
+	for(i=startPlace+1 ; i<(allParts); i+=1)
+		tempStr=StringFromList(i, FullPath, "/")		//this is path, but it could be UUID in some cases, which we need to remove
+		//print strlen(tempStr)
+		if(strlen(tempStr)<36)	//UUIDs are 36 characters long, Catalog name shouydl be shorter!
+			PrefixLoc = PrefixLoc+"/"+tempStr
+		endif
+	endfor
+	//print PrefixLoc
+	Prefix = PrefixLoc
+
+End
+//**********************************************************************************************************
+//**********************************************************************************************************
+//************************************************************************************************************
 FUnction IR3BS_GetJSONScanData()
 
 	setDataFolder root:Packages:Irena:BlueSkySamplePlot
@@ -529,17 +681,17 @@ FUnction IR3BS_GetJSONScanData()
 
 	SVAR ListOfCatalogs=root:Packages:Irena:BlueSkySamplePlot:ListOfCatalogs
 	SVAR CatalogUsed=root:Packages:Irena:BlueSkySamplePlot:CatalogUsed
+	SVAR Prefix = root:Packages:Irena:BlueSkySamplePlot:Prefix				//thsi si ~ Catalog used, but has other path behind the name. Repalce Catalogused with this. 
+
 	SVAR ScanTypeToUse = root:Packages:Irena:BlueSkySamplePlot:ScanTypeToUse
+	SVAR DetectorStr = root:Packages:Irena:BlueSkySamplePlot:DetectorStr
+	SVAR Xaxis = root:Packages:Irena:BlueSkySamplePlot:XaxisStr
 	NVAR NumberOfScansToImport=root:Packages:Irena:BlueSkySamplePlot:NumberOfScansToImport
-	//if(NumberOfScansToImport>300)
-	//	NumberOfScansToImport=300		//limitation of Tiled 0.1.a80
-	//endif
-	
 
 	//SERVER/node/search/CATALOG?page[offset]=0&filter[time_range][condition][since]=FROM_START_TIME&filter[time_range][condition][until]=BEFORE_END_TIME&sort=time
 	variable startTimeSec= date2secs((StartYear), (StartMonth), (StartDay)) - 2082844800 - Date2secs(-1,-1,-1) //convert to Python time and fix to UTC time which BS is using. 
 	variable endTimeSec = startTimeSec + NumOfHours*60*60
-	string TempAddress = ServerAddress+"/api/v1/node/search/"
+	string TempAddress = ServerAddress+"/api/v1/search/"
 	string StartTimeStr, EndTimeStr
 	sprintf StartTimeStr, "%.15g" ,startTimeSec
 	sprintf EndTimeStr, "%.15g" ,endTimeSec
@@ -554,16 +706,27 @@ FUnction IR3BS_GetJSONScanData()
 	KillWaves/Z IDwave, PlanNameWave, TimeWave
 	make/O/N=(0)/T IDwave, PlanNameWave, MetadataStr
 	make/O/N=(0)/D TimeWave						//must be double precision!
+	//abort if no usable catalog is selected. 
+	if(StringMatch(CatalogUsed, "---" ))
+		Wave w1= root:Packages:Irena:BlueSkySamplePlot:SelectionOfAvailableData
+		Wave/T wt2= root:Packages:Irena:BlueSkySamplePlot:PrunedListOfAvailableData
+		Wave/T wt1= root:Packages:Irena:BlueSkySamplePlot:ListOfAvailableData
+		redimension/N=0 w1, wt1, wt2
+		abort 
+	endif
+
+	//variable timerRefNum=startMSTimer
 	
-	//need to split into smaller chunks (100) to downlad in pages.
+	//need to split into smaller chunks (100) to download in pages.
 	For(i2=0;i2<NumStepsNeeded;i2+=1)
 		OffsetStart = i2*chunkToDownload
-		TempAddress = ServerAddress+"/api/v1/node/search/"			//this needs to be reset here... 
+		//print "Downloading "+num2str(i2)+" set of "+num2str(chunkToDownload)+" data" 
+		TempAddress = ServerAddress+"/api/v1/search/"			//this needs to be reset here... 
 		if(AllDates)
 			//TempAddress +=CatalogUsed+"?page[offset]=00&page[limit]="+num2str(NumberOfScansToImport)+"&sort=time"
-			TempAddress +=CatalogUsed+"?page[offset]="+num2str(OffsetStart)+"&page[limit]="+num2str(chunkToDownload)+"&sort=time"
+			TempAddress +=Prefix+"/?page[offset]="+num2str(OffsetStart)+"&page[limit]="+num2str(chunkToDownload)+"&sort=time"
 		else
-			TempAddress +=CatalogUsed+"?page[offset]="+num2str(OffsetStart)+"&page[limit]="+num2str(chunkToDownload)+"&filter[time_range][condition][since]="+StartTimeStr+"&filter[time_range][condition][until]="+EndTimeStr
+			TempAddress +=Prefix+"/?page[offset]="+num2str(OffsetStart)+"&page[limit]="+num2str(chunkToDownload)+"&filter[time_range][condition][since]="+StartTimeStr+"&filter[time_range][condition][until]="+EndTimeStr
 			if(!	StringMatch(ScanTypeToUse, "all"))
 				TempAddress +="&filter[eq][condition][key]=plan_name"
 				TempAddress +="&filter[eq][condition][value]=\""+ScanTypeToUse+"\""
@@ -572,9 +735,206 @@ FUnction IR3BS_GetJSONScanData()
 			TempAddress +="&filter[time_range][condition][timezone]=US/Central&sort=time"
 			//note: sort=-time sorts in inverse chronological order. 
 			//example
-			//http://usaxscontrol:8000/api/v1/node/search/20idb_usaxs?page[offset]=0&page[limit]=100&filter[time_range][condition][since]=1671235200&filter[time_range][condition][until]=1671321600&filter[time_range][condition][timezone]=US/Central&sort=time
-			//http://usaxscontrol:8000/api/v1/node/search/20idb_usaxs?page[offset]=100&page[limit]=100&filter[time_range][condition][since]=1671235200&filter[time_range][condition][until]=1671321600&filter[time_range][condition][timezone]=US/Central&sort=time
+			//http://usaxscontrol:8020/api/v1/node/search/20idb_usaxs?page[offset]=0&page[limit]=100&filter[time_range][condition][since]=1671235200&filter[time_range][condition][until]=1671321600&filter[time_range][condition][timezone]=US/Central&sort=time
+			//http://usaxscontrol:8020/api/v1/node/search/20idb_usaxs?page[offset]=100&page[limit]=100&filter[time_range][condition][since]=1671235200&filter[time_range][condition][until]=1671321600&filter[time_range][condition][timezone]=US/Central&sort=time
 		endif
+		TempAddress+="&fields=metadata&omit_links=true"		//this maps everything outside metadata to null, including links. Makes everything smaller and faster. . 
+		//print TempAddress
+		//example: http://usaxscontrol.xray.aps.anl.gov:8020/api/v1/search/idb_usaxs_retired_2023-12-05?page[offset]=0&page[limit]=250&filter[time_range][condition][since]=1678341600&filter[time_range][condition][until]=1678413600&filter[eq][condition][key]=plan_name&filter[eq][condition][value]=%22tune_ar%22&filter[time_range][condition][timezone]=US/Central&sort=time&fields=metadata&omit_links=true
+		//this is example of what we are getting on 1-4-2024 when scoped down to metadata only and removed links: TempAddress+="&fields=metadata&omit_links=true" this is single scan document: 
+				// {
+				//   "data": [
+				//      {
+				//         "attributes": {
+				//            "ancestors": [
+				//               "idb_usaxs_retired_2023-12-05"
+				//            ],
+				//            "data_sources": null,
+				//            "metadata": {
+				//               "start": {
+				//                  "EPICS_CA_MAX_ARRAY_BYTES": "1280000",
+				//                  "EPICS_HOST_ARCH": "linux-x86_64",
+				//                  "beamline_id": "APS 9-ID-C USAXS",
+				//                  "datetime": "2023-03-09 00:04:36.101637",
+				//                  "detectors": [
+				//                     "PD_USAXS"
+				//                  ],
+				//                  "epics_libca": "/home/beams11/USAXS/micromamba/envs/bluesky_2023_1/lib/python3.10/site-packages/epics/clibs/linux64/libca.so",
+				//                  "hints": {
+				//                     "dimensions": [
+				//                        [
+				//                           [
+				//                              "a_stage_r2p"
+				//                           ],
+				//                           "primary"
+				//                        ]
+				//                     ]
+				//                  },
+				//                  "login_id": "usaxs@usaxscontrol.xray.aps.anl.gov",
+				//                  "motors": [
+				//                     "a_stage_r2p"
+				//                  ],
+				//                  "num_intervals": 30,
+				//                  "num_points": 31,
+				//                  "pid": 1521928,
+				//                  "plan_args": {
+				//                     "args": [
+				//                        "UsaxsMotorTunable(prefix='9idcLAX:pi:c0:m1', name='a_stage_r2p', parent='a_stage', settle_time=0.0, timeout=None, read_attrs=['user_readback', 'user_setpoint'], configuration_attrs=['user_offset', 'user_offset_dir', 'velocity', 'acceleration', 'motor_egu', 'width'])",
+				//                        43.48869216238651,
+				//                        55.48869216238651
+				//                     ],
+				//                     "detectors": [
+				//                        "myScalerCH(prefix='9idcLAX:vsc:c0', name='scaler0', read_attrs=['channels', 'channels.chan04', 'channels.chan04.s', 'time'], configuration_attrs=['channels', 'channels.chan01', 'channels.chan01.chname', 'channels.chan01.preset', 'channels.chan01.gate', 'channels.chan04', 'channels.chan04.chname', 'channels.chan04.preset', 'channels.chan04.gate', 'count_mode', 'delay', 'auto_count_delay', 'freq', 'preset_time', 'auto_count_time', 'egu'])",
+				//                        "UsaxsMotorTunable(prefix='9idcLAX:pi:c0:m1', name='a_stage_r2p', parent='a_stage', settle_time=0.0, timeout=None, read_attrs=['user_readback', 'user_setpoint'], configuration_attrs=['user_offset', 'user_offset_dir', 'velocity', 'acceleration', 'motor_egu', 'width'])"
+				//                     ],
+				//                     "num": 31,
+				//                     "per_step": "None"
+				//                  },
+				//                  "plan_name": "tune_a2rp",
+				//                  "plan_pattern": "inner_product",
+				//                  "plan_pattern_args": {
+				//                     "args": [
+				//                        "UsaxsMotorTunable(prefix='9idcLAX:pi:c0:m1', name='a_stage_r2p', parent='a_stage', settle_time=0.0, timeout=None, read_attrs=['user_readback', 'user_setpoint'], configuration_attrs=['user_offset', 'user_offset_dir', 'velocity', 'acceleration', 'motor_egu', 'width'])",
+				//                        43.48869216238651,
+				//                        55.48869216238651
+				//                     ],
+				//                     "num": 31
+				//                  },
+				//                  "plan_pattern_module": "bluesky.plan_patterns",
+				//                  "plan_type": "generator",
+				//                  "proposal_id": "testing",
+				//                  "purpose": "tuner",
+				//                  "scan_id": 440,
+				//                  "time": 1678341876.142742,
+				//                  "tune_md": {
+				//                     "initial_position": 49.48869216238651,
+				//                     "time_iso8601": "2023-03-09 00:04:36.118210",
+				//                     "width": 12.0
+				//                  },
+				//                  "tune_parameters": {
+				//                     "initial_position": 49.48869216238651,
+				//                     "num": 31,
+				//                     "peak_choice": "com",
+				//                     "width": 12.0,
+				//                     "x_axis": "a_stage_r2p",
+				//                     "y_axis": "PD_USAXS"
+				//                  },
+				//                  "uid": "27a3c3d2-b768-40fc-bcba-bfa013196448",
+				//                  "versions": {
+				//                     "apstools": "1.6.10",
+				//                     "area_detector_handlers": "0.0.10",
+				//                     "bluesky": "1.10.0",
+				//                     "databroker": "1.2.5",
+				//                     "epics": "3.5.0",
+				//                     "epics_ca": "3.5.0",
+				//                     "h5py": "3.8.0",
+				//                     "matplotlib": "3.6.3",
+				//                     "numpy": "1.23.5",
+				//                     "ophyd": "1.7.0",
+				//                     "pyRestTable": "2020.0.7",
+				//                     "pymongo": "4.3.3",
+				//                     "spec2nexus": "2021.2.5"
+				//                  }
+				//               },
+				//               "stop": {
+				//                  "exit_status": "success",
+				//                  "num_events": {
+				//                     "baseline": 2,
+				//                     "primary": 31
+				//                  },
+				//                  "reason": "",
+				//                  "run_start": "27a3c3d2-b768-40fc-bcba-bfa013196448",
+				//                  "time": 1678341888.2595327,
+				//                  "uid": "00e9f178-2191-4ac5-a92d-d971fabd1d3b"
+				//               },
+				//               "summary": {
+				//                  "datetime": "2023-03-09T00:04:36.142742",
+				//                  "duration": 12.116790771484375,
+				//                  "plan_name": "tune_a2rp",
+				//                  "scan_id": 440,
+				//                  "stream_names": [
+				//                     "aps_current_monitor",
+				//                     "baseline",
+				//                     "primary"
+				//                  ],
+				//                  "timestamp": 1678341876.142742,
+				//                  "uid": "27a3c3d2-b768-40fc-bcba-bfa013196448"
+				//               }
+				//            },
+				//            "sorting": null,
+				//            "specs": null,
+				//            "structure": null,
+				//            "structure_family": "container"
+				//         },
+				//         "id": "27a3c3d2-b768-40fc-bcba-bfa013196448",
+				//         "links": null,
+				//         "meta": null
+				//      }
+				//   ],
+				//   "error": null,
+				//   "links": {
+				//      "first": "http://usaxscontrol.xray.aps.anl.gov:8020/api/v1/search/idb_usaxs_retired_2023-12-05?page[offset]=0&page[limit]=1",
+				//      "last": "http://usaxscontrol.xray.aps.anl.gov:8020/api/v1/search/idb_usaxs_retired_2023-12-05?page[offset]=267&page[limit]=1",
+				//      "next": "http://usaxscontrol.xray.aps.anl.gov:8020/api/v1/search/idb_usaxs_retired_2023-12-05?page[offset]=1&page[limit]=1",
+				//      "prev": null,
+				//      "self": "http://usaxscontrol.xray.aps.anl.gov:8020/api/v1/search/idb_usaxs_retired_2023-12-05?page[offset]=0&page[limit]=1"
+				//   },
+				//   "meta": {
+				//      "count": 267
+				//   }
+				//}
+				//
+
+		//NOW, scope down even more using JMESpath querry...
+		//&select_metadata={detectors:start.detectors,motors:start.motors}
+		//Note: select_metadata = Curly brackets,
+		//detectors : start.detectors , mpotors:start.motors etc. 
+		//NOTE: changes layout…   
+		//http://usaxscontrol.xray.aps.anl.gov:8020/api/v1/search/idb_usaxs_retired_2023-12-05?page[offset]=0&page[limit]=250&filter[time_range][condition][since]=1678341600&filter[time_range][condition][until]=1678413600&filter[eq][condition][key]=plan_name
+		//&filter[eq][condition][value]=%22tune_a2rp%22&filter[time_range][condition][timezone]=US/Central&sort=time&fields=metadata&omit_links=true&select_metadata={detectors:start.detectors,motors:start.motors}
+		TempAddress+="&select_metadata={detectors:start.detectors,motors:start.motors,plan_name:start.plan_name,time:start.time}"		//this selects only specific metadata. 
+		//this returns very small document:
+			//{
+			//   "data": [
+			//      {
+			//         "attributes": {
+			//            "ancestors": [
+			//               "idb_usaxs_retired_2023-12-05"
+			//            ],
+			//            "data_sources": null,
+			//            "metadata": {
+			//               "detectors": [
+			//                  "PD_USAXS"
+			//               ],
+			//               "motors": [
+			//                  "a_stage_r2p"
+			//               ],
+			//               "plan_name": "tune_a2rp",
+			//               "time": 1678341876.142742
+			//            },
+			//            "sorting": null,
+			//            "specs": null,
+			//            "structure": null,
+			//            "structure_family": "container"
+			//         },
+			//         "id": "27a3c3d2-b768-40fc-bcba-bfa013196448",
+			//         "links": null,
+			//         "meta": null
+			//      }
+			//   ],
+			//   "error": null,
+			//   "links": {
+			//      "first": "http://usaxscontrol.xray.aps.anl.gov:8020/api/v1/search/idb_usaxs_retired_2023-12-05?page[offset]=0&page[limit]=1",
+			//      "last": "http://usaxscontrol.xray.aps.anl.gov:8020/api/v1/search/idb_usaxs_retired_2023-12-05?page[offset]=267&page[limit]=1",
+			//      "next": "http://usaxscontrol.xray.aps.anl.gov:8020/api/v1/search/idb_usaxs_retired_2023-12-05?page[offset]=1&page[limit]=1",
+			//      "prev": null,
+			//      "self": "http://usaxscontrol.xray.aps.anl.gov:8020/api/v1/search/idb_usaxs_retired_2023-12-05?page[offset]=0&page[limit]=1"
+			//   },
+			//   "meta": {
+			//      "count": 267
+			//   }
+			//}
+
 		print TempAddress
 		URLRequest/Z url=TempAddress
 		if(V_Flag!=0)
@@ -585,13 +945,14 @@ FUnction IR3BS_GetJSONScanData()
 			abort "Cannot parse server response"
 		endif
 		variable jsonId = V_Value
+		//debug commands: 
 		//print jsonID
-		//JSONXOP_Dump refNumJson
-		//print S_Value		-- prints the file in history and works. 
-	
+		//JSONXOP_Dump/IND=3 jsonId
+		//print "*********************AAAAAA*******************************"
+		//print strlen(S_Value)		//-- prints the file in history and works. 
+		//print S_Value				//-- prints the file in history and works. 
 		//this list how many items are in that address, this is how many data sets were returned in the json. 
-		//print JSON_GetArraySize(jsonID, "/data")
-	
+		//print JSON_GetArraySize(jsonID, "/data")	
 		//this works for string keys in given location, not for single value
 		//JSONXOP_GetKeys jsonId, "/data/0", keyWave
 		//this reads value... Number: 
@@ -609,45 +970,50 @@ FUnction IR3BS_GetJSONScanData()
 		//time conversion. Tiled uses January 1, 1970
 		//print/D date2secs(1970,1,1)
 		//while Igor is 1904. We need to add :  
-	  	// date2secs(2022, 02, 20 ) - date2secs(1970,01,01)			//this converts to UTC, which is not needed anymore... : - Date2secs(-1,-1,-1)
-	
-		
+	  	// date2secs(2022, 02, 20 ) - date2secs(1970,01,01)			//this converts to UTC, which is not needed anymore... : - Date2secs(-1,-1,-1)		
 		//let's list those which are plan "tune_a2rp"
 		numDataSets = JSON_GetArraySize(jsonID, "/data")
-		//KillWaves/Z IDwave, PlanNameWave, TimeWave
-		//make/O/N=(numDataSets)/T IDwave, PlanNameWave
-		//make/O/N=(numDataSets)/D TimeWave			//must be double precision!
 		Redimension/N=(Oldrecords+numDataSets) IDwave, PlanNameWave, TimeWave, MetadataStr
 		j=Oldrecords
 		For(i=0;i<numDataSets;i+=1)
-			tempAddress = "/data/"+num2str(i)+"/attributes/metadata/start/plan_name"
+			//tempAddress = "/data/"+num2str(i)+"/attributes/metadata/start/plan_name"		//for one without select_metadata
+			tempAddress = "/data/"+num2str(i)+"/attributes/metadata/plan_name"				//for one WITH select_metadata
 			tempPlanName = JSON_GetString(jsonID, tempAddress,ignoreErr=1) 
 			//if(!StringMatch(tempPlanName, "documentation_run"))
 			tempAddress = "/data/"+num2str(i)+"/id"
 			IDwave[j] = JSON_GetString(jsonID, tempAddress,ignoreErr=1)
 			PlanNameWave[j]=tempPlanName
-			tempAddress = "/data/"+num2str(i)+"/attributes/metadata/start/time"
+			//tempAddress = "/data/"+num2str(i)+"/attributes/metadata/start/time"		//for one without select_metadata
+			tempAddress = "/data/"+num2str(i)+"/attributes/metadata/time"				//for one WITH select_metadata
 			//print/D JSON_GetVariable(jsonID, tempAddress)
 			TimeWave[j] = JSON_GetVariable(jsonID, tempAddress,ignoreErr=1) + date2secs(1970,01,01)+ Date2secs(-1,-1,-1) 		//this is in Chicago time for User interface (+ Date2secs(-1,-1,-1))
 			//now metadata which can be used to scope down the data. 
 			MetadataStr[j] = ""
-			tempAddress = "/data/"+num2str(i)+"/attributes/metadata/start/detectors/0"
+			//tempAddress = "/data/"+num2str(i)+"/attributes/metadata/start/detectors/0"		//for one without select_metadata
+			tempAddress = "/data/"+num2str(i)+"/attributes/metadata/detectors/0"				//for one WITH select_metadata
 			tempMetadata= JSON_GetString(jsonID, tempAddress,ignoreErr=1)
 			MetadataStr[j]+="Detector="+tempMetadata+";"
-			tempAddress = "/data/"+num2str(i)+"/attributes/metadata/start/motors/0"
+			DetectorStr = tempMetadata
+			//tempAddress = "/data/"+num2str(i)+"/attributes/metadata/start/motors/0"		//for one without select_metadata
+			tempAddress = "/data/"+num2str(i)+"/attributes/metadata/motors/0"				//for one WITH select_metadata
 			tempMetadata= JSON_GetString(jsonID, tempAddress,ignoreErr=1)
 			MetadataStr[j]+="Axis="+tempMetadata+";"
-			//tempAddress = "/data/"+num2str(i)+"/attributes/metadata/start/motors/0"
+			Xaxis = tempMetadata
+			//tempAddress = "/data/"+num2str(i)+"/attributes/metadata/start/motors/0"		//for one without select_metadata
 			//tempMetadata= JSON_GetString(jsonID, tempAddress,ignoreErr=1)
 			//MetadataStr[j]+="Axis="+tempMetadata+";"
 			j+=1
 		endfor
 		Oldrecords=j
 		JSONXOP_Release jsonId
-		if(numDataSets<1)
+		if(numDataSets<(chunkToDownload-1))
 			break
 		endif
 	endfor
+	
+	//variable microseconds = StopMSTimer(timerRefNum)
+	//print microseconds
+	//timerRefNum = startMSTimer
 	//populate listbox
 	wave/T ListOfAvailableData = root:Packages:Irena:BlueSkySamplePlot:ListOfAvailableData
 	Wave SelectionOfAvailableData = root:Packages:Irena:BlueSkySamplePlot:SelectionOfAvailableData
@@ -660,29 +1026,10 @@ FUnction IR3BS_GetJSONScanData()
 		ListOfAvailableData[][2] = MetadataStr[p]
 		ListOfAvailableData[][3] = IDwave[p]
 	endif
-	
-	//create list of scans available on server
-//	SVAR ListOfScanTypes=root:Packages:Irena:BlueSkySamplePlot:ListOfScanTypes
-//	SVAR ScanTypeToUse=root:Packages:Irena:BlueSkySamplePlot:ScanTypeToUse
-//	string OldScanTypeToUse = ScanTypeToUse
-//	ListOfScanTypes = ""
-//	ScanTypeToUse = ""
-//	For(i=0;i<DimSize(ListOfAvailableData,0);i+=1)
-//		if(!StringMatch(ListOfScanTypes,"*"+ListOfAvailableData[i][0]+";*"))
-//			ListOfScanTypes +=ListOfAvailableData[i][0]+";"
-//		endif
-//	endfor
-//	if(strlen(ScanTypeToUse)<1 && DimSize(ListOfAvailableData,0)>0)
-//		ScanTypeToUse = StringFromList(0, ListOfScanTypes)
-//	endif
-//	if(strlen(OldScanTypeToUse)>1)
-//		if(StringMatch(ListOfScanTypes, "*"+OldScanTypeToUse+"*" ))
-//			ScanTypeToUse=OldScanTypeToUse
-//		endif	
-//	endif
-	
+		
 	IR3BS_UdateListBoxScans()
-	
+	//microseconds = StopMSTimer(timerRefNum)
+	//print microseconds
 end
 
 //************************************************************************************************************
@@ -740,7 +1087,8 @@ Function IR3BS_PopMenuProc(pa) : PopupMenuControl
 				SVAR ListOfCatalogs=root:Packages:Irena:BlueSkySamplePlot:ListOfCatalogs
 				SVAR CatalogUsed=root:Packages:Irena:BlueSkySamplePlot:CatalogUsed
 				CatalogUsed = popStr
-				IR3BS_GetJSONScanData()
+				IR3BS_InitCatalog()		//this locates the Catalog path
+				IR3BS_GetJSONScanData()	//this updates the catalog data, if possible. 
 			endif
 			
 			if(StringMatch(pa.ctrlName, "ScanTypeToUse" ))
@@ -758,6 +1106,191 @@ Function IR3BS_PopMenuProc(pa) : PopupMenuControl
 
 	return 0
 End
+
+
+
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+
+// package needs specific JSON functions
+
+/// @addtogroup JSONXOP_GetArraySize
+/// @{
+/// @brief Get the number of elements in an array.
+///
+/// @param jsonID     numeric identifier of the JSON object
+/// @param jsonPath   RFC 6901 compliant JSON Pointer
+/// @param ignoreErr  [optional, default 0] set to ignore runtime errors
+/// @returns a numeric variable with the number of elements the array at jsonPath
+threadsafe static Function JSON_GetArraySize(jsonID, jsonPath, [ignoreErr])
+	Variable jsonID
+	String jsonPath
+	Variable ignoreErr
+
+	ignoreErr = ParamIsDefault(ignoreErr) ? JSON_ZFLAG_DEFAULT : !!ignoreErr
+
+	JSONXOP_GetArraySize/Z=1/Q=(JSON_QFLAG_DEFAULT) jsonID, jsonPath
+	if(V_flag)
+		if(ignoreErr)
+			return NaN
+		endif
+
+		AbortOnValue 1, V_flag
+	endif
+
+	return V_Value
+End
+
+/// @brief Get a text entity as string variable from a JSON object
+///
+/// @param jsonID     numeric identifier of the JSON object
+/// @param jsonPath   RFC 6901 compliant JSON Pointer
+/// @param ignoreErr  [optional, default 0] set to ignore runtime errors
+/// @returns a string containing the entity
+threadsafe static Function/S JSON_GetString(jsonID, jsonPath, [ignoreErr])
+	Variable jsonID
+	String jsonPath
+	Variable ignoreErr
+
+	ignoreErr = ParamIsDefault(ignoreErr) ? JSON_ZFLAG_DEFAULT : ignoreErr
+
+	JSONXOP_GetValue/Z=1/Q=(JSON_QFLAG_DEFAULT)/T jsonID, jsonPath
+	if(V_flag)
+		if(ignoreErr)
+			return ""
+		endif
+
+		AbortOnValue 1, V_flag
+	endif
+
+	return S_Value
+End
+
+/// @brief Get a numeric, boolean or null entity as variable from a JSON object
+///
+/// @param jsonID     numeric identifier of the JSON object
+/// @param jsonPath   RFC 6901 compliant JSON Pointer
+/// @param ignoreErr  [optional, default 0] set to ignore runtime errors
+/// @returns a numeric variable containing the entity
+threadsafe static Function JSON_GetVariable(jsonID, jsonPath, [ignoreErr])
+	Variable jsonID
+	String jsonPath
+	Variable ignoreErr
+
+	ignoreErr = ParamIsDefault(ignoreErr) ? JSON_ZFLAG_DEFAULT : ignoreErr
+
+	JSONXOP_GetValue/Z=1/Q=(JSON_QFLAG_DEFAULT)/V jsonID, jsonPath
+	if(V_flag)
+		if(ignoreErr)
+			return NaN
+		endif
+
+		AbortOnValue 1, V_flag
+	endif
+
+	return V_Value
+End
+
+/// @brief Get an array as numeric wave from a JSON object
+///
+/// @param jsonID     numeric identifier of the JSON object
+/// @param jsonPath   RFC 6901 compliant JSON Pointer
+/// @param ignoreErr  [optional, default 0] set to ignore runtime errors
+/// @returns a free numeric double precision wave with the elements of the array
+threadsafe static Function/WAVE JSON_GetWave(jsonID, jsonPath, [ignoreErr])
+	Variable jsonID
+	String jsonPath
+	Variable ignoreErr
+
+	ignoreErr = ParamIsDefault(ignoreErr) ? JSON_ZFLAG_DEFAULT : ignoreErr
+
+	JSONXOP_GetValue/Z=1/Q=(JSON_QFLAG_DEFAULT)/WAVE=wv/FREE jsonID, jsonPath
+	if(V_flag)
+		if(ignoreErr)
+			return $""
+		endif
+
+		AbortOnValue 1, V_flag
+	endif
+
+	return wv
+End
+
+
+/// @addtogroup JSONXOP_GetKeys
+/// @{
+/// @brief Get the name of all object members of the specified path
+///
+/// @param jsonID     numeric identifier of the JSON object
+/// @param jsonPath   RFC 6901 compliant JSON Pointer
+/// @param ignoreErr  [optional, default 0] set to ignore runtime errors
+/// @param esc        [optional, 0 or 1] set to ignore RFC 6901 path escaping standards
+/// @returns a free text wave with all elements as rows.
+threadsafe static Function/WAVE JSON_GetKeys(jsonID, jsonPath, [esc, ignoreErr])
+	Variable jsonID
+	String jsonPath
+	Variable esc, ignoreErr
+
+	ignoreErr = ParamIsDefault(ignoreErr) ? JSON_ZFLAG_DEFAULT : !!ignoreErr
+
+	if(ParamIsDefault(esc))
+		JSONXOP_GetKeys/Z=1/Q=(JSON_QFLAG_DEFAULT)/FREE jsonID, jsonPath, result
+	else
+		esc = !!esc
+		JSONXOP_GetKeys/Z=1/Q=(JSON_QFLAG_DEFAULT)/ESC=(esc)/FREE jsonID, jsonPath, result
+	endif
+
+	if(V_flag)
+		if(ignoreErr)
+			return $""
+		endif
+
+		AbortOnValue 1, V_flag
+	endif
+
+	return result
+End
+
+/// @addtogroup JSONXOP_GetMaxArraySize
+/// @{
+/// @brief Get the maximum element size for each dimension in an array
+///
+/// @param jsonID     numeric identifier of the JSON object
+/// @param jsonPath   RFC 6901 compliant JSON Pointer
+/// @param ignoreErr  [optional, default 0] set to ignore runtime errors
+/// @returns a free numeric wave with the size for each dimension as rows
+threadsafe static Function/WAVE JSON_GetMaxArraySize(jsonID, jsonPath, [ignoreErr])
+	Variable jsonID
+	String jsonPath
+	Variable ignoreErr
+
+	ignoreErr = ParamIsDefault(ignoreErr) ? JSON_ZFLAG_DEFAULT : !!ignoreErr
+
+	JSONXOP_GetMaxArraySize/Z=1/Q=(JSON_QFLAG_DEFAULT)/FREE jsonID, jsonPath, w
+	if(V_flag)
+		if(ignoreErr)
+			return $""
+		endif
+
+		AbortOnValue 1, V_flag
+	endif
+
+	return w
+End
+/// @}
+
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+
+
 
 
 //************************************************************************************************************
@@ -857,7 +1390,7 @@ End
 //
 //### Server root
 //
-//working with `http://usaxscontrol:8000`, calling this SERVER
+//working with `http://usaxscontrol:8020`, calling this SERVER
 //
 //### Server overview
 //

@@ -384,8 +384,24 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************//*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
-//*******************************************************************************************************************************************
 Function NI1A_CorrectDataPerUserReq(orientation)
+	string orientation
+	
+	NVAR/Z ALSRotAxisToSampleDist=root:Packages:Nika_RSoXS:ALSRotAxisToSampleDist
+	if(NVAR_Exists(ALSRotAxisToSampleDist))
+		if(ALSRotAxisToSampleDist!=0)
+			NI1A_CorrectDataPerUserReqA(orientation)
+		else
+			NI1A_CorrectDataPerUserReqN(orientation)
+		endif
+	else
+		NI1A_CorrectDataPerUserReqN(orientation)
+	endif
+end
+
+//*******************************************************************************************************************************************
+
+Function NI1A_CorrectDataPerUserReqN(orientation)
 	string orientation
 	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf = GetDataFolder(1)
@@ -476,7 +492,7 @@ Function NI1A_CorrectDataPerUserReq(orientation)
 		if(UseCorrectionFactor)
 			CalibrationPrefactor*=CorrectionFactor
 		endif
-		if(UseSolidAngle)		//Combined with Gemoetry Correction this results in angle dependent solid angle correction.  
+		if(UseSolidAngle)		//Combined with Geometry Correction this results in angle dependent solid angle correction.  
 			variable solidAngle =PixelSizeX/SampleToCCDDistance * PixelSizeY/SampleToCCDDistance
 			//print solidAngle
 			//fixed bug 10-13-2018, was multiplying by solid angle. not dividing.But we need to divide by solid angle - if the detector is further, we see less of area, 
@@ -1302,8 +1318,22 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
-
 Function NI1A_Create2DQWave(DataWave)
+ 	Wave DataWave
+ 	
+	NVAR/Z ALSRotAxisToSampleDist=root:Packages:Nika_RSoXS:ALSRotAxisToSampleDist	
+	if(NVAR_Exists(ALSRotAxisToSampleDist))		//Use ALS specificv code
+		if(ALSRotAxisToSampleDist!=0)
+			NI1A_Create2DQWaveALS(DataWave)
+		else
+			NI1A_Create2DQWaveNormal(DataWave)
+		endif
+	else
+		NI1A_Create2DQWaveNormal(DataWave)
+	endif
+end
+//*******************************************************************************************************************************************
+Function NI1A_Create2DQWaveNormal(DataWave)
 	wave DataWave
 	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf=GetDataFolder(1)
