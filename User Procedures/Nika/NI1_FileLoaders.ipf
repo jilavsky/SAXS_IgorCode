@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=2.60
+#pragma version=2.61
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2023, Argonne National Laboratory
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.61 3/24/2024 Added to Dectris detectors Eiger2_500k - 16M. Tested only on 16M, do not have other images for testing. 
 //2.60 fix hdf5 plain file import, 2022-11-06, to handle 1st 2-3D data set in the file, difficult to support more flexible method. 
 //2.59 add ability to flip/rotate image after load to let users tweak image orientation. 
 //2.58 fix Eiger detector dimensions (lines ~800-850) - looks like dimensions of images were wrong and therefroe images did not look right. This related to tiff and cbf images, found on cbf images from user. 
@@ -833,9 +834,17 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
  	             //Redimension/N=(3262,3108) Loadedwave0   
  	             Redimension/N=(3110,3269) Loadedwave0      	//4-18-2022 based on Decrtis pdf about Eiger det. 
  	        elseif(stringmatch(PilatusType,"Eiger16M"))
- 	            //Redimension/N=(4362,4148) Loadedwave0   //this does not seem to work for test Eigter 16M cbf file
- 	            														//4-18-2022 based on Decrtis pdf about Eiger det. 
  	            Redimension/N=(4150,4371) Loadedwave0   	//this works for test 16M cbf. Are all images this way? 
+ 	        elseif(stringmatch(PilatusType,"Eiger2_500k"))			//Eiger2 500k;Eiger1M;Eiger4M;Eiger9M;Eiger16M
+ 	             Redimension/N=(512,1028) Loadedwave0   
+ 	        elseif(stringmatch(PilatusType,"Eiger2_1M"))
+ 	             Redimension/N=(1028,1062) Loadedwave0      	//4-18-2022 based on Decrtis pdf about Eiger det. 
+ 	        elseif(stringmatch(PilatusType,"Eiger2_4M"))
+ 	             Redimension/N=(2068,2162) Loadedwave0      	//4-18-2022 based on Decrtis pdf about Eiger det. 
+ 	        elseif(stringmatch(PilatusType,"Eiger2_9M"))
+ 	             Redimension/N=(3108,3262) Loadedwave0      	//4-18-2022 based on Decrtis pdf about Eiger det. 
+ 	        elseif(stringmatch(PilatusType,"Eiger2_16M"))
+ 	            Redimension/N=(4148,4362) Loadedwave0   	//this works for test 16M cbf. Are all images this way? 
  	        else
  	        	Abort "Unknown Pilatus Type"
  	        endif
@@ -1626,7 +1635,7 @@ Function NI1_PilatusLoaderPanelFnct() : Panel
 		DrawText 10,280,"to add functionality.  Called after loading the file."
 		PopupMenu PilatusType,pos={15,70},size={122,21},proc=NI1_PilatusPopMenuProc,title="Detector Type :  "
 		PopupMenu PilatusType,help={"Select detector type :"}
-		PopupMenu PilatusType,mode=1,popvalue=PilatusType,value= #"\"Pilatus100k;Pilatus300k;Pilatus300k-w;Pilatus1M;Pilatus2M;Pilatus6M;Pilatus3_200k;Eiger500k;Eiger1M;Eiger4M;Eiger9M;Eiger16M;\""
+		PopupMenu PilatusType,mode=1,popvalue=PilatusType,value= #"\"Pilatus100k;Pilatus300k;Pilatus300k-w;Pilatus1M;Pilatus2M;Pilatus6M;Pilatus3_200k;Eiger500k;Eiger1M;Eiger4M;Eiger9M;Eiger16M;Eiger2_500k;Eiger2_1M;Eiger2_4M;Eiger2_9M;Eiger2_16M;\""
 
 		PopupMenu PilatusFileType,pos={15,100},size={122,21},proc=NI1_PilatusPopMenuProc,title="File Type :  "
 		PopupMenu PilatusFileType,help={"Select file type :"}
