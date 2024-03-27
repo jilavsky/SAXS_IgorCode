@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.16
+#pragma version=1.17
 constant IR3JversionNumber = 1.16			//Simple Fit panel version number
 
 //*************************************************************************\
@@ -11,6 +11,7 @@ constant IR3JversionNumber = 1.16			//Simple Fit panel version number
 constant SimpleFitsLinPlotMaxScale = 1.07
 constant SimpleFitsLinPlotMinScale = 0.8
 
+//1.17		Fix (Rick Beyer) Correlations functions. Fixes for model 1 and 3, model 2 still questionable.  
 //1.16 	add Power Law fit. 
 //1.15 	add 1D Correlation function
 //1.14	 	add handling of USAXS M_... waves 
@@ -3785,8 +3786,11 @@ Function IR3J_Calculate1DCorrelation()
 	SVAR DataFolderName = root:Packages:Irena:SimpleFits:DataFolderName
 	//SVAR ListOfCorr1DMethod = "Anisotropic (abs, Strobl);Anisotropic (norm);Isotropic (norm);"
 
-	Wave IntWave = root:Packages:Irena:SimpleFits:OriginalDataIntWave
-	Wave QWave = root:Packages:Irena:SimpleFits:OriginalDataQWave
+	Wave/Z IntWave = root:Packages:Irena:SimpleFits:OriginalDataIntWave
+	Wave/Z QWave = root:Packages:Irena:SimpleFits:OriginalDataQWave
+	if(!WaveExists(IntWave) || !WaveExists(QWave))
+		abort
+	endif 
 	
 	DoWIndow IR3J_LogLogDataDisplay
 	if(V_Flag!=1)
@@ -3798,30 +3802,37 @@ Function IR3J_Calculate1DCorrelation()
 	Duplicate/Free/R=[DataQstartPoint,DataQEndPoint] IntWave, GammawaveTemp,upper,lower,upper_int,lower_int
 	Duplicate/Free/R=[DataQstartPoint,DataQEndPoint] Qwave, QwaveTemp, ZwaveTemp, be,X2T
 
-	Variable index,counter
+	Variable index,counter,Zstep
 
 	//Create wave of Z values from 0 to Zmax
-	index = numpnts(ZwaveTemp)-1
-	ZwaveTemp = x*Zmax/index						
+	index = numpnts(QwaveTemp)-1; 	//print "Index =",index
+	Zstep = Zmax/index; 				//print "Zstep = ",Zstep
+	ZwaveTemp = 0 + p*Zstep; 			//print "ZwaveTemp[0] =",ZwaveTemp[0]; print "ZwaveTemp[index] =",ZwaveTemp[index]			
 
 	//Convert I(q) from units of cm^-1 to electron units (See Roe, pp. 12-13)
 	//Need wavelength, use 1.542 for Cu-ka in Angstroms.
 	//Calculating be is almost pointless b/c be is almost exactly equal to re
 	//Need to convert units of rwave_eu into mol e- TWICE.  Can only do once here b/c
 	//IGOR can't handle number size.
-	X2T = 2*asin(1.542*QwaveTemp/4/pi)				
-	be = (2.81794e-13)*sqrt((1+cos(X2T))/2)		//in units of cm
-	rwave_eu = IntWaveTemp/be^2						//in units of (# electrons)^2/cm^3
-	rwave_meu = rwave_eu/6.022e23					//Convert from electrons to mol e- (first time)
+	//X2T = 2*asin(1.542*QwaveTemp/4/pi)				
+	//be = (2.81794e-13)*sqrt((1+cos(X2T))/2)		//in units of cm
+	//rwave_eu = IntWaveTemp/be^2						//in units of (# electrons)^2/cm^3
+	//rwave_meu = rwave_eu/6.022e23					//Convert from electrons to mol e- (first time)
+	//*********************************************************************************************
+	//UPDATE AS OF 3/26/24:  I MOVED THE SCALING BY ELECTRON RADIUS INTO THE INTEGRALS TO BE CONSISTENT
+	//WITH BASUIRA-CEMBALA ET AL, J. APPL. CRYST. (2015), 48, 1498-1506.
+	//AS A RESULT, I NEED TO GO BACK AND FIGURE OUT THE REST OF THE UNIT CONVERSIONS FOR THE STROBL
+	//CALCULATION METHOD (#1)
+	//*********************************************************************************************
 		
 	//Create a loop that calculates K(z) or Gamma(z) for each value of z in zwave.
 	counter = 0
 	Do
 		//Strobl approach
 		If(StringMatch(Corr1DMethod, "Anisotropic (abs, Strobl)")) 								
-			Integrand = 4*pi*QwaveTemp^2*rwave_meu*cos(QwaveTemp*ZwaveTemp[counter])
+			Integrand = 4*pi*QwaveTemp^2*IntWaveTemp*cos(QwaveTemp*ZwaveTemp[counter])/(2*pi)^3/(2.81794e-13)^2
 			Integrate/T Integrand /X=QwaveTemp/D=Integrand_int
-			KwaveTemp[counter]=Integrand_int[index]/(2*pi)^3
+			KwaveTemp[counter]=Integrand_int[index]
 		
 		//Roe approach for anisotropic data
 		ElseIf(StringMatch(Corr1DMethod, "Anisotropic (norm)"))								
@@ -3833,9 +3844,9 @@ Function IR3J_Calculate1DCorrelation()
 		
 		//Roe approach for isotropic data
 		ElseIf(StringMatch(Corr1DMethod, "Isotropic (norm)"))							
-			Upper = QwaveTemp^2*IntWaveTemp*cos(QwaveTemp*ZwaveTemp[counter])
+			Upper = 4*pi*QwaveTemp^2*IntWaveTemp*cos(QwaveTemp*ZwaveTemp[counter])/(2*pi)^3/(2.81794e-13)^2
 			Integrate/T Upper /X=QwaveTemp/D=Upper_int
-			Lower = QwaveTemp^2*IntWaveTemp
+			Lower = 4*pi*QwaveTemp^2*IntWaveTemp/(2*pi)^3/(2.81794e-13)^2
 			Integrate/T Lower /X=QwaveTemp/D=Lower_int
 			GammawaveTemp[counter]=Upper_int[index]/Lower_int[index]
 		
@@ -3856,8 +3867,9 @@ Function IR3J_Calculate1DCorrelation()
 	EndIf
 
 	//Correct intensity scaling
-	KwaveTemp = KwaveTemp*1e24							//Change units of q from 1/A to 1/cm (^3)
-	KwaveTemp = KwaveTemp/6.022e23						//Second conversion to mol e- from number e-
+	//UPDATE AS OF 3/26/24: NEED TO SORT OUT THIS BIT....
+	KwaveTemp = KwaveTemp/6.022e23					//Second conversion to mol e- from number e-
+	//KwaveTemp = KwaveTemp*1e24						//Change units of q from 1/A to 1/cm (^3)
 	
 	//output in graph...
 	DoWindow IR3J_LinDataDisplay
