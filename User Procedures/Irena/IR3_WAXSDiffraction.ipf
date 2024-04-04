@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.16
+#pragma version=1.17
 #include <Multi-peak fitting 2.0>
 
 //local configurations
@@ -12,6 +12,7 @@ constant IR3WversionNumber = 1.16	//Diffraction panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.17 Update HKLString for display in graph when manually adding/updating JCPDS card. When table is closed, lines with H+k+L>0 will get hkl string, else "".  
 //1.16 change to use MultiSampleSelection Listbox tools and not custom code. 
 //1.15 add "Distance correction" value which enables one to shift sticks to correct for poor calibration of distacne. 
 //1.14 add button to open AMS www so users can search for cards easily. 
@@ -2827,6 +2828,7 @@ Function IR3W_PDF4AddManually()
 	KillWIndow/Z JCPDS_Input
  	NewDataFolder/O/S root:WAXS_PDF
 	string OldCardName, NewCardNumber, NewCardName, NewCardNote, DeleteCardName
+	string/g NewCardNameG
 	DeleteCardName="---"
 	OldCardName = "---"
 	NewCardNumber = ""
@@ -2877,14 +2879,39 @@ Function IR3W_PDF4AddManually()
 	else
 		Print "Could not figure out what to do..."
 	endif
+	NewCardNameG = NewCardFullName
 	Edit/K=1/W=(351,213,873,819) NewCard
 	DoWindow/C/R JCPDS_Input
 	ModifyTable format(Point)=1
 	ModifyTable horizontalIndex=2
 	ModifyTable showParts=0xFD
+	SetWindow JCPDS_Input,hook(UpdateWhenKilling)=IR3W_JCPDSTableHook 
 	
 	setDataFolder OldDf
 end
+//**************************************************************************************
+//**************************************************************************************
+FUnction IR3W_JCPDSTableHook(s)
+	STRUCT WMWinHookStruct &s
+
+	if(s.eventCode ==2)
+		DFref oldDf= GetDataFolderDFR()
+	 	SetDataFolder root:WAXS_PDF
+		SVAR NewCardFullName=root:WAXS_PDF:NewCardNameG
+		Wave JPCDSCard=$(NewCardFullName)
+		Wave/T JPCDSCardStr=$(NewCardFullName+"_hklStr")
+		variable i
+		For(i=0;i<numpnts(JPCDSCardStr);i+=1)
+			if(JPCDSCard[i][1]+ JPCDSCard[i][2]+JPCDSCard[i][3]>0)
+				JPCDSCardStr[i]=num2str(JPCDSCard[i][1])+num2str(JPCDSCard[i][2])+num2str(JPCDSCard[i][3])
+			else 
+				JPCDSCardStr[i] = ""
+			endif
+		endfor
+	endif
+	setDataFolder oldDf
+end
+
 //**************************************************************************************
 //**************************************************************************************
 //**************************************************************************************
