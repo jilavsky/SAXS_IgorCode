@@ -706,7 +706,9 @@ Function NI1A_Create2DQWaveALS(DataWave)
 	multithread a = (d1+d2)*sec(phi)-d1-(((q+0.5)*PixelSizeY)+(d1+d2)*tan(phi)-C)*sin(phi)		
 	multithread b = ((((q+0.5)*PixelSizeY)+(d1+d2)*tan(phi)-C)*cos(phi))^2 + ((p - BeamCenterX + 0.5)*PixelSizeX)^2
 
-	MatrixOP/O Q2DWave = (2*pi*sqrt(2)/Wavelength)*sqrt(1-a/sqrt(sq(a)+b))
+	//Does not compile on IP8
+	//MatrixOP/O Q2DWave = (2*pi*sqrt(2)/Wavelength)*sqrt(1-a/sqrt(sq(a)+b))
+	MatrixOP/O Q2DWave = (2*pi*sqrt(2)/Wavelength)*sqrt(1-a/sqrt(a*a+b))
 	
 	NoteStr = ReplaceStringByKey("BeamCenterX", NoteStr, num2str(BeamCenterX), "=", ";")
 	NoteStr = ReplaceStringByKey("BeamCenterY", NoteStr, num2str(BeamCenterY), "=", ";")
@@ -1069,9 +1071,13 @@ Function/WAVE IN2_SolidAngleCorrectionALS(DataWave)
 	MatrixOP/FREE z1 = const((num_pixels_Y),(num_pixels_X),(d2 + d1*(1-cos(phi))))
 			// z is the distance from the source perpendicular to the Cartesian plane the CCD is in.
 	
-	MatrixOP/FREE omega = atan(x2*y2/(z1*sqrt(sq(x2)+sq(y2)+sq(z1)))) - atan(x2*y1/(z1*sqrt(sq(x2)+sq(y1)+sq(z1)))) - atan(x1*y2/(z1*sqrt(sq(x1)+sq(y2)+sq(z1))))	+ atan(x1*y1/(z1*sqrt(sq(x1)+sq(y1)+sq(z1))))
+	//Does not compile on IP8
+	//MatrixOP/FREE omega = atan(x2*y2/(z1*sqrt(sq(x2)+sq(y2)+sq(z1)))) - atan(x2*y1/(z1*sqrt(sq(x2)+sq(y1)+sq(z1)))) - atan(x1*y2/(z1*sqrt(sq(x1)+sq(y2)+sq(z1))))	+ atan(x1*y1/(z1*sqrt(sq(x1)+sq(y1)+sq(z1))))
+	MatrixOP/FREE omega = atan(x2*y2/(z1*sqrt(x2*x2+y2*y2+z1*z1))) - atan(x2*y1/(z1*sqrt(x2*x2+y1*y1+z1*z1))) - atan(x1*y2/(z1*sqrt(x1*x1)+y2*y2+z1*z1)))	+ atan(x1*y1/(z1*sqrt(x1*x1+y1*y1+z1*z1)))
 	// omega is the solid angle of a pixel
-	MatrixOP/FREE omega_0 = 4*atan(PixelSizeX*PixelSizeY/(2*z1*sqrt(sq(PixelSizeX)+sq(PixelSizeY)+4*sq(z1))))
+	//Does not compile on IP8
+	//MatrixOP/FREE omega_0 = 4*atan(PixelSizeX*PixelSizeY/(2*z1*sqrt(sq(PixelSizeX)+sq(PixelSizeY)+4*sq(z1))))
+	MatrixOP/FREE omega_0 = 4*atan(PixelSizeX*PixelSizeY/(2*z1*sqrt(PixelSizeX*PixelSizeX + PixelSizeY*PixelSizeY + 4*z1*z1)))
 
 	MatrixOP/O SolidAngleCorrectionMap = omega_0 / omega //This is a normalization of the solid angle to virtual pixel residing at the termination of 'z'
 	

@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.75
+#pragma version=2.76
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -10,6 +10,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.76 Fix LUT type to 32bit unsigned integer. Wiht LUT wave as FP32 on 4kx4k images Nika was running out of p precision and data reduction broke. 
 //2.75 fix for TransformAxis1.2 Ticks change done at version 9.02
 //2.74 ~2022 sometimes. 
 //			added ability to calculate transmission using semi transparent beamstop. 
@@ -197,8 +198,10 @@ Function NI1A_AverageDataPerUserReq(orientation)
 	Intensity=0
 	Error=0
 	//variable i, j, counter, numbins, start1, end1
+	//print/D numpnts(LUT)
 	MatrixOp/Free  tempInt = LUT
 	tempInt = Calibrated2DDataSet
+	//print/D numpnts(tempInt)
 	//following si probably slow, but IndexSort cannot be multithreaded... 
 	IndexSort LUT, tempInt
 	//Duplicate/O tempInt, TempIntSqt
@@ -1296,7 +1299,8 @@ Function NI1A_CreateLUT(orientation)
 	//wavestats/Q MaskedQ2DWave
 	//this should be faster
 	variable Npnts = DimSize(MaskedQ2DWave, 0)*DimSize(MaskedQ2DWave, 1)
-	make/O/N=(Npnts)  $("Qdistribution1D_"+orientation), $("LUT_"+orientation)
+	make/O/N=(Npnts)  $("Qdistribution1D_"+orientation)
+	make/O/N=(Npnts)/I/U $("LUT_"+orientation)
 	wave LUT=$("LUT_"+orientation)
 	wave Qdistribution1D=$("Qdistribution1D_"+orientation)
 	///redimension/S Qdistribution1D	//probably not needed anymore. Waste of time. 
