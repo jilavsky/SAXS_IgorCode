@@ -4,7 +4,7 @@
 
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2023, Argonne National Laboratory
+//* Copyright (c) 2005 - 2025, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -3344,7 +3344,7 @@ Function IR3C_MultiAppendControls(ToolPackageFolder,PanelName, DoubleClickFunNm,
 end
 //**************************************************************************************
 //**************************************************************************************
-//					this follwoing is very important function, 
+//					this following is very important function, 
 //			it sets the names of selected X, Y, and E data for user
 //					this may require bit more of debugging... 
 //**************************************************************************************

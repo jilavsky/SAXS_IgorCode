@@ -1,15 +1,17 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.76
+#pragma version=2.78
 #include <TransformAxis1.2>
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2023, Argonne National Laboratory
+//* Copyright (c) 2005 - 2024, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.78 change some calculations to DP as 2024-09-26, some users are running with intensity out of SP precision.  
+//2.77 fix for behavior with UseSampleTransmission controls. 
 //2.76 Fix LUT type to 32bit unsigned integer. Wiht LUT wave as FP32 on 4kx4k images Nika was running out of p precision and data reduction broke. 
 //2.75 fix for TransformAxis1.2 Ticks change done at version 9.02
 //2.74 ~2022 sometimes. 
@@ -200,6 +202,7 @@ Function NI1A_AverageDataPerUserReq(orientation)
 	//variable i, j, counter, numbins, start1, end1
 	//print/D numpnts(LUT)
 	MatrixOp/Free  tempInt = LUT
+	redimension/D tempInt					//2024-09-26, sopme users are running with intensity out of SP precision. This is needed to fix that. 
 	tempInt = Calibrated2DDataSet
 	//print/D numpnts(tempInt)
 	//following si probably slow, but IndexSort cannot be multithreaded... 
@@ -483,8 +486,8 @@ Function NI1A_CorrectDataPerUserReqN(orientation)
 
 	//MatrixOP/O/S   Calibrated2DDataSet = DataWave		// MatrixOP/O does NOT preserve wavenote...  
 	Duplicate/O DataWave,  Calibrated2DDataSet
-	
 	Wave Calibrated2DDataSet=root:Packages:Convert2Dto1D:Calibrated2DDataSet
+	Redimension/D Calibrated2DDataSet						//2024-09-26, sopme users are running with intensity out of SP precision. This is needed to fix that. 
 	//redimension/S Calibrated2DDataSet		//2022-01 needed??? 
 	string OldNote=note(Calibrated2DDataSet)
 
@@ -620,6 +623,7 @@ Function NI1A_CorrectDataPerUserReqN(orientation)
 			Wave GeometryCorrection
 			MatrixOp/O  Calibrated2DDataSet = Calibrated2DDataSet / GeometryCorrection
 		endif
+
 		if(DoPolarizationCorrection)		//added 8/31/09 to enable 2D corection for polarization
 			NI1A_Generate2DPolCorrWv()
 			Wave polar2DWave
@@ -1023,7 +1027,7 @@ Function NI1A_CreateHistogram(orientation)
 	
 	Make/O $("HistogramWv_"+orientation)
 	Wave HistogramWv=$("HistogramWv_"+orientation)
-	redimension/S HistogramWv
+	//redimension/S HistogramWv
 	NVAR QbinningLogarithmic=root:Packages:Convert2Dto1D:QbinningLogarithmic
 	NVAR QvectorNumberPoints=root:Packages:Convert2Dto1D:QvectorNumberPoints
 	
@@ -1304,8 +1308,8 @@ Function NI1A_CreateLUT(orientation)
 	wave LUT=$("LUT_"+orientation)
 	wave Qdistribution1D=$("Qdistribution1D_"+orientation)
 	///redimension/S Qdistribution1D	//probably not needed anymore. Waste of time. 
-	Qdistribution1D = MaskedQ2DWave
-	LUT=p
+	Multithread Qdistribution1D = MaskedQ2DWave
+	Multithread LUT=p
 	MakeIndex Qdistribution1D, LUT
 	string NoteStr=note(Q2DWave)
 	NoteStr+="UseMask="+num2str(UseMask)+";"
@@ -1363,8 +1367,8 @@ Function NI1A_Create2DQWaveNormal(DataWave)
 		//Create wave for q distribution
 		MatrixOp/O  Q2DWave=DataWave
 		MatrixOp/O  Theta2DWave=DataWave
-		Redimension/S Q2DWave
-		Redimension/S Theta2DWave
+		//Redimension/S Q2DWave
+		//Redimension/S Theta2DWave
 		variable ts=ticks
 		if(abs(HorizontalTilt)>0.01 || abs(VerticalTilt)>0.01)		//use tilts, new method March 2011, JIL. Using extracted code by Jon Tischler. 
 			NI2T_Calculate2DThetaWithTilts(Theta2DWave)		
@@ -5797,10 +5801,17 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 		SetVariable SampleTransmFnct,disable=(!checked), win=NI1A_Convert2Dto1DPanel
 		CheckBox UseTranspBeamstop,disable=(checked), win=NI1A_Convert2Dto1DPanel
 	endif
-	//if(cmpstr("UseSampleTransmission",ctrlName)==0)
-	//endif
+	if(cmpstr("UseSampleTransmission",ctrlName)==0)	//transmission controls... 
+		//NVAR UseSampleTransmFnct = root:Packages:Convert2Dto1D:UseSampleTransmFnct
+		//SetVariable SampleTransmission,disable=(checked), win=NI1A_Convert2Dto1DPanel
+		//SetVariable SampleTransmFnct,disable=(checked || !UseSampleTransmFnct), win=NI1A_Convert2Dto1DPanel
+		//CheckBox UseSampleTransmFnct,disable=(checked), win=NI1A_Convert2Dto1DPanel
+		//if(checked)
+		//	NI1A_SetupTransparentBeamstop()
+		//endif
+	endif
 
-	if(cmpstr("UseTranspBeamstop",ctrlName)==0||cmpstr("UseSampleTransmission",ctrlName)==0)
+	if(cmpstr("UseTranspBeamstop",ctrlName)==0)
 		NVAR UseSampleTransmFnct = root:Packages:Convert2Dto1D:UseSampleTransmFnct
 		SetVariable SampleTransmission,disable=(checked), win=NI1A_Convert2Dto1DPanel
 		SetVariable SampleTransmFnct,disable=(checked || !UseSampleTransmFnct), win=NI1A_Convert2Dto1DPanel

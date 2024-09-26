@@ -7,7 +7,7 @@ Constant AlwaysRecalculateFF = 0			//set to 1 to recalculate always the FF.
 #define UseXOPforFFCalcs					//comment out to prevent use of xops
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2023, Argonne National Laboratory
+//* Copyright (c) 2005 - 2025, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -1362,12 +1362,13 @@ static Function IR1T_CalcTubeFFPoints(Qvalue,radius,Length,WallThickness,CoreShe
 	
 	variable LargeBesArg=0.5*Qvalue*length*Cos(Alpha)
 	variable LargeBes
-	if(LargeBesArg<1e-6)
-		LargeBes=1
-	else
-		LargeBes=sin(LargeBesArg)/(LargeBesArg)
-	endif
-	
+//	if(LargeBesArg<1e-6)
+//		LargeBes=1
+//	else
+//		LargeBes=sin(LargeBesArg)/(LargeBesArg)
+//	endif
+	LargeBes=sinc(LargeBesArg)
+
 	variable SmallBesArg=Qvalue*radius*Sin(Alpha)
 	variable SmallBessDivided
 	if (SmallBesArg<1e-10)
@@ -1602,11 +1603,12 @@ threadsafe static Function IR1T_CalcCylinderFFPoints(Qvalue,radius,Length,Alpha)
 	
 	variable LargeBesArg=0.5*Qvalue*length*Cos(Alpha)
 	variable LargeBes
-	if ((LargeBesArg)<1e-6)
-		LargeBes=1
-	else
-		LargeBes=sin(LargeBesArg) / LargeBesArg
-	endif
+//	if ((LargeBesArg)<1e-6)
+//		LargeBes=1
+//	else
+//		LargeBes=sin(LargeBesArg) / LargeBesArg
+//	endif
+	LargeBes=sinc(LargeBesArg)
 	
 	variable SmallBesArg=Qvalue*radius*Sin(Alpha)
 	variable SmallBessDivided
