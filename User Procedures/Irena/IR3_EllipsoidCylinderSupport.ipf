@@ -691,7 +691,14 @@ Function IR3F_SaveResultsToNotebook()
 	//	endif
 	NVAR SASBackground = root:Packages:Irena:CylinderModels:SASBackground
 	FittingResults+= "SAS background included = "+num2str(SASBackground)+"\r"
-	IR1_AppendAnyGraph("IR3F_LogLogDataDisplay")
+	DoWIndow IR3F_LogLogDataDisplay
+	if(V_Flag)
+		IR1_AppendAnyGraph("IR3F_LogLogDataDisplay")
+	endif
+	DoWIndow IR3F_FittingDataDisplay
+	if(V_Flag)
+		IR1_AppendAnyGraph("IR3F_FittingDataDisplay")
+	endif
 	IR1_AppendAnyText(FittingResults,0)	
 	IR1_AppendAnyText("******************************************\r",0)	
 	SetDataFolder OldDf

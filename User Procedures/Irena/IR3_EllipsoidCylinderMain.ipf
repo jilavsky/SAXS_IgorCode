@@ -661,11 +661,11 @@ Function IR3F_SetVarProc(sva) : SetVariableControl
 				// 1 	change step t0 fraction of value
 				// 2 	change limits for the variable... 
 				// 3	recalculate 
-//				if(StringMatch(sva.vName, "TSPar[2]" ))
-//					SetVariable $(sva.ctrlName) win=IR3F_CylinderModelsPanel,limits={-inf ,inf,abs(IR3FSetVariableStepRatio*sva.dval)} 
-//				else
+				if(StringMatch(sva.vName, "ProfCSElCylPar[1]")||StringMatch(sva.vName, "ProfCSElCylPar[4]")||StringMatch(sva.vName, "ProfCSElCylPar[6]"))	//this is for Profile radius and shell thicknesses, small steps make no sense. 1A resolution needed
+					SetVariable $(sva.ctrlName) win=IR3F_CylinderModelsPanel,limits={1 ,inf,1} 
+				else
 					SetVariable $(sva.ctrlName) win=IR3F_CylinderModelsPanel,limits={0 ,inf,abs(IR3FSetVariableStepRatio*sva.dval)} 
-//				endif
+				endif
 //				// sva.vName contains name of variable
 				Wave/Z CntrlWv=sva.svwave
 				Indx = str2num(stringFromList(1,sva.vName,"["))			//Wname[0]
