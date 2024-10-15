@@ -3558,8 +3558,8 @@ Function IN3S_BeamlineSurvey()
 	//sync epics, RBV and TAR positions here
 #if(exists("pvOpen")==4)
 	variable SxPV, SyPV
-	pvOpen/Q SxPV, "9idcAERO:m8.RBV"
-	pvOpen/Q SyPV, "9idcAERO:m9.RBV"
+	pvOpen/Q SxPV, "usxAERO:m8.RBV"
+	pvOpen/Q SyPV, "usxAERO:m9.RBV"
 	pvWait 5
 	//this needs to be in background function and in 10Hz loop. 	
 	SampleXRBV = IN3S_GetMotorPositions(SxPV)
@@ -3577,7 +3577,7 @@ end
 static Function IN3S_BeramlineSurveyAbortIfNeeded(string WhyString)
 	variable InstrumentUsed
 #if(exists("pvOpen")==4)
-		InstrumentUsed = IN3S_GetPVVariableValue("9idcLAX:dataColInProgress")	
+		InstrumentUsed = IN3S_GetPVVariableValue("usxLAX:dataColInProgress")	
 		if(InstrumentUsed)
 			abort "Instrument is collecting data, cannot "+WhyString
 		endif
@@ -3631,8 +3631,8 @@ Function IN3S_BackgroundEpics(s) // This is the function that will be called per
 	NVAR SampleYRBV=root:Packages:SamplePlateSetup:SampleYRBV
 #if(exists("pvOpen")==4)
 	variable SxPV, SyPV
-	pvOpen/Q SxPV, "9idcAERO:m8.RBV"
-	pvOpen/Q SyPV, "9idcAERO:m9.RBV"
+	pvOpen/Q SxPV, "usxAERO:m8.RBV"
+	pvOpen/Q SyPV, "usxAERO:m9.RBV"
 	pvWait 5
 	//this needs to be in background function and in 10Hz loop. 	
 	SampleXRBV = IN3S_GetMotorPositions(SxPV)
@@ -3911,8 +3911,8 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 			if(StringMatch(ba.ctrlName, "SyncMotors"))
 #if(exists("pvOpen")==4)
 				variable SxPV, SyPV
-				pvOpen/Q SxPV, "9idcAERO:m8.RBV"
-				pvOpen/Q SyPV, "9idcAERO:m9.RBV"
+				pvOpen/Q SxPV, "usxAERO:m8.RBV"
+				pvOpen/Q SyPV, "usxAERO:m9.RBV"
 				SampleXTAR = IN3S_GetMotorPositions(SxPV)
 				SampleYTAR = IN3S_GetMotorPositions(SyPV)
 				SampleXRBV = IN3S_GetMotorPositions(SxPV)
@@ -3925,98 +3925,98 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 			variable InstrumentUsed
 			if(StringMatch(ba.ctrlName, "SetSXAs00"))
 #if(exists("pvOpen")==4)
-					InstrumentUsed = IN3S_GetPVVariableValue("9idcLAX:dataColInProgress")	
+					InstrumentUsed = IN3S_GetPVVariableValue("usxLAX:dataColInProgress")	
 					if(InstrumentUsed)
 						abort "Instrument is collecting data, cannot move motors"
 					else	
 						//"SX"
-						IN3S_PutEpicsPv("9idcAERO:m8.SSET", 1)
+						IN3S_PutEpicsPv("usxAERO:m8.SSET", 1)
 						sleep/T 10
-						IN3S_PutEpicsPv("9idcAERO:m8.VAL", 0)
+						IN3S_PutEpicsPv("usxAERO:m8.VAL", 0)
 						sleep/T 10
-						IN3S_PutEpicsPv("9idcAERO:m8.SUSE", 1)
+						IN3S_PutEpicsPv("usxAERO:m8.SUSE", 1)
 					endif
 				SampleXTAR = 0
 #endif
 			endif		
 			if(StringMatch(ba.ctrlName, "SetSYAs00"))
 #if(exists("pvOpen")==4)
-					InstrumentUsed = IN3S_GetPVVariableValue("9idcLAX:dataColInProgress")	
+					InstrumentUsed = IN3S_GetPVVariableValue("usxLAX:dataColInProgress")	
 					if(InstrumentUsed)
 						abort "Instrument is collecting data, cannot move motors"
 					else	
 						//"SY"
-						IN3S_PutEpicsPv("9idcAERO:m9.SSET", 1)
+						IN3S_PutEpicsPv("usxAERO:m9.SSET", 1)
 						sleep/T 10
-						IN3S_PutEpicsPv("9idcAERO:m9.VAL", 0)
+						IN3S_PutEpicsPv("usxAERO:m9.VAL", 0)
 						sleep/T 10
-						IN3S_PutEpicsPv("9idcAERO:m9.SUSE", 1)
+						IN3S_PutEpicsPv("usxAERO:m9.SUSE", 1)
 					endif
 				SampleYTAR = 0
 #endif
 			endif		
 			if(StringMatch(ba.ctrlName, "STOPMotors"))
 #if(exists("pvOpen")==4)
-					InstrumentUsed = IN3S_GetPVVariableValue("9idcLAX:dataColInProgress")	
+					InstrumentUsed = IN3S_GetPVVariableValue("usxLAX:dataColInProgress")	
 					if(InstrumentUsed)
 						abort "Instrument is collecting data, cannot move motors"
 					else	
-						IN3S_PutEpicsPv("9idcLAX:alltop", 1)
+						IN3S_PutEpicsPv("usxLAX:allStop", 1)
 					endif
 #endif
 			endif		
 			variable HorSlit, VertSLit, HorGuardSlit, VertGuardSlit
 			if(StringMatch(ba.ctrlName, "OpenSlitsLarge"))
 #if(exists("pvOpen")==4)
-					InstrumentUsed = IN3S_GetPVVariableValue("9idcLAX:dataColInProgress")	
+					InstrumentUsed = IN3S_GetPVVariableValue("usxLAX:dataColInProgress")	
 					if(InstrumentUsed)
 						abort "Instrument is collecting data, cannot move motors"
 					else	
 						//c1:m8 is Horizontal slit size
-						IN3S_PutEpicsPv("9idcLAX:m58:c1:m8.VAL", 2.5)
-						IN3S_PutEpicsPv("9idcLAX:GSlit1H:size", 2.8)
+						IN3S_PutEpicsPv("usxLAX:m58:c1:m8.VAL", 2.5)
+						IN3S_PutEpicsPv("usxLAX:GSlit1H:size", 2.8)
 						//c1:m7 is Vertical slit size
-						IN3S_PutEpicsPv("9idcLAX:m58:c1:m7.VAL", 1.2)
-						IN3S_PutEpicsPv("9idcLAX:GSlit1V:size", 1.4)
+						IN3S_PutEpicsPv("usxLAX:m58:c1:m7.VAL", 1.2)
+						IN3S_PutEpicsPv("usxLAX:GSlit1V:size", 1.4)
 					endif
 #endif
 			endif		
 
 			if(StringMatch(ba.ctrlName, "OpenSlitsUSAXS"))
 #if(exists("pvOpen")==4)
-					InstrumentUsed = IN3S_GetPVVariableValue("9idcLAX:dataColInProgress")	
+					InstrumentUsed = IN3S_GetPVVariableValue("usxLAX:dataColInProgress")	
 					if(InstrumentUsed)
 						abort "Instrument is collecting data, cannot move motors"
 					else	
-						HorSlit = IN3S_GetPVVariableValue("9idcLAX:USAXS_hslit_ap")
-						VertSLit = IN3S_GetPVVariableValue("9idcLAX:USAXS_vslit_ap")
-						HorGuardSlit = IN3S_GetPVVariableValue("9idcLAX:USAXS_hgslit_ap")
-						VertGuardSlit = IN3S_GetPVVariableValue("9idcLAX:USAXS_vgslit_ap")
+						HorSlit = IN3S_GetPVVariableValue("usxLAX:USAXS_hslit_ap")
+						VertSLit = IN3S_GetPVVariableValue("usxLAX:USAXS_vslit_ap")
+						HorGuardSlit = IN3S_GetPVVariableValue("usxLAX:USAXS_hgslit_ap")
+						VertGuardSlit = IN3S_GetPVVariableValue("usxLAX:USAXS_vgslit_ap")
 						//c1:m8 is Horizontal slit size
-						IN3S_PutEpicsPv("9idcLAX:m58:c1:m8.VAL", HorSlit)
-						IN3S_PutEpicsPv("9idcLAX:GSlit1H:size", HorGuardSlit)
+						IN3S_PutEpicsPv("usxLAX:m58:c1:m8.VAL", HorSlit)
+						IN3S_PutEpicsPv("usxLAX:GSlit1H:size", HorGuardSlit)
 						//c1:m7 is Vertical slit size
-						IN3S_PutEpicsPv("9idcLAX:m58:c1:m7.VAL", VertSLit)
-						IN3S_PutEpicsPv("9idcLAX:GSlit1V:size", VertGuardSlit)
+						IN3S_PutEpicsPv("usxLAX:m58:c1:m7.VAL", VertSLit)
+						IN3S_PutEpicsPv("usxLAX:GSlit1V:size", VertGuardSlit)
 					endif
 #endif
 			endif		
 			if(StringMatch(ba.ctrlName, "OpenSlitsSWAXS"))
 #if(exists("pvOpen")==4)
-					InstrumentUsed = IN3S_GetPVVariableValue("9idcLAX:dataColInProgress")	
+					InstrumentUsed = IN3S_GetPVVariableValue("usxLAX:dataColInProgress")	
 					if(InstrumentUsed)
 						abort "Instrument is collecting data, cannot move motors"
 					else	
-						HorSlit = IN3S_GetPVVariableValue("9idcLAX:SAXS_hslit_ap")
-						VertSLit = IN3S_GetPVVariableValue("9idcLAX:SAXS_vslit_ap")
-						HorGuardSlit = IN3S_GetPVVariableValue("9idcLAX:SAXS_hgslit_ap")
-						VertGuardSlit = IN3S_GetPVVariableValue("9idcLAX:SAXS_vgslit_ap")
+						HorSlit = IN3S_GetPVVariableValue("usxLAX:SAXS_hslit_ap")
+						VertSLit = IN3S_GetPVVariableValue("usxLAX:SAXS_vslit_ap")
+						HorGuardSlit = IN3S_GetPVVariableValue("usxLAX:SAXS_hgslit_ap")
+						VertGuardSlit = IN3S_GetPVVariableValue("usxLAX:SAXS_vgslit_ap")
 						//c1:m8 is Horizontal slit size
-						IN3S_PutEpicsPv("9idcLAX:m58:c1:m8.VAL", HorSlit)
-						IN3S_PutEpicsPv("9idcLAX:GSlit1H:size", HorGuardSlit)
+						IN3S_PutEpicsPv("usxLAX:m58:c1:m8.VAL", HorSlit)
+						IN3S_PutEpicsPv("usxLAX:GSlit1H:size", HorGuardSlit)
 						//c1:m8 is Vertical slit size
-						IN3S_PutEpicsPv("9idcLAX:m58:c1:m7.VAL", VertSLit)
-						IN3S_PutEpicsPv("9idcLAX:GSlit1V:size", VertGuardSlit)
+						IN3S_PutEpicsPv("usxLAX:m58:c1:m7.VAL", VertSLit)
+						IN3S_PutEpicsPv("usxLAX:GSlit1V:size", VertGuardSlit)
 					endif
 #endif
 			endif		
@@ -4154,17 +4154,17 @@ end
 static Function IN3S_MoveMotorInEpics(WhichMotor,MovePosition)
 	string WhichMotor		//SX or SY
 	variable MovePosition	
-	//avoid moving if instrument is running, 9idcLAX:dataColInProgress = 1
+	//avoid moving if instrument is running, usxLAX:dataColInProgress = 1
 	variable InstrumentUsed=0
 #if(exists("pvOpen")==4)
-	InstrumentUsed = IN3S_GetPVVariableValue("9idcLAX:dataColInProgress")	
+	InstrumentUsed = IN3S_GetPVVariableValue("usxLAX:dataColInProgress")	
 	if(InstrumentUsed)
 		abort "Instrument is collecting data, cannot move motors"
 	else	
 		if(stringMatch(WhichMotor,"SX"))
-			IN3S_PutEpicsPv("9idcAERO:m8.VAL", MovePosition)
+			IN3S_PutEpicsPv("usxAERO:m8.VAL", MovePosition)
 		elseif(stringMatch(WhichMotor,"SY"))
-			IN3S_PutEpicsPv("9idcAERO:m9.VAL", MovePosition)
+			IN3S_PutEpicsPv("usxAERO:m9.VAL", MovePosition)
 		endif
 	endif
 #else

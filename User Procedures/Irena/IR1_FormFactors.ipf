@@ -1603,11 +1603,6 @@ threadsafe static Function IR1T_CalcCylinderFFPoints(Qvalue,radius,Length,Alpha)
 	
 	variable LargeBesArg=0.5*Qvalue*length*Cos(Alpha)
 	variable LargeBes
-//	if ((LargeBesArg)<1e-6)
-//		LargeBes=1
-//	else
-//		LargeBes=sin(LargeBesArg) / LargeBesArg
-//	endif
 	LargeBes=sinc(LargeBesArg)
 	
 	variable SmallBesArg=Qvalue*radius*Sin(Alpha)

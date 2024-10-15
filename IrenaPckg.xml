@@ -54,6 +54,8 @@
 		<File>User Procedures/Irena/IR3_DataManipulationIII.ipf</File>			
 		<File>User Procedures/Irena/IR3_SystemSpecificModels.ipf</File>		
 		<File>User Procedures/Irena/IR3_AnalyzeResults2.ipf</File>		
+		<File>User Procedures/Irena/IR3_EllipsoidCylinderMain.ipf</File>		
+		<File>User Procedures/Irena/IR3_EllipsoidCylinderSupport.ipf</File>		
 		<File>User Procedures/Irena/license.txt</File>
 		<File>User Procedures/Irena/Modification history.txt</File>
 		<File>User Procedures/Irena/ReadMe.txt</File>

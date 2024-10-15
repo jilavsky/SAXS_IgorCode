@@ -1,11 +1,11 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
-#pragma version=2.72
+#pragma version=2.73
 #pragma IgorVersion=8.04
 
 //DO NOT renumber Main files every time, these are main release numbers...
 //define manual date and release verison 
-constant CurrentIrenaVersionNumber = 2.72		//change version of Boot Irena1 modeling.ipf to get proper check version. 
+constant CurrentIrenaVersionNumber = 2.73		//change version of Boot Irena1 modeling.ipf to get proper check version. 
 
 //*************************************************************************
 //* Copyright (c) 2005 - 2025, Argonne National Laboratory
@@ -13,6 +13,7 @@ constant CurrentIrenaVersionNumber = 2.72		//change version of Boot Irena1 model
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************
 
+//2.73   Added Ellipsoid Cylinder support
 //2.72		July2023 release, minor changes, fix IP9.02 compatiblity
 //2.713	April2023Beta, minor changes
 //2.711	Development version, 2021/11
@@ -208,6 +209,8 @@ Menu "SAS"
 	help = {"Modeling of SAS by combining mass and surface fractal dependecies, based on model by Andrew Allen"}
 	"System Specific Models", IR3S_SysSpecModels()
 	help={"Debye-Bueche, Teubner-Strey model, Benedetti-Ciccariello "}
+	"Cylinder Models (under dev)",IR3F_CylinderModels() 
+	help={"Form factors - Cylinder, core shell cylinder, elliptical cylinder etc.  "}
 	"Small-Angle Diffraction", IR2D_MainSmallAngleDiff()
 	help={"Modeling of small angle diffraction - up to 6 peaks and Powerlaw background"}
 	"Powder Diffraction fitting (WAXS, XRD)", IR3W_WAXS()
@@ -357,6 +360,7 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	WindowProcNames+="IRB1_ImportBioSAXSASCIIData=IRB1_ImpASCIIMainCheckVer;IRB1_DataManipulationPanel=IRB1_DataManMainCheckVersion;"
 	WindowProcNames+="IRB1_ATSASInterfacePanel=IR1B_PDDFMainCheckVersion;IR3J_SimpleFitsPanel=IR1B_SimpleFitsMainCheckVersion;IR3B_MetadataBrowserPanel=IR3B_MainCheckVersion;"
 	WindowProcNames+="IR3S_SysSpecModelsPanel=IR3S_MainCheckVersion;IR3DM_DataManIIIPanel=IR3DM_MainCheckVersion;IR3E_AnalyzeResultsPanel=IR3E_MainCheckVersion;"
+	WindowProcNames+="IR3F_CylinderModelsPanel=IR3F_MainCheckVersion;"
   
 	IR2C_CheckWindowsProcVersions(WindowProcNames)
 	IN2G_CheckPlatformGUIFonts()

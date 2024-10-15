@@ -1,7 +1,8 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 2.72
+#pragma version = 2.73
 #pragma IgorVersion=8.04
 
+//2.73   Added Ellipsoid Cylinder support
 //2.72		July2023 release
 //2.71x	Development versions
 //2.71 	October2021 release

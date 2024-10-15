@@ -1,6 +1,6 @@
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
 #pragma IgorVersion=8.03 	//requires Igor version 8.03 or higher
-#pragma version=2.26
+#pragma version=2.27
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2025, Argonne National Laboratory
@@ -8,7 +8,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.26		October2021 release
+//2.27  Added Ellipsoid Cylinder tool 
+//2.26	  October2021 release
 //2.252 added System Specific Models (Analytical models replacement). Move ANalytical models to old. 
 //2.251 added DataManipulation3
 //2.25 September2020 release
@@ -86,6 +87,8 @@
 #include "IR3_SimpleFits", version>=1.16
 #include "IR3_WAXSDiffraction", version>=1.16
 #include "IR3_AnalyzeResults2", version>=0.2
+#include "IR3_EllipsoidCylinderMain", version>=0.3
+#include "IR3_EllipsoidCylinderSupport", version>=0.3
 //bio tools
 #include "IRB1_bioSAXS", version>=1.02
 #include "IRB1_EvaluationTools", version>=1.0
