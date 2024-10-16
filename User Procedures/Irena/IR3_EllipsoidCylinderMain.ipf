@@ -827,7 +827,10 @@ static Function IR3F_AppendDataToGraphLogLog()
 	IR3F_CreateCylinderModelsGraphs()
 	variable WhichLegend=0
 	string Shortname1
-	Wave OriginalDataIntWave=root:Packages:Irena:CylinderModels:OriginalDataIntWave
+	Wave/Z OriginalDataIntWave=root:Packages:Irena:CylinderModels:OriginalDataIntWave
+	if(!WaveExists(OriginalDataIntWave))
+		return 0
+	endif
 	Wave OriginalDataQWave=root:Packages:Irena:CylinderModels:OriginalDataQWave
 	Wave OriginalDataErrorWave=root:Packages:Irena:CylinderModels:OriginalDataErrorWave
 	CheckDisplayed /W=IR3F_LogLogDataDisplay OriginalDataIntWave
