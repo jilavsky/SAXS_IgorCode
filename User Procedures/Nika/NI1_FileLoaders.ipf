@@ -700,9 +700,9 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 				Abort "Failed to find start of binary section in the Cbf file"
 			endif
 			testLine = testLine[0, PilskipBytes]
-		elseif(stringmatch(FileNameToLoad, "*.tif" )||stringmatch(FileNameToLoad, "*.tiff" ))
+		elseif(stringmatch(FileNameToLoad, "*.tif" )||stringmatch(FileNameToLoad, "*.tiff" )||stringmatch(PilatusFileType, "tiff" ))
 			PilskipBytes=4096
-		elseif(stringmatch(FileNameToLoad, "*.img" ))//seems to have header also? , some edf files do haave extension img anyway :-?
+		elseif(stringmatch(FileNameToLoad, "*.img" )||stringmatch(PilatusFileType, "img" ))//seems to have header also? , some edf files do haave extension img anyway :-?
 			open /R/P=$(PathName) RefNum as FileNameToLoad
 			testLine=""
 			testLine=PadString (testLine, 16800, 0x20)
@@ -710,6 +710,9 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 			close RefNum
 			//headerLength1=(strsearch(testLine, "}", 0))
 			PilskipBytes=NumberByKey("HEADER_BYTES", testLine[2,100]  , "="  , ";")
+			if(numtype(PilskipBytes)!=0)
+					PilskipBytes=NumberByKey("HEADER", testLine[2,100]  , "="  , " ")
+			endif
 			PilskipBytes = numtype(PilskipBytes)==0 ? PilskipBytes : 0
 		else
 			PilskipBytes=0

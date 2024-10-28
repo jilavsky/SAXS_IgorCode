@@ -418,9 +418,9 @@ static Function IR3F_SetupControlsOnMainpanel()
 				SetVariable ModelVarPar4 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ProfCSElCylPar[3][0] ,title="Aspect Ratio  ", disable=0, limits={0.01,inf,IR3FSetVariableStepRatio*ProfCSElCylPar[5][0]}, help={"Aspect Ratio, 0.5 - 2"}
 				
 				SetVariable ModelVarPar5 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ProfCSElCylPar[4][0] ,title="Shell 1 Thick [A]", disable=0, limits={0.01,inf,1}, help={"Shell Thick[A]"}
-				SetVariable ModelVarPar6 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ProfCSElCylPar[5][0] ,title="Δ SLD 1 [10^10cm^-2]", disable=0, limits={0.01,inf,IR3FSetVariableStepRatio*ProfCSElCylPar[3][0]}, help={"SLD of shell 1 (NOT dRho^2)"}
+				SetVariable ModelVarPar6 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ProfCSElCylPar[5][0] ,title="Δ SLD 1 [10^10cm^-2]", disable=0, limits={-inf,inf,IR3FSetVariableStepRatio*ProfCSElCylPar[3][0]}, help={"SLD of shell 1 (NOT dRho^2)"}
 				SetVariable ModelVarPar7 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ProfCSElCylPar[6][0] ,title="Shell 2 Thick [A]", disable=0, limits={0.01,inf,1}, help={"Shell Thick[A]"}
-				SetVariable ModelVarPar8 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ProfCSElCylPar[7][0] ,title="Δ SLD 2 [10^10cm^-2]", disable=0, limits={0.01,inf,IR3FSetVariableStepRatio*ProfCSElCylPar[3][0]}, help={"SLD of shell 2 (NOT dRho^2)"}
+				SetVariable ModelVarPar8 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ProfCSElCylPar[7][0] ,title="Δ SLD 2 [10^10cm^-2]", disable=0, limits={-inf,inf,IR3FSetVariableStepRatio*ProfCSElCylPar[3][0]}, help={"SLD of shell 2 (NOT dRho^2)"}
 
 				CheckBox FitModelVarPar1 win=IR3F_CylinderModelsPanel,value= ProfCSElCylPar[0][1], disable=0 	//variable= root:Packages:Irena:CylinderModels:FitDBPrefactor, disable=1
 				CheckBox FitModelVarPar2 win=IR3F_CylinderModelsPanel,value= ProfCSElCylPar[1][1], disable=0
@@ -663,6 +663,8 @@ Function IR3F_SetVarProc(sva) : SetVariableControl
 				// 3	recalculate 
 				if(StringMatch(sva.vName, "ProfCSElCylPar[1]")||StringMatch(sva.vName, "ProfCSElCylPar[4]")||StringMatch(sva.vName, "ProfCSElCylPar[6]"))	//this is for Profile radius and shell thicknesses, small steps make no sense. 1A resolution needed
 					SetVariable $(sva.ctrlName) win=IR3F_CylinderModelsPanel,limits={1 ,inf,1} 
+				elseif(StringMatch(sva.vName, "ProfCSElCylPar[7]")||StringMatch(sva.vName, "ProfCSElCylPar[5]"))	//this is for Profile shell dSLD, need negative values
+					SetVariable $(sva.ctrlName) win=IR3F_CylinderModelsPanel,limits={-inf ,inf,abs(IR3FSetVariableStepRatio*sva.dval)} 
 				else
 					SetVariable $(sva.ctrlName) win=IR3F_CylinderModelsPanel,limits={0 ,inf,abs(IR3FSetVariableStepRatio*sva.dval)} 
 				endif

@@ -1,7 +1,7 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version=1.03
+#pragma version=1.04
 
 	//this is available ONLY, if JSONXOP is installed and json_functions.ipf is in User Procedures. 
 #if(exists("JSONXOP_GetValue")==4)
@@ -22,6 +22,9 @@ static Constant JSON_NULL      = 5
 Menu "USAXS"
 	"Bluesky Plots", IR3BS_BlueSkyPlot()
 end
+
+
+//1.04 fixes to IN3BS_ImportDataAndPlot to record all data in json so we can use them for analysis. 
 //1.03 Optimization & fixes January 2024, making it compatible to other catalogs also? 
 //1.02 December 2023, Tiled ??? compatible, major source changes. 
 //1.01 November 2022, Tiled 0.1.0a80 compatible, changed webGUI 
@@ -32,7 +35,8 @@ end
 //strconstant ServerAddress="http://usaxscontrol:8020"
 strconstant ServerAddress="http://usaxscontrol.xray.aps.anl.gov:8020"
 //strconstant ServerAddress="https://tiled-demo.blueskyproject.io"
-strconstant DefaultUSAXScatalog="idb_usaxs_retired_2023-12-05"		//set to name of default catalog, likely "usaxs" when in operations
+//strconstant DefaultUSAXScatalog="idb_usaxs_retired_2023-12-05"		//set to name of default catalog, likely "usaxs" when in operations
+strconstant DefaultUSAXScatalog="usaxs"		//set to name of default catalog, likely "usaxs" when in operations
 
 
 //how to install tiled: https://github.com/BCDA-APS/tiled-template/blob/main/docs/create.md
@@ -391,10 +395,10 @@ Function IN3BS_ImportDataAndPlot(selRow, saveTheData, PlotAll)
 		abort "Cannot parse server response"
 	endif
 	variable jsonId = V_Value
-	//if we need to check who the json looks like, this will dumpt the json to history as formatted string
+	//if we need to check who the json looks like, this will dump the json to history as formatted string
 	//JSONXOP_Dump jsonId
-	//JSONXOP_Dump /IND=3 jsonID 	//this adds indents so one can read the damned thing. 
-	//print S_Value		//-- prints the file in history and works. 
+	JSONXOP_Dump /IND=3 jsonID 	//this adds indents so one can read the damned thing. 
+	print S_Value		//-- prints the file in history and works. 
 	//JSONXOP_Release jsonId
 	//abort
 
@@ -413,9 +417,19 @@ Function IN3BS_ImportDataAndPlot(selRow, saveTheData, PlotAll)
 	
 	//wave maxSize=JSON_GetMaxArraySize(jsonID, "/"+DetKey)
 	//data can these addressed like before with names ("id" or via numbers "0=time, 1=PD_USAXS, 3=a_stage_r
-	//store data here and do something with them.
+	//store all data here and do something with them.
+	//these are for standard scans we know names for 
 	wave DetFree = JSON_GetWave(jsonID, DetectorStr, ignoreErr=1)
 	wave XdatFree = JSON_GetWave(jsonID, XaxisStr, ignoreErr=1)
+	//now, for all scans, just load all waves in data:
+	variable i
+	string wvName
+	make/Free/WAVE/N=(numpnts(Keys)) WaveRefs		//we need to use wavereference here, does not seem to be possible other way... 
+	For(i=0;i<numpnts(Keys);i+=1)
+		wvName = Keys[i]
+		WaveRefs[i] = JSON_GetWave(jsonID, wvName, ignoreErr=1)	//this should create all waves, these are free waves!
+	endfor
+	
 	
 	JSONXOP_Release jsonId
 	
@@ -478,8 +492,17 @@ Function IN3BS_ImportDataAndPlot(selRow, saveTheData, PlotAll)
 		DateTimeStr =PrunedListOfAvailableData[selRow][1]
 		NewDataFolder/O/S root:ScanData
 		NewDataFolder/O/S $(CleanupName(tempScanName+"_"+DateTimeStr, 0))
+		//these are standards can data with only 1 detector
 		Duplicate/O DetFree, Detector
 		Duplicate/O XdatFree, Xdata
+		//these are non standard data with potentially multiple detectors
+		For(i=0;i<numpnts(Keys);i+=1)
+			wvName = Keys[i]
+			Wave tmpWvFree = WaveRefs[i]
+			Duplicate/O tmpWvFree, $(wvName)		
+		endfor
+
+
 		if(PlotAll)
 			DoWIndow BlueSkyGraph
 			if(V_Flag)
