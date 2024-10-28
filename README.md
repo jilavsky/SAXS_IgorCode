@@ -5,7 +5,7 @@ Irena, Nika, and Indra SAXS Igor code by Jan Ilavsky for Igor Pro 8.04 and highe
 
 
 **This code can be installed using Igor installer** from https://github.com/jilavsky/SAXS_IgorInstaller/tree/master/Igor_GitHub If you want to install one or more packages from here, download the latest version of 
-"GHInstaller_IrenaNika_vxxx.pxp" and use that to install. Direct link to the latest version of installer is : https://github.com/jilavsky/SAXS_IgorInstaller/blob/master/Igor_GitHub/GHInstaller_IrenaNika_v1.16.pxp?raw=true
+"GHInstaller_IrenaNika_vxxx.pxp" and use that to install. Direct link to the latest version of installer is : https://github.com/jilavsky/SAXS_IgorInstaller/blob/master/Igor_GitHub/GHInstaller_IrenaNika_v1.17.pxp?raw=true
 
 **Igor 7 or before** 
 see: https://github.com/jilavsky/SAXS_IgorCode/wiki/Installation-Problems
