@@ -301,7 +301,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 			NewNote+=headerStr
 		endif
 	elseif(cmpstr(FileType,"TPA/XML")==0)
-#if	Exists("XMLopenfile")
+#if(Exists("XMLopenfile"))
 		FileNameToLoad= FileName
 		if(cmpstr(FileName[strlen(FileName)-4,inf],".xml")!=0)
 			FileNameToLoad= FileName+ ".xml"
@@ -341,7 +341,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		NewNote = ReplaceString("2%", NewNote, " ")
 		NI2_CreateWvNoteNbk(NewNote)
 #else
-	DoAlert 0, "XML xop is not installed, this feature is not available. Please install xops using latest Universal Installer.pxp or Java installer or install manually."
+	DoAlert 0, "XML xop is not installed, this feature is not available. Please install xops using latest Installer version or install manually."
 #endif
 	elseif(cmpstr(FileType,".hdf")==0)
 #if(exists("HDF5OpenFile")==4)
@@ -708,10 +708,11 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 			testLine=PadString (testLine, 16800, 0x20)
 			FBinRead RefNum, testLine
 			close RefNum
+			//print testLine
 			//headerLength1=(strsearch(testLine, "}", 0))
-			PilskipBytes=NumberByKey("HEADER_BYTES", testLine[2,100]  , "="  , ";")
+			PilskipBytes=NumberByKey("HEADER_BYTES", testLine[2,100]  , "="  , ";")		//may be this can be modified also: NI1_parseHeader(testLine[2,100], "HEADER_BYTES")	
 			if(numtype(PilskipBytes)!=0)
-					PilskipBytes=NumberByKey("HEADER", testLine[2,100]  , "="  , " ")
+					PilskipBytes=NI1_parseHeader(testLine[2,100], "HEADER")	//NumberByKey("HEADER", testLine[2,100]  , "="  , ";")
 			endif
 			PilskipBytes = numtype(PilskipBytes)==0 ? PilskipBytes : 0
 		else
@@ -1432,6 +1433,20 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 	return LoadedOK
 end
 //*******************************************************************************************************************************************
+
+static Function NI1_parseHeader(string in, string key)
+    string str
+    SplitString/E=(key+"=(?: )*([0-9]*)") in, str
+    return str2num(str)
+End
+//
+//Function testRegex()
+//    string header = "  OD SAPPHIRE  4.0\r\n\r\nCOMPRESSION=TY6( 25.4%)\r\n\r\nNX= 487 NY= 407 OI=   7037 OL=      0\r\nfgjhgjnbnn\r\nNHEADER=   6576 NG=    512 NS=    768 NK=   1024 NS=    512 NH=   2048\r\n\r\nNSUPPLEMENT=      0\r\n\r\nTIME=Fri Oct 25 17:11:57 2024        "
+//    print parseHeader(header, "NX")
+//    print parseHeader(header, "NY")
+//    print parseHeader(header, "NHEADER")
+//End
+
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 Function NI1_MaskHDFLoader(PathName,FileName,FileType,NewWaveName)
