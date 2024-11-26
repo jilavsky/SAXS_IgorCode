@@ -527,7 +527,7 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData, origFileName)
 	Wave SDDW=:entry:metadata:detector_distance
 	Wave SADW=:entry:metadata:analyzer_distance
 	Wave/T SpecSourceFilenameW=:entry:metadata:SPEC_data_file
-	Wave I00GainW =:entry:metadata:I00AmpGain
+	//Wave I00GainW =:entry:metadata:I00AmpGain
 	Wave I0GainW = :entry:metadata:I0AmpGain
 	Wave/T TimeW=:entry:metadata:timeStamp
 	Wave/Z USAXSPinT_I0Counts=:entry:metadata:trans_I0_counts
@@ -583,7 +583,7 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData, origFileName)
 		TimeRangeAfterUPD = {updMaskR1[0],updMaskR2[0],updMaskR3[0],updMaskR4[0],updMaskR5[0]}
 		TimeRangeAfterI0 = {0.05,0.05,0.05,0.05,0.05}
 		//we need to mask at least 50ms for each change...
-		TimeRangeAfterUPD = TimeRangeAfterUPD[p]>0.05 ? TimeRangeAfterUPD[p] : 0.05
+		TimeRangeAfterUPD = TimeRangeAfterUPD[p]>0.01 ? TimeRangeAfterUPD[p] : 0.01
 		//Ar positions read at 10Hz 
 		Wave changes_AR_PSOpulse = :entry:flyScan:changes_AR_PSOpulse
 		Wave changes_AR_angle = :entry:flyScan:changes_AR_angle
@@ -613,6 +613,8 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData, origFileName)
 	TimeRangeAfterUPD[2] = FSOverWriteRage3DeadTime>0 ? FSOverWriteRage3DeadTime : TimeRangeAfterUPD[2]
 	TimeRangeAfterUPD[3] = FSOverWriteRage4DeadTime>0 ? FSOverWriteRage4DeadTime : TimeRangeAfterUPD[3]
 	TimeRangeAfterUPD[4] = FSOverWriteRage5DeadTime>0 ? FSOverWriteRage5DeadTime : TimeRangeAfterUPD[4]
+	//temp fix TODO: fix settings at the beamline and try 
+	//STimeRangeAfterUPD*=0.1
 	//here we copy data to new place
 	newDataFolder/O/S root:USAXS
 	string FileName, ListOfExistingFolders
@@ -711,7 +713,7 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData, origFileName)
 		MeasTime*=2e-08				//convert to seconds
 		IN3_FSCreateGainWave(PD_range,ampReqGain,ampGain,mcsChangePnts, TimeRangeAfterUPD,MeasTime)
 		I0gain = I0gainW[0]
-	elseif(HdfWriterVersion>=1 && HdfWriterVersion<=1.2) 
+	elseif(HdfWriterVersion>=1 && HdfWriterVersion<=1.3) 
 		MeasTime/=mcaFrequency[0]		//convert to seconds
 		if(AmplifierUsed[0])		//DDPCA300
 			IN3_FSCreateGainWave(PD_range,DDPCA300_ampReqGain,DDPCA300_ampGain,DDPCA300_mcsChan, TimeRangeAfterUPD,MeasTime)
@@ -744,10 +746,10 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData, origFileName)
 	UPDParameters="Vfc=100000;Gain1="+num2str(updG1[0])+";Gain2="+num2str(updG2[0])+";Gain3="+num2str(updG3[0])+";Gain4="+num2str(updG4[0])+";Gain5="+num2str(updG5[0])
 	UPDParameters+=";Bkg1="+num2str(updBkg1[0])+";Bkg2="+num2str(updBkg2[0])+";Bkg3="+num2str(updBkg3[0])+";Bkg4="+num2str(updBkg4[0])+";Bkg5="+num2str(updBkg5[0])
 	UPDParameters+=";Bkg1Err="+num2str(updBkgErr1[0])+";Bkg2Err="+num2str(updBkgErr2[0])+";Bkg3Err="+num2str(updBkgErr3[0])+";Bkg4Err="+num2str(updBkgErr4[0])+";Bkg5Err="+num2str(updBkgErr5[0])
-	UPDParameters+=";I0AmpDark=;I0AmpGain="+num2str(I0GainW[0])+";I00AmpGain="+num2str(I00GainW[0])+";UPDsize="+num2str(UPDsize[0])+";"
+	UPDParameters+=";I0AmpDark=;I0AmpGain="+num2str(I0GainW[0])+";I00AmpGain="+";UPDsize="+num2str(UPDsize[0])+";"//+num2str(I00GainW[0])
 	string/g MeasurementParameters
 	MeasurementParameters="DCM_energy="+num2str(DCM_energyW[0])+";SAD="+num2str(SADW[0])+";SDD="+num2str(SDDW[0])+";thickness="+num2str(SampleThicknessW[0])+";"
-	MeasurementParameters+=";I0AmpDark=;I0AmpGain="+num2str(I0GainW[0])+";I00AmpGain="+num2str(I00GainW[0])+";"
+	MeasurementParameters+=";I0AmpDark=;I0AmpGain="+num2str(I0GainW[0])+";I00AmpGain="+";"//+num2str(I00GainW[0])
 	MeasurementParameters+="Vfc=100000;Gain1="+num2str(updG1[0])+";Gain2="+num2str(updG2[0])+";Gain3="+num2str(updG3[0])+";Gain4="+num2str(updG4[0])+";Gain5="+num2str(updG5[0])
 	MeasurementParameters+=";Bkg1="+num2str(updBkg1[0])+";Bkg2="+num2str(updBkg2[0])+";Bkg3="+num2str(updBkg3[0])+";Bkg4="+num2str(updBkg4[0])+";Bkg5="+num2str(updBkg5[0])
 	MeasurementParameters+=";Bkg1Err="+num2str(updBkgErr1[0])+";Bkg2Err="+num2str(updBkgErr2[0])+";Bkg3Err="+num2str(updBkgErr3[0])+";Bkg4Err="+num2str(updBkgErr4[0])+";Bkg5Err="+num2str(updBkgErr5[0])
@@ -1384,6 +1386,9 @@ Function IN3_FSCreateGainWave(GainWv,ampGainReq,ampGain,mcsChangePnts, TimeRange
 			i-=1
 		while (i>0 && tmpmcsChangePnts[i] <1)
 	endif
+//	if(tmpmcsChangePnts[0]==0)
+//		DeletePoints 0, 1, tmpmcsChangePnts
+//	endif
 	//this blasts on these 3 waves any lines, which contain NaN in any of the three waves. 
 	IN2G_RemoveNaNsFrom3Waves(tmpmcsChangePnts,tmpampGainReq,tmpampGain)
 	//debug code
@@ -1409,7 +1414,7 @@ Function IN3_FSCreateGainWave(GainWv,ampGainReq,ampGain,mcsChangePnts, TimeRange
 						endif
 						GainWv[EndRc+1,] = ampGain[iii]+1		//set rest of the measured points to the gain we set
 						if(IN3_RemoveRangeChangeEffects)		//remove transitional effects
-							IN3_MaskPointsForGivenTime(GainWv,MeasTime,EndRc+1, TimeRangeAfter[ampGain[iii]])		//mask for time, if needed.
+							//IN3_MaskPointsForGivenTime(GainWv,MeasTime,EndRc+1, TimeRangeAfter[ampGain[iii]])		//mask for time, if needed.
 						endif
 					endif			
 			endif

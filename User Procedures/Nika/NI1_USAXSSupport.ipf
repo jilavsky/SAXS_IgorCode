@@ -585,7 +585,7 @@ Function NI1_9IDCConfigNexus()
 
 //print StringByKey("data:model", OldNOte  , "=" , ";")
 //print OldNOte
-	if( (stringMatch("9ID",Beamline)||stringMatch("20ID",Beamline)) && stringMatch("Pilatus", StringByKey("data:model", OldNOte  , "=" , ";")))	
+	if( (stringMatch("9ID",Beamline)||stringMatch("20ID",Beamline)||stringMatch("12ID",Beamline)) && stringMatch("Pilatus", StringByKey("data:model", OldNOte  , "=" , ";")))	
 //		//9ID data from 2015 onwards... 
 //		Wavelength = NumberByKey(NI1_9IDCFindKeyStr("monochromator:wavelength=", OldNote), OldNote  , "=" , ";")
 //		XRayEnergy = 12.3984/Wavelength

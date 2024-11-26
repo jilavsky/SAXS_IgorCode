@@ -168,9 +168,11 @@ Function IR3BS_InitServer()
 		SVAR ListOfCatalogs=root:Packages:Irena:BlueSkySamplePlot:ListOfCatalogs
 		SVAR CatalogUsed=root:Packages:Irena:BlueSkySamplePlot:CatalogUsed
 		SVAR ScanTypeToUse = root:Packages:Irena:BlueSkySamplePlot:ScanTypeToUse
-		PopupMenu CatalogUsed,value=#"root:Packages:Irena:BlueSkySamplePlot:ListOfCatalogs",mode=1, popvalue=CatalogUsed
+		SVAR ListOfScanTypes = root:Packages:Irena:BlueSkySamplePlot:ListOfScanTypes
+		CatalogUsed = DefaultUSAXScatalog
+		PopupMenu CatalogUsed,value=#"root:Packages:Irena:BlueSkySamplePlot:ListOfCatalogs",mode=1+WhichListItem(CatalogUsed, ListOfCatalogs) // popvalue=CatalogUsed
 		IR3BS_GetJSONScanData()
-		PopupMenu ScanTypeToUse,value=#"root:Packages:Irena:BlueSkySamplePlot:ListOfScanTypes",mode=1, popvalue=ScanTypeToUse
+		PopupMenu ScanTypeToUse,value=#"root:Packages:Irena:BlueSkySamplePlot:ListOfScanTypes",mode=1+ WhichListItem(ScanTypeToUse, ListOfScanTypes) //, popvalue=ScanTypeToUse
 	endif
 end
 
