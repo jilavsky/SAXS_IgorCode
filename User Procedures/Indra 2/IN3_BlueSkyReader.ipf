@@ -399,8 +399,8 @@ Function IN3BS_ImportDataAndPlot(selRow, saveTheData, PlotAll)
 	variable jsonId = V_Value
 	//if we need to check who the json looks like, this will dump the json to history as formatted string
 	//JSONXOP_Dump jsonId
-	JSONXOP_Dump /IND=3 jsonID 	//this adds indents so one can read the damned thing. 
-	print S_Value		//-- prints the file in history and works. 
+	//JSONXOP_Dump /IND=3 jsonID 	//this adds indents so one can read the damned thing. 
+	//print S_Value		//-- prints the file in history and works. 
 	//JSONXOP_Release jsonId
 	//abort
 
@@ -680,6 +680,24 @@ FUnction IR3BS_InitCatalog()
 End
 //**********************************************************************************************************
 //**********************************************************************************************************
+Function IR3BS_GetListOfLastData()
+
+
+	setDataFolder root:Packages:Irena:BlueSkySamplePlot
+
+	SVAR ListOfCatalogs=root:Packages:Irena:BlueSkySamplePlot:ListOfCatalogs
+	SVAR CatalogUsed=root:Packages:Irena:BlueSkySamplePlot:CatalogUsed
+	SVAR Prefix = root:Packages:Irena:BlueSkySamplePlot:Prefix				//thsi si ~ Catalog used, but has other path behind the name. Repalce Catalogused with this. 
+
+	SVAR ScanTypeToUse = root:Packages:Irena:BlueSkySamplePlot:ScanTypeToUse
+	SVAR DetectorStr = root:Packages:Irena:BlueSkySamplePlot:DetectorStr
+	SVAR Xaxis = root:Packages:Irena:BlueSkySamplePlot:XaxisStr
+	NVAR NumberOfScansToImport=root:Packages:Irena:BlueSkySamplePlot:NumberOfScansToImport
+
+
+
+end
+
 //************************************************************************************************************
 FUnction IR3BS_GetJSONScanData()
 

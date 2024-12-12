@@ -1498,6 +1498,10 @@ Function IN3_FitModGaussTop(ctrlname, DoNOtChangeLimits) : Buttoncontrol			// ca
 //	K0=0
 	MAKE/O/D/N=4 W_coef		//fix 2015-06 Coefficient wave MUST be double precision or weird things happen with fits. 
 	wavestats/Q PD_Intensity
+	//fix issue when scan ddid not pass through main peak
+	if(V_maxloc<2)
+		Abort "Bad data, no peak found"
+	endif
 	//workaround problems 2012/01, one large point appears ...
 	Duplicate/Free PD_Intensity, tempPDInt
 	//this tempPDInt needs nan's removed. need to interpolate values?

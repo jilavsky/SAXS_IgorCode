@@ -111,7 +111,7 @@ Window IN2Y_ChannelCutPosCalculations() : Panel
 	SetDrawEnv linefgc= (52224,0,41728),dash= 5,arrow= 1
 	DrawLine 529,76,700,76
 	SetVariable BraggAngle,pos={532,377},size={250,22},proc=IN2Y_XtalCalculations,title="Bragg Angle [degrees]"
-	SetVariable BraggAngle,fSize=14,format="%3.2f"
+	SetVariable BraggAngle,fSize=14,format="%3.4f"
 	SetVariable BraggAngle,limits={1,50,0.1},value= root:Packages:XtalCalc:BraggAngle
 	SetVariable Gapsetting,pos={262,330},size={200,22},proc=IN2Y_XtalCalculations,title="Gap [mm]             "
 	SetVariable Gapsetting,fSize=14,value= root:Packages:XtalCalc:Gapsetting

@@ -128,6 +128,9 @@ Function IN3_SmoothRData()
 				//somehow we need to stay within one range also... 
 				StartPoints = ceil(tmpTime/tmpMeasTime[i])+1
 				EndPoints = StartPoints
+				if((i-StartPoints)<1)
+					abort "Bad data, cannot fix this. Likely Flyscan parameters were wrong" 
+				endif
 				if(i+EndPoints>numpnts(Intensity))
 					EndPoints = numpnts(Intensity) - i
 				endif

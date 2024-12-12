@@ -59,10 +59,10 @@ Constant IN3_TrimDoNOTremoveVibrations=0			//this controls if vibrations are fou
 
 //FlyScan data reduction
 //this is for early data only, now this is in hdf file. 
-Constant AmplifierRange1BlockTime=0.00
-Constant AmplifierRange2BlockTime=0.00
-Constant AmplifierRange3BlockTime=0.00
-Constant AmplifierRange4BlockTime=0.00
+Constant AmplifierRange1BlockTime=0.03
+Constant AmplifierRange2BlockTime=0.03
+Constant AmplifierRange3BlockTime=0.03
+Constant AmplifierRange4BlockTime=0.03
 Constant AmplifierRange5BlockTime=0.4
 
 
@@ -713,8 +713,17 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData, origFileName)
 		MeasTime*=2e-08				//convert to seconds
 		IN3_FSCreateGainWave(PD_range,ampReqGain,ampGain,mcsChangePnts, TimeRangeAfterUPD,MeasTime)
 		I0gain = I0gainW[0]
-	elseif(HdfWriterVersion>=1 && HdfWriterVersion<=1.3) 
-		MeasTime/=mcaFrequency[0]		//convert to seconds
+	elseif(HdfWriterVersion>=1 && HdfWriterVersion<1.3) 
+		MeasTime/=mcaFrequency[0]		//
+		if(AmplifierUsed[0])		//DDPCA300
+			IN3_FSCreateGainWave(PD_range,DDPCA300_ampReqGain,DDPCA300_ampGain,DDPCA300_mcsChan, TimeRangeAfterUPD,MeasTime)
+		else						//DLPCA200
+			IN3_FSCreateGainWave(PD_range,DLPCA200_ampReqGain,DLPCA200_ampGain,DLPCA200_mcsChan, TimeRangeAfterUPD,MeasTime)
+		endif
+		IN3_FSCreateGainWave(I0gain,I0_ampReqGain,I0_ampGain,I0_mcsChan, TimeRangeAfterI0,MeasTime)
+		I0gain = 10^(I0gain[p]+5)
+	elseif(HdfWriterVersion>=1.3) 
+		MeasTime/=mcaFrequency[0]/10		//convert to seconds, MCA frequncy is 1e7, but now we are using 1e6
 		if(AmplifierUsed[0])		//DDPCA300
 			IN3_FSCreateGainWave(PD_range,DDPCA300_ampReqGain,DDPCA300_ampGain,DDPCA300_mcsChan, TimeRangeAfterUPD,MeasTime)
 		else						//DLPCA200
@@ -1056,6 +1065,9 @@ Function IN3_CleanUpStaleMCAChannel(PSO_Wave, AnglesWave)
 	wave PSO_Wave, AnglesWave
 	
 	variable i, j, jstart, NumNANsRemoved, NumPointsFixed
+	if(numpnts(PSO_Wave)<5)
+		abort "Missing PSO aux record, cannot salvage this data"
+	endif
 	//first remove all points which have 0 chan in them (except the last one). Any motion here is before we start moving.  
 	For(i=0;i<numpnts(PSO_Wave);i+=1)
 		if(PSO_Wave[i]==0 && PSO_Wave[i+1]==0)
@@ -1414,7 +1426,7 @@ Function IN3_FSCreateGainWave(GainWv,ampGainReq,ampGain,mcsChangePnts, TimeRange
 						endif
 						GainWv[EndRc+1,] = ampGain[iii]+1		//set rest of the measured points to the gain we set
 						if(IN3_RemoveRangeChangeEffects)		//remove transitional effects
-							//IN3_MaskPointsForGivenTime(GainWv,MeasTime,EndRc+1, TimeRangeAfter[ampGain[iii]])		//mask for time, if needed.
+							IN3_MaskPointsForGivenTime(GainWv,MeasTime,EndRc+1, TimeRangeAfter[ampGain[iii]])		//mask for time, if needed.
 						endif
 					endif			
 			endif
