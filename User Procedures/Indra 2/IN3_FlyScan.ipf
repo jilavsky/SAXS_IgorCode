@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.09
+#pragma version=1.10
 #include <Peak AutoFind>
 
 
@@ -14,6 +14,7 @@ Constant IN3_TrimDoNOTremoveVibrations=0			//this controls if vibrations are fou
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+//1.10 tweak to allow FLyscan to deliver 1 less point and not consider it be vibrations. Seems routine starting issue. 
 //1.09 fix step scanning gain correction bug which resulted in problems when reducing data which had I0 variations. 
 //1.08 fixed loading 20ID horizontally scanning step scan data. 
 //1.07 fixes for HDF5 changes in IP9, removed old FLyScan Import code (separate panel to import FS data which were then reduced by old USAXS `panel). Obsolete. 
@@ -659,8 +660,10 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData, origFileName)
 			Redimension /D/N=(AR_pulses[0]) ArValues
 			ArValues[1,numpnts(ArValues)-1] = (ArValues[p]+ArValues[p-1])/2		// shift to have mean AR value for each point and not the end of the AR value, when the system advanced to next point. 
 			DeletePoints 0, 1, ArValues					//the system does not report any data for first channel. HLe settings.
-			if(numpnts(MeasTime)!=numpnts(ArValues))
+			if(numpnts(MeasTime)<(numpnts(ArValues)-1))
 				OscillationsFound=1
+			elseif(numpnts(MeasTime)==(numpnts(ArValues)-1))
+				DeletePoints 0, 1, ArValues
 			endif
 		elseif(AR_PulseMode[0]==2)							//this is using trajectory way points, typically 200 points
 			Duplicate/Free AR_waypoints, ArValues

@@ -2107,7 +2107,10 @@ Function NI1_9IDCNXTransmission()
 	variable EmptyPinPDGain = NumberByKey(NI1_9IDCFindKeyStr("Pin_TrPDgain=", OldNote), OldNote  , "=" , ";")
 
 	variable  Trans
-
+	print "SAXS SamplePinPD = "+num2str(SamplePinPD)+"    Gain = "+num2str(SampleIPinPdGain)
+	print "SAXS SampleI0 = "+num2str(SampleI0)+"    Gain = "+num2str(SampleI0gain)
+	print "SAXS Empty = "+num2str(EmptypinPD)+"    Gain = "+num2str(EmptyPinPDGain)
+	print "SAXS EmptyI0 = "+num2str(EmptyI0)+"    Gain = "+num2str(EmptyI0gain)
 	Trans = ((SamplePinPD / SampleIPinPdGain)/ (SampleI0 / SampleI0gain)) / ((EmptypinPD / EmptyPinPDGain)/(EmptyI0/ EmptyI0gain))
 	if(numtype(Trans)!=0)
 		Print "Transmission value was impossible to calculate from NX values from Sample and Empty, setting to 0"
@@ -2308,6 +2311,7 @@ Function NI1_9IDWFindTRANS(SampleName)
 		I000S = NumberByKey(NI1_9IDCFindKeyStr("I0_cts=", OldNOteSample), OldNOteSample  , "=" , ";")
 	endif
 	variable I0gainS = NumberByKey(NI1_9IDCFindKeyStr("I0_gain=", OldNOteSample), OldNOteSample  , "=" , ";")
+	print "WAXS SampleI0 = "+num2str(I000S)+"    Gain = "+num2str(I0gainS)
 	I000S = I000S / I0gainS
 	if(numtype(I000S)!=0)
 		Print "I0 value not found in the wave note of the sample file, setting to 1"
@@ -2319,6 +2323,7 @@ Function NI1_9IDWFindTRANS(SampleName)
 		I000E = NumberByKey(NI1_9IDCFindKeyStr("I0_cts=", OldNOteEmpty), OldNOteEmpty  , "=" , ";")
 	endif
 	variable I0gainE = NumberByKey(NI1_9IDCFindKeyStr("I0_gain=", OldNOteEmpty), OldNOteEmpty  , "=" , ";")
+	print "WAXS EmptyI0 = "+num2str(I000E)+"    Gain = "+num2str(I0gainE)
 	I000E = I000E / I0gainE
 	if(numtype(I000E)!=0)
 		Print "I0 value not found in the wave note of the sample file, setting to 1"
@@ -2331,6 +2336,7 @@ Function NI1_9IDWFindTRANS(SampleName)
 		TRDS = NumberByKey(NI1_9IDCFindKeyStr("TR_cts=", OldNOteSample), OldNOteSample  , "=" , ";")
 	endif
 	variable TRDgainS = NumberByKey(NI1_9IDCFindKeyStr("TR_gain=", OldNOteSample), OldNOteSample  , "=" , ";")
+	print "WAXS SamplePinPD = "+num2str(TRDS)+"    Gain = "+num2str(TRDgainS)
 	TRDS = TRDS / TRDgainS
 	if(numtype(TRDS)!=0)
 		Print "TR diode value not found in the wave note of the sample file, setting to 1"
@@ -2342,6 +2348,7 @@ Function NI1_9IDWFindTRANS(SampleName)
 		TRDE = NumberByKey(NI1_9IDCFindKeyStr("TR_cts=", OldNOteEmpty), OldNOteEmpty  , "=" , ";")
 	endif
 	variable TRDgainE = NumberByKey(NI1_9IDCFindKeyStr("TR_gain=", OldNOteEmpty), OldNOteEmpty  , "=" , ";")
+	print "WAXS Empty = "+num2str(TRDE)+"    Gain = "+num2str(TRDgainE)
 	TRDE = TRDE / TRDgainE
 	if(numtype(TRDE)!=0)
 		Print "I0 value not found in the wave note of the sample file, setting to 1"

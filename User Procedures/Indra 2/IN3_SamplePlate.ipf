@@ -44,17 +44,17 @@
 constant IN3_SamplePlateSetupVersion=1.08
 constant IN3SBeamlineSurveyEpicsMonTicks = 15 
 constant IN3SBeamlineSurveyDevelopOn = 0
-//  values for beamtime estimate, last calibrated using BS on 7/31/2021 JIL (used 15 scan records BS).
+//  values for beamtime estimate, last calibrated using BS on 12/14/2024 JIL (best guess).
 //  result is about 2 minutes more than real time. 
-constant IN3BmSrvUSAXSOverhead 		= 10		//overhead for flyscan
-constant IN3BmSrvSAXSOverhead 		= 3			//overhead for SAXS, transmission measurement 
-constant IN3BmSrvWAXSOverhead 		= 1			//overhead for WAXS 
-constant IN3BmSrvSampleMoveSpeed 	= 2			//average moving samples around in mm/sec, is 4rev/sec
+constant IN3BmSrvUSAXSOverhead 		= 15		//overhead for flyscan, transmission, return and start, OK for BS
+constant IN3BmSrvSAXSOverhead 		= 5			//overhead for SAXS, transmission measurement 
+constant IN3BmSrvWAXSOverhead 		= 3			//overhead for WAXS 
+constant IN3BmSrvSampleMoveSpeed 	= 30  		//average moving samples around in mm/sec, Aerotech stages, BS
 constant IN3BmSrvTuneTimeStep 		= 600		//retune every 600 seconds 
 constant IN3BmSrvTuneTimeNumU 		= 3			//retune every 3 USAXS scans 
-constant IN3BmSrvTuneAveTime  		= 40		//retune takes avergate 40 seconds full preUSAXStune is 40 seconds... 
-constant IN3BmSrvSWTuneAveTime 		= 14		//SWAXS tune MR
-constant IN3BmSrvMoveGeometryTime 	= 20		//overhead to move from USAXS to SAXS to WAXS
+constant IN3BmSrvTuneAveTime  		= 20		//retune takes average 20 seconds in BS 
+constant IN3BmSrvSWTuneAveTime 		= 0			//SWAXS tune MR disabled on 12ID BS setup, not needed.
+constant IN3BmSrvMoveGeometryTime 	= 15		//overhead to move from USAXS to SAXS to WAXS
 
 
 //TODO:
