@@ -597,25 +597,28 @@ Function IN3_SaveData()
 	
 	NVAR UseMSAXSCorrection= root:Packages:Indra3:UseMSAXSCorrection
 	
-	
-	setDataFolder DataFolderName
-	variable/g BeamCenter = BeamCenterL
-	variable/g MaximumIntensity = MaximumIntensityL
-	variable/g PeakWidth = PeakWidthL
-	variable/g Wavelength = WavelengthL
-	string/g ListOfASBParameters=ListOfASBParametersL
-
-	
 	if(IsBlank)	//is Blank, so save only Blank data...
+		//this needs these waves to be in current folder. 
 		IN2G_AppendorReplaceWaveNote("R_Int","Wname","Blank_R_Int") 
 		IN2G_AppendorReplaceWaveNote("R_error","Wname","Blank_R_error") 
 		IN2G_AppendorReplaceWaveNote("R_Qvec","Wname","Blank_R_Qvec") 
 		IN2G_AppendorReplaceWaveNote("R_Qvec","Units","A-1")
 		IN2G_AppendorReplaceWaveNote("R_Int","Units","cm-1")
+		IN2G_AppendorReplaceWaveNote("R_Qvec","USAXSDataFolder",DataFolderName)
+		IN2G_AppendorReplaceWaveNote("R_Int","USAXSDataFolder",DataFolderName)
+		IN2G_AppendorReplaceWaveNote("R_Qvec","COMMENT",StringByKey("COMMENT", note(R_Int)))
+		IN2G_AppendorReplaceWaveNote("R_Int","COMMENT",StringByKey("COMMENT", note(R_Int)))
 
 		Duplicate/O R_Int, $(DataFolderName+"Blank_R_Int")
 		Duplicate/O R_Error, $(DataFolderName+"Blank_R_error")
 		Duplicate/O R_Qvec, $(DataFolderName+"Blank_R_Qvec")
+
+		setDataFolder DataFolderName
+		variable/g BeamCenter = BeamCenterL
+		variable/g MaximumIntensity = MaximumIntensityL
+		variable/g PeakWidth = PeakWidthL
+		variable/g Wavelength = WavelengthL
+		string/g ListOfASBParameters=ListOfASBParametersL
 
 		IN2G_AppendAnyText("\r*******************************************************************************")
 		IN2G_AppendAnyText("Processed Blank data for sample : " + DataFolderName)
@@ -628,8 +631,17 @@ Function IN3_SaveData()
 		IN2G_AppendAnyText("Beam Center Error :\t\t"+StringByKey("BeamCenterError", note(R_Int), "=",";"))
 		IN2G_AppendAnyText("Maximum Intensity Error :\t"+StringByKey("MaximumIntensityError", note(R_Int), "=",";"))
 		IN2G_AppendAnyText("Peak Width error :\t\t"+StringByKey("FWHM_Error", note(R_Int), "=",";"))
+		
 	else
+		setDataFolder DataFolderName
+		variable/g BeamCenter = BeamCenterL
+		variable/g MaximumIntensity = MaximumIntensityL
+		variable/g PeakWidth = PeakWidthL
+		variable/g Wavelength = WavelengthL
+		string/g ListOfASBParameters=ListOfASBParametersL
+
 		string oldNoteValue=stringBykey("COMMENT", note(BL_R_Int), "=")
+		string tempStr=note(BL_R_Int)
 		string oldNoteValue2=stringBykey("USAXSDataFolder", note(BL_R_Int), "=")
 		IN2G_AppendorReplaceWaveNote("R_Int","Wname","R_Int") 
 		IN2G_AppendorReplaceWaveNote("R_error","Wname","R_error") 

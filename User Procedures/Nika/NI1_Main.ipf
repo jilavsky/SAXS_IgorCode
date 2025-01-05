@@ -103,7 +103,7 @@ Menu "SAS 2D"
 	"Configuration manager", NI1_GeometriesManager()
 	help={"This enables switching among multiple Nika geometries, such as distances or wavelengths"}
 	Submenu "Instrument configurations"
-		"9IDC USAXS-SAXS-WAXS", NI1_9IDCConfigureNika()
+		"APS USAXS-SAXS-WAXS", NI1_APSConfigureNika()
 		help={"Support for data from 9ID or9IDC (USAXS/SAXS) beamline at APS"}
 		"RSoXS ALS soft energy instrument", NI1_RSoXSCreateGUI()
 		help={"Support for data from ALS soft energy beamline"}
@@ -787,7 +787,7 @@ Function NI1_GMCreateNewGeom()
 	PopupMenu RestoreGeometries,win=NI1_GeometriesManagerPanel,value= #"root:Packages:NikaGeometries:ListOfGeomsSaved", mode=0
 	NI1A_Convert2Dto1DMainPanel()
 	if(WasNI1_9IDCConfigPanel)
-		NI1_9IDCConfigureNika()
+		NI1_APSConfigureNika()
 	endif
 	setDataFolder oldDf
 end

@@ -12,6 +12,7 @@ Constant NumPntsAlpha = 121					//121 to 181 changes calculation time by 50% (6.
 Constant NumPntsPsi = 41					//21 ~ 1.5 sec, 41 ~ 3 sec, 61 ~ 4.5 sec, 91 ~ 6.5 sec, no observable impact on model... weird... 
 											//181/91 seems to give excellent results, 121/41 gives very good values (on test case) and is much faster. 
 
+Constant PrintFitProgress=1					//print steps while fitting
 //*************************************************************************\
 //* Copyright (c) 2005 - 2025, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
@@ -35,7 +36,7 @@ Function IR3F_AutoRecalculateModelData(variable Force)
 	//next we calculate the model
 	NVAR UpdateAutomatically=root:Packages:Irena:CylinderModels:UpdateAutomatically
 	if(UpdateAutomatically||Force)
-		IR3F_GraphModelData()
+		IR3F_CalculateAndGraphModelData()
 		IR3F_AttachTags(0)
 	endif
 
@@ -45,7 +46,7 @@ end
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-static Function IR3F_GraphModelData()
+static Function IR3F_CalculateAndGraphModelData()
 	//next we graph the model
 	
 	DFref oldDf= GetDataFolderDFR()
@@ -79,7 +80,7 @@ static Function IR3F_GraphModelData()
 			endif
 		endif
 		SVAR ModelSelected=root:Packages:Irena:CylinderModels:ModelSelected
-		if(stringMatch(ModelSelected,"Profile CS Ellip. Cylinder"))
+		if(stringMatch(ModelSelected,"Profile CS Ellip. Cylinder") || stringMatch(ModelSelected,"Profile CS Ellip. Cylinder 2"))
 			Wave/Z Profile = root:Packages:Irena:CylinderModels:Profile
 			if(WaveExists(Profile))
 				DoWIndow IR3F_SLDProfile
@@ -89,7 +90,7 @@ static Function IR3F_GraphModelData()
 					Label left "Δ SLD [10\\S10 \\Mcm\\S2\\M]"
 					Label bottom "Radial distance [Angstroms]"
 					ModifyGraph mirror=1
-					SetAxis/E=1 left *,(1.1*wavemax(Profile))
+					SetAxis/A
 					AutoPositionWindow/M=1 /R=IR3F_LogLogDataDisplay	IR3F_SLDProfile	
 				endif
 			endif
@@ -105,6 +106,7 @@ static Function IR3F_GraphModelData()
 		if(!StringMatch(FittingPower, "Int"))
 			strswitch(FittingPower)
 				case "Int":
+					break
 				
 				case "I*Q":
 					Duplicate/O ModelIntensity, ModelWaveQ
@@ -201,6 +203,8 @@ Function IR3F_CalculateModel(OriginalIntensity,OriginalQvector, calledFromFittin
 	//CSElCylParNames = 		{"Prefactor","Radius","Length","SLD","ShellThickness","AspectRatio"}
 	Wave ProfCSElCylPar= root:Packages:Irena:CylinderModels:ProfCSElCylPar
 	//ProfCSElCylParNames = {"Prefactor","Radius","Length","AspectRatio","Shell1Th","Shell1SLD", "Shell2th", "Shell2SLD"}
+	Wave ProfCSElCylPar2= root:Packages:Irena:CylinderModels:ProfCSElCylPar2
+	//ProfCSElCylParNames = {"Prefactor","Radius","Length","AspectRatio","Shell1Th","Shell1SLD", "Shell2th", "Shell2SLD", "Shell3th", "Shell3SLD"}
 
 	// model calculations are here...
 		//	//Unified fit, left in, for now not used
@@ -225,7 +229,7 @@ Function IR3F_CalculateModel(OriginalIntensity,OriginalQvector, calledFromFittin
 	//Cylinder models
 	variable Prefactor, Radius, Length, SLD
 	variable ShellThicknes, AspectRatio
-	variable Shell1Th,Shell1SLD, Shell2th, Shell2SLD
+	variable Shell1Th,Shell1SLD, Shell2th, Shell2SLD, Shell3Th, Shell3SLD
 	if(StringMatch(ModelSelected, "Cylinder" ))
 		Prefactor 	=CylPar[0][0] 
 		Radius 		=CylPar[1][0]
@@ -235,6 +239,9 @@ Function IR3F_CalculateModel(OriginalIntensity,OriginalQvector, calledFromFittin
 		if(!StringMatch(oldModel, "Cylinder")||!StringMatch(oldPar,newPar))
 			IR3F_CalculateCylinder(CylModelQvector, ModelIntensityTMP, Radius,Length,SLD)
 			Note /K  ModelIntensityTMP, "Model:"+ModelSelected+";"+"Par:"+newPar+";"
+			if(PrintFitProgress)
+				print "Calculated:"+ModelSelected+",Rad="+num2str(radius)+",SLD="+num2str(SLD)
+			endif
 		endif
 		CylinderModelIntensity = Prefactor*ModelIntensityTMP
 	elseif(StringMatch(ModelSelected, "Core Shell Cylinder" ))
@@ -247,6 +254,9 @@ Function IR3F_CalculateModel(OriginalIntensity,OriginalQvector, calledFromFittin
 		if(!StringMatch(oldModel, "Core Shell Cylinder")||!StringMatch(oldPar,newPar))
 			IR3F_CalculateCSCylinder(CylModelQvector, ModelIntensityTMP, Radius,Length,SLD, ShellThicknes)
 			Note /K  ModelIntensityTMP, "Model:"+ModelSelected+";"+"Par:"+newPar+";"
+			if(PrintFitProgress)
+				print "Calculated:"+ModelSelected+",Rad="+num2str(radius)+",SLD="+num2str(SLD)+",ShellThicknes="+num2str(ShellThicknes)
+			endif
 		endif
 		CylinderModelIntensity = Prefactor*ModelIntensityTMP
 	elseif(StringMatch(ModelSelected, "Ellip. Cylinder" ))
@@ -259,6 +269,9 @@ Function IR3F_CalculateModel(OriginalIntensity,OriginalQvector, calledFromFittin
 		if(!StringMatch(oldModel, "Ellip. Cylinder")||!StringMatch(oldPar,newPar))
 			IR3F_CalculateEplipCylinder(CylModelQvector, ModelIntensityTMP, Radius,Length,SLD, AspectRatio)
 			Note /K  ModelIntensityTMP, "Model:"+ModelSelected+";"+"Par:"+newPar+";"
+			if(PrintFitProgress)
+				print "Calculated:"+ModelSelected+",Rad="+num2str(radius)+",SLD="+num2str(SLD)+",AR="+num2str(AspectRatio)
+			endif
 		endif
 		CylinderModelIntensity = Prefactor*ModelIntensityTMP
 	elseif(StringMatch(ModelSelected, "Core Shell Ellip. Cylinder" ))
@@ -272,6 +285,9 @@ Function IR3F_CalculateModel(OriginalIntensity,OriginalQvector, calledFromFittin
 		if(!StringMatch(oldModel, "Core Shell Ellip. Cylinder")||!StringMatch(oldPar,newPar))
 			IR3F_CalcCoreShellEplipCylinder(CylModelQvector, ModelIntensityTMP, Radius,Length,SLD, ShellThicknes,AspectRatio)
 			Note /K  ModelIntensityTMP, "Model:"+ModelSelected+";"+"Par:"+newPar+";"
+			if(PrintFitProgress)
+				print "Calculated:"+ModelSelected+",Rad="+num2str(radius)+",Shell1SLD="+num2str(SLD)+",ShellTh="+num2str(ShellThicknes)+",AR="+num2str(AspectRatio)
+			endif
 		endif
 		CylinderModelIntensity = Prefactor*ModelIntensityTMP
 
@@ -294,13 +310,41 @@ Function IR3F_CalculateModel(OriginalIntensity,OriginalQvector, calledFromFittin
 			IR3F_CalcCSElProfile(CylModelQvector, ModelIntensityTMP, length, radius, AspectRatio, Shell1th, Shell1SLD, Shell2th, Shell2SLD, calledFromFitting)
 			//endif
 			Note /K  ModelIntensityTMP, "Model:"+ModelSelected+";"+"Par:"+newPar+";"
+			if(PrintFitProgress)
+				print "Calculated:"+ModelSelected+",Rad="+num2str(radius)+",AR="+num2str(AspectRatio)+",Shell1th="+num2str(Shell1th)+",Shell1SLD="+num2str(Shell1SLD)+",Shell2th="+num2str(Shell2th)+",Shell2SLD="+num2str(Shell2SLD)
+			endif
+		endif
+		CylinderModelIntensity = Prefactor*ModelIntensityTMP
+	elseif(StringMatch(ModelSelected, "Profile CS Ellip. Cylinder 2" ))
+		//{"Prefactor","Radius","Length","AspectRatio","Shell1Th","Shell1SLD", "Shell2th", "Shell2SLD", "Shell3th", "Shell3SLD"}
+
+		Prefactor 	=ProfCSElCylPar2[0][0] 
+		Radius 		=ProfCSElCylPar2[1][0]
+		Length 		=ProfCSElCylPar2[2][0]
+		AspectRatio	=ProfCSElCylPar2[3][0]
+		Shell1Th	=ProfCSElCylPar2[4][0]
+		Shell1SLD 	=ProfCSElCylPar2[5][0]
+		Shell2Th	=ProfCSElCylPar2[6][0]
+		Shell2SLD 	=ProfCSElCylPar2[7][0]
+		Shell3Th	=ProfCSElCylPar2[8][0]
+		Shell3SLD 	=ProfCSElCylPar2[9][0]
+		newPar = num2str(Radius)+"-"+num2str(Length)+"-"+num2str(AspectRatio)+"-"+num2str(Shell1Th)+"-"+num2str(Shell1SLD)+"-"+num2str(Shell2Th)+"-"+num2str(Shell2SLD)+"-"+num2str(Shell3Th)+"-"+num2str(Shell3SLD)+"-"+num2str(UseGMatrixCalculations)
+		if(!StringMatch(oldModel, "Profile CS Ellip. Cylinder 2")||!StringMatch(oldPar,newPar))
+			//if(UseGMatrixCalculations)
+			//	CalcCSProfileGM(CylModelQvector, ModelIntensityTMP, length, radius, AspectRatio, Shell1th, Shell1SLD, Shell2th, Shell2SLD)		
+			//else
+			IR3F_CalcCSElProfile2(CylModelQvector, ModelIntensityTMP, length, radius, AspectRatio, Shell1th, Shell1SLD, Shell2th, Shell2SLD,Shell3th, Shell3SLD, calledFromFitting)
+			//endif
+			Note /K  ModelIntensityTMP, "Model:"+ModelSelected+";"+"Par:"+newPar+";"
+			if(PrintFitProgress)
+				print "Calculated:"+ModelSelected+",Rad="+num2str(radius)+",AR="+num2str(AspectRatio)+",Shell1th="+num2str(Shell1th)+",Shell1SLD="+num2str(Shell1SLD)+",Shell2th="+num2str(Shell2th)+",Shell2SLD="+num2str(Shell2SLD)
+			endif
 		endif
 		CylinderModelIntensity = Prefactor*ModelIntensityTMP
 	else
 		CylinderModelIntensity = 0
 		ModelIntensityTMP = 0
 	endif
-
 	
 	UnsmearedModelIntensity = CylinderModelIntensity + SASBackground
 	//slit smear with finite slit length...
@@ -318,23 +362,61 @@ Function IR3F_CalculateModel(OriginalIntensity,OriginalQvector, calledFromFittin
 		CylModelInt = CylinderModelIntensity
 		//UnifiedModelInt = UnifiedFitIntensity
 	endif
+	
+	//add smearing by number of points here
+	NVAR SmearPointsNum= root:Packages:Irena:CylinderModels:SmearPointsNum
+	if(SmearPointsNum>0)
+		Smooth  /E=3  /F SmearPointsNum, ModelIntensity
+	endif
 
 	if(calledFromFitting)
 		SVAR FittingPower= root:Packages:Irena:CylinderModels:FittingPower
 		//FittingPower = "Int;I*Q;I*Q^2;I*Q^3;I*Q^4;
 		strswitch(FittingPower)
 			case "Int":
-			
+				break
 			case "I*Q":
 				ModelIntensity = ModelIntensity*OriginalQvector
+				break
 			case "I*Q^2":
 				ModelIntensity = ModelIntensity*OriginalQvector^2
+				break
 			case "I*Q^3":
 				ModelIntensity = ModelIntensity*OriginalQvector^3
+				break
 			case "I*Q^4":
 				ModelIntensity = ModelIntensity*OriginalQvector^4
+				break
 		endswitch
 	endif
+	NVAR AchievedChiSquare=root:Packages:Irena:CylinderModels:AchievedChiSquare
+	//give us chance to see also chi-square if needed
+	Wave/Z FitIntensityWave	= root:Packages:Irena:CylinderModels:FitIntensityWave
+	Wave/Z OriginalDataIntWave = root:Packages:Irena:CylinderModels:OriginalDataIntWave
+	if(calledFromFitting && WaveExists(FitIntensityWave))	
+		Wave FitQvectorWave = root:Packages:Irena:CylinderModels:FitQvectorWave
+		Wave FitErrorWave = root:Packages:Irena:CylinderModels:FitErrorWave
+		Duplicate/Free FitIntensityWave, tempChiSqWv
+		tempChiSqWv = (FitIntensityWave - ModelIntensity)^2 / FitErrorWave^2
+		tempChiSqWv = numtype(tempChiSqWv[p])<1 ? tempChiSqWv[p] : 0
+		AchievedChiSquare = sum(tempChiSqWv)
+		if(PrintFitProgress)
+			print "Chi-square = "+num2str(AchievedChiSquare)
+		endif
+	elseif(!calledFromFitting && WaveExists(OriginalDataIntWave))
+		Wave OriginalDataQWave = root:Packages:Irena:CylinderModels:OriginalDataQWave
+		Wave OriginalDataErrorWave=root:Packages:Irena:CylinderModels:OriginalDataErrorWave
+		Duplicate/Free OriginalDataIntWave, tempChiSqWv
+		tempChiSqWv = (OriginalDataIntWave - ModelIntensity)^2 / OriginalDataErrorWave^2
+		tempChiSqWv = numtype(tempChiSqWv[p])<1 ? tempChiSqWv[p] : 0
+		AchievedChiSquare = sum(tempChiSqWv)
+		if(PrintFitProgress)
+			print "Chi-square = "+num2str(AchievedChiSquare)
+		endif
+	else
+		AchievedChiSquare = 0
+	endif
+
 
 	Duplicate/O OriginalQvector, OriginalQvector4, OriginalQvector3
 	OriginalQvector4 = OriginalQvector^4
@@ -871,7 +953,30 @@ Function IR3F_CalcCSElProfile(Qvalues,Intensity, length, radius, AspectRatio, Sh
 	wave Intensity
 
 	IR3F_SetupWarningPanel(calledFromFitting,0)
-	IR3F_CreateParametrizedProfile(length, radius, AspectRatio, Shell1th, Shell1SLD, Shell2th, Shell2SLD)  
+	NVAR ProfileNumPoints=root:Packages:Irena:CylinderModels:ProfileNumPoints
+	IR3F_CreateParametrizedProfile(ProfileNumPoints,length, radius, AspectRatio, Shell1th, Shell1SLD, Shell2th, Shell2SLD)  
+	wave Profile		//this is SLD steps, x scaling gives step, x value is radius
+	variable step = dimDelta(Profile,0)
+	
+	variable startT, endT
+	startT = ticks
+	
+	multithread Intensity = IR3F_CSElProfileInt(Qvalues[p],profile,AspectRatio, Length)
+	
+	endT = (ticks-startT)/60
+	print "Time to calculate was = "+num2str(endT)+" seconds"
+	IR3F_KillWarningPanel()
+	Intensity *=1e-13//scaling to fix to Modeling calculations. Not sure why
+end
+//*******************************************************************************************************************************************
+Function IR3F_CalcCSElProfile2(Qvalues,Intensity, length, radius, AspectRatio, Shell1th, Shell1SLD, Shell2th, Shell2SLD, Shell3th, Shell3SLD, calledFromFitting)
+	variable length, radius, AspectRatio, Shell1th, Shell1SLD, Shell2th, Shell2SLD,Shell3th, Shell3SLD,calledFromFitting
+	wave Qvalues
+	wave Intensity
+
+	IR3F_SetupWarningPanel(calledFromFitting,0)
+	NVAR ProfileNumPoints=root:Packages:Irena:CylinderModels:ProfileNumPoints
+	IR3F_CreateParametrizedProfile2(ProfileNumPoints,length, radius, AspectRatio, Shell1th, Shell1SLD, Shell2th, Shell2SLD,Shell3th, Shell3SLD)  
 	wave Profile		//this is SLD steps, x scaling gives step, x value is radius
 	variable step = dimDelta(Profile,0)
 	
@@ -1002,13 +1107,13 @@ end
 
 
 //*****************************************************************************************************************
-//	this creates density profile in 100 steps; profile is parametrized to bunch of parameters
+//	this creates density profile with user defined No of steps; profile is parametrized to bunch of parameters
 //*****************************************************************************************************************
-Function IR3F_CreateParametrizedProfile(length, radius, AspectRatio, Shell1th, Shell1SLD, Shell2th, Shell2SLD)  
-	variable length, radius, AspectRatio, Shell1th, Shell1SLD, Shell2th, Shell2SLD
+Function IR3F_CreateParametrizedProfile(ProfileNumPoints,length, radius, AspectRatio, Shell1th, Shell1SLD, Shell2th, Shell2SLD)  
+	variable ProfileNumPoints, length, radius, AspectRatio, Shell1th, Shell1SLD, Shell2th, Shell2SLD
 	
 	setDataFolder root:Packages:Irena:CylinderModels:
-	make/O/N=100 Profile	
+	make/O/N=(ProfileNumPoints) Profile	
 	NVAR ProfileMaxX=root:Packages:Irena:CylinderModels:ProfileMaxX
 	SetScale/P x 0,(ProfileMaxX/100),"A", Profile
 	variable step = dimDelta(Profile,0)
@@ -1021,15 +1126,82 @@ Function IR3F_CreateParametrizedProfile(length, radius, AspectRatio, Shell1th, S
 	// SLD=0 beyond
 	//
 	Profile = 0
-	Profile [0,radius/step]=0
-	Profile [(radius)/step+1, (radius+Shell1th)/step]=Shell1SLD
-	Profile [(radius+Shell1th)/step+1,(radius+Shell1th+Shell2th)/step]=Shell2SLD
-	Profile [(radius+Shell1th+Shell2th)/step+1,(radius+Shell1th+Shell2th+Shell1th)/step]=Shell1SLD
+	variable LastRadius=radius
+	Profile [0,LastRadius/step]=0										//code
+	Profile [LastRadius/step+1, (LastRadius+Shell1th)/step]=Shell1SLD	//shell1
+	LastRadius = LastRadius+Shell1th
+	Profile [(LastRadius)/step+1,(LastRadius+Shell2th)/step]=Shell2SLD	//shell2
+	LastRadius = LastRadius+Shell2th
+	Profile [(LastRadius)/step+1,(LastRadius+Shell1th)/step]=Shell1SLD	//shell1 again
+	LastRadius = LastRadius+Shell1th
+
+	DoWIndow IR3F_SLDProfile
+	if(!V_Flag)
+		Display /W=(521,750,1383,1100)/K=1 /N=IR3F_SLDProfile
+		AppendToGraph /W=IR3F_SLDProfile Profile
+		Label left "Δ SLD [10\\S10 \\Mcm\\S2\\M]"
+		Label bottom "Radial distance [Angstroms]"
+		ModifyGraph mirror=1
+		SetAxis/A
+		AutoPositionWindow/M=1 /R=IR3F_LogLogDataDisplay	IR3F_SLDProfile	
+	else
+		DoWIndow/F IR3F_SLDProfile
+	endif
+
+end
+//*****************************************************************************************************************
+Function IR3F_CreateParametrizedProfile2(ProfileNumPoints,length, radius, AspectRatio, Shell1th, Shell1SLD, Shell2th, Shell2SLD,Shell3th, Shell3SLD)  
+	variable ProfileNumPoints, length, radius, AspectRatio, Shell1th, Shell1SLD, Shell2th, Shell2SLD,Shell3th, Shell3SLD
+	
+	setDataFolder root:Packages:Irena:CylinderModels:
+	make/O/N=(ProfileNumPoints) Profile	
+	NVAR ProfileMaxX=root:Packages:Irena:CylinderModels:ProfileMaxX
+	SetScale/P x 0,(ProfileMaxX/ProfileNumPoints),"A", Profile
+	variable step = dimDelta(Profile,0)
+	//define profile here...
+	//Profile is:
+	// from 0 to radius SLD=0
+	// from radius to radius+Shell1th SLD=Shell1SLD
+	// from radius+Shell1th to radius+Shell1th+Shell2th SLD= Shell2SLD
+	// from radius+Shell1th+Shell2th to radius+Shell1th+Shell2th+Shell1th SLD=Shell1SLD
+	// SLD=0 beyond
+	//
+	Profile = 0
+	variable LastRadius=radius
+	Profile [0,LastRadius/step]=0										//code
+	Profile [LastRadius/step+1, (LastRadius+Shell1th)/step]=Shell1SLD	//shell1
+	LastRadius = LastRadius+Shell1th
+	Profile [(LastRadius)/step+1,(LastRadius+Shell2th)/step]=Shell2SLD	//shell2
+	LastRadius = LastRadius+Shell2th
+	Profile [(LastRadius)/step+1,(LastRadius+Shell1th)/step]=Shell1SLD	//shell1 again
+	LastRadius = LastRadius+Shell1th
+	Profile [(LastRadius)/step+1,(LastRadius+Shell3th)/step]=Shell3SLD	//shell3 = core of shell
+	LastRadius = LastRadius+Shell3th
+	Profile [(LastRadius)/step+1,(LastRadius+Shell1th)/step]=Shell1SLD	//shell1 again
+	LastRadius = LastRadius+Shell1th
+	Profile [(LastRadius)/step+1,(LastRadius+Shell2th)/step]=Shell2SLD	//shell2
+	LastRadius = LastRadius+Shell2th
+	Profile [(LastRadius)/step+1,(LastRadius+Shell1th)/step]=Shell1SLD	//shell1 again
+
+	DoWIndow IR3F_SLDProfile
+	if(!V_Flag)
+		Display /W=(521,750,1383,1100)/K=1 /N=IR3F_SLDProfile
+		AppendToGraph /W=IR3F_SLDProfile Profile
+		Label left "Δ SLD [10\\S10 \\Mcm\\S2\\M]"
+		Label bottom "Radial distance [Angstroms]"
+		ModifyGraph mirror=1
+		SetAxis/A
+		AutoPositionWindow/M=1 /R=IR3F_LogLogDataDisplay	IR3F_SLDProfile	
+	else
+		DoWIndow/F IR3F_SLDProfile
+	endif
+
+
 end
 //*****************************************************************************************************************
 //	internal function for core shell Profile calculations
 //*****************************************************************************************************************
-threadsafe static function IR3F_CSElProfileInt(Qval,profile,AspectRatio, Length)
+threadsafe function IR3F_CSElProfileInt(Qval,profile,AspectRatio, Length)
 		variable Qval, AspectRatio, Length
 		wave profile
 		//notes: There are two ways to calculate Form factor * Volume for layered profile here. 

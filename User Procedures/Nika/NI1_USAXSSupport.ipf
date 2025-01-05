@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.54
+#pragma version=1.55
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2025, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.55 added 12IDE USAXS/SAXS/WAXS works also. started 11-2024
 //1.54 added 20ID beamline to support, USAXS/SAXS/WAXS in 2022-2023
 //1.53 Added Dexela HDF5 support for WAXS, Fixed offset is read and set in NI1_9IDWFindI0, there is no function in Nika to set thsi dynamically. 
 //1.52 Added mask which can mask off low sensitivity pixels between tiles. 
@@ -68,7 +69,7 @@
 //this is package for support of 15ID-D SAXS and SAXS instruments. 
 
 
-Function NI1_9IDCConfigureNika()
+Function NI1_APSConfigureNika()
 
 	string OldDFf=GetDataFolder(1)
 
@@ -2165,7 +2166,7 @@ Function NI1_9IDCFindTransmission(SampleName)
 	NVAR USAXSForceTransmissionDialog = root:Packages:Convert2Dto1D:USAXSForceTransmissionDialog
 	NVAR USAXSForceUSAXSTransmission = root:Packages:Convert2Dto1D:USAXSForceUSAXSTransmission
 
-	//try to calculate the transmission using the 2012-03 pinPD placed on teh front of teh snout...
+	//try to calculate the transmission using the 2012-03 PD placed on the front of the snout...
 	
 	variable CalcTrans = NI1_9IDCNXTransmission()
 	
@@ -2517,7 +2518,7 @@ Function NI1_9IDCFindEfI0(SampleName)
 		endif
 		string USAXSUsedBlankName
 		if(WaveExists(SMR_Int))
-			USAXSUsedBlankName=StringByKey("BlankComment", note(SMR_Int) , "="  , ";")
+			USAXSUsedBlankName=StringByKey("BlankFolder", note(SMR_Int) , "="  , ";")
 			USAXSUsedBlankName=ReplaceString(" ", USAXSUsedBlankName, "_")
 		else
 			USAXSUsedBlankName=""

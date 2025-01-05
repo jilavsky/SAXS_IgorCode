@@ -89,61 +89,73 @@ Function IR3F_CylinderPanelFnct()
 	IR3C_MultiAppendControls("Irena:CylinderModels","IR3F_CylinderModelsPanel", "IR3F_CopyAndAppendData","",1,1)
 	//hide what is not needed
 	checkbox UseResults, disable=1
-	SetVariable DataQEnd,pos={290,90},size={190,15}, proc=IR3F_SetVarProc,title="Q max "
+	Button GetHelp,pos={430,40},size={80,15},fColor=(65535,32768,32768), proc=IR3F_ButtonProc,title="Get Help", help={"Open www manual page for this tool"}
+	SetVariable DataQEnd,pos={290,83},size={190,15}, proc=IR3F_SetVarProc,title="Q max "
 	Setvariable DataQEnd, variable=root:Packages:Irena:CylinderModels:DataQEnd, limits={-inf,inf,0}
-	SetVariable DataQstart,pos={290,110},size={190,15}, proc=IR3F_SetVarProc,title="Q min "
+	SetVariable DataQstart,pos={290,65},size={190,15}, proc=IR3F_SetVarProc,title="Q min "
 	Setvariable DataQstart, variable=root:Packages:Irena:CylinderModels:DataQstart, limits={-inf,inf,0}
-	SetVariable DataFolderName,noproc,title=" ",pos={260,145},size={260,20},frame=0, fstyle=1,fSize=11,valueColor=(0,0,65535)
+	SetVariable DataFolderName,noproc,title=" ",pos={260,100},size={260,20},frame=0, fstyle=1,fSize=11,valueColor=(0,0,65535)
 	Setvariable DataFolderName, variable=root:Packages:Irena:CylinderModels:DataFolderName, noedit=1
 
 	//Button SelectAll,pos={187,680},size={80,15}, proc=IR3F_ButtonProc,title="SelectAll", help={"Select All data in Listbox"}
-	Button GetHelp,pos={430,50},size={80,15},fColor=(65535,32768,32768), proc=IR3F_ButtonProc,title="Get Help", help={"Open www manual page for this tool"}
-	PopupMenu ModelSelected,pos={280,165},size={200,20},fStyle=2,proc=IR3F_PopMenuProc,title="Function : "
+	PopupMenu ModelSelected,pos={280,125},size={200,20},fStyle=2,proc=IR3F_PopMenuProc,title="Function : "
 	SVAR ModelSelected = root:Packages:Irena:CylinderModels:ModelSelected
 	PopupMenu ModelSelected,mode=1,popvalue=ModelSelected,value= #"root:Packages:Irena:CylinderModels:ListOfModels" 
 
 	//	here will be model variables/controls... These will be attached to specific variables later... 
-	SetVariable ModelVarPar1,pos={340,190},size={110,17},title="ModelVarPar1",proc=IR3F_SetVarProc, disable=1, bodywidth=70,limits={0,inf,1}, help={"ModelVarPar1"}
-	CheckBox FitModelVarPar1,pos={470,190},size={79,14},proc=IR3F_FitCheckProc,title="Fit?", help={"Fit this parameter?"}, disable=1
-	SetVariable ModelVarPar2,pos={340,210},size={110,17},title="ModelVarPar2",proc=IR3F_SetVarProc, disable=1, bodywidth=70,limits={0,inf,1}, help={"ModelVarPar2"}
-	CheckBox FitModelVarPar2,pos={470,210},size={79,14},proc=IR3F_FitCheckProc,title="Fit?", help={"Fit this parameter?"}, disable=1
-	SetVariable ModelVarPar3,pos={340,230},size={110,17},title="ModelVarPar3",proc=IR3F_SetVarProc, disable=1, bodywidth=70,limits={0,inf,1}, help={"ModelVarPar3"}
-	CheckBox FitModelVarPar3,pos={470,230},size={79,14},proc=IR3F_FitCheckProc,title="Fit?", help={"Fit this parameter?"}, disable=1
-	SetVariable ModelVarPar4,pos={340,250},size={110,17},title="ModelVarPar4",proc=IR3F_SetVarProc, disable=1, bodywidth=70,limits={0,inf,1}, help={"ModelVarPar4"}
-	CheckBox FitModelVarPar4,pos={470,250},size={79,14},proc=IR3F_FitCheckProc,title="Fit?", help={"Fit this parameter?"}, disable=1
-	SetVariable ModelVarPar5,pos={340,270},size={110,17},title="ModelVarPar5",proc=IR3F_SetVarProc, disable=1, bodywidth=70,limits={0,inf,1}, help={"ModelVarPar5"}
-	CheckBox FitModelVarPar5,pos={470,270},size={79,14},proc=IR3F_FitCheckProc,title="Fit?", help={"Fit this parameter?"}, disable=1
-	SetVariable ModelVarPar6,pos={340,290},size={110,17},title="ModelVarPar6",proc=IR3F_SetVarProc, disable=1, bodywidth=70,limits={0,inf,1}, help={"ModelVarPar6"}
-	CheckBox FitModelVarPar6,pos={470,290},size={79,14},proc=IR3F_FitCheckProc,title="Fit?", help={"Fit this parameter?"}, disable=1
-	SetVariable ModelVarPar7,pos={340,310},size={110,17},title="ModelVarPar7",proc=IR3F_SetVarProc, disable=1, bodywidth=70,limits={0,inf,1}, help={"ModelVarPar7"}
-	CheckBox FitModelVarPar7,pos={470,310},size={79,14},proc=IR3F_FitCheckProc,title="Fit?", help={"Fit this parameter?"}, disable=1
-	SetVariable ModelVarPar8,pos={340,330},size={110,17},title="ModelVarPar8",proc=IR3F_SetVarProc, disable=1, bodywidth=70,limits={0,inf,1}, help={"ModelVarPar8"}
-	CheckBox FitModelVarPar8,pos={470,330},size={79,14},proc=IR3F_FitCheckProc,title="Fit?", help={"Fit this parameter?"}, disable=1
+	SetVariable ModelVarPar1,pos={340,150},size={110,17},title="ModelVarPar1",proc=IR3F_SetVarProc, disable=1, bodywidth=70,limits={0,inf,1}, help={"ModelVarPar1"}
+	CheckBox FitModelVarPar1,pos={470,150},size={79,14},proc=IR3F_FitCheckProc,title="Fit?", help={"Fit this parameter?"}, disable=1
+	SetVariable ModelVarPar2,pos={340,170},size={110,17},title="ModelVarPar2",proc=IR3F_SetVarProc, disable=1, bodywidth=70,limits={0,inf,1}, help={"ModelVarPar2"}
+	CheckBox FitModelVarPar2,pos={470,170},size={79,14},proc=IR3F_FitCheckProc,title="Fit?", help={"Fit this parameter?"}, disable=1
+	SetVariable ModelVarPar3,pos={340,190},size={110,17},title="ModelVarPar3",proc=IR3F_SetVarProc, disable=1, bodywidth=70,limits={0,inf,1}, help={"ModelVarPar3"}
+	CheckBox FitModelVarPar3,pos={470,190},size={79,14},proc=IR3F_FitCheckProc,title="Fit?", help={"Fit this parameter?"}, disable=1
+	SetVariable ModelVarPar4,pos={340,210},size={110,17},title="ModelVarPar4",proc=IR3F_SetVarProc, disable=1, bodywidth=70,limits={0,inf,1}, help={"ModelVarPar4"}
+	CheckBox FitModelVarPar4,pos={470,210},size={79,14},proc=IR3F_FitCheckProc,title="Fit?", help={"Fit this parameter?"}, disable=1
+	SetVariable ModelVarPar5,pos={340,230},size={110,17},title="ModelVarPar5",proc=IR3F_SetVarProc, disable=1, bodywidth=70,limits={0,inf,1}, help={"ModelVarPar5"}
+	CheckBox FitModelVarPar5,pos={470,230},size={79,14},proc=IR3F_FitCheckProc,title="Fit?", help={"Fit this parameter?"}, disable=1
+	SetVariable ModelVarPar6,pos={340,250},size={110,17},title="ModelVarPar6",proc=IR3F_SetVarProc, disable=1, bodywidth=70,limits={0,inf,1}, help={"ModelVarPar6"}
+	CheckBox FitModelVarPar6,pos={470,250},size={79,14},proc=IR3F_FitCheckProc,title="Fit?", help={"Fit this parameter?"}, disable=1
+	SetVariable ModelVarPar7,pos={340,270},size={110,17},title="ModelVarPar7",proc=IR3F_SetVarProc, disable=1, bodywidth=70,limits={0,inf,1}, help={"ModelVarPar7"}
+	CheckBox FitModelVarPar7,pos={470,270},size={79,14},proc=IR3F_FitCheckProc,title="Fit?", help={"Fit this parameter?"}, disable=1
+	SetVariable ModelVarPar8,pos={340,290},size={110,17},title="ModelVarPar8",proc=IR3F_SetVarProc, disable=1, bodywidth=70,limits={0,inf,1}, help={"ModelVarPar8"}
+	CheckBox FitModelVarPar8,pos={470,290},size={79,14},proc=IR3F_FitCheckProc,title="Fit?", help={"Fit this parameter?"}, disable=1
+	SetVariable ModelVarPar9,pos={340,310},size={110,17},title="ModelVarPar9",proc=IR3F_SetVarProc, disable=1, bodywidth=70,limits={0,inf,1}, help={"ModelVarPar9"}
+	CheckBox FitModelVarPar9,pos={470,310},size={79,14},proc=IR3F_FitCheckProc,title="Fit?", help={"Fit this parameter?"}, disable=1
+	SetVariable ModelVarPar10,pos={340,330},size={110,17},title="ModelVarPar10",proc=IR3F_SetVarProc, disable=1, bodywidth=70,limits={0,inf,1}, help={"ModelVarPar10"}
+	CheckBox FitModelVarPar10,pos={470,330},size={79,14},proc=IR3F_FitCheckProc,title="Fit?", help={"Fit this parameter?"}, disable=1
 
 
-	SetVariable ModelVarPar1LL,pos={260,355},size={60,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Lower fitting limit Var1"}
-	SetVariable ModelVarPar1UL,pos={340,355},size={100,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Upper fitting limit Var1"}
-	SetVariable ModelVarPar2LL,pos={260,375},size={60,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Lower fitting limit Var2"}
-	SetVariable ModelVarPar2UL,pos={340,375},size={100,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Upper fitting limit Var2"}
-	SetVariable ModelVarPar3LL,pos={260,395},size={60,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Lower fitting limit Var3"}
-	SetVariable ModelVarPar3UL,pos={340,395},size={100,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Upper fitting limit Var3"}
-	SetVariable ModelVarPar4LL,pos={260,415},size={60,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Lower fitting limit Var4"}
-	SetVariable ModelVarPar4UL,pos={340,415},size={100,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Upper fitting limit Var4"}
-	SetVariable ModelVarPar5LL,pos={260,435},size={60,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Lower fitting limit Var5"}
-	SetVariable ModelVarPar5UL,pos={340,435},size={100,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Upper fitting limit Var5"}
-	SetVariable ModelVarPar6LL,pos={260,455},size={60,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Lower fitting limit Var6"}
-	SetVariable ModelVarPar6UL,pos={340,455},size={100,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Upper fitting limit Var6"}
-	SetVariable ModelVarPar7LL,pos={260,475},size={60,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Lower fitting limit Var7"}
-	SetVariable ModelVarPar7UL,pos={340,475},size={100,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Upper fitting limit Var7"}
-	SetVariable ModelVarPar8LL,pos={260,495},size={60,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Lower fitting limit Var8"}
-	SetVariable ModelVarPar8UL,pos={340,495},size={100,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Upper fitting limit Var8"}
+	SetVariable ModelVarPar1LL,pos={260,360},size={60,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Lower fitting limit Var1"}
+	SetVariable ModelVarPar1UL,pos={340,360},size={100,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Upper fitting limit Var1"}
+	SetVariable ModelVarPar2LL,pos={260,376},size={60,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Lower fitting limit Var2"}
+	SetVariable ModelVarPar2UL,pos={340,376},size={100,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Upper fitting limit Var2"}
+	SetVariable ModelVarPar3LL,pos={260,392},size={60,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Lower fitting limit Var3"}
+	SetVariable ModelVarPar3UL,pos={340,392},size={100,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Upper fitting limit Var3"}
+	SetVariable ModelVarPar4LL,pos={260,408},size={60,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Lower fitting limit Var4"}
+	SetVariable ModelVarPar4UL,pos={340,408},size={100,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Upper fitting limit Var4"}
+	SetVariable ModelVarPar5LL,pos={260,424},size={60,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Lower fitting limit Var5"}
+	SetVariable ModelVarPar5UL,pos={340,424},size={100,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Upper fitting limit Var5"}
+	SetVariable ModelVarPar6LL,pos={260,440},size={60,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Lower fitting limit Var6"}
+	SetVariable ModelVarPar6UL,pos={340,440},size={100,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Upper fitting limit Var6"}
+	SetVariable ModelVarPar7LL,pos={260,456},size={60,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Lower fitting limit Var7"}
+	SetVariable ModelVarPar7UL,pos={340,456},size={100,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Upper fitting limit Var7"}
+	SetVariable ModelVarPar8LL,pos={260,472},size={60,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Lower fitting limit Var8"}
+	SetVariable ModelVarPar8UL,pos={340,472},size={100,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Upper fitting limit Var8"}
+	SetVariable ModelVarPar9LL,pos={260,488},size={60,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Lower fitting limit Var9"}
+	SetVariable ModelVarPar9UL,pos={340,488},size={100,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Upper fitting limit Var9"}
+	SetVariable ModelVarPar10LL,pos={260,504},size={60,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Lower fitting limit Var10"}
+	SetVariable ModelVarPar10UL,pos={340,504},size={100,17},title=" ",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Upper fitting limit Var10"}
 
 	Button ModelButton1,pos={500,345},size={80,20}, proc=IR3F_ButtonProc, title="Button1", help={""}, disable=0
 	Button ModelButton2,pos={500,370},size={80,20}, proc=IR3F_ButtonProc, title="Button2", help={""}, disable=0
 	Button ModelButton3,pos={500,395},size={80,20}, proc=IR3F_ButtonProc, title="Button3", help={""}, disable=0
 
-	SetVariable ProfileMaxX,pos={400,530},size={70,17},title="Profile max radius [A]",noproc, disable=1, bodywidth=60,limits={0,inf,1}, help={"Max radius considered in Profile"}
-	SetVariable ProfileMaxX win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ProfileMaxX
+
+	//NVAR ProfileNumPoints=root:Packages:Irena:CylinderModels:ProfileNumPoints
+	SetVariable ProfileNumPoints,pos={300,530},size={70,17},title="Profile pnts",proc=IR3F_SetVarProc, disable=1, bodywidth=60,limits={0,300,20}, help={"Num points in Profile"}
+	SetVariable ProfileNumPoints value=root:Packages:Irena:CylinderModels:ProfileNumPoints
+	SetVariable ProfileMaxX,pos={470,530},size={70,17},title="Profile max radius [A]",proc=IR3F_SetVarProc, disable=1, bodywidth=60,limits={0,inf,5}, help={"Max radius considered in Profile"}
+	SetVariable ProfileMaxX value=root:Packages:Irena:CylinderModels:ProfileMaxX
 //	CheckBox UseGMatrixCalculations,pos={400,550},size={79,14},title="Use Matrix Calc", help={"Use calculations which are faster when changing only profile?"}, disable=1
 //	CheckBox UseGMatrixCalculations,noproc,variable= root:Packages:Irena:CylinderModels:UseGMatrixCalculations
 
@@ -165,9 +177,19 @@ Function IR3F_CylinderPanelFnct()
 //	SetVariable UnifPwrlawP,limits={0,5,0.1},value= root:Packages:Irena:CylinderModels:UnifiedPar[3][0], help={"Power law slope of low-Q region"}
 //	SetVariable UnifRgCO,pos={270,580},size={110,17},title="RgCO  ",proc=IR3F_SetVarProc, disable=!(UseUnified), bodywidth=70
 //	SetVariable UnifRgCO,limits={0,inf,10},value= root:Packages:Irena:CylinderModels:UnifiedPar[4][0], help={"Rg cutt off for low-Q region"}
+	CheckBox UseGeneticOptimization,pos={270,555},size={79,14},noproc,title="Genetic Optimization Fitting?", variable= root:Packages:Irena:CylinderModels:UseGeneticOptimization, help={"Fit using Genetic Optimization (SLOW)?"}
+	CheckBox FixedWeights,pos={450,555},size={79,14},noproc,title="Fix weight?", variable= root:Packages:Irena:CylinderModels:FixedWeights, help={"Fit with fixed weights of 3% (not uncertainties)?"}
+
+
+	SetVariable SmearPointsNum,pos={400,570},size={140,16},proc=IR3F_SetVarProc,title="Smearing pnts ", help={"Smears data over this many points to fake resolution smearing"}
+	SetVariable SmearPointsNum,limits={0,100,1}, variable= root:Packages:Irena:CylinderModels:SmearPointsNum
+
 	PopupMenu FittingPower,pos={270,580},size={200,20},fStyle=2,proc=IR3F_PopMenuProc,title="Fit I*Q^x : "
 	SVAR FittingPower = root:Packages:Irena:CylinderModels:FittingPower
 	PopupMenu FittingPower,mode=1,popvalue=FittingPower,value= #"root:Packages:Irena:CylinderModels:ListOfFittingPowers" 
+
+	SetVariable AchievedChiSquare,pos={400,590},size={140,16},noproc,title="Chi-square ", help={"Chi-square of the model vs data (Int vs Q)"}
+	SetVariable AchievedChiSquare,noedit=1,limits={-inf,Inf,0}, variable= root:Packages:Irena:CylinderModels:AchievedChiSquare
 
 	SetVariable SASBackground,pos={270,610},size={150,16},proc=IR3F_SetVarProc,title="SAS Background", help={"Background of SAS"}, bodywidth=70
 	SetVariable SASBackground,limits={-inf,Inf,1},variable= root:Packages:Irena:CylinderModels:SASBackground
@@ -183,6 +205,7 @@ Function IR3F_CylinderPanelFnct()
 
 	CheckBox FitSASBackground,pos={450,610},size={79,14},noproc,title="Fit?", variable= root:Packages:Irena:CylinderModels:FitSASBackground, help={"Fit this parameter?"}
 //
+
 
 	//final controls... 
 	Button RecalculateModel,pos={275,640},size={110,20}, proc=IR3F_ButtonProc, title="Calculate Model", help={"Calculate Model using parameters above"}
@@ -234,6 +257,8 @@ static Function IR3F_SetupControlsOnMainpanel()
 	//CSElCylParNames = 		{"Prefactor","Radius","Length","SLD","ShellThickness","AspectRatio"}
 	Wave ProfCSElCylPar= root:Packages:Irena:CylinderModels:ProfCSElCylPar
 	//ProfCSElCylParNames = {"Prefactor","Radius","Length","AspectRatio","Shell1Th","Shell1SLD", "Shell2th", "Shell2SLD"}
+	Wave ProfCSElCylPar2= root:Packages:Irena:CylinderModels:ProfCSElCylPar2
+	//ProfCSElCylParNames = {"Prefactor","Radius","Length","AspectRatio","Shell1Th","Shell1SLD", "Shell2th", "Shell2SLD", "Shell3th", "Shell3SLD"}
 	
 	//Wave UBGPar 	= 	root:Packages:Irena:CylinderModels:UBGPar
 	//UBGParNames = {"Rg1","B1","pack","CorrDist","StackIrreg","kI"}
@@ -245,10 +270,15 @@ static Function IR3F_SetupControlsOnMainpanel()
 				SetVariable ModelVarPar1 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:CylPar[0][0] ,title="Scale         ", disable=0, limits={-inf,inf,IR3FSetVariableStepRatio*CylPar[0][0]}, help={"Scale"}
 				SetVariable ModelVarPar2 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:CylPar[1][0] ,title="Radius [A]    ", disable=0, limits={1,inf,IR3FSetVariableStepRatio*CylPar[1][0]}, help={"Radius of the cylinder, A"}
 				SetVariable ModelVarPar3 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:CylPar[2][0] ,title="Length [A]    ", disable=0, limits={10,inf,IR3FSetVariableStepRatio*CylPar[2][0]}, help={"Length of cylinder, A"}
-				SetVariable ModelVarPar4 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:CylPar[3][0] ,title="Δ SLD [10^10cm^-2]", disable=0, limits={0.01,inf,IR3FSetVariableStepRatio*CylPar[3][0]}, help={"SLD of core (NOT dRho^2)"}
+				SetVariable ModelVarPar4 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:CylPar[3][0] ,title="Δ SLD [10^10cm^-2]", disable=0, limits={-inf,inf,IR3FSetVariableStepRatio*CylPar[3][0]}, help={"SLD of core (NOT dRho^2)"}
 				SetVariable ModelVarPar5 win=IR3F_CylinderModelsPanel, disable=1, noedit=0
 				SetVariable ModelVarPar6 win=IR3F_CylinderModelsPanel, disable=1, noedit=0
 				SetVariable ModelVarPar7 win=IR3F_CylinderModelsPanel, disable=1, noedit=0
+				SetVariable ModelVarPar8 win=IR3F_CylinderModelsPanel, disable=1, noedit=0
+				SetVariable ModelVarPar9 win=IR3F_CylinderModelsPanel,disable=1
+				CheckBox FitModelVarPar9 win=IR3F_CylinderModelsPanel,disable=1
+				SetVariable ModelVarPar10 win=IR3F_CylinderModelsPanel,disable=1
+				CheckBox FitModelVarPar10 win=IR3F_CylinderModelsPanel,disable=1
 
 				CheckBox FitModelVarPar1 win=IR3F_CylinderModelsPanel,value= CylPar[0][1], disable=0 	//variable= root:Packages:Irena:CylinderModels:FitDBPrefactor, disable=1
 				CheckBox FitModelVarPar2 win=IR3F_CylinderModelsPanel,value= CylPar[2][1], disable=0
@@ -257,6 +287,7 @@ static Function IR3F_SetupControlsOnMainpanel()
 				CheckBox FitModelVarPar5 win=IR3F_CylinderModelsPanel,disable=1
 				CheckBox FitModelVarPar6 win=IR3F_CylinderModelsPanel,disable=1
 				CheckBox FitModelVarPar7 win=IR3F_CylinderModelsPanel,disable=1
+				CheckBox FitModelVarPar8 win=IR3F_CylinderModelsPanel,disable=1
 
 				Button ModelButton1 win=IR3F_CylinderModelsPanel, title="", help={""}, disable=1
 				Button ModelButton2 win=IR3F_CylinderModelsPanel, title="", help={""}, disable=1
@@ -276,6 +307,14 @@ static Function IR3F_SetupControlsOnMainpanel()
 				SetVariable ModelVarPar6UL win=IR3F_CylinderModelsPanel, disable=1
 				SetVariable ModelVarPar7LL win=IR3F_CylinderModelsPanel, disable=1
 				SetVariable ModelVarPar7UL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ModelVarPar8LL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ModelVarPar8UL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ModelVarPar9LL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ModelVarPar9UL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ModelVarPar10LL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ModelVarPar10UL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ProfileMaxX win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ProfileNumPoints win=IR3F_CylinderModelsPanel, disable=1
 				break		// exit from switch
 
 			case "Core Shell Cylinder":	// execute if case matches expression
@@ -283,10 +322,15 @@ static Function IR3F_SetupControlsOnMainpanel()
 				SetVariable ModelVarPar1 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:CSCylPar[0][0] ,title="Scale         ", disable=0, limits={-inf,inf,IR3FSetVariableStepRatio*CSCylPar[0][0]}, help={"Scale"}
 				SetVariable ModelVarPar2 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:CSCylPar[1][0] ,title="Radius [A]    ", disable=0, limits={1,inf,IR3FSetVariableStepRatio*CSCylPar[1][0]}, help={"Radius of the cylinder, A"}
 				SetVariable ModelVarPar3 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:CSCylPar[2][0] ,title="Length [A]    ", disable=0, limits={10,inf,IR3FSetVariableStepRatio*CSCylPar[2][0]}, help={"Length of cylinder, A"}
-				SetVariable ModelVarPar4 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:CSCylPar[3][0] ,title="Δ SLD [10^10cm^-2]", disable=0, limits={0.01,inf,IR3FSetVariableStepRatio*CSCylPar[3][0]}, help={"SLD of core (NOT dRho^2)"}
+				SetVariable ModelVarPar4 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:CSCylPar[3][0] ,title="Δ SLD [10^10cm^-2]", disable=0, limits={-inf,inf,IR3FSetVariableStepRatio*CSCylPar[3][0]}, help={"SLD of core (NOT dRho^2)"}
 				SetVariable ModelVarPar5 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:CSCylPar[4][0] ,title="Shell Thick [A]", disable=0, limits={0.01,inf,IR3FSetVariableStepRatio*CSCylPar[4][0]}, help={"Thickenss of shell in A"}
 				SetVariable ModelVarPar6 win=IR3F_CylinderModelsPanel, disable=1, noedit=0
 				SetVariable ModelVarPar7 win=IR3F_CylinderModelsPanel, disable=1, noedit=0
+				SetVariable ModelVarPar8 win=IR3F_CylinderModelsPanel, disable=1, noedit=0
+				SetVariable ModelVarPar9 win=IR3F_CylinderModelsPanel,disable=1
+				CheckBox FitModelVarPar9 win=IR3F_CylinderModelsPanel,disable=1
+				SetVariable ModelVarPar10 win=IR3F_CylinderModelsPanel,disable=1
+				CheckBox FitModelVarPar10 win=IR3F_CylinderModelsPanel,disable=1
 
 				CheckBox FitModelVarPar1 win=IR3F_CylinderModelsPanel,value= CSCylPar[0][1], disable=0 	//variable= root:Packages:Irena:CylinderModels:FitDBPrefactor, disable=1
 				CheckBox FitModelVarPar2 win=IR3F_CylinderModelsPanel,value= CSCylPar[1][1], disable=0
@@ -295,6 +339,7 @@ static Function IR3F_SetupControlsOnMainpanel()
 				CheckBox FitModelVarPar5 win=IR3F_CylinderModelsPanel,value= CSCylPar[4][1], disable=0
 				CheckBox FitModelVarPar6 win=IR3F_CylinderModelsPanel,disable=1
 				CheckBox FitModelVarPar7 win=IR3F_CylinderModelsPanel,disable=1
+				CheckBox FitModelVarPar8 win=IR3F_CylinderModelsPanel,disable=1
 
 				Button ModelButton1 win=IR3F_CylinderModelsPanel, title="", help={""}, disable=1
 				Button ModelButton2 win=IR3F_CylinderModelsPanel, title="", help={""}, disable=1
@@ -309,8 +354,8 @@ static Function IR3F_SetupControlsOnMainpanel()
 				SetVariable ModelVarPar3LL win=IR3F_CylinderModelsPanel,disable=1
 				SetVariable ModelVarPar3UL win=IR3F_CylinderModelsPanel,disable=1
 				
-				SetVariable ModelVarPar4LL win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:CSCylPar[3][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for SLD"}
-				SetVariable ModelVarPar4UL win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:CSCylPar[3][3] ,title="< ΔSLD < ", disable=0, limits={0.01,inf,0}, help={"High limit for SLD"}
+				SetVariable ModelVarPar4LL win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:CSCylPar[3][2] ,title=" ", disable=0, limits={-inf,inf,0}, help={"Lower limit for SLD"}
+				SetVariable ModelVarPar4UL win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:CSCylPar[3][3] ,title="< ΔSLD < ", disable=0, limits={-inf,inf,0}, help={"High limit for SLD"}
 				
 				SetVariable ModelVarPar5LL win=IR3F_CylinderModelsPanel, value=root:Packages:Irena:CylinderModels:CSCylPar[4][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for Shell Thickness"}
 				SetVariable ModelVarPar5UL win=IR3F_CylinderModelsPanel, value=root:Packages:Irena:CylinderModels:CSCylPar[4][3] ,title="< ShTh < ", disable=0, limits={0.01,inf,0}, help={"High limit for Shell Thickness"}
@@ -320,6 +365,14 @@ static Function IR3F_SetupControlsOnMainpanel()
 				
 				SetVariable ModelVarPar7LL win=IR3F_CylinderModelsPanel, disable=1
 				SetVariable ModelVarPar7UL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ModelVarPar8LL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ModelVarPar8UL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ModelVarPar9LL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ModelVarPar9UL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ModelVarPar10LL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ModelVarPar10UL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ProfileMaxX win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ProfileNumPoints win=IR3F_CylinderModelsPanel, disable=1
 				break		// exit from switch
 
 			case "Ellip. Cylinder":	// execute if case matches expression
@@ -327,10 +380,15 @@ static Function IR3F_SetupControlsOnMainpanel()
 				SetVariable ModelVarPar1 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ElCylPar[0][0] ,title="Scale         ", disable=0, limits={-inf,inf,IR3FSetVariableStepRatio*ElCylPar[0][0]}, help={"Scale"}
 				SetVariable ModelVarPar2 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ElCylPar[1][0] ,title="Radius [A]    ", disable=0, limits={1,inf,IR3FSetVariableStepRatio*ElCylPar[1][0]}, help={"Radius of the cylinder, A"}
 				SetVariable ModelVarPar3 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ElCylPar[2][0] ,title="Length [A]    ", disable=0, limits={10,inf,IR3FSetVariableStepRatio*ElCylPar[2][0]}, help={"Length of cylinder, A"}
-				SetVariable ModelVarPar4 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ElCylPar[3][0] ,title="Δ SLD [10^10cm^-2]", disable=0, limits={0.01,inf,IR3FSetVariableStepRatio*ElCylPar[3][0]}, help={"SLD of core (NOT dRho^2)"}
+				SetVariable ModelVarPar4 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ElCylPar[3][0] ,title="Δ SLD [10^10cm^-2]", disable=0, limits={-inf,inf,IR3FSetVariableStepRatio*ElCylPar[3][0]}, help={"SLD of core (NOT dRho^2)"}
 				SetVariable ModelVarPar5 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ElCylPar[4][0] ,title="Aspect Ratio  ", disable=0, limits={0.01,inf,IR3FSetVariableStepRatio*ElCylPar[4][0]}, help={"Aspect Ratio, 0.5 - 2"}
 				SetVariable ModelVarPar6 win=IR3F_CylinderModelsPanel, disable=1, noedit=0
 				SetVariable ModelVarPar7 win=IR3F_CylinderModelsPanel, disable=1, noedit=0
+				SetVariable ModelVarPar8 win=IR3F_CylinderModelsPanel, disable=1, noedit=0
+				SetVariable ModelVarPar9 win=IR3F_CylinderModelsPanel,disable=1
+				CheckBox FitModelVarPar9 win=IR3F_CylinderModelsPanel,disable=1
+				SetVariable ModelVarPar10 win=IR3F_CylinderModelsPanel,disable=1
+				CheckBox FitModelVarPar10 win=IR3F_CylinderModelsPanel,disable=1
 
 				CheckBox FitModelVarPar1 win=IR3F_CylinderModelsPanel,value= ElCylPar[0][1], disable=0 	//variable= root:Packages:Irena:CylinderModels:FitDBPrefactor, disable=1
 				CheckBox FitModelVarPar2 win=IR3F_CylinderModelsPanel,value= ElCylPar[1][1], disable=0
@@ -339,6 +397,7 @@ static Function IR3F_SetupControlsOnMainpanel()
 				CheckBox FitModelVarPar5 win=IR3F_CylinderModelsPanel,value= ElCylPar[4][1], disable=0
 				CheckBox FitModelVarPar6 win=IR3F_CylinderModelsPanel,disable=1
 				CheckBox FitModelVarPar7 win=IR3F_CylinderModelsPanel,disable=1
+				CheckBox FitModelVarPar8 win=IR3F_CylinderModelsPanel,disable=1
 
 				Button ModelButton1 win=IR3F_CylinderModelsPanel, title="", help={""}, disable=1
 				Button ModelButton2 win=IR3F_CylinderModelsPanel, title="", help={""}, disable=1
@@ -353,8 +412,8 @@ static Function IR3F_SetupControlsOnMainpanel()
 				SetVariable ModelVarPar3LL win=IR3F_CylinderModelsPanel,disable=1
 				SetVariable ModelVarPar3UL win=IR3F_CylinderModelsPanel,disable=1
 				
-				SetVariable ModelVarPar4LL win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ElCylPar[3][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for SLD"}
-				SetVariable ModelVarPar4UL win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ElCylPar[3][3] ,title="< ΔSLD < ", disable=0, limits={0.01,inf,0}, help={"High limit for SLD"}
+				SetVariable ModelVarPar4LL win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ElCylPar[3][2] ,title=" ", disable=0, limits={-inf,inf,0}, help={"Lower limit for SLD"}
+				SetVariable ModelVarPar4UL win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ElCylPar[3][3] ,title="< ΔSLD < ", disable=0, limits={-inf,inf,0}, help={"High limit for SLD"}
 				
 				SetVariable ModelVarPar5LL win=IR3F_CylinderModelsPanel, value=root:Packages:Irena:CylinderModels:ElCylPar[4][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for AspectRatio"}
 				SetVariable ModelVarPar5UL win=IR3F_CylinderModelsPanel, value=root:Packages:Irena:CylinderModels:ElCylPar[4][3] ,title="< AR < ", disable=0, limits={0.01,inf,0}, help={"High limit for AspectRatio"}
@@ -364,6 +423,14 @@ static Function IR3F_SetupControlsOnMainpanel()
 				
 				SetVariable ModelVarPar7LL win=IR3F_CylinderModelsPanel, disable=1
 				SetVariable ModelVarPar7UL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ModelVarPar8LL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ModelVarPar8UL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ModelVarPar9LL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ModelVarPar9UL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ModelVarPar10LL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ModelVarPar10UL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ProfileMaxX win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ProfileNumPoints win=IR3F_CylinderModelsPanel, disable=1
 				break		// exit from switch
 
 			case "Core Shell Ellip. Cylinder":	// execute if case matches expression
@@ -371,10 +438,11 @@ static Function IR3F_SetupControlsOnMainpanel()
 				SetVariable ModelVarPar1 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:CSElCylPar[0][0] ,title="Scale         ", disable=0, limits={-inf,inf,IR3FSetVariableStepRatio*CSElCylPar[0][0]}, help={"Scale"}
 				SetVariable ModelVarPar2 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:CSElCylPar[1][0] ,title="Radius [A]    ", disable=0, limits={1,inf,IR3FSetVariableStepRatio*CSElCylPar[1][0]}, help={"Radius of the cylinder, A"}
 				SetVariable ModelVarPar3 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:CSElCylPar[2][0] ,title="Length [A]    ", disable=0, limits={10,inf,IR3FSetVariableStepRatio*CSElCylPar[2][0]}, help={"Length of cylinder, A"}
-				SetVariable ModelVarPar4 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:CSElCylPar[3][0] ,title="Δ SLD [10^10cm^-2]", disable=0, limits={0.01,inf,IR3FSetVariableStepRatio*CSElCylPar[3][0]}, help={"SLD of core (NOT dRho^2)"}
+				SetVariable ModelVarPar4 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:CSElCylPar[3][0] ,title="Δ SLD [10^10cm^-2]", disable=0, limits={-inf,inf,IR3FSetVariableStepRatio*CSElCylPar[3][0]}, help={"SLD of core (NOT dRho^2)"}
 				SetVariable ModelVarPar5 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:CSElCylPar[4][0] ,title="Shell Thick [A]", disable=0, limits={0.01,inf,IR3FSetVariableStepRatio*CSElCylPar[4][0]}, help={"Shell Thick[A]"}
 				SetVariable ModelVarPar6 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:CSElCylPar[5][0] ,title="Aspect Ratio  ", disable=0, limits={0.01,inf,IR3FSetVariableStepRatio*CSElCylPar[5][0]}, help={"Aspect Ratio, 0.5 - 2"}
 				SetVariable ModelVarPar7 win=IR3F_CylinderModelsPanel, disable=1, noedit=0
+				SetVariable ModelVarPar8 win=IR3F_CylinderModelsPanel, disable=1, noedit=0
 
 				CheckBox FitModelVarPar1 win=IR3F_CylinderModelsPanel,value= CSElCylPar[0][1], disable=0 	//variable= root:Packages:Irena:CylinderModels:FitDBPrefactor, disable=1
 				CheckBox FitModelVarPar2 win=IR3F_CylinderModelsPanel,value= CSElCylPar[1][1], disable=0
@@ -383,6 +451,11 @@ static Function IR3F_SetupControlsOnMainpanel()
 				CheckBox FitModelVarPar5 win=IR3F_CylinderModelsPanel,value= CSElCylPar[4][1], disable=0
 				CheckBox FitModelVarPar6 win=IR3F_CylinderModelsPanel,value= CSElCylPar[5][1], disable=0
 				CheckBox FitModelVarPar7 win=IR3F_CylinderModelsPanel,disable=1
+				CheckBox FitModelVarPar8 win=IR3F_CylinderModelsPanel,disable=1
+				SetVariable ModelVarPar9 win=IR3F_CylinderModelsPanel,disable=1
+				CheckBox FitModelVarPar9 win=IR3F_CylinderModelsPanel,disable=1
+				SetVariable ModelVarPar10 win=IR3F_CylinderModelsPanel,disable=1
+				CheckBox FitModelVarPar10 win=IR3F_CylinderModelsPanel,disable=1
 
 				Button ModelButton1 win=IR3F_CylinderModelsPanel, title="", help={""}, disable=1
 				Button ModelButton2 win=IR3F_CylinderModelsPanel, title="", help={""}, disable=1
@@ -397,8 +470,8 @@ static Function IR3F_SetupControlsOnMainpanel()
 				SetVariable ModelVarPar3LL win=IR3F_CylinderModelsPanel,disable=1
 				SetVariable ModelVarPar3UL win=IR3F_CylinderModelsPanel,disable=1
 				
-				SetVariable ModelVarPar4LL win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:CSElCylPar[3][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for SLD"}
-				SetVariable ModelVarPar4UL win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:CSElCylPar[3][3] ,title="< Δ SLD < ", disable=0, limits={0.01,inf,0}, help={"High limit for SLD"}
+				SetVariable ModelVarPar4LL win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:CSElCylPar[3][2] ,title=" ", disable=0, limits={-inf,inf,0}, help={"Lower limit for SLD"}
+				SetVariable ModelVarPar4UL win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:CSElCylPar[3][3] ,title="< Δ SLD < ", disable=0, limits={-inf,inf,0}, help={"High limit for SLD"}
 				
 				SetVariable ModelVarPar5LL win=IR3F_CylinderModelsPanel, value=root:Packages:Irena:CylinderModels:CSElCylPar[4][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for Shell Thickness"}
 				SetVariable ModelVarPar5UL win=IR3F_CylinderModelsPanel, value=root:Packages:Irena:CylinderModels:CSElCylPar[4][3] ,title="< ShTh < ", disable=0, limits={0.01,inf,0}, help={"High limit for Shell Thickness"}
@@ -408,6 +481,15 @@ static Function IR3F_SetupControlsOnMainpanel()
 				
 				SetVariable ModelVarPar7LL win=IR3F_CylinderModelsPanel, disable=1
 				SetVariable ModelVarPar7UL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ModelVarPar8LL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ModelVarPar8UL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ModelVarPar9LL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ModelVarPar9UL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ModelVarPar10LL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ModelVarPar10UL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ProfileMaxX win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ProfileNumPoints win=IR3F_CylinderModelsPanel, disable=1
+
 				break		// exit from switch
 
 			case "Profile CS Ellip. Cylinder":	// execute if case matches expression
@@ -430,6 +512,10 @@ static Function IR3F_SetupControlsOnMainpanel()
 				CheckBox FitModelVarPar6 win=IR3F_CylinderModelsPanel,value= ProfCSElCylPar[5][1], disable=0
 				CheckBox FitModelVarPar7 win=IR3F_CylinderModelsPanel,value= ProfCSElCylPar[6][1], disable=0
 				CheckBox FitModelVarPar8 win=IR3F_CylinderModelsPanel,value= ProfCSElCylPar[7][1], disable=0
+				SetVariable ModelVarPar9 win=IR3F_CylinderModelsPanel,disable=1
+				CheckBox FitModelVarPar9 win=IR3F_CylinderModelsPanel,disable=1
+				SetVariable ModelVarPar10 win=IR3F_CylinderModelsPanel,disable=1
+				CheckBox FitModelVarPar10 win=IR3F_CylinderModelsPanel,disable=1
 
 				Button ModelButton1 win=IR3F_CylinderModelsPanel, title="", help={""}, disable=1
 				Button ModelButton2 win=IR3F_CylinderModelsPanel, title="", help={""}, disable=1
@@ -450,16 +536,85 @@ static Function IR3F_SetupControlsOnMainpanel()
 				SetVariable ModelVarPar5LL win=IR3F_CylinderModelsPanel, value=root:Packages:Irena:CylinderModels:ProfCSElCylPar[4][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for Shell 1 Thickness"}
 				SetVariable ModelVarPar5UL win=IR3F_CylinderModelsPanel, value=root:Packages:Irena:CylinderModels:ProfCSElCylPar[4][3] ,title="< Sh1Th < ", disable=0, limits={1,inf,0}, help={"High limit for Shell 1 Thickness"}
 				
-				SetVariable ModelVarPar6LL win=IR3F_CylinderModelsPanel, value=root:Packages:Irena:CylinderModels:ProfCSElCylPar[5][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for SLD 1"}
-				SetVariable ModelVarPar6UL win=IR3F_CylinderModelsPanel, value=root:Packages:Irena:CylinderModels:ProfCSElCylPar[5][3] ,title="< ΔSLD 1 < ", disable=0, limits={0.0001,inf,0}, help={"High limit for SLD 1"}
+				SetVariable ModelVarPar6LL win=IR3F_CylinderModelsPanel, value=root:Packages:Irena:CylinderModels:ProfCSElCylPar[5][2] ,title=" ", disable=0, limits={-inf,inf,0}, help={"Lower limit for SLD 1"}
+				SetVariable ModelVarPar6UL win=IR3F_CylinderModelsPanel, value=root:Packages:Irena:CylinderModels:ProfCSElCylPar[5][3] ,title="< ΔSLD 1 < ", disable=0, limits={-inf,inf,0}, help={"High limit for SLD 1"}
 				
 				SetVariable ModelVarPar7LL win=IR3F_CylinderModelsPanel, value=root:Packages:Irena:CylinderModels:ProfCSElCylPar[6][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for Shell 1 Thickness"}
 				SetVariable ModelVarPar7UL win=IR3F_CylinderModelsPanel, value=root:Packages:Irena:CylinderModels:ProfCSElCylPar[6][3] ,title="< Sh2Th < ", disable=0, limits={1,inf,0}, help={"High limit for Shell 2 Thickness"}
 
-				SetVariable ModelVarPar8LL win=IR3F_CylinderModelsPanel, value=root:Packages:Irena:CylinderModels:ProfCSElCylPar[5][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for SLD 2"}
-				SetVariable ModelVarPar8UL win=IR3F_CylinderModelsPanel, value=root:Packages:Irena:CylinderModels:ProfCSElCylPar[5][3] ,title="< ΔSLD 2 < ", disable=0, limits={0.0001,inf,0}, help={"High limit for SLD 2"}
+				SetVariable ModelVarPar8LL win=IR3F_CylinderModelsPanel, value=root:Packages:Irena:CylinderModels:ProfCSElCylPar[7][2] ,title=" ", disable=0, limits={-inf,inf,0}, help={"Lower limit for SLD 2"}
+				SetVariable ModelVarPar8UL win=IR3F_CylinderModelsPanel, value=root:Packages:Irena:CylinderModels:ProfCSElCylPar[7][3] ,title="< ΔSLD 2 < ", disable=0, limits={-inf,inf,0}, help={"High limit for SLD 2"}
+				SetVariable ModelVarPar9LL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ModelVarPar9UL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ModelVarPar10LL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ModelVarPar10UL win=IR3F_CylinderModelsPanel, disable=1
 
 				SetVariable ProfileMaxX win=IR3F_CylinderModelsPanel, disable=0
+				SetVariable ProfileNumPoints win=IR3F_CylinderModelsPanel, disable=0
+				CheckBox UseGMatrixCalculations win=IR3F_CylinderModelsPanel, disable=0
+
+				break		// exit from switch
+			case "Profile CS Ellip. Cylinder 2":	// execute if case matches expression
+				//ProfProfCSElCylParNames = {"Prefactor","Radius","Length","AspectRatio","Shell1Th","Shell1SLD", "Shell2th", "Shell2SLD", "Shell3th", "Shell3SLD"}
+				SetVariable ModelVarPar1 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ProfCSElCylPar2[0][0] ,title="Scale         ", disable=0, limits={-inf,inf,IR3FSetVariableStepRatio*ProfCSElCylPar2[0][0]}, help={"Scale"}
+				SetVariable ModelVarPar2 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ProfCSElCylPar2[1][0] ,title="Radius [A]    ", disable=0, limits={1,inf,1}, help={"Radius of the cylinder, A"}
+				SetVariable ModelVarPar3 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ProfCSElCylPar2[2][0] ,title="Length [A]    ", disable=0, limits={10,inf,IR3FSetVariableStepRatio*ProfCSElCylPar2[2][0]}, help={"Length of cylinder, A"}
+				SetVariable ModelVarPar4 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ProfCSElCylPar2[3][0] ,title="Aspect Ratio  ", disable=0, limits={0.01,inf,IR3FSetVariableStepRatio*ProfCSElCylPar2[5][0]}, help={"Aspect Ratio, 0.5 - 2"}
+				
+				SetVariable ModelVarPar5 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ProfCSElCylPar2[4][0] ,title="Shell 1 Thick [A]", disable=0, limits={0.01,inf,1}, help={"Shell Thick[A]"}
+				SetVariable ModelVarPar6 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ProfCSElCylPar2[5][0] ,title="Δ SLD 1 [10^10cm^-2]", disable=0, limits={-inf,inf,IR3FSetVariableStepRatio*ProfCSElCylPar2[3][0]}, help={"SLD of shell 1 (NOT dRho^2)"}
+				SetVariable ModelVarPar7 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ProfCSElCylPar2[6][0] ,title="Shell 2 Thick [A]", disable=0, limits={0.01,inf,1}, help={"Shell Thick[A]"}
+				SetVariable ModelVarPar8 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ProfCSElCylPar2[7][0] ,title="Δ SLD 2 [10^10cm^-2]", disable=0, limits={-inf,inf,IR3FSetVariableStepRatio*ProfCSElCylPar2[3][0]}, help={"SLD of shell 2 (NOT dRho^2)"}
+				SetVariable ModelVarPar9 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ProfCSElCylPar2[8][0] ,title="Shell 3 Thick [A]", disable=0, limits={0.01,inf,1}, help={"Shell Thick[A]"}
+				SetVariable ModelVarPar10 win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ProfCSElCylPar2[9][0] ,title="Δ SLD 3 [10^10cm^-2]", disable=0, limits={-inf,inf,IR3FSetVariableStepRatio*ProfCSElCylPar2[3][0]}, help={"SLD of shell 3 (NOT dRho^2)"}
+
+				CheckBox FitModelVarPar1 win=IR3F_CylinderModelsPanel,value= ProfCSElCylPar2[0][1], disable=0 	//variable= root:Packages:Irena:CylinderModels:FitDBPrefactor, disable=1
+				CheckBox FitModelVarPar2 win=IR3F_CylinderModelsPanel,value= ProfCSElCylPar2[1][1], disable=0
+				CheckBox FitModelVarPar3 win=IR3F_CylinderModelsPanel,value= ProfCSElCylPar2[2][1], disable=1
+				CheckBox FitModelVarPar4 win=IR3F_CylinderModelsPanel,value= ProfCSElCylPar2[3][1], disable=0
+				CheckBox FitModelVarPar5 win=IR3F_CylinderModelsPanel,value= ProfCSElCylPar2[4][1], disable=0
+				CheckBox FitModelVarPar6 win=IR3F_CylinderModelsPanel,value= ProfCSElCylPar2[5][1], disable=0
+				CheckBox FitModelVarPar7 win=IR3F_CylinderModelsPanel,value= ProfCSElCylPar2[6][1], disable=0
+				CheckBox FitModelVarPar8 win=IR3F_CylinderModelsPanel,value= ProfCSElCylPar2[7][1], disable=0
+				CheckBox FitModelVarPar9 win=IR3F_CylinderModelsPanel,value= ProfCSElCylPar2[8][1], disable=0
+				CheckBox FitModelVarPar10 win=IR3F_CylinderModelsPanel,value= ProfCSElCylPar2[9][1], disable=0
+
+				Button ModelButton1 win=IR3F_CylinderModelsPanel, title="", help={""}, disable=1
+				Button ModelButton2 win=IR3F_CylinderModelsPanel, title="", help={""}, disable=1
+				Button ModelButton3 win=IR3F_CylinderModelsPanel, title="", help={""}, disable=1
+
+				SetVariable ModelVarPar1LL win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ProfCSElCylPar2[0][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for Scale"}
+				SetVariable ModelVarPar1UL win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ProfCSElCylPar2[0][3] ,title="< Scale < ", disable=0, limits={0.01,inf,0}, help={"High limit for Scale"}
+				
+				SetVariable ModelVarPar2LL win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ProfCSElCylPar2[1][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for Radius"}
+				SetVariable ModelVarPar2UL win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ProfCSElCylPar2[1][3] ,title="< Rad < ", disable=0, limits={0.01,inf,0}, help={"High limit for Radius"}
+				
+				SetVariable ModelVarPar3LL win=IR3F_CylinderModelsPanel,disable=1
+				SetVariable ModelVarPar3UL win=IR3F_CylinderModelsPanel,disable=1
+				
+				SetVariable ModelVarPar4LL win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ProfCSElCylPar2[3][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for SLD"}
+				SetVariable ModelVarPar4UL win=IR3F_CylinderModelsPanel,value=root:Packages:Irena:CylinderModels:ProfCSElCylPar2[3][3] ,title="< AR < ", disable=0, limits={0.01,inf,0}, help={"High limit for SLD"}
+				
+				SetVariable ModelVarPar5LL win=IR3F_CylinderModelsPanel, value=root:Packages:Irena:CylinderModels:ProfCSElCylPar2[4][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for Shell 1 Thickness"}
+				SetVariable ModelVarPar5UL win=IR3F_CylinderModelsPanel, value=root:Packages:Irena:CylinderModels:ProfCSElCylPar2[4][3] ,title="< Sh1Th < ", disable=0, limits={1,inf,0}, help={"High limit for Shell 1 Thickness"}
+				
+				SetVariable ModelVarPar6LL win=IR3F_CylinderModelsPanel, value=root:Packages:Irena:CylinderModels:ProfCSElCylPar2[5][2] ,title=" ", disable=0, limits={-inf,inf,0}, help={"Lower limit for SLD 1"}
+				SetVariable ModelVarPar6UL win=IR3F_CylinderModelsPanel, value=root:Packages:Irena:CylinderModels:ProfCSElCylPar2[5][3] ,title="< ΔSLD 1 < ", disable=0, limits={-inf,inf,0}, help={"High limit for SLD 1"}
+				
+				SetVariable ModelVarPar7LL win=IR3F_CylinderModelsPanel, value=root:Packages:Irena:CylinderModels:ProfCSElCylPar2[6][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for Shell 2 Thickness"}
+				SetVariable ModelVarPar7UL win=IR3F_CylinderModelsPanel, value=root:Packages:Irena:CylinderModels:ProfCSElCylPar2[6][3] ,title="< Sh2Th < ", disable=0, limits={1,inf,0}, help={"High limit for Shell 2 Thickness"}
+
+				SetVariable ModelVarPar8LL win=IR3F_CylinderModelsPanel, value=root:Packages:Irena:CylinderModels:ProfCSElCylPar2[7][2] ,title=" ", disable=0, limits={-inf,inf,0}, help={"Lower limit for SLD 2"}
+				SetVariable ModelVarPar8UL win=IR3F_CylinderModelsPanel, value=root:Packages:Irena:CylinderModels:ProfCSElCylPar2[7][3] ,title="< ΔSLD 2 < ", disable=0, limits={-inf,inf,0}, help={"High limit for SLD 2"}
+
+				SetVariable ModelVarPar9LL win=IR3F_CylinderModelsPanel, value=root:Packages:Irena:CylinderModels:ProfCSElCylPar2[8][2] ,title=" ", disable=0, limits={0.01,inf,0}, help={"Lower limit for Shell 3 Thickness"}
+				SetVariable ModelVarPar9UL win=IR3F_CylinderModelsPanel, value=root:Packages:Irena:CylinderModels:ProfCSElCylPar2[8][3] ,title="< Sh3Th < ", disable=0, limits={1,inf,0}, help={"High limit for Shell 3 Thickness"}
+
+				SetVariable ModelVarPar10LL win=IR3F_CylinderModelsPanel, value=root:Packages:Irena:CylinderModels:ProfCSElCylPar2[9][2] ,title=" ", disable=0, limits={-inf,inf,0}, help={"Lower limit for SLD 3"}
+				SetVariable ModelVarPar10UL win=IR3F_CylinderModelsPanel, value=root:Packages:Irena:CylinderModels:ProfCSElCylPar2[9][3] ,title="< ΔSLD 3 < ", disable=0, limits={-inf,inf,0}, help={"High limit for SLD 3"}
+
+				SetVariable ProfileMaxX win=IR3F_CylinderModelsPanel, disable=0
+				SetVariable ProfileNumPoints win=IR3F_CylinderModelsPanel, disable=0
 				CheckBox UseGMatrixCalculations win=IR3F_CylinderModelsPanel, disable=0
 
 				break		// exit from switch
@@ -483,6 +638,10 @@ static Function IR3F_SetupControlsOnMainpanel()
 				SetVariable ModelVarPar7 win=IR3F_CylinderModelsPanel, disable=1, noedit=0
 				CheckBox FitModelVarPar8 win=IR3F_CylinderModelsPanel,disable=1
 				SetVariable ModelVarPar8 win=IR3F_CylinderModelsPanel, disable=1, noedit=0
+				SetVariable ModelVarPar9 win=IR3F_CylinderModelsPanel,disable=1
+				CheckBox FitModelVarPar9 win=IR3F_CylinderModelsPanel,disable=1
+				SetVariable ModelVarPar10 win=IR3F_CylinderModelsPanel,disable=1
+				CheckBox FitModelVarPar10 win=IR3F_CylinderModelsPanel,disable=1
 				Button ModelButton1 win=IR3F_CylinderModelsPanel, disable=1
 				Button ModelButton2 win=IR3F_CylinderModelsPanel, disable=1
 				Button ModelButton3 win=IR3F_CylinderModelsPanel, disable=1
@@ -502,7 +661,12 @@ static Function IR3F_SetupControlsOnMainpanel()
 				SetVariable ModelVarPar7UL win=IR3F_CylinderModelsPanel, disable=1
 				SetVariable ModelVarPar8LL win=IR3F_CylinderModelsPanel, disable=1
 				SetVariable ModelVarPar8UL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ModelVarPar9LL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ModelVarPar9UL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ModelVarPar10LL win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ModelVarPar10UL win=IR3F_CylinderModelsPanel, disable=1
 				SetVariable ProfileMaxX win=IR3F_CylinderModelsPanel, disable=1
+				SetVariable ProfileNumPoints win=IR3F_CylinderModelsPanel, disable=1
 				CheckBox UseGMatrixCalculations win=IR3F_CylinderModelsPanel, disable=1
 				
 		endswitch
@@ -632,7 +796,10 @@ Function IR3F_SetVarProc(sva) : SetVariableControl
 			NVAR DataQEndPoint = root:Packages:Irena:CylinderModels:DataQEndPoint
 			NVAR DataQstartPoint = root:Packages:Irena:CylinderModels:DataQstartPoint
 			variable Indx
-			
+
+			if(stringmatch(sva.ctrlName,"ProfileNumPoints")||stringmatch(sva.ctrlName,"ProfileMaxX"))
+				IR3F_RecalculateProfile()
+			endif			
 			if(stringmatch(sva.ctrlName,"DataQEnd"))
 				WAVE OriginalDataQWave = root:Packages:Irena:CylinderModels:OriginalDataQWave
 				tempP = BinarySearch(OriginalDataQWave, DataQEnd )
@@ -661,9 +828,9 @@ Function IR3F_SetVarProc(sva) : SetVariableControl
 				// 1 	change step t0 fraction of value
 				// 2 	change limits for the variable... 
 				// 3	recalculate 
-				if(StringMatch(sva.vName, "ProfCSElCylPar[1]")||StringMatch(sva.vName, "ProfCSElCylPar[4]")||StringMatch(sva.vName, "ProfCSElCylPar[6]"))	//this is for Profile radius and shell thicknesses, small steps make no sense. 1A resolution needed
+				if(StringMatch(sva.vName, "ProfCSElCylPar[1]")||StringMatch(sva.vName, "ProfCSElCylPar[4]")||StringMatch(sva.vName, "ProfCSElCylPar[6]")||StringMatch(sva.vName, "ProfCSElCylPar[8]"))	//this is for Profile radius and shell thicknesses, small steps make no sense. 1A resolution needed
 					SetVariable $(sva.ctrlName) win=IR3F_CylinderModelsPanel,limits={1 ,inf,1} 
-				elseif(StringMatch(sva.vName, "ProfCSElCylPar[7]")||StringMatch(sva.vName, "ProfCSElCylPar[5]"))	//this is for Profile shell dSLD, need negative values
+				elseif(StringMatch(sva.vName, "ProfCSElCylPar[7]")||StringMatch(sva.vName, "ProfCSElCylPar[5]")||StringMatch(sva.vName, "ProfCSElCylPar[9]"))	//this is for Profile shell dSLD, need negative values
 					SetVariable $(sva.ctrlName) win=IR3F_CylinderModelsPanel,limits={-inf ,inf,abs(IR3FSetVariableStepRatio*sva.dval)} 
 				else
 					SetVariable $(sva.ctrlName) win=IR3F_CylinderModelsPanel,limits={0 ,inf,abs(IR3FSetVariableStepRatio*sva.dval)} 
@@ -677,13 +844,8 @@ Function IR3F_SetVarProc(sva) : SetVariableControl
 				endif
 				IR3F_AutoRecalculateModelData(0)
 			endif
-			if(stringmatch(sva.ctrlName,"UnifG"))
-//				Wave UnifiedPar = root:Packages:Irena:CylinderModels:UnifiedPar
-//				//NVAR UnifRg = root:Packages:Irena:CylinderModels:UnifRg
-//				//NVAR UnifG = root:Packages:Irena:CylinderModels:UnifG
-//				if(UnifiedPar[0][0]==0)
-//					UnifiedPar[1][0]=1e10
-//				endif
+			if(stringmatch(sva.ctrlName,"SmearPointsNum"))
+				IR3F_AutoRecalculateModelData(0)
 			endif
 			if(stringmatch(sva.ctrlName,"UnifRg")||stringmatch(sva.ctrlName,"SASBackground") )
 				SetVariable $(sva.ctrlName) win=IR3F_CylinderModelsPanel,limits={0,inf,IR3FSetVariableStepRatio*sva.dval} 
@@ -706,6 +868,44 @@ Function IR3F_SetVarProc(sva) : SetVariableControl
 	return 0
 End
 //**********************************************************************************************************
+
+Function IR3F_RecalculateProfile()
+
+	SVAR ModelSelected = root:Packages:Irena:CylinderModels:ModelSelected
+	NVAR ProfileNumPoints=root:Packages:Irena:CylinderModels:ProfileNumPoints
+	variable Prefactor, Radius, Length, SLD
+	variable ShellThicknes, AspectRatio
+	variable Shell1Th,Shell1SLD, Shell2th, Shell2SLD, Shell3Th, Shell3SLD
+	Wave ProfCSElCylPar=root:Packages:Irena:CylinderModels:ProfCSElCylPar
+	Wave ProfCSElCylPar2=root:Packages:Irena:CylinderModels:ProfCSElCylPar2
+
+	if(StringMatch(ModelSelected, "Profile CS Ellip. Cylinder" ))
+		//{"Prefactor","Radius","Length","AspectRatio","Shell1Th","Shell1SLD", "Shell2th", "Shell2SLD"}
+		Prefactor 	=ProfCSElCylPar[0][0] 
+		Radius 		=ProfCSElCylPar[1][0]
+		Length 		=ProfCSElCylPar[2][0]
+		AspectRatio	=ProfCSElCylPar[3][0]
+		Shell1Th	=ProfCSElCylPar[4][0]
+		Shell1SLD 	=ProfCSElCylPar[5][0]
+		Shell2Th	=ProfCSElCylPar[6][0]
+		Shell2SLD 	=ProfCSElCylPar[7][0]
+		IR3F_CreateParametrizedProfile(ProfileNumPoints,length, radius, AspectRatio, Shell1th, Shell1SLD, Shell2th, Shell2SLD)  
+	elseif(StringMatch(ModelSelected, "Profile CS Ellip. Cylinder 2" ))
+		//{"Prefactor","Radius","Length","AspectRatio","Shell1Th","Shell1SLD", "Shell2th", "Shell2SLD", "Shell3th", "Shell3SLD"}
+
+		Prefactor 	=ProfCSElCylPar2[0][0] 
+		Radius 		=ProfCSElCylPar2[1][0]
+		Length 		=ProfCSElCylPar2[2][0]
+		AspectRatio	=ProfCSElCylPar2[3][0]
+		Shell1Th	=ProfCSElCylPar2[4][0]
+		Shell1SLD 	=ProfCSElCylPar2[5][0]
+		Shell2Th	=ProfCSElCylPar2[6][0]
+		Shell2SLD 	=ProfCSElCylPar2[7][0]
+		Shell3Th	=ProfCSElCylPar2[8][0]
+		Shell3SLD 	=ProfCSElCylPar2[9][0]
+		IR3F_CreateParametrizedProfile2(ProfileNumPoints,length, radius, AspectRatio, Shell1th, Shell1SLD, Shell2th, Shell2SLD,Shell3th, Shell3SLD)  
+	endif
+end
 //**********************************************************************************************************
 //**************************************************************************************
 //**************************************************************************************
@@ -1029,6 +1229,8 @@ static Function IR3F_FitCSCylinderModel()
 	//CSElCylParNames = 		{"Prefactor","Radius","Length","SLD","ShellThickness","AspectRatio"}
 	Wave ProfCSElCylPar= root:Packages:Irena:CylinderModels:ProfCSElCylPar
 	//ProfCSElCylParNames = {"Prefactor","Radius","Length","AspectRatio","Shell1Th","Shell1SLD", "Shell2th", "Shell2SLD"}
+	Wave ProfCSElCylPar2= root:Packages:Irena:CylinderModels:ProfCSElCylPar2
+	//ProfCSElCylParNames = {"Prefactor","Radius","Length","AspectRatio","Shell1Th","Shell1SLD", "Shell2th", "Shell2SLD", "Shell3th", "Shell3SLD"}
 
 
 	variable i
@@ -1039,6 +1241,7 @@ static Function IR3F_FitCSCylinderModel()
 	ElCylPar[][4]=0
 	CSElCylPar[][4]=0
 	ProfCSElCylPar[][4]=0
+	ProfCSElCylPar2[][4]=0
 
 	if (FitSASBackground)		//are we fitting background?
 		curLen = (numpnts(W_coef))
@@ -1047,8 +1250,9 @@ static Function IR3F_FitCSCylinderModel()
 		W_Coef[curLen]		=	SASBackground
 		BackupFitValues[curLen]=	SASBackground
 		CoefNames[curLen]	=	"SASBackground;"
-		//Gen_Constraints[curLen][0] = SASBackground/10
-		//Gen_Constraints[curLen][1] = SASBackground*10
+		Redimension /N=((curLen+1),2) Gen_Constraints
+		Gen_Constraints[curLen][0] = SASBackground/3
+		Gen_Constraints[curLen][1] = SASBackground*3
 		FullListOfVariablesToCheck+="SASBackground;"
 	endif
 	strswitch(ModelSelected)	// string switch
@@ -1066,9 +1270,11 @@ static Function IR3F_FitCSCylinderModel()
 						Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 						T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(CylPar[i][2])}
 						T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(CylPar[i][3])}		
-						//Redimension /N=((curLen+1),2) Gen_Constraints
-						//Gen_Constraints[curLen][0] = varMeLL
-						//Gen_Constraints[curLen][1] = varMeHL
+						Redimension /N=((curLen+1),2) Gen_Constraints
+						Gen_Constraints[curLen][0] = CylPar[i][2]
+						Gen_Constraints[curLen][1] = CylPar[i][3]
+					else
+						Abort "Wrong limits for parameter "+"CylPar;"+num2str(i)
 					endif
 				endif
 			endfor
@@ -1076,7 +1282,7 @@ static Function IR3F_FitCSCylinderModel()
 		case "Core Shell Cylinder":	// execute if case matches expression
 			Wave CSCylPar	 = root:Packages:Irena:CylinderModels:CSCylPar	
 			//CSCylParNames = {"Prefactor","Radius","Length","SLD","ShellThickness"}
-			For(i=0;i<4;i+=1)	//only first 4 parameters are fittable. 
+			For(i=0;i<5;i+=1)	//only first 4 parameters are fittable. 
 				if(CSCylPar[i][1]>0.5)	//fit? 
 					curLen = (numpnts(W_coef))
 					Redimension /N=(curLen+1) W_coef, CoefNames, BackupFitValues
@@ -1087,6 +1293,11 @@ static Function IR3F_FitCSCylinderModel()
 						Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 						T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(CSCylPar[i][2])}
 						T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(CSCylPar[i][3])}		
+						Redimension /N=((curLen+1),2) Gen_Constraints
+						Gen_Constraints[curLen][0] = CSCylPar[i][2]
+						Gen_Constraints[curLen][1] = CSCylPar[i][3]
+					else
+						Abort "Wrong limits for parameter "+"CSCylPar;"+num2str(i)
 					endif
 				endif
 			endfor
@@ -1094,7 +1305,7 @@ static Function IR3F_FitCSCylinderModel()
 		case "Ellip. Cylinder":	// execute if case matches expression
 			//ElCylParNames = {"Prefactor","Radius","Length","SLD","AspectRatio"}
 			Wave ElCylPar	 = root:Packages:Irena:CylinderModels:ElCylPar	
-			For(i=0;i<3;i+=1)	//only first 4 parameters are fittable. 
+			For(i=0;i<5;i+=1)	//only first 4 parameters are fittable. 
 				if(ElCylPar[i][1]>0.5)	//fit? 
 					curLen = (numpnts(W_coef))
 					Redimension /N=(curLen+1) W_coef, CoefNames, BackupFitValues
@@ -1105,6 +1316,11 @@ static Function IR3F_FitCSCylinderModel()
 						Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 						T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(ElCylPar[i][2])}
 						T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(ElCylPar[i][3])}		
+						Redimension /N=((curLen+1),2) Gen_Constraints
+						Gen_Constraints[curLen][0] = ElCylPar[i][2]
+						Gen_Constraints[curLen][1] = ElCylPar[i][3]
+					else
+						Abort "Wrong limits for parameter "+"ElCylPar;"+num2str(i)
 					endif
 				endif
 			endfor
@@ -1112,7 +1328,7 @@ static Function IR3F_FitCSCylinderModel()
 		case "Core Shell Ellip. Cylinder":	// execute if case matches expression
 			Wave CSElCylPar	 = root:Packages:Irena:CylinderModels:CSElCylPar	
 			//CSElCylParNames = 		{"Prefactor","Radius","Length","SLD","ShellThickness","AspectRatio"}
-			For(i=0;i<5;i+=1)	//only first 5 parameters are fittable. 
+			For(i=0;i<6;i+=1)	//only first 5 parameters are fittable. 
 				if(CSElCylPar[i][1]>0.5)	//fit? 
 					curLen = (numpnts(W_coef))
 					Redimension /N=(curLen+1) W_coef, CoefNames, BackupFitValues
@@ -1123,6 +1339,11 @@ static Function IR3F_FitCSCylinderModel()
 						Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 						T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(CSElCylPar[i][2])}
 						T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(CSElCylPar[i][3])}		
+						Redimension /N=((curLen+1),2) Gen_Constraints
+						Gen_Constraints[curLen][0] = CSElCylPar[i][2]
+						Gen_Constraints[curLen][1] = CSElCylPar[i][3]
+					else
+						Abort "Wrong limits for parameter "+"CSElCylPar;"+num2str(i)
 					endif
 				endif
 			endfor
@@ -1141,6 +1362,34 @@ static Function IR3F_FitCSCylinderModel()
 						Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 						T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(ProfCSElCylPar[i][2])}
 						T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(ProfCSElCylPar[i][3])}		
+						Redimension /N=((curLen+1),2) Gen_Constraints
+						Gen_Constraints[curLen][0] = ProfCSElCylPar[i][2]
+						Gen_Constraints[curLen][1] = ProfCSElCylPar[i][3]
+					else
+						Abort "Wrong limits for parameter "+"ProfCSElCylPar;"+num2str(i)
+					endif
+				endif
+			endfor
+			break
+		case "Profile CS Ellip. Cylinder 2":	// execute if case matches expression
+			Wave ProfCSElCylPar2= root:Packages:Irena:CylinderModels:ProfCSElCylPar2
+			//ProfCSElCylParNames = {"Prefactor","Radius","Length","AspectRatio","Shell1Th","Shell1SLD", "Shell2th", "Shell2SLD", "Shell3th", "Shell3SLD"}
+			For(i=0;i<10;i+=1)	// 
+				if(ProfCSElCylPar2[i][1]>0.5)	//fit? 
+					curLen = (numpnts(W_coef))
+					Redimension /N=(curLen+1) W_coef, CoefNames, BackupFitValues
+					W_Coef[curLen]			= ProfCSElCylPar2[i][0]
+					BackupFitValues[curLen]	=	ProfCSElCylPar2[i][0]
+					CoefNames[curLen]	  	=   "ProfCSElCylPar2;"+num2str(i)+";"
+					if(ProfCSElCylPar2[i][2]<ProfCSElCylPar2[i][0] && ProfCSElCylPar2[i][0]<ProfCSElCylPar2[i][3])
+						Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
+						T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(ProfCSElCylPar2[i][2])}
+						T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(ProfCSElCylPar2[i][3])}		
+						Redimension /N=((curLen+1),2) Gen_Constraints
+						Gen_Constraints[curLen][0] = ProfCSElCylPar2[i][2]
+						Gen_Constraints[curLen][1] = ProfCSElCylPar2[i][3]
+					else
+						Abort "Wrong limits for parameter "+"ProfCSElCylPar2;"+num2str(i)
 					endif
 				endif
 			endfor
@@ -1182,13 +1431,18 @@ static Function IR3F_FitCSCylinderModel()
 	Wave OriginalDataErrorWave=root:Packages:Irena:CylinderModels:OriginalDataErrorWave
 	NVAR AchievedChiSquare=root:Packages:Irena:CylinderModels:AchievedChiSquare
 	SVAR FittingPower= root:Packages:Irena:CylinderModels:FittingPower
+	NVAR FixedWeights = root:Packages:Irena:CylinderModels:FixedWeights
 	//FittingPower = "Int;I*Q;I*Q^2;I*Q^3;I*Q^4;
 
+	NVAR  UseGeneticOptimization = root:Packages:Irena:CylinderModels:UseGeneticOptimization
 	
 	Variable V_chisq
 	Duplicate/O W_Coef, E_wave, CoefficientInput
-	E_wave=W_coef/20
+	E_wave=W_coef/10
 	string HoldStr=""
+	For(i=0;i<numpnts(W_Coef);i+=1)
+		HoldStr+="0"
+	endfor
 	Print "Fitting stating now"
 	IR3F_SetupWarningPanel(0, 1)
 	string ParamName
@@ -1213,18 +1467,35 @@ static Function IR3F_FitCSCylinderModel()
 				case "I*Q":
 					FitIntensityWave = FitIntensityWave*FitQvectorWave
 					FitErrorWave = FitErrorWave*FitQvectorWave
+					break
 				case "I*Q^2":
 					FitIntensityWave = FitIntensityWave*FitQvectorWave^2
 					FitErrorWave = FitErrorWave*FitQvectorWave^2
+					break
 				case "I*Q^3":
 					FitIntensityWave = FitIntensityWave*FitQvectorWave^3
 					FitErrorWave = FitErrorWave*FitQvectorWave^3
+					break
 				case "I*Q^4":
 					FitIntensityWave = FitIntensityWave*FitQvectorWave^4
-					FitErrorWave = FitErrorWave*FitQvectorWave^4		
+					FitErrorWave = FitErrorWave*FitQvectorWave^4	
+					break	
 			endswitch
+			if(FixedWeights)	//users chooses fixed weight of Y not uncertainties
+				FitErrorWave = 0.03*FitIntensityWave
+			endif
 			
-			FuncFit/W=1  IR3F_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1/E=E_wave /D /C=T_Constraints 
+			if(UseGeneticOptimization)
+#if Exists("gencurvefit")==4
+			  	//gencurvefit  /I=1 /W=EWvForFit /M=MaskWaveGenOpt /N /TOL=0.002 /K={50,20,0.7,0.5} /X=QWvForFit IR2L_FitFunction, IntWvForFit  , W_Coef, HoldStr, Gen_Constraints  	
+			  	gencurvefit  /I=1 /N /TOL=0.002 /K={50,20,0.7,0.5} /W=FitErrorWave /X=FitQvectorWave IR3F_FitFunction, FitIntensityWave  , W_Coef, HoldStr, Gen_Constraints  	
+#else
+				Abort  "Genetic Optimization xop NOT installed. Install xop support and then try again"
+#endif
+			else
+				FuncFit/W=1  IR3F_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1/E=E_wave /D /C=T_Constraints 
+				//FuncFit /N=0/W=0/Q/L=(numpnts(IntWvForFit)) IR2L_FitFunction W_coef IntWvForFit /X=QWvForFit /W=EWvForFit /I=1/E=E_wave /D /C=T_Constraints 
+			endif
 		else
 			Duplicate/O OriginalDataIntWave, FitIntensityWave		
 			Duplicate/O OriginalDataQWave, FitQvectorWave
@@ -1246,8 +1517,20 @@ static Function IR3F_FitCSCylinderModel()
 					FitErrorWave = FitErrorWave*FitQvectorWave^4
 				
 			endswitch
+			if(FixedWeights)	//users chooses fixed weight of Y not uncertainties
+				FitErrorWave = 0.03*FitIntensityWave
+			endif
 
-			FuncFit/W=1  IR3F_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1 /E=E_wave/D /C=T_Constraints	
+			if(UseGeneticOptimization)
+#if Exists("gencurvefit")==4
+			  	//gencurvefit  /I=1 /W=EWvForFit /M=MaskWaveGenOpt /N /TOL=0.002 /K={50,20,0.7,0.5} /X=QWvForFit IR2L_FitFunction, IntWvForFit  , W_Coef, HoldStr, Gen_Constraints  	
+			  	gencurvefit  /I=1 /N /TOL=0.002 /K={50,20,0.7,0.5} /W=FitErrorWave /X=FitQvectorWave IR3F_FitFunction, FitIntensityWave  , W_Coef, HoldStr, Gen_Constraints  	
+#else
+				Abort  "Genetic Optimization xop NOT installed. Install xop support and then try again"
+#endif
+			else
+				FuncFit/W=1  IR3F_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1 /E=E_wave/D /C=T_Constraints	
+			endif
 		endif
 		if (V_FitError!=0)	//there was error in fitting
 			AchievedChiSquare = 0
@@ -1281,6 +1564,7 @@ static Function IR3F_FitCSCylinderModel()
 		//	endif
 		NVAR AchievedChiSquare=root:Packages:Irena:CylinderModels:AchievedChiSquare
 		AchievedChiSquare=V_chisq
+		print "Fitting ended with achieved chi-square = "+num2str(V_chisq)+" - note, this may be different than penl set one since that is always for Intensity vs Q" 
 		IR3F_AutoRecalculateModelData(1)
 		IR3F_KillWarningPanel()
 	setDataFolder OldDf
@@ -1345,6 +1629,8 @@ Function IR3F_fitcheckproc(cba) : CheckBoxControl
 		//CSElCylParNames = 		{"Prefactor","Radius","Length","SLD","ShellThickness","AspectRatio"}
 		Wave ProfCSElCylPar= root:Packages:Irena:CylinderModels:ProfCSElCylPar
 		//ProfCSElCylParNames = {"Prefactor","Radius","Length","AspectRatio","Shell1Th","Shell1SLD", "Shell2th", "Shell2SLD"}
+		Wave ProfCSElCylPar2= root:Packages:Irena:CylinderModels:ProfCSElCylPar2
+		//ProfCSElCylParNames = {"Prefactor","Radius","Length","AspectRatio","Shell1Th","Shell1SLD", "Shell2th", "Shell2SLD", "Shell3th", "Shell3SLD"}
 
 		strswitch(ModelSelected)	// string switch
 			case "Cylinder":	// execute if case matches expression
@@ -1442,6 +1728,39 @@ Function IR3F_fitcheckproc(cba) : CheckBoxControl
 					ProfCSElCylPar[7][1] = checked
 				endif
 				break		// exit from switch
+			case "Profile CS Ellip. Cylinder 2":	// execute if case matches expression
+		//{"Prefactor","Radius","Length","AspectRatio","Shell1Th","Shell1SLD", "Shell2th", "Shell2SLD", "Shell3th", "Shell3SLD"}
+				if(StringMatch(cba.ctrlName, "FitModelVarPar1" ))
+					ProfCSElCylPar2[0][1] = checked
+				endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar2" ))
+					ProfCSElCylPar2[1][1] = checked
+				endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar3" ))
+					ProfCSElCylPar2[2][1] = checked
+				endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar4" ))
+					ProfCSElCylPar2[3][1] = checked
+				endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar5" ))
+					ProfCSElCylPar2[4][1] = checked
+				endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar6" ))
+					ProfCSElCylPar2[5][1] = checked
+				endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar7" ))
+					ProfCSElCylPar2[6][1] = checked
+				endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar8" ))
+					ProfCSElCylPar2[7][1] = checked
+				endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar9" ))
+					ProfCSElCylPar2[8][1] = checked
+				endif
+				if(StringMatch(cba.ctrlName, "FitModelVarPar10" ))
+					ProfCSElCylPar2[9][1] = checked
+				endif
+				break		// exit from switch
 			endswitch
 			//handle Unified controls
 //			Wave UnifiedPar = root:Packages:Irena:CylinderModels:UnifiedPar
@@ -1505,7 +1824,8 @@ static Function IR3F_InitCylinderModels()
 	ListOfVariablesMain="UseIndra2Data;UseQRSdata;DataQEnd;DataQStart;DataQEndPoint;DataQstartPoint;"
 	ListOfVariablesMain+="UpdateAutomatically;AchievedChiSquare;ScatteringContrast;SlitLength;UseSlitSmearedData;"
 	ListOfVariablesMain+="SaveToNotebook;SaveToWaves;SaveToFolder;DelayBetweenProcessing;DoNotTryRecoverData;HideTagsAlways;"
-	ListOfVariablesMain+="UseUnified;"
+	ListOfVariablesMain+="UseUnified;UseGeneticOptimization;FixedWeights;SmearPointsNum;"
+	//ListOfVariablesMain+="UseUnified;UseGeneticOptimization;FixedWeights;SmearPointsNum;"
 	
 	//background
 	ListOfVariablesBG="SASBackground;FitSASBackground;SASBackgroundLL;SASBackgroundHL;SASBackgroundError;"
@@ -1517,7 +1837,7 @@ static Function IR3F_InitCylinderModels()
 	//Ellipsoid Cylinder
 	ListOfVariablesElCyl = ""
 	//Ellipsoid Core Shell Cylinder
-	ListOfVariablesElCylCS = "ProfileMaxX;UseGMatrixCalculations;"
+	ListOfVariablesElCylCS = "ProfileMaxX;UseGMatrixCalculations;ProfileNumPoints;"
 	
 	ListOfVariables = ListOfVariablesMain+ListOfVariablesElCylCS+ListOfVariablesBG
 	// new, use waves for parameters. Let's see if it is better
@@ -1544,17 +1864,24 @@ static Function IR3F_InitCylinderModels()
 	make/O/T/N=(5) ElCylParNames		// 
 	wave/T ElCylParNames
 	ElCylParNames = {"Prefactor","Radius","Length","SLD","AspectRatio"}
-	//Core-shell Elliptical Cylinder, 5 parameters
+	//Core-shell Elliptical Cylinder, 6 parameters
 	make/O/N=(6,5) CSElCylPar			//
 	make/O/T/N=(6) CSElCylParNames		// 
 	wave/T CSElCylParNames
 	CSElCylParNames = {"Prefactor","Radius","Length","SLD","ShellThickness","AspectRatio"}
 
-	//SLD Profile Core-shell Elips Cylinder, 7 parameters
+	//SLD Profile Core-shell Elips Cylinder, 8 parameters
 	make/O/N=(8,5) ProfCSElCylPar			//
 	make/O/T/N=(8) ProfCSElCylParNames		// 
 	wave/T ProfCSElCylParNames
 	ProfCSElCylParNames = {"Prefactor","Radius","Length","AspectRatio","Shell1Th","Shell1SLD", "Shell2th", "Shell2SLD"}
+
+	//SLD Profile Core-shell Elips Cylinder 2, 10 parameters
+	make/O/N=(10,5) ProfCSElCylPar2			//
+	make/O/T/N=(10) ProfCSElCylParNames2		// 
+	wave/T ProfCSElCylParNames2
+	ProfCSElCylParNames = {"Prefactor","Radius","Length","AspectRatio","Shell1Th","Shell1SLD", "Shell2th", "Shell2SLD", "Shell3th","Shell3SLD"}
+
 	
 	//and here we create them
 	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
@@ -1585,7 +1912,7 @@ static Function IR3F_InitCylinderModels()
 		endif
 	endfor		
 	SVAR ListOfModels
-	ListOfModels="---;Cylinder;Core Shell Cylinder;Ellip. Cylinder;Core Shell Ellip. Cylinder;Profile CS Ellip. Cylinder;"
+	ListOfModels="---;Cylinder;Core Shell Cylinder;Ellip. Cylinder;Core Shell Ellip. Cylinder;Profile CS Ellip. Cylinder;Profile CS Ellip. Cylinder 2;"
 	SVAR ModelSelected
 	if(strlen(ModelSelected)<1)
 		ModelSelected="---"
@@ -1784,9 +2111,9 @@ static Function IR3F_SetInitialValues()
 		ProfCSElCylPar[2][3]=20000
 	endif
 	if(ProfCSElCylPar[3][0]==0)			//AspectRatio
-		ProfCSElCylPar[3][0]=0.01
-		ProfCSElCylPar[3][2]=1e-5
-		ProfCSElCylPar[3][3]=1e5
+		ProfCSElCylPar[3][0]=1
+		ProfCSElCylPar[3][2]=0.1
+		ProfCSElCylPar[3][3]=2
 	endif
 	if(ProfCSElCylPar[4][0]==0)			//Shell1Thickness
 		ProfCSElCylPar[4][0]=10
@@ -1808,6 +2135,60 @@ static Function IR3F_SetInitialValues()
 		ProfCSElCylPar[7][2]=0.2
 		ProfCSElCylPar[7][3]=5
 	endif
+
+	Wave ProfCSElCylPar2 = root:Packages:Irena:CylinderModels:ProfCSElCylPar2
+	//ProfCSElCylParNames = {"Prefactor","Radius","Length","AspectRatio","Shell1Th","Shell1SLD", "Shell2th", "Shell2SLD", "Shell3th","Shell3SLD"}
+	if(ProfCSElCylPar2[0][0]<=0)			//Prefactor
+		ProfCSElCylPar2[0][0]=1
+		ProfCSElCylPar2[0][2]=1e-10
+		ProfCSElCylPar[0][3]=1e10
+	endif
+	if(ProfCSElCylPar2[1][0]==0)			//Radius
+		ProfCSElCylPar2[1][0]=50
+		ProfCSElCylPar2[1][2]=5
+		ProfCSElCylPar2[1][3]=1000
+	endif
+	if(ProfCSElCylPar2[2][0]==0)			//Length
+		ProfCSElCylPar2[2][0]=2000
+		ProfCSElCylPar2[2][2]=200
+		ProfCSElCylPar2[2][3]=20000
+	endif
+	if(ProfCSElCylPar2[3][0]==0)			//AspectRatio
+		ProfCSElCylPar2[3][0]=1
+		ProfCSElCylPar2[3][2]=.15
+		ProfCSElCylPar2[3][3]=2
+	endif
+	if(ProfCSElCylPar2[4][0]==0)			//Shell1Thickness
+		ProfCSElCylPar2[4][0]=10
+		ProfCSElCylPar2[4][2]=1
+		ProfCSElCylPar2[4][3]=1000
+	endif
+	if(ProfCSElCylPar2[5][0]==0)			//Shell1SLD
+		ProfCSElCylPar2[5][0]=1
+		ProfCSElCylPar2[5][2]=0.2
+		ProfCSElCylPar2[5][3]=5
+	endif
+	if(ProfCSElCylPar2[6][0]==0)			//Shell2Thickness
+		ProfCSElCylPar2[6][0]=20
+		ProfCSElCylPar2[6][2]=1
+		ProfCSElCylPar2[6][3]=1000
+	endif
+	if(ProfCSElCylPar2[7][0]==0)			//Shell2SLD
+		ProfCSElCylPar2[7][0]=2
+		ProfCSElCylPar2[7][2]=0.2
+		ProfCSElCylPar2[7][3]=5
+	endif
+	if(ProfCSElCylPar2[8][0]==0)			//Shell3Thickness
+		ProfCSElCylPar2[8][0]=20
+		ProfCSElCylPar2[8][2]=1
+		ProfCSElCylPar2[8][3]=1000
+	endif
+	if(ProfCSElCylPar2[9][0]==0)			//Shell3SLD
+		ProfCSElCylPar2[9][0]=2
+		ProfCSElCylPar2[9][2]=0.2
+		ProfCSElCylPar2[9][3]=5
+	endif
+
 	
 	NVAR DelayBetweenProcessing=root:Packages:Irena:CylinderModels:DelayBetweenProcessing
 	if(DelayBetweenProcessing<0)
@@ -1816,6 +2197,10 @@ static Function IR3F_SetInitialValues()
 	NVAR ProfileMaxX=root:Packages:Irena:CylinderModels:ProfileMaxX
 	if(ProfileMaxX<round(1.1*(ProfCSElCylPar[1][0]+2*ProfCSElCylPar[4][0]+ProfCSElCylPar[6][0])))
 		ProfileMaxX=round(1.1*(ProfCSElCylPar[1][0]+2*ProfCSElCylPar[4][0]+ProfCSElCylPar[6][0]))
+	endif
+	NVAR ProfileNumPoints=root:Packages:Irena:CylinderModels:ProfileNumPoints
+	if(ProfileNumPoints<50)
+		ProfileNumPoints = 100
 	endif
 
 	//CurrentTab=0
