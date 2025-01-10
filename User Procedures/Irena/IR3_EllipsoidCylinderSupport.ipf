@@ -12,7 +12,7 @@ Constant NumPntsAlpha = 121					//121 to 181 changes calculation time by 50% (6.
 Constant NumPntsPsi = 41					//21 ~ 1.5 sec, 41 ~ 3 sec, 61 ~ 4.5 sec, 91 ~ 6.5 sec, no observable impact on model... weird... 
 											//181/91 seems to give excellent results, 121/41 gives very good values (on test case) and is much faster. 
 
-Constant PrintFitProgress=1					//print steps while fitting
+Constant PrintFitProgress=0					//print steps while fitting
 //*************************************************************************\
 //* Copyright (c) 2005 - 2025, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
@@ -34,6 +34,7 @@ Constant PrintFitProgress=1					//print steps while fitting
 //*****************************************************************************************************************
 Function IR3F_AutoRecalculateModelData(variable Force)
 	//next we calculate the model
+	KillWIndow/Z CSCylinderProcessRunning
 	NVAR UpdateAutomatically=root:Packages:Irena:CylinderModels:UpdateAutomatically
 	if(UpdateAutomatically||Force)
 		IR3F_CalculateAndGraphModelData()
@@ -995,6 +996,8 @@ end
 	Function IR3F_SetupWarningPanel(calledFromFitting, FittingMessage)
 	variable calledFromFitting, FittingMessage
 	
+	KillWIndow/Z CSCylinderProcessRunning
+	
 	if(!calledFromFitting)
 		if(FittingMessage)
 			print "*** Profile CS Ellip. Cylinder model ***********"
@@ -1156,6 +1159,12 @@ Function IR3F_CreateParametrizedProfile2(ProfileNumPoints,length, radius, Aspect
 	setDataFolder root:Packages:Irena:CylinderModels:
 	make/O/N=(ProfileNumPoints) Profile	
 	NVAR ProfileMaxX=root:Packages:Irena:CylinderModels:ProfileMaxX
+	variable maxRadval = radius + 4*Shell1th+2*Shell2th+Shell3th
+	if(ProfileMaxX < 1.05*maxRadval)
+		ProfileMaxX = ceil(1.05*maxRadval)
+	endif
+
+
 	SetScale/P x 0,(ProfileMaxX/ProfileNumPoints),"A", Profile
 	variable step = dimDelta(Profile,0)
 	//define profile here...
@@ -1166,6 +1175,7 @@ Function IR3F_CreateParametrizedProfile2(ProfileNumPoints,length, radius, Aspect
 	// from radius+Shell1th+Shell2th to radius+Shell1th+Shell2th+Shell1th SLD=Shell1SLD
 	// SLD=0 beyond
 	//
+	//check that we have large enough radius range
 	Profile = 0
 	variable LastRadius=radius
 	Profile [0,LastRadius/step]=0										//code

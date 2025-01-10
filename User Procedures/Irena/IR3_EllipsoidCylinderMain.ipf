@@ -1438,7 +1438,7 @@ static Function IR3F_FitCSCylinderModel()
 	
 	Variable V_chisq
 	Duplicate/O W_Coef, E_wave, CoefficientInput
-	E_wave=W_coef/10
+	E_wave=W_coef/20
 	string HoldStr=""
 	For(i=0;i<numpnts(W_Coef);i+=1)
 		HoldStr+="0"
