@@ -171,6 +171,7 @@ Function IR3BS_InitServer()
 		SVAR ListOfScanTypes = root:Packages:Irena:BlueSkySamplePlot:ListOfScanTypes
 		CatalogUsed = DefaultUSAXScatalog
 		PopupMenu CatalogUsed,value=#"root:Packages:Irena:BlueSkySamplePlot:ListOfCatalogs",mode=1+WhichListItem(CatalogUsed, ListOfCatalogs) // popvalue=CatalogUsed
+		IR3BS_InitCatalog()		//this locates the Catalog path
 		IR3BS_GetJSONScanData()
 		PopupMenu ScanTypeToUse,value=#"root:Packages:Irena:BlueSkySamplePlot:ListOfScanTypes",mode=1+ WhichListItem(ScanTypeToUse, ListOfScanTypes) //, popvalue=ScanTypeToUse
 	endif
@@ -197,7 +198,7 @@ FUnction IR3BS_Init()
 	ListOfStrings+="DetectorStr;XaxisStr;"
 	ListOfStrings+="Prefix;"
 
-	ListOfVariables="StartYear;StartMoth;StartDay;NumOfHours;AllDates;NumberOfScansToImport;"
+	ListOfVariables="StartYear;StartMoth;StartDay;NumOfHours;AllDates;NumberOfScansToImport;beforeDate;"
 
 	//and here we create them
 	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
@@ -223,7 +224,7 @@ FUnction IR3BS_Init()
 	NumOfHours=24
 	NVAR NumberOfScansToImport
 	if(NumberOfScansToImport<10)
-		NumberOfScansToImport=10000
+		NumberOfScansToImport=100
 	endif
 	SVAR ListOfScanTypes
 	ListOfScanTypes = "tune_ar;tune_a2rp;tune_mr;tune_dx;tune_dy;all;"
@@ -256,25 +257,32 @@ Function IR3BS_BlueSkyPlotPanelFnct()
 	SetVariable NumberOfScansToImport,pos={330,40},size={160,20}, proc=IR3BS_SetVarProc,title="Num of scans:", valueColor=(0,0,0),  limits={10,1000,50}
 	Setvariable NumberOfScansToImport,fStyle=0, variable=root:Packages:Irena:BlueSkySamplePlot:NumberOfScansToImport, disable=0, frame=1, help={"This is Igor internal name for graph currently selected for controls"}
 	
-	//ListOfVariables="StartMoth;StartDay;NumOfHours;"
-	SetVariable StartYear,pos={20,70},size={100,20}, proc=IR3BS_SetVarProc,title="\Zr120Year:", valueColor=(0,0,0)
-	Setvariable StartYear,fStyle=0, variable=root:Packages:Irena:BlueSkySamplePlot:StartYear, disable=0, frame=1, help={"This is Igor internal name for graph currently selected for controls"}
-	SetVariable StartMoth,pos={140,70},size={100,20}, proc=IR3BS_SetVarProc,title="\Zr120Month:", valueColor=(0,0,0)
-	Setvariable StartMoth,fStyle=0, variable=root:Packages:Irena:BlueSkySamplePlot:StartMoth, disable=0, frame=1, help={"This is Igor internal name for graph currently selected for controls"}
-	SetVariable StartDay,pos={260,70},size={100,20}, proc=IR3BS_SetVarProc,title="\Zr120Day:", valueColor=(0,0,0)
-	Setvariable StartDay,fStyle=0, variable=root:Packages:Irena:BlueSkySamplePlot:StartDay, disable=0, frame=1, help={"This is Igor internal name for graph currently selected for controls"}
-	SetVariable NumOfHours,pos={370,70},size={100,20}, proc=IR3BS_SetVarProc,title="\Zr120Hours:", valueColor=(0,0,0)
-	Setvariable NumOfHours,fStyle=0, variable=root:Packages:Irena:BlueSkySamplePlot:NumOfHours, disable=0, frame=1, help={"This is Igor internal name for graph currently selected for controls"}
 
 	Checkbox AllDates, variable=root:Packages:Irena:BlueSkySamplePlot:AllDates
-	CheckBox AllDates title="All dates? ",pos={488,68},size={60,14},proc=IR3S_CheckProc
+	CheckBox AllDates title="All available? ",pos={70,70},size={60,14},proc=IR3S_CheckProc
+	Checkbox beforeDate, variable=root:Packages:Irena:BlueSkySamplePlot:beforeDate
+	CheckBox beforeDate title="Before this date? ",pos={300,70},size={60,14},proc=IR3S_CheckProc
+
+	//ListOfVariables="StartMoth;StartDay;NumOfHours;"
+	SetVariable StartYear,pos={20,90},size={100,20}, proc=IR3BS_SetVarProc,title="\Zr120Year:", valueColor=(0,0,0)
+	Setvariable StartYear,fStyle=0, variable=root:Packages:Irena:BlueSkySamplePlot:StartYear, disable=0, frame=1, help={"This is Igor internal name for graph currently selected for controls"}
+	SetVariable StartMoth,pos={140,90},size={100,20}, proc=IR3BS_SetVarProc,title="\Zr120Month:", valueColor=(0,0,0)
+	Setvariable StartMoth,fStyle=0, variable=root:Packages:Irena:BlueSkySamplePlot:StartMoth, disable=0, frame=1, help={"This is Igor internal name for graph currently selected for controls"}
+	SetVariable StartDay,pos={260,90},size={100,20}, proc=IR3BS_SetVarProc,title="\Zr120Day:", valueColor=(0,0,0)
+	Setvariable StartDay,fStyle=0, variable=root:Packages:Irena:BlueSkySamplePlot:StartDay, disable=0, frame=1, help={"This is Igor internal name for graph currently selected for controls"}
+	SetVariable NumOfHours,pos={370,90},size={100,20}, proc=IR3BS_SetVarProc,title="\Zr120Hours:", valueColor=(0,0,0)
+	Setvariable NumOfHours,fStyle=0, variable=root:Packages:Irena:BlueSkySamplePlot:NumOfHours, disable=0, frame=1, help={"This is Igor internal name for graph currently selected for controls"}
+	Button Now,pos={500,90},size={80,20}, proc=IR3BS_ButtonProc,title="Now", help={"Set time to now"}
+
+	
 
 	SVAR ListOfScanTypes=root:Packages:Irena:BlueSkySamplePlot:ListOfScanTypes
 	SVAR ScanTypeToUse=root:Packages:Irena:BlueSkySamplePlot:ScanTypeToUse
-	PopupMenu ScanTypeToUse,pos={20,100},size={310,20},proc=IR3BS_PopMenuProc, title="Select Scan type",help={"Select one of available scan types"}
+	PopupMenu ScanTypeToUse,pos={20,140},size={310,20},proc=IR3BS_PopMenuProc, title="Select Scan type",help={"Select one of available scan types"}
 	PopupMenu ScanTypeToUse,value=#"root:Packages:Irena:BlueSkySamplePlot:ListOfScanTypes",mode=1, popvalue=ScanTypeToUse
 
-	Button Update,pos={300,100},size={150,20}, proc=IR3BS_ButtonProc,title="Update", help={"Plot selected data in new graph"}
+	Button LastScans,pos={250,140},size={100,20}, proc=IR3BS_ButtonProc,title="Last N Scans", help={"Updater table with last N scans"}
+	Button Update,pos={400,140},size={100,20}, proc=IR3BS_ButtonProc,title="Update table", help={"Reload list in table"}
 
 	ListBox BlueSkyList,pos={8,185},size={573,395} //, special={0,0,1 }		//this will scale the width of column, users may need to slide right using slider at the bottom. 
 	ListBox BlueSkyList,listWave=root:Packages:Irena:BlueSkySamplePlot:PrunedListOfAvailableData
@@ -289,8 +297,9 @@ Function IR3BS_BlueSkyPlotPanelFnct()
 	//	//Plotting controls...
 	//	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={260,170},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 
-	Button importSelected,pos={20,600},size={120,20}, proc=IR3BS_ButtonProc,title="Import Selected", help={"Import selected rows for further processing"}
-	Button importPlotSelected,pos={20,640},size={120,20}, proc=IR3BS_ButtonProc,title="Import & Plot Selected", help={"Import selected rows and plot"}
+	Button importSelected,pos={30,600},size={120,20}, proc=IR3BS_ButtonProc,title="Import Selected", help={"Import selected rows for further processing"}
+	Button importPlotSelected,pos={20,640},size={160,20}, proc=IR3BS_ButtonProc,title="Import & Plot Selected", help={"Import selected rows and plot"}
+	Button importPlotLast,pos={220,640},size={120,20}, proc=IR3BS_ButtonProc,title="Plot last", help={"Import last collected plot (of selected type) and plot it"}
 
 	Button SelectAll,pos={420,600},size={120,20}, proc=IR3BS_ButtonProc,title="Select all ", help={"Select all "}
 	Button DeSelectAll,pos={420,640},size={120,20}, proc=IR3BS_ButtonProc,title="DeSelect all ", help={"Select all "}
@@ -570,6 +579,7 @@ Function IR3BS_ButtonProc(ba) : ButtonControl
 
 	variable i
 	string FoldernameStr
+	string tempDate
 	switch( ba.eventCode )
 		case 2: // mouse up
 			// click code here
@@ -590,6 +600,46 @@ Function IR3BS_ButtonProc(ba) : ButtonControl
 				Wave selWave=root:Packages:Irena:BlueSkySamplePlot:SelectionOfAvailableData
 				selWave = 0
 			endif
+			
+			
+			if(stringmatch(ba.ctrlname,"Now"))
+				NVAR StartYear = root:Packages:Irena:BlueSkySamplePlot:StartYear
+				NVAR StartMoth = root:Packages:Irena:BlueSkySamplePlot:StartMoth
+				NVAR StartDay = root:Packages:Irena:BlueSkySamplePlot:StartDay
+				NVAR NumOfHours = root:Packages:Irena:BlueSkySamplePlot:NumOfHours
+				NVAR beforeDate = root:Packages:Irena:BlueSkySamplePlot:beforeDate
+				tempDate=Secs2Date(datetime,-2)
+				StartYear = str2num(stringFromList(0,tempDate,"-"))
+				StartMoth = str2num(stringFromList(1,tempDate,"-"))
+				StartDay = str2num(stringFromList(2,tempDate,"-"))+1
+			endif			
+			if(stringmatch(ba.ctrlname,"LastScans")||stringmatch(ba.ctrlname,"importPlotLast"))
+				NVAR StartYear = root:Packages:Irena:BlueSkySamplePlot:StartYear
+				NVAR StartMoth = root:Packages:Irena:BlueSkySamplePlot:StartMoth
+				NVAR StartDay = root:Packages:Irena:BlueSkySamplePlot:StartDay
+				NVAR NumOfHours = root:Packages:Irena:BlueSkySamplePlot:NumOfHours
+				NVAR beforeDate = root:Packages:Irena:BlueSkySamplePlot:beforeDate
+				beforeDate = 1
+				NumOfHours = 0
+				tempDate=Secs2Date(datetime,-2)
+				StartYear = str2num(stringFromList(0,tempDate,"-"))
+				StartMoth = str2num(stringFromList(1,tempDate,"-"))
+				StartDay = str2num(stringFromList(2,tempDate,"-"))+1
+				
+				IR3BS_GetJSONScanData()
+			endif
+			
+			if(stringmatch(ba.ctrlname,"importPlotLast"))
+				Wave SelectionOfAvailableData = root:Packages:Irena:BlueSkySamplePlot:SelectionOfAvailableData
+				if(numpnts(SelectionOfAvailableData)>0)
+					SelectionOfAvailableData= 0
+					SelectionOfAvailableData[0]=1
+					IR3BS_ImportSelected(1)
+				else
+					print "No data in database"
+				endif
+			endif
+	
 
 			break
 		case -1: // control being killed
@@ -721,6 +771,7 @@ FUnction IR3BS_GetJSONScanData()
 	NVAR StartYear=root:Packages:Irena:BlueSkySamplePlot:StartYear
 
 	NVAR AllDates=root:Packages:Irena:BlueSkySamplePlot:AllDates
+	NVAR beforeDate=root:Packages:Irena:BlueSkySamplePlot:beforeDate
 
 	SVAR ListOfCatalogs=root:Packages:Irena:BlueSkySamplePlot:ListOfCatalogs
 	SVAR CatalogUsed=root:Packages:Irena:BlueSkySamplePlot:CatalogUsed
@@ -734,12 +785,19 @@ FUnction IR3BS_GetJSONScanData()
 	//SERVER/node/search/CATALOG?page[offset]=0&filter[time_range][condition][since]=FROM_START_TIME&filter[time_range][condition][until]=BEFORE_END_TIME&sort=time
 	variable startTimeSec= date2secs((StartYear), (StartMonth), (StartDay)) - 2082844800 - Date2secs(-1,-1,-1) //convert to Python time and fix to UTC time which BS is using. 
 	variable endTimeSec = startTimeSec + NumOfHours*60*60
+	if(beforeDate)
+		endTimeSec = startTimeSec - NumOfHours*60*60
+	endif
 	string TempAddress = ServerAddress+"/api/v1/search/"
 	string StartTimeStr, EndTimeStr
 	sprintf StartTimeStr, "%.15g" ,startTimeSec
 	sprintf EndTimeStr, "%.15g" ,endTimeSec
 	
-	variable chunkToDownload = 250
+	variable chunkToDownloadDefault = 250
+	variable chunkToDownload = chunkToDownloadDefault
+	if(chunkToDownload>NumberOfScansToImport)
+		chunkToDownload = NumberOfScansToImport
+	endif
 	variable OffsetStart=0
 	variable NumStepsNeeded = ceil(NumberOfScansToImport/chunkToDownload)
 	variable TempNumberOfScansToImport
@@ -757,7 +815,6 @@ FUnction IR3BS_GetJSONScanData()
 		redimension/N=0 w1, wt1, wt2
 		abort 
 	endif
-
 	//variable timerRefNum=startMSTimer
 	
 	//need to split into smaller chunks (100) to download in pages.
@@ -766,17 +823,38 @@ FUnction IR3BS_GetJSONScanData()
 		//print "Downloading "+num2str(i2)+" set of "+num2str(chunkToDownload)+" data" 
 		TempAddress = ServerAddress+"/api/v1/search/"			//this needs to be reset here... 
 		if(AllDates)
-			//TempAddress +=CatalogUsed+"?page[offset]=00&page[limit]="+num2str(NumberOfScansToImport)+"&sort=time"
-			TempAddress +=Prefix+"/?page[offset]="+num2str(OffsetStart)+"&page[limit]="+num2str(chunkToDownload)+"&sort=time"
-		else
-			TempAddress +=Prefix+"/?page[offset]="+num2str(OffsetStart)+"&page[limit]="+num2str(chunkToDownload)+"&filter[time_range][condition][since]="+StartTimeStr+"&filter[time_range][condition][until]="+EndTimeStr
-			if(!	StringMatch(ScanTypeToUse, "all"))
+			if(beforeDate)	//this reads in reverse order last N scans from date selected. 
+				TempAddress +=Prefix+"/?page[offset]="+num2str(OffsetStart)+"&page[limit]="+num2str(chunkToDownload)+"&sort=-time"
+			else
+				//TempAddress +=CatalogUsed+"?page[offset]=00&page[limit]="+num2str(NumberOfScansToImport)+"&sort=time"
+			 	TempAddress +=Prefix+"/?page[offset]="+num2str(OffsetStart)+"&page[limit]="+num2str(chunkToDownload)+"&sort=time"
+			endif					
+
+		else //from/before date
+			if(beforeDate)
+				if(NumOfHours>0)
+					TempAddress +=Prefix+"/?page[offset]="+num2str(OffsetStart)+"&page[limit]="+num2str(chunkToDownload)+"&filter[time_range][condition][until]="+StartTimeStr+"&filter[time_range][condition][since]="+EndTimeStr
+				else
+					TempAddress +=Prefix+"/?page[offset]="+num2str(OffsetStart)+"&page[limit]="+num2str(chunkToDownload)+"&filter[time_range][condition][until]="+StartTimeStr			//+"&filter[time_range][condition][until]="+EndTimeStr
+				endif
+			else
+				if(NumOfHours>0)
+					TempAddress +=Prefix+"/?page[offset]="+num2str(OffsetStart)+"&page[limit]="+num2str(chunkToDownload)+"&filter[time_range][condition][since]="+StartTimeStr+"&filter[time_range][condition][until]="+EndTimeStr
+				else
+					TempAddress +=Prefix+"/?page[offset]="+num2str(OffsetStart)+"&page[limit]="+num2str(chunkToDownload)+"&filter[time_range][condition][since]="+StartTimeStr//+"&filter[time_range][condition][until]="+EndTimeStr
+				endif
+			endif
+			if(!StringMatch(ScanTypeToUse, "all"))
 				TempAddress +="&filter[eq][condition][key]=plan_name"
 				TempAddress +="&filter[eq][condition][value]=\""+ScanTypeToUse+"\""
 			endif
 			//&filter[scan_id][condition][scan_ids]=SCAN_ID
-			TempAddress +="&filter[time_range][condition][timezone]=US/Central&sort=time"
-			//note: sort=-time sorts in inverse chronological order. 
+			if(beforeDate)
+				TempAddress +="&filter[time_range][condition][timezone]=US/Central&sort=-time"
+				//note: sort=-time sorts in inverse chronological order. 
+			else
+				TempAddress +="&filter[time_range][condition][timezone]=US/Central&sort=time"
+			endif
 			//example
 			//http://usaxscontrol:8020/api/v1/node/search/20idb_usaxs?page[offset]=0&page[limit]=100&filter[time_range][condition][since]=1671235200&filter[time_range][condition][until]=1671321600&filter[time_range][condition][timezone]=US/Central&sort=time
 			//http://usaxscontrol:8020/api/v1/node/search/20idb_usaxs?page[offset]=100&page[limit]=100&filter[time_range][condition][since]=1671235200&filter[time_range][condition][until]=1671321600&filter[time_range][condition][timezone]=US/Central&sort=time
@@ -978,11 +1056,12 @@ FUnction IR3BS_GetJSONScanData()
 			//   }
 			//}
 
-		print TempAddress
+		//print TempAddress
 		URLRequest/Z url=TempAddress
 		if(V_Flag!=0)
 			abort "Server not available"
 		endif
+		//print S_serverResponse
 		JSONXOP_Parse/Z(S_serverResponse)
 		if(V_Flag!=0)
 			abort "Cannot parse server response"
