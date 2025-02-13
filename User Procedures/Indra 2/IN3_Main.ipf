@@ -526,11 +526,21 @@ Function/T IN3_USAXSScanLoadHdf5File2(LoadManyDataSets)
 			FileNameNoExtension = ReplaceString("."+DataExtension, FileName, "")
 			//this will display jpg image if it exists... 
 			KillWindow/Z SampleImageDuringMeasurementImg
+			variable Sucess=0
 			if(DisplayJPGFile)
 				JPGFileName = FileNameNoExtension+".jpg"
 				setDataFOlder root:Packages:Indra3:
 				ImageLoad/P=USAXSHDFPath/T=jpeg/Q/O/Z/N=SampleImageDuringMeasurement JPGFileName
 				if(V_flag)	//success...
+						Sucess=1
+				else	//try tiff file
+					JPGFileName = FileNameNoExtension+".tif"
+					ImageLoad/P=USAXSHDFPath/T=tiff/Q/O/Z/N=SampleImageDuringMeasurement JPGFileName
+					if(V_flag)	//success...
+							Sucess=1
+					endif	
+				endif
+				if(Sucess)
 					Wave Img = root:Packages:Indra3:SampleImageDuringMeasurement
 					NewImage/K=1/N=SampleImageDuringMeasurementImg Img
 					MoveWindow /W=SampleImageDuringMeasurementImg 40,45,910,664

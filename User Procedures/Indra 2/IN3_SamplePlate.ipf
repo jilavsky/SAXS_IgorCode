@@ -1,7 +1,7 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version = 1.09
+#pragma version = 1.10
 #pragma IgorVersion=8.03
 
 
@@ -13,6 +13,7 @@
 
 //this is tool to setup Sample Plates for USAXS, survey sample positions, and generate Command files. 
 
+//1.10 Add option for slow speed for moving around. Tweak for 12ID and new Aerotech motors. 
 //1.09 Change PVs for 20IDB upgraded instrument. 
 //1.08 add Export list of saved sets. Increased version number of the panel.   
 //1.07 add IN3S_ImportFile which imports other command files. For nwo set for 12IDB command files. 
@@ -2079,7 +2080,7 @@ static Function IN3S_Initialize()
 	ListOfVariables="NumberOfSamplesToCreate;DisplayAllSamplesInImage;"
 	ListOfVariables+="DefaultSampleThickness;USAXSAll;SAXSAll;WAXSAll;DisplayUSWAXScntrls;"
 	ListOfVariables+="SampleXTAR;SampleYTAR;SelectedRow;SampleThickness;SampleXRBV;SampleYRBV;"
-	ListOfVariables+="SampleXTable;SampleYTable;SurveySXStep;SurveySYStep;MoveWhenRowChanges;"
+	ListOfVariables+="SampleXTable;SampleYTable;SurveySXStep;SurveySYStep;MoveWhenRowChanges;SurveySlowSpeed;"
 	ListOfVariables+="RunExportHookFunction;"
 	ListOfVariables+="USAXSScanTime;SAXSScanTime;WAXSScanTime;CalculatedOverAllTime;NumberOfSamples;"
 	ListOfVariables+="TableIsSaved;ExportCurrentPosSet;ExportListOfPosSets;"
@@ -3766,6 +3767,9 @@ Function IN3S_BeamlineSurveyPanel()
 		Button STOPMotors,pos={10,450},size={105,30}, proc=IN3S_SurveyButtonProc,title="STOP motors",fSize=14, help={"STOP ALL MOTORS MOVEMENT"}
 		Button STOPMotors fColor=(65535,32768,32768)
 
+		CheckBox SurveySlowSpeed pos={160,405},size={70,20},title="Slow Speed?", help={"When selected, SX and SY will move slowly"}
+		CheckBox SurveySlowSpeed variable=root:Packages:SamplePlateSetup:SurveySlowSpeed,  noproc, fColor=(0,0,0),labelBack=(49151,65535,49151)
+
 		Button OpenSlitsLarge,pos={250,425},size={135,20}, proc=IN3S_SurveyButtonProc,title="Open Slits Large",fSize=14, help={"Open slits as large as possible"}
 		Button OpenSlitsUSAXS,pos={250,450},size={135,20}, proc=IN3S_SurveyButtonProc,title="USAXS Slits",fSize=14, help={"Open Slits for USAXS"}
 		Button OpenSlitsSWAXS,pos={250,475},size={135,20}, proc=IN3S_SurveyButtonProc,title="SWAXS Slits",fSize=14, help={"Open Slits for SAXS/WAXS"}
@@ -4156,15 +4160,31 @@ static Function IN3S_MoveMotorInEpics(WhichMotor,MovePosition)
 	variable MovePosition	
 	//avoid moving if instrument is running, usxLAX:dataColInProgress = 1
 	variable InstrumentUsed=0
+	variable oldspeed
+	NVAR SlowDown=root:Packages:SamplePlateSetup:SurveySlowSpeed
 #if(exists("pvOpen")==4)
 	InstrumentUsed = IN3S_GetPVVariableValue("usxLAX:dataColInProgress")	
 	if(InstrumentUsed)
 		abort "Instrument is collecting data, cannot move motors"
 	else	
 		if(stringMatch(WhichMotor,"SX"))
+			oldspeed = IN3S_GetPVVariableValue("usxAERO:m8.VELO")
+			if(SlowDown)
+				IN3S_PutEpicsPv("usxAERO:m8.VELO", 5)
+			endif
 			IN3S_PutEpicsPv("usxAERO:m8.VAL", MovePosition)
+			if(SlowDown)
+				IN3S_PutEpicsPv("usxAERO:m8.VELO", oldspeed)
+			endif
 		elseif(stringMatch(WhichMotor,"SY"))
+			oldspeed = IN3S_GetPVVariableValue("usxAERO:m9.VELO")
+			if(SlowDown)
+				IN3S_PutEpicsPv("usxAERO:m9.VELO", 5)
+			endif
 			IN3S_PutEpicsPv("usxAERO:m9.VAL", MovePosition)
+			if(SlowDown)
+				IN3S_PutEpicsPv("usxAERO:m9.VELO", oldspeed)
+			endif
 		endif
 	endif
 #else

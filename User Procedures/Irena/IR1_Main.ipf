@@ -5,7 +5,7 @@
 
 //DO NOT renumber Main files every time, these are main release numbers...
 //define manual date and release verison 
-constant CurrentIrenaVersionNumber = 2.73		//change version of Boot Irena1 modeling.ipf to get proper check version. 
+constant CurrentIrenaVersionNumber = 2.74		//change version of Boot Irena1 modeling.ipf to get proper check version. 
 
 //*************************************************************************
 //* Copyright (c) 2005 - 2025, Argonne National Laboratory
@@ -13,6 +13,7 @@ constant CurrentIrenaVersionNumber = 2.73		//change version of Boot Irena1 model
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************
 
+//2.74		minor changes, bug fixes. 
 //2.73   Added Ellipsoid Cylinder support
 //2.72		July2023 release, minor changes, fix IP9.02 compatiblity
 //2.713	April2023Beta, minor changes

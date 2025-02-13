@@ -1,7 +1,7 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version=1.04
+#pragma version=1.05
 
 	//this is available ONLY, if JSONXOP is installed and json_functions.ipf is in User Procedures. 
 #if(exists("JSONXOP_GetValue")==4)
@@ -23,7 +23,7 @@ Menu "USAXS"
 	"Bluesky Plots", IR3BS_BlueSkyPlot()
 end
 
-
+//1.05 add display of sample name for USAXS, SAXS, and WAXS instead of non existing detectors
 //1.04 fixes to IN3BS_ImportDataAndPlot to record all data in json so we can use them for analysis. 
 //1.03 Optimization & fixes January 2024, making it compatible to other catalogs also? 
 //1.02 December 2023, Tiled ??? compatible, major source changes. 
@@ -158,7 +158,7 @@ Function IR3BS_InitServer()
 	ListOfCatalogs=AllCatalogs
 	//By now we know how many catalogs we have, but not enough to find data in generic catalog.  
 	//set to USAXS default catalog, if we are looking for it. 	
-	CatalogUsed = stringfromList(0,grepList(AllCatalogs,DefaultUSAXScatalog)) 
+	CatalogUsed = stringfromList(0,listMatch(AllCatalogs,DefaultUSAXScatalog)) 
 	if(strlen(CatalogUsed)<2)
 		CatalogUsed = "---"
 	endif
@@ -171,15 +171,16 @@ Function IR3BS_InitServer()
 		SVAR ListOfScanTypes = root:Packages:Irena:BlueSkySamplePlot:ListOfScanTypes
 		CatalogUsed = DefaultUSAXScatalog
 		PopupMenu CatalogUsed,value=#"root:Packages:Irena:BlueSkySamplePlot:ListOfCatalogs",mode=1+WhichListItem(CatalogUsed, ListOfCatalogs) // popvalue=CatalogUsed
+		PopupMenu ScanTypeToUse,value=#"root:Packages:Irena:BlueSkySamplePlot:ListOfScanTypes",mode=1+ WhichListItem(ScanTypeToUse, ListOfScanTypes) //, popvalue=ScanTypeToUse
 		IR3BS_InitCatalog()		//this locates the Catalog path
 		IR3BS_GetJSONScanData()
-		PopupMenu ScanTypeToUse,value=#"root:Packages:Irena:BlueSkySamplePlot:ListOfScanTypes",mode=1+ WhichListItem(ScanTypeToUse, ListOfScanTypes) //, popvalue=ScanTypeToUse
 	endif
 end
 
 //**********************************************************************************************************
 //**********************************************************************************************************
 FUnction IR3BS_Init()
+
 
 	DfRef OldDf=GetDataFolderDFR()
 	string ListOfVariables
@@ -224,10 +225,14 @@ FUnction IR3BS_Init()
 	NumOfHours=24
 	NVAR NumberOfScansToImport
 	if(NumberOfScansToImport<10)
-		NumberOfScansToImport=100
+		NumberOfScansToImport=10
 	endif
 	SVAR ListOfScanTypes
 	ListOfScanTypes = "tune_ar;tune_a2rp;tune_mr;tune_dx;tune_dy;all;"
+	SVAR ScanTypeToUse
+	if(strlen(ScanTypeToUse)<1)
+		ScanTypeToUse = "all"
+	endif
 
 	Make/O/T/N=(0,3) ListOfAvailableData, PrunedListOfAvailableData
 	Make/O/N=(0) SelectionOfAvailableData 
@@ -396,6 +401,9 @@ Function IN3BS_ImportDataAndPlot(selRow, saveTheData, PlotAll)
 	//TempAddress +=PrunedListOfAvailableData[selRow][3]+"?format=json"					//	this results in giant json with 7.6k lines with /search 
 	// 	selection above makes difference for data adresses.  
 	//Identify the data and get the url for the arrays...
+	//TempAddress = ServerAddress+"/api/v1/full/"+Prefix+"/"
+	//TempAddress +=PrunedListOfAvailableData[selRow][3]+"/metadata/start?format=json"		//	can I get just some of the metadata here?  <<<< 
+	//print TempAddress
 	URLRequest/Z url=TempAddress
 	if(V_Flag!=0)
 		abort "Server not available"
@@ -407,11 +415,18 @@ Function IN3BS_ImportDataAndPlot(selRow, saveTheData, PlotAll)
 	endif
 	variable jsonId = V_Value
 	//if we need to check who the json looks like, this will dump the json to history as formatted string
-	//JSONXOP_Dump jsonId
-	//JSONXOP_Dump /IND=3 jsonID 	//this adds indents so one can read the damned thing. 
-	//print S_Value		//-- prints the file in history and works. 
-	//JSONXOP_Release jsonId
-	//abort
+//	JSONXOP_Dump jsonId
+//	JSONXOP_Dump /IND=3 jsonID 	//this adds indents so one can read the damned thing. 
+//	DoWindow jsonTextOut
+//	if(!V_Flag)
+//		NewNotebook/F=1/K=1/O/N=jsonTextOut	//create notebook for output
+//	endif
+//	Notebook jsonTextOut, selection={startOfFile,startOfFile }
+//	Notebook jsonTextOut, text=S_Value
+//	
+//	//print S_Value		//-- prints the file in history and works. 
+//	JSONXOP_Release jsonId
+//	abort
 
 	//these were populated in IR3BS_GetJSONScanData() and should contain names of x and y axes. 
 
@@ -730,23 +745,16 @@ FUnction IR3BS_InitCatalog()
 End
 //**********************************************************************************************************
 //**********************************************************************************************************
-Function IR3BS_GetListOfLastData()
-
-
-	setDataFolder root:Packages:Irena:BlueSkySamplePlot
-
-	SVAR ListOfCatalogs=root:Packages:Irena:BlueSkySamplePlot:ListOfCatalogs
-	SVAR CatalogUsed=root:Packages:Irena:BlueSkySamplePlot:CatalogUsed
-	SVAR Prefix = root:Packages:Irena:BlueSkySamplePlot:Prefix				//thsi si ~ Catalog used, but has other path behind the name. Repalce Catalogused with this. 
-
-	SVAR ScanTypeToUse = root:Packages:Irena:BlueSkySamplePlot:ScanTypeToUse
-	SVAR DetectorStr = root:Packages:Irena:BlueSkySamplePlot:DetectorStr
-	SVAR Xaxis = root:Packages:Irena:BlueSkySamplePlot:XaxisStr
-	NVAR NumberOfScansToImport=root:Packages:Irena:BlueSkySamplePlot:NumberOfScansToImport
-
-
-
-end
+//Function IR3BS_GetListOfLastData()
+//	setDataFolder root:Packages:Irena:BlueSkySamplePlot
+//	SVAR ListOfCatalogs=root:Packages:Irena:BlueSkySamplePlot:ListOfCatalogs
+//	SVAR CatalogUsed=root:Packages:Irena:BlueSkySamplePlot:CatalogUsed
+//	SVAR Prefix = root:Packages:Irena:BlueSkySamplePlot:Prefix				//thsi si ~ Catalog used, but has other path behind the name. Repalce Catalogused with this. 
+//	SVAR ScanTypeToUse = root:Packages:Irena:BlueSkySamplePlot:ScanTypeToUse
+//	SVAR DetectorStr = root:Packages:Irena:BlueSkySamplePlot:DetectorStr
+//	SVAR Xaxis = root:Packages:Irena:BlueSkySamplePlot:XaxisStr
+//	NVAR NumberOfScansToImport=root:Packages:Irena:BlueSkySamplePlot:NumberOfScansToImport
+//end
 
 //************************************************************************************************************
 FUnction IR3BS_GetJSONScanData()
@@ -1013,7 +1021,8 @@ FUnction IR3BS_GetJSONScanData()
 		//NOTE: changes layout…   
 		//http://usaxscontrol.xray.aps.anl.gov:8020/api/v1/search/idb_usaxs_retired_2023-12-05?page[offset]=0&page[limit]=250&filter[time_range][condition][since]=1678341600&filter[time_range][condition][until]=1678413600&filter[eq][condition][key]=plan_name
 		//&filter[eq][condition][value]=%22tune_a2rp%22&filter[time_range][condition][timezone]=US/Central&sort=time&fields=metadata&omit_links=true&select_metadata={detectors:start.detectors,motors:start.motors}
-		TempAddress+="&select_metadata={detectors:start.detectors,motors:start.motors,plan_name:start.plan_name,time:start.time}"		//this selects only specific metadata. 
+		TempAddress+="&select_metadata={detectors:start.detectors,motors:start.motors,plan_name:start.plan_name,time:start.time,scan_title:start.plan_args.scan_title,title:start.title}"		//this selects only specific metadata. 
+		//NOTE: if the metadata is burried in subfolder, you need to select_metadata with the whole path: start.plan_args.scan_title starts in start, goes in plan_args and picks the scan_title. 
 		//this returns very small document:
 			//{
 			//   "data": [
@@ -1096,6 +1105,7 @@ FUnction IR3BS_GetJSONScanData()
 		//let's list those which are plan "tune_a2rp"
 		numDataSets = JSON_GetArraySize(jsonID, "/data")
 		Redimension/N=(Oldrecords+numDataSets) IDwave, PlanNameWave, TimeWave, MetadataStr
+		string tempMetadata2
 		j=Oldrecords
 		For(i=0;i<numDataSets;i+=1)
 			//tempAddress = "/data/"+num2str(i)+"/attributes/metadata/start/plan_name"		//for one without select_metadata
@@ -1114,13 +1124,24 @@ FUnction IR3BS_GetJSONScanData()
 			//tempAddress = "/data/"+num2str(i)+"/attributes/metadata/start/detectors/0"		//for one without select_metadata
 			tempAddress = "/data/"+num2str(i)+"/attributes/metadata/detectors/0"				//for one WITH select_metadata
 			tempMetadata= JSON_GetString(jsonID, tempAddress,ignoreErr=1)
-			MetadataStr[j]+="Detector="+tempMetadata+";"
-			DetectorStr = tempMetadata
-			//tempAddress = "/data/"+num2str(i)+"/attributes/metadata/start/motors/0"		//for one without select_metadata
 			tempAddress = "/data/"+num2str(i)+"/attributes/metadata/motors/0"				//for one WITH select_metadata
-			tempMetadata= JSON_GetString(jsonID, tempAddress,ignoreErr=1)
-			MetadataStr[j]+="Axis="+tempMetadata+";"
-			Xaxis = tempMetadata
+			tempMetadata2= JSON_GetString(jsonID, tempAddress,ignoreErr=1)
+			if(strlen(tempMetadata)>1&&strlen(tempMetadata2)>1)		//this has detector and axis
+				MetadataStr[j]+="Det="+tempMetadata+";"
+				MetadataStr[j]+="Axis="+tempMetadata2+";"	
+				DetectorStr = tempMetadata
+				Xaxis = tempMetadata
+			else	//flyscan or 
+				//scan_title
+				tempAddress = "/data/"+num2str(i)+"/attributes/metadata/scan_title"				//for one WITH scan_title
+				tempMetadata= JSON_GetString(jsonID, tempAddress,ignoreErr=1)
+				if(strlen(tempMetadata)<1)	//SAXS, WAXS
+					tempAddress = "/data/"+num2str(i)+"/attributes/metadata/title"				//for SAXS/WAXS WITH title
+					tempMetadata= JSON_GetString(jsonID, tempAddress,ignoreErr=1)
+				endif			
+				MetadataStr[j]=tempMetadata
+			endif
+			//tempAddress = "/data/"+num2str(i)+"/attributes/metadata/start/motors/0"		//for one without select_metadata
 			//tempAddress = "/data/"+num2str(i)+"/attributes/metadata/start/motors/0"		//for one without select_metadata
 			//tempMetadata= JSON_GetString(jsonID, tempAddress,ignoreErr=1)
 			//MetadataStr[j]+="Axis="+tempMetadata+";"

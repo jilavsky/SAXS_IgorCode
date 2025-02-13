@@ -2184,17 +2184,29 @@ static Function NI1A_ImportThisJPGFile(SelectedFileToLoad)
 		//"Convert2Dto1DDataPath"
 		NVAR/Z DisplayJPGFile = root:Packages:Convert2Dto1D:DisplayJPGFile
 		KillWindow/Z SampleImageDuringMeasurementImg
+		variable Sucess=0
 		if(NVAR_Exists(DisplayJPGFile))
 			if(DisplayJPGFile)
 				string JPGFileName = StringFromList(0,SelectedFileToLoad,".")+".jpg"
-					setDataFOlder root:Packages:Convert2Dto1D:
-					ImageLoad/P=Convert2Dto1DDataPath/T=jpeg/Q/O/Z/N=SampleImageDuringMeasurement JPGFileName
+				setDataFOlder root:Packages:Convert2Dto1D:
+				ImageLoad/P=Convert2Dto1DDataPath/T=jpeg/Q/O/Z/N=SampleImageDuringMeasurement JPGFileName
 					if(V_flag)	//success...
+						Sucess=1
+					else	//try tiff file
+						JPGFileName = StringFromList(0,SelectedFileToLoad,".")+".tif"
+						ImageLoad/P=Convert2Dto1DDataPath/T=tiff/Q/O/Z/N=SampleImageDuringMeasurement JPGFileName
+						if(V_flag)	//success...
+							Sucess=1
+						endif
+					
+					endif
+				if(Sucess)
 						Wave Img = root:Packages:Convert2Dto1D:SampleImageDuringMeasurement
 						NewImage/K=1/N=SampleImageDuringMeasurementImg Img
 						MoveWindow /W=SampleImageDuringMeasurementImg 40,45,910,664
 						AutoPositionWindow/R=NI1A_Convert2Dto1DPanel/M=1 SampleImageDuringMeasurementImg
-					endif
+
+				endif
 			endif
 		endif	
 end

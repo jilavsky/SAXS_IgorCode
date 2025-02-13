@@ -1,15 +1,16 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
 #pragma IgorVersion=8.04   //requires Igor version 8.03 or higher
-#pragma version = 2.00
+#pragma version = 2.01
 
-constant CurrentIndraVersionNumber = 2.00
+constant CurrentIndraVersionNumber = 2.01
 //*************************************************************************\
 //* Copyright (c) 2005 - 2025, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.01		Changes for 12IDE USAXS/SAXS/WAXS. WIP
 //2.00		July2023 release
 //				Minor fixes, USAXS fixes for 20IDB operations. April2023Beta
 //1.99   October2021 release 

@@ -1509,7 +1509,7 @@ Function IN3_FitModGaussTop(ctrlname, DoNOtChangeLimits) : Buttoncontrol			// ca
 	tempPDInt[V_maxloc]=Nan
 	W_Coef[0]=V_max
 	W_coef[1]=Ar_encoder[V_maxloc]
-	FindLevels /N=5/P/Q  tempPDInt, V_max/2
+	FindLevels /N=25/P/Q  tempPDInt, V_max/2
 	wave W_FindLevels
 	variable startPointL, endPointL
 	if(DoNOtChangeLimits)
@@ -1527,6 +1527,8 @@ Function IN3_FitModGaussTop(ctrlname, DoNOtChangeLimits) : Buttoncontrol			// ca
 		 	startPointL =  IN3_FindlevelsWithNaNs(tempPDInt, V_max/2, V_maxloc, 0)
 		 	endPointL = IN3_FindlevelsWithNaNs(tempPDInt, V_max/2, V_maxloc, 1)
 		endif
+		PeakCenterFitStartPoint = startPointL
+		PeakCenterFitEndPoint =endPointL		
 	endif
 //	Cursor/P /W=RcurvePlotGraph#PeakCenter A  PD_Intensity  startPointL 
 //	Cursor/P /W=RcurvePlotGraph#PeakCenter B  PD_Intensity  endPointL 

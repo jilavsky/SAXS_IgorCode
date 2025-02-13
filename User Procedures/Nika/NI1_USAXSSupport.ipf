@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.55
+#pragma version=1.56
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2025, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.56 tweaks for Eiger WAXS detector
 //1.55 added 12IDE USAXS/SAXS/WAXS works also. started 11-2024
 //1.54 added 20ID beamline to support, USAXS/SAXS/WAXS in 2022-2023
 //1.53 Added Dexela HDF5 support for WAXS, Fixed offset is read and set in NI1_9IDWFindI0, there is no function in Nika to set thsi dynamically. 
@@ -153,16 +154,16 @@ Function NI1_9IDCConfigPanelFunction() : Panel
 	SetDrawEnv fsize= 18,fstyle= 3,textrgb= (16385,16388,65535)
 	DrawText 10,25,"USAXS SAXS/WAXS Nexus file configuration"
 	
-	DrawText 10, 43, "SAXS : Pilatus 100k in USAXS/SAXS/WAXS"
-	DrawText 10, 60, "WAXS-Pilatus : default Pilatus 300kw in USAXS/SAXS/WAXS"
-	DrawText 10, 77, "WAXS-Dexela : rare Dexela 2315 in USAXS/SAXS/WAXS"
+	DrawText 10, 43, "SAXS : default Pilatus in USAXS/SAXS/WAXS"
+	DrawText 10, 60, "WAXS : default Eiger/Pilatus in USAXS/SAXS/WAXS"
+	DrawText 10, 77, "WAXS-Dex : ! RARE ! Dexela 2315 in USAXS/SAXS/WAXS"
 	///DrawText 10, 77, "SAXS     : large SAXS camera in the 15ID-D (only SAXS, no USAXS)"
 	Checkbox SAXSSelection,pos={10,90},size={100,20}, variable=root:Packages:Convert2Dto1D:USAXSSAXSselector, proc=NI1_9IDCCheckProc
 	Checkbox SAXSSelection, title ="SAXS", help={"Use to configure Nika for SAXS"}
 	Checkbox USAXSWAXSselector,pos={120,90},size={100,20}, variable=root:Packages:Convert2Dto1D:USAXSWAXSselector, proc=NI1_9IDCCheckProc
-	Checkbox USAXSWAXSselector, title ="WAXS-Pilatus (typ)", help={"Common detecctor - Use to configure Nika for WAXS using Pilatus"}
+	Checkbox USAXSWAXSselector, title ="WAXS (standard)", help={"Common detecctor - Use to configure Nika for WAXS using Pilatus"}
 	Checkbox USAXSWAXSDexselector,pos={230,90},size={100,20}, variable=root:Packages:Convert2Dto1D:USAXSWAXSDexselector, proc=NI1_9IDCCheckProc
-	Checkbox USAXSWAXSDexselector, title ="WAXS-Dexela (rare)", help={"Rare detector - Use to configure Nika for WAXS using Dexela"}
+	Checkbox USAXSWAXSDexselector, title ="WAXS-Dex (rare)", help={"Rare detector - Use to configure Nika for WAXS using Dexela"}
 
 	Checkbox DisplayJPGFile,pos={370,90},size={100,20}, variable=root:Packages:Convert2Dto1D:DisplayJPGFile, noproc
 	Checkbox DisplayJPGFile, title ="Display JPG File", help={"Display jpg file if it was collected... "}
@@ -518,8 +519,50 @@ Function NI1_9IDCButtonProc(ba) : ButtonControl
 				SVAR BCMatchNameString = root:Packages:Convert2Dto1D:BCMatchNameString
 				if(isSAXS)
 					BCMatchNameString = "(?i)AgB"
+					//need to overwrite also some parameters for SAXS
+					NVAR LN1=root:Packages:Convert2Dto1D:BMCalibrantD1LineWidth
+					NVAR LN2=root:Packages:Convert2Dto1D:BMCalibrantD2LineWidth
+					NVAR LN3=root:Packages:Convert2Dto1D:BMCalibrantD3LineWidth
+					NVAR LN4=root:Packages:Convert2Dto1D:BMCalibrantD4LineWidth
+					NVAR LN5=root:Packages:Convert2Dto1D:BMCalibrantD5LineWidth
+					NVAR LN6=root:Packages:Convert2Dto1D:BMCalibrantD6LineWidth
+					NVAR LN7=root:Packages:Convert2Dto1D:BMCalibrantD7LineWidth
+					NVAR LN8=root:Packages:Convert2Dto1D:BMCalibrantD8LineWidth
+					NVAR LN9=root:Packages:Convert2Dto1D:BMCalibrantD9LineWidth
+					NVAR LN10=root:Packages:Convert2Dto1D:BMCalibrantD10LineWidth
+					LN1=7
+					LN2=7
+					LN3=7
+					LN4=7
+					LN5=7
+					LN6=7
+					LN7=7
+					LN8=7
+					LN9=7
+					LN10=7
 				else
 					BCMatchNameString = "(?i)LaB"
+					//need to overwrite also some parameters for WAXS
+					NVAR LN1=root:Packages:Convert2Dto1D:BMCalibrantD1LineWidth
+					NVAR LN2=root:Packages:Convert2Dto1D:BMCalibrantD2LineWidth
+					NVAR LN3=root:Packages:Convert2Dto1D:BMCalibrantD3LineWidth
+					NVAR LN4=root:Packages:Convert2Dto1D:BMCalibrantD4LineWidth
+					NVAR LN5=root:Packages:Convert2Dto1D:BMCalibrantD5LineWidth
+					NVAR LN6=root:Packages:Convert2Dto1D:BMCalibrantD6LineWidth
+					NVAR LN7=root:Packages:Convert2Dto1D:BMCalibrantD7LineWidth
+					NVAR LN8=root:Packages:Convert2Dto1D:BMCalibrantD8LineWidth
+					NVAR LN9=root:Packages:Convert2Dto1D:BMCalibrantD9LineWidth
+					NVAR LN10=root:Packages:Convert2Dto1D:BMCalibrantD10LineWidth
+					LN1=15
+					LN2=15
+					LN3=15
+					LN4=15
+					LN5=15
+					LN6=15
+					LN7=15
+					LN8=15
+					LN9=15
+					LN10=15
 				endif
 				NI1BC_UpdateBMCntrListBOx()
 				Wave/T ListOfCCDDataInBmCntrPath = root:Packages:Convert2Dto1D:ListOfCCDDataInBmCntrPath
@@ -586,7 +629,7 @@ Function NI1_9IDCConfigNexus()
 
 //print StringByKey("data:model", OldNOte  , "=" , ";")
 //print OldNOte
-	if( (stringMatch("9ID",Beamline)||stringMatch("20ID",Beamline)||stringMatch("12ID",Beamline)) && stringMatch("Pilatus", StringByKey("data:model", OldNOte  , "=" , ";")))	
+	if( (stringMatch("9ID",Beamline)||stringMatch("20ID",Beamline)||stringMatch("12ID",Beamline)) && (stringMatch("Pilatus", StringByKey("data:model", OldNOte  , "=" , ";"))||stringMatch("Eiger2", StringByKey("data:model", OldNOte  , "=" , ";"))))	
 //		//9ID data from 2015 onwards... 
 //		Wavelength = NumberByKey(NI1_9IDCFindKeyStr("monochromator:wavelength=", OldNote), OldNote  , "=" , ";")
 //		XRayEnergy = 12.3984/Wavelength
@@ -733,6 +776,9 @@ Function NI1_9IDCCreateSAXSPixMask()
 			M_ROIMask[193,194][] = 0
 			M_ROIMask[][485,486] = 0
 		endif
+		//this sets all negative pixles (Pilatus way of bad pixel masking) to be masked off
+		M_ROIMask = w2D[p][q] < 0 ? 0 : M_ROIMask[p][q]
+	
 	endif
 	
 	string notestr="MaskOffLowIntPoints:0;LowIntToMaskOff:0>// ;ITEMNO:0;\r"
@@ -794,6 +840,7 @@ Function NI1_9IDCCreateWAXSPixMask()
 	endif
 	Duplicate/O OriginalCCD, M_ROIMask
 	Redimension /B/U M_ROIMask 
+	NVAR USAXSWAXSDexselector = root:Packages:Convert2Dto1D:USAXSWAXSDexselector
 	NVAR/Z UsePixSensitiveMask = root:Packages:Convert2Dto1D:UsePixSensitiveMask
 	if(!NVAR_Exists(UsePixSensitiveMask))
 		variable/g UsePixSensitiveMask=0
@@ -844,8 +891,35 @@ Function NI1_9IDCCreateWAXSPixMask()
 		notestr+="// ;ITEMNO:4;\r"
 		notestr+="DrawRect -1,485,196,495\r"	
 		note M_ROIMask, notestr
-	elseif(DimSize(M_ROIMask, 1)>1500)	//Dexela N2315
+	elseif(DimSize(M_ROIMask, 1)>1500 && !USAXSWAXSDexselector)		//Eiger. 
+		print "Fix default mask in NI1_9IDCCreateWAXSPixMask" 
 					//hor 		vert
+		// these are in between chip dead areas
+		M_ROIMask[0,511][513,514]=0
+		M_ROIMask[0,511][1028,1039]=0
+		M_ROIMask[0,511][1553,1554]=0
+		//these are edges
+		M_ROIMask[0,2][0,2067]=0
+		M_ROIMask[509,511][0,2067]=0
+		M_ROIMask[0,511][0,1]=0
+		M_ROIMask[0,511][2066,2067]=0
+		//this sets all max positive pixels (Eiger way of bad pixel masking) to be masked off	
+		M_ROIMask = OriginalCCD[p][q] < 1e8 ? M_ROIMask[p][q] : 0
+	
+		notestr="MaskOffLowIntPoints:0;LowIntToMaskOff:0>// ;ITEMNO:0;\r"
+		notestr+="	SetDrawEnv xcoord= top,ycoord= left\r"
+		notestr+="// ;ITEMNO:1;\r"
+		notestr+="SetDrawEnv linefgc= (3,52428,1)\r"
+		notestr+="// ;ITEMNO:2;\r"
+		notestr+="SetDrawEnv fillpat= 5,fillfgc= (0,0,0)\r"
+		notestr+="// ;ITEMNO:3;\r"
+		notestr+="SetDrawEnv save\r"
+		notestr+="// ;ITEMNO:4;\r"
+		notestr+="DrawRect -1,485,196,495\r"	
+		note M_ROIMask, notestr
+
+
+	elseif(USAXSWAXSDexselector)	//Dexela N2315
 		M_ROIMask[0,1943][0,3]=0
 		M_ROIMask[0,1943][9,9]=0
 		M_ROIMask[0,1943][3068,3071]=0
@@ -863,18 +937,6 @@ Function NI1_9IDCCreateWAXSPixMask()
 			//these are vertical lines in Nika
 			M_ROIMask[781,781][0,1536]=0
 		endif
-//	
-//		string notestr="MaskOffLowIntPoints:0;LowIntToMaskOff:0>// ;ITEMNO:0;\r"
-//		notestr+="	SetDrawEnv xcoord= top,ycoord= left\r"
-//		notestr+="// ;ITEMNO:1;\r"
-//		notestr+="SetDrawEnv linefgc= (3,52428,1)\r"
-//		notestr+="// ;ITEMNO:2;\r"
-//		notestr+="SetDrawEnv fillpat= 5,fillfgc= (0,0,0)\r"
-//		notestr+="// ;ITEMNO:3;\r"
-//		notestr+="SetDrawEnv save\r"
-//		notestr+="// ;ITEMNO:4;\r"
-//		notestr+="DrawRect -1,485,196,495\r"	
-//		note M_ROIMask, notestr
 	endif		
 	SVAR CurrentMaskFileName = root:Packages:Convert2Dto1D:CurrentMaskFileName
 	CurrentMaskFileName="9IDC default WAXS mask"
