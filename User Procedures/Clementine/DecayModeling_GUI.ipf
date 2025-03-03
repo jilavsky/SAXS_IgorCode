@@ -1,11 +1,12 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.2
+#pragma version=1.3
 #include <Peak AutoFind>
 
 
 // This is part of package called "Clementine" for modeling of decay kinetics using Maximum Entropy method
 // Jan Ilavsky, PhD June 1 2008
 // 1.2 JIL, 7/7/2011 Added reset time for x-scaled data
+// 1.3 JIL, 2/18/2025 fixed GUI control issue which prevented operations on IP9
 //****************************************
 // Main Evaluation procedure:
 //****************************************
@@ -474,36 +475,51 @@ End
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
-	Constant kMili = 1e-3
-	Constant kMicro = 1e-6
-	Constant kNano = 1e-9
-	Constant kPico = 1e-12
+//	Constant kMili = 1e-3
+//	Constant kMicro = 1e-6
+//	Constant kNano = 1e-9
+//	Constant kPico = 1e-12
 
 Function DecJIL_PopMenCorMode()
 	string ModeString="sec;milisec;microsec;nanosec;"
 	NVAR ScaleInputTimeBy = root:Packages:DecayModeling:ScaleInputTimeBy
 
 	
-				switch(ScaleInputTimeBy)	// numeric switch
-					case 1:		// execute if case matches expression
-						return 1
-						break						// exit from switch
-					case kMili:		// execute if case matches expression
-						return 2
-						break
-					case kMicro:		// execute if case matches expression
-						return 3
-						break
-					case kNano:		// execute if case matches expression
-						return 4
-						break
-					case kPico:		// execute if case matches expression
-						return 5
-						break
-					default:								// optional default expression executed
-						return 0					// when no case matches
-				endswitch
-			
+	if(ScaleInputTimeBy==1)
+		return 1
+	elseif(ScaleInputTimeBy==1e-3)
+		return 2
+	elseif(ScaleInputTimeBy==1e-6)
+		return 3
+	elseif(ScaleInputTimeBy==1e-9)
+		return 4
+	elseif(ScaleInputTimeBy==1e-12)
+		return 5
+	else
+		return 0
+	endif
+	
+//	
+//	switch(ScaleInputTimeBy)	// numeric switch
+//		case 1:		// execute if case matches expression
+//			return 1
+//			break						// exit from switch
+//		case 1e-3:		// execute if case matches expression
+//			return 2
+//			break
+//		case 1e-6:		// execute if case matches expression
+//			return 3
+//			break
+//		case 1e-9:		// execute if case matches expression
+//			return 4
+//			break
+//		case 1e-12:		// execute if case matches expression
+//			return 5
+//			break
+//		default:								// optional default expression executed
+//			return 0					// when no case matches
+//	endswitch
+//			
 
 
 end

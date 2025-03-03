@@ -31,9 +31,12 @@ end
 //1.00 original version, kind of works
 
 //server address. 
+strconstant ServerAddress="http://usaxscontrol.xray.aps.anl.gov:8020"		//usaxcontrol
+//strconstant ServerAddress="http://10.211.55.7:8020"							//Ubuntu test machine
+
 //strconstant ServerAddress="http://wow.xray.aps.anl.gov:8010"
 //strconstant ServerAddress="http://usaxscontrol:8020"
-strconstant ServerAddress="http://usaxscontrol.xray.aps.anl.gov:8020"
+//strconstant ServerAddress="http://otz.xray.aps.anl.gov:8020"
 //strconstant ServerAddress="https://tiled-demo.blueskyproject.io"
 //strconstant DefaultUSAXScatalog="idb_usaxs_retired_2023-12-05"		//set to name of default catalog, likely "usaxs" when in operations
 strconstant DefaultUSAXScatalog="usaxs"		//set to name of default catalog, likely "usaxs" when in operations
@@ -676,6 +679,12 @@ FUnction IR3BS_InitCatalog()
 	setDataFolder root:Packages:Irena:BlueSkySamplePlot
 	SVAR Prefix = root:Packages:Irena:BlueSkySamplePlot:Prefix
 	SVAR CatalogUsed=root:Packages:Irena:BlueSkySamplePlot:CatalogUsed
+	SVAR ListOfCatalogs=root:Packages:Irena:BlueSkySamplePlot:ListOfCatalogs
+	//check that default catalog actually exists
+	if(!StringMatch(ListOfCatalogs, "*"+CatalogUsed+";*" ))	//not there, set to 1st on list
+		CatalogUsed = stringFromList(0,ListOfCatalogs)
+	endif
+
 	if(StringMatch(CatalogUsed, "---" ))
 		Wave w1= root:Packages:Irena:BlueSkySamplePlot:SelectionOfAvailableData
 		Wave/T wt2= root:Packages:Irena:BlueSkySamplePlot:PrunedListOfAvailableData
@@ -707,11 +716,16 @@ FUnction IR3BS_InitCatalog()
 	TempAddress = NextURL
 	JSONXOP_Release jsonId
 
-	//print TempAddress
+	print TempAddress
+	Variable timerRefNum, microSeconds
+	timerRefNum = StartMSTimer
 	URLRequest/Z url=TempAddress
 	if(V_Flag!=0)
 		abort "Server not available"
 	endif
+	microSeconds = StopMSTimer(timerRefNum)
+	Print microSeconds/1e6, "secs to get 100 record from "+TempAddress
+	
 	JSONXOP_Parse/Z(S_serverResponse)
 	if(V_Flag!=0)
 		abort "Cannot parse server response"

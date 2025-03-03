@@ -10,7 +10,7 @@ constant CurrentIndraVersionNumber = 2.01
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.01		Changes for 12IDE USAXS/SAXS/WAXS. WIP
+//2.01		Beta release, Changes for 12IDE USAXS/SAXS/WAXS. WIP
 //2.00		July2023 release
 //				Minor fixes, USAXS fixes for 20IDB operations. April2023Beta
 //1.99   October2021 release 

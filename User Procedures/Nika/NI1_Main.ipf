@@ -15,7 +15,7 @@ constant NikaLengthOfPathForPanelDisplay=100
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.86		Nika modification for 12IDE USAXS/SAXS/WAXS instrument.  
+//1.86		Beta release, Nika modification for 12IDE USAXS/SAXS/WAXS instrument.  
 //1.85 	July2023 release, Fix NI1_SetAllPathsInNika which failed to setup properly very long paths. 
 //			1.843 Fix IP9.02 issue with AxisTransform1.2 change. April2023Beta 
 //			1.842 February2023 Beta

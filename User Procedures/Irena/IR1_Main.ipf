@@ -13,7 +13,7 @@ constant CurrentIrenaVersionNumber = 2.74		//change version of Boot Irena1 model
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************
 
-//2.74		minor changes, bug fixes. 
+//2.74		Beta release, minor changes, bug fixes. 
 //2.73   Added Ellipsoid Cylinder support
 //2.72		July2023 release, minor changes, fix IP9.02 compatiblity
 //2.713	April2023Beta, minor changes

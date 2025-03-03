@@ -659,7 +659,9 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData, origFileName)
 			Duplicate/Free AR_PulsePositions, ArValues
 			Redimension /D/N=(AR_pulses[0]) ArValues
 			ArValues[1,numpnts(ArValues)-1] = (ArValues[p]+ArValues[p-1])/2		// shift to have mean AR value for each point and not the end of the AR value, when the system advanced to next point. 
-			DeletePoints 0, 1, ArValues					//the system does not report any data for first channel. HLe settings.
+			//DeletePoints 0, 1, ArValues					//seem to be failing sometimes... the system does not report any data for first channel. HLe settings.
+			ArValues[0]=NaN					//the system does not report any data for first channel. HLe settings.
+			//this is likely not needed for Automation1
 			if(numpnts(MeasTime)<(numpnts(ArValues)-1))
 				OscillationsFound=1
 			elseif(numpnts(MeasTime)==(numpnts(ArValues)-1))
