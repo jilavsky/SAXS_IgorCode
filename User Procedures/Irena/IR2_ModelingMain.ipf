@@ -2690,8 +2690,8 @@ Function IR2L_ReturnOneDataSetToFolder(whichDataSet, WaveNoteText, SkipDialogs, 
 				Duplicate Qvector, $("QvectorModelLSQF2pop"+num2str(j)+"_"+num2str(ii))
 				print "Created results wave : "+DataFolderName+("QvectorModelLSQF2pop"+num2str(j)+"_"+num2str(ii))
 				if(DimensionIsDiameter) 				//all calculations above are done in radii, if we use Diameters, volume/number distributions needs to be half 
-					Duplicate Diameter, $("DiameterModelLSQF2pop"+num2str(j)+"_"+num2str(ii))
-					print "Created results wave : "+DataFolderName+("DiameterModelLSQF2pop"+num2str(j)+"_"+num2str(ii))
+					Duplicate Diameter, $("DiameterModelsLSQF2pop"+num2str(j)+"_"+num2str(ii))
+					print "Created results wave : "+DataFolderName+("DiameterModelsLSQF2pop"+num2str(j)+"_"+num2str(ii))
 				else
 					Duplicate Radii, $("RadiiModelLSQF2pop"+num2str(j)+"_"+num2str(ii))
 					print "Created results wave : "+DataFolderName+("RadiiModelLSQF2pop"+num2str(j)+"_"+num2str(ii))
@@ -2720,8 +2720,8 @@ Function IR2L_ReturnOneDataSetToFolder(whichDataSet, WaveNoteText, SkipDialogs, 
 				Redimension/D MytempWave
 		
 				if(DimensionIsDiameter) 				//all calculations above are done in radii, if we use Diameters, volume/number distributions needs to be half 
-					Wave MytempWave=$("DiameterModelLSQF2pop"+num2str(j)+"_"+num2str(ii))
-					tempname = "DiameterModelLSQF2pop"+num2str(j)+"_"+num2str(ii)
+					Wave MytempWave=$("DiameterModelsLSQF2pop"+num2str(j)+"_"+num2str(ii))
+					tempname = "DiameterModelsLSQF2pop"+num2str(j)+"_"+num2str(ii)
 					IN2G_AppendorReplaceWaveNote(tempname,"DataFrom",GetDataFolder(0))
 					IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
 					IN2G_AppendorReplaceWaveNote(tempname,"Wname",tempname)

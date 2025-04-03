@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
-#pragma version = 1.99
+#pragma version = 2.00
 #pragma IgorVersion=7.05
 
 //DO NOT renumber Main files every time, these are main release numbers...
@@ -11,6 +11,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.00 tweaks for APS-U USAXS instrument. 
 //1.99 added ability to load jpg image if user wants to see data collection image (and it exists...). 
 //1.98  September2020 release. 
 //1.97 February 2020, fix GUI for step scanning
@@ -43,13 +44,14 @@
 Constant IN3_ReduceDataMainVersionNumber=2.01		//these two needs to be the same!
 Constant IN3_NewReduceDataMainVersionNum=2.01	 	//these two needs to be the same!
 constant SmoothBlankForUSAXS = 1
+constant SmoothSampleForUSAXS = 1
 Constant Indra_PDIntBackFixScaleVmin=1.1
 Constant Indra_PDIntBackFixScaleVmax=0.3e-10
-constant	RwaveSmooth1time = 0.01
-constant	RwaveSmooth2time = 0.01
-constant	RwaveSmooth3time = 0.03
-constant	RwaveSmooth4time = 0.3
-constant	RwaveSmooth5time = 0.6
+constant	RwaveSmooth1time = 0.0
+constant	RwaveSmooth2time = 0.0
+constant	RwaveSmooth3time = 0.01
+constant	RwaveSmooth4time = 0.03
+constant	RwaveSmooth5time = 0.06
 constant CalMaxRatioUseSamFWHM = 1.12
 
 //************************************************************************************************************

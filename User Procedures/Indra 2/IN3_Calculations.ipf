@@ -880,9 +880,9 @@ Function IN3_MainPanelCheckBox(ctrlName,checked) : CheckBoxControl
 		endif
 		if(isBlank)
 			TitleBox SelectBlankFolderWarning win=USAXSDataReduction, disable=1
-			SmoothRCurveData=1
+			SmoothRCurveData=SmoothBlankForUSAXS
 		else
-			SmoothRCurveData=0
+			SmoothRCurveData=SmoothSampleForUSAXS
 		endif
 	endif
 	if (cmpstr("RecalculateAutomatically",ctrlName)==0)
@@ -2830,44 +2830,41 @@ Function IN3_GetErrors(SmErrors, SmIntensity, FitIntensity, DsmErrors, Qvector)	
 	wave SmErrors, SmIntensity, FitIntensity, DsmErrors, Qvector
 	
 	DsmErrors=FitIntensity*(SmErrors/SmIntensity)						//error proportional to input data
-	WAVE W_coef=W_coef
-	variable i=1, imax=numpnts(FitIntensity)
+	variable i=2, imax=numpnts(FitIntensity)-1
 	Redimension/N=(numpnts(FitIntensity)) DsmErrors
-	//Variable start = StopMSTimer(-2)
 	Do
-		if( (numtype(FitIntensity[i-1])==0) && (numtype(FitIntensity[i])==0) && (numtype(FitIntensity[i+1])==0))
-			//TBD: find easier way, this is ridiculous. And in Igor 9 alfa needs to add /N=2 to prevent updates to graph... 
-			//CurveFit/Q line, FitIntensity (i-1, i+1) /X=Qvector									//linear function here 
-			//DsmErrors[i]+=abs(W_coef[0]+W_coef[1]*Qvector[i] - FitIntensity[i])	//error due to scatter of data
-			//this calculation is about 50x or more faster than using Curvefit above. 
-			DsmErrors[i]+= IN3_CalculateLineAvegare(FitIntensity,Qvector, i)	
+		if( (numtype(FitIntensity[i-2])==0) &&(numtype(FitIntensity[i-1])==0) && (numtype(FitIntensity[i])==0) && (numtype(FitIntensity[i+1])==0)&& (numtype(FitIntensity[i+2])==0))
+			DsmErrors[i]+= abs(IN3_CalculateLineAverage(FitIntensity,Qvector, i)	- FitIntensity[i])
 		endif
 	i+=1
 	while (i<imax-1)
-	//Variable theend = StopMSTimer(-2)
-	//print "IN3_GetErrors took : "+num2str((theend-start)/100)
-	DsmErrors[0]=DsmErrors[1]									//some error needed for 1st point
-	DsmErrors[imax-1]=DsmErrors[imax-2]								//and error for last point	
+	DsmErrors[0]=3*DsmErrors[2]									//some error needed for 1st point, wild guess
+	DsmErrors[1]=2*DsmErrors[2]									//some error needed for 2nd point, wild guess
+	DsmErrors[imax-1]=DsmErrors[imax-3]								//and error for last point	
+	DsmErrors[imax-2]=DsmErrors[imax-2]								//and error for last point	
  
-	Smooth /E=2 3, DsmErrors
+	//Smooth /E=2 3, DsmErrors
 	//abort
 end
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
 //this calculates line average without doing line fit...
-Function IN3_CalculateLineAvegare(WaveY,waveX, ivalue)
+Function IN3_CalculateLineAverage(WaveY,waveX, ivalue)
 	wave WaveY, WaveX
 	variable ivalue  
 	
-	if(ivalue==3)
-		variable sumx, sumy, sumxy, sumx2
-		sumx 	= WaveX[ivalue-1]+WaveX[ivalue]+WaveX[ivalue+1]
-		sumx2 = WaveX[ivalue-1]^2+WaveX[ivalue]^2+WaveX[ivalue+1]^2
-		sumy 	= WaveY[ivalue-1]+WaveY[ivalue]+WaveY[ivalue+1]
-		sumxy =  WaveX[ivalue-1]*WaveY[ivalue-1]+WaveX[ivalue]*WaveY[ivalue]+WaveX[ivalue+1]*WaveY[ivalue+1]
-		variable mval = (ivalue * sumxy - sumx*sumy) / (ivalue*sumx2 - sumx^2)
-		variable cval = (sumy - mval * sumx) / ivalue
-		//print mval, cval
+	variable sumx, sumx2, sumy, sumxy, mval, cval
+	//variable x_avg, y_avg, numerator, denominator, slope, intercept
+	if(ivalue>1)
+		 // Calculate averages
+		 //checked against Google AI 04-03-2025
+		sumx 	= WaveX[ivalue-2]+WaveX[ivalue-1]+WaveX[ivalue]+WaveX[ivalue+1]+WaveX[ivalue+2]
+		sumx2 = WaveX[ivalue-2]^2+WaveX[ivalue-1]^2+WaveX[ivalue]^2+WaveX[ivalue+1]^2+WaveX[ivalue+2]^2
+		sumy 	= WaveY[ivalue-2]+WaveY[ivalue-1]+WaveY[ivalue]+WaveY[ivalue+1]+WaveY[ivalue+2]
+		sumxy =  WaveX[ivalue-2]*WaveY[ivalue-2]+ WaveX[ivalue-1]*WaveY[ivalue-1]+WaveX[ivalue]*WaveY[ivalue]+WaveX[ivalue+1]*WaveY[ivalue+1]+WaveX[ivalue+2]*WaveY[ivalue+2]
+		mval = (5 * sumxy - sumx*sumy) / (5*sumx2 - sumx^2)
+		cval = (sumy - mval * sumx) / 5
+		//variable result=mval*WaveX[ivalue] + cval
 		return mval*WaveX[ivalue] + cval
 	endif
 	return 0

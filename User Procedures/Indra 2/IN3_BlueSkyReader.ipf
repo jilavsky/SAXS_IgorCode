@@ -1,7 +1,7 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version=1.05
+#pragma version=1.06
 
 	//this is available ONLY, if JSONXOP is installed and json_functions.ipf is in User Procedures. 
 #if(exists("JSONXOP_GetValue")==4)
@@ -23,6 +23,7 @@ Menu "USAXS"
 	"Bluesky Plots", IR3BS_BlueSkyPlot()
 end
 
+//1.06 add ability to get data file and path to data from tiled. Change display of table to make it more useful. 
 //1.05 add display of sample name for USAXS, SAXS, and WAXS instead of non existing detectors
 //1.04 fixes to IN3BS_ImportDataAndPlot to record all data in json so we can use them for analysis. 
 //1.03 Optimization & fixes January 2024, making it compatible to other catalogs also? 
@@ -237,7 +238,7 @@ FUnction IR3BS_Init()
 		ScanTypeToUse = "all"
 	endif
 
-	Make/O/T/N=(0,3) ListOfAvailableData, PrunedListOfAvailableData
+	Make/O/T/N=(0,5) ListOfAvailableData, PrunedListOfAvailableData
 	Make/O/N=(0) SelectionOfAvailableData 
 	SetDataFolder oldDf
 
@@ -395,13 +396,22 @@ Function IN3BS_ImportDataAndPlot(selRow, saveTheData, PlotAll)
 	SVAR CatalogUsed=root:Packages:Irena:BlueSkySamplePlot:CatalogUsed		// this is name of catalog
 	SVAR Prefix = root:Packages:Irena:BlueSkySamplePlot:Prefix				// use this instead of catalog used
 	
+	//first we need to figrue out what we are dealing with...
+	string ScanType=PrunedListOfAvailableData[selRow][0]
+	if(StringMatch(ScanType, "Flyscan")||StringMatch(ScanType, "WAXS")||StringMatch(ScanType, "SAXS")||StringMatch(ScanType, "USAXS"))
+		//these are file based scans, stop here and just print file location and name for now. 
+		print "Data file : "+PrunedListOfAvailableData[selRow][3]
+		print "File loaction : "+PrunedListOfAvailableData[selRow][4]
+		abort 
+	endif
+	
 	//string TempAddress = ServerAddress+"/api/v1/search/"+CatalogUsed+"/"
 	string TempAddress = ServerAddress+"/api/v1/node/full/"+Prefix+"/"
 				//this provides ONLY data and is very small... 
 	//something to note. These return different parts of the data... Smaller or larger tree  
-	TempAddress +=PrunedListOfAvailableData[selRow][3]+"/primary/data?format=json"		//	this results in 267 lines with /search and ONLY data with /node/full <<<< 
-	//TempAddress +=PrunedListOfAvailableData[selRow][3]+"/primary?format=json"			// 	this results in 1300 lines with /search 
-	//TempAddress +=PrunedListOfAvailableData[selRow][3]+"?format=json"					//	this results in giant json with 7.6k lines with /search 
+	TempAddress +=PrunedListOfAvailableData[selRow][5]+"/primary/data?format=json"		//	this results in 267 lines with /search and ONLY data with /node/full <<<< 
+	//TempAddress +=PrunedListOfAvailableData[selRow][5]+"/primary?format=json"			// 	this results in 1300 lines with /search 
+	//TempAddress +=PrunedListOfAvailableData[selRow][5]+"?format=json"					//	this results in giant json with 7.6k lines with /search 
 	// 	selection above makes difference for data adresses.  
 	//Identify the data and get the url for the arrays...
 	//TempAddress = ServerAddress+"/api/v1/full/"+Prefix+"/"
@@ -826,8 +836,8 @@ FUnction IR3BS_GetJSONScanData()
 	variable i, done=0
 	variable numDataSets, i2, j, Oldrecords=0
 	string tempPlanName, tempMetadata
-	KillWaves/Z IDwave, PlanNameWave, TimeWave
-	make/O/N=(0)/T IDwave, PlanNameWave, MetadataStr
+	KillWaves/Z IDwave, PlanNameWave, TimeWave, PathNameWave, FileNameWave
+	make/O/N=(0)/T IDwave, PlanNameWave, MetadataStr, PathNameWave, FileNameWave
 	make/O/N=(0)/D TimeWave						//must be double precision!
 	//abort if no usable catalog is selected. 
 	if(StringMatch(CatalogUsed, "---" ))
@@ -1035,7 +1045,10 @@ FUnction IR3BS_GetJSONScanData()
 		//NOTE: changes layout…   
 		//http://usaxscontrol.xray.aps.anl.gov:8020/api/v1/search/idb_usaxs_retired_2023-12-05?page[offset]=0&page[limit]=250&filter[time_range][condition][since]=1678341600&filter[time_range][condition][until]=1678413600&filter[eq][condition][key]=plan_name
 		//&filter[eq][condition][value]=%22tune_a2rp%22&filter[time_range][condition][timezone]=US/Central&sort=time&fields=metadata&omit_links=true&select_metadata={detectors:start.detectors,motors:start.motors}
-		TempAddress+="&select_metadata={detectors:start.detectors,motors:start.motors,plan_name:start.plan_name,time:start.time,scan_title:start.plan_args.scan_title,title:start.title}"		//this selects only specific metadata. 
+		TempAddress+="&select_metadata={detectors:start.detectors,motors:start.motors,plan_name:start.plan_name,time:start.time,scan_title:start.plan_args.scan_title,title:start.title,hdf5_file:start.hdf5_file,hdf5_path:start.hdf5_path}"		//this selects only specific metadata. 
+					//start
+                  //"hdf5_file": "X0480_EOL_0668.hdf",
+                  //"hdf5_path": "/share1/USAXS_data/2025-02/02_23_Jae/02_23_Jae_waxs",
 		//NOTE: if the metadata is burried in subfolder, you need to select_metadata with the whole path: start.plan_args.scan_title starts in start, goes in plan_args and picks the scan_title. 
 		//this returns very small document:
 			//{
@@ -1079,7 +1092,7 @@ FUnction IR3BS_GetJSONScanData()
 			//   }
 			//}
 
-		//print TempAddress
+		print TempAddress
 		URLRequest/Z url=TempAddress
 		if(V_Flag!=0)
 			abort "Server not available"
@@ -1118,27 +1131,49 @@ FUnction IR3BS_GetJSONScanData()
 	  	// date2secs(2022, 02, 20 ) - date2secs(1970,01,01)			//this converts to UTC, which is not needed anymore... : - Date2secs(-1,-1,-1)		
 		//let's list those which are plan "tune_a2rp"
 		numDataSets = JSON_GetArraySize(jsonID, "/data")
-		Redimension/N=(Oldrecords+numDataSets) IDwave, PlanNameWave, TimeWave, MetadataStr
+		Redimension/N=(Oldrecords+numDataSets) IDwave, PlanNameWave, TimeWave, MetadataStr, PathNameWave, FileNameWave
 		string tempMetadata2
 		j=Oldrecords
+		//fix Ubuntu VM/usaxscontrol issue. Not sure if this is tiled version issue, MongoDB or what. so let's make a switch here... 
+		string Strpath2 = "/attributes/metadata/"		//for one WITH select_metadata on usaxscontrol
+		tempAddress = "/data/"+num2str(i)+Strpath2+"plan_name"
+		tempPlanName = JSON_GetString(jsonID, tempAddress,ignoreErr=1)
+		if(strlen(tempPlanName)<1)		//something is incorrect here... Try one WITH select_metadata for Ubuntu VM
+			Strpath2 = "/attributes/metadata/selected/"
+			tempAddress = "/data/"+num2str(i)+Strpath2+"plan_name"
+			tempPlanName = JSON_GetString(jsonID, tempAddress,ignoreErr=1)
+			if(strlen(tempPlanName)<1)		//something is still incorrect here... Try one without select_metadata
+				Strpath2 = "/attributes/metadata/start/"
+				tempAddress = "/data/"+num2str(i)+Strpath2+"plan_name"
+				tempPlanName = JSON_GetString(jsonID, tempAddress,ignoreErr=1)
+				if(strlen(tempPlanName)<1)
+					abort "Cannot find proper data location. This is bug" 
+				endif
+			endif
+		endif
+		
 		For(i=0;i<numDataSets;i+=1)
-			//tempAddress = "/data/"+num2str(i)+"/attributes/metadata/start/plan_name"		//for one without select_metadata
-			tempAddress = "/data/"+num2str(i)+"/attributes/metadata/plan_name"				//for one WITH select_metadata
+			//tempAddress = "/data/"+num2str(i)+"/attributes/metadata/start/plan_name"				//for one without select_metadata
+			//tempAddress = "/data/"+num2str(i)+"/attributes/metadata/plan_name"					//for one WITH select_metadata
+			tempAddress = "/data/"+num2str(i)+Strpath2+"plan_name"								//for one WITH select_metadata on Ubuntu VM
 			tempPlanName = JSON_GetString(jsonID, tempAddress,ignoreErr=1) 
 			//if(!StringMatch(tempPlanName, "documentation_run"))
 			tempAddress = "/data/"+num2str(i)+"/id"
 			IDwave[j] = JSON_GetString(jsonID, tempAddress,ignoreErr=1)
 			PlanNameWave[j]=tempPlanName
 			//tempAddress = "/data/"+num2str(i)+"/attributes/metadata/start/time"		//for one without select_metadata
-			tempAddress = "/data/"+num2str(i)+"/attributes/metadata/time"				//for one WITH select_metadata
+			//tempAddress = "/data/"+num2str(i)+"/attributes/metadata/time"				//for one WITH select_metadata
+			tempAddress = "/data/"+num2str(i)+Strpath2+"time"				//for one WITH select_metadata on Ubuntu VM
 			//print/D JSON_GetVariable(jsonID, tempAddress)
 			TimeWave[j] = JSON_GetVariable(jsonID, tempAddress,ignoreErr=1) + date2secs(1970,01,01)+ Date2secs(-1,-1,-1) 		//this is in Chicago time for User interface (+ Date2secs(-1,-1,-1))
 			//now metadata which can be used to scope down the data. 
 			MetadataStr[j] = ""
 			//tempAddress = "/data/"+num2str(i)+"/attributes/metadata/start/detectors/0"		//for one without select_metadata
-			tempAddress = "/data/"+num2str(i)+"/attributes/metadata/detectors/0"				//for one WITH select_metadata
+			//tempAddress = "/data/"+num2str(i)+"/attributes/metadata/detectors/0"				//for one WITH select_metadata
+			tempAddress = "/data/"+num2str(i)+Strpath2+"detectors/0"				//for one WITH select_metadata on Ubuntu VM
 			tempMetadata= JSON_GetString(jsonID, tempAddress,ignoreErr=1)
-			tempAddress = "/data/"+num2str(i)+"/attributes/metadata/motors/0"				//for one WITH select_metadata
+			//tempAddress = "/data/"+num2str(i)+"/attributes/metadata/motors/0"				//for one WITH select_metadata
+			tempAddress = "/data/"+num2str(i)+Strpath2+"motors/0"				//for one WITH select_metadata on Ubuntu VM
 			tempMetadata2= JSON_GetString(jsonID, tempAddress,ignoreErr=1)
 			if(strlen(tempMetadata)>1&&strlen(tempMetadata2)>1)		//this has detector and axis
 				MetadataStr[j]+="Det="+tempMetadata+";"
@@ -1147,18 +1182,32 @@ FUnction IR3BS_GetJSONScanData()
 				Xaxis = tempMetadata
 			else	//flyscan or 
 				//scan_title
-				tempAddress = "/data/"+num2str(i)+"/attributes/metadata/scan_title"				//for one WITH scan_title
+				//tempAddress = "/data/"+num2str(i)+"/attributes/metadata/scan_title"				//for one WITH scan_title
+				tempAddress = "/data/"+num2str(i)+Strpath2+"scan_title"				//for one WITH scan_title on Ubuntu VM
 				tempMetadata= JSON_GetString(jsonID, tempAddress,ignoreErr=1)
 				if(strlen(tempMetadata)<1)	//SAXS, WAXS
-					tempAddress = "/data/"+num2str(i)+"/attributes/metadata/title"				//for SAXS/WAXS WITH title
+					//tempAddress = "/data/"+num2str(i)+"/attributes/metadata/title"				//for SAXS/WAXS WITH title
+					tempAddress = "/data/"+num2str(i)+Strpath2+"title"				//for SAXS/WAXS WITH title on Ubuntu VM
 					tempMetadata= JSON_GetString(jsonID, tempAddress,ignoreErr=1)
 				endif			
 				MetadataStr[j]=tempMetadata
 			endif
 			//tempAddress = "/data/"+num2str(i)+"/attributes/metadata/start/motors/0"		//for one without select_metadata
-			//tempAddress = "/data/"+num2str(i)+"/attributes/metadata/start/motors/0"		//for one without select_metadata
 			//tempMetadata= JSON_GetString(jsonID, tempAddress,ignoreErr=1)
 			//MetadataStr[j]+="Axis="+tempMetadata+";"
+			//get also the file name and path
+			                  //"hdf5_file": "X0480_EOL_0668.hdf",
+                  //"hdf5_path": "/share1/USAXS_data/2025-02/02_23_Jae/02_23_Jae_waxs",
+			tempAddress = "/data/"+num2str(i)+Strpath2+"hdf5_path"				//for SAXS/WAXS WITH title on Ubuntu VM
+			tempMetadata= JSON_GetString(jsonID, tempAddress,ignoreErr=1)
+			PathNameWave[j]=tempMetadata
+			
+			//print "Path to data :"+tempMetadata
+			tempAddress = "/data/"+num2str(i)+Strpath2+"hdf5_file"				//for SAXS/WAXS WITH title on Ubuntu VM
+			tempMetadata= JSON_GetString(jsonID, tempAddress,ignoreErr=1)
+			//print "Data File :"+tempMetadata
+			FileNameWave[j] = tempMetadata
+			
 			j+=1
 		endfor
 		Oldrecords=j
@@ -1174,14 +1223,17 @@ FUnction IR3BS_GetJSONScanData()
 	//populate listbox
 	wave/T ListOfAvailableData = root:Packages:Irena:BlueSkySamplePlot:ListOfAvailableData
 	Wave SelectionOfAvailableData = root:Packages:Irena:BlueSkySamplePlot:SelectionOfAvailableData
-	redimension/N=(j,4) ListOfAvailableData 
+	redimension/N=(j,6) ListOfAvailableData 
 	redimension/N=(j) SelectionOfAvailableData 
 	SelectionOfAvailableData = 0
 	if(j>0)
 		ListOfAvailableData[][0] = PlanNameWave[p]
 		ListOfAvailableData[][1] = Secs2Date(TimeWave[p],-2)+"   "+Secs2Time(TimeWave[p],3)
 		ListOfAvailableData[][2] = MetadataStr[p]
-		ListOfAvailableData[][3] = IDwave[p]
+		ListOfAvailableData[][3] = FileNameWave[p]
+		ListOfAvailableData[][4] = PathNameWave[p]
+		ListOfAvailableData[][5] = IDwave[p]
+		
 	endif
 		
 	IR3BS_UdateListBoxScans()
@@ -1198,15 +1250,17 @@ Function IR3BS_UdateListBoxScans()
 	//populate listbox
 	wave/T ListOfAvailableData = root:Packages:Irena:BlueSkySamplePlot:ListOfAvailableData
 	Wave/T PrunedListOfAvailableData  =root:Packages:Irena:BlueSkySamplePlot:PrunedListOfAvailableData
-	redimension/N=(0,4) PrunedListOfAvailableData
+	redimension/N=(0,6) PrunedListOfAvailableData
 	Wave SelectionOfAvailableData = root:Packages:Irena:BlueSkySamplePlot:SelectionOfAvailableData
 	//create list of scans available on server
 	SVAR ListOfScanTypes=root:Packages:Irena:BlueSkySamplePlot:ListOfScanTypes
 	SVAR ScanTypeToUse=root:Packages:Irena:BlueSkySamplePlot:ScanTypeToUse
 	if(!stringmatch(ScanTypeToUse,"all"))
 		Grep /A /E=(ScanTypeToUse)/GCOL=0  ListOfAvailableData as PrunedListOfAvailableData
+		ListBox BlueSkyList win =IR3BS_BlueSkyPlotPanel, widths={15,30,40,5,5,50}
 	else
 		Duplicate/O/T ListOfAvailableData, PrunedListOfAvailableData
+		ListBox BlueSkyList win =IR3BS_BlueSkyPlotPanel, widths={15,20,15,25,15,2}
 	endif
 	redimension/N=(DimSize(PrunedListOfAvailableData,0)) SelectionOfAvailableData 
 	SelectionOfAvailableData = 0

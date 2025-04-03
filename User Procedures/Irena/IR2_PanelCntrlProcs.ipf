@@ -3434,10 +3434,13 @@ Function IR3C_SelectWaveNamesData(CntrlLocationG, SelectedDataFolderName)
 					//for some (Modeling there are two x-wave options, need to figure out which one is present...
 					TempXName=StringByKey(tempStr2, ResultsDataTypesLookup  , ":", ";")
 					TempXName=RemoveEnding(TempXName , ",")+","
+					string folderwaves, lookforstr
 					if(ItemsInList(TempXName,",")>1)
 						j=0
 						Do
 							tempStr3=stringFromList(j,TempXName,",")
+							//folderwaves = DataFolderDir(2, TestFldr)
+							//lookforstr = tempStr3+"_"+StringFromList(ItemsInList(result,"_")-1, result, "_")
 							if(stringmatch(DataFolderDir(2, TestFldr), "*"+tempStr3+"_"+StringFromList(ItemsInList(result,"_")-1, result, "_")+"*" ))
 								TempXName=tempStr3
 								break

@@ -3772,10 +3772,11 @@ Function IN2G_RebinLogData(Wx,Wy,NumberOfPoints,MinStep,[Wsdev,Wxsdev, Wxwidth,W
 				Rebinned_Wv5[i]/=cntPoints
 			endif
 			if(CalcSdev)
-				Rebinned_Wsdev[i]=sqrt(Rebinned_Wsdev[i])/(cntPoints)	 
+				//Rebinned_Wsdev[i]=sqrt(Rebinned_Wsdev[i])/(cntPoints)	 
+				Rebinned_Wsdev[i]=sqrt(Rebinned_Wsdev[i]/cntPoints)	 
 			endif
 			if(CalcXSdev)
-				Rebinned_Wxsdev[i]=sqrt(Rebinned_Wxsdev[i])/(cntPoints)	 
+				Rebinned_Wxsdev[i]=sqrt(Rebinned_Wxsdev[i]/cntPoints)	 
 			endif
 		endfor
 

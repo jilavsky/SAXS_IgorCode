@@ -125,19 +125,23 @@ Function IN3_SmoothRData()
 			if(tmpMeasTime[i]>tmpTime)		//no need to smooth
 				SmoothIntensity[i] = TempIntLog[i]
 			else //need to smooth
-				//somehow we need to stay within one range also... 
+				//somehow we need to stay within one range also... 				
 				StartPoints = ceil(tmpTime/tmpMeasTime[i])+1
 				EndPoints = StartPoints
 				if((i-StartPoints)<1)
 					abort "Bad data, cannot fix this. Likely Flyscan parameters were wrong" 
 				endif
-				if(i+EndPoints>numpnts(Intensity))
-					EndPoints = numpnts(Intensity) - i
+				if(i+EndPoints > numpnts(Intensity)-1)		//do not run out of end of data set
+					EndPoints = numpnts(Intensity)- 1 - i
 				endif
-				if((tmpPD_range[i-StartPoints]!=tmpPD_range[i])||(tmpPD_range[i+EndPoints-1]!=tmpPD_range[i]))
+				//if (i==118)
+				//	debugger
+				//endif
+				if((tmpPD_range[i-StartPoints]!=tmpPD_range[i])||(tmpPD_range[i+EndPoints]!=tmpPD_range[i]))
 					//range change, do not average, use line fitting to get the point... 
-					Duplicate/Free/O/R=[i-StartPoints,i+EndPoints] TempIntLog, tempR
-					Duplicate/O/Free/R=[i-StartPoints,i+EndPoints] Qvector, tempQ
+					Duplicate/Free/O/R=[i-StartPoints,i+EndPoints-1] TempIntLog, tempR
+					Duplicate/O/Free/R=[i-StartPoints,i+EndPoints-1] Qvector, tempQ
+
 					WaveStats /Q tempR
 					if(V_npnts>V_numNans+5)
 						CurveFit/Q line tempR /X=tempQ 
@@ -146,16 +150,16 @@ Function IN3_SmoothRData()
 						R_Error[i]=R_Error[i]/3
 					else
 						SmoothIntensity[i] = TempIntLog[i]
-						R_Error[i]=R_Error[i]
+						R_Error[i]=R_Error[i]		//crude approximation
 					endif
-				else
+				else	//R must be symmetric around the i or the method below will not work right. 
 					Duplicate/Free/O/R=[i-StartPoints,i+EndPoints] TempIntLog, tempR
 					Duplicate/O/Free/R=[i-StartPoints,i+EndPoints] Qvector, tempQ
 					startX =  tempQ[0] 
 					endX =  tempQ[numpnts(tempQ)-1]
 					SmoothIntensity[i] = areaXY(tempQ, tempR, startX,endX)
 					SmoothIntensity[i] /= (endX - startX)
-					R_Error[i]=R_Error[i]/3
+					R_Error[i]=R_Error[i]		//crude approximation
 				endif
 			endif	
 		endfor
@@ -386,7 +390,7 @@ Function IN3_CalculateRWaveIntensity(CleanUpRangeCHange)				//Recalculate the R 
 	else
 		SigmaRwave*=I0_gain
 	endif
-	PD_error=SigmaRwave
+	PD_error=SigmaRwave/5		//2025-04 these values are simply too large on new APS-U USAXS instrument
 	KillWaves/Z LocalParameters , ErrorParameters
 
 	//fix oversubtraction of PD_Intensity here?
