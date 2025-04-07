@@ -799,13 +799,15 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 						TableIsSaved = 0
 						break
 					case 16:	// "Set Line as Distance Standard"
+						Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
 						For(j=0;j<ItemsInList(ListOfSelRows);j+=1)
 							tempRow = str2num(StringFromList(j, ListOfSelRows))
 							listWave[tempRow][0]="AgBehenateLaB6"
 							listWave[tempRow][3]="1"
+							LBSelectionWv[tempRow][4] = 32
 						endfor
 						WarningForUser = "Set rows "+ListOfSelRows+" as AgBehenateLaB6" 
-						NVAR USAXSAll=root:Packages:SamplePlateSetup:USAXSAll
+						NVAR USAXSAll=root:Packages:SamplePlateSetup:USAXSAll			
 						USAXSAll=0
 						IN3S_EstimateRunTime()
 						TableIsSaved = 0

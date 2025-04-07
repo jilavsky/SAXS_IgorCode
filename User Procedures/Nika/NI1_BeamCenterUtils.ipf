@@ -162,7 +162,7 @@ Function NI1BC_CreateBmCntrField()
 	SetVariable BMStandardTransmission,help={"Transmission of the Standard?"}, proc=NI1BC_SetVarProc
 	SetVariable BMStandardTransmission,limits={0,Inf,1},variable= root:Packages:Convert2Dto1D:BMStandardTransmission
 
-	TabControl BmCntrTab,pos={8,284},size={412,300},proc=NI1BC_TabProc
+	TabControl BmCntrTab,pos={8,284},size={412,310},proc=NI1BC_TabProc
 	TabControl BmCntrTab,help={"Select tabs to control various methods"}
 	TabControl BmCntrTab,tabLabel(0)="BeamCntr",tabLabel(1)="Calibrant"
 	TabControl BmCntrTab,tabLabel(2)="Refinement"//,tabLabel(3)="4"
@@ -200,12 +200,15 @@ Function NI1BC_CreateBmCntrField()
 	PopupMenu BmCalibrantName,pos={13,340},size={101,21},proc=NI1BC_BmCntrPopMenuProc,title="Calibrant:"
 	PopupMenu BmCalibrantName,help={"Select type of calibrant to be used"}
 	PopupMenu BmCalibrantName,mode=1,popvalue=BmCalibrantName,value= #"\"User;Ceria;Ag behenate;LaB6;LaB6_2;SRM 674b (CeO2);SRM 660b (LaB6);SRM 640d (Si);\""
-	CheckBox BMCalibrantDisplayCircles title="Display?",pos={320,310}
+	CheckBox BMCalibrantDisplayCircles title="Display?",pos={320,305}
 	CheckBox BMCalibrantDisplayCircles proc=NI1BC_BmCntrCheckProc,variable=root:Packages:Convert2Dto1D:BMCalibrantDisplayCircles
 	CheckBox BMCalibrantDisplayCircles help={"Display circles in image?"}
-	SetVariable BMPathWidth,pos={220,340},size={190,16},title="Lineout Intg over (pix) ="
+	SetVariable BMPathWidth,pos={220,330},size={190,16},title="Lineout Intg over (pix) ="
 	SetVariable BMPathWidth,help={"Integration width for for lineouts"}, proc=NI1BC_SetVarProc
 	SetVariable BMPathWidth,limits={1,Inf,1},variable= root:Packages:Convert2Dto1D:BMPathWidth
+	SetVariable BMPathLength,pos={220,350},size={190,16},title="Set width all ="
+	SetVariable BMPathLength,help={"Integration length for all"}, proc=NI1BC_SetVarProc
+	SetVariable BMPathLength,limits={1,Inf,1},variable= root:Packages:Convert2Dto1D:BMPathWidthAll
 
 
 	CheckBox BMUseCalibrantD1 title="Use d1?",pos={20,370}
@@ -476,6 +479,7 @@ Function NI1BC_TabProc(ctrlName,tabNum)
 	NVAR  BMUseCalibrantD10=root:Packages:Convert2Dto1D:BMUseCalibrantD10
 	
 	SetVariable BMPathWidth, win=NI1_CreateBmCntrFieldPanel, disable=(tabNum!=1)
+	SetVariable BMPathLength, win=NI1_CreateBmCntrFieldPanel, disable=(tabNum!=1)
 	PopupMenu BmCalibrantName, win=NI1_CreateBmCntrFieldPanel, disable=(tabNum!=1)
 	CheckBox BMCalibrantDisplayCircles win=NI1_CreateBmCntrFieldPanel, disable=(tabNum!=1)
 	CheckBox BMUseCalibrantD1 win=NI1_CreateBmCntrFieldPanel, disable=(tabNum!=1)
@@ -576,6 +580,14 @@ Function NI1BC_SetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 			NI1BC_DisplayCalibrantCircles()	
 		endif
 	endfor
+	IF(cmpstr(ctrlName,"BMPathLength")==0)	//sets path width length for all
+		for (i=1; i<11;i+=1)
+			NVAR length = $("root:Packages:Convert2Dto1D:BMCalibrantD"+num2str(i)+"LineWidth")
+			NVAR BMPathWidthAll = root:Packages:Convert2Dto1D:BMPathWidthAll
+			length = BMPathWidthAll
+		endfor
+		NI1BC_DisplayCalibrantCircles()	
+	endif
 	if(cmpstr("XrayEnergy",ctrlName)==0)
 		NVAR Wavelength= root:Packages:Convert2Dto1D:Wavelength
 		Wavelength = 12.398424437/VarNum
@@ -1859,7 +1871,7 @@ Function NI1BC_InitCreateBmCntrFile()
 	ListOfVariablesBC+="BMCalibrantD6;BMUseCalibrantD6;BMCalibrantD7;BMUseCalibrantD7;BMCalibrantD8;BMUseCalibrantD8;BMCalibrantD9;BMUseCalibrantD9;BMCalibrantD10;BMUseCalibrantD10;"
 	ListOfVariablesBC+="BMCalibrantD6LineWidth;BMCalibrantD7LineWidth;BMCalibrantD8LineWidth;BMCalibrantD9LineWidth;BMCalibrantD10LineWidth;"
 	ListOfVariablesBC+="BMFitBeamCenter;BMFitSDD;BMFitWavelength;BMRefNumberOfSectors;BMDezinger;BMDezinerTimes;BMPathWidth;BMUseMask;BMDisplayInImage;"
-	ListOfVariablesBC+="BMSubtractBlank;BMStandardTransmission;BMRefStepInAngle;"
+	ListOfVariablesBC+="BMSubtractBlank;BMStandardTransmission;BMRefStepInAngle;BMPathWidthAll;"
 	
 	ListOfStringsBC="BmCntrFileName;BmCntrFileType;ExportBmCntrFileName;BMColorTableName;FileNameToLoad;"
 	ListOfStringsBC+="BmCalibrantName;BMFunctionName;BCPathInfoStr;BCMatchNameString;"
@@ -1895,7 +1907,7 @@ Function NI1BC_InitCreateBmCntrFile()
 	endfor		
 	
 	ListOfVariablesL="BMCalibrantD1LineWidth;BMCalibrantD2LineWidth;BMCalibrantD3LineWidth;BMCalibrantD4LineWidth;BMCalibrantD5LineWidth;"
-	ListOfVariablesL+="BMCalibrantD6LineWidth;BMCalibrantD7LineWidth;BMCalibrantD8LineWidth;BMCalibrantD9LineWidth;BMCalibrantD10LineWidth;"
+	ListOfVariablesL+="BMCalibrantD6LineWidth;BMCalibrantD7LineWidth;BMCalibrantD8LineWidth;BMCalibrantD9LineWidth;BMCalibrantD10LineWidth;BMPathWidthAll;"
 	for(i=0;i<itemsInList(ListOfVariablesL);i+=1)	
 		NVAR testMe=$stringFromList(i,ListOfVariablesL)
 		if(testMe==0)
