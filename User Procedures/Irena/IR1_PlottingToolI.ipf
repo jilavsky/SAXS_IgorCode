@@ -2337,7 +2337,7 @@ end
 //*************************************************************************************************************
 Function IR1P_GizmoFunctionality()
 	KillWIndow/Z testGizmo
-#if(IgorVersion()<6.99)		//Igor 6
+#if (IgorVersion()<6.99)		//Igor 6
 	Execute("NewGizmo/i/Z/N=testGizmo")
 #else
 	NewGizmo /I /N=testGizmo /K=1

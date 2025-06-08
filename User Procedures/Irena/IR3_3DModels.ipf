@@ -1464,8 +1464,8 @@ Threadsafe Function IR3A_MT_NextPathStep(UniquePathList, ListOfNeighbors,NumberO
 	
 	PriorPathList+=num2str(currentPoint)+";"
 	CurrentPathList= PriorPathList
-#if(IgorVersion()>8.99)
-	MatrixOP/Free ListOfNeighborsRow = zapNaNs(replace(row(ListOfNeighbors,currentPoint),priorPoint,NaN)))
+#if (IgorVersion()>8.99)
+	MatrixOP/Free ListOfNeighborsRow = zapNaNs(replace(row(ListOfNeighbors,currentPoint),priorPoint,NaN))
 	//how many points are left? 
 	pointsFound = numpnts(ListOfNeighborsRow)
 #else

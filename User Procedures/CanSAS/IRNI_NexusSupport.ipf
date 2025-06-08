@@ -3,7 +3,7 @@
 #pragma version = 1.17
 #include "HDF5Gateway"
 
-#if(IgorVersion()<9)  	//no need to include, Igor 9 has this by default.  
+#if (IgorVersion()<9)  	//no need to include, Igor 9 has this by default.  
 #include <HDF5 Browser>
 #endif
 
@@ -580,7 +580,7 @@ Function Nexus_NexusOpenHdf5File()
 	For(i=0;i<numpnts(WaveOfSelections);i+=1)
 		if(WaveOfSelections[i])
 			FileName= WaveOfFiles[i]
-#if(IgorVersion()<9)
+#if (IgorVersion()<9)
 			HDf5Browser#CreateNewHDF5Browser()
 		 	browserName = WinName(0, 64)
 			HDF5OpenFile/R /P=Convert2Dto1DDataPath locFileID as FileName
@@ -2635,7 +2635,7 @@ static Function NEXUS_HdfSaveArrayAttrib(AttribName,AttribValue,AttribLoc, fileI
 		endif
 	endif						
 	//HDF5SaveData /O/A=AttribName groupAttribute, fileID, AttribLoc
-#if(IgorVersion()>8.99)
+#if (IgorVersion()>8.99)
 	HDF5SaveData /O/A=AttribName/STRF={0,1,0} AttribValue, fileID, AttribLoc		//force IP9 variable length strings and ASCII coding. 
 #else
 	HDF5SaveData /O/A=AttribName AttribValue, fileID, AttribLoc
@@ -2660,7 +2660,7 @@ static Function NEXUS_HdfSaveAttrib(AttribName,AttribValue,AttribLoc, fileID,[Do
 		endif
 	endif						
 	//HDF5SaveData /O/A=AttribName groupAttribute, fileID, AttribLoc
-#if(IgorVersion()>8.99)
+#if (IgorVersion()>8.99)
 	HDF5SaveData /O/A=AttribName/STRF={0,1,0} groupAttribute, fileID, AttribLoc		//force IP9 variable length strings and ASCII coding. 
 #else
 	HDF5SaveData /O/A=AttribName groupAttribute, fileID, AttribLoc
@@ -2679,7 +2679,7 @@ static Function NEXUS_HdfSaveAttribIntg(AttribName,AttribValue,AttribLoc, fileID
 	make/U/W/Free/N=1 groupAttribute
 	groupAttribute = AttribValue									
 	//HDF5SaveData /O/A=AttribName groupAttribute, fileID, AttribLoc
-#if(IgorVersion()>8.99)
+#if (IgorVersion()>8.99)
 	HDF5SaveData /O/A=AttribName/STRF={0,1,0} groupAttribute, fileID, AttribLoc		//force IP9 variable length strings and ASCII coding. 
 #else
 	HDF5SaveData /O/A=AttribName groupAttribute, fileID, AttribLoc

@@ -3454,20 +3454,23 @@ Function IN3S_MyCursorsMovedHook(s)
 			//print s.pointNumber
 			//print s.yPointNumber
 			strswitch(s.cursorName)
-				hookResult =1
 				case "A":
+					hookResult =1
 					xRT = s.pointNumber
 					yRT = s.yPointNumber
 					break
 				case "B":
+					hookResult =1
 					xRB = s.pointNumber
 					yRB = s.yPointNumber
 					break
 				case "C":
+					hookResult =1
 					xLT = s.pointNumber
 					yLT = s.yPointNumber
 					break
 				case "D":
+					hookResult =1
 					xLB = s.pointNumber
 					yLB = s.yPointNumber	
 					break
@@ -3517,7 +3520,7 @@ Function IN3S_BeamlineSurvey()
 
 	//abort if epics support does not exist...
 	if(exists("pvOpen")!=4 && IN3SBeamlineSurveyDevelopOn<1)
-		Abort "This is useful only at the beamline on usaxspc7 or usaxspc11" 
+		Abort "This is useful only at the beamline on usaxspc14 or usaxspc11" 
 	endif
 	/// abort if instrument in use. 
 	IN3S_BeramlineSurveyAbortIfNeeded("Cannot use survey tool")
@@ -3559,7 +3562,7 @@ Function IN3S_BeamlineSurvey()
 	SetWindow BeamlinePlateSetup  hook(EpicsMon)=IN3S_BeamlineSurveyEpicsHook
 	IN3S_BeamlineSurveyStartEpicsUpdate()
 	//sync epics, RBV and TAR positions here
-#if(exists("pvOpen")==4)
+#if (exists("pvOpen")==4)
 	variable SxPV, SyPV
 	pvOpen/Q SxPV, "usxAERO:m8.RBV"
 	pvOpen/Q SyPV, "usxAERO:m9.RBV"
@@ -3579,7 +3582,7 @@ end
 //*************************************************************************************************
 static Function IN3S_BeramlineSurveyAbortIfNeeded(string WhyString)
 	variable InstrumentUsed
-#if(exists("pvOpen")==4)
+#if (exists("pvOpen")==4)
 		InstrumentUsed = IN3S_GetPVVariableValue("usxLAX:dataColInProgress")	
 		if(InstrumentUsed)
 			abort "Instrument is collecting data, cannot "+WhyString
@@ -3632,7 +3635,7 @@ Function IN3S_BackgroundEpics(s) // This is the function that will be called per
 	STRUCT WMBackgroundStruct &s	//note: cannot be static or things will not work. 
 	NVAR SampleXRBV=root:Packages:SamplePlateSetup:SampleXRBV
 	NVAR SampleYRBV=root:Packages:SamplePlateSetup:SampleYRBV
-#if(exists("pvOpen")==4)
+#if (exists("pvOpen")==4)
 	variable SxPV, SyPV
 	pvOpen/Q SxPV, "usxAERO:m8.RBV"
 	pvOpen/Q SyPV, "usxAERO:m9.RBV"
@@ -3650,7 +3653,7 @@ end
 static function IN3S_GetMotorPositions(SPV)
 	variable SPV
 
-#if(exists("pvOpen")==4)
+#if (exists("pvOpen")==4)
 	variable tempRBV
 	pvGet SPV, tempRBV
 	return tempRBV
@@ -3660,7 +3663,7 @@ end
 static function IN3S_GetPVVariableValue(PVString)
 	string  PVString
 
-#if(exists("pvOpen")==4)
+#if (exists("pvOpen")==4)
 	variable tempRBV, PVv
 	pvOpen/Q PVv, PVString
 	pvGet PVv, tempRBV
@@ -3915,7 +3918,7 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 				IN3S_MoveMotorInEpics("SY",SampleYTAR)
 			endif
 			if(StringMatch(ba.ctrlName, "SyncMotors"))
-#if(exists("pvOpen")==4)
+#if (exists("pvOpen")==4)
 				variable SxPV, SyPV
 				pvOpen/Q SxPV, "usxAERO:m8.RBV"
 				pvOpen/Q SyPV, "usxAERO:m9.RBV"
@@ -3930,7 +3933,7 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 			endif
 			variable InstrumentUsed
 			if(StringMatch(ba.ctrlName, "SetSXAs00"))
-#if(exists("pvOpen")==4)
+#if (exists("pvOpen")==4)
 					InstrumentUsed = IN3S_GetPVVariableValue("usxLAX:dataColInProgress")	
 					if(InstrumentUsed)
 						abort "Instrument is collecting data, cannot move motors"
@@ -3946,7 +3949,7 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 #endif
 			endif		
 			if(StringMatch(ba.ctrlName, "SetSYAs00"))
-#if(exists("pvOpen")==4)
+#if (exists("pvOpen")==4)
 					InstrumentUsed = IN3S_GetPVVariableValue("usxLAX:dataColInProgress")	
 					if(InstrumentUsed)
 						abort "Instrument is collecting data, cannot move motors"
@@ -3962,7 +3965,7 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 #endif
 			endif		
 			if(StringMatch(ba.ctrlName, "STOPMotors"))
-#if(exists("pvOpen")==4)
+#if (exists("pvOpen")==4)
 					InstrumentUsed = IN3S_GetPVVariableValue("usxLAX:dataColInProgress")	
 					if(InstrumentUsed)
 						abort "Instrument is collecting data, cannot move motors"
@@ -3973,7 +3976,7 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 			endif		
 			variable HorSlit, VertSLit, HorGuardSlit, VertGuardSlit
 			if(StringMatch(ba.ctrlName, "OpenSlitsLarge"))
-#if(exists("pvOpen")==4)
+#if (exists("pvOpen")==4)
 					InstrumentUsed = IN3S_GetPVVariableValue("usxLAX:dataColInProgress")	
 					if(InstrumentUsed)
 						abort "Instrument is collecting data, cannot move motors"
@@ -3989,7 +3992,7 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 			endif		
 
 			if(StringMatch(ba.ctrlName, "OpenSlitsUSAXS"))
-#if(exists("pvOpen")==4)
+#if (exists("pvOpen")==4)
 					InstrumentUsed = IN3S_GetPVVariableValue("usxLAX:dataColInProgress")	
 					if(InstrumentUsed)
 						abort "Instrument is collecting data, cannot move motors"
@@ -4008,7 +4011,7 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 #endif
 			endif		
 			if(StringMatch(ba.ctrlName, "OpenSlitsSWAXS"))
-#if(exists("pvOpen")==4)
+#if (exists("pvOpen")==4)
 					InstrumentUsed = IN3S_GetPVVariableValue("usxLAX:dataColInProgress")	
 					if(InstrumentUsed)
 						abort "Instrument is collecting data, cannot move motors"
@@ -4164,7 +4167,7 @@ static Function IN3S_MoveMotorInEpics(WhichMotor,MovePosition)
 	variable InstrumentUsed=0
 	variable oldspeed
 	NVAR SlowDown=root:Packages:SamplePlateSetup:SurveySlowSpeed
-#if(exists("pvOpen")==4)
+#if (exists("pvOpen")==4)
 	InstrumentUsed = IN3S_GetPVVariableValue("usxLAX:dataColInProgress")	
 	if(InstrumentUsed)
 		abort "Instrument is collecting data, cannot move motors"
@@ -4202,7 +4205,7 @@ static Function IN3S_PutEpicsPv(PVAddress, target)	//note, this waits until moto
 	string PVAddress
 	variable target
 	if(numtype(target)==0)			//prevent NaN sent to epics, it will accept it and move to crazy place. 
-#if(exists("pvOpen")==4)
+#if (exists("pvOpen")==4)
 		variable sxRBV
 		pvOpen/T=5 sxRBV, PVAddress				// /T is timeout, should wait only this timeout. 
 		pvPutNumber/Q sxRBV, target				// /Q returns immediately, else waits until completion.  

@@ -301,7 +301,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 			NewNote+=headerStr
 		endif
 	elseif(cmpstr(FileType,"TPA/XML")==0)
-#if(Exists("XMLopenfile"))
+#if (Exists("XMLopenfile"))
 		FileNameToLoad= FileName
 		if(cmpstr(FileName[strlen(FileName)-4,inf],".xml")!=0)
 			FileNameToLoad= FileName+ ".xml"
@@ -344,7 +344,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 	DoAlert 0, "XML xop is not installed, this feature is not available. Please install xops using latest Installer version or install manually."
 #endif
 	elseif(cmpstr(FileType,".hdf")==0)
-#if(exists("HDF5OpenFile")==4)
+#if (exists("HDF5OpenFile")==4)
 		FileNameToLoad= FileName
 		pathInfo $(PathName)
 		string FullFileName=S_Path+FileName
@@ -1218,7 +1218,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 	elseif(cmpstr(FileType,"MarIP/xop")==0)		//added 9/16/2008, needs ccp4xop ... 
 		PathInfo $(PathName)
 		FileNameToLoad=  S_path + FileName
-#if(Exists("ccp4unpack"))	
+#if (Exists("ccp4unpack"))	
 		ccp4unpack/M /N=$(NewWaveName)/O  FileNameToLoad		//note: Fails for names too long... 
 		LoadedOK=1		//??? how to check if it works?
 //		ccp4unpack/M /N=$(NewWaveName)/P=$(PathName) /O  FileNameToLoad
@@ -1451,7 +1451,7 @@ End
 //*******************************************************************************************************************************************
 Function NI1_MaskHDFLoader(PathName,FileName,FileType,NewWaveName)
 	string PathName,FileName,FileType,NewWaveName
-#if(exists("HDF5OpenFile")==4)	
+#if (exists("HDF5OpenFile")==4)	
 	string OldDf=GetDataFOlder(1)
 	setDataFOlder root:Packages:Convert2Dto1D
 	
@@ -3489,7 +3489,7 @@ EndMacro
 //		
 //		string OldDf=getDataFolder(1)
 //		Variable fileID
-//#if(exists("HDF5OpenFile")==4)
+//#if (exists("HDF5OpenFile")==4)
 //		HDF5OpenFile /P=$(FilePathName)/R /Z fileID as Filename	// Displays a dialog
 //		if (V_flag == 0)	// User selected a file?
 //		    string PathString

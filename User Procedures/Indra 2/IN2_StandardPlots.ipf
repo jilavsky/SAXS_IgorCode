@@ -1,16 +1,15 @@
-#pragma TextEncoding = "UTF-8"
-#pragma rtGlobals=3			// Use modern global access method.
-//#pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.14
+#pragma rtFunctionErrors=1
+#pragma TextEncoding="UTF-8"
+#pragma rtGlobals=3 // Use modern global access method.
+  
+#pragma version=1.14
 
-
-
-//1.14 	removed all code, use Irena now. 
+//1.14 	removed all code, use Irena now.
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2025, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
-//* in the file LICENSE that is included with this distribution. 
+//* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
 //**********************************************************************************
@@ -22,7 +21,7 @@
 //	//calls IN2S_InitializeStandardPlots() and executes IN2S_StandardPlotPanel()
 //
 //	IN2G_UniversalFolderScan("root:USAXS:", 5, "IN2G_CheckTheFolderName()")  //here we fix the folder names/sample names in wave notes if necessary
-//		
+//
 //	IN2S_InitializeStandardPlots()
 //	Execute ("IN2S_StandardPlotPanel()")
 //
@@ -39,13 +38,13 @@
 //	//first create place where to work
 //	NewDataFolder/O root:Packages
 //	NewDataFolder/O/S root:Packages:StandardPlots
-//	
+//
 //	KillWIndow/Z IN2S_TopGraph
 //	KillWIndow/Z IN2S_BotGraph
 //
 //	//now lets create string & variables
 //	KillWaves/A/Z
-//		 
+//
 //	string/g StandardPlotsParameters=""
 //	string/g PlotTypeOne="---"
 //	string/g PlotTypeTwo="---"
@@ -53,7 +52,7 @@
 //	string/g ActiveData="---"
 //	string/g ListOfPlottedData=""
 //	string/g ListOfPlottedDataNames=""
-//	
+//
 //	variable/g PlotOneYType=1
 //	variable/g PlotOneXType=1
 //	variable/g PlotTwoYType=1
@@ -61,16 +60,16 @@
 //	variable/g RemoveNegInt=1
 //	variable/g RemoveNegQval=1
 //	variable/g DeleteData=0
-//	
+//
 //	NVAR/Z UseFontSize
 //	if(!NVAR_Exists(UseFontSize))
 //		variable/g UseFontSize=10
 //	endif
-//	
+//
 //	variable/g IntensityMultiplier=1
 //	variable/g IntBackground=0
 //	variable/g Qoffset =0
-//	
+//
 //	variable/g TopErrorBars=1
 //	variable/g BotErrorbars=1
 //end
@@ -94,12 +93,12 @@
 //Function IN2S_UpdatePlotsParameters(key,val)
 //	string key, val
 //	//this does not seem to be used at all
-//	
+//
 //	setDataFolder root:packages:StandardPlots:
-//	
+//
 //	SVAR StandardPlotsParameters
 //	SVAR ActiveData
-//	
+//
 //	if (cmpstr(ActiveData,"---")!=0)
 //		StandardPlotsParameters=ReplaceStringByKey(ActiveData+"_"+key, StandardPlotsParameters, val , "=" )
 //	endif
@@ -112,23 +111,23 @@
 //Function IN2S_CopyWaves()
 //		//this function copies waves from their original folder into the local folder
 //		//works only on last item in the ListOfPlottedData, selects the proper data type
-//		
+//
 //		setDataFolder root:Packages:StandardPlots:
-//		
+//
 //		SVAR ListOfPlottedData
 //		SVAR DataTypeToPlot
 //		variable NumOfData=itemsInList(ListOfPlottedData)-1
-//		
+//
 //		string IntWaveName="OrgIntData"+num2str(NumOfData)
 //		string QWaveName="OrgQData"+num2str(NumOfData)
 //		string EWaveName="OrgEData"+num2str(NumOfData)
-//		
+//
 //		string pathToData=IN2S_FixThePopStr(stringFromList(NumOfData,ListOfPlottedData))
-//		
+//
 //		string pathToInt=""
 //		string pathToQ=""
 //		string pathToE=""
-//		
+//
 //	if (cmpstr(DataTypeToPlot,"SMR_Int")==0)
 //		pathToInt=pathToData+"SMR_Int"
 //		pathToQ=pathToData+"SMR_Qvec"
@@ -138,7 +137,7 @@
 //	if (cmpstr(DataTypeToPlot,"DSM_Int")==0)
 //		pathToInt=pathToData+"DSM_Int"
 //		pathToQ=pathToData+"DSM_Qvec"
-//		pathToE=pathToData+"DSM_Error"	
+//		pathToE=pathToData+"DSM_Error"
 //	endif
 //
 //	if (cmpstr(DataTypeToPlot,"M_SMR_Int")==0)
@@ -177,7 +176,7 @@
 //		pathToE=pathToData+"R_Error"
 //	endif
 //
-//	if (cmpstr(pathToData,"---")!=0)	
+//	if (cmpstr(pathToData,"---")!=0)
 //		WAVE/Z OrgInt=$(pathToInt)
 //		WAVE/Z OrgQ=$(pathToQ)
 //		WAVE/Z OrgE=$(pathToE)
@@ -186,14 +185,14 @@
 //			DoAlert 0, "There is something wrong with the data waves or their names, check the folder with data"
 //			abort
 //		endif
-//	
+//
 //		Duplicate/O OrgInt, $IntWaveName
 //		Duplicate/O OrgQ, $QWaveName
 //		Duplicate/O OrgE, $EWaveName
 //	else
 //		ListOfPlottedData=RemoveFromList("---",ListOfPlottedData)
-//	endif	
-//	
+//	endif
+//
 //	IN2S_CorrectOrgData()	//move out **************************************
 //
 //end
@@ -204,12 +203,12 @@
 //
 //Function IN2S_CalculateAllTopGraphWaves()
 //		//calls for each item in the listOfPlottedData IN2S_CalculateOneTopGraphWaves
-//		
+//
 //	SVAR ListOfPlottedData
-//	
+//
 //	variable numOfPlotedWaves=ItemsInList(ListOfPlottedData)
 //	variable i=0
-//	
+//
 //	For (i=0;i<numOfPlotedWaves;i+=1)
 //		IN2S_CalculateOneTopGraphWaves(i)
 //	endfor
@@ -222,15 +221,15 @@
 //Function IN2S_CalculateOneTopGraphWaves(WhichOne)
 //	variable WhichOne
 //		//calculates the topGraph waves for item in list
-//		// as called with 
+//		// as called with
 //	setDataFolder root:Packages:StandardPlots:
-//	
+//
 //	SVAR PlotTypeOne
 //	SVAR ActiveData
 //	SVAR ListOfPlottedData
 //	SVAR DataTypeToPlot
-//	
-//	
+//
+//
 //	string OrgIntWvNm="ModIntData"+num2str(WhichOne)
 //	string OrgQWvNm="ModQData"+num2str(WhichOne)
 //	string OrgEWvNm="ModEData"+num2str(WhichOne)
@@ -238,26 +237,26 @@
 //	string IntWvNm="TopYData"+num2str(WhichOne)
 //	string QWvNm="TopXData"+num2str(WhichOne)
 //	string EWvNm="TopEData"+num2str(WhichOne)
-//	
+//
 //	Wave OrgInt=$OrgIntWvNm
 //	Wave OrgQ=$OrgQWvNm
 //	Wave OrgE=$OrgEWvNm
-//	
+//
 //	Duplicate/O OrgInt,$IntWvNm
 //	Duplicate/O OrgQ,$QWvNm
 //	Duplicate/O OrgE,$EWvNm
-//	
+//
 //	Wave NewInt=$IntWvNm
 //	Wave NewQ=$QWvNm
 //	Wave NewE=$EWvNm
-//	
+//
 //	if (cmpstr("Int-Q",PlotTypeOne)==0)
-// 
+//
 // 	endif
 //	if (cmpstr("SizeDist",PlotTypeOne)==0)
-// 
+//
 // 	endif
-//	
+//
 //	if (cmpstr("Porod",PlotTypeOne)==0)
 //		if (stringmatch("*DSM*", DataTypeToPlot)==0)
 //			NewQ=NewQ^4
@@ -278,13 +277,13 @@
 //			NewInt=ln(NewInt)
 //			NewE=0
 //			Duplicate/O NewQ, NewQ2
-//			NewQ2=NewQ^2			
+//			NewQ2=NewQ^2
 //			IN2S_DifferentiateXY (NewQ2, NewInt, "Different")
 //			Wave Different
 //			NewInt=Different
 //			KillWaves/Z Different, NewQ2
 //			NewInt=sqrt(abs(3*NewInt))
-//	endif	
+//	endif
 //end
 //
 ////**********************************************************************************
@@ -299,17 +298,17 @@
 //Function IN2S_DifferentiateXY(xWave, yWave, yDestWaveName)
 //	Wave xWave, yWave							// input X, Y waves
 //	String yDestWaveName						// name to use for output wave
-//	
+//
 //	String xDestWaveName						// to hold name of temp dx/dp wave
-//	
+//
 //	xDestWaveName = "DifferentiateXYTempX"
-//	
+//
 //	Duplicate/O xWave, $xDestWaveName		// make clones
 //	Duplicate/O yWave, $yDestWaveName
-//	
+//
 //	Wave xDest = $xDestWaveName
 //	Wave yDest = $yDestWaveName
-//	
+//
 //	CopyScales/P yDest, xDest					// same dx, same Differentiate scale
 //	Differentiate xDest, yDest					// do differentiation
 //	yDest /= xDest								// take ratio
@@ -343,7 +342,7 @@
 //	if (cmpstr(type, "logX-logY")==0)
 //		PlotOneYType=1
 //		PlotOneXType=1
-//	endif	
+//	endif
 //	CheckBox PlotOneY,value= PlotOneYType, win=IN2S_StandardPlotPanel
 //	CheckBox PlotOneX,value= PlotOneXType, win=IN2S_StandardPlotPanel
 //end
@@ -375,7 +374,7 @@
 //	if (cmpstr(type, "logX-logY")==0)
 //		PlotTwoYType=1
 //		PlotTwoXType=1
-//	endif	
+//	endif
 //	CheckBox PlotTwoY,value= PlotTwoYType, win=IN2S_StandardPlotPanel
 //	CheckBox PlotTwoX,value= PlotTwoXType, win=IN2S_StandardPlotPanel
 //end
@@ -388,10 +387,10 @@
 //		//calls for each item in the listOfPlottedData IN2S_CalculateOneTopGraphWaves
 //
 //	SVAR ListOfPlottedData
-//	
+//
 //	variable numOfPlotedWaves=ItemsInList(ListOfPlottedData)
 //	variable i=0
-//	
+//
 //	For (i=0;i<numOfPlotedWaves;i+=1)
 //		IN2S_CalculateOneBotGraphWaves(i)
 //	endfor
@@ -404,15 +403,15 @@
 //Function IN2S_CalculateOneBotGraphWaves(WhichOne)
 //	variable WhichOne
 //		//calculates the topGraph waves for item in list
-//		// as called with 
+//		// as called with
 //
 //	setDataFolder root:Packages:StandardPlots:
-//	
+//
 //	SVAR PlotTypeTwo
 //	SVAR ActiveData
 //	SVAR ListOfPlottedData
 //	SVAR DataTypeToPlot
-//	
+//
 //	string OrgIntWvNm="ModIntData"+num2str(WhichOne)
 //	string OrgQWvNm="ModQData"+num2str(WhichOne)
 //	string OrgEWvNm="ModEData"+num2str(WhichOne)
@@ -420,24 +419,24 @@
 //	string IntWvNm="BotYData"+num2str(WhichOne)
 //	string QWvNm="BotXData"+num2str(WhichOne)
 //	string EWvNm="BotEData"+num2str(WhichOne)
-//	
+//
 //	Wave OrgInt=$OrgIntWvNm
 //	Wave OrgQ=$OrgQWvNm
 //	Wave OrgE=$OrgEWvNm
-//	
+//
 //	Duplicate/O OrgInt,$IntWvNm
 //	Duplicate/O OrgQ,$QWvNm
 //	Duplicate/O OrgE,$EWvNm
-//	
+//
 //	Wave NewInt=$IntWvNm
 //	Wave NewQ=$QWvNm
 //	Wave NewE=$EWvNm
-//	
+//
 //	if (cmpstr("Int-Q",PlotTypeTwo)==0)
 //	endif
 //	if (cmpstr("SizeDist",PlotTypeTwo)==0)
 //	endif
-//	
+//
 //	if (cmpstr("Porod",PlotTypeTwo)==0)
 //		if (stringmatch(DataTypeToPlot,"*DSM*")==1)
 //			NewQ=NewQ^4
@@ -458,7 +457,7 @@
 //			NewInt=ln(NewInt)
 //			NewE=0
 //			Duplicate/O NewQ, NewQ2
-//		NewQ2=NewQ^2			
+//		NewQ2=NewQ^2
 //		IN2S_DifferentiateXY (NewQ2, NewInt, "Different")
 //		Wave Different
 //		NewInt=Different
@@ -476,9 +475,9 @@
 //	String ctrlName
 //	Variable popNum
 //	String popStr
-//	
+//
 //	//popup procedure used to control all popups in this procedure
-//	
+//
 //	setDataFolder root:Packages:StandardPlots:
 //	SVAR StandardPlotsParameters
 //		SVAR ListOfPlottedData
@@ -493,7 +492,7 @@
 //		NVAR RemoveNegInt
 //		NVAR RemoveNegQval
 //		NVAR DeleteData
-//		
+//
 //	if (cmpstr("SelectDataType",ctrlName)==0)
 ////		DoAlert 1, "Do you really want to reset graphs?"
 ////		if (V_flag==1)
@@ -503,7 +502,7 @@
 ////			execute("IN2S_StandardPlotPanel()")
 ////		endif
 //	endif
-//	
+//
 //	if (cmpstr("AddDataToPlot",ctrlName)==0)
 //		ListOfPlottedData+=popStr+DataTypeToPlot+":"+";"
 ////		ListOfPlottedData+=popStr+";"
@@ -513,7 +512,7 @@
 //		if (V_flag==1)
 //			IN2S_FixPlotAxis("Top","Set")
 //			IN2S_CalculateAllTopGraphWaves()
-//			IN2S_AppendTopWaves()		
+//			IN2S_AppendTopWaves()
 //			IN2S_GraphLegendAndColors()
 //			IN2S_SetTopAxis()
 //			IN2S_FixPlotAxis("Top","Reset")
@@ -522,13 +521,13 @@
 //		if (V_flag==1)
 //			IN2S_FixPlotAxis("Bot","Set")
 //			IN2S_CalculateAllBotGraphWaves()
-//			IN2S_AppendBotWaves()	
+//			IN2S_AppendBotWaves()
 //			IN2S_GraphLegendAndColors()
 //			IN2S_SetBotAxis()
 //			IN2S_FixPlotAxis("Bot","Reset")
-//		endif	
+//		endif
 //	endif
-//	
+//
 //	if (cmpstr("SelectActiveData",ctrlName)==0)
 //		ActiveData=popStr
 //		IntensityMultiplier=NumberByKey(ActiveData+"IntensityMultiplier", StandardPlotsParameters , "=" )
@@ -568,10 +567,10 @@
 //			IN2S_SetTopAxis()
 //		else
 //			PlotTypeOne=popStr
-//			KillWIndow/Z IN2S_TopGraph		
+//			KillWIndow/Z IN2S_TopGraph
 //		endif
 //	endif
-//	
+//
 //	if (cmpstr("BottomY",ctrlName)==0)
 //		PlotTypeTwo=popStr
 //	endif
@@ -592,7 +591,7 @@
 //				IN2S_CalculateAllBotGraphWaves()
 //				IN2S_SetBotAxisType()
 //				IN2S_CreateBotGraph()
-//				IN2S_AppendBotWaves()		
+//				IN2S_AppendBotWaves()
 //				IN2S_SetBotAxis()
 //			endif
 //	endif
@@ -603,13 +602,13 @@
 //			IN2S_CalculateAllBotGraphWaves()
 //			IN2S_SetBotAxisType()
 //			IN2S_CreateBotGraph()
-//			IN2S_AppendBotWaves()		
+//			IN2S_AppendBotWaves()
 //			IN2S_SetBotAxis()
-//		else	
+//		else
 //			PlotTypeTwo=popStr
-//			KillWIndow/Z IN2S_BotGraph			
+//			KillWIndow/Z IN2S_BotGraph
 //		endif
-//	endif	
+//	endif
 //End
 //
 ////**********************************************************************************
@@ -618,12 +617,12 @@
 //
 //Function/T IN2S_FixThePopStr(popStr)
 //	string popStr
-//	
+//
 //	variable i, imax
 //	imax=ItemsInList(popStr,":")
 //	string tempStr
 //	tempStr=""
-//	
+//
 //	For(i=0;i<imax-1;i+=1)
 //		tempStr+=StringFromList(i, popStr , ":")+":"
 //	endfor
@@ -641,39 +640,39 @@
 //	String varName
 //
 //	//Variables  procedure used to control all variables in this procedure
-//	
+//
 //	setDataFolder root:packages:StandardPlots
 //	SVAR ListOfPlottedData
 //	SVAR ActiveData
 //	SVAR StandardPlotsParameters
-//	
+//
 //	variable ModifiedData=WhichListItem(ActiveData , ListOfPlottedData)
-//	
+//
 //	NVAR IntensityMultiplier
 //	NVAR IntBackground
 //	NVAR Qoffset
 //
 //	if (cmpstr("IntModifier",ctrlName)==0)
-//		IntensityMultiplier=varNum	
+//		IntensityMultiplier=varNum
 //		SetVariable IntModifier,limits={0,Inf,(varNum/20)}
 //	endif
 //	if (cmpstr("Qoffset",ctrlName)==0)
 //		Qoffset=varNum
 //		if (varNum==0)
-//			SetVariable Qoffset,limits={-Inf,Inf,0.0001}		
+//			SetVariable Qoffset,limits={-Inf,Inf,0.0001}
 //		else
 //			SetVariable Qoffset,limits={-Inf,Inf,varNum/10}
 //		endif
 //	endif
 //	if (cmpstr("IntBackground",ctrlName)==0)
-//		IntBackground=varNum	
+//		IntBackground=varNum
 //		if (varNum==0)
-//			SetVariable IntBackground,limits={-Inf,Inf,1}		
+//			SetVariable IntBackground,limits={-Inf,Inf,1}
 //		else
 //			SetVariable IntBackground,limits={-Inf,Inf,varNum/10}
 //		endif
 //	endif
-//	
+//
 //	StandardPlotsParameters=ReplaceNumberByKey(ActiveData+"IntensityMultiplier", StandardPlotsParameters, IntensityMultiplier ,"=")
 //	StandardPlotsParameters=ReplaceNumberByKey(ActiveData+"Qoffset", StandardPlotsParameters, Qoffset ,"=")
 //	StandardPlotsParameters=ReplaceNumberByKey(ActiveData+"IntBackground", StandardPlotsParameters, IntBackground ,"=")
@@ -793,10 +792,10 @@
 //	NVAR BotErrorBars
 //	NVAR DeleteData
 ////	NVAR RemoveNegatives
-//	
+//
 //	SVAR StandardPlotsParameters
 //	SVAR ActiveData
-//	
+//
 //
 //	if (cmpstr(ctrlName,"PlotOneErrors")==0)
 //		if (checked==1)
@@ -846,7 +845,7 @@
 //		IN2S_CalculateAllTopGraphWaves()
 //		IN2S_CalculateAllBotGraphWaves()
 //	endif
-//	
+//
 //	if (cmpstr(ctrlName,"DeleteData")==0)
 //		if (checked==1)
 //			DeleteData=1
@@ -859,7 +858,7 @@
 //		IN2S_CalculateAllTopGraphWaves()
 //		IN2S_CalculateAllBotGraphWaves()
 //	endif
-//	
+//
 //	if (cmpstr(ctrlName,"RemvNegQ")==0)
 //		if (checked==1)
 //			RemoveNegQval=1
@@ -965,13 +964,13 @@
 //		//creates Top Graph, if it exists, it is first deleted
 // 	KillWIndow/Z IN2S_TopGraph
 //  	PauseUpdate    //*************************Graph section**********************************
-//	Display/k=1 /W=(0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),55*IN2G_ScreenWidthHeight("width"),47*IN2G_ScreenWidthHeight("height")) as "Top Graph"		
+//	Display/k=1 /W=(0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),55*IN2G_ScreenWidthHeight("width"),47*IN2G_ScreenWidthHeight("height")) as "Top Graph"
 //	DoWindow/C IN2S_TopGraph
 //	ModifyGraph mode=4,	margin(top)=20, mirror=1, minor=1
 //	showinfo												//shows info
 //	ShowTools/A											//show tools
 //	ModifyGraph fSize=12,font="Times New Roman"				//modifies size and font of labels
-//	AutoPositionWindow/M=1 /R=IN2S_TopGraph IN2S_StandardPlotPanel 
+//	AutoPositionWindow/M=1 /R=IN2S_TopGraph IN2S_StandardPlotPanel
 //end
 //
 ////**********************************************************************************
@@ -1004,7 +1003,7 @@
 //	NVAR PlotTwoXType
 //	//this procedure changes axis in the bot graph acording to the variables set
 //	//uses IN2G_AutoscaleAxisFromZero
-//	
+//
 //	if (PlotTwoYType)
 //		ModifyGraph/W=IN2S_BotGraph log(left)=1
 //	else
@@ -1026,13 +1025,13 @@
 //
 // 	KillWIndow/Z IN2S_BotGraph
 //  	PauseUpdate    //*************************Graph section**********************************
-//	Display/k=1 /W=(0.3*IN2G_ScreenWidthHeight("width"),53*IN2G_ScreenWidthHeight("height"),55*IN2G_ScreenWidthHeight("width"),95*IN2G_ScreenWidthHeight("height")) as "Bottom Graph"		
+//	Display/k=1 /W=(0.3*IN2G_ScreenWidthHeight("width"),53*IN2G_ScreenWidthHeight("height"),55*IN2G_ScreenWidthHeight("width"),95*IN2G_ScreenWidthHeight("height")) as "Bottom Graph"
 //	DoWindow/C IN2S_BotGraph
 //	ModifyGraph mode=4,	margin(top)=20, mirror=1, minor=1
 //	showinfo												//shows info
 //	ShowTools/A											//show tools
 //	ModifyGraph fSize=12,font="Times New Roman"				//modifies size and font of labels
-////	AutoPositionWindow/M=1 /R=IN2S_BotGraph IN2S_StandardPlotPanel 
+////	AutoPositionWindow/M=1 /R=IN2S_BotGraph IN2S_StandardPlotPanel
 //end
 //
 ////**********************************************************************************
@@ -1086,7 +1085,7 @@
 //		return 0
 //	endif
 //
-//	DoWindow/F IN2S_BotGraph	
+//	DoWindow/F IN2S_BotGraph
 //	RemoveFromGraph/W=IN2S_BotGraph/Z BotYData0,BotYData1,BotYData2, BotYData3, BotYData4, BotYData5, BotYData6
 //	RemoveFromGraph/W=IN2S_BotGraph/Z BotYData7,BotYData8,BotYData9, BotYData10, BotYData11, BotYData12, BotYData13
 //	RemoveFromGraph/W=IN2S_BotGraph/Z BotYData14,BotYData15,BotYData16, BotYData17, BotYData18, BotYData19, BotYData20
@@ -1134,52 +1133,52 @@
 //	setDataFolder  root:Packages:StandardPlots:
 //	SVAR PlotTypeOne
 //	SVAR PlotTypeTwo
-//	
+//
 //	if (cmpstr(TopBot,"Top")==0)
 //		if (cmpstr("Int-Q",PlotTypeOne)==0)
 //			Label/W=IN2S_TopGraph left "Intensity"
-//			Label/W=IN2S_TopGraph bottom "Q, 1/Angstrom"	
+//			Label/W=IN2S_TopGraph bottom "Q, 1/Angstrom"
 ////			IN2G_AppendSizeTopWave("IN2S_TopGraph",TopXData0, TopYData0,0,0,-10)
 //		endif
 //		if (cmpstr("SizeDist",PlotTypeOne)==0)
 //			Label/W=IN2S_TopGraph left "Distribution"
-//			Label/W=IN2S_TopGraph bottom "Diameter Angstrom"	
+//			Label/W=IN2S_TopGraph bottom "Diameter Angstrom"
 //		endif
 //		if (cmpstr("Porod",PlotTypeOne)==0)
 //			Label/W=IN2S_TopGraph left "Int * Q^p (p=3 for SMR, 4 for DSM)"
 //			Label/W=IN2S_TopGraph bottom "Q^p, (p=3 for SMR, 4 for DSM), 1/Angstrom^p"
-//		endif		
+//		endif
 //		if (cmpstr("Guinier",PlotTypeOne)==0)
 //			Label/W=IN2S_TopGraph left "ln (Int)"
-//			Label/W=IN2S_TopGraph bottom "Q^2, 1/Angstrom2"	
-//		endif		
+//			Label/W=IN2S_TopGraph bottom "Q^2, 1/Angstrom2"
+//		endif
 //		if (cmpstr("Rg-Q",PlotTypeOne)==0)
 //			Label/W=IN2S_TopGraph left "Rg, Angstrom"
-//			Label/W=IN2S_TopGraph bottom "Q, 1/Angstrom"	
-//		endif		
+//			Label/W=IN2S_TopGraph bottom "Q, 1/Angstrom"
+//		endif
 //	endif
 //	if (cmpstr(TopBot,"Bot")==0)
 //		if (cmpstr("Int-Q",PlotTypeTwo)==0)
 //			Label/W=IN2S_BotGraph left "Intensity"
-//			Label/W=IN2S_BotGraph bottom "Q vector"	
+//			Label/W=IN2S_BotGraph bottom "Q vector"
 ////			IN2G_AppendSizeTopWave("IN2S_BotGraph",BotXData0, BotYData0,0,0,-10)
 //		endif
 //		if (cmpstr("SizeDist",PlotTypeTwo)==0)
 //			Label/W=IN2S_BotGraph left "Distribution"
-//			Label/W=IN2S_BotGraph bottom "Diameter Angstrom"	
+//			Label/W=IN2S_BotGraph bottom "Diameter Angstrom"
 //		endif
 //		if (cmpstr("Porod",PlotTypeTwo)==0)
 //			Label/W=IN2S_BotGraph left "Int * Q^p, (p=3 for SMR, 4 for DSM)"
-//			Label/W=IN2S_BotGraph bottom "Q^p, (p=3 for SMR, 4 for DSM), 1/Angstrom^p"	
-//		endif		
+//			Label/W=IN2S_BotGraph bottom "Q^p, (p=3 for SMR, 4 for DSM), 1/Angstrom^p"
+//		endif
 //		if (cmpstr("Guinier",PlotTypeTwo)==0)
 //			Label/W=IN2S_BotGraph left "ln (Int) "
-//			Label/W=IN2S_BotGraph bottom "Q^2, 1/Angstrom"	
-//		endif		
+//			Label/W=IN2S_BotGraph bottom "Q^2, 1/Angstrom"
+//		endif
 //		if (cmpstr("Rg-Q",PlotTypeTwo)==0)
 //			Label/W=IN2S_BotGraph left "Rg, Angstrom"
-//			Label/W=IN2S_BotGraph bottom "Q, 1/Angstrom"	
-//		endif		
+//			Label/W=IN2S_BotGraph bottom "Q, 1/Angstrom"
+//		endif
 //	endif
 //end
 //
@@ -1191,7 +1190,7 @@
 //		//corrects the data - recalculates all data from Original waves into modified waves
 //		//using parameters in the list
 //	setDataFolder root:Packages:StandardPlots
-//	
+//
 //	SVAR ListOfPlottedData
 //	variable NumberOfWaves=ItemsInList(ListOfPlottedData)
 //	SVAR StandardPlotsParameters
@@ -1206,22 +1205,22 @@
 //
 //	NVAR RemoveNegInt
 //	NVAR RemoveNegQval
-//	
+//
 //	For (i=0;i<NumberOfWaves;i+=1)
-//	
+//
 //		WAVE CurrentInt=$("OrgIntData"+num2str(i))
 //		WAVE CurrentQ=$("OrgQData"+num2str(i))
 //		WAVE CurrentE=$("OrgEData"+num2str(i))
-//		
+//
 //		currentData=StringFromList(i, ListOfPlottedData)
-//		
+//
 //		IntensityMultiplier=NumberByKey(currentData+"IntensityMultiplier", StandardPlotsParameters , "=" )
 //		Qoffset=NumberByKey(currentData+"Qoffset", StandardPlotsParameters , "=" )
 //		IntBackground=NumberByKey(currentData+"IntBackground", StandardPlotsParameters , "=" )
 //		RemoveNegIntTemp=NumberByKey(currentData+"RemoveNegInt", StandardPlotsParameters , "=" )
 //		RemoveNegQvalTemp=NumberByKey(currentData+"RemoveNegQval", StandardPlotsParameters , "=" )
 //		DeleteData=NumberByKey(currentData+"DeleteData", StandardPlotsParameters , "=" )
-//		
+//
 //		if (numtype(IntensityMultiplier)!=0)
 //			IntensityMultiplier=1
 //		endif
@@ -1244,26 +1243,26 @@
 //		Duplicate/O  CurrentInt, $("ModIntData"+num2str(i))
 //		Duplicate/O  CurrentQ, $("ModQData"+num2str(i))
 //		Duplicate/O  CurrentE, $("ModEData"+num2str(i))
-//		
+//
 //		Wave modInt=$("ModIntData"+num2str(i))
 //		Wave modQ=$("ModQData"+num2str(i))
 //		Wave modE=$("ModEData"+num2str(i))
-//		
+//
 //		if (RemoveNegIntTemp)
 //			IN2S_RemoveNegInt(modInt)
 //		endif
 //		if (RemoveNegQvalTemp)
 //			IN2S_RemoveNegQval(modQ)
 //		endif
-//		
+//
 //		modInt=(modInt-IntBackground)*IntensityMultiplier
 //		modQ=modQ-Qoffset
 //		modE=modE*IntensityMultiplier
-//		
+//
 //		if (DeleteData)
 //			modInt=NaN
 //		endif
-//		
+//
 //		StandardPlotsParameters=ReplaceNumberByKey(currentData+"IntensityMultiplier", StandardPlotsParameters , IntensityMultiplier,"=" )
 //		StandardPlotsParameters=ReplaceNumberByKey(currentData+"Qoffset", StandardPlotsParameters ,Qoffset, "=" )
 //		StandardPlotsParameters=ReplaceNumberByKey(currentData+"IntBackground", StandardPlotsParameters ,IntBackground, "=" )
@@ -1302,30 +1301,30 @@
 ////**********************************************************************************
 ////**********************************************************************************
 //
-//Function IN2S_SetBotAxisType() 
+//Function IN2S_SetBotAxisType()
 //		//sets axis types (log/lin) acording to type of plot selected. Used to reset
 //		//the axis to usual style when plot type changed.
 //		//uses IN2S_SetBotAsType
 //	setDataFolder root:Packages:StandardPlots:
-//	
+//
 //	SVAR PlotTypeTwo
-//		
+//
 //	if (cmpstr("Int-Q",PlotTypeTwo)==0)
-//			IN2S_SetBotAsType("LogX-LogY")		
+//			IN2S_SetBotAsType("LogX-LogY")
 //	endif
 //
 //	if (cmpstr("SizeDist",PlotTypeTwo)==0)
-//			IN2S_SetBotAsType("LinX-LinY")		
+//			IN2S_SetBotAsType("LinX-LinY")
 //	endif
-//	
+//
 //	if (cmpstr("Porod",PlotTypeTwo)==0)
-//		IN2S_SetBotAsType("LinX-LinY")		
+//		IN2S_SetBotAsType("LinX-LinY")
 //	endif
 //	if (cmpstr("Guinier",PlotTypeTwo)==0)
-//			IN2S_SetBotAsType("LinX-linY")		
+//			IN2S_SetBotAsType("LinX-linY")
 //	endif
 //	if (cmpstr("Rg-Q",PlotTypeTwo)==0)
-//		IN2S_SetBotAsType("LogX-linY")		
+//		IN2S_SetBotAsType("LogX-linY")
 //	endif
 //end
 //
@@ -1337,27 +1336,27 @@
 //		//sets axis types (log/lin) acording to type of plot selected. Used to reset
 //		//the axis to usual style when plot type changed.
 //		//uses IN2S_SetTopAsType
-//	
+//
 //	setDataFolder root:Packages:StandardPlots:
-//	
+//
 //	SVAR PlotTypeOne
 //	if (cmpstr("Int-Q",PlotTypeOne)==0)
-//		IN2S_SetTopAsType("LogX-logY")		
+//		IN2S_SetTopAsType("LogX-logY")
 //	endif
 //
 //	if (cmpstr("SizeDist",PlotTypeOne)==0)
-//		IN2S_SetTopAsType("LinX-LinY")		
+//		IN2S_SetTopAsType("LinX-LinY")
 //	endif
-//	
+//
 //	if (cmpstr("Porod",PlotTypeOne)==0)
-//		IN2S_SetTopAsType("LinX-linY")		
+//		IN2S_SetTopAsType("LinX-linY")
 //	endif
 //	if (cmpstr("Guinier",PlotTypeOne)==0)
-//		IN2S_SetTopAsType("LinX-linY")		
+//		IN2S_SetTopAsType("LinX-linY")
 //	endif
 //	if (cmpstr("Rg-Q",PlotTypeOne)==0)
-//		IN2S_SetTopAsType("LogX-linY")		
-//	endif	
+//		IN2S_SetTopAsType("LogX-linY")
+//	endif
 //end
 //
 ////**********************************************************************************
@@ -1368,7 +1367,7 @@
 //	String ctrlName
 //
 //	setDataFolder root:Packages:StandardPlots:
-//	
+//
 //	//here goes what happens if I push FitPorod button
 //	//	Button FitPorodTop,pos={89,23},size={50,20},proc=IN2S_PlotFitsBtnControl,title="Fit Porod"
 //	//	Button FitPorodBot,pos={89,23},size={50,20},proc=IN2S_PlotFitsBtnControl,title="Fit Porod"
@@ -1392,7 +1391,7 @@
 //	endif
 //	if (cmpstr(ctrlName,"SizeDistPanelTop")==0)
 //		IN2S_SizeDistPanel("Top")
-//	endif	
+//	endif
 //	if (cmpstr(ctrlName,"SizeDistPanelBot")==0)
 //		IN2S_SizeDistPanel("Bot")
 //	endif
@@ -1404,16 +1403,16 @@
 ////Panel for size distributions
 //Function IN2S_SizeDistPanel(which)
 //	string which
-//	
+//
 //	IN2S_InitializeSizeDistCalc()
-//	
+//
 //	SVAR/Z gwhich=root:Packages:StandardPlots:which
 //	if (!SVAR_Exists(gwhich))
 //		string/G root:Packages:StandardPlots:which
 //		SVAR gwhich=root:Packages:StandardPlots:which
 //	endif
 //	gwhich=which
-//	
+//
 //	KillWIndow/Z IN2S_SizeDistPanelProc
 // 	Execute("IN2S_SizeDistPanelProc()")
 //end
@@ -1431,31 +1430,31 @@
 //	NVAR NWStandardDeviation=root:Packages:StandardPlots:NWStandardDeviation
 //	NVAR RemoveNegatives=root:Packages:StandardPlots:RemoveNegatives
 //	SVAR which=root:Packages:StandardPlots:which
-//	
-//	//first make sure we are in the appropriate graph window 
+//
+//	//first make sure we are in the appropriate graph window
 //	If (cmpstr(which,"Top")==0)
 //		DoWIndow/F IN2S_TopGraph
 //	endif
 //	If (cmpstr(which,"Bot")==0)
 //		DoWIndow/F IN2S_BotGraph
 //	endif
-//	
+//
 //	//here we calculate what is needed
 //	//First pull the wave names
 //	if (cmpstr(CsrWave(A), CsrWave(B))!=0)
-//		Abort "Cursors are not on the same data or not in the graph at all" 
+//		Abort "Cursors are not on the same data or not in the graph at all"
 //	endif
-//	
+//
 ////	//Here we need to check for cursors, if they are in the graph...
 //	variable StartPoint=pcsr(A)
 //	variable EndPoint=pcsr(B)
 ////	if (numtype(StartPoint)==2 || numtype(EndPoint)==2)
 ////		abort "Cursors not in the graph"
 ////	endif
-//	
+//
 //	Wave FD=CsrWaveRef(A)			//, "IN2S_TopGraph"
 //	Wave Ddist=CsrXWaveRef(A)
-//	
+//
 //	VolumeFraction=CalibrationFactor*IN2G_VolumeFraction(FD,Ddist,StartPoint,EndPoint, RemoveNegatives)
 //	NumberDensity=CalibrationFactor*IN2G_NumberDensity(FD,Ddist,StartPoint,EndPoint, RemoveNegatives)
 //	SpecificSurface=CalibrationFactor*IN2G_SpecificSurface(FD,Ddist,StartPoint,EndPoint, RemoveNegatives)
@@ -1464,7 +1463,7 @@
 //	VWStandardDeviation=CalibrationFactor*IN2G_VWStandardDeviation(FD,Ddist,StartPoint,EndPoint, RemoveNegatives)
 //	NWStandardDeviation=CalibrationFactor*IN2G_NWStandardDeviation(FD,Ddist,StartPoint,EndPoint, RemoveNegatives)
 //	//I wish I knew if the calibration factor was this easy for all these parameters
-//	
+//
 //End
 //
 //
@@ -1577,7 +1576,7 @@
 //	string Ename
 //	string Qname
 //	string IntName
-//	
+//
 //	if (cmpstr(which,"top")==0)
 //		DoWindow/F IN2S_TopGraph
 //		GraphName="IN2S_TopGraph"
@@ -1585,35 +1584,35 @@
 //		Qname="TopXData"
 //		IntName="TopYData"
 //	else
-//		DoWindow/F IN2S_BotGraph	
+//		DoWindow/F IN2S_BotGraph
 //		GraphName="IN2S_BotGraph"
 //		Ename="BotEData"
 //		Qname="BotXData"
 //		IntName="BotYData"
 //	endif
-//	
+//
 //	string WvAref=CsrWave(A, GraphName)
 //	string WvBref=CsrWave(B, GraphName)
 //	if (cmpstr(WvAref,WvBref)!=0)
 //		Abort "cursors are not on the same data"
 //	endif
-//	
+//
 //	Wave IntWave=CsrWaveRef(A, GraphName)
-//	variable selectedSetNumber=str2num(WvAref[8,inf])	
+//	variable selectedSetNumber=str2num(WvAref[8,inf])
 //	Wave EWave=$(Ename+num2str(selectedSetNumber))
 //	Wave QWave=$(Qname+num2str(selectedSetNumber))
 //	IntName+=num2str(selectedSetNumber)
-//	
-//	CurveFit line IntWave[pcsr(A),pcsr(B)] /X=QWave /W=EWave /I=1 /D 
-//	
+//
+//	CurveFit line IntWave[pcsr(A),pcsr(B)] /X=QWave /W=EWave /I=1 /D
+//
 //	Wave FitWave=$("fit_"+IntName)
-//	
+//
 //	string oldNote=note(IntWave)
 //	string oldComment=StringByKey("COMMENT", oldNote , "=")
 //	string newComment="Comment="+"Fitted on "+oldComment + ";Wname=Porod Fit"
-//	
+//
 //	note FitWave, newComment
-//	
+//
 //	Wave W_coef
 //	variable PorodConst=W_coef[0]
 //	variable background=W_coef[1]
@@ -1623,9 +1622,9 @@
 //	attachTo=floor(attachTo)
 //	attachTo=QWave[attachTo]
 //	Tag/C/N=PorodTag/F=0/S=3/L=2 $("fit_"+IntName), attachTo,Results
-//	
+//
 //	IN2S_GraphLegendAndColors()
-//	
+//
 ////	OK, here we are done with	the graph in which we were doing the fit.
 ////now let us see if we can put the data in other graphs
 //
@@ -1636,7 +1635,7 @@
 //	string NextYwaveName
 //	SVAR PlotTypeOne
 //	SVAR PlotTypeTwo
-//	
+//
 //	if (cmpstr(which,"Top")==0)
 //		NextPlot="Bot"
 //		NextGraphName="IN2S_BotGraph"
@@ -1655,36 +1654,36 @@
 //	if (V_flag==0)
 //		abort
 //	endif
-//	
+//
 //	Wave NextYwv=$NextYwaveName
 //	Wave NextXwv=$NextXwaveName
 //	string NewYwvName="Transferred"+NextYwaveName
 //	Duplicate/O NextYwv, $NewYwvName
 //	Wave NewYwv=$NewYwvName
 //	SVAR PlottedDataType=root:Packages:StandardPlots:DataTypeToPlot
-//	
+//
 //	if (cmpstr(NextPlotType,"Int-Q")==0)
 //
 //		NewYwv=(PorodConst/(NextXwv^3))+background
-//	
+//
 //		if (cmpstr(PlottedDataType,"DSM_Int")==0)
 //			NewYwv=(PorodConst/(NextXwv^4))+background
 //		endif
-//		
+//
 //		if (cmpstr(PlottedDataType,"M_DSM_Int")==0)
 //			NewYwv=(PorodConst/(NextXwv^4))+background
 //		endif
-//		
+//
 //		RemoveFromGraph/Z  $NewYwvName
 //		AppendToGraph NewYwv vs NextXwv
-//			
+//
 //	 	newComment="Comment="+"Fitted on "+oldComment + ";Wname= Transferred Porod Fit"
 //		note/K NewYwv
 //		note NewYwv, newComment
 //
 //		IN2S_GraphLegendAndColors()
 //	endif
-//	
+//
 //end
 //
 //
@@ -1701,27 +1700,27 @@
 //	SVAR PlotTypeTwo
 //	WAVE OrgQData0
 //	WAVE OrgIntData0
-//	
+//
 //	if (cmpstr(TopBot,"Top")==0)
 //		if (cmpstr("Int-Q",PlotTypeOne)==0)
 //			// Append buttons definitions here
 //		endif
 //		if (cmpstr("SizeDist",PlotTypeOne)==0)
 //			// Append buttons definitions here
-//			Button SizeDistPanelTop,pos={70,1},size={100,20},proc=IN2S_PlotFitsBtnControl,title="Calculations Panel"				
+//			Button SizeDistPanelTop,pos={70,1},size={100,20},proc=IN2S_PlotFitsBtnControl,title="Calculations Panel"
 //		endif
 //		if (cmpstr("Porod",PlotTypeOne)==0)
 //			// Append buttons definitions here
-//			Button FitPorodTop,pos={89,23},size={50,20},proc=IN2S_PlotFitsBtnControl,title="Fit Porod"	
-//		endif		
+//			Button FitPorodTop,pos={89,23},size={50,20},proc=IN2S_PlotFitsBtnControl,title="Fit Porod"
+//		endif
 //		if (cmpstr("Guinier",PlotTypeOne)==0)
-//			Button FitGuinierTop,pos={89,23},size={60,20},proc=IN2S_PlotFitsBtnControl,title="Fit Guinier"	
+//			Button FitGuinierTop,pos={89,23},size={60,20},proc=IN2S_PlotFitsBtnControl,title="Fit Guinier"
 ////			IN2G_AppendGuinierTopWave("IN2S_TopGraph",ModQData0, ModIntData0,0,0,0)
 //			// Append buttons definitions here
-//		endif		
+//		endif
 //		if (cmpstr("Rg-Q",PlotTypeOne)==0)
 //			// Append buttons definitions here
-//		endif		
+//		endif
 //	endif
 //	if (cmpstr(TopBot,"Bot")==0)
 //		if (cmpstr("Int-Q",PlotTypeTwo)==0)
@@ -1729,20 +1728,20 @@
 //		endif
 //		if (cmpstr("SizeDist",PlotTypeTwo)==0)
 //			// Append buttons definitions here
-//			Button SizeDistPanelBot,pos={70,1},size={100,20},proc=IN2S_PlotFitsBtnControl,title="Calculations Panel"				
+//			Button SizeDistPanelBot,pos={70,1},size={100,20},proc=IN2S_PlotFitsBtnControl,title="Calculations Panel"
 //		endif
 //		if (cmpstr("Porod",PlotTypeTwo)==0)
 //			// Append buttons definitions here
 //			Button FitPorodBot,pos={89,23},size={50,20},proc=IN2S_PlotFitsBtnControl,title="Fit Porod"
-//		endif		
+//		endif
 //		if (cmpstr("Guinier",PlotTypeTwo)==0)
 //			Button FitGuinierBot,pos={89,23},size={60,20},proc=IN2S_PlotFitsBtnControl,title="Fit Guinier"
 ////			IN2G_AppendGuinierTopWave("IN2S_BotGraph",ModQData0, ModIntData0,0,0,0)
 //			// Append buttons definitions here
-//		endif		
+//		endif
 //		if (cmpstr("Rg-Q",PlotTypeTwo)==0)
 //			// Append buttons definitions here
-//		endif		
+//		endif
 //	endif
 //end
 //
@@ -1758,7 +1757,7 @@
 //	string Ename
 //	string Qname
 //	string IntName
-//	
+//
 //	if (cmpstr(which,"top")==0)
 //		DoWindow/F IN2S_TopGraph
 //		GraphName="IN2S_TopGraph"
@@ -1766,47 +1765,47 @@
 //		Qname="TopXData"
 //		IntName="TopYData"
 //	else
-//		DoWindow/F IN2S_BotGraph	
+//		DoWindow/F IN2S_BotGraph
 //		GraphName="IN2S_BotGraph"
 //		Ename="BotEData"
 //		Qname="BotXData"
 //		IntName="BotYData"
 //	endif
-//	
+//
 //	string WvAref=CsrWave(A, GraphName)
 //	string WvBref=CsrWave(B, GraphName)
 //	if (cmpstr(WvAref,WvBref)!=0)
 //		Abort "cursors are not on the same data"
 //	endif
-//	
+//
 //	Wave IntWave=CsrWaveRef(A, GraphName)
-//	variable selectedSetNumber=str2num(WvAref[8,inf])	
+//	variable selectedSetNumber=str2num(WvAref[8,inf])
 //	Wave EWave=$(Ename+num2str(selectedSetNumber))
 //	Wave QWave=$(Qname+num2str(selectedSetNumber))
 //	IntName+=num2str(selectedSetNumber)
-//	
-//	CurveFit line IntWave[pcsr(A),pcsr(B)] /X=QWave /I=1 /D 
-//	
+//
+//	CurveFit line IntWave[pcsr(A),pcsr(B)] /X=QWave /I=1 /D
+//
 //	Wave FitWave=$("fit_"+IntName)
-//	
+//
 //	string oldNote=note(IntWave)
 //	string oldComment=StringByKey("COMMENT", oldNote , "=")
 //	string newComment="Comment="+"Fitted on "+oldComment + ";Wname=Guinier Fit"
-//	
+//
 //	note FitWave, newComment
-//	
+//
 //	Wave W_coef
 //	Wave W_sigma
 //	variable LnInt=W_coef[0]
 //	variable Rgslope=W_coef[1]
-//	
+//
 //	variable Int0=exp(LnInt)
 //	variable IntError=0.5*(abs(exp(LnInt+W_sigma[0])-Int0)+abs(exp(LnInt-W_sigma[0])-Int0))
 //	variable Rg=sqrt(-Rgslope*3)
 //	variable RgError=0.5*(abs(sqrt((-Rgslope+W_sigma[1])*3)-Rg)+abs(sqrt((-Rgslope-W_sigma[1])*3)-Rg))
 //	variable RgQmin=Rg*sqrt(QWave[pcsr(A)])
 //	variable RgQmax=Rg*sqrt(QWave[pcsr(B)])
-//	
+//
 //	string Results="     Guinier fit results: \r I (q=0): "+num2str(Int0)+" +/-  "+num2str(IntError)
 //	Results+="\r Rg : "+num2str(Rg)+"  +/-  "+num2str(RgError)
 //	Results+="\r"+num2str(RgQmin)+ "< Rg * q < "+num2str(RgQmax)
@@ -1814,9 +1813,9 @@
 //	attachTo=floor(attachTo)
 //	attachTo=QWave[attachTo]
 //	Tag/C/N=GuinierTag/F=0/S=3/L=2 $("fit_"+IntName), attachTo,Results
-//	
+//
 //	IN2S_GraphLegendAndColors()
-//	
+//
 ////	OK, here we are done with	the graph in which we were doing the fit.
 ////now let us see if we can put the data in other graphs
 //
@@ -1827,7 +1826,7 @@
 //	string NextYwaveName
 //	SVAR PlotTypeOne
 //	SVAR PlotTypeTwo
-//	
+//
 //	if (cmpstr(which,"Top")==0)
 //		NextPlot="Bot"
 //		NextGraphName="IN2S_BotGraph"
@@ -1846,7 +1845,7 @@
 //	if (V_flag==0)
 //		abort
 //	endif
-//	
+//
 //	Wave NextYwv=$NextYwaveName
 //	wavestats/Q NextYwv
 //	variable MinOnNextYwv=V_min
@@ -1854,7 +1853,7 @@
 //	string NewYwvName="Transferred"+NextYwaveName
 //	Duplicate/O NextYwv, $NewYwvName
 //	Wave NewYwv=$NewYwvName
-//	
+//
 //	if (cmpstr(NextPlotType,"Int-Q")==0)
 //		NewYwv=exp(lnInt + Rgslope*(NextXwv^2))
 ////		variable start=binarysearch(NewYwv,MinOnNextYwv)
@@ -1863,21 +1862,21 @@
 //		NewYwv[start, inf]=NaN
 //		RemoveFromGraph/Z  $NewYwvName
 //		AppendToGraph NewYwv vs NextXwv
-//			
+//
 //	 	newComment="Comment="+"Fitted on "+oldComment + ";Wname= Transferred Guinier Fit"
 //		note/K NewYwv
 //		note NewYwv, newComment
 //
 //		IN2S_GraphLegendAndColors()
 //	endif
-//	
+//
 //end
 //
 //
 //Function IN2S_FixPlotAxis(Which,SetReset)	//sets parameters and resets the axis before and after working on graph
 //		string Which, SetReset
 //		//Which can be Top or Bot; SetReset can be Set or Reset
-//	
+//
 //	if (cmpstr(SetReset,"Set")==0)		//set parameters so we remember axis settings
 //		if (cmpstr(Which,"Top")==0)		//here it is top graph
 //			DoWindow IN2S_TopGraph
@@ -1916,8 +1915,8 @@
 //			DoWindow IN2S_TopGraph
 //			if (V_flag)		//OK, window exists
 //				SetAxis/W=IN2S_TopGraph left, TopLeftMin, TopLeftMax
-//				SetAxis/W=IN2S_TopGraph bottom, TopBottomMin, TopBottomMax				
-//			endif		
+//				SetAxis/W=IN2S_TopGraph bottom, TopBottomMin, TopBottomMax
+//			endif
 //		else								//and here bottom graph
 //			NVAR/Z BotLeftMax
 //			if (!NVAR_exists(BotLeftMax))		//check, that the parameters exist, assume if exists on, exist all
@@ -1929,8 +1928,8 @@
 //			DoWindow IN2S_BotGraph
 //			if (V_flag)		//OK, window exists
 //				SetAxis/W=IN2S_BotGraph left, BotLeftMin, BotLeftMax
-//				SetAxis/W=IN2S_BotGraph bottom, BotBottomMin, BotBottomMax				
-//			endif		
+//				SetAxis/W=IN2S_BotGraph bottom, BotBottomMin, BotBottomMax
+//			endif
 //		endif
 //	endif
 //end

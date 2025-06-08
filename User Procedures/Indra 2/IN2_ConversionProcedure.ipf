@@ -1,25 +1,25 @@
-#pragma TextEncoding = "UTF-8"
-#pragma rtGlobals=3			// Use modern global access method.
-//#pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.10
-
+#pragma rtFunctionErrors=1
+#pragma TextEncoding="UTF-8"
+#pragma rtGlobals=3 // Use modern global access method.
+  
+#pragma version=1.10
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2025, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
-//* in the file LICENSE that is included with this distribution. 
+//* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
 //Menu "Spec"
 //	"---"
 //	"Convert Old data NOT finished yet", IN2Z_ConvertAllScans()
 //end
-//need to finish conversion by copying USAXS basic waves to USAXS folder... 
+//need to finish conversion by copying USAXS basic waves to USAXS folder...
 //
 //Function IN2Z_ConvertAllScans()
 //	string dfStart
 //	Prompt dfStart, "Select folder, all subfolders will be also converted", popup, IN2G_FindFolderWithWaveTypes("root:", 30, "*", 1)
-//	
+//
 //	DoPrompt "Select folder with data to convert",dfStart
 //
 //	string dfStartShort=dfstart[0,strlen(dfStart)-2]
@@ -35,11 +35,11 @@
 //Function/S IN2Z_ConvertScans(dfStart, levels)
 //        string dfStart
 //        Variable levels
-//               
+//
 //        dfStart+=":"
-//        
+//
 //        String dfSave, templist
-//             
+//
 //        dfSave = GetDataFolder(1)
 //        templist = DataFolderDir(1)
 //
@@ -51,7 +51,7 @@
 //        if (levels <= 0)
 //                return ""
 //        endif
-//        
+//
 //        String subDF
 //        Variable index = 0
 //        do
@@ -60,12 +60,12 @@
 //
 //                if (strlen(temp) == 0)
 //                        break                                                                           // No more data folders.
-//                endif	     		  
+//                endif
 //                subDF = dfStart + temp
 //                IN2Z_ConvertScans(subDF,levels)     // Recurse.
 //                index += 1
 //        while(1)
-//        
+//
 //        SetDataFolder(dfSave)
 //        return ""
 //End
@@ -74,10 +74,10 @@
 //
 //
 //Function IN2Z_ConvertOneScan()
-////this function converts current scan into Indra2 compatible form... 
+////this function converts current scan into Indra2 compatible form...
 //
 //	if ((stringMatch(GetDataFolder(0),"*spec*")==1)&&(stringMatch(GetDataFolder(0),"*OriginalData*")!=1))
-//	
+//
 //
 //		IN2Z_CreateStringsWithData()		//this creates strings which will be needed.
 //
@@ -85,17 +85,17 @@
 //		IN2Z_AppendNoteToAllWaves(NewWavenote)	//this creates notes for all waves
 //
 //		string FldrSampleRaw=IN2Z_CreateDataFolders()		//creates the folders and returns list of folder names
-//	
+//
 //		string RawFldr=StringFromList(1,FldrSampleRaw)
 //		string USAXSFldr=StringFromList(0,FldrSampleRaw)
-//	
+//
 //		IN2Z_CopyDataToRaw(RawFldr)				//copies data to Raw folder
-//		
+//
 //		USAXSFldr=USAXSFldr[0,strlen(USAXSFldr)-2]
 //		IN2Z_CopyDataToUSAXS(USAXSFldr)			//copies data to USAXS folder
-//		
+//
 //		IN2Z_CheckUPDParameters(USAXSFldr,RawFldr)
-//		
+//
 //		IN2Z_FinishConversion(FldrSampleRaw)
 //	endif
 //end
@@ -104,7 +104,7 @@
 //Function IN2Z_CopyDataToUSAXS(USAXSFldr)
 //	string USAXSFldr
 //	//this function copies data to USAXS folder
-//	
+//
 //	IN2Z_CpyMvOneWave("PD_Intensity",USAXSFldr,1)		//this moves wave into new folder
 //	IN2Z_CpyMvOneWave("PD_Error",USAXSFldr,1)		//this moves wave into new folder
 //	IN2Z_CpyMvOneWave("Qvec",USAXSFldr,1)		//this moves wave into new folder
@@ -129,7 +129,7 @@
 //	IN2Z_CpyMvOneString("MeasurementParameters",USAXSFldr,1)		//this moves or copies string
 //	SVAR/Z specCommand					//this removes spaces in the beggigning of SpecComment... problem
 //	variable i=0
-//	if (SVAR_Exists(specCommand))	
+//	if (SVAR_Exists(specCommand))
 //		for (i=0;i<4;i+=1)
 //			if (cmpstr(specCommand[0]," ")==0)
 //				specCommand=specCommand[1, strlen(specCommand)-1]
@@ -137,16 +137,16 @@
 //		endfor
 //	endif
 //	IN2Z_CpyMvOneString("specCommand",USAXSFldr,1)		//this moves or copies string
-//	IN2Z_CpyMvOneString("timeWritten",USAXSFldr,1)		//this moves or copies string	
+//	IN2Z_CpyMvOneString("timeWritten",USAXSFldr,1)		//this moves or copies string
 //	IN2Z_CpyMvOneString("specComment",USAXSFldr,1)		//this moves or copies string
 //	IN2Z_CpyMvOneString("SpecSourceFileName",USAXSFldr,1)		//this moves or copies string
 //
-//	IN2Z_CpyMvOneVariable("BeamCenter",USAXSFldr,1)		//and this moves or copies one variable	
-//	IN2Z_CpyMvOneVariable("MaximumIntensity",USAXSFldr,1)		//and this moves or copies one variable	
-//	IN2Z_CpyMvOneVariable("wavelength",USAXSFldr,1)		//and this moves or copies one variable	
-//	IN2Z_CpyMvOneVariable("Transmission",USAXSFldr,1)		//and this moves or copies one variable	
-//	IN2Z_CpyMvOneVariable("Qshift",USAXSFldr,1)		//and this moves or copies one variable	
-//	IN2Z_CpyMvOneVariable("PeakWidth",USAXSFldr,1)		//and this moves or copies one variable	
+//	IN2Z_CpyMvOneVariable("BeamCenter",USAXSFldr,1)		//and this moves or copies one variable
+//	IN2Z_CpyMvOneVariable("MaximumIntensity",USAXSFldr,1)		//and this moves or copies one variable
+//	IN2Z_CpyMvOneVariable("wavelength",USAXSFldr,1)		//and this moves or copies one variable
+//	IN2Z_CpyMvOneVariable("Transmission",USAXSFldr,1)		//and this moves or copies one variable
+//	IN2Z_CpyMvOneVariable("Qshift",USAXSFldr,1)		//and this moves or copies one variable
+//	IN2Z_CpyMvOneVariable("PeakWidth",USAXSFldr,1)		//and this moves or copies one variable
 //
 //end
 //
@@ -176,22 +176,22 @@
 //	IN2Z_CpyMvOneString("SpecSourceFileName",RawFldr,0)		//this moves or copies string
 //	IN2Z_CpyMvOneString("specMotors",RawFldr,1)		//this moves or copies string
 //	IN2Z_CpyMvOneString("EPICS_PVs",RawFldr,1)		//this moves or copies string
-//	
+//
 //
 //end
 //
 //Function/T IN2Z_CreateDataFolders()
 ////this function creates the folders as needed
-//	
+//
 //	string df=GetDataFolder(1)
-//	
+//
 //	SVAR SpecComment
 //	string RawFldrNm="root:raw:Converted:"
 //	string RawFldrShort=GetDataFolder(0)
 //	String USAXSDataFldr="root:USAXS:Converted:"
 //	string USAXSFlderShort=SpecComment
 //	variable i=0
-//	
+//
 //	if (!DataFolderExists("root:raw"))
 //		NewDataFolder root:raw
 //	endif
@@ -204,7 +204,7 @@
 //	if (!DataFolderExists("root:USAXS:Converted"))
 //		NewDataFolder root:USAXS:Converted
 //	endif
-//	
+//
 //	SetDataFolder root:raw:Converted
 //	if (DataFolderExists(RawFldrShort))
 //		RawFldrShort=UniqueName(RawFldrShort,11,0)
@@ -216,20 +216,20 @@
 //		USAXSFlderShort=CleanupName(UniqueName(USAXSFlderShort,11,0),1)
 //	endif
 //		NewDataFolder/S $USAXSFlderShort
-//	
+//
 //	USAXSDataFldr=GetDataFolder(1)
 //
 //	SetDataFolder df
 //	RawFldrNm+=RawFldrShort
-//	
-//	
+//
+//
 //	return USAXSDataFldr+";"+RawFldrNm
 //end
 //
 //Function IN2Z_CreateStringsWithData()
 ////this function converts variables into strings as needed in the Indra2
 //
-//		
+//
 //	string/G UPDParameters=""
 //	UPDParameters =  IN2Z_NVARRplcKwString("UPDParameters","Vfc","VToFFactorL")
 //	UPDParameters =  IN2Z_NVARRplcKwString("UPDParameters","Gain1","Range1")
@@ -278,9 +278,9 @@
 //end
 //
 //
-//Function IN2Z_AppendNoteToAllWaves(NoteString)	//this function appends or replaces note (key/note) 
+//Function IN2Z_AppendNoteToAllWaves(NoteString)	//this function appends or replaces note (key/note)
 //	string NoteString							//to all waves in the folder
-//	
+//
 //	string ListOfWaves=WaveList("*",";",""), temp
 //	variable i=0, imax=ItemsInList(ListOfWaves)
 //	For(i=0;i<imax;i+=1)
@@ -294,14 +294,14 @@
 //Function IN2Z_CpyMvOneWave(WvName,FldrName,CpyMv)	//copies or move one way to specified folder
 //	string WvName, FldrName								//set CpyMv to 0 for copy, 1 for move
 //	Variable CpyMv
-//	
+//
 //	FldrName=IN2G_CheckFldrNmSemicolon(FldrName,1 )
 //	Wave Mywave=$WvName
-//	
+//
 //	if (CpyMv)
 //		if (WaveExists(Mywave))
 //			MoveWave Mywave, $FldrName
-//		endif	
+//		endif
 //	else
 //		if (WaveExists(Mywave))
 //			FldrName=FldrName+WvName
@@ -313,18 +313,18 @@
 //Function IN2Z_CpyMvOneString(StrName,FldrName,CpyMv)	//copies or move one way to specified folder
 //	string StrName, FldrName								//set CpyMv to 0 for copy, 1 for move
 //	Variable CpyMv
-//	
+//
 //	FldrName=IN2G_CheckFldrNmSemicolon(FldrName,1 )
 //	FldrName+=StrName
 //	SVAR/Z MyString=$StrName
-//	
+//
 //	if (CpyMv)
 //		if (SVAR_Exists(MyString))
 //			MoveString $StrName, $FldrName
-//		endif	
+//		endif
 //	else
 //		if (SVAR_Exists(MyString))
-//			string/g $FldrName = MyString 
+//			string/g $FldrName = MyString
 //		endif
 //	endif
 //end
@@ -332,28 +332,28 @@
 //Function IN2Z_CpyMvOneVariable(VarName,FldrName,CpyMv)	//copies or move one way to specified folder
 //	string VarName, FldrName								//set CpyMv to 0 for copy, 1 for move
 //	Variable CpyMv
-//	
+//
 //	FldrName=IN2G_CheckFldrNmSemicolon(FldrName,1 )
 //	FldrName=FldrName+VarName
 //	NVAR/Z MyVar=$VarName
-//	
+//
 //	if (CpyMv)
 //		if (NVAR_Exists(MyVar))
 //			MoveVariable $VarName, $FldrName
-//		endif	
+//		endif
 //	else
 //		if (NVAR_Exists(MyVar))
-//			Variable/g $FldrName = MyVar 
+//			Variable/g $FldrName = MyVar
 //		endif
 //	endif
 //end
 //
 //Function/S IN2Z_NVARRplcKwString(KWList,KeyWord,NVARname)	//thsi function replaces part of string if it exists
 //	string KWList,KeyWord,NVARname
-//	
+//
 //	SVAR LKWList=$KWList
 //	NVAR/Z NewNumber=$NVARname
-//	
+//
 //	if (NVAR_Exists(NewNumber))
 //		LKWList=ReplaceStringByKey(KeyWord, LKWList,num2str(NewNumber),"=")
 //	endif
@@ -362,10 +362,10 @@
 //
 //Function/S IN2Z_SVARRplcKwString(KWList,KeyWord,SVARname)	//thsi function replaces part of string if it exists
 //	string KWList,KeyWord,SVARname
-//	
+//
 //	SVAR LKWList=$KWList
 //	SVAR/Z NewString=$SVARname
-//	
+//
 //	if (SVAR_Exists(NewString))
 //		LKWList=ReplaceStringByKey(KeyWord, LKWList,NewString,"=")
 //	endif
@@ -402,20 +402,20 @@
 //	if (StringMatch(RawToUSAXS,"*XX*"))
 //		IN2_RAWtoUSAXSParametersSetup(0)
 //		PauseForUser IN2_RawToUSAXSPanel
-//	endif 
-//	
+//	endif
+//
 //	IN2Z_DoRawToUSAXSConversion("Yes")
 //end
 //
 //
 //Function IN2Z_CheckUPDParameters(USAXSFolder,RawFolder)
 //		string USAXSFolder, RawFolder
-//		
+//
 //		USAXSFolder=IN2G_CheckFldrNmSemicolon(USAXSFolder,1)
 //		RawFolder=IN2G_CheckFldrNmSemicolon(RawFolder,1)
 //		string dfOld=getdataFolder(1)
 //		setDataFolder root:Packages:Indra3
-//		
+//
 //		SVAR UPDParameters=$USAXSFolder+"UPDParameters"
 //		SVAR EPICS_PVs=$RawFolder+"EPICS_PVs"
 //		SVAR RawToUSAXS
@@ -423,9 +423,9 @@
 //	if (StringMatch(RawToUSAXS,"*YY*"))
 //		execute("IN2_PhotodiodeConvPanel()")
 //		PauseForUser IN2_PhotodiodeConvPanel
-//	endif 
+//	endif
 //
-//		
+//
 //	if (strlen(UPDParameters)<11)
 //		UPDParameters="Vfc="+StringByKey(StringByKey("Vfc",RawToUSAXS,"="),EPICS_PVs)+";"
 //		UPDParameters+="Gain1="+StringByKey(StringByKey("Gain1",RawToUSAXS,"="),EPICS_PVs)+";"
@@ -440,7 +440,7 @@
 //		UPDParameters+="Bkg5="+StringByKey(StringByKey("Bkg5",RawToUSAXS,"="),EPICS_PVs)+";"
 //		UPDParameters+="UPDsize="+StringByKey(StringByKey("UPDsize",RawToUSAXS,"="),EPICS_PVs)+";"
 //	endif
-//	
+//
 //	setDataFolder dfOld
 //end
 //
@@ -459,57 +459,57 @@
 //		if (SVAR_Exists(ListOfDeleteWaves))								//here we delete waves if user chose to
 //			variable i=0
 //			string WaveNameDelete
-//			for(i=0;i<ItemsInList(ListOfDeleteWaves);i+=1)	
+//			for(i=0;i<ItemsInList(ListOfDeleteWaves);i+=1)
 //				WaveNameDelete=StringFromList(i,ListOfDeleteWaves)
-//				KillWaves/Z $WaveNameDelete						
-//			endfor										
+//				KillWaves/Z $WaveNameDelete
+//			endfor
 //		endif
-//		
+//
 //	string tempname="root:USAXS:"
-//		
+//
 //	tempname="root:USAXS:"+USAXSSubFolder+":"
-//		
+//
 //	tempname+=USAXSFolder										//this creates sample folder name
-//	
+//
 //		string TempWaveName="", TempNewWaveName=""					//note for waves to be appended to each USAXS wave
 //		string  newnote=""												//remove ":" from folder poitners
 //		string oldnote
-//		
+//
 //		TempWaveName=StringByKey("AR_enc", RawToUSAXS,"=")		//this creates copy of ARencoder wave
 //		TempNewWaveName=tempname+":AR_encoder"
 //		Duplicate/O $TempWaveName, $TempNewWaveName
 //		oldnote=Note($TempNewWaveName)
 //		Note/K $TempNewWaveName
 //		note $TempNewWaveName, oldnote+newnote+"Wname=AR_encoder;"
-//		
+//
 //		TempWaveName=StringByKey("PD_range", RawToUSAXS,"=")		//this creates copy of PD range wave
 //		TempNewWaveName=tempname+":PD_range"
 //		Duplicate/O $TempWaveName, $TempNewWaveName
 //		oldnote=Note($TempNewWaveName)
 //		Note/K $TempNewWaveName
 //		note $TempNewWaveName, oldnote+newnote+"Wname=PD_range;"
-//		
+//
 //		TempWaveName=StringByKey("USAXS_PD", RawToUSAXS,"=")		//this creates copy of USAXS PD wave
 //		TempNewWaveName=tempname+":USAXS_PD"
 //		Duplicate/O $TempWaveName, $TempNewWaveName
 //		oldnote=Note($TempNewWaveName)
 //		Note/K $TempNewWaveName
 //		note $TempNewWaveName, oldnote+newnote+"Wname=USAXS_PD;"
-//		
+//
 //		TempWaveName=StringByKey("Time", RawToUSAXS,"=")		//this creates copy of measurement time wave
 //		TempNewWaveName=tempname+":MeasTime"
 //		Duplicate/O $TempWaveName, $TempNewWaveName
 //		oldnote=Note($TempNewWaveName)
 //		Note/K $TempNewWaveName
 //		note $TempNewWaveName, oldnote+newnote+"Wname=MeasTime;"
-//		
+//
 //		TempWaveName=StringByKey("Monitor", RawToUSAXS,"=")		//this creates copy of monitors wave
 //		TempNewWaveName=tempname+":Monitor"
 //		Duplicate/O $TempWaveName, $TempNewWaveName
 //		oldnote=Note($TempNewWaveName)
 //		Note/K $TempNewWaveName
 //		note $TempNewWaveName, oldnote+newnote+"Wname=Monitor;"
-//			
+//
 //	SetDataFolder df
 //	//last specXX converted is in RawFolder, how do I find out which is next?
 //

@@ -1,4 +1,4 @@
-#pragma rtGlobals=1		// Use modern global access method.
+#pragma rtGlobals=1 // Use modern global access method.
 #pragma version=2.02
 
 //thsi should be all commented out and later removed. 3/31/2017
@@ -6,15 +6,15 @@
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
-//* in the file LICENSE that is included with this distribution. 
+//* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
 //2.01 added license for ANL
 //2.02 removed old method of genetic optimization
 
-//This macro file is part of Igor macros package called "Irena", 
+//This macro file is part of Igor macros package called "Irena",
 //the full package should be available from usaxs.xray.aps.anl.gov/
-//this package contains 
+//this package contains
 // Igor functions for modeling of SAS from various distributions of scatterers...
 
 //Jan Ilavsky, January 2010
@@ -22,11 +22,8 @@
 //please, read Readme in the distribution zip file with more details on the program
 //report any problems to: ilavsky@aps.anl.gov
 
-
 //These are fitting function and function creating the call function...
 //this is real fun - the number of fittign parameters changes, so this is major complicated system...
-
-
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -36,7 +33,7 @@
 //
 //Function IR1_FitFunction(w,yw,xw) : FitFunc
 //	Wave w,yw,xw
-//	
+//
 //	//here the w contains the parameters, yw will be the result and xw is the input
 //	//CurveFitDialog/ These comments were created by the Curve Fitting dialog. Altering them will
 //	//CurveFitDialog/ make the function less convenient to work with in the Curve Fitting dialog.
@@ -83,17 +80,17 @@
 //	variable i, NumOfParam
 //	NumOfParam=numpnts(CoefNames)
 //	string ParamName=""
-//	
+//
 //	string OdlDf=GetDataFolder(1)
 //	setDataFOlder root:packages:SAS_Modeling
-//	
+//
 //	for (i=0;i<NumOfParam;i+=1)
 //		ParamName=CoefNames[i]
 //
 //		Nvar TempParam=$(ParamName)
-//		TempParam=w[i]	
+//		TempParam=w[i]
 //	endfor
-//	
+//
 //	Wave QvectorWave=root:Packages:SAS_Modeling:FitQvectorWave
 //
 //	IR1_CreateDistributionWaves()
@@ -103,12 +100,12 @@
 //	IR1_FitCalculateModelIntensity(QvectorWave)
 //	IR1_FitSmearLSQFData()
 //
-//	
+//
 //	Wave resultWv=root:Packages:SAS_Modeling:FitDistModelIntensity
-//	
+//
 //	SetDataFolder OdlDf
 //	yw=resultWv
-//	
+//
 //End
 //
 //
@@ -126,12 +123,12 @@
 //	ListOfVars+="Dist3LocationError;Dist3ScaleError;Dist3ShapeError;Dist3VolFractionError;"
 //	ListOfVars+="Dist4LocationError;Dist4ScaleError;Dist4ShapeError;Dist4VolFractionError;"
 //	ListOfVars+="Dist5LocationError;Dist5ScaleError;Dist5ShapeError;Dist5VolFractionError;"
-//	
+//
 //	variable i
 //	For(i=0;i<ItemsInList(ListOfVars);i+=1)
 //		NVAR testNum=$("root:Packages:SAS_Modeling:"+StringFromList(i,ListOfVars))
 //		testNum=0
-//	endfor	
+//	endfor
 //end
 //
 //
@@ -146,14 +143,14 @@
 ////
 ////	string OldDF=GetDataFolder(1)
 ////	setDataFolder root:Packages:SAS_Modeling
-////	
+////
 ////	NVAR NumberOfDistributions=root:Packages:SAS_Modeling:NumberOfDistributions
 ////
 ////	NVAR SASBackground=root:Packages:SAS_Modeling:SASBackground
 ////	NVAR FitSASBackground=root:Packages:SAS_Modeling:FitSASBackground
 ////	NVAR UseInterference = root:Packages:SAS_Modeling:UseInterference
-////	
-//////dist 1 part	
+////
+//////dist 1 part
 ////	NVAR Dist1VolFraction=root:Packages:SAS_Modeling:Dist1VolFraction
 ////	NVAR Dist1VolHighLimit=root:Packages:SAS_Modeling:Dist1VolHighLimit
 ////	NVAR Dist1VolLowLimit=root:Packages:SAS_Modeling:Dist1VolLowLimit
@@ -166,7 +163,7 @@
 ////	NVAR Dist1Shape=root:Packages:SAS_Modeling:Dist1Shape
 ////	NVAR Dist1ScaleHighLimit=root:Packages:SAS_Modeling:Dist1ScaleHighLimit
 ////	NVAR Dist1ScaleLowLimit=root:Packages:SAS_Modeling:Dist1ScaleLowLimit
-////	
+////
 ////	NVAR Dist1FitShape=root:Packages:SAS_Modeling:Dist1FitShape
 ////	NVAR Dist1FitLocation=root:Packages:SAS_Modeling:Dist1FitLocation
 ////	NVAR Dist1FitScale=root:Packages:SAS_Modeling:Dist1FitScale
@@ -211,7 +208,7 @@
 ////	NVAR Dist2Shape=root:Packages:SAS_Modeling:Dist2Shape
 ////	NVAR Dist2ScaleHighLimit=root:Packages:SAS_Modeling:Dist2ScaleHighLimit
 ////	NVAR Dist2ScaleLowLimit=root:Packages:SAS_Modeling:Dist2ScaleLowLimit
-////	
+////
 ////	NVAR Dist2FitShape=root:Packages:SAS_Modeling:Dist2FitShape
 ////	NVAR Dist2FitLocation=root:Packages:SAS_Modeling:Dist2FitLocation
 ////	NVAR Dist2FitScale=root:Packages:SAS_Modeling:Dist2FitScale
@@ -256,7 +253,7 @@
 ////	NVAR Dist3Shape=root:Packages:SAS_Modeling:Dist3Shape
 ////	NVAR Dist3ScaleHighLimit=root:Packages:SAS_Modeling:Dist3ScaleHighLimit
 ////	NVAR Dist3ScaleLowLimit=root:Packages:SAS_Modeling:Dist3ScaleLowLimit
-////	
+////
 ////	NVAR Dist3FitShape=root:Packages:SAS_Modeling:Dist3FitShape
 ////	NVAR Dist3FitLocation=root:Packages:SAS_Modeling:Dist3FitLocation
 ////	NVAR Dist3FitScale=root:Packages:SAS_Modeling:Dist3FitScale
@@ -302,7 +299,7 @@
 ////	NVAR Dist4Shape=root:Packages:SAS_Modeling:Dist4Shape
 ////	NVAR Dist4ScaleHighLimit=root:Packages:SAS_Modeling:Dist4ScaleHighLimit
 ////	NVAR Dist4ScaleLowLimit=root:Packages:SAS_Modeling:Dist4ScaleLowLimit
-////	
+////
 ////	NVAR Dist4FitShape=root:Packages:SAS_Modeling:Dist4FitShape
 ////	NVAR Dist4FitLocation=root:Packages:SAS_Modeling:Dist4FitLocation
 ////	NVAR Dist4FitScale=root:Packages:SAS_Modeling:Dist4FitScale
@@ -348,7 +345,7 @@
 ////	NVAR Dist5Shape=root:Packages:SAS_Modeling:Dist5Shape
 ////	NVAR Dist5ScaleHighLimit=root:Packages:SAS_Modeling:Dist5ScaleHighLimit
 ////	NVAR Dist5ScaleLowLimit=root:Packages:SAS_Modeling:Dist5ScaleLowLimit
-////	
+////
 ////	NVAR Dist5FitShape=root:Packages:SAS_Modeling:Dist5FitShape
 ////	NVAR Dist5FitLocation=root:Packages:SAS_Modeling:Dist5FitLocation
 ////	NVAR Dist5FitScale=root:Packages:SAS_Modeling:Dist5FitScale
@@ -394,7 +391,7 @@
 ////	Make/D/O/T/N=0 T_Constraints
 ////	T_Constraints=""
 ////	CoefNames=""
-////	
+////
 ////	if (FitSASBackground)		//are we fitting background?
 ////		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames//, T_Constraints
 ////		W_Coef[numpnts(W_Coef)-1]=SASBackground
@@ -404,14 +401,14 @@
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = -1* SASBackground*10
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = SASBackground*10
 ////	endif
-//////dist 1 part	
+//////dist 1 part
 ////	if (Dist1FitVol && NumberOfDistributions>0)		//are we fitting distribution 1 volume?
 ////		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames
 ////		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 ////		W_Coef[numpnts(W_Coef)-1]=Dist1VolFraction
 ////		CoefNames[numpnts(CoefNames)-1]="Dist1VolFraction"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist1VolLowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist1VolHighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist1VolHighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist1VolLowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist1VolHighLimit
@@ -422,7 +419,7 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist1Location
 ////		CoefNames[numpnts(CoefNames)-1]="Dist1Location"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist1LocLowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist1LocHighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist1LocHighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist1LocLowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist1LocHighLimit
@@ -434,7 +431,7 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist1Scale
 ////		CoefNames[numpnts(CoefNames)-1]="Dist1Scale"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist1ScaleLowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist1ScaleHighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist1ScaleHighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist1ScaleLowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist1ScaleHighLimit
@@ -446,7 +443,7 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist1Shape
 ////		CoefNames[numpnts(CoefNames)-1]="Dist1Shape"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist1ShapeLowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist1ShapeHighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist1ShapeHighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist1ShapeLowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist1ShapeHighLimit
@@ -459,12 +456,12 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist1ScatShapeParam1
 ////		CoefNames[numpnts(CoefNames)-1]="Dist1ScatShapeParam1"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist1ScatShapeParam1LowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist1ScatShapeParam1HighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist1ScatShapeParam1HighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist1ScatShapeParam1LowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist1ScatShapeParam1HighLimit
 ////	endif
-////	
+////
 ////	if (Dist1FitScatShapeParam2 && NumberOfDistributions>0)
 ////			//are we fitting distribution 1 scatterer shape parameter?
 ////		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames
@@ -472,12 +469,12 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist1ScatShapeParam2
 ////		CoefNames[numpnts(CoefNames)-1]="Dist1ScatShapeParam2"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist1ScatShapeParam2LowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist1ScatShapeParam2HighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist1ScatShapeParam2HighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist1ScatShapeParam2LowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist1ScatShapeParam2HighLimit
 ////	endif
-////	
+////
 ////	if (Dist1FitScatShapeParam3 && NumberOfDistributions>0)
 ////			//are we fitting distribution 1 scatterer shape parameter?
 ////		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames
@@ -485,7 +482,7 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist1ScatShapeParam3
 ////		CoefNames[numpnts(CoefNames)-1]="Dist1ScatShapeParam3"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist1ScatShapeParam3LowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist1ScatShapeParam3HighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist1ScatShapeParam3HighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist1ScatShapeParam3LowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist1ScatShapeParam3HighLimit
@@ -497,7 +494,7 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist1InterferencePhi
 ////		CoefNames[numpnts(CoefNames)-1]="Dist1InterferencePhi"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist1InterferencePhiLL)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist1InterferencePhiHL)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist1InterferencePhiHL)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist1InterferencePhiLL
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist1InterferencePhiHL
@@ -509,20 +506,20 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist1InterferenceEta
 ////		CoefNames[numpnts(CoefNames)-1]="Dist1InterferenceEta"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist1InterferenceEtaLL)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist1InterferenceEtaHL)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist1InterferenceEtaHL)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist1InterferenceEtaLL
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist1InterferenceEtaHL
 ////	endif
-////	
-//////dist 2 part	
+////
+//////dist 2 part
 ////	if (Dist2FitVol && NumberOfDistributions>1)		//are we fitting distribution 2 volume?
 ////		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames
 ////		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 ////		W_Coef[numpnts(W_Coef)-1]=Dist2VolFraction
 ////		CoefNames[numpnts(CoefNames)-1]="Dist2VolFraction"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist2VolLowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist2VolHighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist2VolHighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist2VolLowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist2VolHighLimit
@@ -533,7 +530,7 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist2Location
 ////		CoefNames[numpnts(CoefNames)-1]="Dist2Location"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist2LocLowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist2LocHighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist2LocHighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist2LocLowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist2LocHighLimit
@@ -545,7 +542,7 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist2Scale
 ////		CoefNames[numpnts(CoefNames)-1]="Dist2Scale"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist2ScaleLowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist2ScaleHighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist2ScaleHighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist2ScaleLowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist2ScaleHighLimit
@@ -557,12 +554,12 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist2Shape
 ////		CoefNames[numpnts(CoefNames)-1]="Dist2Shape"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist2ShapeLowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist2ShapeHighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist2ShapeHighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist2ShapeLowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist2ShapeHighLimit
 ////	endif
-////	
+////
 ////
 ////	if (Dist2FitScatShapeParam1 && NumberOfDistributions>1)
 ////			//are we fitting distribution 1 scatterer shape parameter?
@@ -571,12 +568,12 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist2ScatShapeParam1
 ////		CoefNames[numpnts(CoefNames)-1]="Dist2ScatShapeParam1"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist2ScatShapeParam1LowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist2ScatShapeParam1HighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist2ScatShapeParam1HighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist2ScatShapeParam1LowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist2ScatShapeParam1HighLimit
 ////	endif
-////	
+////
 ////	if (Dist2FitScatShapeParam2 && NumberOfDistributions>1)
 ////			//are we fitting distribution 1 scatterer shape parameter?
 ////		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames
@@ -584,12 +581,12 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist2ScatShapeParam2
 ////		CoefNames[numpnts(CoefNames)-1]="Dist2ScatShapeParam2"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist2ScatShapeParam2LowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist2ScatShapeParam2HighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist2ScatShapeParam2HighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist2ScatShapeParam2LowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist2ScatShapeParam2HighLimit
 ////	endif
-////	
+////
 ////	if (Dist2FitScatShapeParam3 && NumberOfDistributions>1)
 ////			//are we fitting distribution 1 scatterer shape parameter?
 ////		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames
@@ -597,7 +594,7 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist2ScatShapeParam3
 ////		CoefNames[numpnts(CoefNames)-1]="Dist2ScatShapeParam3"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist2ScatShapeParam3LowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist2ScatShapeParam3HighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist2ScatShapeParam3HighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist2ScatShapeParam3LowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist2ScatShapeParam3HighLimit
@@ -609,7 +606,7 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist2InterferencePhi
 ////		CoefNames[numpnts(CoefNames)-1]="Dist2InterferencePhi"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist2InterferencePhiLL)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist2InterferencePhiHL)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist2InterferencePhiHL)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist2InterferencePhiLL
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist2InterferencePhiHL
@@ -621,20 +618,20 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist2InterferenceEta
 ////		CoefNames[numpnts(CoefNames)-1]="Dist2InterferenceEta"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist2InterferenceEtaLL)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist2InterferenceEtaHL)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist2InterferenceEtaHL)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist2InterferenceEtaLL
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist2InterferenceEtaHL
 ////	endif
 ////
-//////dist 3 part	
+//////dist 3 part
 ////	if (Dist3FitVol && NumberOfDistributions>2)		//are we fitting distribution 3 volume?
 ////		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames
 ////		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 ////		W_Coef[numpnts(W_Coef)-1]=Dist3VolFraction
 ////		CoefNames[numpnts(CoefNames)-1]="Dist3VolFraction"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist3VolLowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist3VolHighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist3VolHighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist3VolLowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist3VolHighLimit
@@ -645,7 +642,7 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist3Location
 ////		CoefNames[numpnts(CoefNames)-1]="Dist3Location"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist3LocLowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist3LocHighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist3LocHighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist3LocLowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist3LocHighLimit
@@ -657,7 +654,7 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist3Scale
 ////		CoefNames[numpnts(CoefNames)-1]="Dist3Scale"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist3ScaleLowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist3ScaleHighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist3ScaleHighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist3ScaleLowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist3ScaleHighLimit
@@ -669,7 +666,7 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist3Shape
 ////		CoefNames[numpnts(CoefNames)-1]="Dist3Shape"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist3ShapeLowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist3ShapeHighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist3ShapeHighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist3ShapeLowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist3ShapeHighLimit
@@ -682,12 +679,12 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist3ScatShapeParam1
 ////		CoefNames[numpnts(CoefNames)-1]="Dist3ScatShapeParam1"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist3ScatShapeParam1LowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist3ScatShapeParam1HighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist3ScatShapeParam1HighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist3ScatShapeParam1LowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist3ScatShapeParam1HighLimit
 ////	endif
-////	
+////
 ////	if (Dist3FitScatShapeParam2 && NumberOfDistributions>2)
 ////			//are we fitting distribution 1 scatterer shape parameter?
 ////		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames
@@ -695,12 +692,12 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist3ScatShapeParam2
 ////		CoefNames[numpnts(CoefNames)-1]="Dist3ScatShapeParam2"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist3ScatShapeParam2LowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist3ScatShapeParam2HighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist3ScatShapeParam2HighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist3ScatShapeParam2LowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist3ScatShapeParam2HighLimit
 ////	endif
-////	
+////
 ////	if (Dist3FitScatShapeParam3 && NumberOfDistributions>2)
 ////			//are we fitting distribution 1 scatterer shape parameter?
 ////		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames
@@ -708,7 +705,7 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist3ScatShapeParam3
 ////		CoefNames[numpnts(CoefNames)-1]="Dist3ScatShapeParam3"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist3ScatShapeParam3LowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist3ScatShapeParam3HighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist3ScatShapeParam3HighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist3ScatShapeParam3LowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist3ScatShapeParam3HighLimit
@@ -720,7 +717,7 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist3InterferencePhi
 ////		CoefNames[numpnts(CoefNames)-1]="Dist3InterferencePhi"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist3InterferencePhiLL)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist3InterferencePhiHL)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist3InterferencePhiHL)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist3InterferencePhiLL
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist3InterferencePhiHL
@@ -732,21 +729,21 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist3InterferenceEta
 ////		CoefNames[numpnts(CoefNames)-1]="Dist3InterferenceEta"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist3InterferenceEtaLL)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist3InterferenceEtaHL)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist3InterferenceEtaHL)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist3InterferenceEtaLL
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist3InterferenceEtaHL
 ////	endif
-////	
-////	
-//////dist 4 part	
+////
+////
+//////dist 4 part
 ////	if (Dist4FitVol && NumberOfDistributions>3)		//are we fitting distribution 4 volume?
 ////		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames
 ////		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 ////		W_Coef[numpnts(W_Coef)-1]=Dist4VolFraction
 ////		CoefNames[numpnts(CoefNames)-1]="Dist4VolFraction"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist4VolLowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist4VolHighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist4VolHighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist4VolLowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist4VolHighLimit
@@ -757,7 +754,7 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist4Location
 ////		CoefNames[numpnts(CoefNames)-1]="Dist4Location"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist4LocLowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist4LocHighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist4LocHighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist4LocLowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist4LocHighLimit
@@ -769,7 +766,7 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist4Scale
 ////		CoefNames[numpnts(CoefNames)-1]="Dist4Scale"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist4ScaleLowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist4ScaleHighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist4ScaleHighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist4ScaleLowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist4ScaleHighLimit
@@ -781,7 +778,7 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist4Shape
 ////		CoefNames[numpnts(CoefNames)-1]="Dist4Shape"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist4ShapeLowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist4ShapeHighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist4ShapeHighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist4ShapeLowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist4ShapeHighLimit
@@ -794,25 +791,25 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist4ScatShapeParam1
 ////		CoefNames[numpnts(CoefNames)-1]="Dist4ScatShapeParam1"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist4ScatShapeParam1LowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist4ScatShapeParam1HighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist4ScatShapeParam1HighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist4ScatShapeParam1LowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist4ScatShapeParam1HighLimit
 ////	endif
-////	
+////
 ////	if (Dist4FitScatShapeParam2 && NumberOfDistributions>3)
 ////			//are we fitting distribution 1 scatterer shape parameter?
 ////		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames
 ////		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 ////		W_Coef[numpnts(W_Coef)-1]=Dist4ScatShapeParam2
 ////		CoefNames[numpnts(CoefNames)-1]="Dist4ScatShapeParam2"
-////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist4ScatShapeParam2LowLimit)} 
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist4ScatShapeParam2HighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist4ScatShapeParam2LowLimit)}
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist4ScatShapeParam2HighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist4ScatShapeParam2LowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist4ScatShapeParam2HighLimit
 ////	endif
-////	
+////
 ////	if (Dist4FitScatShapeParam3 && NumberOfDistributions>3)
 ////			//are we fitting distribution 1 scatterer shape parameter?
 ////		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames
@@ -820,7 +817,7 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist4ScatShapeParam3
 ////		CoefNames[numpnts(CoefNames)-1]="Dist4ScatShapeParam3"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist4ScatShapeParam3LowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist4ScatShapeParam3HighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist4ScatShapeParam3HighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist4ScatShapeParam3LowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist4ScatShapeParam3HighLimit
@@ -832,7 +829,7 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist4InterferencePhi
 ////		CoefNames[numpnts(CoefNames)-1]="Dist4InterferencePhi"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist4InterferencePhiLL)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist4InterferencePhiHL)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist4InterferencePhiHL)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist4InterferencePhiLL
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist4InterferencePhiHL
@@ -844,21 +841,21 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist4InterferenceEta
 ////		CoefNames[numpnts(CoefNames)-1]="Dist4InterferenceEta"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist4InterferenceEtaLL)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist4InterferenceEtaHL)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist4InterferenceEtaHL)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist4InterferenceEtaLL
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist4InterferenceEtaHL
 ////	endif
-////	
 ////
-//////dist 5 part	
+////
+//////dist 5 part
 ////	if (Dist5FitVol && NumberOfDistributions>4)		//are we fitting distribution 1 volume?
 ////		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames
 ////		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 ////		W_Coef[numpnts(W_Coef)-1]=Dist5VolFraction
 ////		CoefNames[numpnts(CoefNames)-1]="Dist5VolFraction"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist5VolLowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist5VolHighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist5VolHighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist5VolLowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist5VolHighLimit
@@ -869,7 +866,7 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist5Location
 ////		CoefNames[numpnts(CoefNames)-1]="Dist5Location"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist5LocLowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist5LocHighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist5LocHighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist5LocLowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist5LocHighLimit
@@ -881,7 +878,7 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist5Scale
 ////		CoefNames[numpnts(CoefNames)-1]="Dist5Scale"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist5ScaleLowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist5ScaleHighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist5ScaleHighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist5ScaleLowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist5ScaleHighLimit
@@ -893,7 +890,7 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist5Shape
 ////		CoefNames[numpnts(CoefNames)-1]="Dist5Shape"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist5ShapeLowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist5ShapeHighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist5ShapeHighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist5ShapeLowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist5ShapeHighLimit
@@ -906,12 +903,12 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist5ScatShapeParam1
 ////		CoefNames[numpnts(CoefNames)-1]="Dist5ScatShapeParam1"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist5ScatShapeParam1LowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist5ScatShapeParam1HighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist5ScatShapeParam1HighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist5ScatShapeParam1LowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist5ScatShapeParam1HighLimit
 ////	endif
-////	
+////
 ////	if (Dist5FitScatShapeParam2 && NumberOfDistributions>4)
 ////			//are we fitting distribution 1 scatterer shape parameter?
 ////		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames
@@ -919,12 +916,12 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist5ScatShapeParam2
 ////		CoefNames[numpnts(CoefNames)-1]="Dist5ScatShapeParam2"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist5ScatShapeParam2LowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist5ScatShapeParam2HighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist5ScatShapeParam2HighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist5ScatShapeParam2LowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist5ScatShapeParam2HighLimit
 ////	endif
-////	
+////
 ////	if (Dist5FitScatShapeParam3 && NumberOfDistributions>4)
 ////			//are we fitting distribution 1 scatterer shape parameter?
 ////		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames
@@ -932,7 +929,7 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist5ScatShapeParam3
 ////		CoefNames[numpnts(CoefNames)-1]="Dist5ScatShapeParam3"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist5ScatShapeParam3LowLimit)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist5ScatShapeParam3HighLimit)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist5ScatShapeParam3HighLimit)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist5ScatShapeParam3LowLimit
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist5ScatShapeParam3HighLimit
@@ -944,7 +941,7 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist5InterferencePhi
 ////		CoefNames[numpnts(CoefNames)-1]="Dist5InterferencePhi"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist5InterferencePhiLL)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist5InterferencePhiHL)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist5InterferencePhiHL)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist5InterferencePhiLL
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist5InterferencePhiHL
@@ -956,29 +953,29 @@
 ////		W_Coef[numpnts(W_Coef)-1]=Dist5InterferenceEta
 ////		CoefNames[numpnts(CoefNames)-1]="Dist5InterferenceEta"
 ////		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Dist5InterferenceEtaLL)}
-////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist5InterferenceEtaHL)}		
+////		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Dist5InterferenceEtaHL)}
 ////		Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 ////		Gen_Constraints[numpnts(CoefNames)-1][0] = Dist5InterferenceEtaLL
 ////		Gen_Constraints[numpnts(CoefNames)-1][1] = Dist5InterferenceEtaHL
 ////	endif
-////	
 ////
 ////
-////	
+////
+////
 ////	IR1S_ResetErrors()
 ////	DoWindow /F IR1_LogLogPlot
 ////	Wave OriginalQvector
 ////	Wave OriginalIntensity
-////	Wave OriginalError	
-////	
+////	Wave OriginalError
+////
 ////	Variable V_chisq
 ////	Duplicate/O W_Coef, E_wave, CoefficientInput
 ////	E_wave=W_coef/20
 ////
 ////	IR1S_RecordResults("before")
-////	
-////		NVAR/Z UseLSQF = root:Packages:SAS_Modeling:UseLSQF 
-////		NVAR/Z UseGenOpt = root:Packages:SAS_Modeling:UseGenOpt 
+////
+////		NVAR/Z UseLSQF = root:Packages:SAS_Modeling:UseLSQF
+////		NVAR/Z UseGenOpt = root:Packages:SAS_Modeling:UseGenOpt
 ////		if(!NVAR_Exists(UseGenOpt))
 ////			variable/g UseGenOpt
 ////			variable/g UseLSQF
@@ -1003,7 +1000,7 @@
 //////					break
 //////				endif
 //////			endif
-//////		
+//////
 //////		endfor
 ////		IR1S_CheckFittingParamsFnct()
 ////		PauseForUser IR1S_CheckFittingParams
@@ -1031,37 +1028,37 @@
 ////		if (cmpstr(CsrWave(B, "IR1_LogLogPlotLSQF"),"IntensityOriginal")!=0)
 ////			Cursor/P /W=IR1_LogLogPlotLSQF B  OriginalIntensity  binarysearch(OriginalQvector,CsrXWaveRef(B) [pcsr(B, "IR1_LogLogPlotLSQF")])
 ////		endif
-////		Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalIntensity, FitIntensityWave		
+////		Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalIntensity, FitIntensityWave
 ////		Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalQvector, FitQvectorWave
 ////		Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalError, FitErrorWave
 ////		if(UseLSQF)
-////			FuncFit /N/Q IR1_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1/E=E_wave /D /C=T_Constraints 
+////			FuncFit /N/Q IR1_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1/E=E_wave /D /C=T_Constraints
 ////		else
 ////			Duplicate/O FitIntensityWave, GenMaskWv
-////			GenMaskWv=1 	
+////			GenMaskWv=1
 ////#if Exists("gencurvefit")
-////	  	gencurvefit  /I=1 /W=FitErrorWave /M=GenMaskWv /N /TOL=0.002 /K={50,20,0.7,0.5} /X=FitQvectorWave IR1_FitFunction, FitIntensityWave  , W_Coef, HoldStr, Gen_Constraints  	
+////	  	gencurvefit  /I=1 /W=FitErrorWave /M=GenMaskWv /N /TOL=0.002 /K={50,20,0.7,0.5} /X=FitQvectorWave IR1_FitFunction, FitIntensityWave  , W_Coef, HoldStr, Gen_Constraints
 //////		print "xop code"
 ////#else
-//////	  	GEN_curvefit("IR1_FitFunction",W_Coef,FitIntensityWave,HoldStr,x=FitQvectorWave,w=FitErrorWave,c=Gen_Constraints,mask=GenMaskWv, popsize=20,k_m=0.7,recomb=0.5,iters=50,tol=0.002)	
+//////	  	GEN_curvefit("IR1_FitFunction",W_Coef,FitIntensityWave,HoldStr,x=FitQvectorWave,w=FitErrorWave,c=Gen_Constraints,mask=GenMaskWv, popsize=20,k_m=0.7,recomb=0.5,iters=50,tol=0.002)
 //////		print "Old code"
 ////		Abort  "Genetic Optimization xop NOT installed. Install xop support and then try again"
 ////#endif
 ////		endif
 ////	else
-////		Duplicate/O OriginalIntensity, FitIntensityWave		
+////		Duplicate/O OriginalIntensity, FitIntensityWave
 ////		Duplicate/O OriginalQvector, FitQvectorWave
 ////		Duplicate/O OriginalError, FitErrorWave
 ////		if(UseLSQF)
-////			FuncFit /N/Q IR1_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1 /E=E_wave/D /C=T_Constraints	
+////			FuncFit /N/Q IR1_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1 /E=E_wave/D /C=T_Constraints
 ////		else
 ////			Duplicate/O FitIntensityWave, GenMaskWv
-////			GenMaskWv=1	
+////			GenMaskWv=1
 ////#if Exists("gencurvefit")
-////	  	gencurvefit  /I=1 /W=FitErrorWave /M=GenMaskWv /N /TOL=0.002 /K={50,20,0.7,0.5} /X=FitQvectorWave IR1_FitFunction, FitIntensityWave  , W_Coef, HoldStr, Gen_Constraints  	
+////	  	gencurvefit  /I=1 /W=FitErrorWave /M=GenMaskWv /N /TOL=0.002 /K={50,20,0.7,0.5} /X=FitQvectorWave IR1_FitFunction, FitIntensityWave  , W_Coef, HoldStr, Gen_Constraints
 //////		print "xop code"
 ////#else
-//////	  	GEN_curvefit("IR1_FitFunction",W_Coef,FitIntensityWave,HoldStr,x=FitQvectorWave,w=FitErrorWave,c=Gen_Constraints,mask=GenMaskWv, popsize=20,k_m=0.7,recomb=0.5,iters=50,tol=0.002)	
+//////	  	GEN_curvefit("IR1_FitFunction",W_Coef,FitIntensityWave,HoldStr,x=FitQvectorWave,w=FitErrorWave,c=Gen_Constraints,mask=GenMaskWv, popsize=20,k_m=0.7,recomb=0.5,iters=50,tol=0.002)
 //////		print "Old code"
 ////		Abort "Genetic Optimization xop NOT installed. Install xop support and then try again"
 ////#endif
@@ -1069,11 +1066,11 @@
 ////	endif
 ////	if (V_FitError!=0)	//there was error in fitting
 ////		IR1S_ResetParamsAfterBadFit()
-////		Abort "Fitting error, check starting parameters and fitting limits" 
+////		Abort "Fitting error, check starting parameters and fitting limits"
 ////	endif
 ////	//this now records the errors for fitted parameters into the appropriate variables
 ////	Wave/Z W_sigma=root:Packages:SAS_Modeling:W_sigma
-////	
+////
 ////	string OneErrorName
 ////	For(i=0;i<(numpnts(CoefNames));i+=1)
 ////		OneErrorName="root:Packages:SAS_Modeling:"+CoefNames[i]+"Error"
@@ -1084,15 +1081,15 @@
 ////			Error=0
 ////		endif
 ////	endfor
-////	
+////
 ////	variable/g AchievedChisq=V_chisq
 ////	IR1_GraphModelData()
 ////	IR1S_RecordResults("after")
 ////	DoWIndow/F IR1S_ControlPanel
 ////	IR1S_FixTabsInPanel()
-////		
+////
 ////	KillWaves/Z T_Constraints, E_wave
-////	
+////
 ////	setDataFolder OldDF
 ////end
 //////*****************************************************************************************************************
@@ -1105,7 +1102,7 @@
 ////*****************************************************************************************************************
 ////*****************************************************************************************************************
 //
-//Function IR1S_CheckFittingParamsFnct() 
+//Function IR1S_CheckFittingParamsFnct()
 ////	PauseUpdate; Silent 1		// building window...
 //	NewPanel /K=1/W=(400,140,870,600) as "Check fitting parameters"
 //	Dowindow/C IR1S_CheckFittingParams
@@ -1164,7 +1161,7 @@
 ////*****************************************************************************************************************
 //Function IR1S_CheckFitPrmsButtonProc(ctrlName) : ButtonControl
 //	String ctrlName
-//	
+//
 //	if(stringmatch(ctrlName,"*CancelBtn*"))
 //		variable/g root:Packages:SAS_Modeling:UserCanceled=1
 //		DoWindow/K IR1S_CheckFittingParams
@@ -1199,7 +1196,7 @@
 //	endif
 //	FitDistModelIntensity=SmearedDistModelIntensity
 //	KillWaves/Z SmearedDistModelIntensity
-//	
+//
 //	FitDistModelIQ4=FitDistModelIntensity*FitModelQvector^4
 //
 //end
@@ -1226,7 +1223,7 @@
 //	variable i, NumOfParam
 //	NumOfParam=numpnts(CoefNames)
 //	string ParamName=""
-//	
+//
 //	for (i=0;i<NumOfParam;i+=1)
 //		ParamName=CoefNames[i]
 //		NVAR TempParam=$(ParamName)
@@ -1247,18 +1244,18 @@
 ////this is specialized version of Calculate model intensity
 //Function IR1_FitCalculateModelIntensity(MyQvectorWave)
 //	Wave MyQvectorWave
-//	
+//
 //	string OldDf=GetDataFolder(1)
 //	setDataFolder root:Packages:SAS_Modeling
-//	
+//
 //	NVAR NumberOfDistributions=root:Packages:SAS_Modeling:NumberOfDistributions
-//	
+//
 //	Duplicate/O MyQvectorWave, FitModelQvector, FitDistModelIntensity, FitDistModelIQ4
 //	Redimension/D  FitModelQvector, FitDistModelIntensity, FitDistModelIQ4
-//	FitDistModelIntensity=0	
+//	FitDistModelIntensity=0
 //
 //	variable i
-//	
+//
 //	For(i=1;i<=NumberOfDistributions;i+=1)
 ////		IR1_FitCalcIntFromOneDist(i, FitModelQvector)
 //		IR1_CalcIntFromOneDist(i, FitModelQvector)
@@ -1269,13 +1266,13 @@
 //		Wave IntToAdd=$("root:Packages:SAS_Modeling:Dist"+num2str(i)+"ModelIntensity")
 //		FitDistModelIntensity+=IntToAdd
 //	endfor
-//	
+//
 //	//add background here:
 //	NVAR SASBackground=root:Packages:SAS_Modeling:SASBackground
 //	FitDistModelIntensity+=SASBackground
-//	
+//
 //	FitDistModelIQ4=FitDistModelIntensity*FitModelQvector^4
-//	
+//
 //	setDataFolder OldDF
 //end
 //
@@ -1287,11 +1284,11 @@
 ////Function IR1_FitCalcIntFromOneDist(DistNum, FitModelQvector)
 ////	variable DistNum
 ////	Wave FitModelQvector
-////	
+////
 ////	string OldDf
 ////	OldDf=getDataFolder(1)
 ////	setDataFolder root:Packages:SAS_Modeling
-////	
+////
 ////	Wave Distdiameters=$("root:Packages:SAS_Modeling:Dist"+num2str(DistNum)+"Diameters")
 ////	Wave DistNumberDist=$("root:Packages:SAS_Modeling:Dist"+num2str(DistNum)+"NumberDist")
 ////	SVAR ShapeType=$("root:Packages:SAS_Modeling:Dist"+num2str(DistNum)+"ShapeModel")
@@ -1299,15 +1296,15 @@
 ////	NVAR Param2=$("root:Packages:SAS_Modeling:Dist"+num2str(DistNum)+"ScatShapeParam2")
 ////	NVAR Param3=$("root:Packages:SAS_Modeling:Dist"+num2str(DistNum)+"ScatShapeParam3")
 ////	NVAR DistContrast=$("root:Packages:SAS_Modeling:Dist"+num2str(DistNum)+"Contrast")
-////	
+////
 ////	string tempName="Dist"+num2str(DistNum)+"ModelIntensity"
 ////	Duplicate/O OriginalQvector, $tempName
 ////	Wave DistModelIntensity=$tempName
 ////	Redimension/D DistModelIntensity
 ////	IR1_CalcIntensityInterStep(DistModelIntensity, DistDiameters, OriginalQvector, DistNumberDist,ShapeType, Param1, Param2, Param3 )
-////	
+////
 ////	DistModelIntensity*=DistContrast*1e20		//this multiplies by scattering contrast
-////	
+////
 ////	//Interference, if needed
 ////	NVAR UseInterference = root:Packages:SAS_Modeling:UseInterference
 ////	NVAR DistUseInterference=$("root:Packages:SAS_Modeling:Dist"+num2str(DistNum)+"UseInterference")

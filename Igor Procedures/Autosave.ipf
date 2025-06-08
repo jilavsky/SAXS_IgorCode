@@ -71,7 +71,7 @@ End Menu
 //  either stops it or asks the user to set it up
 //--------------------------------------------------------------------------
 Function ASMenuAction()
-#if(IgorVersion()>8.1)
+#if (IgorVersion()>8.1)
 	//Igor 9, need to check on Autosave built in IP9
 	print "Igor 9 has now built-in Autosave. It may be better to use that one. You can Find it in \"Misc > Miscellaneous Settings...\" "
 #endif
@@ -116,7 +116,7 @@ Function ASTask(s)
 STRUCT WMBackgroundStruct &s        // required by Igor but unused
 
 	//check if IP9 is in autosave mode...
-#if(IgorVersion()>8.1)
+#if (IgorVersion()>8.1)
 	//Igor 9, need to check on Autosave built in IP9
 	if(NumberByKey("Enabled", IgorInfo(13), ":", ";")) 
 		print "Igor 9 Autosave is running, cannot use two different Autosave tools, aborting"
@@ -150,7 +150,7 @@ End Function
 //--------------------------------------------------------------------------
 Function ASSetup()
 
-#if(IgorVersion()>8.1)
+#if (IgorVersion()>8.1)
 	//Igor 9, need to check on Autosave built in IP9
 	if(NumberByKey("Enabled", IgorInfo(13), ":", ";")) 
 		Abort "Igor 9 Autosave is running, cannot use two different Autosave tools, aborting"

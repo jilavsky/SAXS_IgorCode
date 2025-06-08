@@ -525,14 +525,17 @@ Menu "TracePopup"
       "Save as pxp", IN2G_SaveTopGraphPXP()
 end
 
-#if(IgorVersion()>8.99)
+	#if (IgorVersion()>8.99)
+
 Menu "GraphPopup"
        "Save as jpg", IN2G_SaveTopGraphJpg()
        "Save as h5xp or pxp", IN2G_SaveTopGraphPXP()
        "Clone this window with data", IN2G_CloneWindow()
        "Make limits Nice", IN2G_MakeGrphLimitsNice()
 End
+
 #else       
+
 Menu "GraphPopup"
        "Save as jpg", IN2G_SaveTopGraphJpg()
        "Save as pxp", IN2G_SaveTopGraphPXP()
@@ -548,7 +551,7 @@ End
 
 
 Function IN2G_AddButtonsToBrowser()
-#if(IgorVersion()<9)
+#if (IgorVersion()<9)
 	CreateBrowser
 	ModifyBrowser appendUserButton={'SampleName-to-Values',"IN2G_ExtractInfoFromFldrname()"}
 	ModifyBrowser appendUserButton={'Graph w1 vs w2',"IN2G_PlotBrowserSelectionXY()"}
@@ -557,7 +560,7 @@ end
 
 //this is right click Igor 9+ Data Browser functions, so they do not need to be buttons. 
 
-#if(IgorVersion()>8.99)		
+#if (IgorVersion()>8.99)		
 			Menu "DataBrowserObjectsPopup", dynamic		
 				"--"
 				// Only one of these menu items will be visible,
@@ -801,7 +804,7 @@ Function IN2G_SaveTopGraphPXP()
 				NewName = UserSampleName
 			endif
 		endif
-#if(IgorVersion()>8.99)
+#if (IgorVersion()>8.99)
 		//SaveGraphCopy /I/T=1 /W=$(topWindow)	  			//this is h5xp
 		SaveGraphCopy /I /W=$(NewName)	  			//this is pxp
 #else
@@ -2150,7 +2153,7 @@ Function IN2G_ReadIrenaGUIPackagePrefs(ForceRead)
 				DoWIndow NI1A_Convert2Dto1DPanel
 				if(V_Flag)
 					PopupMenu ColorTablePopup,win=NI1A_Convert2Dto1DPanel,popvalue=ColorTableName
-#if(Exists("NI1A_TopCCDImageUpdateColors")==6)					
+#if (Exists("NI1A_TopCCDImageUpdateColors")==6)					
 					NI1A_TopCCDImageUpdateColors(1)
 #endif
 				endif
@@ -2527,7 +2530,7 @@ Function IN2G_PanelResizePanelSize(s)
 		OriginalHeight = NumberByKey("PanelHeight", OrigInfo, ":", ";")	//pixels
 		CurWidth = abs(right-left) 													//with DC is pixels
 		CurHeight = abs(bottom-top)													//with DC is pixels
-#if(IgorVersion()>8.99)	//Igor 9, use expand on whole panel... 
+#if (IgorVersion()>8.99)	//Igor 9, use expand on whole panel... 
 		//variable/g LastMessage
 		//if(abs(lastmessage-datetime)<60*30)
 		//	print "In Igor 9 right click on panel and select expansion -> and select scale of original size you prefer" 
@@ -4601,7 +4604,7 @@ Function IN2G_ShowHideErrorBars(ShowErroBars, [topGraphStr])
 	else
 		topGraph=topGraphStr	
 	endif
-#if(IgorVersion()>=8)
+#if (IgorVersion()>=8)
 	if(strlen(topGraph)>0)
 		TraceNames=TraceNameList(topGraph,";",3)
 		numTraces =  ItemsInList(TraceNames)
@@ -7629,7 +7632,7 @@ Function IN2G_CheckScreenSize(which,MinVal)
 	//MinVal is in pixles
 	
 	////IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-#if(IgorVersion()>8.1)
+#if (IgorVersion()>8.1)
 	return 1
 #endif
 
