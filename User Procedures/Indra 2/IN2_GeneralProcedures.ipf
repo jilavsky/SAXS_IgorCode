@@ -2487,6 +2487,7 @@ Function IN2G_PanelResizePanelSize(s)
 		//getmouse /W=$(s.winName)
 		//print V_Flag
 		//print V_left
+//debug
 	if ( s.eventCode == 6 && (WinType(s.winName)==7))	// resized and is panel, not usable for others. 
 		////IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		GetWindow $(s.winName), note
@@ -2525,7 +2526,8 @@ Function IN2G_PanelResizePanelSize(s)
 				OriginalResolution = 72
 			endif
 		endif 
-		variable moveConvFac=screenResolution/OriginalResolution
+		//debug
+		//variable moveConvFac=screenResolution/OriginalResolution
 		OriginalWidth = NumberByKey("PanelWidth", OrigInfo, ":", ";")		//pixels
 		OriginalHeight = NumberByKey("PanelHeight", OrigInfo, ":", ";")	//pixels
 		CurWidth = abs(right-left) 													//with DC is pixels
@@ -2544,6 +2546,9 @@ Function IN2G_PanelResizePanelSize(s)
 		scaleSelect = min(scaleSelect,8)							//8 is max allowed
 		scaleSelect = max(scaleSelect,0.25)						//0.25 is min allowed 
 		modifyPanel/W=$(s.winName) expand=scaleSelect
+		//GetWindow $(s.winName) wsize
+		//variable newWidth = V_right - V_left
+		//variable newHeight = V_bottom - V_top		
 		variable newWidth = OriginalWidth*scaleSelect
 		variable newHeight = OriginalHeight*scaleSelect
 		MoveWindow/W=$(s.winName) left, top, left+newWidth, top+newHeight
@@ -2781,7 +2786,6 @@ Function IN2G_ResetPanelSize(PanelNameLocal, setSizeIfNeeded)
 		WidthScale = 95
 		HeightScale = 90
 	endif
-	
 	GetWindow $PanelNameLocal wsize				
 	if(Width> IN2G_ScreenWidthHeight("Width")*WidthScale)
 		Width = IN2G_ScreenWidthHeight("Width")*WidthScale
@@ -2791,22 +2795,40 @@ Function IN2G_ResetPanelSize(PanelNameLocal, setSizeIfNeeded)
 	endif
 	variable keys= GetKeyState(0)
 	if(keys>0 || FoundValidPrefs<1 || DoNotRestorePanelSizes)		//ANY modifier key was pressed or no/incorrect pref file was found, reset the size
-			GetWindow $PanelNameLocal wsize
-			MoveWindow/W=$PanelNameLocal V_left, V_top, V_right, V_bottom
-			PrefsPos.version = kPrefsVersion
-			PrefsPos.panelCoords[0] = V_right-V_left		//width
-			PrefsPos.panelCoords[1] = V_bottom-V_top		//height
-			PrefsPos.panelCoords[2] = V_left					//left
-			PrefsPos.panelCoords[3] = V_top					//top 
-			PrefsPos.panelCoords[4] = V_right					//right
-			PrefsPos.panelCoords[5] = V_bottom				//bottom
-			if(setSizeIfNeeded)
-				SavePackagePreferences/FLSH=1 kPackageName, packageFileName, kPrefsRecordID, PrefsPos
-			endif
+		//nothing to do here, resetting size
 	else
-			MoveWindow/W=$PanelNameLocal Left, Top, Left+Width, Top+Height
+//debug	
+#if (IgorVersion()>8.99)	//Igor 9, use expand on whole panel... 
+	//need to figure out how much to resize the panel here. 
+		variable curExpand, newExpand
+		//curExpand=PanelResolution($PanelNameLocal)/PanelResolution("")
+		modifyPanel/W=$(PanelNameLocal) expand=1
+		GetWindow $PanelNameLocal wsize
+		//V_left, V_top, V_right, V_bottom
+		newExpand = 0.5*((width/(V_right-V_left))+(Height/(V_bottom-V_top)))
+		modifyPanel/W=$(PanelNameLocal) expand=newExpand
+//		GetWindow $PanelNameLocal wsize
+//		Width = V_right - V_left
+//		Height = V_bottom - V_top
+//		MoveWindow/W=$PanelNameLocal Left, Top, Left+Width, Top+Height
+#else
+		MoveWindow/W=$PanelNameLocal Left, Top, Left+Width, Top+Height
+#endif
 	endif
-	 
+	//and save new widnwos position. 
+	GetWindow $PanelNameLocal wsize
+	MoveWindow/W=$PanelNameLocal V_left, V_top, V_right, V_bottom
+	PrefsPos.version = kPrefsVersion
+	PrefsPos.panelCoords[0] = V_right-V_left		//width
+	PrefsPos.panelCoords[1] = V_bottom-V_top		//height
+	PrefsPos.panelCoords[2] = V_left					//left
+	PrefsPos.panelCoords[3] = V_top					//top 
+	PrefsPos.panelCoords[4] = V_right					//right
+	PrefsPos.panelCoords[5] = V_bottom				//bottom
+	if(setSizeIfNeeded)
+		SavePackagePreferences/FLSH=1 kPackageName, packageFileName, kPrefsRecordID, PrefsPos
+	endif
+
 	
 end
 //***********************************************************

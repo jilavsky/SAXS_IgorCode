@@ -376,6 +376,7 @@ static Function IN3_ReturnCursorBack(QminDefaultForProcessing)
 	NVAR PeakWidth = root:Packages:Indra3:PeakWidthArcSec
 	NVAR BlankWidth = root:Packages:Indra3:BlankWidth
 	NVAR Wavelength = root:Packages:Indra3:Wavelength
+	NVAR Transmission = root:Packages:Indra3:SampleTransmission
 
 
 	variable HaveMSAXSCOrrection=0
@@ -424,7 +425,9 @@ static Function IN3_ReturnCursorBack(QminDefaultForProcessing)
 			LogBlankInt = log(BL_R_Int)
 			IntRatio = interp(R_Qvec, BL_R_Qvec, LogBlankInt)		//this is interpolated log(BlankInt)
 			IntRatio = 10^IntRatio											//interpolated BlankInt
-			IntRatio = R_Int / IntRatio										//this is R_int/BlankInt (interpolated to R_+Qvec)
+			IntRatio = R_Int / IntRatio										//this is R_int/BlankInt (interpolated to R_Qvec) without transmission CORRECTION!
+			//IntRatio = IntRatio/Transmission					 		//this is R_int/BlankInt (interpolated to R_Qvec) with transmission CORRECTION!
+			
 			IntRatio = IntRatio / QCorrection
 			wavestats/Q/R=[10,numpnts(IntRatio)/10] IntRatio
 			FindLevel  /Q/EDGE=1/R=[V_minloc,numpnts(IntRatio)-1] IntRatio, MinQMinFindRatio
