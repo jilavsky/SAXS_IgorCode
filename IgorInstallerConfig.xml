@@ -17,8 +17,8 @@
 			<Package>xop32bit</Package>
 			<Package>xop64bit</Package>
 		</KnownPackages>
-		<current_release>July2023</current_release>
-		<current_beta_release>March2025Beta</current_beta_release>
+		<current_release>June2025</current_release>
+		<current_beta_release></current_beta_release>
 	</VersionCheck>
 
 
@@ -56,7 +56,8 @@
 				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
 			</Package>
 			<VersionComment>June 2025. Igor 10(Beta), 9.x, and 8.04.</VersionComment>
-		</release>		<release name="July2023">
+		</release>		
+		<release name="July2023">
 			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/refs/tags/July2023a.zip</SourceFileAddress>
 			<Package>
 				<name>Irena</name>
