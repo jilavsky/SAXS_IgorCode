@@ -10,6 +10,8 @@
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//2.02 	June 2025 release,  Fixes for new 12IDE USAXS instrument operations, tested with IP10Beta
+//2.01		Beta release, Changes for 12IDE USAXS/SAXS/WAXS. WIP//2.00		July2023 release
 //2.00	 Added IN3_BlueSkyReader
 //1.99	 October2021 release
 //1.98 September2020 release.
@@ -53,12 +55,12 @@
 #include "IN2_XtalCalculations", version >= 1.1
 #include "IN3_CalcScattering", version >= 1.01
 #include "IN3_Calculations", version >= 1.42
-#include "IN3_FlyScan", version >= 1.09
-#include "IN3_Main", version >= 1.99
+#include "IN3_FlyScan", version >= 1.10
+#include "IN3_Main", version >= 2.02
 #include "IN3_Rwave", version >= 1
 #include "IN3_SupportFnct", version >= 1.14
 #include "IN3_SamplePlate", version >= 1.09
-#include "IN3_BlueSkyReader", version >= 1.01
+#include "IN3_BlueSkyReader", version >= 1.06
 
 #include "spec", version >= 2.21
 //#include ":IN2_XtalCalculations", version>=1

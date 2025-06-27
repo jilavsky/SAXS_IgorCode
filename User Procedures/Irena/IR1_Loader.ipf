@@ -1,6 +1,6 @@
 #pragma rtGlobals=3 // Use strict wave reference mode and runtime bounds checking
-#pragma IgorVersion=8.03 //requires Igor version 8.03 or higher
-#pragma version=2.27
+#pragma IgorVersion=8.04 //requires Igor version 8.03 or higher
+#pragma version=2.74
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2025, Argonne National Laboratory
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//2.74  Sync with main version number
 //2.27  Added Ellipsoid Cylinder tool
 //2.26	  October2021 release
 //2.252 added System Specific Models (Analytical models replacement). Move ANalytical models to old.
@@ -56,8 +57,8 @@
 #include "IR1_EvaluationGraph", version >= 2.11
 #include "IR1_FormFactors", version >= 2.30
 #include "IR1_Fractals", version >= 2.13
-#include "IR1_ImportData", version >= 2.42
-#include "IR1_Main", version >= 2.72
+#include "IR1_ImportData", version >= 2.43
+#include "IR1_Main", version >= 2.74
 #include "IR1_PlottingToolI", version >= 2.34
 #include "IR1_PlottingToolI2", version >= 2.24
 #include "IR1_ScattContrast", version >= 2.28
@@ -79,15 +80,16 @@
 #include "IR3_3DModels", version >= 1.03
 #include "IR3_3DSupportFunctions", version >= 1.00
 #include "IR3_3DTwoPhaseSolid", version >= 1.02
-#include "IR3_Anisotropy", version >= 1.00
-#include "IR3_GuinierPorodModel", version >= 1.12
-#include "IR3_MergingData", version >= 1.22
-#include "IR3_MultiDataPlot", version >= 1.05
-#include "IR3_SimpleFits", version >= 1.16
-#include "IR3_WAXSDiffraction", version >= 1.16
 #include "IR3_AnalyzeResults2", version >= 0.2
+#include "IR3_Anisotropy", version >= 1.00
 #include "IR3_EllipsoidCylinderMain", version >= 0.3
 #include "IR3_EllipsoidCylinderSupport", version >= 0.3
+#include "IR3_GuinierPorodModel", version >= 1.12
+#include "IR3_MergingData", version >= 1.22
+#include "IR3_MultiDataPlot", version >= 1.06
+#include "IR3_SimpleFits", version >= 1.17
+#include "IR3_WAXSDiffraction", version >= 1.17
+
 //bio tools
 #include "IRB1_bioSAXS", version >= 1.02
 #include "IRB1_EvaluationTools", version >= 1.0

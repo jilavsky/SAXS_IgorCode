@@ -1,7 +1,8 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.85
+#pragma version = 1.86
 #pragma IgorVersion=8.04
 
+//1.86		June 2025 release, Nika modification for 12IDE USAXS/SAXS/WAXS instrument, Bug release
 //1.85 	July2023 release
 //1.84		October2021 release, IP9 maintenance and other changes. 
 //1.83 	September2020 release

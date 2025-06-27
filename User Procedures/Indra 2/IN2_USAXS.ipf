@@ -1,15 +1,16 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
 #pragma IgorVersion=8.04   //requires Igor version 8.03 or higher
-#pragma version = 2.01
+#pragma version = 2.02
 
-constant CurrentIndraVersionNumber = 2.01
+constant CurrentIndraVersionNumber = 2.02
 //*************************************************************************\
 //* Copyright (c) 2005 - 2025, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.02 	Fixes for new 12IDE USAXS instrument operations, tested with IP10Beta
 //2.01		Beta release, Changes for 12IDE USAXS/SAXS/WAXS. WIP
 //2.00		July2023 release
 //				Minor fixes, USAXS fixes for 20IDB operations. April2023Beta
@@ -537,11 +538,11 @@ Function IN2_AboutPanel()
 	DoWindow/C About_Indra_2_Macros
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 18,fstyle= 1,textrgb= (16384,28160,65280)
-	DrawText 10,37,"Indra 2 macros for Igor Pro 8.04 & 9.x"
+	DrawText 10,37,"Indra 2 macros for Igor Pro 8.04, 9.x & 10(Beta)"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
-	DrawText 52,64,"@ Jan Ilavsky, 2023"
+	DrawText 52,64,"@ Jan Ilavsky, 2025"
 	DrawText 49,103,"release "+num2str(CurrentIndraVersionNumber)
-	DrawText 11,136,"To get help please contact: ilavsky@aps.anl.gov"
+	DrawText 11,136,"To get help please contact: ilavsky@anl.gov"
 	DrawText 11,156,"https://usaxs.xray.aps.anl.gov/"
 end
 //*****************************************************************************************************************

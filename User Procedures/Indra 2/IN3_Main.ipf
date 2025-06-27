@@ -1,8 +1,8 @@
 #pragma rtFunctionErrors=1
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use modern global access method.
-#pragma version=2.01
-#pragma IgorVersion=7.05
+#pragma version=2.02
+#pragma IgorVersion=8.04
 
 //DO NOT renumber Main files every time, these are main release numbers...
 
@@ -12,6 +12,8 @@
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//2.02 	June 2025 release,  Fixes for new 12IDE USAXS instrument operations, tested with IP10Beta
+//2.01		Beta release, Changes for 12IDE USAXS/SAXS/WAXS. WIP//2.00		July2023 release
 //2.01 remove default removeDropouts and removeOscillations, should not be needed anymore. 
 //2.00 tweaks for APS-U USAXS instrument.
 //1.99 added ability to load jpg image if user wants to see data collection image (and it exists...).
@@ -43,8 +45,8 @@
 //1.79 4/2013 JIL, added pin diode transmission
 //1.78, 2/2013, JIL: Added option to calibrate by weight. Needed for USAXS users.
 
-Constant IN3_ReduceDataMainVersionNumber = 2.01 //these two needs to be the same!
-Constant IN3_NewReduceDataMainVersionNum = 2.01 //these two needs to be the same!
+Constant IN3_ReduceDataMainVersionNumber = 2.02 //these two needs to be the same!
+Constant IN3_NewReduceDataMainVersionNum = 2.02 //these two needs to be the same!
 Constant SmoothBlankForUSAXS             = 1
 Constant SmoothSampleForUSAXS            = 1
 Constant Indra_PDIntBackFixScaleVmin     = 1.1

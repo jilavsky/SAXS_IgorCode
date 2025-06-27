@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
-#pragma version=2.73
+#pragma version=2.74
 #pragma IgorVersion=8.04
 
 //DO NOT renumber Main files every time, these are main release numbers...
@@ -13,6 +13,7 @@ constant CurrentIrenaVersionNumber = 2.74		//change version of Boot Irena1 model
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************
 
+//2.74 	Minor release to capture minor changes related to new USAXS 12IDE instrument, bug release. 
 //2.74		Beta release, minor changes, bug fixes. 
 //2.73   Added Ellipsoid Cylinder support
 //2.72		July2023 release, minor changes, fix IP9.02 compatiblity
@@ -890,11 +891,11 @@ Function IR1_AboutPanel()
 	NewPanel/K=1 /W=(173.25,50,580,460)/N=About_Irena_1_Macros as "About Irena Macros"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 20,fstyle= 1,textrgb= (16384,28160,65280)
-	DrawText 23,30,"Irena macros for Igor Pro 8.04 & 9.x"
+	DrawText 23,30,"Irena macros for Igor Pro 8.04, 9.x & 10(Beta)"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
-	DrawText 100,60,"@ ANL, 2023"
+	DrawText 100,60,"@ ANL, 2025"
 	DrawText 10,80,"release "+num2str(CurrentIrenaVersionNumber)
-	DrawText 11,100,"To get help please contact: ilavsky@aps.anl.gov"
+	DrawText 11,100,"To get help please contact: ilavsky@anl.gov"
 	SetDrawEnv textrgb= (0,0,65535)
 	DrawText 11,120,"http://usaxs.xray.aps.anl.gov/staff/ilavsky/irena.htm"
 	SetDrawEnv fsize= 14, fstyle=1

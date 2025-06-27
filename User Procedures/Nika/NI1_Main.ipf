@@ -1,6 +1,6 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use modern global access method.
-#pragma version=1.85
+#pragma version=1.86
 #pragma IgorVersion=8.04
 
 //DO NOT renumber Main files every time, these are main release numbers...
@@ -15,6 +15,7 @@ Constant NikaLengthOfPathForPanelDisplay = 100
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//1.86		Nika modification for 12IDE USAXS/SAXS/WAXS instrument, Bug release
 //1.86		Beta release, Nika modification for 12IDE USAXS/SAXS/WAXS instrument.
 //1.85 	July2023 release, Fix NI1_SetAllPathsInNika which failed to setup properly very long paths.
 //			1.843 Fix IP9.02 issue with AxisTransform1.2 change. April2023Beta
@@ -351,11 +352,11 @@ Function NI1_AboutPanel()
 	DoWindow/C About_Nika_1_Macros
 	SetDrawLayer UserBack
 	SetDrawEnv fsize=18, fstyle=1, textrgb=(16384, 28160, 65280)
-	DrawText 10, 37, "Nika 1 macros for Igor Pro 8.04 & 9.x"
+	DrawText 10, 37, "Nika 1 macros for Igor Pro 8.04, 9.x & 10(Beta)"
 	SetDrawEnv fsize=16, textrgb=(16384, 28160, 65280)
-	DrawText 52, 64, "@ ANL, 2023"
+	DrawText 52, 64, "@ ANL, 2025"
 	DrawText 49, 103, "Release " + num2str(CurrentNikaVersionNumber)
-	DrawText 11, 136, "To get help please contact: ilavsky@aps.anl.gov"
+	DrawText 11, 136, "To get help please contact: ilavsky@anl.gov"
 	DrawText 11, 156, "https://usaxs.xray.aps.anl.gov/software-description"
 
 	DrawText 11, 190, "Set of macros to convert 2D SAS images"
