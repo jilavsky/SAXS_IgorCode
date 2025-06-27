@@ -23,7 +23,40 @@
 
 
 	<InstallerConfig>
-		<release name="July2023">
+		<release name="June2025">
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/refs/tags/June2025.zip</SourceFileAddress>
+			<Package>
+				<name>Irena</name>
+				<version>2.74</version>
+				<PackageList>IrenaPckg.xml</PackageList>
+				<VersionCheckFile>Boot Irena1 modeling.ipf</VersionCheckFile>
+			</Package>
+			<Package>
+				<name>Nika</name>
+				<version>1.86</version>
+				<PackageList>NikaPckg.xml</PackageList>
+				<VersionCheckFile>Boot Nika.ipf</VersionCheckFile>
+			</Package>
+			<Package>
+				<name>Indra</name>
+				<version>2.02</version>
+				<PackageList>IndraPckg.xml</PackageList>
+				<VersionCheckFile>Boot Indra2.ipf</VersionCheckFile>
+			</Package>
+			<Package>
+				<name>xop32bit</name>
+				<version>1</version>
+				<PackageList>xopPckg32.xml</PackageList>
+				<VersionCheckFile>IrenaNikaXop32Ver.ipf</VersionCheckFile>
+			</Package>
+			<Package>
+				<name>xop64bit</name>
+				<version>2</version>
+				<PackageList>xopPckg64.xml</PackageList>
+				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
+			</Package>
+			<VersionComment>June 2025. Igor 10(Beta), 9.x, and 8.04.</VersionComment>
+		</release>		<release name="July2023">
 			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/refs/tags/July2023a.zip</SourceFileAddress>
 			<Package>
 				<name>Irena</name>
