@@ -1,5 +1,5 @@
 #pragma rtGlobals=3 // Use modern global access method.
-#pragma version=1.34
+#pragma version=1.35
 
 Constant IR2LversionNumber = 1.25
 
@@ -9,6 +9,7 @@ Constant IR2LversionNumber = 1.25
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//1.35 add requested feature to add ccontrols to have graph axis linear-or-log and change color of model_set1
 //1.34 fix GenCurveFit call, which was failing due to Exists("gencurvefit") returning 4 instead of 3 which was in the code.
 //1.33 add Disk as form factor for size distribution.
 //1.32 add Unified Fit Form Factor to MassFractals.
@@ -964,6 +965,10 @@ Function IR2L_AppendDataIntoGraph(whichDataSet) //Adds user data into the graph 
 		Checkbox DisplayResidualsPlot, proc=IR2L_GraphsCheckboxProc, variable=root:Packages:IR2L_NLSQF:DisplayResidualsPlot, pos={200, 44}, title="Display Residuals Plot?", help={"Display Residulas plot?"}
 		Checkbox DisplayIQ4vsQplot, proc=IR2L_GraphsCheckboxProc, variable=root:Packages:IR2L_NLSQF:DisplayIQ4vsQplot, pos={390, 44}, title="Display IQ4 vs Q Plot?", help={"Display IQ^4 vs Q plot?"}
 
+
+		Checkbox GraphXLog, proc=IR2L_GraphsCheckboxProc, variable=root:Packages:IR2L_NLSQF:GraphXLog, pos={650, 3}, title="X-axis log?", help={"Use log-x axis scaling?"}
+		Checkbox GraphYLog, proc=IR2L_GraphsCheckboxProc, variable=root:Packages:IR2L_NLSQF:GraphYLog, pos={650, 25}, title="Y-axis log?", help={"Use log-y axis scaling?"}
+		PopupMenu ModelColor, proc=IR2L_PanelPopupControl, pos={650,44}, size={200,20},	value="*COLORPOP*", title="Model set1 line color", help={"Select color for model line"}
 	endif
 
 	WAVE/Z InputIntensity = $("Intensity_set" + num2str(whichDataSet))
@@ -1107,6 +1112,13 @@ Function IR2L_GraphsCheckboxProc(ctrlName, checked) : CheckBoxControl
 		IR2L_CreateOtherGraphs()
 	endif
 
+	if(stringMatch(ctrlName, "GraphXLog") || stringMatch(ctrlName, "GraphYLog") )
+		IR2L_FormatInputGraph()
+	endif
+
+
+
+
 	setDataFolder oldDf
 End
 //*****************************************************************************************************************
@@ -1143,6 +1155,8 @@ Function IR2L_FormatInputGraph()
 	NVAR GraphXMax           = root:Packages:IR2L_NLSQF:GraphXMax
 	NVAR GraphYMin           = root:Packages:IR2L_NLSQF:GraphYMin
 	NVAR GraphYMax           = root:Packages:IR2L_NLSQF:GraphYMax
+	NVAR GraphXLog           = root:Packages:IR2L_NLSQF:GraphXLog
+	NVAR GraphYLog           = root:Packages:IR2L_NLSQF:GraphYLog
 	SVAR IntCalibrationUnits = root:Packages:IR2L_NLSQF:IntCalibrationUnits
 	DoWindow LSQF_MainGraph
 	if(V_Flag)
@@ -1151,7 +1165,8 @@ Function IR2L_FormatInputGraph()
 		ModifyGraph/Z/W=LSQF_MainGraph marker=19
 		ModifyGraph/Z/W=LSQF_MainGraph msize=2
 		ModifyGraph/Z/W=LSQF_MainGraph grid=1
-		ModifyGraph/Z/W=LSQF_MainGraph log=1
+		ModifyGraph/Z/W=LSQF_MainGraph log(left)=GraphYLog
+		ModifyGraph/Z/W=LSQF_MainGraph log(bottom)=GraphXLog
 		ShowInfo/W=LSQF_MainGraph
 		ModifyGraph/Z/W=LSQF_MainGraph mirror=1
 		Label/Z/W=LSQF_MainGraph left, "Intensity [" + IntCalibrationUnits + "]"

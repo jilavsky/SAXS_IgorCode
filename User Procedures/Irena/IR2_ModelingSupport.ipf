@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.52
+#pragma version=1.53
 
 
 constant ChangeFromGaussToSlit=2
@@ -9,6 +9,7 @@ constant ChangeFromGaussToSlit=2
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.53 add requested feature to add ccontrols to have graph axis linear-or-log and change color of model_set1
 //1.52 reviewed pixel smearing (still think it is working correctly) and modified IR2L_FinishSmearingOfData() to use multiple threads. 
 //1.51 added option to save population results from scripting tool. 
 //1.50 merged togetehr with IR2L_NLSQFCalc.ipf
@@ -607,6 +608,12 @@ Function IR2L_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
 		endif
 	endif
 
+	if (stringmatch(ctrlName,"ModelColor"))
+		SVAR rgbIntensityLine_set1 = root:Packages:IR2L_NLSQF:rgbIntensityLine_set1
+		rgbIntensityLine_set1 = popStr
+		IR2L_FormatInputGraph()
+	endif
+	
 	if (stringmatch(ctrlName,"DataUnits"))
 		IR2L_SetDataUnits(popStr)
 	endif
@@ -2166,6 +2173,7 @@ Function IR2L_Initialize()
 	//SizeDist_DimensionType = "Radius" or "Diameter"
 
 	ListOfVariables+="GraphXMin;GraphXMax;GraphYMin;GraphYMax;SizeDistDisplayNumDist;SizeDistDisplayVolDist;"
+	ListOfVariables+="GraphXLog;GraphYLog;"
 	ListOfVariables+="SizeDistLogVolDist;SizeDistLogNumDist;SizeDistLogX;"
 	ListOfVariables+="ConfEvMinVal;ConfEvMaxVal;ConfEvNumSteps;ConfEvVaryParam;ConfEvChiSq;ConfEvAutoOverwrite;ConfEvFixRanges;"
 	ListOfVariables+="ConfEvTargetChiSqRange;ConfEvAutoCalcTarget;"
@@ -2809,7 +2817,10 @@ Function IR2L_SetInitialValues(enforce)
 		endif
 	endfor
 	
-
+	NVAR GraphXLog
+	NVAR GraphYLog
+	GraphXLog = 1
+	GraphYLog = 1
 end
 
 
