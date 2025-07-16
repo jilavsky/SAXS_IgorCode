@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.31
+#pragma version = 2.32
 #pragma IgorVersion = 8.03
 
 //control constants
@@ -38,6 +38,7 @@ strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
+//2.32 fix IP8.x bug
 //2.31 fix IN2G_AddWaveStatistics to write statistics data in Y wave data folder. 
 //2.30 added IN2G_Find2DDataInFolderTree, needed to search for 2D images in imported HDF5 folder tree. 
 //2.29 Fixed IN2G_BrowserDuplicateItem() to handle liberal names. 
@@ -2527,7 +2528,7 @@ Function IN2G_PanelResizePanelSize(s)
 			endif
 		endif 
 		//debug
-		//variable moveConvFac=screenResolution/OriginalResolution
+		variable moveConvFac=screenResolution/OriginalResolution
 		OriginalWidth = NumberByKey("PanelWidth", OrigInfo, ":", ";")		//pixels
 		OriginalHeight = NumberByKey("PanelHeight", OrigInfo, ":", ";")	//pixels
 		CurWidth = abs(right-left) 													//with DC is pixels
