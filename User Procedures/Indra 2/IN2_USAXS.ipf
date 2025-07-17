@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
-#pragma IgorVersion=8.04   //requires Igor version 8.03 or higher
-#pragma version = 2.02
+#pragma IgorVersion=9.05   //requires Igor version 9.05 or higher
+#pragma version = 2.03
 
 constant CurrentIndraVersionNumber = 2.02
 //*************************************************************************\
@@ -10,6 +10,7 @@ constant CurrentIndraVersionNumber = 2.02
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.03 	Remvoe odl crud. 
 //2.02 	Fixes for new 12IDE USAXS instrument operations, tested with IP10Beta
 //2.01		Beta release, Changes for 12IDE USAXS/SAXS/WAXS. WIP
 //2.00		July2023 release
@@ -63,36 +64,37 @@ End
 Menu "USAXS"
 	"Import and Reduce USAXS Flyscan data",IN3_NewMain()
 	help={"GUI to import and process Flyscan data (reccomended for Flyscans)"}
-	Submenu "Other input methods"
-		"Import USAXS Step scan Data [SPEC]", In2_ImportData()
-		help={"Import USAXS data from APS USAXS instrument - from Spec file"}
-		"Import Desktop data [Osmic-Rigaku]",  IN2U_LoadDesktopData()
-		help={"Import USAXS data set from desktop instrument - Osmic/Rigaku"}
+	//Submenu "Other input methods"
+		//"Import USAXS Step scan Data [SPEC]", In2_ImportData()
+		//help={"Import USAXS data from APS USAXS instrument - from Spec file"}
+		//"Import Desktop data [Osmic-Rigaku]",  IN2U_LoadDesktopData()
+		//help={"Import USAXS data set from desktop instrument - Osmic/Rigaku"}
 		//"Import USAXS FlyScan data [hdf5]", IN3_FlyScanMain()
 		//help={"Import USAXS data from USAXS using FlyScan - HDF5 data"}
-		"---"
-		"Reduce USAXS data (old, spec)",IN3_Main()
-		help={"This willl reduce USAXS data stored in this experiment"}
-	end
+		//"---"
+		//"Reduce USAXS data (old, spec)",IN3_Main()
+		//help={"This willl reduce USAXS data stored in this experiment"}
+	//end
 	"Setup Sample Plates",IN3S_SampleSetupMain()
 	help={"Tool to help users setup sample plates, survey and generate command files"}
 
 	"Calculate Scattering from model", IN3M_CalculateDataFromModel()
 	help={"Use model and sample parameters to calculate scattering"}
 
-	//	"Desmear Fast", IN2D_DesmearFastMain()  //removed since no one used it, but code stays...
-	"--"
-	//"Export data",IN2B_ExportAllData() 
-	//help={"Export all data from weithin Igor for use in different packages. Not necessary for Irena 1 package."}
-
 	"Xtal position calc", IN2Y_GapCalculations()
 	help={"Crystal position callculator for beamline staff."}
 	
+	"Config fonts, uncertainties, names", IN3_ConfigureGUIfonts()
+	help={"Crystal position callculator for beamline staff."}
+
+	//	"Desmear Fast", IN2D_DesmearFastMain()  //removed since no one used it, but code stays...
+	//"--"
+	//"Export data",IN2B_ExportAllData() 
+	//help={"Export all data from weithin Igor for use in different packages. Not necessary for Irena 1 package."}
 	//	"Import X23 Data", IN2I_ImportX23Data()		//code commented out since no one was using it... 
 	//	"---"
 	//	"GA USAXS correction", Correct_GA_USAXS()		//also not needed as far as I can find out
-	"--"
-	Submenu "Old stuff"
+	//Submenu "Old stuff"
 	//	"Create R wave", IN2A_CreateRWave()
 	// help={"Correct measured data for dark currents and find beam center"}
 	//	"Subtract Blank from Sample", IN2B_AlignSampleAndBlank()
@@ -101,10 +103,10 @@ Menu "USAXS"
 	//	help={"Correction for transmission if multiple scattering is present. Corrects callibration only."}
 	//	"Ave MSAXS corr - SBUSAXS", IN2A_MSAXSAverageCorr()
 	//	help={"MSAXS correction for SBUSAXS measurements when anisotropy in broadening is observed."}
-		"Anisotropic MSAXS", IN2A_AnisotropicMSAXS()
-		help={"Part of SBUSAXS MSAXS correction"}
-		"Correct AnisoScans", IN2B_CorrectAnisoData("","",1,1)
-		help={"Correct ANiso Scans done during SBUSAXS measurements"}
+	//	"Anisotropic MSAXS", IN2A_AnisotropicMSAXS()
+	//	help={"Part of SBUSAXS MSAXS correction"}
+	//	"Correct AnisoScans", IN2B_CorrectAnisoData("","",1,1)
+	//	help={"Correct ANiso Scans done during SBUSAXS measurements"}
 	//	"Merge two DataSets", IN2M_MergeTwoDataSets()
 	//	help={"Can sum two data sets of R-data, SMR-data, or DSM_data"}
 	
@@ -113,54 +115,23 @@ Menu "USAXS"
 	//	help={"Desmear data from slit smeared aka regular) USAXS."}
 	//	"Subtract background", IN2Q_SubtractBackground()
 	//	help={"Tool to subtract background from DSM data before export. Not necessary for Irena 1 package."}
-	end
-	SubMenu "Spec"
-		"Read Comments from SPEC file", IN2_ExtractComments()
+	//end
+	//SubMenu "Spec"
+	//	"Read Comments from SPEC file", IN2_ExtractComments()
 	//		"---"
 	//		"Fix SPEC-to-USAXS waves", IN2_RAWtoUSAXSParametersSetup(0) 
 	//		"Fix SPEC-to-USAXS UPD", IN2_PhotodiodeConvPanel() 
 	//		"---"
 	//		"Raw to USAXS one-by-one",IN2_ConvertRAW_To_USAXSFnct() 
 	//		"Raw to USAXS quick", IN2_CovertRaw_To_USAXSAutoF(0)
-		"Raw to Non-USAXS", IN2_ConvertRawToOthersFnct()
-	end
-	SubMenu "Utilities"
-		"Shrink Igor experiment size",IN3_ShrinkIgorFileSize() 
-		help={"Export all data from within Igor for use in different packages. Not necessary for Irena 1 package."}
-		"Config fonts, uncertainties, names", IN3_ConfigureGUIfonts()
-		help={"Crystal position callculator for beamline staff."}
-		"Check Igor display size", IN2G_CheckForGraphicsSetting(1)
-		help={"Check if current display area is suitable for the code"}
-
-
-	end
-//	SubMenu "Logging Notebook"
-//		"Show Logbook", IN2N_CreateShowNtbkForLogging(1)
-//		"Copy Graph In LogBk BW", IN2N_CopyGraphInNotebook(0)	
-//		"Copy Graph In LogBk CLR", IN2N_CopyGraphInNotebook(1)
-//		"Insert Date, Time in LogBk", IN2N_InsertDateAndTime()
-//		"Notebook Control Panel", IN2N_LogBookControlPanel()
-//		"--"
-//		"Create Summary Notebook", IN2N_CreateSummaryNotebook(0)
-//	End
-//	SubMenu "USAXS Plotting tools"
-//		"Standard USAXS Plots with math", IN2S_StandardUSAXSPlots()
-//		help={"This is advanced plotting tools which with math functions"}
-//		"Basic USAXS Plots", IN2P_CommonUSAXSPlots()
-//		help={"This is basic plotting tools which without math functions"}
-//	//	"Common non-USAXS Plots", IN2P_CommonNonUSAXSPlots()
-//		"Generic plotting tool for power users", IN2P_GenericUSAXSPlots()
-//		help={"This is  plotting tools which can plot any wave against any other wave, unlikely useful to regular users..."}
-//		"--"
-//		"Draw Line Of Any Slope", IN2P_DrawLineOfAnySlope()
-//		"Draw Line Of -4 Slope",  IN2P_DrawLineOf4Slope()
-//		"Draw Line Of -3 Slope",  IN2P_DrawLineOf3Slope()
-//		"Draw Line Of -2 Slope",  IN2P_DrawLineOf2Slope()
-//		"Make log-log graph decade limits", IN2P_MakeLogLogGraphDecLim()
-//		"--"
-//		"Fit Line With Cursors", IN2P_FitLineWithCursors()
-//		"Fit Power Law with Cursors", IN2P_FitPowerLawWithCursors()
-//	End
+	//	"Raw to Non-USAXS", IN2_ConvertRawToOthersFnct()
+	//end
+	//SubMenu "Utilities"
+	//	"Shrink Igor experiment size",IN3_ShrinkIgorFileSize() 
+	//	help={"Export all data from within Igor for use in different packages. Not necessary for Irena 1 package."}
+	//	"Check Igor display size", IN2G_CheckForGraphicsSetting(1)
+	//	help={"Check if current display area is suitable for the code"}
+	"--"
 
 	"Remove USAXS Macros", IN2_RemoveUSAXSMacros()
 	help={"Removes USAXS macros from current experiment"}
@@ -173,12 +144,30 @@ Menu "USAXS"
 	help={"Open notes about recent changes in the code. "}
 	"About", IN2_AboutPanel()
 	help={"Information about the version"}
+	"--"
+
 end
 
 
 //****************************************************************************************
 //****************************************************************************************
 ////****************************************************************************************
+
+Function IN2_RemoveUSAXSMacros()
+	//kill windows as needed, needs to be smarter here???
+	KillWIndow/Z RcurvePlotGraph
+ 	KillWIndow/Z USAXSDataReduction
+ 	
+
+
+	Execute/P "DELETEINCLUDE \"IN2_Load Indra 2\""
+	Execute/P "COMPILEPROCEDURES "
+	SVAR strChange=root:Packages:USAXSItem1Str
+	strChange= "Load USAXS Macros"
+	BuildMenu "USAXS"
+	DoWindow USAXSQuickManual
+end
+
 //
 //Function/S IN2_MenuItemForGraph(menuItem, onlyForThisGraph)
 //	String menuItem, onlyForThisGraph
@@ -236,24 +225,24 @@ end
 
 //***********************************************************
 //***********************************************************
-//***********************************************************
-Function IN3_ShrinkIgorFileSize()
-	if(DataFolderExists("root:raw"))
-		variable DeleteSize= IN2G_EstimateFolderSize("root:raw:")
-		DoAlert /T="Confirm you want to do this" 1, "Do you want to delete folder with raw data to shrink the Igor experiment size? You should save approximately "+num2str(1.1*DeleteSize/1000000)+" MB. Most users never need it so this should be safe to do."
-		if(V_flag)
-			//IgorInfo
-			KillDataFolder/Z root:raw
-			if(V_Flag!=0)
-				DoAlert/T="Error message" 0, "Raw data folder could not be deleted. Likely data from it are used in some graph or table. Close those graphs and tables and try again." 
-			else
-				print "Deleted raw data folder from this experiment to shrink it down"
-			endif
-		endif
-	else
-		print "Raw data folder does not exist, it therefore cannot be deleted. Likely you already deleted the raw data folder."
-	endif
-end
+////***********************************************************
+//Function IN3_ShrinkIgorFileSize()
+//	if(DataFolderExists("root:raw"))
+//		variable DeleteSize= IN2G_EstimateFolderSize("root:raw:")
+//		DoAlert /T="Confirm you want to do this" 1, "Do you want to delete folder with raw data to shrink the Igor experiment size? You should save approximately "+num2str(1.1*DeleteSize/1000000)+" MB. Most users never need it so this should be safe to do."
+//		if(V_flag)
+//			//IgorInfo
+//			KillDataFolder/Z root:raw
+//			if(V_Flag!=0)
+//				DoAlert/T="Error message" 0, "Raw data folder could not be deleted. Likely data from it are used in some graph or table. Close those graphs and tables and try again." 
+//			else
+//				print "Deleted raw data folder from this experiment to shrink it down"
+//			endif
+//		endif
+//	else
+//		print "Raw data folder does not exist, it therefore cannot be deleted. Likely you already deleted the raw data folder."
+//	endif
+//end
 //***********************************************************
 //***********************************************************
 //***********************************************************
@@ -1424,91 +1413,91 @@ Function IN2A_CleanupAllWIndows()
 ////	endif
 ////end
 //
-Function IN2A_GetMeasParam()		//sets various spray parameters
-	SVAR SpecCommand
-	
-	string specCommandSeparated= ReduceSpaceRunsInString(SpecCommand,1)
-	if (!cmpstr(SpecCommandSeparated[0,0]," "))
-		SpecCommandSeparated = SpecCommandSeparated[1,inf]						// remove any leading space
-	endif
-	SpecCommandSeparated = ChangePartsOfString(SpecCommandSeparated," ",";")		// one space is name separator
-
-	//	Following macro calls are know  to me
-	//	11 items: uascan motor start center finish minstep dy0 SDD_mm exponent intervals time		.... old slit smeared macro before AY movement
-	// 	13 items: uascan motor start center finish minstep dy0 SDD_mm ay0 SAD_mm exponent intervals time.... new slit smeared macro with AY movement
-	//	12 items: sbuascan motor start center finish minstep dy0 asrp SDD_mm exponent intervals time		.... old SBUSAXS smeared macro before AY movement
-	//	14 items: sbuascan motor start center finish minstep dy0 asrp SDD_mm ay0 SAD_mm exponent intervals time.... old slit smeared macro before AY movement
-	
-	Variable SDDistance
-	if (ItemsInList(SpecCommandSeparated)==11)
-		SDDistance=str2num(StringFromList(7,SpecCommandSeparated))
-	endif
-	if (ItemsInList(SpecCommandSeparated)==13)
-		SDDistance=str2num(StringFromList(7,SpecCommandSeparated))
-	endif
-	if (ItemsInList(SpecCommandSeparated)==12)
-		SDDistance=str2num(StringFromList(8,SpecCommandSeparated))
-	endif
-	if (ItemsInList(SpecCommandSeparated)==14)
-		SDDistance=str2num(StringFromList(8,SpecCommandSeparated))
-	endif
-	Variable ScanSteps=str2num(StringFromList(ItemsInList(SpecCommandSeparated)-2,SpecCommandSeparated))
-	
-	Prompt SDDistance, "This looks like messup with Sample to Detector distance - overide:"
-	
-	if (SDDistance<50)
-		DoPrompt "Check Parameters", SDDistance
-		if (V_Flag)
-			Abort 
-		endif	
-	endif
-	//lets check on SDD length
-	
-	if (cmpstr(StringFromList(7,SpecCommandSeparated),"SBUASCAN")==0)		//regular USAXS
-		if (SDDistance>450)
-			DoPrompt "Check Parameters", SDDistance
-			if (V_Flag)
-				Abort 
-			endif	
-		endif
-	else									//SBUSAXS, longer SDD usual
-		if (SDDistance>700)
-			DoPrompt "Check Parameters", SDDistance
-			if (V_Flag)
-				Abort 
-			endif	
-		endif
-	endif
-	
-	SVAR MeasurementParameters
-	SVAR UPDParameters
-	
-	NVAR/Z PhotoDiodeSize=root:Packages:Indra3:PhotoDiodeSize
-	if (!NVAR_Exists(PhotoDiodeSize))								//avoid next lines if already exists....
-		Variable/G root:Packages:Indra3:PhotoDiodeSize=5.5
-		NVAR PhotoDiodeSize=root:Packages:Indra3:PhotoDiodeSize
-		Variable PhotoDiodeSizeL=PhotoDiodeSize
-		Prompt PhotoDiodeSizeL, "Check PD size:"
-		DoPrompt "Check PD size", PhotoDiodeSizeL
-			if (V_Flag)
-				Abort 
-			endif	
-		PhotoDiodeSize=PhotoDiodeSizeL
-	endif
-
-	variable wavelength=12.398424437/NumberByKey("DCM_energy",MeasurementParameters,"=")
-	variable SlitLength=0.5*((4*pi)/wavelength)*sin(PhotoDiodeSize/(2*SDDistance))
-
-	MeasurementParameters=ReplaceStringByKey("Wavelength",MeasurementParameters,num2str(wavelength),"=")
-	MeasurementParameters=ReplaceStringByKey("SlitLength",MeasurementParameters,num2str(SlitLength),"=")
-	MeasurementParameters=ReplaceStringByKey("NumberOfSteps",MeasurementParameters,num2str(ScanSteps),"=")
-	MeasurementParameters=ReplaceStringByKey("SDDistance",MeasurementParameters,num2str(SDDistance),"=")
-	
-	IN2G_AppendNoteToAllWaves("Wavelength",num2str(wavelength))
-	IN2G_AppendNoteToAllWaves("SlitLength",num2str(SlitLength))
-	IN2G_AppendNoteToAllWaves("NumberOfSteps",num2str(ScanSteps))
-	IN2G_AppendNoteToAllWaves("SDDistance",num2str(SDDistance))
-end
+//Function IN2A_GetMeasParam()		//sets various spray parameters
+//	SVAR SpecCommand
+//	
+//	string specCommandSeparated= ReduceSpaceRunsInString(SpecCommand,1)
+//	if (!cmpstr(SpecCommandSeparated[0,0]," "))
+//		SpecCommandSeparated = SpecCommandSeparated[1,inf]						// remove any leading space
+//	endif
+//	SpecCommandSeparated = ChangePartsOfString(SpecCommandSeparated," ",";")		// one space is name separator
+//
+//	//	Following macro calls are know  to me
+//	//	11 items: uascan motor start center finish minstep dy0 SDD_mm exponent intervals time		.... old slit smeared macro before AY movement
+//	// 	13 items: uascan motor start center finish minstep dy0 SDD_mm ay0 SAD_mm exponent intervals time.... new slit smeared macro with AY movement
+//	//	12 items: sbuascan motor start center finish minstep dy0 asrp SDD_mm exponent intervals time		.... old SBUSAXS smeared macro before AY movement
+//	//	14 items: sbuascan motor start center finish minstep dy0 asrp SDD_mm ay0 SAD_mm exponent intervals time.... old slit smeared macro before AY movement
+//	
+//	Variable SDDistance
+//	if (ItemsInList(SpecCommandSeparated)==11)
+//		SDDistance=str2num(StringFromList(7,SpecCommandSeparated))
+//	endif
+//	if (ItemsInList(SpecCommandSeparated)==13)
+//		SDDistance=str2num(StringFromList(7,SpecCommandSeparated))
+//	endif
+//	if (ItemsInList(SpecCommandSeparated)==12)
+//		SDDistance=str2num(StringFromList(8,SpecCommandSeparated))
+//	endif
+//	if (ItemsInList(SpecCommandSeparated)==14)
+//		SDDistance=str2num(StringFromList(8,SpecCommandSeparated))
+//	endif
+//	Variable ScanSteps=str2num(StringFromList(ItemsInList(SpecCommandSeparated)-2,SpecCommandSeparated))
+//	
+//	Prompt SDDistance, "This looks like messup with Sample to Detector distance - overide:"
+//	
+//	if (SDDistance<50)
+//		DoPrompt "Check Parameters", SDDistance
+//		if (V_Flag)
+//			Abort 
+//		endif	
+//	endif
+//	//lets check on SDD length
+//	
+//	if (cmpstr(StringFromList(7,SpecCommandSeparated),"SBUASCAN")==0)		//regular USAXS
+//		if (SDDistance>450)
+//			DoPrompt "Check Parameters", SDDistance
+//			if (V_Flag)
+//				Abort 
+//			endif	
+//		endif
+//	else									//SBUSAXS, longer SDD usual
+//		if (SDDistance>700)
+//			DoPrompt "Check Parameters", SDDistance
+//			if (V_Flag)
+//				Abort 
+//			endif	
+//		endif
+//	endif
+//	
+//	SVAR MeasurementParameters
+//	SVAR UPDParameters
+//	
+//	NVAR/Z PhotoDiodeSize=root:Packages:Indra3:PhotoDiodeSize
+//	if (!NVAR_Exists(PhotoDiodeSize))								//avoid next lines if already exists....
+//		Variable/G root:Packages:Indra3:PhotoDiodeSize=5.5
+//		NVAR PhotoDiodeSize=root:Packages:Indra3:PhotoDiodeSize
+//		Variable PhotoDiodeSizeL=PhotoDiodeSize
+//		Prompt PhotoDiodeSizeL, "Check PD size:"
+//		DoPrompt "Check PD size", PhotoDiodeSizeL
+//			if (V_Flag)
+//				Abort 
+//			endif	
+//		PhotoDiodeSize=PhotoDiodeSizeL
+//	endif
+//
+//	variable wavelength=12.398424437/NumberByKey("DCM_energy",MeasurementParameters,"=")
+//	variable SlitLength=0.5*((4*pi)/wavelength)*sin(PhotoDiodeSize/(2*SDDistance))
+//
+//	MeasurementParameters=ReplaceStringByKey("Wavelength",MeasurementParameters,num2str(wavelength),"=")
+//	MeasurementParameters=ReplaceStringByKey("SlitLength",MeasurementParameters,num2str(SlitLength),"=")
+//	MeasurementParameters=ReplaceStringByKey("NumberOfSteps",MeasurementParameters,num2str(ScanSteps),"=")
+//	MeasurementParameters=ReplaceStringByKey("SDDistance",MeasurementParameters,num2str(SDDistance),"=")
+//	
+//	IN2G_AppendNoteToAllWaves("Wavelength",num2str(wavelength))
+//	IN2G_AppendNoteToAllWaves("SlitLength",num2str(SlitLength))
+//	IN2G_AppendNoteToAllWaves("NumberOfSteps",num2str(ScanSteps))
+//	IN2G_AppendNoteToAllWaves("SDDistance",num2str(SDDistance))
+//end
 //
 //*********************End of Create R wave functions *********************************************
 //*********************Align sample and Blank*******************************************************
@@ -3402,884 +3391,884 @@ end
 //**************************************************************
 //  Correct processing of ANisao Scans from SBUSAXS
 //***************************************************************
-
-Function IN2B_CorrectAnisoData(SampleFolderName,BlankFolderName,SampleTransmission,select)//dws
-	//function to correct aniso data for dark currents and blank data 
-	//first find the folders which user wants to correct
-	//and find blank run from which we can pull the correction parameters
-	string SampleFolderName
-	string BlankFolderName
-	variable SampleTransmission,select
-	
-	string oldDf=GetDataFolder(1)
-	
-	//first find the folders which user wants to correct
-	//and find blank run from which we can pull the correction parameters
-	
-	Prompt SampleFolderName, "Select Aniso Folder", popup, IN2G_FindFolderWithWaveTypes("root:Others:", 5, "USAXS_PD", 1)
-	Prompt BlankFolderName, "Select Blank run Folder", popup, IN2G_FindFolderWithWaveTypes("root:USAXS:", 5, "USAXS_PD", 1)
-	Prompt SampleTransmission, "Input USAXS sample transmission" 
-	If (Select==1)
-		DoPrompt "Select data to corect", SampleFolderName, BlankFolderName, SampleTransmission
-	endif
-	
-	Wave AnisoUSAXS_PD=$(SampleFolderName+"USAXS_PD")
-	Wave AnisoSeconds=$(SampleFolderName+"seconds")
-	Wave AnisoAR_enc=$(SampleFolderName+"ar_enc")
-	Wave AnisoMonitor=$(SampleFolderName+"I0")
-	SVAR AnisoMeasPar=$(SampleFolderName+"MeasurementParameters")
-
-	Wave BlankUSAXS_PD=$(BlankFolderName+"USAXS_PD")
-	Wave BlankPD_range=$(BlankFolderName+"pd_range")
-	Wave BlankSeconds=$(BlankFolderName+"MeasTime")
-	Wave BlankAR_enc=$(BlankFolderName+"ar_encoder")
-	Wave BlankMonitor=$(BlankFolderName+"Monitor")
-	SVAR BlankMeasPar=$(BlankFolderName+"MeasurementParameters")
-
-	Variable AnisoPD_range=NumberByKey("UPD2range", AnisoMeasPar , ":", ";") +1		//+1 due to UDP2range being zero based UPD range
-	variable AnisoPDDarkCurrent=NumberByKey("UPD2bkg"+num2str(AnisoPD_range), AnisoMeasPar , ":", ";")
-	variable BlankUPDVal=interp(AnisoAR_enc[0], BlankAR_enc, BlankUSAXS_PD )	//1 based UPD range
-	variable BlankPD_rangeVal=floor(interp(AnisoAR_enc[0], BlankAR_enc, BlankPD_range ))	
-	variable RangeDifference=BlankPD_rangeVal-AnisoPD_range
-	if (RangeDifference<0)
-		Abort "Ranges weird - blank range is higher than sample" 
-	endif
-	variable BlankPDDarkCurrent=NumberByKey("UPD2bkg"+num2str(BlankPD_rangeVal), BlankMeasPar , "=", ";")
-
-	
-	
-	// BlankFolderName
-	// SampleFolderName
-	setDataFolder $SampleFolderName
-	
-	Duplicate/O AnisoUSAXS_PD, AnisoIntensityCorr, TempAnisoBlInt
-	Wave AnisoIntensityCorr
-	Wave TempAnisoBlInt
-	
-	
-
-
-	AnisoIntensityCorr=AnisoUSAXS_PD - (AnisoPDDarkCurrent*AnisoSeconds	)	//this fixes the USAXS PD for dark current
-	TempAnisoBlInt= (BlankUPDVal - (BlankSeconds * BlankPDDarkCurrent)) / 10^(2*RangeDifference)
-	
-	AnisoIntensityCorr= AnisoIntensityCorr - SampleTransmission * (TempAnisoBlInt * AnisoMonitor / BlankMonitor)
-
-	variable  RangeDifferenceFix=AnisoPD_range-1   //Normalize to range 1
-	
-	AnisoIntensityCorr=10^8*AnisoIntensityCorr/10^(2*RangeDifferenceFix)            //10^8 is arbitrary scale factor
-
-	killWaves/Z TempAnisoBlInt
-	
-	setDataFolder oldDf
-
-
-end
-
-//*************************************************
-//*************************************************
-//*************************************************
-//*************************************************
-//*************************************************
-//*************************************************
-
-FUNCTION IN2B_OneDataXmlWriter(xmlFile, IndraDataType)		//take data from current Igor folder, if present and write xmlFile. xmlFile should be with path. 
-	STRING xmlFile, IndraDataType
-	VARIABLE fileID, i
-	STRING myList = "", motorPositions
-	NVAR Transmission, BeamCenter, MaximumIntensity, PeakWidth, Wavelength
-	SVAR SpecCommand, SpecSourceFileName, SpecComment
-	SVAR MeasurementParameters, UPDParameters, ListOfASBParameters, PathToRawData
-	
-	if(stringmatch(IndraDataType,"smr"))
-		WAVE Qvec = SMR_Qvec
-		WAVE Int = SMR_Int
-		WAVE Error = SMR_Error
-	elseif(stringmatch(IndraDataType,"dsm"))
-		WAVE Qvec = DSM_Qvec
-		WAVE Int = DSM_Int
-		WAVE Error = DSM_Error
-	elseif(stringmatch(IndraDataType,"M_smr"))
-		WAVE Qvec = M_SMR_Qvec
-		WAVE Int = M_SMR_Int
-		WAVE Error = M_SMR_Error
-	elseif(stringmatch(IndraDataType,"M_dsm"))
-		WAVE Qvec = M_DSM_Qvec
-		WAVE Int = M_DSM_Int
-		WAVE Error = M_DSM_Error
-	endif
-
-	// this is useful for reporting on some standard parameters
-	motorPositions = IN2_specMotors(PathToRawData)
-
-	myList = ReplaceStringByKey("SpecSourceFileName", myList, SpecSourceFileName, "=", ";")
-	myList = ReplaceNumberByKey("BeamCenter", myList, BeamCenter, "=", ";")
-	myList = ReplaceNumberByKey("MaximumIntensity", myList, MaximumIntensity, "=", ";")
-	myList = ReplaceNumberByKey("PeakWidth", myList, PeakWidth, "=", ";")
-
-	// gather and organize the Indra-specific metadata
-	KillWaves/Z metadata
-	MAKE/T/N=(0,2)/O metadata
-	Redimension/N=(0,2) metadata
-
-	Redimension/N=(DimSize(metadata, 0)+1, DimSize(metadata, 1)) metadata
-	metadata[Inf][0] = "local variables"
-	metadata[Inf][1] = myList
-
-	Redimension/N=(DimSize(metadata, 0)+1, DimSize(metadata, 1)) metadata
-	metadata[Inf][0] = "wavenotes"
-	metadata[Inf][1] = note(Qvec)
-
-	Redimension/N=(DimSize(metadata, 0)+1, DimSize(metadata, 1)) metadata
-	metadata[Inf][0] = "MeasurementParameters"
-	metadata[Inf][1] = MeasurementParameters
-
-	Redimension/N=(DimSize(metadata, 0)+1, DimSize(metadata, 1)) metadata
-	metadata[Inf][0] = "UPDParameters"
-	metadata[Inf][1] = UPDParameters
-
-	Redimension/N=(DimSize(metadata, 0)+1, DimSize(metadata, 1)) metadata
-	metadata[Inf][0] = "ListOfASBParameters"
-	metadata[Inf][1] = ListOfASBParameters
-
-	IN2_rawMetadata2List(PathToRawData)	//  Look at the  "PathToRawData"  There's lots more metadata there.  Maybe too much.
-
-
-	// define the namespaces
-#if	Exists("XMLcreateFile")
-	fileID = XMLcreateFile(xmlFile, "SASroot", "cansas1d/1.0", "")
-	XMLsetAttr(fileID,		"/SASroot", 				"", "version", "1.0")
-	XMLsetAttr(fileID,		"/SASroot", 				"", "xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance")
-	XMLsetAttr(fileID,		"/SASroot", 				"", "xsi:schemaLocation", "cansas1d/1.0    http://svn.smallangles.net/svn/canSAS/1dwg/trunk/cansas1d.xsd")
-	XMLaddNode(fileID, 	"/SASroot", 				"", "comment", "created by CS_XML_Indra.ipf", 8)
-
-	XMLaddNode(fileID, 	"/SASroot", 	"", "comment", "exported from IgorPro::Indra", 8)
-	XMLaddNode(fileID, 	"/SASroot", 	"", "comment", date()+"  "+time(), 8)
-
-	XMLaddNode(fileID, 	"/SASroot", 				"", "SASentry", "", 1)
-	XMLsetAttr(fileID,		"/SASroot/SASentry", 	"", "name", SpecComment)
-	XMLaddNode(fileID, 	"/SASroot/SASentry", 	"", "Title", SpecComment, 1)
-	
-	//need to create here appropriate RunInfo we can use in the future, something like:  "APS_USAXS=32-ID; scan=S81; file=08_21.dat; dataType=slit-smeared; MSAXS=no" 
-	string RunInfo = "APS_USAXS=15-ID;"
-	RunInfo +="scan="+StringByKey("SCAN_N", note(Qvec), "=")+";"
-	RunInfo +="file="+StringByKey("DATAFILE", note(Qvec), "=")+";"
-	if(stringmatch(IndraDataType,"*smr"))
-		RunInfo +="dataType=slit-smeared;"
-	elseif(stringmatch(IndraDataType,"*dsm"))
-		if(stringmatch(StringByKey("DataDesmeared",note(Qvec),"="),"yes"))
-			RunInfo +="dataType=desmeared;"
-		else
-			RunInfo +="dataType=2D-collimated;"
-		endif
-	endif
-	if(stringmatch(IndraDataType,"M_*"))
-		RunInfo +="MSAXS=yes;"
-	else
-		RunInfo +="MSAXS=no;"
-	endif
-	
-	XMLsetAttr(fileID,		"/SASroot/SASentry/Run", "", "name", RunInfo)
-	XMLaddNode(fileID, 	"/SASroot/SASentry", 	"", "Run", RunInfo , 1)
-	XMLaddNode(fileID, 	"/SASroot/SASentry", 	"", "SASdata", "", 1)
-	XMLsetAttr(fileID,		"/SASroot/SASentry/SASdata", "", "name", RunInfo)
-	STRING xpathstr
-	Wave SMR_Qvec
-	FOR ( i = 0; i < NumPnts(SMR_Qvec); i += 1 )
-		xpathstr = "/SASroot/SASentry/SASdata/Idata["+num2str(i+1)+"]"
-		XMLaddNode(fileID, 	"/SASroot/SASentry/SASdata", 	"", "Idata", "", 1)
-		XMLaddNode(fileID, 	xpathstr, 			"", "Q", num2str(Qvec[i]), 1)
-		XMLsetAttr(fileID,		xpathstr + "/Q", 		"", "unit", "1/A")
-		XMLaddNode(fileID, 	xpathstr, 			"", "I", num2str(Int[i]), 1)
-		XMLsetAttr(fileID,		xpathstr + "/I", 		"", "unit", "1/cm")
-		XMLaddNode(fileID, 	xpathstr, 			"", "Idev", num2str(error[i]), 1)
-		XMLsetAttr(fileID,		xpathstr + "/Idev", 	"", "unit", "1/cm")
-	ENDFOR
-
-	// it is presumptive to say this is USAXS data, unless the tool only outputs USAXS data from Irena
-	// HOWEVER, if we do not assume this is USAXS data, there is not much content available after SASdata
-	// Perhaps we can test for a few key items that are specific to USAXS
-	// If found, then it verifies the assumption this is USAXS data
-	// else: it is I(Q) data imported into the Irena format.
-	// DECISION:
-	// Expect the calling routine to have determined that the chosen folder contains APS/USAXS data
-
-	XMLaddNode(fileID, 	"/SASroot/SASentry", 	"", "SASsample", "", 1)
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASsample", 	"", "ID", SpecComment, 1)
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASsample", 	"", "thickness", StringByKey("SampleThickness", note(SMR_Qvec), "="), 1)
-	XMLsetAttr(fileID,		"/SASroot/SASentry/SASsample/thickness", "", "unit", "mm")
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASsample", 	"", "transmission", num2str(Transmission), 1)
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASsample", 	"", "position", "", 1)
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASsample/position", 	"", "x", StringByKey("sx", motorPositions), 1)
-	XMLsetAttr(fileID,		"/SASroot/SASentry/SASsample/position/x", "", "unit", "mm")
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASsample/position", 	"", "y", StringByKey("sy", motorPositions), 1)
-	XMLsetAttr(fileID,		"/SASroot/SASentry/SASsample/position/y", "", "unit", "mm")
-
-	XMLaddNode(fileID, 	"/SASroot/SASentry", 	"", "SASinstrument", "", 1)
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument", 	"", "name", "APS 32ID-B USAXS", 1)
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument", 	"", "SASsource", "", 1)
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SASsource", 	"", "radiation", "X-ray synchrotron", 1)
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SASsource", 	"", "beam_size", "", 1)
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SASsource/beam_size", 	"", "x", StringByKey("uslithorap", motorPositions), 1)
-	XMLsetAttr(fileID,		"/SASroot/SASentry/SASinstrument/SASsource/beam_size/x", "", "unit", "mm")
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SASsource/beam_size", 	"", "y", StringByKey("uslitverap", motorPositions), 1)
-	XMLsetAttr(fileID,		"/SASroot/SASentry/SASinstrument/SASsource/beam_size/y", "", "unit", "mm")
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SASsource", 	"", "beam_shape", "rectangle", 1)
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SASsource", 	"", "wavelength", num2str(Wavelength), 1)
-	XMLsetAttr(fileID,		"/SASroot/SASentry/SASinstrument/SASsource/wavelength", "", "unit", "A")
-
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument", 	"", "SAScollimation", "", 1)
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SAScollimation", 	"", "aperture", "", 1)
-	XMLsetAttr(fileID,		"/SASroot/SASentry/SASinstrument/SAScollimation/aperture", "", "name", "usaxs")
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SAScollimation/aperture", 	"", "size", "", 1)
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SAScollimation/aperture/size", 	"", "x", StringByKey("uslithorap", motorPositions), 1)
-	XMLsetAttr(fileID,		"/SASroot/SASentry/SASinstrument/SAScollimation/aperture/size/x", "", "unit", "mm")
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SAScollimation/aperture/size", 	"", "y", StringByKey("uslitverap", motorPositions), 1)
-	XMLsetAttr(fileID,		"/SASroot/SASentry/SASinstrument/SAScollimation/aperture/size/y", "", "unit", "mm")
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SAScollimation", 	"", "aperture", "", 1)
-	XMLsetAttr(fileID,		"/SASroot/SASentry/SASinstrument/SAScollimation/aperture[2]", "", "name", "s1")
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SAScollimation/aperture[2]", 	"", "size", "", 1)
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SAScollimation/aperture[2]/size", 	"", "x", StringByKey("s1hgap", motorPositions), 1)
-	XMLsetAttr(fileID,		"/SASroot/SASentry/SASinstrument/SAScollimation/aperture[2]/size/x", "", "unit", "mm")
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SAScollimation/aperture[2]/size", 	"", "y", StringByKey("s1vgap", motorPositions), 1)
-	XMLsetAttr(fileID,		"/SASroot/SASentry/SASinstrument/SAScollimation/aperture[2]/size/y", "", "unit", "mm")
-
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument", 	"", "SASdetector", "", 1)
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SASdetector", "", "name", "USAXS photodiode", 1)
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SASdetector", "", "SDD", StringByKey("SDDistance", note(Qvec), "="), 1)
-	XMLsetAttr(fileID,		"/SASroot/SASentry/SASinstrument/SASdetector/SDD", "", "unit", "mm")
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SASdetector", "", "pixel_size", "", 1)
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SASdetector/pixel_size", "", "x", "5.50", 1)
-	XMLsetAttr(fileID,		"/SASroot/SASentry/SASinstrument/SASdetector/pixel_size/x", "", "unit", "mm")
-	//slit length needs to vary depending on slit smeared/desmeared/2D colimated data
-	if(stringmatch(IndraDataType,"*smr"))
-		XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SASdetector", "", "slit_length", StringByKey("SlitLength", note(Qvec), "="), 1)
-	else
-		XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SASdetector", "", "slit_length", "0.9e-4", 1)
-	endif
-	XMLsetAttr(fileID,		"/SASroot/SASentry/SASinstrument/SASdetector/slit_length", "", "unit", "1/A")
-
-	XMLaddNode(fileID, 	"/SASroot/SASentry", 	"", "SASprocess", "", 1)
-	XMLsetAttr(fileID,		"/SASroot/SASentry/SASprocess", "", "name", "Indra")
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASprocess", 	"", "name", "exported from IgorPro::Indra", 1)
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASprocess", 	"", "date", date()+"  "+time(), 1)
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASprocess", 	"", "description", "USAXS data in standard 1-D form", 1)
-
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASprocess", 	"", "term", StringByKey("en", motorPositions), 1)
-	XMLsetAttr(fileID,		"/SASroot/SASentry/SASprocess/term[1]", "", "name", "energy")
-	XMLsetAttr(fileID,		"/SASroot/SASentry/SASprocess/term[1]", "", "unit", "keV")
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASprocess", 	"", "term", StringByKey("SAD", MeasurementParameters, "="), 1)
-	XMLsetAttr(fileID,		"/SASroot/SASentry/SASprocess/term[2]", "", "name", "SAD")
-	XMLsetAttr(fileID,		"/SASroot/SASentry/SASprocess/term[2]", "", "unit", "mm")
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASprocess", 	"", "term", StringByKey("SDD", MeasurementParameters, "="), 1)
-	XMLsetAttr(fileID,		"/SASroot/SASentry/SASprocess/term[3]", "", "name", "SDD")
-	XMLsetAttr(fileID,		"/SASroot/SASentry/SASprocess/term[3]", "", "unit", "mm")
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASprocess", 	"", "term", StringByKey("DATE", note(SMR_Qvec), "=") + "  " + StringByKey("HOUR", note(SMR_Qvec), "="), 1)
-	XMLsetAttr(fileID,		"/SASroot/SASentry/SASprocess/term[4]", "", "name", "experiment date")
-	// XMLsetAttr(fileID,		"/SASroot/SASentry/SASprocess/term[4]", "", "unit", "none")	// "unit" is optional
-
-	XMLaddNode(fileID, 	"/SASroot/SASentry/SASprocess", 	"", "SASprocessnote", "", 1)
-
-	// place the metadata in a SASprocessnote named "metadata"
-	XMLsetAttr(fileID,		"/SASroot/SASentry/SASprocess/SASprocessnote", "", "name", "metadata")
-	FOR ( i = 0; i < DimSize(metadata, 0); i += 1 )
-		IN2_metadata2XML(fileID, "/SASroot/SASentry/SASprocess/SASprocessnote", i+1, metadata[i][0], "APS_USAXS", metadata[i][1])	
-	ENDFOR
-
-	XMLaddNode(fileID, 	"/SASroot/SASentry", 	"", "SASnote", "", 1)	// required but nothing to say
-
-	XMLsaveFile(fileID)
-	XMLcloseFile(fileID,0)
-	//fix the bug in XML writer which cannot do stylesheets directives...
-	IN2_FixXMLHeader( xmlFile)
-	 //prg HD:cccc:yyy:test.xml
-	 string XSLFileName
-	 XSLFileName = RemoveFromList(StringFromList(ItemsInList(xmlFile,":")-1, xmlFile  , ":"), xmlFile  ,":")
-	 XSLFileName +="example.xsl"
-
-	 variable refnum2
-	Open/Z/R  refnum2 as XSLFileName
-	if(V_Flag!=0)
-		//Add Example.XSL file...
-		close refnum2
-		 IN2_MakeExampleXSL()
-		SaveNotebook /O ExampleXSL  as XSLFileName
-		KillWIndow/Z ExampleXSL
-		print "Created XSL file for you..."
-	else
-		close refnum2
-	endif
-#else
-		Abort "XML xop not installed, this feature is not available. Use one of the installers and install the xop support before using this feature."
-#endif
-END
-
-Function IN2_FixXMLHeader( XMLFileName)
-	string   XMLFileName
-
-	OpenNotebook/V=0 /N=tempFIle  XMLFileName
-	Notebook tempFIle selection={(0, 22),(0,22) }
-	Notebook tempFIle text="<?xml-stylesheet type=\"text/xsl\" href=\"example.xsl\" ?>\r\n"
-	SaveNotebook /O tempFIle  as XMLFileName
-	DoWIndow /K tempFIle
-end
-
-
-Function IN2_MakeExampleXSL()
-	String nb = "ExampleXSL"
-	NewNotebook/N=$nb/F=0/V=1/K=0/W=(311,44,1020,714)
-	Notebook $nb defaultTab=20, statusWidth=252
-	Notebook $nb text="<?xml version=\"1.0\"?>\r"
-	Notebook $nb text="<xsl:stylesheet version=\"1.0\"\r"
-	Notebook $nb text="\txmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\"\r"
-	Notebook $nb text="\txmlns:cs=\"cansas1d/1.0\"\r"
-	Notebook $nb text="\txmlns:fn=\"http://www.w3.org/2005/02/xpath-functions\"\r"
-	Notebook $nb text="\t>\r"
-	Notebook $nb text="\r"
-	Notebook $nb text="\t<!-- http://www.w3schools.com/xsl/xsl_transformation.asp -->\r"
-	Notebook $nb text="\t<!-- http://www.smallangles.net/wgwiki/index.php/cansas1d_documentation -->\r"
-	Notebook $nb text="\r"
-	Notebook $nb text="\t<xsl:template match=\"/\">\r"
-	Notebook $nb text="<!-- DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml"
-	Notebook $nb text="1-transitional.dtd\" -->\r"
-	Notebook $nb text="\t\t<html>\r"
-	Notebook $nb text="\t\t\t<head>\r"
-	Notebook $nb text="\t\t\t\t<title>SAS data in canSAS 1-D format</title>\r"
-	Notebook $nb text="\t\t\t</head>\r"
-	Notebook $nb text="\t\t\t<body>\r"
-	Notebook $nb text="\t\t\t\t<h1>SAS data in canSAS 1-D format</h1>\r"
-	Notebook $nb text="\t\t\t\t<small>generated using <TT>example.xsl</TT> from canSAS</small>\r"
-	Notebook $nb text="\t\t\t\t<BR />\r"
-	Notebook $nb text="\t\t\t\t<table border=\"2\">\r"
-	Notebook $nb text="\t\t\t\t\t<tr>\r"
-	Notebook $nb text="\t\t\t\t\t\t<th bgcolor=\"lavender\">canSAS 1-D XML version:</th>\r"
-	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\"cs:SASroot/@version\" /></td>\r"
-	Notebook $nb text="\t\t\t\t\t</tr>\r"
-	Notebook $nb text="\t\t\t\t\t<tr>\r"
-	Notebook $nb text="\t\t\t\t\t\t<th bgcolor=\"lavender\">number of entries:</th>\r"
-	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\"count(cs:SASroot/cs:SASentry)\" /></td>\r"
-	Notebook $nb text="\t\t\t\t\t</tr>\r"
-	Notebook $nb text="\t\t\t\t\t<xsl:if test=\"count(/cs:SASroot//cs:SASentry)>1\">\r"
-	Notebook $nb text="\t\t\t\t\t\t<!-- if more than one SASentry, make a table of contents -->\r"
-	Notebook $nb text="\t\t\t\t\t\t<xsl:for-each select=\"/cs:SASroot//cs:SASentry\">\r"
-	Notebook $nb text="\t\t\t\t\t\t\t<tr>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t<th bgcolor=\"lavender\">SASentry-<xsl:value-of select=\"position()\" /></th>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t<td>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t<a href=\"#SASentry-{generate-id(.)}\">\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t<xsl:if test=\"@name!=''\">\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t(<xsl:value-of select=\"@name\" />)\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t</xsl:if>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t<xsl:value-of select=\"cs:Title\" />\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t</a>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t</td>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t<xsl:if test=\"count(cs:SASdata)>1\">\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t<td>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t<!-- if more than one SASdata, make a local table of contents -->\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t<xsl:for-each select=\"cs:SASdata\">\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t<xsl:if test=\"position()>1\">\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t\t<xsl:text> | </xsl:text>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t</xsl:if>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t<a href=\"#SASdata-{generate-id(.)}\">\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t\t<xsl:choose>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t\t\t<xsl:when test=\"cs:name!=''\">\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xsl:value-of select=\"cs:name\" />\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t\t\t</xsl:when>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t\t\t<xsl:when test=\"@name!=''\">\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xsl:value-of select=\"@name\" />\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t\t\t</xsl:when>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t\t\t<xsl:otherwise>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t\t\t\tSASdata<xsl:value-of select=\"position()\" />\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t\t\t</xsl:otherwise>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t\t</xsl:choose>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t</a>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t</xsl:for-each>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t</td>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t</xsl:if>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t</tr>\r"
-	Notebook $nb text="\t\t\t\t\t\t</xsl:for-each>\r"
-	Notebook $nb text="\t\t\t\t\t</xsl:if>\r"
-	Notebook $nb text="\t\t\t\t</table>\r"
-	Notebook $nb text="\t\t\t\t<xsl:apply-templates  />\r"
-	Notebook $nb text="\t\t\t\t<hr />\r"
-	Notebook $nb text="\t\t\t</body>\r"
-	Notebook $nb text="\t\t</html>\r"
-	Notebook $nb text="\t</xsl:template>\r"
-	Notebook $nb text="\r"
-	Notebook $nb text="\t<xsl:template match=\"cs:SASroot\">\r"
-	Notebook $nb text="\t\t<xsl:for-each select=\"cs:SASentry\">\r"
-	Notebook $nb text="\t\t\t<hr />\r"
-	Notebook $nb text="\t\t\t<br />\r"
-	Notebook $nb text="\t\t\t<a id=\"#SASentry-{generate-id(.)}\"  name=\"#SASentry-{generate-id(.)}\" />\r"
-	Notebook $nb text="\t\t\t<h1>\r"
-	Notebook $nb text="\t\t\t\t\tSASentry<xsl:value-of select=\"position()\" />:\r"
-	Notebook $nb text="\t\t\t\t\t<xsl:if test=\"@name!=''\">\r"
-	Notebook $nb text="\t\t\t\t\t\t(<xsl:value-of select=\"@name\" />)\r"
-	Notebook $nb text="\t\t\t\t\t</xsl:if>\r"
-	Notebook $nb text="\t\t\t\t\t<xsl:value-of select=\"cs:Title\" />\r"
-	Notebook $nb text="\t\t\t</h1>\r"
-	Notebook $nb text="\t\t\t<xsl:if test=\"count(cs:SASdata)>1\">\r"
-	Notebook $nb text="\t\t\t\t<table border=\"2\">\r"
-	Notebook $nb text="\t\t\t\t\t<caption>SASdata contents</caption>\r"
-	Notebook $nb text="\t\t\t\t\t<xsl:for-each select=\"cs:SASdata\">\r"
-	Notebook $nb text="\t\t\t\t\t\t<tr>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t<th>SASdata-<xsl:value-of select=\"position()\" /></th>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t<td>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t<a href=\"#SASdata-{generate-id(.)}\">\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t<xsl:choose>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t<xsl:when test=\"@name!=''\">\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t<xsl:value-of select=\"@name\" />\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t</xsl:when>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t<xsl:otherwise>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\tSASdata<xsl:value-of select=\"position()\" />\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t</xsl:otherwise>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t\t</xsl:choose>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t</a>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t</td>\r"
-	Notebook $nb text="\t\t\t\t\t\t</tr>\r"
-	Notebook $nb text="\t\t\t\t\t</xsl:for-each>\r"
-	Notebook $nb text="\t\t\t\t</table>\r"
-	Notebook $nb text="\t\t\t</xsl:if>\r"
-	Notebook $nb text="\t\t\t<br />\r"
-	Notebook $nb text="\t\t\t<table border=\"2\">\r"
-	Notebook $nb text="\t\t\t\t<tr>\r"
-	Notebook $nb text="\t\t\t\t\t<th>SAS data</th>\r"
-	Notebook $nb text="\t\t\t\t\t<th>Selected Metadata</th>\r"
-	Notebook $nb text="\t\t\t\t</tr>\r"
-	Notebook $nb text="\t\t\t\t<tr>\r"
-	Notebook $nb text="\t\t\t\t\t<td valign=\"top\"><xsl:apply-templates  select=\"cs:SASdata\" /></td>\r"
-	Notebook $nb text="\t\t\t\t\t<td valign=\"top\">\r"
-	Notebook $nb text="\t\t\t\t\t\t<table border=\"2\">\r"
-	Notebook $nb text="\t\t\t\t\t\t\t<tr bgcolor=\"lavender\">\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t<th>name</th>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t<th>value</th>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t<th>unit</th>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t</tr>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t<tr>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t<td>Title</td>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t<td><xsl:value-of select=\"cs:Title\" /></td>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t<td />\r"
-	Notebook $nb text="\t\t\t\t\t\t\t</tr>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t<tr>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t<td>Run</td>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t<td><xsl:value-of select=\"cs:Run\" /></td>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t\t<td />\r"
-	Notebook $nb text="\t\t\t\t\t\t\t</tr>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t<tr><xsl:apply-templates  select=\"run\" /></tr>\r"
-	Notebook $nb text="\t\t\t\t\t\t\t<xsl:apply-templates  select=\"cs:SASsample\" />\r"
-	Notebook $nb text="\t\t\t\t\t\t\t<xsl:apply-templates  select=\"cs:SASinstrument\" />\r"
-	Notebook $nb text="\t\t\t\t\t\t\t<xsl:apply-templates  select=\"cs:SASprocess\" />\r"
-	Notebook $nb text="\t\t\t\t\t\t\t<xsl:apply-templates  select=\"cs:SASnote\" />\r"
-	Notebook $nb text="\t\t\t\t\t\t</table>\r"
-	Notebook $nb text="\t\t\t\t\t</td>\r"
-	Notebook $nb text="\t\t\t\t</tr>\r"
-	Notebook $nb text="\t\t\t</table>\r"
-	Notebook $nb text="\t\t</xsl:for-each>\r"
-	Notebook $nb text="\t</xsl:template>\r"
-	Notebook $nb text="\r"
-	Notebook $nb text="\t<xsl:template match=\"cs:SASdata\">\r"
-	Notebook $nb text="\t\t<a id=\"#SASdata-{generate-id(.)}\"  name=\"#SASdata-{generate-id(.)}\" />\r"
-	Notebook $nb text="\t\t<table border=\"2\">\r"
-	Notebook $nb text="\t\t\t<caption>\r"
-	Notebook $nb text="\t\t\t\t<xsl:if test=\"@name!=''\">\r"
-	Notebook $nb text="\t\t\t\t\t<xsl:value-of select=\"@name\" />\r"
-	Notebook $nb text="\t\t\t\t</xsl:if>\r"
-	Notebook $nb text="\t\t\t\t(<xsl:value-of select=\"count(cs:Idata)\" /> points)\r"
-	Notebook $nb text="\t\t\t</caption>\r"
-	Notebook $nb text="\t\t\t<tr bgcolor=\"lavender\">\r"
-	Notebook $nb text="\t\t\t\t<xsl:for-each select=\"cs:Idata[1]/*\">\r"
-	Notebook $nb text="\t\t\t\t\t<th>\r"
-	Notebook $nb text="\t\t\t\t\t\t<xsl:value-of select=\"name()\" /> \r"
-	Notebook $nb text="\t\t\t\t\t\t<xsl:if test=\"@unit!=''\">\r"
-	Notebook $nb text="\t\t\t\t\t\t\t(<xsl:value-of select=\"@unit\" />)\r"
-	Notebook $nb text="\t\t\t\t\t\t</xsl:if>\r"
-	Notebook $nb text="\t\t\t\t\t</th>\r"
-	Notebook $nb text="\t\t\t\t</xsl:for-each>\r"
-	Notebook $nb text="\t\t\t</tr>\r"
-	Notebook $nb text="\t\t\t<xsl:for-each select=\"cs:Idata\">\r"
-	Notebook $nb text="\t\t\t\t<tr>\r"
-	Notebook $nb text="\t\t\t\t\t<xsl:for-each select=\"*\">\r"
-	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
-	Notebook $nb text="\t\t\t\t\t</xsl:for-each>\r"
-	Notebook $nb text="\t\t\t\t</tr>\r"
-	Notebook $nb text="\t\t\t</xsl:for-each>\r"
-	Notebook $nb text="\t\t</table>\r"
-	Notebook $nb text="\t</xsl:template>\r"
-	Notebook $nb text="\r"
-	Notebook $nb text="\t<xsl:template match=\"cs:SASsample\">\r"
-	Notebook $nb text="\t\t<tr>\r"
-	Notebook $nb text="\t\t\t<td>SASsample</td>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@name\" /></td>\r"
-	Notebook $nb text="\t\t\t<td />\r"
-	Notebook $nb text="\t\t</tr>\r"
-	Notebook $nb text="\t\t<xsl:for-each select=\"*\">\r"
-	Notebook $nb text="\t\t\t<xsl:choose>\r"
-	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='position'\">\r"
-	Notebook $nb text="\t\t\t\t\t<xsl:apply-templates select=\".\" />\r"
-	Notebook $nb text="\t\t\t\t</xsl:when>\r"
-	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='orientation'\">\r"
-	Notebook $nb text="\t\t\t\t\t<xsl:apply-templates select=\".\" />\r"
-	Notebook $nb text="\t\t\t\t</xsl:when>\r"
-	Notebook $nb text="\t\t\t\t<xsl:otherwise>\r"
-	Notebook $nb text="\t\t\t\t\t<tr>\r"
-	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"name()\" /></td>\r"
-	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
-	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\"@unit\" /></td>\r"
-	Notebook $nb text="\t\t\t\t\t</tr>\r"
-	Notebook $nb text="\t\t\t\t</xsl:otherwise>\r"
-	Notebook $nb text="\t\t\t</xsl:choose>\r"
-	Notebook $nb text="\t\t</xsl:for-each>\r"
-	Notebook $nb text="\t</xsl:template>\r"
-	Notebook $nb text="\r"
-	Notebook $nb text="\t<xsl:template match=\"cs:SASinstrument\">\r"
-	Notebook $nb text="\t\t<tr>\r"
-	Notebook $nb text="\t\t\t<td>SASinstrument</td>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"cs:name\" /></td>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@name\" /></td>\r"
-	Notebook $nb text="\t\t</tr>\r"
-	Notebook $nb text="\t\t<xsl:for-each select=\"*\">\r"
-	Notebook $nb text="\t\t\t<xsl:choose>\r"
-	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='SASsource'\"><xsl:apply-templates select=\".\" /></xsl:when>\r"
-	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='SAScollimation'\"><xsl:apply-templates select=\".\" /></xsl:when>\r"
-	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='SASdetector'\"><xsl:apply-templates select=\".\" /></xsl:when>\r"
-	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='name'\" />\r"
-	Notebook $nb text="\t\t\t\t<xsl:otherwise>\r"
-	Notebook $nb text="\t\t\t\t\t<tr>\r"
-	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"name()\" /></td>\r"
-	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
-	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\"@unit\" /></td>\r"
-	Notebook $nb text="\t\t\t\t\t</tr>\r"
-	Notebook $nb text="\t\t\t\t</xsl:otherwise>\r"
-	Notebook $nb text="\t\t\t</xsl:choose>\r"
-	Notebook $nb text="\t\t</xsl:for-each>\r"
-	Notebook $nb text="\t</xsl:template>\r"
-	Notebook $nb text="\r"
-	Notebook $nb text="\t<xsl:template match=\"cs:SASsource\">\r"
-	Notebook $nb text="\t\t<tr>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"name()\" /></td>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@name\" /></td>\r"
-	Notebook $nb text="\t\t\t<td />\r"
-	Notebook $nb text="\t\t</tr>\r"
-	Notebook $nb text="\t\t<xsl:for-each select=\"*\">\r"
-	Notebook $nb text="\t\t\t<xsl:choose>\r"
-	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='beam_size'\"><xsl:apply-templates select=\".\" /></xsl:when>\r"
-	Notebook $nb text="\t\t\t\t<xsl:otherwise>\r"
-	Notebook $nb text="\t\t\t\t\t<tr>\r"
-	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"name()\" /></td>\r"
-	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
-	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\"@unit\" /></td>\r"
-	Notebook $nb text="\t\t\t\t\t</tr>\r"
-	Notebook $nb text="\t\t\t\t</xsl:otherwise>\r"
-	Notebook $nb text="\t\t\t</xsl:choose>\r"
-	Notebook $nb text="\t\t</xsl:for-each>\r"
-	Notebook $nb text="\t</xsl:template>\r"
-	Notebook $nb text="\r"
-	Notebook $nb text="\t<xsl:template match=\"cs:beam_size\">\r"
-	Notebook $nb text="\t\t<tr>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"name()\" /></td>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@name\" /></td>\r"
-	Notebook $nb text="\t\t\t<td />\r"
-	Notebook $nb text="\t\t</tr>\r"
-	Notebook $nb text="\t\t<xsl:for-each select=\"*\">\r"
-	Notebook $nb text="\t\t\t<tr>\r"
-	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\"name(../..)\" />_<xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"n"
-	Notebook $nb text="ame()\" /></td>\r"
-	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
-	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\"@unit\" /></td>\r"
-	Notebook $nb text="\t\t\t</tr>\r"
-	Notebook $nb text="\t\t</xsl:for-each>\r"
-	Notebook $nb text="\t</xsl:template>\r"
-	Notebook $nb text="\r"
-	Notebook $nb text="\t<xsl:template match=\"cs:SAScollimation\">\r"
-	Notebook $nb text="\t\t<xsl:for-each select=\"*\">\r"
-	Notebook $nb text="\t\t\t<xsl:choose>\r"
-	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='aperture'\"><xsl:apply-templates select=\".\" /></xsl:when>\r"
-	Notebook $nb text="\t\t\t\t<xsl:otherwise>\r"
-	Notebook $nb text="\t\t\t\t\t<tr>\r"
-	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"name()\" /></td>\r"
-	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
-	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\"@unit\" /></td>\r"
-	Notebook $nb text="\t\t\t\t\t</tr>\r"
-	Notebook $nb text="\t\t\t\t</xsl:otherwise>\r"
-	Notebook $nb text="\t\t\t</xsl:choose>\r"
-	Notebook $nb text="\t\t</xsl:for-each>\r"
-	Notebook $nb text="\t</xsl:template>\r"
-	Notebook $nb text="\r"
-	Notebook $nb text="\t<xsl:template match=\"cs:aperture\">\r"
-	Notebook $nb text="\t\t<tr>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"name()\" /></td>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@name\" /></td>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@type\" /></td>\r"
-	Notebook $nb text="\t\t</tr>\r"
-	Notebook $nb text="\t\t<xsl:for-each select=\"*\">\r"
-	Notebook $nb text="\t\t\t<xsl:choose>\r"
-	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='size'\"><xsl:apply-templates select=\".\" /></xsl:when>\r"
-	Notebook $nb text="\t\t\t\t<xsl:otherwise>\r"
-	Notebook $nb text="\t\t\t\t\t<tr>\r"
-	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\"name(../..)\" />_<xsl:value-of select=\"name(..)\" />_<xsl:value-of select="
-	Notebook $nb text="\"name()\" /></td>\r"
-	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
-	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\"@unit\" /></td>\r"
-	Notebook $nb text="\t\t\t\t\t</tr>\r"
-	Notebook $nb text="\t\t\t\t</xsl:otherwise>\r"
-	Notebook $nb text="\t\t\t</xsl:choose>\r"
-	Notebook $nb text="\t\t</xsl:for-each>\r"
-	Notebook $nb text="\t</xsl:template>\r"
-	Notebook $nb text="\r"
-	Notebook $nb text="\t<xsl:template match=\"cs:size\">\r"
-	Notebook $nb text="\t\t<tr>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"name(../..)\" />_<xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"na"
-	Notebook $nb text="me()\" /></td>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@name\" /></td>\r"
-	Notebook $nb text="\t\t\t<td />\r"
-	Notebook $nb text="\t\t</tr>\r"
-	Notebook $nb text="\t\t<xsl:for-each select=\"*\">\r"
-	Notebook $nb text="\t\t\t<tr>\r"
-	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\"name(../../..)\" />_<xsl:value-of select=\"name(../..)\" />_<xsl:value-of sel"
-	Notebook $nb text="ect=\"name(..)\" />_<xsl:value-of select=\"name()\" /></td>\r"
-	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
-	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\"@unit\" /></td>\r"
-	Notebook $nb text="\t\t\t</tr>\r"
-	Notebook $nb text="\t\t</xsl:for-each>\r"
-	Notebook $nb text="\t</xsl:template>\r"
-	Notebook $nb text="\r"
-	Notebook $nb text="\t<xsl:template match=\"cs:SASdetector\">\r"
-	Notebook $nb text="\t\t<tr>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"name()\" /></td>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"cs:name\" /></td>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@name\" /></td>\r"
-	Notebook $nb text="\t\t</tr>\r"
-	Notebook $nb text="\t\t<xsl:for-each select=\"*\">\r"
-	Notebook $nb text="\t\t\t<xsl:choose>\r"
-	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='name'\" />\r"
-	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='offset'\"><xsl:apply-templates select=\".\" /></xsl:when>\r"
-	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='orientation'\"><xsl:apply-templates select=\".\" /></xsl:when>\r"
-	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='beam_center'\"><xsl:apply-templates select=\".\" /></xsl:when>\r"
-	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='pixel_size'\"><xsl:apply-templates select=\".\" /></xsl:when>\r"
-	Notebook $nb text="\t\t\t\t<xsl:otherwise>\r"
-	Notebook $nb text="\t\t\t\t\t<tr>\r"
-	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"name()\" /></td>\r"
-	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
-	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\"@unit\" /></td>\r"
-	Notebook $nb text="\t\t\t\t\t</tr>\r"
-	Notebook $nb text="\t\t\t\t</xsl:otherwise>\r"
-	Notebook $nb text="\t\t\t</xsl:choose>\r"
-	Notebook $nb text="\t\t</xsl:for-each>\r"
-	Notebook $nb text="\t</xsl:template>\r"
-	Notebook $nb text="\r"
-	Notebook $nb text="\t<xsl:template match=\"cs:orientation\">\r"
-	Notebook $nb text="\t\t<tr>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"name()\" /></td>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@name\" /></td>\r"
-	Notebook $nb text="\t\t\t<td />\r"
-	Notebook $nb text="\t\t</tr>\r"
-	Notebook $nb text="\t\t<xsl:for-each select=\"*\">\r"
-	Notebook $nb text="\t\t\t<tr>\r"
-	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\"name(../..)\" />_<xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"n"
-	Notebook $nb text="ame()\" /></td>\r"
-	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
-	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\"@unit\" /></td>\r"
-	Notebook $nb text="\t\t\t</tr>\r"
-	Notebook $nb text="\t\t</xsl:for-each>\r"
-	Notebook $nb text="\t</xsl:template>\r"
-	Notebook $nb text="\r"
-	Notebook $nb text="\t<xsl:template match=\"cs:position\">\r"
-	Notebook $nb text="\t\t<tr>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"name()\" /></td>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@name\" /></td>\r"
-	Notebook $nb text="\t\t\t<td />\r"
-	Notebook $nb text="\t\t</tr>\r"
-	Notebook $nb text="\t\t<xsl:for-each select=\"*\">\r"
-	Notebook $nb text="\t\t\t<tr>\r"
-	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\"name(../..)\" />_<xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"n"
-	Notebook $nb text="ame()\" /></td>\r"
-	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
-	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\"@unit\" /></td>\r"
-	Notebook $nb text="\t\t\t</tr>\r"
-	Notebook $nb text="\t\t</xsl:for-each>\r"
-	Notebook $nb text="\t</xsl:template>\r"
-	Notebook $nb text="\r"
-	Notebook $nb text="\t<xsl:template match=\"cs:offset\">\r"
-	Notebook $nb text="\t\t<tr>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"name()\" /></td>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@name\" /></td>\r"
-	Notebook $nb text="\t\t\t<td />\r"
-	Notebook $nb text="\t\t</tr>\r"
-	Notebook $nb text="\t\t<xsl:for-each select=\"*\">\r"
-	Notebook $nb text="\t\t\t<tr>\r"
-	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\"name(../..)\" />_<xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"n"
-	Notebook $nb text="ame()\" /></td>\r"
-	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
-	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\"@unit\" /></td>\r"
-	Notebook $nb text="\t\t\t</tr>\r"
-	Notebook $nb text="\t\t</xsl:for-each>\r"
-	Notebook $nb text="\t</xsl:template>\r"
-	Notebook $nb text="\r"
-	Notebook $nb text="\t<xsl:template match=\"cs:beam_center\">\r"
-	Notebook $nb text="\t\t<tr>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"name()\" /></td>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@name\" /></td>\r"
-	Notebook $nb text="\t\t\t<td />\r"
-	Notebook $nb text="\t\t</tr>\r"
-	Notebook $nb text="\t\t<xsl:for-each select=\"*\">\r"
-	Notebook $nb text="\t\t\t<tr>\r"
-	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\"name(../..)\" />_<xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"n"
-	Notebook $nb text="ame()\" /></td>\r"
-	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
-	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\"@unit\" /></td>\r"
-	Notebook $nb text="\t\t\t</tr>\r"
-	Notebook $nb text="\t\t</xsl:for-each>\r"
-	Notebook $nb text="\t</xsl:template>\r"
-	Notebook $nb text="\r"
-	Notebook $nb text="\t<xsl:template match=\"cs:pixel_size\">\r"
-	Notebook $nb text="\t\t<tr>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"name()\" /></td>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@name\" /></td>\r"
-	Notebook $nb text="\t\t\t<td />\r"
-	Notebook $nb text="\t\t</tr>\r"
-	Notebook $nb text="\t\t<xsl:for-each select=\"*\">\r"
-	Notebook $nb text="\t\t\t<tr>\r"
-	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\"name(../..)\" />_<xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"n"
-	Notebook $nb text="ame()\" /></td>\r"
-	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
-	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\"@unit\" /></td>\r"
-	Notebook $nb text="\t\t\t</tr>\r"
-	Notebook $nb text="\t\t</xsl:for-each>\r"
-	Notebook $nb text="\t</xsl:template>\r"
-	Notebook $nb text="\r"
-	Notebook $nb text="\t<xsl:template match=\"cs:term\">\r"
-	Notebook $nb text="\t\t<tr>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@name\" /></td>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@unit\" /></td>\r"
-	Notebook $nb text="\t\t</tr>\r"
-	Notebook $nb text="\t</xsl:template>\r"
-	Notebook $nb text="\r"
-	Notebook $nb text="\t<xsl:template match=\"cs:SASprocessnote\">\r"
-	Notebook $nb text="\t\t<tr>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"name()\" /></td>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@name\" /></td>\r"
-	Notebook $nb text="\t\t</tr>\r"
-	Notebook $nb text="\t</xsl:template>\r"
-	Notebook $nb text="\r"
-	Notebook $nb text="\t<xsl:template match=\"cs:SASprocess\">\r"
-	Notebook $nb text="\t\t<tr>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"name()\" /></td>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"cs:name\" /></td>\r"
-	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@name\" /></td>\r"
-	Notebook $nb text="\t\t</tr>\r"
-	Notebook $nb text="\t\t<xsl:for-each select=\"*\">\r"
-	Notebook $nb text="\t\t\t<xsl:choose>\r"
-	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='name'\" />\r"
-	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='term'\"><xsl:apply-templates select=\".\" /></xsl:when>\r"
-	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='SASprocessnote'\"><xsl:apply-templates select=\".\" /></xsl:when>\r"
-	Notebook $nb text="\t\t\t\t<xsl:otherwise>\r"
-	Notebook $nb text="\t\t\t\t\t<tr>\r"
-	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"name()\" /></td>\r"
-	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
-	Notebook $nb text="\t\t\t\t\t\t<td />\r"
-	Notebook $nb text="\t\t\t\t\t</tr>\r"
-	Notebook $nb text="\t\t\t\t</xsl:otherwise>\r"
-	Notebook $nb text="\t\t\t</xsl:choose>\r"
-	Notebook $nb text="\t\t</xsl:for-each>\r"
-	Notebook $nb text="\t</xsl:template>\r"
-	Notebook $nb text="\r"
-	Notebook $nb text="\t<xsl:template match=\"cs:SASnote\">\r"
-	Notebook $nb text="\t\t<xsl:if test=\"@name!=''\">\r"
-	Notebook $nb text="\t\t\t<tr>\r"
-	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\"name()\" /></td>\r"
-	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
-	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\"@name\" /></td>\r"
-	Notebook $nb text="\t\t\t</tr>\r"
-	Notebook $nb text="\t\t</xsl:if>\r"
-	Notebook $nb text="\t</xsl:template>\r"
-	Notebook $nb text="\r"
-	Notebook $nb text="</xsl:stylesheet>\r"
-end
-FUNCTION/s IN2_specMotors(rawPath)
-	STRING rawPath
-	STRING result = "", value
-	STRING pwd = GetDataFolder(1)
-
-	SetDataFolder rawPath
-	SVAR specMotors
-	result = specMotors
-	SetDataFolder pwd
-	RETURN (result)
-END
-
-FUNCTION IN2_rawMetadata2List(rawPath)
-	STRING rawPath
-	STRING result = ""
-	STRING pwd = GetDataFolder(1)
-	WAVE/T metadata
-
-	SetDataFolder rawPath
-	SVAR specCommand, timeWritten, specComment, specValues, specMotors, EPICS_PVs
-	SVAR xAxisName, yAxisName, SpecSourceFileName, DataTransferredto
-	result = ReplaceStringByKey("specCommand", result, specCommand, "=", ";")
-	result = ReplaceStringByKey("timeWritten", result, timeWritten, "=", ";")
-	result = ReplaceStringByKey("specComment", result, specComment, "=", ";")
-	result = ReplaceStringByKey("xAxisName", result, xAxisName, "=", ";")
-	result = ReplaceStringByKey("yAxisName", result, yAxisName, "=", ";")
-	result = ReplaceStringByKey("SpecSourceFileName", result, SpecSourceFileName, "=", ";")
-	result = ReplaceStringByKey("DataTransferredto", result, DataTransferredto, "=", ";")
-
-	Redimension/N=(DimSize(metadata, 0)+1, DimSize(metadata, 1)) metadata
-	metadata[Inf][0] = "raw"
-	metadata[Inf][1] = result
-
-	Redimension/N=(DimSize(metadata, 0)+1, DimSize(metadata, 1)) metadata
-	metadata[Inf][0] = "specValues"
-	metadata[Inf][1] = In2_listConvert(specValues)
-
-	Redimension/N=(DimSize(metadata, 0)+1, DimSize(metadata, 1)) metadata
-	metadata[Inf][0] = "specMotors"
-	metadata[Inf][1] = In2_listConvert(specMotors)
-
-	Redimension/N=(DimSize(metadata, 0)+1, DimSize(metadata, 1)) metadata
-	metadata[Inf][0] = "EPICS_PVs"
-	metadata[Inf][1] = In2_listConvert(EPICS_PVs)
-
-	SetDataFolder pwd
-END
-
-FUNCTION IN2_metadata2XML(fileID, parent, index, section, node, theList)
-	VARIABLE fileID, index
-	STRING parent, section, node, theList
-	STRING theItem, theKey, theValue
-	VARIABLE i, pos
-
-#if Exists("XMLaddNode")==3
-	XMLaddNode(fileID, parent, "", node, "", 1)
-	parent += "/"+node+"[" + num2str(index) + "]"
-	XMLsetAttr(fileID,	parent, "", "name", section)
-
-	FOR ( i = 0; i < ItemsInList(theList) ; i += 1 )
-		theItem = StringFromList(i, theList)					// walk through all items
-		pos = strsearch(theItem, "=", 0)
-		theKey = theItem[0,pos-1]
-		theValue = theItem[pos+1,Inf]
-		IF (strlen(theValue))
-			XMLaddNode(fileID, parent, "", theKey, theValue, 1)
-		ENDIF
-	ENDFOR
-#else
-		Abort "XML xop not installed, this feature is not available. Use one of the installers and install the xop support before using this feature."
-#endif
-END
-
-static FUNCTION/S IN2_listConvert(rawList)
-	STRING rawList
-	VARIABLE i, pos
-	STRING result = "", item, key, value
-	FOR ( i = 0; i < ItemsInList(rawList) ; i += 1 )		// walk through all items
-		item = StringFromList(i, rawList)					// walk through all items
-		pos = strsearch(item, ":", 0)
-		key = item[0,pos-1]
-		value = item[pos+1,Inf]
-		result = ReplaceStringByKey(key, result, value, "=", ";")
-	ENDFOR
-	RETURN (result)
-END
-
-
+//
+//Function IN2B_CorrectAnisoData(SampleFolderName,BlankFolderName,SampleTransmission,select)//dws
+//	//function to correct aniso data for dark currents and blank data 
+//	//first find the folders which user wants to correct
+//	//and find blank run from which we can pull the correction parameters
+//	string SampleFolderName
+//	string BlankFolderName
+//	variable SampleTransmission,select
+//	
+//	string oldDf=GetDataFolder(1)
+//	
+//	//first find the folders which user wants to correct
+//	//and find blank run from which we can pull the correction parameters
+//	
+//	Prompt SampleFolderName, "Select Aniso Folder", popup, IN2G_FindFolderWithWaveTypes("root:Others:", 5, "USAXS_PD", 1)
+//	Prompt BlankFolderName, "Select Blank run Folder", popup, IN2G_FindFolderWithWaveTypes("root:USAXS:", 5, "USAXS_PD", 1)
+//	Prompt SampleTransmission, "Input USAXS sample transmission" 
+//	If (Select==1)
+//		DoPrompt "Select data to corect", SampleFolderName, BlankFolderName, SampleTransmission
+//	endif
+//	
+//	Wave AnisoUSAXS_PD=$(SampleFolderName+"USAXS_PD")
+//	Wave AnisoSeconds=$(SampleFolderName+"seconds")
+//	Wave AnisoAR_enc=$(SampleFolderName+"ar_enc")
+//	Wave AnisoMonitor=$(SampleFolderName+"I0")
+//	SVAR AnisoMeasPar=$(SampleFolderName+"MeasurementParameters")
+//
+//	Wave BlankUSAXS_PD=$(BlankFolderName+"USAXS_PD")
+//	Wave BlankPD_range=$(BlankFolderName+"pd_range")
+//	Wave BlankSeconds=$(BlankFolderName+"MeasTime")
+//	Wave BlankAR_enc=$(BlankFolderName+"ar_encoder")
+//	Wave BlankMonitor=$(BlankFolderName+"Monitor")
+//	SVAR BlankMeasPar=$(BlankFolderName+"MeasurementParameters")
+//
+//	Variable AnisoPD_range=NumberByKey("UPD2range", AnisoMeasPar , ":", ";") +1		//+1 due to UDP2range being zero based UPD range
+//	variable AnisoPDDarkCurrent=NumberByKey("UPD2bkg"+num2str(AnisoPD_range), AnisoMeasPar , ":", ";")
+//	variable BlankUPDVal=interp(AnisoAR_enc[0], BlankAR_enc, BlankUSAXS_PD )	//1 based UPD range
+//	variable BlankPD_rangeVal=floor(interp(AnisoAR_enc[0], BlankAR_enc, BlankPD_range ))	
+//	variable RangeDifference=BlankPD_rangeVal-AnisoPD_range
+//	if (RangeDifference<0)
+//		Abort "Ranges weird - blank range is higher than sample" 
+//	endif
+//	variable BlankPDDarkCurrent=NumberByKey("UPD2bkg"+num2str(BlankPD_rangeVal), BlankMeasPar , "=", ";")
+//
+//	
+//	
+//	// BlankFolderName
+//	// SampleFolderName
+//	setDataFolder $SampleFolderName
+//	
+//	Duplicate/O AnisoUSAXS_PD, AnisoIntensityCorr, TempAnisoBlInt
+//	Wave AnisoIntensityCorr
+//	Wave TempAnisoBlInt
+//	
+//	
+//
+//
+//	AnisoIntensityCorr=AnisoUSAXS_PD - (AnisoPDDarkCurrent*AnisoSeconds	)	//this fixes the USAXS PD for dark current
+//	TempAnisoBlInt= (BlankUPDVal - (BlankSeconds * BlankPDDarkCurrent)) / 10^(2*RangeDifference)
+//	
+//	AnisoIntensityCorr= AnisoIntensityCorr - SampleTransmission * (TempAnisoBlInt * AnisoMonitor / BlankMonitor)
+//
+//	variable  RangeDifferenceFix=AnisoPD_range-1   //Normalize to range 1
+//	
+//	AnisoIntensityCorr=10^8*AnisoIntensityCorr/10^(2*RangeDifferenceFix)            //10^8 is arbitrary scale factor
+//
+//	killWaves/Z TempAnisoBlInt
+//	
+//	setDataFolder oldDf
+//
+//
+//end
+//
+////*************************************************
+////*************************************************
+////*************************************************
+////*************************************************
+////*************************************************
+////*************************************************
+//
+//FUNCTION IN2B_OneDataXmlWriter(xmlFile, IndraDataType)		//take data from current Igor folder, if present and write xmlFile. xmlFile should be with path. 
+//	STRING xmlFile, IndraDataType
+//	VARIABLE fileID, i
+//	STRING myList = "", motorPositions
+//	NVAR Transmission, BeamCenter, MaximumIntensity, PeakWidth, Wavelength
+//	SVAR SpecCommand, SpecSourceFileName, SpecComment
+//	SVAR MeasurementParameters, UPDParameters, ListOfASBParameters, PathToRawData
+//	
+//	if(stringmatch(IndraDataType,"smr"))
+//		WAVE Qvec = SMR_Qvec
+//		WAVE Int = SMR_Int
+//		WAVE Error = SMR_Error
+//	elseif(stringmatch(IndraDataType,"dsm"))
+//		WAVE Qvec = DSM_Qvec
+//		WAVE Int = DSM_Int
+//		WAVE Error = DSM_Error
+//	elseif(stringmatch(IndraDataType,"M_smr"))
+//		WAVE Qvec = M_SMR_Qvec
+//		WAVE Int = M_SMR_Int
+//		WAVE Error = M_SMR_Error
+//	elseif(stringmatch(IndraDataType,"M_dsm"))
+//		WAVE Qvec = M_DSM_Qvec
+//		WAVE Int = M_DSM_Int
+//		WAVE Error = M_DSM_Error
+//	endif
+//
+//	// this is useful for reporting on some standard parameters
+//	motorPositions = IN2_specMotors(PathToRawData)
+//
+//	myList = ReplaceStringByKey("SpecSourceFileName", myList, SpecSourceFileName, "=", ";")
+//	myList = ReplaceNumberByKey("BeamCenter", myList, BeamCenter, "=", ";")
+//	myList = ReplaceNumberByKey("MaximumIntensity", myList, MaximumIntensity, "=", ";")
+//	myList = ReplaceNumberByKey("PeakWidth", myList, PeakWidth, "=", ";")
+//
+//	// gather and organize the Indra-specific metadata
+//	KillWaves/Z metadata
+//	MAKE/T/N=(0,2)/O metadata
+//	Redimension/N=(0,2) metadata
+//
+//	Redimension/N=(DimSize(metadata, 0)+1, DimSize(metadata, 1)) metadata
+//	metadata[Inf][0] = "local variables"
+//	metadata[Inf][1] = myList
+//
+//	Redimension/N=(DimSize(metadata, 0)+1, DimSize(metadata, 1)) metadata
+//	metadata[Inf][0] = "wavenotes"
+//	metadata[Inf][1] = note(Qvec)
+//
+//	Redimension/N=(DimSize(metadata, 0)+1, DimSize(metadata, 1)) metadata
+//	metadata[Inf][0] = "MeasurementParameters"
+//	metadata[Inf][1] = MeasurementParameters
+//
+//	Redimension/N=(DimSize(metadata, 0)+1, DimSize(metadata, 1)) metadata
+//	metadata[Inf][0] = "UPDParameters"
+//	metadata[Inf][1] = UPDParameters
+//
+//	Redimension/N=(DimSize(metadata, 0)+1, DimSize(metadata, 1)) metadata
+//	metadata[Inf][0] = "ListOfASBParameters"
+//	metadata[Inf][1] = ListOfASBParameters
+//
+//	IN2_rawMetadata2List(PathToRawData)	//  Look at the  "PathToRawData"  There's lots more metadata there.  Maybe too much.
+//
+//
+//	// define the namespaces
+//#if	Exists("XMLcreateFile")
+//	fileID = XMLcreateFile(xmlFile, "SASroot", "cansas1d/1.0", "")
+//	XMLsetAttr(fileID,		"/SASroot", 				"", "version", "1.0")
+//	XMLsetAttr(fileID,		"/SASroot", 				"", "xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance")
+//	XMLsetAttr(fileID,		"/SASroot", 				"", "xsi:schemaLocation", "cansas1d/1.0    http://svn.smallangles.net/svn/canSAS/1dwg/trunk/cansas1d.xsd")
+//	XMLaddNode(fileID, 	"/SASroot", 				"", "comment", "created by CS_XML_Indra.ipf", 8)
+//
+//	XMLaddNode(fileID, 	"/SASroot", 	"", "comment", "exported from IgorPro::Indra", 8)
+//	XMLaddNode(fileID, 	"/SASroot", 	"", "comment", date()+"  "+time(), 8)
+//
+//	XMLaddNode(fileID, 	"/SASroot", 				"", "SASentry", "", 1)
+//	XMLsetAttr(fileID,		"/SASroot/SASentry", 	"", "name", SpecComment)
+//	XMLaddNode(fileID, 	"/SASroot/SASentry", 	"", "Title", SpecComment, 1)
+//	
+//	//need to create here appropriate RunInfo we can use in the future, something like:  "APS_USAXS=32-ID; scan=S81; file=08_21.dat; dataType=slit-smeared; MSAXS=no" 
+//	string RunInfo = "APS_USAXS=15-ID;"
+//	RunInfo +="scan="+StringByKey("SCAN_N", note(Qvec), "=")+";"
+//	RunInfo +="file="+StringByKey("DATAFILE", note(Qvec), "=")+";"
+//	if(stringmatch(IndraDataType,"*smr"))
+//		RunInfo +="dataType=slit-smeared;"
+//	elseif(stringmatch(IndraDataType,"*dsm"))
+//		if(stringmatch(StringByKey("DataDesmeared",note(Qvec),"="),"yes"))
+//			RunInfo +="dataType=desmeared;"
+//		else
+//			RunInfo +="dataType=2D-collimated;"
+//		endif
+//	endif
+//	if(stringmatch(IndraDataType,"M_*"))
+//		RunInfo +="MSAXS=yes;"
+//	else
+//		RunInfo +="MSAXS=no;"
+//	endif
+//	
+//	XMLsetAttr(fileID,		"/SASroot/SASentry/Run", "", "name", RunInfo)
+//	XMLaddNode(fileID, 	"/SASroot/SASentry", 	"", "Run", RunInfo , 1)
+//	XMLaddNode(fileID, 	"/SASroot/SASentry", 	"", "SASdata", "", 1)
+//	XMLsetAttr(fileID,		"/SASroot/SASentry/SASdata", "", "name", RunInfo)
+//	STRING xpathstr
+//	Wave SMR_Qvec
+//	FOR ( i = 0; i < NumPnts(SMR_Qvec); i += 1 )
+//		xpathstr = "/SASroot/SASentry/SASdata/Idata["+num2str(i+1)+"]"
+//		XMLaddNode(fileID, 	"/SASroot/SASentry/SASdata", 	"", "Idata", "", 1)
+//		XMLaddNode(fileID, 	xpathstr, 			"", "Q", num2str(Qvec[i]), 1)
+//		XMLsetAttr(fileID,		xpathstr + "/Q", 		"", "unit", "1/A")
+//		XMLaddNode(fileID, 	xpathstr, 			"", "I", num2str(Int[i]), 1)
+//		XMLsetAttr(fileID,		xpathstr + "/I", 		"", "unit", "1/cm")
+//		XMLaddNode(fileID, 	xpathstr, 			"", "Idev", num2str(error[i]), 1)
+//		XMLsetAttr(fileID,		xpathstr + "/Idev", 	"", "unit", "1/cm")
+//	ENDFOR
+//
+//	// it is presumptive to say this is USAXS data, unless the tool only outputs USAXS data from Irena
+//	// HOWEVER, if we do not assume this is USAXS data, there is not much content available after SASdata
+//	// Perhaps we can test for a few key items that are specific to USAXS
+//	// If found, then it verifies the assumption this is USAXS data
+//	// else: it is I(Q) data imported into the Irena format.
+//	// DECISION:
+//	// Expect the calling routine to have determined that the chosen folder contains APS/USAXS data
+//
+//	XMLaddNode(fileID, 	"/SASroot/SASentry", 	"", "SASsample", "", 1)
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASsample", 	"", "ID", SpecComment, 1)
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASsample", 	"", "thickness", StringByKey("SampleThickness", note(SMR_Qvec), "="), 1)
+//	XMLsetAttr(fileID,		"/SASroot/SASentry/SASsample/thickness", "", "unit", "mm")
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASsample", 	"", "transmission", num2str(Transmission), 1)
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASsample", 	"", "position", "", 1)
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASsample/position", 	"", "x", StringByKey("sx", motorPositions), 1)
+//	XMLsetAttr(fileID,		"/SASroot/SASentry/SASsample/position/x", "", "unit", "mm")
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASsample/position", 	"", "y", StringByKey("sy", motorPositions), 1)
+//	XMLsetAttr(fileID,		"/SASroot/SASentry/SASsample/position/y", "", "unit", "mm")
+//
+//	XMLaddNode(fileID, 	"/SASroot/SASentry", 	"", "SASinstrument", "", 1)
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument", 	"", "name", "APS 32ID-B USAXS", 1)
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument", 	"", "SASsource", "", 1)
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SASsource", 	"", "radiation", "X-ray synchrotron", 1)
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SASsource", 	"", "beam_size", "", 1)
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SASsource/beam_size", 	"", "x", StringByKey("uslithorap", motorPositions), 1)
+//	XMLsetAttr(fileID,		"/SASroot/SASentry/SASinstrument/SASsource/beam_size/x", "", "unit", "mm")
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SASsource/beam_size", 	"", "y", StringByKey("uslitverap", motorPositions), 1)
+//	XMLsetAttr(fileID,		"/SASroot/SASentry/SASinstrument/SASsource/beam_size/y", "", "unit", "mm")
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SASsource", 	"", "beam_shape", "rectangle", 1)
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SASsource", 	"", "wavelength", num2str(Wavelength), 1)
+//	XMLsetAttr(fileID,		"/SASroot/SASentry/SASinstrument/SASsource/wavelength", "", "unit", "A")
+//
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument", 	"", "SAScollimation", "", 1)
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SAScollimation", 	"", "aperture", "", 1)
+//	XMLsetAttr(fileID,		"/SASroot/SASentry/SASinstrument/SAScollimation/aperture", "", "name", "usaxs")
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SAScollimation/aperture", 	"", "size", "", 1)
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SAScollimation/aperture/size", 	"", "x", StringByKey("uslithorap", motorPositions), 1)
+//	XMLsetAttr(fileID,		"/SASroot/SASentry/SASinstrument/SAScollimation/aperture/size/x", "", "unit", "mm")
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SAScollimation/aperture/size", 	"", "y", StringByKey("uslitverap", motorPositions), 1)
+//	XMLsetAttr(fileID,		"/SASroot/SASentry/SASinstrument/SAScollimation/aperture/size/y", "", "unit", "mm")
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SAScollimation", 	"", "aperture", "", 1)
+//	XMLsetAttr(fileID,		"/SASroot/SASentry/SASinstrument/SAScollimation/aperture[2]", "", "name", "s1")
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SAScollimation/aperture[2]", 	"", "size", "", 1)
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SAScollimation/aperture[2]/size", 	"", "x", StringByKey("s1hgap", motorPositions), 1)
+//	XMLsetAttr(fileID,		"/SASroot/SASentry/SASinstrument/SAScollimation/aperture[2]/size/x", "", "unit", "mm")
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SAScollimation/aperture[2]/size", 	"", "y", StringByKey("s1vgap", motorPositions), 1)
+//	XMLsetAttr(fileID,		"/SASroot/SASentry/SASinstrument/SAScollimation/aperture[2]/size/y", "", "unit", "mm")
+//
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument", 	"", "SASdetector", "", 1)
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SASdetector", "", "name", "USAXS photodiode", 1)
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SASdetector", "", "SDD", StringByKey("SDDistance", note(Qvec), "="), 1)
+//	XMLsetAttr(fileID,		"/SASroot/SASentry/SASinstrument/SASdetector/SDD", "", "unit", "mm")
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SASdetector", "", "pixel_size", "", 1)
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SASdetector/pixel_size", "", "x", "5.50", 1)
+//	XMLsetAttr(fileID,		"/SASroot/SASentry/SASinstrument/SASdetector/pixel_size/x", "", "unit", "mm")
+//	//slit length needs to vary depending on slit smeared/desmeared/2D colimated data
+//	if(stringmatch(IndraDataType,"*smr"))
+//		XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SASdetector", "", "slit_length", StringByKey("SlitLength", note(Qvec), "="), 1)
+//	else
+//		XMLaddNode(fileID, 	"/SASroot/SASentry/SASinstrument/SASdetector", "", "slit_length", "0.9e-4", 1)
+//	endif
+//	XMLsetAttr(fileID,		"/SASroot/SASentry/SASinstrument/SASdetector/slit_length", "", "unit", "1/A")
+//
+//	XMLaddNode(fileID, 	"/SASroot/SASentry", 	"", "SASprocess", "", 1)
+//	XMLsetAttr(fileID,		"/SASroot/SASentry/SASprocess", "", "name", "Indra")
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASprocess", 	"", "name", "exported from IgorPro::Indra", 1)
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASprocess", 	"", "date", date()+"  "+time(), 1)
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASprocess", 	"", "description", "USAXS data in standard 1-D form", 1)
+//
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASprocess", 	"", "term", StringByKey("en", motorPositions), 1)
+//	XMLsetAttr(fileID,		"/SASroot/SASentry/SASprocess/term[1]", "", "name", "energy")
+//	XMLsetAttr(fileID,		"/SASroot/SASentry/SASprocess/term[1]", "", "unit", "keV")
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASprocess", 	"", "term", StringByKey("SAD", MeasurementParameters, "="), 1)
+//	XMLsetAttr(fileID,		"/SASroot/SASentry/SASprocess/term[2]", "", "name", "SAD")
+//	XMLsetAttr(fileID,		"/SASroot/SASentry/SASprocess/term[2]", "", "unit", "mm")
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASprocess", 	"", "term", StringByKey("SDD", MeasurementParameters, "="), 1)
+//	XMLsetAttr(fileID,		"/SASroot/SASentry/SASprocess/term[3]", "", "name", "SDD")
+//	XMLsetAttr(fileID,		"/SASroot/SASentry/SASprocess/term[3]", "", "unit", "mm")
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASprocess", 	"", "term", StringByKey("DATE", note(SMR_Qvec), "=") + "  " + StringByKey("HOUR", note(SMR_Qvec), "="), 1)
+//	XMLsetAttr(fileID,		"/SASroot/SASentry/SASprocess/term[4]", "", "name", "experiment date")
+//	// XMLsetAttr(fileID,		"/SASroot/SASentry/SASprocess/term[4]", "", "unit", "none")	// "unit" is optional
+//
+//	XMLaddNode(fileID, 	"/SASroot/SASentry/SASprocess", 	"", "SASprocessnote", "", 1)
+//
+//	// place the metadata in a SASprocessnote named "metadata"
+//	XMLsetAttr(fileID,		"/SASroot/SASentry/SASprocess/SASprocessnote", "", "name", "metadata")
+//	FOR ( i = 0; i < DimSize(metadata, 0); i += 1 )
+//		IN2_metadata2XML(fileID, "/SASroot/SASentry/SASprocess/SASprocessnote", i+1, metadata[i][0], "APS_USAXS", metadata[i][1])	
+//	ENDFOR
+//
+//	XMLaddNode(fileID, 	"/SASroot/SASentry", 	"", "SASnote", "", 1)	// required but nothing to say
+//
+//	XMLsaveFile(fileID)
+//	XMLcloseFile(fileID,0)
+//	//fix the bug in XML writer which cannot do stylesheets directives...
+//	IN2_FixXMLHeader( xmlFile)
+//	 //prg HD:cccc:yyy:test.xml
+//	 string XSLFileName
+//	 XSLFileName = RemoveFromList(StringFromList(ItemsInList(xmlFile,":")-1, xmlFile  , ":"), xmlFile  ,":")
+//	 XSLFileName +="example.xsl"
+//
+//	 variable refnum2
+//	Open/Z/R  refnum2 as XSLFileName
+//	if(V_Flag!=0)
+//		//Add Example.XSL file...
+//		close refnum2
+//		 IN2_MakeExampleXSL()
+//		SaveNotebook /O ExampleXSL  as XSLFileName
+//		KillWIndow/Z ExampleXSL
+//		print "Created XSL file for you..."
+//	else
+//		close refnum2
+//	endif
+//#else
+//		Abort "XML xop not installed, this feature is not available. Use one of the installers and install the xop support before using this feature."
+//#endif
+//END
+//
+//Function IN2_FixXMLHeader( XMLFileName)
+//	string   XMLFileName
+//
+//	OpenNotebook/V=0 /N=tempFIle  XMLFileName
+//	Notebook tempFIle selection={(0, 22),(0,22) }
+//	Notebook tempFIle text="<?xml-stylesheet type=\"text/xsl\" href=\"example.xsl\" ?>\r\n"
+//	SaveNotebook /O tempFIle  as XMLFileName
+//	DoWIndow /K tempFIle
+//end
+//
+//
+//Function IN2_MakeExampleXSL()
+//	String nb = "ExampleXSL"
+//	NewNotebook/N=$nb/F=0/V=1/K=0/W=(311,44,1020,714)
+//	Notebook $nb defaultTab=20, statusWidth=252
+//	Notebook $nb text="<?xml version=\"1.0\"?>\r"
+//	Notebook $nb text="<xsl:stylesheet version=\"1.0\"\r"
+//	Notebook $nb text="\txmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\"\r"
+//	Notebook $nb text="\txmlns:cs=\"cansas1d/1.0\"\r"
+//	Notebook $nb text="\txmlns:fn=\"http://www.w3.org/2005/02/xpath-functions\"\r"
+//	Notebook $nb text="\t>\r"
+//	Notebook $nb text="\r"
+//	Notebook $nb text="\t<!-- http://www.w3schools.com/xsl/xsl_transformation.asp -->\r"
+//	Notebook $nb text="\t<!-- http://www.smallangles.net/wgwiki/index.php/cansas1d_documentation -->\r"
+//	Notebook $nb text="\r"
+//	Notebook $nb text="\t<xsl:template match=\"/\">\r"
+//	Notebook $nb text="<!-- DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml"
+//	Notebook $nb text="1-transitional.dtd\" -->\r"
+//	Notebook $nb text="\t\t<html>\r"
+//	Notebook $nb text="\t\t\t<head>\r"
+//	Notebook $nb text="\t\t\t\t<title>SAS data in canSAS 1-D format</title>\r"
+//	Notebook $nb text="\t\t\t</head>\r"
+//	Notebook $nb text="\t\t\t<body>\r"
+//	Notebook $nb text="\t\t\t\t<h1>SAS data in canSAS 1-D format</h1>\r"
+//	Notebook $nb text="\t\t\t\t<small>generated using <TT>example.xsl</TT> from canSAS</small>\r"
+//	Notebook $nb text="\t\t\t\t<BR />\r"
+//	Notebook $nb text="\t\t\t\t<table border=\"2\">\r"
+//	Notebook $nb text="\t\t\t\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t\t\t\t<th bgcolor=\"lavender\">canSAS 1-D XML version:</th>\r"
+//	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\"cs:SASroot/@version\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t\t</tr>\r"
+//	Notebook $nb text="\t\t\t\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t\t\t\t<th bgcolor=\"lavender\">number of entries:</th>\r"
+//	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\"count(cs:SASroot/cs:SASentry)\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t\t</tr>\r"
+//	Notebook $nb text="\t\t\t\t\t<xsl:if test=\"count(/cs:SASroot//cs:SASentry)>1\">\r"
+//	Notebook $nb text="\t\t\t\t\t\t<!-- if more than one SASentry, make a table of contents -->\r"
+//	Notebook $nb text="\t\t\t\t\t\t<xsl:for-each select=\"/cs:SASroot//cs:SASentry\">\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t<th bgcolor=\"lavender\">SASentry-<xsl:value-of select=\"position()\" /></th>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t<td>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t<a href=\"#SASentry-{generate-id(.)}\">\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t<xsl:if test=\"@name!=''\">\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t(<xsl:value-of select=\"@name\" />)\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t</xsl:if>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t<xsl:value-of select=\"cs:Title\" />\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t</a>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t</td>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t<xsl:if test=\"count(cs:SASdata)>1\">\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t<td>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t<!-- if more than one SASdata, make a local table of contents -->\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t<xsl:for-each select=\"cs:SASdata\">\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t<xsl:if test=\"position()>1\">\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t\t<xsl:text> | </xsl:text>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t</xsl:if>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t<a href=\"#SASdata-{generate-id(.)}\">\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t\t<xsl:choose>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t\t\t<xsl:when test=\"cs:name!=''\">\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xsl:value-of select=\"cs:name\" />\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t\t\t</xsl:when>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t\t\t<xsl:when test=\"@name!=''\">\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xsl:value-of select=\"@name\" />\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t\t\t</xsl:when>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t\t\t<xsl:otherwise>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t\t\t\tSASdata<xsl:value-of select=\"position()\" />\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t\t\t</xsl:otherwise>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t\t</xsl:choose>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t</a>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t</xsl:for-each>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t</td>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t</xsl:if>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t</tr>\r"
+//	Notebook $nb text="\t\t\t\t\t\t</xsl:for-each>\r"
+//	Notebook $nb text="\t\t\t\t\t</xsl:if>\r"
+//	Notebook $nb text="\t\t\t\t</table>\r"
+//	Notebook $nb text="\t\t\t\t<xsl:apply-templates  />\r"
+//	Notebook $nb text="\t\t\t\t<hr />\r"
+//	Notebook $nb text="\t\t\t</body>\r"
+//	Notebook $nb text="\t\t</html>\r"
+//	Notebook $nb text="\t</xsl:template>\r"
+//	Notebook $nb text="\r"
+//	Notebook $nb text="\t<xsl:template match=\"cs:SASroot\">\r"
+//	Notebook $nb text="\t\t<xsl:for-each select=\"cs:SASentry\">\r"
+//	Notebook $nb text="\t\t\t<hr />\r"
+//	Notebook $nb text="\t\t\t<br />\r"
+//	Notebook $nb text="\t\t\t<a id=\"#SASentry-{generate-id(.)}\"  name=\"#SASentry-{generate-id(.)}\" />\r"
+//	Notebook $nb text="\t\t\t<h1>\r"
+//	Notebook $nb text="\t\t\t\t\tSASentry<xsl:value-of select=\"position()\" />:\r"
+//	Notebook $nb text="\t\t\t\t\t<xsl:if test=\"@name!=''\">\r"
+//	Notebook $nb text="\t\t\t\t\t\t(<xsl:value-of select=\"@name\" />)\r"
+//	Notebook $nb text="\t\t\t\t\t</xsl:if>\r"
+//	Notebook $nb text="\t\t\t\t\t<xsl:value-of select=\"cs:Title\" />\r"
+//	Notebook $nb text="\t\t\t</h1>\r"
+//	Notebook $nb text="\t\t\t<xsl:if test=\"count(cs:SASdata)>1\">\r"
+//	Notebook $nb text="\t\t\t\t<table border=\"2\">\r"
+//	Notebook $nb text="\t\t\t\t\t<caption>SASdata contents</caption>\r"
+//	Notebook $nb text="\t\t\t\t\t<xsl:for-each select=\"cs:SASdata\">\r"
+//	Notebook $nb text="\t\t\t\t\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t<th>SASdata-<xsl:value-of select=\"position()\" /></th>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t<td>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t<a href=\"#SASdata-{generate-id(.)}\">\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t<xsl:choose>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t<xsl:when test=\"@name!=''\">\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\t<xsl:value-of select=\"@name\" />\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t</xsl:when>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t<xsl:otherwise>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t\tSASdata<xsl:value-of select=\"position()\" />\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t\t</xsl:otherwise>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t\t</xsl:choose>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t</a>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t</td>\r"
+//	Notebook $nb text="\t\t\t\t\t\t</tr>\r"
+//	Notebook $nb text="\t\t\t\t\t</xsl:for-each>\r"
+//	Notebook $nb text="\t\t\t\t</table>\r"
+//	Notebook $nb text="\t\t\t</xsl:if>\r"
+//	Notebook $nb text="\t\t\t<br />\r"
+//	Notebook $nb text="\t\t\t<table border=\"2\">\r"
+//	Notebook $nb text="\t\t\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t\t\t<th>SAS data</th>\r"
+//	Notebook $nb text="\t\t\t\t\t<th>Selected Metadata</th>\r"
+//	Notebook $nb text="\t\t\t\t</tr>\r"
+//	Notebook $nb text="\t\t\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t\t\t<td valign=\"top\"><xsl:apply-templates  select=\"cs:SASdata\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t\t<td valign=\"top\">\r"
+//	Notebook $nb text="\t\t\t\t\t\t<table border=\"2\">\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t<tr bgcolor=\"lavender\">\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t<th>name</th>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t<th>value</th>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t<th>unit</th>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t</tr>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t<td>Title</td>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t<td><xsl:value-of select=\"cs:Title\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t<td />\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t</tr>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t<td>Run</td>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t<td><xsl:value-of select=\"cs:Run\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t\t<td />\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t</tr>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t<tr><xsl:apply-templates  select=\"run\" /></tr>\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t<xsl:apply-templates  select=\"cs:SASsample\" />\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t<xsl:apply-templates  select=\"cs:SASinstrument\" />\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t<xsl:apply-templates  select=\"cs:SASprocess\" />\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t<xsl:apply-templates  select=\"cs:SASnote\" />\r"
+//	Notebook $nb text="\t\t\t\t\t\t</table>\r"
+//	Notebook $nb text="\t\t\t\t\t</td>\r"
+//	Notebook $nb text="\t\t\t\t</tr>\r"
+//	Notebook $nb text="\t\t\t</table>\r"
+//	Notebook $nb text="\t\t</xsl:for-each>\r"
+//	Notebook $nb text="\t</xsl:template>\r"
+//	Notebook $nb text="\r"
+//	Notebook $nb text="\t<xsl:template match=\"cs:SASdata\">\r"
+//	Notebook $nb text="\t\t<a id=\"#SASdata-{generate-id(.)}\"  name=\"#SASdata-{generate-id(.)}\" />\r"
+//	Notebook $nb text="\t\t<table border=\"2\">\r"
+//	Notebook $nb text="\t\t\t<caption>\r"
+//	Notebook $nb text="\t\t\t\t<xsl:if test=\"@name!=''\">\r"
+//	Notebook $nb text="\t\t\t\t\t<xsl:value-of select=\"@name\" />\r"
+//	Notebook $nb text="\t\t\t\t</xsl:if>\r"
+//	Notebook $nb text="\t\t\t\t(<xsl:value-of select=\"count(cs:Idata)\" /> points)\r"
+//	Notebook $nb text="\t\t\t</caption>\r"
+//	Notebook $nb text="\t\t\t<tr bgcolor=\"lavender\">\r"
+//	Notebook $nb text="\t\t\t\t<xsl:for-each select=\"cs:Idata[1]/*\">\r"
+//	Notebook $nb text="\t\t\t\t\t<th>\r"
+//	Notebook $nb text="\t\t\t\t\t\t<xsl:value-of select=\"name()\" /> \r"
+//	Notebook $nb text="\t\t\t\t\t\t<xsl:if test=\"@unit!=''\">\r"
+//	Notebook $nb text="\t\t\t\t\t\t\t(<xsl:value-of select=\"@unit\" />)\r"
+//	Notebook $nb text="\t\t\t\t\t\t</xsl:if>\r"
+//	Notebook $nb text="\t\t\t\t\t</th>\r"
+//	Notebook $nb text="\t\t\t\t</xsl:for-each>\r"
+//	Notebook $nb text="\t\t\t</tr>\r"
+//	Notebook $nb text="\t\t\t<xsl:for-each select=\"cs:Idata\">\r"
+//	Notebook $nb text="\t\t\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t\t\t<xsl:for-each select=\"*\">\r"
+//	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t\t</xsl:for-each>\r"
+//	Notebook $nb text="\t\t\t\t</tr>\r"
+//	Notebook $nb text="\t\t\t</xsl:for-each>\r"
+//	Notebook $nb text="\t\t</table>\r"
+//	Notebook $nb text="\t</xsl:template>\r"
+//	Notebook $nb text="\r"
+//	Notebook $nb text="\t<xsl:template match=\"cs:SASsample\">\r"
+//	Notebook $nb text="\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t<td>SASsample</td>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@name\" /></td>\r"
+//	Notebook $nb text="\t\t\t<td />\r"
+//	Notebook $nb text="\t\t</tr>\r"
+//	Notebook $nb text="\t\t<xsl:for-each select=\"*\">\r"
+//	Notebook $nb text="\t\t\t<xsl:choose>\r"
+//	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='position'\">\r"
+//	Notebook $nb text="\t\t\t\t\t<xsl:apply-templates select=\".\" />\r"
+//	Notebook $nb text="\t\t\t\t</xsl:when>\r"
+//	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='orientation'\">\r"
+//	Notebook $nb text="\t\t\t\t\t<xsl:apply-templates select=\".\" />\r"
+//	Notebook $nb text="\t\t\t\t</xsl:when>\r"
+//	Notebook $nb text="\t\t\t\t<xsl:otherwise>\r"
+//	Notebook $nb text="\t\t\t\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"name()\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\"@unit\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t\t</tr>\r"
+//	Notebook $nb text="\t\t\t\t</xsl:otherwise>\r"
+//	Notebook $nb text="\t\t\t</xsl:choose>\r"
+//	Notebook $nb text="\t\t</xsl:for-each>\r"
+//	Notebook $nb text="\t</xsl:template>\r"
+//	Notebook $nb text="\r"
+//	Notebook $nb text="\t<xsl:template match=\"cs:SASinstrument\">\r"
+//	Notebook $nb text="\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t<td>SASinstrument</td>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"cs:name\" /></td>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@name\" /></td>\r"
+//	Notebook $nb text="\t\t</tr>\r"
+//	Notebook $nb text="\t\t<xsl:for-each select=\"*\">\r"
+//	Notebook $nb text="\t\t\t<xsl:choose>\r"
+//	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='SASsource'\"><xsl:apply-templates select=\".\" /></xsl:when>\r"
+//	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='SAScollimation'\"><xsl:apply-templates select=\".\" /></xsl:when>\r"
+//	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='SASdetector'\"><xsl:apply-templates select=\".\" /></xsl:when>\r"
+//	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='name'\" />\r"
+//	Notebook $nb text="\t\t\t\t<xsl:otherwise>\r"
+//	Notebook $nb text="\t\t\t\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"name()\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\"@unit\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t\t</tr>\r"
+//	Notebook $nb text="\t\t\t\t</xsl:otherwise>\r"
+//	Notebook $nb text="\t\t\t</xsl:choose>\r"
+//	Notebook $nb text="\t\t</xsl:for-each>\r"
+//	Notebook $nb text="\t</xsl:template>\r"
+//	Notebook $nb text="\r"
+//	Notebook $nb text="\t<xsl:template match=\"cs:SASsource\">\r"
+//	Notebook $nb text="\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"name()\" /></td>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@name\" /></td>\r"
+//	Notebook $nb text="\t\t\t<td />\r"
+//	Notebook $nb text="\t\t</tr>\r"
+//	Notebook $nb text="\t\t<xsl:for-each select=\"*\">\r"
+//	Notebook $nb text="\t\t\t<xsl:choose>\r"
+//	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='beam_size'\"><xsl:apply-templates select=\".\" /></xsl:when>\r"
+//	Notebook $nb text="\t\t\t\t<xsl:otherwise>\r"
+//	Notebook $nb text="\t\t\t\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"name()\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\"@unit\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t\t</tr>\r"
+//	Notebook $nb text="\t\t\t\t</xsl:otherwise>\r"
+//	Notebook $nb text="\t\t\t</xsl:choose>\r"
+//	Notebook $nb text="\t\t</xsl:for-each>\r"
+//	Notebook $nb text="\t</xsl:template>\r"
+//	Notebook $nb text="\r"
+//	Notebook $nb text="\t<xsl:template match=\"cs:beam_size\">\r"
+//	Notebook $nb text="\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"name()\" /></td>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@name\" /></td>\r"
+//	Notebook $nb text="\t\t\t<td />\r"
+//	Notebook $nb text="\t\t</tr>\r"
+//	Notebook $nb text="\t\t<xsl:for-each select=\"*\">\r"
+//	Notebook $nb text="\t\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\"name(../..)\" />_<xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"n"
+//	Notebook $nb text="ame()\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\"@unit\" /></td>\r"
+//	Notebook $nb text="\t\t\t</tr>\r"
+//	Notebook $nb text="\t\t</xsl:for-each>\r"
+//	Notebook $nb text="\t</xsl:template>\r"
+//	Notebook $nb text="\r"
+//	Notebook $nb text="\t<xsl:template match=\"cs:SAScollimation\">\r"
+//	Notebook $nb text="\t\t<xsl:for-each select=\"*\">\r"
+//	Notebook $nb text="\t\t\t<xsl:choose>\r"
+//	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='aperture'\"><xsl:apply-templates select=\".\" /></xsl:when>\r"
+//	Notebook $nb text="\t\t\t\t<xsl:otherwise>\r"
+//	Notebook $nb text="\t\t\t\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"name()\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\"@unit\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t\t</tr>\r"
+//	Notebook $nb text="\t\t\t\t</xsl:otherwise>\r"
+//	Notebook $nb text="\t\t\t</xsl:choose>\r"
+//	Notebook $nb text="\t\t</xsl:for-each>\r"
+//	Notebook $nb text="\t</xsl:template>\r"
+//	Notebook $nb text="\r"
+//	Notebook $nb text="\t<xsl:template match=\"cs:aperture\">\r"
+//	Notebook $nb text="\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"name()\" /></td>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@name\" /></td>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@type\" /></td>\r"
+//	Notebook $nb text="\t\t</tr>\r"
+//	Notebook $nb text="\t\t<xsl:for-each select=\"*\">\r"
+//	Notebook $nb text="\t\t\t<xsl:choose>\r"
+//	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='size'\"><xsl:apply-templates select=\".\" /></xsl:when>\r"
+//	Notebook $nb text="\t\t\t\t<xsl:otherwise>\r"
+//	Notebook $nb text="\t\t\t\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\"name(../..)\" />_<xsl:value-of select=\"name(..)\" />_<xsl:value-of select="
+//	Notebook $nb text="\"name()\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\"@unit\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t\t</tr>\r"
+//	Notebook $nb text="\t\t\t\t</xsl:otherwise>\r"
+//	Notebook $nb text="\t\t\t</xsl:choose>\r"
+//	Notebook $nb text="\t\t</xsl:for-each>\r"
+//	Notebook $nb text="\t</xsl:template>\r"
+//	Notebook $nb text="\r"
+//	Notebook $nb text="\t<xsl:template match=\"cs:size\">\r"
+//	Notebook $nb text="\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"name(../..)\" />_<xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"na"
+//	Notebook $nb text="me()\" /></td>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@name\" /></td>\r"
+//	Notebook $nb text="\t\t\t<td />\r"
+//	Notebook $nb text="\t\t</tr>\r"
+//	Notebook $nb text="\t\t<xsl:for-each select=\"*\">\r"
+//	Notebook $nb text="\t\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\"name(../../..)\" />_<xsl:value-of select=\"name(../..)\" />_<xsl:value-of sel"
+//	Notebook $nb text="ect=\"name(..)\" />_<xsl:value-of select=\"name()\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\"@unit\" /></td>\r"
+//	Notebook $nb text="\t\t\t</tr>\r"
+//	Notebook $nb text="\t\t</xsl:for-each>\r"
+//	Notebook $nb text="\t</xsl:template>\r"
+//	Notebook $nb text="\r"
+//	Notebook $nb text="\t<xsl:template match=\"cs:SASdetector\">\r"
+//	Notebook $nb text="\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"name()\" /></td>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"cs:name\" /></td>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@name\" /></td>\r"
+//	Notebook $nb text="\t\t</tr>\r"
+//	Notebook $nb text="\t\t<xsl:for-each select=\"*\">\r"
+//	Notebook $nb text="\t\t\t<xsl:choose>\r"
+//	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='name'\" />\r"
+//	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='offset'\"><xsl:apply-templates select=\".\" /></xsl:when>\r"
+//	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='orientation'\"><xsl:apply-templates select=\".\" /></xsl:when>\r"
+//	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='beam_center'\"><xsl:apply-templates select=\".\" /></xsl:when>\r"
+//	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='pixel_size'\"><xsl:apply-templates select=\".\" /></xsl:when>\r"
+//	Notebook $nb text="\t\t\t\t<xsl:otherwise>\r"
+//	Notebook $nb text="\t\t\t\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"name()\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\"@unit\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t\t</tr>\r"
+//	Notebook $nb text="\t\t\t\t</xsl:otherwise>\r"
+//	Notebook $nb text="\t\t\t</xsl:choose>\r"
+//	Notebook $nb text="\t\t</xsl:for-each>\r"
+//	Notebook $nb text="\t</xsl:template>\r"
+//	Notebook $nb text="\r"
+//	Notebook $nb text="\t<xsl:template match=\"cs:orientation\">\r"
+//	Notebook $nb text="\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"name()\" /></td>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@name\" /></td>\r"
+//	Notebook $nb text="\t\t\t<td />\r"
+//	Notebook $nb text="\t\t</tr>\r"
+//	Notebook $nb text="\t\t<xsl:for-each select=\"*\">\r"
+//	Notebook $nb text="\t\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\"name(../..)\" />_<xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"n"
+//	Notebook $nb text="ame()\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\"@unit\" /></td>\r"
+//	Notebook $nb text="\t\t\t</tr>\r"
+//	Notebook $nb text="\t\t</xsl:for-each>\r"
+//	Notebook $nb text="\t</xsl:template>\r"
+//	Notebook $nb text="\r"
+//	Notebook $nb text="\t<xsl:template match=\"cs:position\">\r"
+//	Notebook $nb text="\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"name()\" /></td>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@name\" /></td>\r"
+//	Notebook $nb text="\t\t\t<td />\r"
+//	Notebook $nb text="\t\t</tr>\r"
+//	Notebook $nb text="\t\t<xsl:for-each select=\"*\">\r"
+//	Notebook $nb text="\t\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\"name(../..)\" />_<xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"n"
+//	Notebook $nb text="ame()\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\"@unit\" /></td>\r"
+//	Notebook $nb text="\t\t\t</tr>\r"
+//	Notebook $nb text="\t\t</xsl:for-each>\r"
+//	Notebook $nb text="\t</xsl:template>\r"
+//	Notebook $nb text="\r"
+//	Notebook $nb text="\t<xsl:template match=\"cs:offset\">\r"
+//	Notebook $nb text="\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"name()\" /></td>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@name\" /></td>\r"
+//	Notebook $nb text="\t\t\t<td />\r"
+//	Notebook $nb text="\t\t</tr>\r"
+//	Notebook $nb text="\t\t<xsl:for-each select=\"*\">\r"
+//	Notebook $nb text="\t\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\"name(../..)\" />_<xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"n"
+//	Notebook $nb text="ame()\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\"@unit\" /></td>\r"
+//	Notebook $nb text="\t\t\t</tr>\r"
+//	Notebook $nb text="\t\t</xsl:for-each>\r"
+//	Notebook $nb text="\t</xsl:template>\r"
+//	Notebook $nb text="\r"
+//	Notebook $nb text="\t<xsl:template match=\"cs:beam_center\">\r"
+//	Notebook $nb text="\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"name()\" /></td>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@name\" /></td>\r"
+//	Notebook $nb text="\t\t\t<td />\r"
+//	Notebook $nb text="\t\t</tr>\r"
+//	Notebook $nb text="\t\t<xsl:for-each select=\"*\">\r"
+//	Notebook $nb text="\t\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\"name(../..)\" />_<xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"n"
+//	Notebook $nb text="ame()\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\"@unit\" /></td>\r"
+//	Notebook $nb text="\t\t\t</tr>\r"
+//	Notebook $nb text="\t\t</xsl:for-each>\r"
+//	Notebook $nb text="\t</xsl:template>\r"
+//	Notebook $nb text="\r"
+//	Notebook $nb text="\t<xsl:template match=\"cs:pixel_size\">\r"
+//	Notebook $nb text="\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"name()\" /></td>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@name\" /></td>\r"
+//	Notebook $nb text="\t\t\t<td />\r"
+//	Notebook $nb text="\t\t</tr>\r"
+//	Notebook $nb text="\t\t<xsl:for-each select=\"*\">\r"
+//	Notebook $nb text="\t\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\"name(../..)\" />_<xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"n"
+//	Notebook $nb text="ame()\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\"@unit\" /></td>\r"
+//	Notebook $nb text="\t\t\t</tr>\r"
+//	Notebook $nb text="\t\t</xsl:for-each>\r"
+//	Notebook $nb text="\t</xsl:template>\r"
+//	Notebook $nb text="\r"
+//	Notebook $nb text="\t<xsl:template match=\"cs:term\">\r"
+//	Notebook $nb text="\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@name\" /></td>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@unit\" /></td>\r"
+//	Notebook $nb text="\t\t</tr>\r"
+//	Notebook $nb text="\t</xsl:template>\r"
+//	Notebook $nb text="\r"
+//	Notebook $nb text="\t<xsl:template match=\"cs:SASprocessnote\">\r"
+//	Notebook $nb text="\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"name()\" /></td>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@name\" /></td>\r"
+//	Notebook $nb text="\t\t</tr>\r"
+//	Notebook $nb text="\t</xsl:template>\r"
+//	Notebook $nb text="\r"
+//	Notebook $nb text="\t<xsl:template match=\"cs:SASprocess\">\r"
+//	Notebook $nb text="\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"name()\" /></td>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"cs:name\" /></td>\r"
+//	Notebook $nb text="\t\t\t<td><xsl:value-of select=\"@name\" /></td>\r"
+//	Notebook $nb text="\t\t</tr>\r"
+//	Notebook $nb text="\t\t<xsl:for-each select=\"*\">\r"
+//	Notebook $nb text="\t\t\t<xsl:choose>\r"
+//	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='name'\" />\r"
+//	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='term'\"><xsl:apply-templates select=\".\" /></xsl:when>\r"
+//	Notebook $nb text="\t\t\t\t<xsl:when test=\"name()='SASprocessnote'\"><xsl:apply-templates select=\".\" /></xsl:when>\r"
+//	Notebook $nb text="\t\t\t\t<xsl:otherwise>\r"
+//	Notebook $nb text="\t\t\t\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\"name(..)\" />_<xsl:value-of select=\"name()\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t\t\t<td />\r"
+//	Notebook $nb text="\t\t\t\t\t</tr>\r"
+//	Notebook $nb text="\t\t\t\t</xsl:otherwise>\r"
+//	Notebook $nb text="\t\t\t</xsl:choose>\r"
+//	Notebook $nb text="\t\t</xsl:for-each>\r"
+//	Notebook $nb text="\t</xsl:template>\r"
+//	Notebook $nb text="\r"
+//	Notebook $nb text="\t<xsl:template match=\"cs:SASnote\">\r"
+//	Notebook $nb text="\t\t<xsl:if test=\"@name!=''\">\r"
+//	Notebook $nb text="\t\t\t<tr>\r"
+//	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\"name()\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\".\" /></td>\r"
+//	Notebook $nb text="\t\t\t\t<td><xsl:value-of select=\"@name\" /></td>\r"
+//	Notebook $nb text="\t\t\t</tr>\r"
+//	Notebook $nb text="\t\t</xsl:if>\r"
+//	Notebook $nb text="\t</xsl:template>\r"
+//	Notebook $nb text="\r"
+//	Notebook $nb text="</xsl:stylesheet>\r"
+//end
+//FUNCTION/s IN2_specMotors(rawPath)
+//	STRING rawPath
+//	STRING result = "", value
+//	STRING pwd = GetDataFolder(1)
+//
+//	SetDataFolder rawPath
+//	SVAR specMotors
+//	result = specMotors
+//	SetDataFolder pwd
+//	RETURN (result)
+//END
+//
+//FUNCTION IN2_rawMetadata2List(rawPath)
+//	STRING rawPath
+//	STRING result = ""
+//	STRING pwd = GetDataFolder(1)
+//	WAVE/T metadata
+//
+//	SetDataFolder rawPath
+//	SVAR specCommand, timeWritten, specComment, specValues, specMotors, EPICS_PVs
+//	SVAR xAxisName, yAxisName, SpecSourceFileName, DataTransferredto
+//	result = ReplaceStringByKey("specCommand", result, specCommand, "=", ";")
+//	result = ReplaceStringByKey("timeWritten", result, timeWritten, "=", ";")
+//	result = ReplaceStringByKey("specComment", result, specComment, "=", ";")
+//	result = ReplaceStringByKey("xAxisName", result, xAxisName, "=", ";")
+//	result = ReplaceStringByKey("yAxisName", result, yAxisName, "=", ";")
+//	result = ReplaceStringByKey("SpecSourceFileName", result, SpecSourceFileName, "=", ";")
+//	result = ReplaceStringByKey("DataTransferredto", result, DataTransferredto, "=", ";")
+//
+//	Redimension/N=(DimSize(metadata, 0)+1, DimSize(metadata, 1)) metadata
+//	metadata[Inf][0] = "raw"
+//	metadata[Inf][1] = result
+//
+//	Redimension/N=(DimSize(metadata, 0)+1, DimSize(metadata, 1)) metadata
+//	metadata[Inf][0] = "specValues"
+//	metadata[Inf][1] = In2_listConvert(specValues)
+//
+//	Redimension/N=(DimSize(metadata, 0)+1, DimSize(metadata, 1)) metadata
+//	metadata[Inf][0] = "specMotors"
+//	metadata[Inf][1] = In2_listConvert(specMotors)
+//
+//	Redimension/N=(DimSize(metadata, 0)+1, DimSize(metadata, 1)) metadata
+//	metadata[Inf][0] = "EPICS_PVs"
+//	metadata[Inf][1] = In2_listConvert(EPICS_PVs)
+//
+//	SetDataFolder pwd
+//END
+//
+//FUNCTION IN2_metadata2XML(fileID, parent, index, section, node, theList)
+//	VARIABLE fileID, index
+//	STRING parent, section, node, theList
+//	STRING theItem, theKey, theValue
+//	VARIABLE i, pos
+//
+//#if Exists("XMLaddNode")==3
+//	XMLaddNode(fileID, parent, "", node, "", 1)
+//	parent += "/"+node+"[" + num2str(index) + "]"
+//	XMLsetAttr(fileID,	parent, "", "name", section)
+//
+//	FOR ( i = 0; i < ItemsInList(theList) ; i += 1 )
+//		theItem = StringFromList(i, theList)					// walk through all items
+//		pos = strsearch(theItem, "=", 0)
+//		theKey = theItem[0,pos-1]
+//		theValue = theItem[pos+1,Inf]
+//		IF (strlen(theValue))
+//			XMLaddNode(fileID, parent, "", theKey, theValue, 1)
+//		ENDIF
+//	ENDFOR
+//#else
+//		Abort "XML xop not installed, this feature is not available. Use one of the installers and install the xop support before using this feature."
+//#endif
+//END
+//
+//static FUNCTION/S IN2_listConvert(rawList)
+//	STRING rawList
+//	VARIABLE i, pos
+//	STRING result = "", item, key, value
+//	FOR ( i = 0; i < ItemsInList(rawList) ; i += 1 )		// walk through all items
+//		item = StringFromList(i, rawList)					// walk through all items
+//		pos = strsearch(item, ":", 0)
+//		key = item[0,pos-1]
+//		value = item[pos+1,Inf]
+//		result = ReplaceStringByKey(key, result, value, "=", ";")
+//	ENDFOR
+//	RETURN (result)
+//END
+//
+//

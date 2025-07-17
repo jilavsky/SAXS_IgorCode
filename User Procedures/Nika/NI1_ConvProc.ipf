@@ -3431,8 +3431,8 @@ End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
-Function NI1A_LoadEmptyOrDark(EmptyOrDark)
-	string EmptyOrDark
+Function NI1A_LoadEmptyOrDark(EmptyOrDark,[EmptyFileName])
+	string EmptyOrDark, EmptyFileName
 	//check the parameters for conversion
 	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf = getDataFolder(1)
@@ -3458,6 +3458,12 @@ Function NI1A_LoadEmptyOrDark(EmptyOrDark)
 	SVAR CurrentDarkFieldName
 	SVAR CurrentPixSensFile
 	string FileNameToLoad = ListOf2DEmptyData[selection]
+	if(ParamIsDefault(EmptyFileName))
+		FileNameToLoad = ListOf2DEmptyData[selection]
+	else
+		FileNameToLoad = EmptyFileName
+	endif
+	
 	string NewWaveName
 	if(numtype(strlen(FileNameToLoad)) != 0) //abort if user did not select anything in the box
 		abort

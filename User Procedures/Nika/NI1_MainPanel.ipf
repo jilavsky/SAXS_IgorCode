@@ -1330,6 +1330,8 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 		DataFolderNameL = "root:SAS"
 		LongUseName     = "root:SAS:" + possiblyQuoteName(UseName)
 	endif
+
+	string/g LastProcessedDataSetFolder = LongUseName
 	//split for code for line profile and sectors...
 	if(stringmatch(CurOrient, "*LP*")) //Line profile code goes here...***************
 		//this seems to fail in cases when too much of the detector is covered by NaNs (masked).
@@ -1493,6 +1495,8 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 				endif
 			endif
 			NewDataFolder/S/O $(LongUseName)
+			LastProcessedDataSetFolder = LongUseName
+			//print LongUseName
 			string/G UserSampleName = OriginalUserName
 			if(UseQvector)
 				Duplicate/O Intensity, $("r_" + UseName)

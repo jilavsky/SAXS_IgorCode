@@ -128,16 +128,16 @@ Proc LoadUSAXSAndIrena()
 	Execute/P("LoadIrenaSASMacros()")
 end
 Proc LoadUSAXSIrenaandNika()
+	Execute/P("LoadNika2DSASMacros()")
 	Execute/P("LoadUSAXSMacros()")
 	Execute/P("LoadIrenaSASMacros()")
-	Execute/P("LoadNika2DSASMacros()")
 end
 
 Function LoadUSAXSMacros()
 	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))>=8.03)
 		Execute/P "INSERTINCLUDE \"IN2_Load Indra 2\""
 		Execute/P "COMPILEPROCEDURES "
-		Execute/P "IN2N_CreateShowNtbkForLogging(0)"
+		//Execute/P "IN2N_CreateShowNtbkForLogging(0)"
 		Execute/P "ionChamberInitPackage()"
 		NewDataFolder/O root:Packages			//create the folder for string variable
 		string/g root:Packages:USAXSItem1Str

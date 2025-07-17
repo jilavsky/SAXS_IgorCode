@@ -1,8 +1,8 @@
-#pragma rtFunctionErrors=1
-#pragma TextEncoding="UTF-8"
-#pragma rtGlobals=3 // Use modern global access method.
-  
-#pragma version=1.1
+#pragma rtFunctionErrors = 1
+#pragma TextEncoding     = "UTF-8"
+#pragma rtGlobals        = 3 // Use modern global access method.
+
+#pragma version = 1.1
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2025, Argonne National Laboratory

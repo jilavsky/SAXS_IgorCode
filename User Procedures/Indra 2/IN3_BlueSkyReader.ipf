@@ -1,8 +1,8 @@
-#pragma rtFunctionErrors=1
-#pragma TextEncoding="UTF-8"
-#pragma rtGlobals=3 // Use modern global access method and strict wave access
-#pragma DefaultTab={3, 20, 4} // Set default tab width in Igor Pro 9 and later
-#pragma version=1.06
+#pragma rtFunctionErrors = 1
+#pragma TextEncoding     = "UTF-8"
+#pragma rtGlobals        = 3          // Use modern global access method and strict wave access
+#pragma DefaultTab       = {3, 20, 4} // Set default tab width in Igor Pro 9 and later
+#pragma version          = 1.06
 
 //this is available ONLY, if JSONXOP is installed and json_functions.ipf is in User Procedures.
 #if (exists("JSONXOP_GetValue") == 4)
@@ -360,6 +360,7 @@ Function IN3BS_ListBoxMenuProc(STRUCT WMListboxAction &lba) : ListBoxControl
 
 	return 0
 End
+
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
@@ -378,6 +379,7 @@ Function IR3BS_ImportSelected(variable PlotAll)
 		IN2G_LegendTopGrphFldr(12, 20, 1, 0)
 	endif
 End
+
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
@@ -669,6 +671,7 @@ Function IR3BS_ButtonProc(STRUCT WMButtonAction &ba) : ButtonControl
 	endswitch
 	return 0
 End
+
 //**********************************************************************************************************
 //**********************************************************************************************************
 //************************************************************************************************************
@@ -1262,6 +1265,7 @@ Function IR3BS_UdateListBoxScans()
 	SelectionOfAvailableData = 0
 
 End
+
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************

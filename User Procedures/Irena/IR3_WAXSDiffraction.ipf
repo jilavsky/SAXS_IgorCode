@@ -181,8 +181,13 @@ Function IR3W_WAXSPanelFunction()
 	Button MultiPeakRecordFit,help={"Record current MPF2 resultsc for data with Multipeak 2.0."}
 	Button MultiPeakFitRange,pos={279.00,395.00},size={250.00,20.00},proc=IR3W_WAXSButtonProc,title="Fit + Record Range of data"
 	Button MultiPeakFitRange,help={"Fit Range fo data with Multipeak 2.0."}
+	Checkbox RunHookFunctionBeforeFit, pos={290,420},size={76,14},title="Reset before fit?", noproc, variable=root:Packages:Irena:WAXS:RunHookFunctionBeforeFit
+
+
 	Button MultiPeakPlotTool,pos={308.00,489.00},size={200.00,20.00},proc=IR3W_WAXSButtonProc,title="Plot/Evaluate results"
 	Button MultiPeakPlotTool,help={"Evaluate results from Multipeak 2.0."}
+
+
 
 	Button MPF2_DoFitButton,pos={302.00,270.00},size={194.00,16.00},proc=IR3W_WAXSButtonProc,title="Do MPF2 Fit"
 	Button MPF2_DoFitButton,fSize=10,fStyle=1,fColor=(32768,32770,65535)
@@ -258,6 +263,7 @@ Function IR3W_PDF4TabProc(tca) : TabControl
 				Button MultiPeakRecordFit,win=IR3W_WAXSPanel, disable=(tab!=0 || !DisplayFitBtns)
 				Button MultiPeakFitRange,win=IR3W_WAXSPanel, disable=(tab!=0 || !DisplayFitBtns)
 				Button MultiPeakPlotTool,win=IR3W_WAXSPanel, disable=(tab!=0)
+				Checkbox RunHookFunctionBeforeFit,win=IR3W_WAXSPanel, disable=(tab!=0 || !DisplayFitBtns)
 				Button MPF2_DoFitButton,win=IR3W_WAXSPanel, disable=(tab!=0 || !DisplayFitBtns)
 				TitleBox Info3,fSize=12,win=IR3W_WAXSPanel, disable=(tab!=0 || !DisplayFitBtns)
 				TitleBox Info4,fSize=12,win=IR3W_WAXSPanel, disable=(tab!=0 || !DisplayFitBtns)
@@ -362,7 +368,7 @@ Function IR3W_InitWAXS()
 	ListOfVariables+="DisplayDataBackground;"
 	ListOfVariables+="DisplayUncertainties;DataTTHEnd;DataTTHstart;MPF2CurrentFolderNumber;"
 	ListOfVariables+="ProcessManually;ProcessSequentially;OverwriteExistingData;AutosaveAfterProcessing;"
-	ListOfVariables+="Energy;Wavelength;"
+	ListOfVariables+="Energy;Wavelength;RunHookFunctionBeforeFit;"
 	ListOfVariables+="PDF4_DisplayHKLTags;DistanceCorrection;"
 
 	//and here we create them
@@ -1495,6 +1501,10 @@ Function IR3W_WAXSButtonProc(ba) : ButtonControl
 				s.eventCode = 2
 				s.ctrlName="MPF2_DoFitButton"
 				s.win  ="IR3W_WAXSMainGraph#MultiPeak2Panel#P2"
+				NVAR RunHookFunctionBeforeFit = root:Packages:Irena:WAXS:RunHookFunctionBeforeFit
+				if(RunHookFunctionBeforeFit)
+					IR3W_HookFunction()
+				endif
 				MPF2_DoFitButtonProc(s)
 			endif
 			if(stringmatch(ba.ctrlname,"MPF2PlotPeakGraph"))
@@ -1549,6 +1559,17 @@ Function IR3W_WAXSButtonProc(ba) : ButtonControl
 End
 //**************************************************************************************
 //**************************************************************************************
+
+Function IR3W_HookFunction()
+	//this reverts fit before running next one, used to reset to guess when running multipel fits. 
+	//If needed, copy this function to main procedure file and use override to creted coipy which will override this behavior. 
+	STRUCT WMButtonAction s
+	s.eventCode = 2
+	s.ctrlName="MPF2_DoFitButton"
+	s.win  ="IR3W_WAXSMainGraph#MultiPeak2Panel#P2"
+		//MPF2_AutoLocatePeaksButtonProc(s)
+	MPF2_RevertToPreviousButtonProc(s)
+end
 //**************************************************************************************
 //**************************************************************************************
 //**************************************************************************************
@@ -1943,6 +1964,10 @@ static Function IR3W_DoMultiPeak2Fits()
 		s.ctrlName="MPF2_DoFitButton"
 		s.win="IR3W_WAXSMainGraph#MultiPeak2Panel#P2"
 		s.eventCode=2
+		NVAR RunHookFunctionBeforeFit = root:Packages:Irena:WAXS:RunHookFunctionBeforeFit
+		if(RunHookFunctionBeforeFit)
+			IR3W_HookFunction()
+		endif
 		MPF2_DoFitButtonProc(s)
 end
 //**********************************************************************************************************
