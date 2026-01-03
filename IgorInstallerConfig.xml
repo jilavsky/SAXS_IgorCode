@@ -17,7 +17,7 @@
 			<Package>xop64bit</Package>
 		</KnownPackages>
 		<current_release>July2025</current_release>
-		<current_beta_release></current_beta_release>
+		<current_beta_release>January2026beta</current_beta_release>
 	</VersionCheck>
 
 
@@ -158,31 +158,25 @@
 			</Package>
 			<VersionComment>September 2020. Requires Igor 8.03 or higher.</VersionComment>
 		</release>
-		<release name="March2025Beta" beta="true">
-			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/refs/tags/March2025Beta.zip</SourceFileAddress>
+		<release name="January2026beta" beta="true">
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/refs/tags/January2026beta.zip</SourceFileAddress>
 			<Package>
 				<name>Irena</name>
-				<version>2.74</version>
+				<version>2.75</version>
 				<PackageList>IrenaPckg.xml</PackageList>
 				<VersionCheckFile>Boot Irena1 modeling.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>Nika</name>
-				<version>1.86</version>
+				<version>1.87</version>
 				<PackageList>NikaPckg.xml</PackageList>
 				<VersionCheckFile>Boot Nika.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>Indra</name>
-				<version>2.01</version>
+				<version>2.05</version>
 				<PackageList>IndraPckg.xml</PackageList>
 				<VersionCheckFile>Boot Indra2.ipf</VersionCheckFile>
-			</Package>
-			<Package>
-				<name>xop32bit</name>
-				<version>1</version>
-				<PackageList>xopPckg32.xml</PackageList>
-				<VersionCheckFile>IrenaNikaXop32Ver.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>xop64bit</name>
@@ -190,7 +184,7 @@
 				<PackageList>xopPckg64.xml</PackageList>
 				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
 			</Package>
-			<VersionComment>Beta release March 2025. Fixes for 12IDE USAXS operations.</VersionComment>
+			<VersionComment>Beta release January 2026. Major internal code revision. New import tool for 12IDE USAXS Matilda data.</VersionComment>
 		</release>
 	</InstallerConfig>
 </IgorInstaller>
