@@ -1,8 +1,8 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 2.74
+#pragma version = 2.75
 #pragma IgorVersion=9.04
 
-
+//2.75		January2026 release. Cleanup code and support new USAXS import tools. 
 //2.74 	June 2025 release, Minor release to capture minor changes related to new USAXS 12IDE instrument, bug release. 
 //2.73   Added Ellipsoid Cylinder support
 //2.72		July2023 release

@@ -1,7 +1,8 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 2.02
+#pragma version = 2.05
 #pragma IgorVersion=9.04
 
+//2.05 	January 2026 BETA release. Add USAXS import tool for Mtilda. 
 //2.02 	June 2025 release,  Fixes for new 12IDE USAXS instrument operations, tested with IP10Beta
 //2.01		Beta release, Changes for 12IDE USAXS/SAXS/WAXS. WIP//2.00		July2023 release
 //1.99   October2021 release

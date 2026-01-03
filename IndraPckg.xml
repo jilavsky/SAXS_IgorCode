@@ -28,6 +28,9 @@
 		<File>User Procedures/Indra 2/IN3_SamplePlate.ipf</File>
 		<File>User Procedures/Indra 2/IN3_BlueSkyReader.ipf</File>
 		<File>User Procedures/Indra 2/IN3_CalcScattering.ipf</File>
+		<File>User Procedures/Indra 2/IN4_MainCode.ipf</File>
+		<File>User Procedures/Indra 2/IN4_Calculations.ipf</File>
+		<File>User Procedures/Indra 2/IN4_SupportCode.ipf</File>
 		<File>User Procedures/Indra 2/Indra 2 test.pxp</File>
 		<File>User Procedures/Indra 2/IonChamber3.3.ipf</File>
 		<File>User Procedures/Indra 2/Readme.txt</File>
