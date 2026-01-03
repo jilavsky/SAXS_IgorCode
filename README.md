@@ -1,7 +1,9 @@
 # SAXS_IgorCode
 Irena, Nika, and Indra SAXS Igor code by Jan Ilavsky for Igor Pro 8.04 and higher. Irena is package for SAXS and SANS data analysis. Nika is package for 2D -> 1D  data reduction for SAXS and WAXS (powder diffraction). Indra is package for USAXS (specifically Bonse-Hart APS and some desktop devices) data reduction.  
 
-**The current stable release version is July 2025. This version is for Igor Pro 8.04, 9.02+, and 10(Beta)** 
+**The current stable release version is July 2025. This version is for Igor Pro 8.04, 9.02+, and 10.x**
+
+**The current BETA release is January 2026 beta. SUpports Igor 9.05 and 10.x** 
 
 
 **This code can be installed using Igor installer** from https://github.com/jilavsky/SAXS_IgorInstaller/tree/master/Igor_GitHub If you want to install one or more packages from here, download the latest version of 
