@@ -3,7 +3,7 @@
 #pragma version=1.00
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
@@ -602,8 +602,7 @@ End
 //******************************************************************************************************************************************************
 static Function IR3N_InitAnisotropicSystems()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFREF oldDf = GetDataFolderDFR()
+ 	DFREF oldDf = GetDataFolderDFR()
 
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:AnisotropicSystems
@@ -632,14 +631,16 @@ static Function IR3N_InitAnisotropicSystems()
 End
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-static Function IR3N_HOP(R_sam, Az_sam) //original provided code... Can bve tested
+static Function IR3N_HOP(R_sam, Az_sam) 
+	WAVE R_sam, Az_sam 
+	//input the output of Irena Line tool using ellipse w/ AR set to 1
+	//original provided code... Can be tested
 	//Calculates Hermans Orientation Parameter
 	//P. C. van der Heijden, L. Rubatat, O. Diat, Macromolecules 2004, 37, 5327.
 	//Check L.E. Alexander, R.J. Roe, etc.
 	//ASSUMES INPUT ANGLE DATA IS IN DEGREES
 	//Integration from 0 to pi/2 input directly in AreaXY command
 
-	WAVE R_sam, Az_sam //input the output of Irena Line tool using ellipse w/ AR set to 1
 	variable Ang_start, AngR_start //starting angle for integration
 	Duplicate/O Az_sam, AzR_sam //Aziumthal angle data in radians
 	variable HOP //Hermans orientation parameter final value

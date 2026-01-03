@@ -4,7 +4,7 @@
 #pragma version=0.3
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratorys
+//* Copyright (c) 2005 - 2026, Argonne National Laboratorys
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -76,8 +76,7 @@ end
 ////************************************************************************************************************
 ////************************************************************************************************************
 Function IR3F_CylinderPanelFnct()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	PauseUpdate    		// building window...
+ 	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,560,815) as "Cylinder based Models"
 	DoWIndow/C IR3F_CylinderModelsPanel
 	TitleBox MainTitle title="Cylinder Models - Dev!",pos={140,2},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},fSize=22,fColor=(0,0,52224)
@@ -244,8 +243,7 @@ end
 
 static Function IR3F_SetupControlsOnMainpanel()
 	
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	SVAR ModelSelected = root:Packages:Irena:CylinderModels:ModelSelected
+ 	SVAR ModelSelected = root:Packages:Irena:CylinderModels:ModelSelected
 	NVAR UseUnified = root:Packages:Irena:CylinderModels:UseUnified
 	Wave CylPar	 = root:Packages:Irena:CylinderModels:CylPar	
 	//CylParNames = {"Prefactor","Radius","Length","SLD"}
@@ -1453,10 +1451,10 @@ static Function IR3F_FitCSCylinderModel()
 			//check that cursors are actually on hte right wave...
 			//make sure the cursors are on the right waves..
 			if (cmpstr(CsrWave(A, "IR3F_LogLogDataDisplay"),"OriginalDataQWave")!=0)
-				Cursor/P/W=IR3F_LogLogDataDisplay A  OriginalDataIntWave  binarysearch(OriginalDataQWave, CsrXWaveRef(A) [pcsr(A, "IR3F_LogLogDataDisplay")])
+				Cursor/P/W=IR3F_LogLogDataDisplay A , OriginalDataIntWave,  binarysearch(OriginalDataQWave, CsrXWaveRef(A) [pcsr(A, "IR3F_LogLogDataDisplay")])
 			endif
 			if (cmpstr(CsrWave(B, "IR3F_LogLogDataDisplay"),"OriginalDataQWave")!=0)
-				Cursor/P /W=IR3F_LogLogDataDisplay B  OriginalDataIntWave  binarysearch(OriginalDataQWave,CsrXWaveRef(B) [pcsr(B, "IR3F_LogLogDataDisplay")])
+				Cursor/P /W=IR3F_LogLogDataDisplay B , OriginalDataIntWave , binarysearch(OriginalDataQWave,CsrXWaveRef(B) [pcsr(B, "IR3F_LogLogDataDisplay")])
 			endif
 			Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalDataIntWave, FitIntensityWave		
 			Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalDataQWave, FitQvectorWave
@@ -1800,8 +1798,7 @@ End
 static Function IR3F_InitCylinderModels()	
 
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFref oldDf= GetDataFolderDFR()
+ 	DFref oldDf= GetDataFolderDFR()
 	variable i
 		
 	if (!DataFolderExists("root:Packages:Irena:CylinderModels"))		//create folder

@@ -1,13 +1,14 @@
-#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.30
+#pragma rtGlobals=3		// Use modern global access method.
+#pragma version=1.31
 
 Constant IR2SversionNumber=1.30
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.31 changed to Pragma version 3
 //1.30 added ability to save separate ppopulation data in Modeling
 //1.29 fix probem with DSM data folders showing as QRS data folders which caused issues. 
 //1.28 added better regular expression cheat sheet on the panel. 
@@ -1326,13 +1327,13 @@ Function IR2S_FItWithSizes(Uncert)
 			if(StartQ>0)
 				Wave Qwave = root:Packages:Sizes:Q_vecOriginal
 				if(binarysearch(Qwave,StartQ)>=0)
-					Cursor  /P /W=IR1R_SizesInputGraph A  IntensityOriginal binarysearch(Qwave,StartQ)
+					Cursor  /P /W=IR1R_SizesInputGraph A,  IntensityOriginal, binarysearch(Qwave,StartQ)
 				endif	
 			endif
 			if(EndQ>0)
 				Wave Qwave = root:Packages:Sizes:Q_vecOriginal
 				if(binarysearch(Qwave,EndQ)>=0)
-					Cursor  /P /W=IR1R_SizesInputGraph B  IntensityOriginal binarysearch(Qwave,EndQ)	
+					Cursor  /P /W=IR1R_SizesInputGraph B,  IntensityOriginal, binarysearch(Qwave,EndQ)	
 				endif
 			endif
 			//set back user choices ofr errros
@@ -1493,13 +1494,13 @@ Function IR2S_FitWithGuinierPorod()
 			if(StartQ>0)
 				Wave Qwave = root:Packages:Irena:GuinierPorod:OriginalQvector
 				if(binarysearch(Qwave,StartQ)>=0)
-					Cursor  /P /W=IR1_LogLogPlotU A  OriginalIntensity binarysearch(Qwave,StartQ)
+					Cursor  /P /W=IR1_LogLogPlotU A,  OriginalIntensity, binarysearch(Qwave,StartQ)
 				endif	
 			endif
 			if(EndQ>0)
 				Wave Qwave = root:Packages:Irena:GuinierPorod:OriginalQvector
 				if(binarysearch(Qwave,EndQ)>=0)
-					Cursor  /P /W=IR1_LogLogPlotU B  OriginalIntensity binarysearch(Qwave,EndQ)	
+					Cursor  /P /W=IR1_LogLogPlotU B , OriginalIntensity, binarysearch(Qwave,EndQ)	
 				endif
 			endif
 			
@@ -1654,13 +1655,13 @@ Function IR2S_FItWithUnifiedFit()
 			if(StartQ>0)
 				Wave Qwave = root:Packages:Irena_UnifFit:OriginalQvector
 				if(binarysearch(Qwave,StartQ)>=0)
-					Cursor  /P /W=IR1_LogLogPlotU A  OriginalIntensity binarysearch(Qwave,StartQ)
+					Cursor  /P /W=IR1_LogLogPlotU A,  OriginalIntensity, binarysearch(Qwave,StartQ)
 				endif	
 			endif
 			if(EndQ>0)
 				Wave Qwave = root:Packages:Irena_UnifFit:OriginalQvector
 				if(binarysearch(Qwave,EndQ)>=0)
-					Cursor  /P /W=IR1_LogLogPlotU B  OriginalIntensity binarysearch(Qwave,EndQ)	
+					Cursor  /P /W=IR1_LogLogPlotU B,  OriginalIntensity, binarysearch(Qwave,EndQ)	
 				endif
 			endif
 			

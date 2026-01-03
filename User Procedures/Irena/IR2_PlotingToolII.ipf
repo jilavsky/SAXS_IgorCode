@@ -1,16 +1,17 @@
 #pragma TextEncoding = "UTF-8"
-#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.10
+#pragma rtGlobals=3		// Use modern global access method.
+#pragma version=1.11
 
 constant IR1D_DWSversionNumber = 1.00			//Data plotting II version 
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.1		merged the two DWS ipf files together. 
+//1.11 changed to pragma globals 3
+//1.1 merged the two DWS ipf files together. 
 //1.00 modified to have ponel scaling
 
 ///******************************************************************************************
@@ -512,25 +513,30 @@ function IR2D_DWSAttachErrorBars()
 				Errorbars $activetrace OFF;delayUpdate	
 			else
 				if (Stringmatch (activetrace,"M_DSM_int*"))
+					Wave/Z M_DSM_Error
 					if (waveexists(M_DSM_Error))
 						ErrorBars/T=0/L=1.2 $activetrace Y,wave=(M_DSM_Error,M_DSM_Error);DelayUpdate
 					endif
 				elseif (Stringmatch (activetrace,"*DSM_int*"))
+					Wave/Z DSM_Error
 					if (waveexists(DSM_Error))
 						ErrorBars/T=0/L=1.2 $activetrace Y,wave=(DSM_Error,DSM_Error);DelayUpdate
 					endif
 				elseif (Stringmatch (activetrace,"M_SMR_int*"))
+					Wave/Z M_SMR_Error
 					if (waveexists(M_SMR_Error))
 						ErrorBars/T=0/L=1.2 $activetrace Y,wave=(M_SMR_Error,M_SMR_Error);DelayUpdate
 					endif
 				elseif (Stringmatch (activetrace,"*SMR_int*"))
+					Wave/Z SMR_Error
 					if (waveexists(SMR_Error))
 						ErrorBars/T=0/L=1.2 $activetrace Y,wave=(SMR_Error,SMR_Error);DelayUpdate
 					endif
 				elseif (Stringmatch (activetrace,"R*"))
 					ewave="s"+activetrace[1,32]
-					if (waveexists($ewave))
-						ErrorBars/T=0/L=1.2 $activetrace Y,wave=($ewave,$ewave);DelayUpdate
+					Wave/Z tempErr = $(ewave)
+					if (waveexists(tempErr))
+						ErrorBars/T=0/L=1.2 $activetrace Y,wave=(tempErr,tempErr);DelayUpdate
 					endif
 				endif
 			endif
@@ -638,7 +644,8 @@ End
 
 
 static Function IR2D_DWSFindString2num(index,strings,separator)
-	variable index//starts at 0
+	variable index
+	//starts at 0
 	string strings,separator
 	
 	variable pos1=0,pos2=0
@@ -1161,7 +1168,7 @@ Proc IR2D_DWSStdGraph(width,maxY,minY,BW,ylabel,xlabel,modetype,aspect,linewidth
 		Label bottom xlabel
 	endif
 	
-	If ((!maxy==0)&(miny==0))||(!miny==0)&(maxy==0))
+	If(((maxy!=0)&&(miny==0))||(miny!=0)&&(maxy==0))
 		Doalert 0,"If you enter one axis limit, you must enter the other"
 		abort
 	endif

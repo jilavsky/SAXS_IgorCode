@@ -1,13 +1,15 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=2.61
+#pragma version=2.62
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.62 Add check for Nexus (line 997) if the image contains very high points, they will be set to -2. New Eiger2 records the non existent/bad pixels as high value, not -2 as earlier. 
+		//this works with older Nika logic and does not need other code revisions.  
 //2.61 3/24/2024 Added to Dectris detectors Eiger2_500k - 16M. Tested only on 16M, do not have other images for testing. 
 //2.60 fix hdf5 plain file import, 2022-11-06, to handle 1st 2-3D data set in the file, difficult to support more flexible method. 
 //2.59 add ability to flip/rotate image after load to let users tweak image orientation. 
@@ -42,7 +44,7 @@
 //2.31 fixed /NTHR=1 to /NTHR=0
 //2.30 adds EQSANS calibrated data
 //2.29 added Pilatus 3 200k (with dimensions 487,407) 
-//2.28 attempted to add Pilatus cbf format, code is half way through but the example makes no sense and does not work... abandon until proper image is avbaialbel.  
+//2.28 attempted to add Pilatus cbf format, code is half way through but the example makes no sense and does not work... abandon until proper image is available.  
 //2.27 added double clicks to Empty and Dark Listboxes as well as maskListbox on main panel
 //2.26 modified and tested various version of mpa formats. Found internal switch and combined all mpa formats into one. Should work until somone has another format. 
 //2.25 added marCCD (mccd) file format - it is basically tiff file with header, which is not containing much useful information as far as I can figure out... 
@@ -301,7 +303,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 			NewNote+=headerStr
 		endif
 	elseif(cmpstr(FileType,"TPA/XML")==0)
-#if (Exists("XMLopenfile"))
+#if(Exists("XMLopenfile"))
 		FileNameToLoad= FileName
 		if(cmpstr(FileName[strlen(FileName)-4,inf],".xml")!=0)
 			FileNameToLoad= FileName+ ".xml"
@@ -344,7 +346,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 	DoAlert 0, "XML xop is not installed, this feature is not available. Please install xops using latest Installer version or install manually."
 #endif
 	elseif(cmpstr(FileType,".hdf")==0)
-#if (exists("HDF5OpenFile")==4)
+#if(exists("HDF5OpenFile")==4)
 		FileNameToLoad= FileName
 		pathInfo $(PathName)
 		string FullFileName=S_Path+FileName
@@ -830,33 +832,41 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
  	             Redimension/N=(512,1028) Loadedwave0   
  	        elseif(stringmatch(PilatusType,"Eiger1M"))
  	             //Redimension/N=(1062,1028) Loadedwave0
- 	             Redimension/N=(1030,1065) Loadedwave0      	//4-18-2022 based on Decrtis pdf about Eiger det. 
+ 	             Redimension/N=(1030,1065) Loadedwave0      	//4-18-2022 based on Dectris pdf about Eiger det. 
  	        elseif(stringmatch(PilatusType,"Eiger4M"))
  	             //Redimension/N=(2162,2068) Loadedwave0   
- 	             Redimension/N=(2070,2167) Loadedwave0      	//4-18-2022 based on Decrtis pdf about Eiger det. 
+ 	             Redimension/N=(2070,2167) Loadedwave0      	//4-18-2022 based on Dectris pdf about Eiger det. 
  	        elseif(stringmatch(PilatusType,"Eiger9M"))
  	             //Redimension/N=(3262,3108) Loadedwave0   
- 	             Redimension/N=(3110,3269) Loadedwave0      	//4-18-2022 based on Decrtis pdf about Eiger det. 
+ 	             Redimension/N=(3110,3269) Loadedwave0      	//4-18-2022 based on Dectris pdf about Eiger det. 
  	        elseif(stringmatch(PilatusType,"Eiger16M"))
  	            Redimension/N=(4150,4371) Loadedwave0   	//this works for test 16M cbf. Are all images this way? 
  	        elseif(stringmatch(PilatusType,"Eiger2_500k"))			//Eiger2 
  	             Redimension/N=(512,1028) Loadedwave0   
  	        elseif(stringmatch(PilatusType,"Eiger2_1M"))
- 	             Redimension/N=(1028,1062) Loadedwave0      	//3-24-2024 based on Decrtis www about Eiger det. 
+ 	             Redimension/N=(1028,1062) Loadedwave0      	//3-24-2024 based on Dectris www about Eiger det. 
  	        elseif(stringmatch(PilatusType,"Eiger2_4M"))
- 	             Redimension/N=(2068,2162) Loadedwave0      	//3-24-2024 based on Decrtis www about Eiger det. 
+ 	             Redimension/N=(2068,2162) Loadedwave0      	//3-24-2024 based on Dectris www about Eiger det. 
  	        elseif(stringmatch(PilatusType,"Eiger2_9M"))
- 	             Redimension/N=(3108,3262) Loadedwave0      	//3-24-2024 based on Decrtis www about Eiger det. 
+ 	             Redimension/N=(3108,3262) Loadedwave0      	//3-24-2024 based on Dectris www about Eiger det. 
  	        elseif(stringmatch(PilatusType,"Eiger2_16M"))
- 	            Redimension/N=(4148,4362) Loadedwave0   		//3-24-2024 based on Decrtis www about Eiger det.  
+ 	            Redimension/N=(4148,4362) Loadedwave0   		//3-24-2024 based on Dectris www about Eiger det.  
  	        elseif(stringmatch(PilatusType,"Eiger2_1MW"))
- 	            Redimension/N=(2068,512) Loadedwave0   		//3-24-2024 based on Decrtis www about Eiger det. 
+ 	            Redimension/N=(2068,512) Loadedwave0   		//3-24-2024 based on Dectris www about Eiger det. 
  	        elseif(stringmatch(PilatusType,"Eiger2_2MW"))
- 	            Redimension/N=(4148,512) Loadedwave0   		//3-24-2024 based on Decrtis www about Eiger det. 
+ 	            Redimension/N=(4148,512) Loadedwave0   		//3-24-2024 based on Dectris www about Eiger det. 
  	        else
  	        	Abort "Unknown Pilatus Type"
  	        endif
-         //     Loadedwave0[12][162] /= 100.0
+ 	        //New Eigers use high value to maker unused and bad pixels, htis breaks old Pilatus handling... 
+ 	        //let's fix it. This shoudl work, but it needs testing when we have Pilatus file with non HDF5 data
+// 	        if(StringMatch(PilatusType, "Eiger*"))
+// 	        	wavestats/Q Loadedwave0
+// 	        	//print/D V_max 
+// 	        	if(V_Max>1e9)
+// 	        		MatrixOp/O Loadedwave0 = replace(Loadedwave0,V_max,-2)
+// 	        	endif
+// 	        endif
               duplicate/O Loadedwave0, $(NewWaveName)
               //call Hook function 
               if(exists("PilatusHookFunction")==6)
@@ -982,7 +992,22 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		if(!WaveExists(Loadedwave0))
 			return 0
 		endif	
-		duplicate/O Loadedwave0, $(NewWaveName)
+		//New Eiger detectors use high number to denote missing/bad pixels (not -2 as old ones). 
+		//this breaks some other code... Let's fix it here.  
+
+		variable maxValV 
+		maxValV = wavemax(Loadedwave0)
+		variable Tempoffset
+		//print/D V_max //should be 4294967295
+      	if(maxValV>1e9)	//remove high intensity points
+      		//Loadedwave0 is UNIT32 and 4294967295 = -1 
+      		//this is the way:
+      		MatrixOp/O Loadedwave0 = int32(Loadedwave0)
+      		//this converts 4294967295 into -1, so all solved, no more needed... 
+      		//this might have worked also? 
+      		//MatrixOp/O Loadedwave0 = replace(fp32(Loadedwave0),maxValV,-2)
+      	endif      	
+      duplicate/O Loadedwave0, $(NewWaveName)
 		killwaves Loadedwave0
 		NewNote+="DataFileName="+FileNameToLoad+";"
 		NewNote+="DataFileType="+"Nexus"+";"
@@ -1218,7 +1243,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 	elseif(cmpstr(FileType,"MarIP/xop")==0)		//added 9/16/2008, needs ccp4xop ... 
 		PathInfo $(PathName)
 		FileNameToLoad=  S_path + FileName
-#if (Exists("ccp4unpack"))	
+#if(Exists("ccp4unpack"))	
 		ccp4unpack/M /N=$(NewWaveName)/O  FileNameToLoad		//note: Fails for names too long... 
 		LoadedOK=1		//??? how to check if it works?
 //		ccp4unpack/M /N=$(NewWaveName)/P=$(PathName) /O  FileNameToLoad
@@ -1451,7 +1476,7 @@ End
 //*******************************************************************************************************************************************
 Function NI1_MaskHDFLoader(PathName,FileName,FileType,NewWaveName)
 	string PathName,FileName,FileType,NewWaveName
-#if (exists("HDF5OpenFile")==4)	
+#if(exists("HDF5OpenFile")==4)	
 	string OldDf=GetDataFOlder(1)
 	setDataFOlder root:Packages:Convert2Dto1D
 	
@@ -2504,7 +2529,8 @@ end
 //*******************************************************************************************************************************************
 
 Function NI1_LoadWinViewFile(fName, NewWaveName)
-	String fName											// fully qualified name of file to open
+	String fName										
+		// fully qualified name of file to open
 	String NewWaveName		
 
 //	Variable refNum
@@ -3489,7 +3515,7 @@ EndMacro
 //		
 //		string OldDf=getDataFolder(1)
 //		Variable fileID
-//#if (exists("HDF5OpenFile")==4)
+//#if(exists("HDF5OpenFile")==4)
 //		HDF5OpenFile /P=$(FilePathName)/R /Z fileID as Filename	// Displays a dialog
 //		if (V_flag == 0)	// User selected a file?
 //		    string PathString
@@ -3933,8 +3959,10 @@ endstructure
 //**************************************************************************************
 //**************************************************************************************
 static Function NI1_mpaFindFirstDataLine(pathName, filePath)
-	String pathName		// Name of symbolic path or ""
-	String filePath			// Name of file or partial path relative to symbolic path.
+	String pathName		
+	// Name of symbolic path or ""
+	String filePath			
+	// Name of file or partial path relative to symbolic path.
  
 	Variable refNum
  
@@ -3965,8 +3993,10 @@ End
 //**************************************************************************************
 
 Function NI1_MPASpeFindNumDataLines(pathName, filePath)
-	String pathName		// Name of symbolic path or "" to display dialog.
-	String filePath			// Name of file or "" to display dialog. Can also be full or partial path relative to symbolic path.
+	String pathName		
+	// Name of symbolic path or "" to display dialog.
+	String filePath			
+	// Name of file or "" to display dialog. Can also be full or partial path relative to symbolic path.
  
 
 	Variable refNum
@@ -4549,7 +4579,7 @@ static Function/S NI1_HdfReadAllAttributes(fileID, Location, isDataSet)
 	variable i
 	For(i=0;i<itemsinlist(ListofAttributesNames);i+=1)
 		killwaves/Z attribValue
-		HDF5LoadData /A=stringfromlist(i,ListofAttributesNames)  /N=attribValue  /O /Q   /TYPE=(DataType) fileID , Location
+		HDF5LoadData /A=(stringfromlist(i,ListofAttributesNames))  /N=attribValue  /O /Q   /TYPE=(DataType) fileID , Location
 		Wave  attribValue
 		if(WaveType(attribValue ,1)==2)
 			Wave/T  attribValueT=attribValue
@@ -4621,8 +4651,8 @@ Function NI1A_LoadCbfCompresedImage(PathName,FileNameToLoad, WaveNameToCreate)
 	FSetPos fileVar, SkipBytes											//start of the image
 	FStatus fileVar
 	bufSize = V_logEOF-V_filePos										//this is how much data we have in the image starting at the binary data start
-	make/B/O/N=(bufSize)/Free BufWv										//signed 1 byte wave for the data
-	make/O/N=(sizeToExpect)/Free ResultImage							//here go the converted signed integers. Note, they can be 8, 16, or 32 bits. 64bits not supported here. 
+	make/B/N=(bufSize)/Free BufWv										//signed 1 byte wave for the data
+	make/N=(sizeToExpect)/Free ResultImage							//here go the converted signed integers. Note, they can be 8, 16, or 32 bits. 64bits not supported here. 
 	FBinRead/B=1/F=1 fileVar, BufWv										//read 1 Byte each into singed integers wave
 	close filevar
 	//and decompress the data here 	

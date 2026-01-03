@@ -188,13 +188,20 @@ End
 //
 static Function NI1_LoadOneFITS(refnum, dfName, doHeader, doHistory, doComment, doAutoDisp, doInt2Float, bigBytes)
 	variable refnum
-	string   dfName      // data folder name for results -- may be file name if desired
-	variable doHeader    // set true to put header(s) in a notebook
-	variable doHistory   // set true to put HISTORY in the notebook
-	variable doComment   // ditto for COMMENT
-	variable doAutoDisp  // true to display data
-	variable doInt2Float // true convert ints to floats
-	variable bigBytes    // if data exceeds this size, ask permission to load
+	string   dfName      
+	variable doHeader    
+	variable doHistory   
+	variable doComment   
+	variable doAutoDisp  
+	variable doInt2Float 
+	variable bigBytes    
+	// string   dfName      // data folder name for results -- may be file name if desired
+	// variable doHeader    // set true to put header(s) in a notebook
+	// variable doHistory   // set true to put HISTORY in the notebook
+	// variable doComment   // ditto for COMMENT
+	// variable doAutoDisp  // true to display data
+	// variable doInt2Float // true convert ints to floats
+	// variable bigBytes    // if data exceeds this size, ask permission to load
 
 	variable doLogNotebook = doHeader | doHistory | doComment
 

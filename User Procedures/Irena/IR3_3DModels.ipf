@@ -8,7 +8,7 @@ Constant IR3TTwoPhaseVersionNumber 	= 1.00
 
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -1464,16 +1464,11 @@ Threadsafe Function IR3A_MT_NextPathStep(UniquePathList, ListOfNeighbors,NumberO
 	
 	PriorPathList+=num2str(currentPoint)+";"
 	CurrentPathList= PriorPathList
-#if (IgorVersion()>8.99)
+
 	MatrixOP/Free ListOfNeighborsRow = zapNaNs(replace(row(ListOfNeighbors,currentPoint),priorPoint,NaN))
 	//how many points are left? 
 	pointsFound = numpnts(ListOfNeighborsRow)
-#else
-	MatrixOP/Free ListOfNeighborsRow = replace(row(ListOfNeighbors,currentPoint),priorPoint,NaN))
-	//how many points are not Nans? 
-	Extract /FREE /O ListOfNeighborsRow, ListOfNeighborsRow, numtype(ListOfNeighborsRow)==0
-	pointsFound = numpnts(ListOfNeighborsRow)
-#endif
+
 	//decisions what to do... 
 	if(pointsFound==0)		//this is end point, I just came from the only neighbor this has
 		//print "One complete path is : "+CurrentPathList
@@ -1558,8 +1553,7 @@ End
 //******************************************************************************************************************************************************
 static Function IR3A_InitializeMassFractAgg()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFref oldDf= GetDataFolderDFR()
+ 	DFref oldDf= GetDataFolderDFR()
 
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:AggregateModeling
@@ -3632,8 +3626,7 @@ End
 //******************************************************************************************************************************************************
 Function IR3P_InitializePOVPDB()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFref oldDf= GetDataFolderDFR()
+ 	DFref oldDf= GetDataFolderDFR()
 
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:POVPDBImport
@@ -3818,7 +3811,7 @@ Function IR3P_Read3DDataFile()
 		variable FInalSize
 		OPEN/R/F=".POV"/M="Find POV file" refNum
 		if(strlen(S_fileName)>0)
-			Make/O/U/B/Free/n=((500),(500),(500)) centersWave
+			Make/U/B/Free/n=((500),(500),(500)) centersWave
 			centersWave=0
 			String lineStr
 			Variable count=0

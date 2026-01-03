@@ -1,15 +1,16 @@
 #pragma TextEncoding="UTF-8"
-#pragma rtGlobals=2 // Use modern global access method.
-#pragma version=1.08
+#pragma rtGlobals=3 // Use modern global access method.
+#pragma version=1.09
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//1.09 lint, changed from prgama version 2 to 3, may cause issues as noted in 1.05. Needs fixing now. 
 //1.08 added DisorderedCrystal of second type https://en.wikipedia.org/wiki/Structure_factor#Finite_crystals_with_disorder_of_the_second_kind
-//1.07 removed most Executes in preparation fro Igor 7
+//1.07 removed most Executes in preparation for Igor 7
 //1.06 added support for "No fitting limits" option i n GUI
 //1.05 changed back to rtGlobals=2, need to check code much more to make it 3
 //1.04 added User as structure factor. Requested feature.
@@ -794,8 +795,11 @@ End
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 Function IR2S_DisorderedCrystal(w, x)
-	WAVE     w //contains parameters:   {Par1,Par2,Par3,Par4,Par5,Par6}
-	variable x //this is Q for which to calculate S(Q)
+	WAVE     w 
+	//contains parameters:   {Par1,Par2,Par3,Par4,Par5,Par6}
+	variable x 
+	//this is Q for which to calculate S(Q)
+	
 	variable Rval, Sigma2, Aval //declare meaningful parameters names
 	variable temp
 	Aval   = w[0] //Distance between crystal spaces

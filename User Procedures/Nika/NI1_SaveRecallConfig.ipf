@@ -4,7 +4,7 @@
 #pragma version=1.03
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
@@ -167,7 +167,8 @@ Function NI1A_SaveLoadListBoxProc(ctrlName, row, col, event) : ListBoxControl
 	string   ctrlName
 	variable row
 	variable col
-	variable event //1=mouse down, 2=up, 3=dbl click, 4=cell select with mouse or keys
+	variable event 
+	//1=mouse down, 2=up, 3=dbl click, 4=cell select with mouse or keys
 	//5=cell select with shift key, 6=begin edit, 7=end
 
 	if(event == 2)

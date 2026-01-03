@@ -4,7 +4,7 @@ Constant IR3MversionNumber = 2.62 //Data manipulation II panel version number
 Constant IR1DversionNumber = 2.61 //Data manipulation I panel version number
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
@@ -287,7 +287,8 @@ EndMacro
 Function IR1D_SliderProc(ctrlName, sliderValue, event) : SliderControl
 	string   ctrlName
 	variable sliderValue
-	variable event // bit field: bit 0: value set, 1: mouse down, 2: mouse up, 3: mouse moved
+	variable event 
+	// bit field: bit 0: value set, 1: mouse down, 2: mouse up, 3: mouse moved
 
 	//	if(event %& 0x1)	// bit 0, value set
 	//
@@ -594,15 +595,15 @@ Function IR1D_MergeData(VaryQshift)
 	StartQp = BinarySearch(Qvector1, startQ)
 	EndQp   = BinarySearch(Qvector1, endQ)
 
-	Duplicate/O/FREE Intensity1, TempInt1
-	Duplicate/O/FREE Intensity2, TempInt2
-	Duplicate/O/FREE Qvector1, TempQ1
-	Duplicate/O/FREE Qvector2, TempQ2
+	 Duplicate/FREE Intensity1, TempInt1
+	 Duplicate/FREE Intensity2, TempInt2
+	 Duplicate/FREE Qvector1, TempQ1
+	 Duplicate/FREE Qvector2, TempQ2
 	IN2G_RemoveNaNsFrom3Waves(TempInt1, TempQ1, TempErr1)
 	IN2G_RemoveNaNsFrom3Waves(TempInt2, TempQ2, TempErr2)
-	Duplicate/O/FREE/R=[StartQp, EndQp] TempInt1, TempInt1Part, TempInt2Part
-	Duplicate/O/FREE/R=[StartQp, EndQp] TempQ1, TempQ1Part
-	Duplicate/O/FREE/R=[StartQp, EndQp] TempErr1, TempErr1Part, TempErr2Part
+	 Duplicate/FREE/R=[StartQp, EndQp] TempInt1, TempInt1Part, TempInt2Part
+	 Duplicate/FREE/R=[StartQp, EndQp] TempQ1, TempQ1Part
+	 Duplicate/FREE/R=[StartQp, EndQp] TempErr1, TempErr1Part, TempErr2Part
 
 	TempInt2Part = TempInt2[BinarySearchInterp(Qvector2, TempQ1Part[p])]
 	TempErr2Part = TempErr2[BinarySearchInterp(Qvector2, TempQ1Part[p])]
@@ -1754,10 +1755,10 @@ static Function IR1D_AutoScale()
 	if(!WaveExists(Intensity1) || !WaveExists(Intensity2) || !WaveExists(Qvector1) || !WaveExists(Qvector2))
 		abort
 	endif
-	Duplicate/O/FREE Intensity1, TempInt1
-	Duplicate/O/FREE Intensity2, TempInt2
-	Duplicate/O/FREE Qvector1, TempQ1, bla1
-	Duplicate/O/FREE Qvector2, TempQ2, bla2
+	 Duplicate/FREE Intensity1, TempInt1
+	 Duplicate/FREE Intensity2, TempInt2
+	 Duplicate/FREE Qvector1, TempQ1, bla1
+	 Duplicate/FREE Qvector2, TempQ2, bla2
 	variable integral1, integral2
 	IN2G_RemoveNaNsFrom3Waves(TempInt1, TempQ1, bla1)
 	IN2G_RemoveNaNsFrom3Waves(TempInt2, TempQ2, bla2)
@@ -3644,8 +3645,10 @@ End
 ///******************************************************************************************
 
 Function/S IR3M_ListFoldersWithSubfolders(startDF, levels)
-	string   startDF // startDF requires trailing colon.
-	variable levels  //set 1 for long type and 0 for short type return
+	string   startDF 
+	variable levels  
+	// startDF requires trailing colon.
+	//set 1 for long type and 0 for short type return
 	//
 	string dfSave
 	string list = "", templist, tempWvName, tempWaveType
@@ -5479,7 +5482,8 @@ Function IR3M_ListBoxProc(ctrlName, row, col, event) : ListBoxControl
 	string   ctrlName
 	variable row
 	variable col
-	variable event //1=mouse down, 2=up, 3=dbl click, 4=cell select with mouse or keys
+	variable event 
+	//1=mouse down, 2=up, 3=dbl click, 4=cell select with mouse or keys
 	//5=cell select with shift key, 6=begin edit, 7=end
 
 	if(event == 4)

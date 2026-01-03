@@ -1,7 +1,8 @@
-#pragma rtFunctionErrors=1
-#pragma TextEncoding="UTF-8"
-#pragma rtGlobals=3 // Use modern global access method and strict wave access.
-#pragma version=1.10
+#pragma rtFunctionErrors = 1
+#pragma TextEncoding     = "UTF-8"
+#pragma rtGlobals        = 3 // Use modern global access method and strict wave access.
+#pragma version          = 1.10
+
 #include <Peak AutoFind>
 
 Constant IN3_FlyImportVersionNumber    = 0.96
@@ -10,7 +11,7 @@ Constant IN3_RemoveRangeChangeEffects  = 1
 Constant IN3_TrimDoNOTremoveVibrations = 0 //this controls if vibrations are found and attempt to remove is worse than keeping them, what happens.
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
@@ -443,7 +444,7 @@ End
 //				endif
 //				RawFolderWithData = RawFolderWithFldr+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameShort
 //				print "Imported HDF5 file : "+RawFolderWithData
-//#if (exists("AfterFlyImportHook")==6)
+//#if(exists("AfterFlyImportHook")==6)
 //			AfterFlyImportHook(RawFolderWithData)
 //#endif
 //				if(ReduceXPCSdata)
@@ -499,15 +500,15 @@ Function/S IN3_FSConvertToUSAXS(string RawFolderWithData, string origFileName)
 	WAVE   updBkg3      = :entry:metadata:upd_bkg2
 	WAVE   updBkg4      = :entry:metadata:upd_bkg3
 	WAVE   updBkg5      = :entry:metadata:upd_bkg4
-	WAVE/Z   updBkgErr1   = :entry:metadata:upd_bkgErr0
+	WAVE/Z updBkgErr1   = :entry:metadata:upd_bkgErr0
 	if(!WaveExists(updBkgErr1))
-		WAVE/Z   updBkgErr1   = :entry:metadata:upd_bkg_err0
+		WAVE/Z updBkgErr1 = :entry:metadata:upd_bkg_err0
 	endif
-	WAVE   updBkgErr2   = :entry:metadata:upd_bkgErr1
-	WAVE   updBkgErr3   = :entry:metadata:upd_bkgErr2
-	WAVE   updBkgErr4   = :entry:metadata:upd_bkgErr3
-	WAVE   updBkgErr5   = :entry:metadata:upd_bkgErr4
-	WAVE/Z UPDsize      = :entry:metadata:UPDsize
+	WAVE   updBkgErr2 = :entry:metadata:upd_bkgErr1
+	WAVE   updBkgErr3 = :entry:metadata:upd_bkgErr2
+	WAVE   updBkgErr4 = :entry:metadata:upd_bkgErr3
+	WAVE   updBkgErr5 = :entry:metadata:upd_bkgErr4
+	WAVE/Z UPDsize    = :entry:metadata:UPDsize
 	if(!WaveExists(UPDsize))
 		make/O/N=1 :entry:metadata:UPDsize
 		WAVE UPDsize = :entry:metadata:UPDsize
@@ -654,12 +655,15 @@ Function/S IN3_FSConvertToUSAXS(string RawFolderWithData, string origFileName)
 			Redimension/D/N=(AR_pulses[0]) ArValues
 			ArValues[1, numpnts(ArValues) - 1] = (ArValues[p] + ArValues[p - 1]) / 2 // shift to have mean AR value for each point and not the end of the AR value, when the system advanced to next point.
 			//DeletePoints 0, 1, ArValues					//seem to be failing sometimes... the system does not report any data for first channel. HLe settings.
-			ArValues[0] = NaN //the system does not report any data for first channel. HLe settings.
+			//ArValues[0] = NaN //the system does not report any data for first channel. HLe settings.
 			//this is likely not needed for Automation1
-			if(numpnts(MeasTime) < (numpnts(ArValues) - 1))
+			//still happening for Automation 1 also. Sometimes missing 2 points? 
+			if(numpnts(MeasTime) < (numpnts(ArValues) - 2))
 				OscillationsFound = 1
 			elseif(numpnts(MeasTime) == (numpnts(ArValues) - 1))
 				DeletePoints 0, 1, ArValues
+			elseif(numpnts(MeasTime) == (numpnts(ArValues) - 2))
+				DeletePoints 0, 2, ArValues
 			endif
 		elseif(AR_PulseMode[0] == 2) //this is using trajectory way points, typically 200 points
 			Duplicate/FREE AR_waypoints, ArValues
@@ -714,7 +718,7 @@ Function/S IN3_FSConvertToUSAXS(string RawFolderWithData, string origFileName)
 		I0gain = I0gainW[0]
 	elseif(HdfWriterVersion >= 1 && HdfWriterVersion < 1.3)
 		//MeasTime /= mcaFrequency[0] //
-		MeasTime /= 1e6		//mcaFrequency contains nonsense.. 
+		MeasTime /= 1e6 //mcaFrequency contains nonsense..
 		if(AmplifierUsed[0]) //DDPCA300
 			IN3_FSCreateGainWave(PD_range, DDPCA300_ampReqGain, DDPCA300_ampGain, DDPCA300_mcsChan, TimeRangeAfterUPD, MeasTime)
 		else //DLPCA200
@@ -837,18 +841,18 @@ Function/S IN3_StepScanConvertToUSAXS(string RawFolderWithData, string origFileN
 	//Wave/T SpecFileNameWv=:entry:metadata:SPEC_data_file
 	//SpecFileName=SpecFileNameWv[0]
 	//SpecFileName=stringFromList(0,SpecFileName,".")
-	//need to decide if we have new or old data format. 
+	//need to decide if we have new or old data format.
 	WAVE/Z/T SpecSourceFilenameW = :entry:SPEC_data_file //TODO: this needs to be added to metadata
 
 	NVAR   HdfWriterVersion = HdfWriterVersion
 	WAVE/T UserSampleNameWv = :entry:title
 	//wave data to locate
-	WAVE   TimeWv    = :entry:data:seconds
-	WAVE/Z   I0Wv      = :entry:data:I0
-	WAVE/Z   updWv     = :entry:data:UPD
+	WAVE   TimeWv = :entry:data:seconds
+	WAVE/Z I0Wv   = :entry:data:I0
+	WAVE/Z updWv  = :entry:data:UPD
 	if(!WaveExists(I0Wv))
-		WAVE   I0Wv      = :entry:data:I0_USAXS
-		WAVE   updWv     = :entry:data:PD_USAXS
+		WAVE I0Wv  = :entry:data:I0_USAXS
+		WAVE updWv = :entry:data:PD_USAXS
 	endif
 	WAVE   I00GainW  = :entry:data:I00_autorange_controls_reqrange
 	WAVE   I0GainW   = :entry:data:I0_autorange_controls_reqrange
@@ -1167,7 +1171,7 @@ Function IN3_LocateAndRemoveOscillations(WAVE AR_encoder, WAVE AR_PSOpulse, WAVE
 		if(numtype(curPnt) == 0)
 			CurArVal = AR_angle[BinarySearchInterp(AR_PSOpulse, i)]
 			curEnc   = AR_encoder[i]
-			//and fix the AR_encoder only if the value is different by mroe then "slopy" factor of 2e-5
+			//and fix the AR_encoder only if the value is different by more then "slopy" factor of 2e-5
 			if(abs(AR_encoder[i] - CurArVal) > 1e-5)
 				AR_encoder[i] = CurArVal
 			endif

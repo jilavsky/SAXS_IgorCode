@@ -3,7 +3,7 @@
 Constant IR3LversionNumber = 1.06 //MultiDataplotting tool version number.
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
@@ -23,8 +23,7 @@ Constant IR3LversionNumber = 1.06 //MultiDataplotting tool version number.
 ///******************************************************************************************
 Function IR3L_MultiSamplePlot()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	IN2G_CheckScreenSize("width", 1000)
+ 	IN2G_CheckScreenSize("width", 1000)
 	IN2G_CheckScreenSize("height", 670)
 	DoWIndow IR3L_MultiSamplePlotPanel
 	if(V_Flag)
@@ -63,8 +62,7 @@ End
 
 static Function IR3L_SetStartConditions()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	SVAR GraphWindowName = root:Packages:Irena:MultiSamplePlot:GraphWindowName
+ 	SVAR GraphWindowName = root:Packages:Irena:MultiSamplePlot:GraphWindowName
 	SVAR GraphUserTitle  = root:Packages:Irena:MultiSamplePlot:GraphUserTitle
 
 	//look for top MultiDataPlot_*, if does nto exist, attach to top graph, if exists...
@@ -96,8 +94,7 @@ End
 //************************************************************************************************************
 //************************************************************************************************************
 Function IR3L_MultiSamplePlotPanelFnct()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	PauseUpdate // building window...
+ 	PauseUpdate // building window...
 	NewPanel/K=1/W=(5.25, 43.25, 605, 820) as "MultiData plotting tool"
 	DoWIndow/C IR3L_MultiSamplePlotPanel
 	TitleBox MainTitle, title="\Zr220Multi Data plotting tool", pos={140, 1}, frame=0, fstyle=3, fixedSize=1, font="Times New Roman", size={360, 30}, fColor=(0, 0, 52224)
@@ -207,8 +204,7 @@ End
 static Function IR3L_FixPanelControls()
 	//fix panel controls to whatever selection user made...
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	SVAR SelectedDataPlot = root:Packages:Irena:MultiSamplePlot:SelectedDataPlot
+ 	SVAR SelectedDataPlot = root:Packages:Irena:MultiSamplePlot:SelectedDataPlot
 	strswitch(SelectedDataPlot) // string switch
 		case "X-Y (q-Int, etc.)": // execute if case matches expression
 			TitleBox SelectedDataPlotInstructions, win=IR3L_MultiSamplePlotPanel, title="\Zr100Original data will be used"
@@ -248,8 +244,7 @@ End
 
 Function/S IR3L_GraphListPopupString()
 	// Create some waves for demo purposes
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string list = WinList("MultiDataPlot_*", ";", "WIN:1")
+ 	string list = WinList("MultiDataPlot_*", ";", "WIN:1")
 	list = SortList(list)
 	//now, append names to them
 	variable i
@@ -272,8 +267,7 @@ End
 //**********************************************************************************************************
 
 static Function IR3L_InitMultiSamplePlot()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFREF OldDf = GetDataFolderDFR()
+ 	DFREF OldDf = GetDataFolderDFR()
 	string   ListOfVariables
 	string   ListOfStrings
 	variable i
@@ -531,8 +525,7 @@ Function IR3L_PopMenuProc(pa) : PopupMenuControl
 	if(Pa.eventcode != 2)
 		return 0
 	endif
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	SVAR GraphWindowName = root:Packages:Irena:MultiSamplePlot:GraphWindowName
+ 	SVAR GraphWindowName = root:Packages:Irena:MultiSamplePlot:GraphWindowName
 	if(strlen(GraphWindowName) > 0)
 		if(stringmatch(ctrlName, "SelectGraphWindows"))
 			//do something here
@@ -661,8 +654,7 @@ End
 //**************************************************************************************
 Function IR3L_DoubleClickAction(FoldernameStr)
 	string FoldernameStr
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	//if called with GraphWindowName = "---" need to create new graph and direct data there, or the tool doe snothing
+ 	//if called with GraphWindowName = "---" need to create new graph and direct data there, or the tool doe snothing
 	SVAR GraphWindowName = root:Packages:Irena:MultiSamplePlot:GraphWindowName
 	string LocalGraphName
 	variable CreatedNewGraph = 0
@@ -694,8 +686,7 @@ End
 static Function IR3L_AppendData(FolderNameStr)
 	string FolderNameStr
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFREF OldDf = GetDataFolderDFR()
+ 	DFREF OldDf = GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:MultiSamplePlot //go into the folder
 	SVAR DataStartFolder   = root:Packages:Irena:MultiSamplePlot:DataStartFolder
 	SVAR DataFolderName    = root:Packages:Irena:MultiSamplePlot:DataFolderName
@@ -918,12 +909,12 @@ End
 //**********************************************************************************************************
 
 static Function IR3L_LookUpValueForWaveName(SampleNameStr, SampleNameWV, ValueWv)
-	string SampleNameStr //folder name only, no wabe nae and include ":" at the end.
+	string SampleNameStr 
+	//folder name only, no path name and include ":" at the end.
 	WAVE/T SampleNameWV
 	WAVE   ValueWv
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	variable i
+ 	variable i
 	for(i = 0; i < numpnts(SampleNameWV); i += 1)
 		if(StringMatch(SampleNameStr, SampleNameWV[i]))
 			return ValueWv[i]
@@ -1084,8 +1075,7 @@ End
 //**********************************************************************************************************
 static Function IR3L_CreateNewGraph()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	SVAR GraphWindowName = root:Packages:Irena:MultiSamplePlot:GraphWindowName
+ 	SVAR GraphWindowName = root:Packages:Irena:MultiSamplePlot:GraphWindowName
 	SVAR GraphUserTitle  = root:Packages:Irena:MultiSamplePlot:GraphUserTitle
 	//first create a new GraphWindowName, this is new graph...
 	string basename = "MultiDataPlot_"
@@ -1100,8 +1090,7 @@ End
 static Function IR3L_SetAndApplyStyle(WHichStyle)
 	string WHichStyle
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	//	ListOfDefinedStyles = "Log-Log;Lin-Log;VolumeSizeDistribution;NumberSizeDistribution;"
+ 	//	ListOfDefinedStyles = "Log-Log;Lin-Log;VolumeSizeDistribution;NumberSizeDistribution;"
 	SVAR GraphWindowName        = root:Packages:Irena:MultiSamplePlot:GraphWindowName
 	NVAR LogXAxis               = root:Packages:Irena:MultiSamplePlot:LogXAxis
 	NVAR LogYAxis               = root:Packages:Irena:MultiSamplePlot:LogYAxis
@@ -1201,8 +1190,7 @@ End
 static Function IR3L_ApplyPresetFormating(GraphNameString)
 	string GraphNameString
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	if(strlen(GraphNameString) < 1)
+ 	if(strlen(GraphNameString) < 1)
 		return 0
 	endif
 	DoWIndow $(GraphNameString)
@@ -1299,8 +1287,7 @@ End
 static Function IR3L_SetPlotLegends() //this function will set axis legends and otehr stuff based on waves
 	//applies only when creating new graph...
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	NVAR UseIndra2Data      = root:Packages:Irena:MultiSamplePlot:UseIndra2Data
+ 	NVAR UseIndra2Data      = root:Packages:Irena:MultiSamplePlot:UseIndra2Data
 	NVAR UseQRSdata         = root:Packages:Irena:MultiSamplePlot:UseQRSdata
 	NVAR UseResults         = root:Packages:Irena:MultiSamplePlot:UseResults
 	NVAR UseUserDefinedData = root:Packages:Irena:MultiSamplePlot:UseUserDefinedData

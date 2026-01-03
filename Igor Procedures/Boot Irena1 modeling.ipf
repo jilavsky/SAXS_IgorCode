@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version = 2.74
-#pragma IgorVersion=8.04
+#pragma IgorVersion=9.04
 
 
 //2.74 	June 2025 release, Minor release to capture minor changes related to new USAXS 12IDE instrument, bug release. 
@@ -23,7 +23,7 @@
 
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -70,7 +70,7 @@ end
 
 
 Function LoadIrenaSASMacros()
-	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))>=7.05)
+	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))>=9.04)
 		Execute/P "INSERTINCLUDE \"IR1_Loader\""
 		Execute/P "COMPILEPROCEDURES "
 		NewDataFolder/O root:Packages			//create the folder for string variable
@@ -79,6 +79,6 @@ Function LoadIrenaSASMacros()
 		SASItem1Str= "---"
 		BuildMenu "SAS"
 	else
-		DoAlert 0, "Your version of Igor is lower than 7.05, these macros need version 7.05 or higher, please update your Igor to the latest release "  
+		DoAlert 0, "Your version of Igor is lower than 9.04, these macros need version 9.05 or higher, please update your Igor to the latest release "  
 	endif
 end

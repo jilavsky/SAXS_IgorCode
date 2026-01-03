@@ -5,7 +5,7 @@ Constant IR1RSversionNumber=2.30
 
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -279,10 +279,10 @@ Function IR1R_SizesFitting(ctrlName) : ButtonControl			//this function is called
 		endif
 		Wave QvectorTmp=root:Packages:Sizes:Q_vecOriginal
 		if (!stringmatch(CsrWave(A, "IR1R_SizesInputGraph"),"IntensityOriginal"))
-			Cursor/P/W=IR1R_SizesInputGraph A  IntensityOriginal  binarysearch(QvectorTmp, CsrXWaveRef(A) [pcsr(A, "IR1R_SizesInputGraph")])
+			Cursor/P/W=IR1R_SizesInputGraph A , IntensityOriginal,  binarysearch(QvectorTmp, CsrXWaveRef(A) [pcsr(A, "IR1R_SizesInputGraph")])
 		endif
 		if (!stringmatch(CsrWave(B, "IR1R_SizesInputGraph"),"IntensityOriginal"))
-			Cursor/P /W=IR1R_SizesInputGraph B  IntensityOriginal  binarysearch(QvectorTmp,CsrXWaveRef(B) [pcsr(B, "IR1R_SizesInputGraph")])
+			Cursor/P /W=IR1R_SizesInputGraph B,  IntensityOriginal,  binarysearch(QvectorTmp,CsrXWaveRef(B) [pcsr(B, "IR1R_SizesInputGraph")])
 		endif
 	endif
 	
@@ -1401,8 +1401,8 @@ Function IR1R_RecoverOldParameters()
 		PopupMenu ShapeModel,mode=(1+WhichListItem(ShapeType,tmpSvr1)),value= #("\""+tmpSvr1+"\""), win=IR1R_SizesInputPanel
 		Dowindow  IR1R_SizesInputGraph 	//this checks for existence of this window and if it exists, it will put in the cursors as appropriate...
 		if(V_Flag)
-			Cursor /W=IR1R_SizesInputGraph A IntensityOriginal BinarySearch(Q_vecOriginal, StartFItQvalue )
-			Cursor /W=IR1R_SizesInputGraph B IntensityOriginal BinarySearch(Q_vecOriginal, EndFItQvalue )
+			Cursor /W=IR1R_SizesInputGraph A, IntensityOriginal, BinarySearch(Q_vecOriginal, StartFItQvalue )
+			Cursor /W=IR1R_SizesInputGraph B, IntensityOriginal, BinarySearch(Q_vecOriginal, EndFItQvalue )
 		endif
 		//and now recalculate the background
 		IR1R_BackgroundInput("bckg",Bckg,"bla","Bla")
@@ -1667,7 +1667,8 @@ End
 //*****************************************************************************************************************
 
 static  Function IR1R_CalcFractAggFormFactor(FRwave,Qw,currentR,Param1,Param2)	
-	Wave Qw,FRwave					//returns column (FRwave) for column of Qw and diameter
+	Wave Qw,FRwave					
+	//returns column (FRwave) for column of Qw and diameter
 	Variable currentR, Param1, Param2
 	//Param1 is primary particle radius
 	//Param2 is fractal dimension
@@ -1709,7 +1710,8 @@ end
 
 
 static  Function IR1R_CalculateFractAggSQPoints(Qvalue,R,r0, D)
-	variable Qvalue, R, r0, D							//does the math for S(Q) factor function
+	variable Qvalue, R, r0, D							
+	//does the math for S(Q) factor function
 	
 	variable QR=Qvalue*R	
 	variable tempResult
@@ -1748,8 +1750,11 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
- Function IR1R_BinWidthInRadia(i)			//calculates the width in radia by taking half distance to point before and after
-	variable i								//returns number in A
+
+ Function IR1R_BinWidthInRadia(i)			
+	variable i								
+	//calculates the width in radia by taking half distance to point before and after
+	//returns number in A
 
 	string OldDf
 	OldDf=GetDataFolder(1)
@@ -1776,7 +1781,8 @@ end
 //*****************************************************************************************************************
 
 static  Function IR1R_CalculateSphereFormFactor(FRwave,Qw,radius)	
-	Wave Qw,FRwave					//returns column (FRwave) for column of Qw and radius
+	Wave Qw,FRwave					
+	//returns column (FRwave) for column of Qw and radius
 	Variable radius	
 	
 	FRwave=IR1R_CalculateSphereFFPoints(Qw[p],radius)		//calculates the formula 
@@ -1792,7 +1798,9 @@ end
 //*****************************************************************************************************************
 
 static  Function IR1R_CalculateSphereFFPoints(Qvalue,radius)
-	variable Qvalue, radius										//does the math for Sphere Form factor function
+	variable Qvalue, radius										
+	
+	//does the math for Sphere Form factor function
 	variable QR=Qvalue*radius
 
 	return (3/(QR*QR*QR))*(sin(QR)-(QR*cos(QR)))
@@ -1817,7 +1825,8 @@ end
 //*****************************************************************************************************************
 
 static Function IR1R_CalcSpheroidFormFactor(FRwave,Qw,radius,AR)	
-	Wave Qw,FRwave					//returns column (FRwave) for column of Qw and radius
+	Wave Qw,FRwave					
+	//returns column (FRwave) for column of Qw and radius
 	Variable radius, AR	
 	
 	FRwave=IR1R_CalcIntgSpheroidFFPoints(Qw[p],radius,AR)	//calculates the formula 
@@ -1856,7 +1865,8 @@ end
 //*****************************************************************************************************************
 
 static  Function IR1R_CalcSpheroidFFPoints(Qvalue,radius,AR,CosTh)
-	variable Qvalue, radius	, AR, CosTh							//does the math for Spheroid Form factor function
+	variable Qvalue, radius	, AR, CosTh							
+	//does the math for Spheroid Form factor function
 	variable QR=Qvalue*radius*sqrt(1+(((AR*AR)-1)*CosTh*CosTh))
 
 	return (3/(QR*QR*QR))*(sin(QR)-(QR*cos(QR)))
@@ -2312,8 +2322,8 @@ end
 
 	ModifyGraph/W=IR1R_SizesInputGraph mode(Intensity)=3,marker(Intensity)=5,msize(Intensity)=3
 	
-	Cursor/P/W=IR1R_SizesInputGraph A IntensityOriginal, csrApos
-	Cursor/P/W=IR1R_SizesInputGraph B IntensityOriginal, csrBpos
+	Cursor/P/W=IR1R_SizesInputGraph A, IntensityOriginal, csrApos
+	Cursor/P/W=IR1R_SizesInputGraph B, IntensityOriginal, csrBpos
 	
 	ModifyGraph/W=IR1R_SizesInputGraph rgb(SizesFitIntensity)=(0,0,52224)	
 	ModifyGraph/W=IR1R_SizesInputGraph  lsize(SizesFitIntensity)=3	
@@ -2794,7 +2804,7 @@ Function IR1R_SizesEstimateErrors()
 	//now let's generate new data and run this multiple time...
 	variable i
 	variable FailedInFitting=0
-	Make/O/Free/N=(numpnts(CurrentResultSizeDistribution),10) StatisticsSizeDistributions
+	Make/Free/N=(numpnts(CurrentResultSizeDistribution),10) StatisticsSizeDistributions
 	For(i=0;i<10;i+=1)
 		IntensityOriginal = IntensityOriginalBackup + gnoise(ErrorsOriginal[p])
 		FailedInFitting+=IR1R_SizesFitting("RunSizes")
@@ -3191,10 +3201,10 @@ Function IR1R_GraphIfAllowed(ctrlName)
 					endif
 					Wave QvectorTmp=root:Packages:Sizes:Q_vecOriginal
 					if (!stringmatch(CsrWave(A, "IR1R_SizesInputGraph"),"IntensityOriginal"))
-						Cursor/P/W=IR1R_SizesInputGraph A  IntensityOriginal  binarysearch(QvectorTmp, CsrXWaveRef(A) [pcsr(A, "IR1R_SizesInputGraph")])
+						Cursor/P/W=IR1R_SizesInputGraph A , IntensityOriginal , binarysearch(QvectorTmp, CsrXWaveRef(A) [pcsr(A, "IR1R_SizesInputGraph")])
 					endif
 					if (!stringmatch(CsrWave(B, "IR1R_SizesInputGraph"),"IntensityOriginal"))
-						Cursor/P /W=IR1R_SizesInputGraph B  IntensityOriginal  binarysearch(QvectorTmp,CsrXWaveRef(B) [pcsr(B, "IR1R_SizesInputGraph")])
+						Cursor/P /W=IR1R_SizesInputGraph B,  IntensityOriginal,  binarysearch(QvectorTmp,CsrXWaveRef(B) [pcsr(B, "IR1R_SizesInputGraph")])
 					endif
 				endif
 				Wave IntensityOriginal = root:Packages:Sizes:IntensityOriginal 
@@ -3244,11 +3254,11 @@ Function IR1R_GraphIfAllowed(ctrlName)
 	endif
 		
 	if ((strlen(IN2G_RemoveExtraQuote(IntNm,1,1))>0)&&(strlen(IN2G_RemoveExtraQuote(QvcNm,1,1))>0)&&(strlen(IN2G_RemoveExtraQuote(ErrNm,1,1))>0))
-		Wave Int=$(FldrNm+IntNm)
+		Wave Intw=$(FldrNm+IntNm)
 		Wave Qvc=$(FldrNm+QvcNm)
 		Wave/Z Err=$(FldrNm+ErrNm)
 		
-		if ((numpnts(Int)==numpnts(Qvc))&&(!WaveExists(Err)||(numpnts(Int)==numpnts(Err))))
+		if ((numpnts(Intw)==numpnts(Qvc))&&(!WaveExists(Err)||(numpnts(Intw)==numpnts(Err))))
 			IR1R_SelectAndCopyData()
 			if(cmpstr(ctrlName,"GraphIfAllowedSkipRecover")!=0)
 				IR1R_RecoverOldParameters()							//this function recovers fitting parameters, if sizes were run already on the data
@@ -3259,8 +3269,8 @@ Function IR1R_GraphIfAllowed(ctrlName)
 	
 	endif
 	if(OldCursorA + OldCursorB>0)
-			Cursor/P /W=IR1R_SizesInputGraph A  IntensityOriginal  OldCursorA
-			Cursor/P /W=IR1R_SizesInputGraph B  IntensityOriginal  OldCursorB
+			Cursor/P /W=IR1R_SizesInputGraph A,  IntensityOriginal,  OldCursorA
+			Cursor/P /W=IR1R_SizesInputGraph B,  IntensityOriginal,  OldCursorB
 	endif
 	DoWIndow/F IR1R_SizesInputPanel
 	IR1R_FitBPBackOnGraph()
@@ -3357,17 +3367,14 @@ Function IN2R_CalculateVolume(ctrlname) : Buttoncontrol
 		OrigStartPointB=pcsr(B)
 		startA=0
 		startB=numpnts(MyXWave)-1
-		Cursor  /P /W=IR1R_SizesInputGraph A  CurrentResultSizeDistribution  startA
-		Cursor  /P /W=IR1R_SizesInputGraph B  CurrentResultSizeDistribution  startB
+		Cursor  /P /W=IR1R_SizesInputGraph A,  CurrentResultSizeDistribution, startA
+		Cursor  /P /W=IR1R_SizesInputGraph B,  CurrentResultSizeDistribution , startB
 		movedCursors=1
 	else
 		startA=pcsr(A)
 		startB=pcsr(B)
 	endif		
-//	if(cmpstr(CsrWave(A,"IR1R_SizesInputGraph"),"CurrentResultSizeDistribution")!=0 || cmpstr(CsrWave(B,"IR1R_SizesInputGraph"),"CurrentResultSizeDistribution")!=0) 
-//		abort "Cursors not set on right waves. Set cursors on Volume distribution (bar graph)"
-//	endif		
-	
+
 	volume = areaXY(MyXWave,MyYWave, MyXWave[pcsr(A)],MyXWave[pcsr(B)])
 	TotalVolumeFraction = volume
 	CheckDisplayed /W=IR1R_SizesInputGraph MyEWave
@@ -3411,14 +3418,14 @@ Function IN2R_CalculateVolume(ctrlname) : Buttoncontrol
 	Tag/C/N=Label1/A=LB/X=-10.00/Y=5.00/B=1 CurrentResultSizeDistribution, (pcsr(A) + pcsr(B))/2,tagText
 	if(movedCursors)
 		if(numtype(OrigStartPointA)==0)
-			Cursor  /P /W=IR1R_SizesInputGraph A  IntensityOriginal  OrigStartPointA
+			Cursor  /P /W=IR1R_SizesInputGraph A,  IntensityOriginal,  OrigStartPointA
 		else
-			Cursor  /P /W=IR1R_SizesInputGraph A  IntensityOriginal  startA
+			Cursor  /P /W=IR1R_SizesInputGraph A,  IntensityOriginal,  startA
 		endif
 		if(numtype(OrigStartPointB)==0)
-			Cursor  /P /W=IR1R_SizesInputGraph B  IntensityOriginal  OrigStartPointB
+			Cursor  /P /W=IR1R_SizesInputGraph B,  IntensityOriginal,  OrigStartPointB
 		else
-			Cursor  /P /W=IR1R_SizesInputGraph B IntensityOriginal  startB
+			Cursor  /P /W=IR1R_SizesInputGraph B, IntensityOriginal , startB
 		endif
 	endif
 	KillWaves/Z temp_cumulative, temp_probability, Another_temp, tempXwave
@@ -3615,10 +3622,10 @@ Function IR1R_FitPowerLawBackground(FixPowerlaw)
 		endif
 		Wave QvectorTmp=root:Packages:Sizes:Q_vecOriginal
 		if (!stringmatch(CsrWave(A, "IR1R_SizesInputGraph"),"IntensityOriginal"))
-			Cursor/P/W=IR1R_SizesInputGraph A  IntensityOriginal  binarysearch(QvectorTmp, CsrXWaveRef(A) [pcsr(A, "IR1R_SizesInputGraph")])
+			Cursor/P/W=IR1R_SizesInputGraph A , IntensityOriginal , binarysearch(QvectorTmp, CsrXWaveRef(A) [pcsr(A, "IR1R_SizesInputGraph")])
 		endif
 		if (!stringmatch(CsrWave(B, "IR1R_SizesInputGraph"),"IntensityOriginal"))
-			Cursor/P /W=IR1R_SizesInputGraph B  IntensityOriginal  binarysearch(QvectorTmp,CsrXWaveRef(B) [pcsr(B, "IR1R_SizesInputGraph")])
+			Cursor/P /W=IR1R_SizesInputGraph B,  IntensityOriginal,  binarysearch(QvectorTmp,CsrXWaveRef(B) [pcsr(B, "IR1R_SizesInputGraph")])
 		endif
 	endif
 	Wave IntensityOriginal = root:Packages:Sizes:IntensityOriginal 
@@ -3666,10 +3673,10 @@ Function IR1R_FitFlatBackground()
 		endif
 		Wave QvectorTmp=root:Packages:Sizes:Q_vecOriginal
 		if (!stringmatch(CsrWave(A, "IR1R_SizesInputGraph"),"IntensityOriginal"))
-			Cursor/P/W=IR1R_SizesInputGraph A  IntensityOriginal  binarysearch(QvectorTmp, CsrXWaveRef(A) [pcsr(A, "IR1R_SizesInputGraph")])
+			Cursor/P/W=IR1R_SizesInputGraph A , IntensityOriginal , binarysearch(QvectorTmp, CsrXWaveRef(A) [pcsr(A, "IR1R_SizesInputGraph")])
 		endif
 		if (!stringmatch(CsrWave(B, "IR1R_SizesInputGraph"),"IntensityOriginal"))
-			Cursor/P /W=IR1R_SizesInputGraph B  IntensityOriginal  binarysearch(QvectorTmp,CsrXWaveRef(B) [pcsr(B, "IR1R_SizesInputGraph")])
+			Cursor/P /W=IR1R_SizesInputGraph B,  IntensityOriginal,  binarysearch(QvectorTmp,CsrXWaveRef(B) [pcsr(B, "IR1R_SizesInputGraph")])
 		endif
 	endif
 	Wave IntensityOriginal = root:Packages:Sizes:IntensityOriginal 
@@ -4052,9 +4059,12 @@ EndMacro
 static  Function IR1R_MaximumEntropy(MeasuredData,Errors,InitialModelBckg,MaxIterations,Model,MaxEntStabilityParam,OpusFnct,TropusFnct,UpdateGraph)
 	wave MeasuredData,Errors,InitialModelBckg,Model
 	variable MaxIterations,MaxEntStabilityParam
-	FuncRef IR1R_ModelOpus OpusFnct		//converts the Model to MeasuredData
-	FuncRef IR1R_ModelOpus TropusFnct	//converts the MeasuredData into Model
-	FuncRef IR1R_UpdateDataForGrph UpdateGraph	//converts the MeasuredData into Model
+	FuncRef IR1R_ModelOpus OpusFnct		
+	//converts the Model to MeasuredData
+	FuncRef IR1R_ModelOpus TropusFnct	
+	//converts the MeasuredData into Model
+	FuncRef IR1R_UpdateDataForGrph UpdateGraph	
+	//converts the MeasuredData into Model
 
 	DFref oldDf= GetDataFolderDFR()
 
@@ -4964,10 +4974,10 @@ Function IR1R_ReadQsForBackFits(whichOnes)
 		endif
 		Wave QvectorTmp=root:Packages:Sizes:Q_vecOriginal
 		if (!stringmatch(CsrWave(A, "IR1R_SizesInputGraph"),"IntensityOriginal"))
-			Cursor/P/W=IR1R_SizesInputGraph A  IntensityOriginal  binarysearch(QvectorTmp, CsrXWaveRef(A) [pcsr(A, "IR1R_SizesInputGraph")])
+			Cursor/P/W=IR1R_SizesInputGraph A , IntensityOriginal , binarysearch(QvectorTmp, CsrXWaveRef(A) [pcsr(A, "IR1R_SizesInputGraph")])
 		endif
 		if (!stringmatch(CsrWave(B, "IR1R_SizesInputGraph"),"IntensityOriginal"))
-			Cursor/P /W=IR1R_SizesInputGraph B  IntensityOriginal  binarysearch(QvectorTmp,CsrXWaveRef(B) [pcsr(B, "IR1R_SizesInputGraph")])
+			Cursor/P /W=IR1R_SizesInputGraph B,  IntensityOriginal,  binarysearch(QvectorTmp,CsrXWaveRef(B) [pcsr(B, "IR1R_SizesInputGraph")])
 		endif
 	endif
 	Wave IntensityOriginal = root:Packages:Sizes:IntensityOriginal 
@@ -4997,11 +5007,11 @@ Function IR1R_SetCsrstoQsBFits(whichOnes)
 		Wave IntensityOriginal = root:Packages:Sizes:IntensityOriginal 
 		Wave Q_vecOriginal = root:Packages:Sizes:Q_vecOriginal
 		if(whichOnes==0)	//Flat Background
-			Cursor/P /W=IR1R_SizesInputGraph A  IntensityOriginal  binarysearch(Q_vecOriginal,FitBackonImportQmin)
-			Cursor/P /W=IR1R_SizesInputGraph B  IntensityOriginal  binarysearch(Q_vecOriginal,FitBackonImportQmax)
+			Cursor/P /W=IR1R_SizesInputGraph A,  IntensityOriginal,  binarysearch(Q_vecOriginal,FitBackonImportQmin)
+			Cursor/P /W=IR1R_SizesInputGraph B,  IntensityOriginal,  binarysearch(Q_vecOriginal,FitBackonImportQmax)
 		elseif(whichOnes==1)
-			Cursor/P /W=IR1R_SizesInputGraph A  IntensityOriginal  binarysearch(Q_vecOriginal,FitBPonImportQmin)
-			Cursor/P /W=IR1R_SizesInputGraph B  IntensityOriginal  binarysearch(Q_vecOriginal,FitBPonImportQmax)
+			Cursor/P /W=IR1R_SizesInputGraph A,  IntensityOriginal,  binarysearch(Q_vecOriginal,FitBPonImportQmin)
+			Cursor/P /W=IR1R_SizesInputGraph B,  IntensityOriginal,  binarysearch(Q_vecOriginal,FitBPonImportQmax)
 		endif
 	endif	
 end
@@ -5033,10 +5043,10 @@ Function IR1R_FitBPBackOnGraph()
 			endif
 			Wave QvectorTmp=root:Packages:Sizes:Q_vecOriginal
 			if (!stringmatch(CsrWave(A, "IR1R_SizesInputGraph"),"IntensityOriginal"))
-				Cursor/P/W=IR1R_SizesInputGraph A  IntensityOriginal  binarysearch(QvectorTmp, CsrXWaveRef(A) [pcsr(A, "IR1R_SizesInputGraph")])
+				Cursor/P/W=IR1R_SizesInputGraph A , IntensityOriginal , binarysearch(QvectorTmp, CsrXWaveRef(A) [pcsr(A, "IR1R_SizesInputGraph")])
 			endif
 			if (!stringmatch(CsrWave(B, "IR1R_SizesInputGraph"),"IntensityOriginal"))
-				Cursor/P /W=IR1R_SizesInputGraph B  IntensityOriginal  binarysearch(QvectorTmp,CsrXWaveRef(B) [pcsr(B, "IR1R_SizesInputGraph")])
+				Cursor/P /W=IR1R_SizesInputGraph B,  IntensityOriginal,  binarysearch(QvectorTmp,CsrXWaveRef(B) [pcsr(B, "IR1R_SizesInputGraph")])
 			endif
 		endif
 		variable OldCursorA, OldCursorB
@@ -5050,22 +5060,22 @@ Function IR1R_FitBPBackOnGraph()
 				FitBPonImport=1
 				FitBonImport = 0
 			endif
-			Cursor/P /W=IR1R_SizesInputGraph A  IntensityOriginal  binarysearch(Q_vecOriginal,FitBPonImportQmin)
-			Cursor/P /W=IR1R_SizesInputGraph B  IntensityOriginal  binarysearch(Q_vecOriginal,FitBPonImportQmax)
+			Cursor/P /W=IR1R_SizesInputGraph A,  IntensityOriginal,  binarysearch(Q_vecOriginal,FitBPonImportQmin)
+			Cursor/P /W=IR1R_SizesInputGraph B,  IntensityOriginal,  binarysearch(Q_vecOriginal,FitBPonImportQmax)
 			if(FitBonImport)
 				IR1R_FitPowerLawBackground(1)	
 			elseif(FitBPonImport)
 				IR1R_FitPowerLawBackground(0)			
 			endif
-			Cursor/P /W=IR1R_SizesInputGraph A  IntensityOriginal  OldCursorA
-			Cursor/P /W=IR1R_SizesInputGraph B  IntensityOriginal  OldCursorB
+			Cursor/P /W=IR1R_SizesInputGraph A,  IntensityOriginal,  OldCursorA
+			Cursor/P /W=IR1R_SizesInputGraph B,  IntensityOriginal,  OldCursorB
 		endif
 		if(FitBckgOnImport)	//something needs to be done	
-			Cursor/P /W=IR1R_SizesInputGraph A  IntensityOriginal  binarysearch(Q_vecOriginal,FitBackonImportQmin)
-			Cursor/P /W=IR1R_SizesInputGraph B  IntensityOriginal  binarysearch(Q_vecOriginal,FitBackonImportQmax)
+			Cursor/P /W=IR1R_SizesInputGraph A,  IntensityOriginal,  binarysearch(Q_vecOriginal,FitBackonImportQmin)
+			Cursor/P /W=IR1R_SizesInputGraph B,  IntensityOriginal,  binarysearch(Q_vecOriginal,FitBackonImportQmax)
 			IR1R_FitFlatBackground()			
-			Cursor/P /W=IR1R_SizesInputGraph A  IntensityOriginal  OldCursorA
-			Cursor/P /W=IR1R_SizesInputGraph B  IntensityOriginal  OldCursorB
+			Cursor/P /W=IR1R_SizesInputGraph A,  IntensityOriginal,  OldCursorA
+			Cursor/P /W=IR1R_SizesInputGraph B,  IntensityOriginal,  OldCursorB
 		endif
 	endif
 end

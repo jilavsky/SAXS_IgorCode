@@ -5,7 +5,7 @@
 
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -45,8 +45,7 @@ Function IR3S_SysSpecModels()
 	KillWindow/Z IR3S_SysSpecModelsPanel
 	KillWindow/Z IR3S_LogLogDataDisplay
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	IN2G_CheckScreenSize("width",1200)
+ 	IN2G_CheckScreenSize("width",1200)
 	DoWIndow IR3S_SysSpecModelsPanel
 	if(V_Flag)
 		DoWindow/F IR3S_SysSpecModelsPanel
@@ -122,8 +121,7 @@ end
 ////************************************************************************************************************
 ////************************************************************************************************************
 Function IR3S_SysSpecModelsPanelFnct()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	PauseUpdate    		// building window...
+ 	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,560,815) as "System Specific Models"
 	DoWIndow/C IR3S_SysSpecModelsPanel
 	TitleBox MainTitle title="System Specific Models - Dev!",pos={140,2},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},fSize=22,fColor=(0,0,52224)
@@ -252,8 +250,7 @@ end
 
 static Function IR3S_SetupControlsOnMainpanel()
 	
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	SVAR ModelSelected = root:Packages:Irena:SysSpecModels:ModelSelected
+ 	SVAR ModelSelected = root:Packages:Irena:SysSpecModels:ModelSelected
 	NVAR UseUnified = root:Packages:Irena:SysSpecModels:UseUnified
 	Wave DBPar = root:Packages:Irena:SysSpecModels:DBPar
 	//DBParNames = {"Prefactor","CorrLength","Eta","Wavelength"}
@@ -845,8 +842,7 @@ End
 
 static Function IR3S_FitSequenceOfData()
 
-		//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-		//warn user if not saving results...
+	 		//warn user if not saving results...
 
 		NVAR SaveToNotebook=root:Packages:Irena:SysSpecModels:SaveToNotebook
 		NVAR SaveToWaves=root:Packages:Irena:SysSpecModels:SaveToWaves
@@ -1018,8 +1014,7 @@ End
 Function IR3S_CopyAndAppendData(FolderNameStr)
 	string FolderNameStr
 	
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFref oldDf= GetDataFolderDFR()
+ 	DFref oldDf= GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:SysSpecModels					//go into the folder
 		SVAR DataStartFolder=root:Packages:Irena:SysSpecModels:DataStartFolder
 		SVAR DataFolderName=root:Packages:Irena:SysSpecModels:DataFolderName
@@ -1108,8 +1103,7 @@ end
 
 static Function IR3S_AppendDataToGraphLogLog()
 	
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	IR3S_CreateSysSpecModelsGraphs()
+ 	IR3S_CreateSysSpecModelsGraphs()
 	variable WhichLegend=0
 	string Shortname1
 	Wave OriginalDataIntWave=root:Packages:Irena:SysSpecModels:OriginalDataIntWave
@@ -1184,8 +1178,7 @@ static Function IR3S_SyncCursorsTogether(traceName,CursorName,PointNumber)
 	string traceName,CursorName
 	variable PointNumber
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	IR3S_CreateSysSpecModelsGraphs()
+ 	IR3S_CreateSysSpecModelsGraphs()
 	NVAR DataQEnd = root:Packages:Irena:SysSpecModels:DataQEnd
 	NVAR DataQstart = root:Packages:Irena:SysSpecModels:DataQstart
 	NVAR DataQEndPoint = root:Packages:Irena:SysSpecModels:DataQEndPoint
@@ -1213,8 +1206,7 @@ end
 //**********************************************************************************************************
 static Function IR3S_CreateSysSpecModelsGraphs()
 	
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	variable exists1=0
+ 	variable exists1=0
 	DoWIndow IR3S_LogLogDataDisplay
 	if(V_Flag)
 		DoWIndow/hide=? IR3S_LogLogDataDisplay
@@ -1238,8 +1230,7 @@ end
 static Function IR3S_InitSysSpecModels()	
 
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFref oldDf= GetDataFolderDFR()
+ 	DFref oldDf= GetDataFolderDFR()
 	variable i
 		
 	if (!DataFolderExists("root:Packages:Irena:SysSpecModels"))		//create folder
@@ -1767,10 +1758,6 @@ static Function IR3S_FitSysSpecificModels()
 			endfor
 	endif
 	
-//	For(i=0;i<itemsInList(FullListOfVariablesToCheck);i+=1)
-//		NVAR ValError = $(StringFromList(i, FullListOfVariablesToCheck)+"Error")
-//		ValError = 0	
-//	endfor
 	if(numpnts(W_Coef)<1)
 		Abort "Nothing to fit" 
 	endif
@@ -1793,13 +1780,13 @@ static Function IR3S_FitSysSpecificModels()
 		Variable V_FitError=0			//This should prevent errors from being generated
 		//and now the fit...
 		if (strlen(csrWave(A))!=0 && strlen(csrWave(B))!=0)		//cursors in the graph
-			//check that cursors are actually on hte right wave...
+			//check that cursors are actually on the right wave...
 			//make sure the cursors are on the right waves..
 			if (cmpstr(CsrWave(A, "IR3S_LogLogDataDisplay"),"OriginalDataQWave")!=0)
-				Cursor/P/W=IR3S_LogLogDataDisplay A  OriginalDataIntWave  binarysearch(OriginalDataQWave, CsrXWaveRef(A) [pcsr(A, "IR3S_LogLogDataDisplay")])
+				Cursor/P/W=IR3S_LogLogDataDisplay A , OriginalDataIntWave,  binarysearch(OriginalDataQWave, CsrXWaveRef(A) [pcsr(A, "IR3S_LogLogDataDisplay")])
 			endif
 			if (cmpstr(CsrWave(B, "IR3S_LogLogDataDisplay"),"OriginalDataQWave")!=0)
-				Cursor/P /W=IR3S_LogLogDataDisplay B  OriginalDataIntWave  binarysearch(OriginalDataQWave,CsrXWaveRef(B) [pcsr(B, "IR3S_LogLogDataDisplay")])
+				Cursor/P /W=IR3S_LogLogDataDisplay B , OriginalDataIntWave,  binarysearch(OriginalDataQWave,CsrXWaveRef(B) [pcsr(B, "IR3S_LogLogDataDisplay")])
 			endif
 			Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalDataIntWave, FitIntensityWave		
 			Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalDataQWave, FitQvectorWave
@@ -2331,17 +2318,17 @@ static Function IR3S_HybridHermans(wHybridHermans,wUnif, qval)
 	variable/C H1=exp(2*pi*cv_i*amoth*sval-2*pi^2*amosig^2*sval^2)
 	variable/C H2=exp(2*pi*cv_i*cryth*sval-2*pi^2*crysig^2*sval^2)
 	variable Bs = abs(wHybridHermans[4])/(2*pi)^4
-	variable int=(Bs/(sval^4))*Real((1-H1)*(1-H2)/(1-H1*H2))
+	variable intv=(Bs/(sval^4))*Real((1-H1)*(1-H2)/(1-H1*H2))
 	//add level 2 Guinier
-	Int+=G2*exp(-abs(Rg2)^2*qval^2/3)
+	intv+=G2*exp(-abs(Rg2)^2*qval^2/3)
 	//add level 3
 	if(cutoff==1)//use level 2 to cutoff level 3
 		wUnif[4][0]=Rg2
-		Int+=G3*exp(-abs(Rg3)^2*qval^2/3)+B3*exp(-abs(Rg2)^2*qval^2/3)*qstar3^(-abs(P3))
+		intv+=G3*exp(-abs(Rg3)^2*qval^2/3)+B3*exp(-abs(Rg2)^2*qval^2/3)*qstar3^(-abs(P3))
 	else //no cutoff for the power-law
-		Int+=G3*exp(-abs(Rg3)^2*qval^2/3)+B3*qstar3^(-abs(P3))
+		intv+=G3*exp(-abs(Rg3)^2*qval^2/3)+B3*qstar3^(-abs(P3))
 	endif
-	return(Int)
+	return(intv)
 End
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -2626,7 +2613,8 @@ end
 
 
 static Function IR3S_SaveResultsToFolder(DoNotAskUser)
-	variable DoNotAskUser		//set to 1 to prevent questions, when doing sequence... 
+	variable DoNotAskUser		
+	//set to 1 to prevent questions, when doing sequence... 
 	NVAR SaveToFolder=root:Packages:Irena:SysSpecModels:SaveToFolder
 	if(SaveToFolder<1)
 		return 0
@@ -2927,7 +2915,8 @@ end
 
 
 static Function IR3S_AttachTags(Attach)
-	variable Attach		//=1 when attach, 0 when only remeove. 
+	variable Attach		
+	//=1 when attach, 0 when only remeove. 
 	
 	NVAR HideTagsAlways = root:Packages:Irena:SysSpecModels:HideTagsAlways
 	Tag/W=IR3S_LogLogDataDisplay /K/N=DBTag 

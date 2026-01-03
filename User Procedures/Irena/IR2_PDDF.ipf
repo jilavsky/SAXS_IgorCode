@@ -1,16 +1,16 @@
 #pragma TextEncoding = "UTF-8"
-#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.15
+#pragma rtGlobals=3		// Use modern global access method.
+#pragma version=1.16
 Constant IR2PrversionNumber=1.13
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.16 changed to Pragma version 3
 //1.15 combined together with IR2Pr_Regularization.ipf
-
 //1.13 added better graph size controls for screen size using IN2G_GetGraphWidthHeight
 //1.13  removed unused functions
 //1.12 added getHelp button calling to www manual
@@ -735,6 +735,7 @@ Function IR2Pr_AppendIntOriginal()		//appends (and removes) and configures in gr
 	Wave IntensityOriginal=root:Packages:Irena_PDDF:IntensityOriginal
 	Wave Q_vecOriginal=root:Packages:Irena_PDDF:Q_vecOriginal
 	Wave DeletePointsMaskErrorWave=root:Packages:Irena_PDDF:DeletePointsMaskErrorWave
+	Wave DeletePointsMaskWave = root:Packages:Irena_PDDF:DeletePointsMaskWave
 	variable csrApos
 	variable csrBpos
 	
@@ -813,11 +814,11 @@ static Function IR2Pr_GraphIfAllowed(ctrlName)
 	endif
 		
 	if ((strlen(IN2G_RemoveExtraQuote(IntNm,1,1))>0)&&(strlen(IN2G_RemoveExtraQuote(QvcNm,1,1))>0)&&(strlen(IN2G_RemoveExtraQuote(ErrNm,1,1))>0))
-		Wave Int=$(FldrNm+IntNm)
+		Wave IntW=$(FldrNm+IntNm)
 		Wave Qvc=$(FldrNm+QvcNm)
 		Wave/Z Err=$(FldrNm+ErrNm)
 		
-		if ((numpnts(Int)==numpnts(Qvc))&&(!WaveExists(Err)||(numpnts(Int)==numpnts(Err))))
+		if ((numpnts(IntW)==numpnts(Qvc))&&(!WaveExists(Err)||(numpnts(IntW)==numpnts(Err))))
 			IR2Pr_SelectAndCopyData()
 			if(cmpstr(ctrlName,"GraphIfAllowedSkipRecover")!=0)
 				IR2Pr_RecoverOldParameters()							//this function recovers fitting parameters, if sizes were run already on the data
@@ -978,8 +979,10 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
-Function IR1_AppendAnyGraph(GraphName)		//this function checks for existance of notebook
-	string GraphName						//and appends text to the end of the notebook
+Function IR1_AppendAnyGraph(GraphName)		
+	//this function checks for existance of notebook
+	string GraphName						
+	//and appends text to the end of the notebook
 	    
 	string TextToBeInserted="\r"
     SVAR/Z nbl=root:Packages:Irena:ResultsNotebookName
@@ -1000,8 +1003,10 @@ end
 //*****************************************************************************************************************
 
 
-Function IR1_AppendAnyText(TextToBeInserted, style)		//this function checks for existance of notebook
-	string TextToBeInserted						//and appends text to the end of the notebook
+Function IR1_AppendAnyText(TextToBeInserted, style)		
+	//this function checks for existance of notebook
+	string TextToBeInserted						
+	//and appends text to the end of the notebook
 	variable style
 	    
 	TextToBeInserted=TextToBeInserted+"\r"
@@ -1177,7 +1182,8 @@ static Function IR2Pr_FitMooreAutocorrelation()
 	CurrentResultPdf=IR2Pr_MoorePOR(MooreParametersV,R_distribution[p],dmax)/2
 	//calculate errors here... Use MonteCarlo method on results using errors from LSQF... Probably wrong, but what the hell else?
 	
-	variable i, MontCarloMax=100		//number of MonteCarlo iterations
+	variable i
+	variable MontCarloMax=100		//number of MonteCarlo iterations
 	Duplicate/O CurrentresultPdf, CurrentResultMontCarlo, PDDFErrors
 	Make/O/N=(numpnts(R_distribution), (MontCarloMax)) MontStatWave
 	For(i=0;i<MontCarloMax;i+=1)
@@ -1597,7 +1603,7 @@ Function IR2Pr_BackgroundInput(ctrlName,varNum,varStr,varName) : SetVariableCont
 	DOWIndow/F IR2Pr_ControlPanel
 	IR1G_UpdateSetVarStep("Background",0.1)
 
-	Wave Q_vec=root:Packages:Irena_PDDF:Q_vec
+	Wave Q_vecOriginal=root:Packages:Irena_PDDF:Q_vec
 	Duplicate/O Q_vecOriginal BackgroundWave
 	BackgroundWave=varNum
 	CheckDisplayed BackgroundWave 
@@ -1660,10 +1666,10 @@ Function IR2Pr_PdfFitting(ctrlName) : ButtonControl			//this function is called 
 		//make sure the cursors are on the right waves..
 		Wave QvectorTmp=root:Packages:Irena_PDDF:Q_vecOriginal
 		if (cmpstr(CsrWave(A, "IR2Pr_PDFInputGraph"),"IntensityOriginal")!=0)
-			Cursor/P/W=IR2Pr_PDFInputGraph A  IntensityOriginal  binarysearch(QvectorTmp, CsrXWaveRef(A) [pcsr(A, "IR2Pr_PDFInputGraph")])
+			Cursor/P/W=IR2Pr_PDFInputGraph A, IntensityOriginal,  binarysearch(QvectorTmp, CsrXWaveRef(A) [pcsr(A, "IR2Pr_PDFInputGraph")])
 		endif
 		if (cmpstr(CsrWave(B, "IR2Pr_PDFInputGraph"),"IntensityOriginal")!=0)
-			Cursor/P /W=IR2Pr_PDFInputGraph B  IntensityOriginal  binarysearch(QvectorTmp,CsrXWaveRef(B) [pcsr(B, "IR2Pr_PDFInputGraph")])
+			Cursor/P /W=IR2Pr_PDFInputGraph B , IntensityOriginal,  binarysearch(QvectorTmp,CsrXWaveRef(B) [pcsr(B, "IR2Pr_PDFInputGraph")])
 		endif
 	endif
 
@@ -1763,9 +1769,13 @@ end
 	Wave PDFFitIntensity=root:Packages:Irena_PDDF:PDFFitIntensity
 	Wave Q_vec=root:Packages:Irena_PDDF:Q_vec
 	Wave IntensityOriginal=root:Packages:Irena_PDDF:IntensityOriginal
+	Wave Intensity = root:Packages:Irena_PDDF:Intensity
 	Wave NormalizedResidual=root:Packages:Irena_PDDF:NormalizedResidual
 	Wave Q_vecOriginal=root:Packages:Irena_PDDF:Q_vecOriginal
 	Wave/Z PDDFErrors = root:Packages:Irena_PDDF:PDDFErrors
+	Wave DeletePointsMaskWave = root:Packages:Irena_PDDF:DeletePointsMaskWave
+	Wave DeletePointsMaskErrorWave = root:Packages:Irena_PDDF:DeletePointsMaskErrorWave
+	
 //	SVAR SizesParameters=root:Packages:Irena_PDDF:SizesParameters
 	Wave BackgroundWave=root:Packages:Irena_PDDF:BackgroundWave
 	SVAR MethodRun=root:Packages:Irena_PDDF:MethodRun
@@ -1813,6 +1823,7 @@ end
 			SetAxis/W=IR2Pr_PDFInputGraph/N=1 right -(V_max*0.1),V_max*1.1
 		endif
 	endif
+	
 	AppendToGraph/W=IR2Pr_PDFInputGraph Intensity vs Q_vec
 	AppendToGraph/W=IR2Pr_PDFInputGraph PDFFitIntensity vs Q_vec
 	AppendToGraph/W=IR2Pr_PDFInputGraph BackgroundWave vs Q_vecOriginal
@@ -2527,6 +2538,7 @@ static Function IR2Pr_FindOptimumAvalue(Evalue)						//does the fitting itself, 
 		//Need to fix binning effect, if it was not accounted for in G matrix we need to take bin width out now...
 		variable iv
 		Wave CurrentResultPdf = root:Packages:Irena_PDDF:CurrentResultPdf
+		Wave ModelDistribution = root:Packages:Irena_PDDF:ModelDistribution
 		For(iv=0;iv<numpnts(ModelDistribution);iv+=1)
 			CurrentResultPdf[iv] = CurrentResultPdf[iv] / IR2Pr_BinWidthInRadia(iv)
 		endfor
@@ -2609,7 +2621,8 @@ Function IR2Pr_PDDFCalculatePrVariation()
 	Duplicate/O R_distribution, BinWidth, PDDFErrors
 	BinWidth = IR2Pr_BinWidthInRadia(p)
 	//and here we need to do the MonteCarlo method... 
-	variable i, MontCarloMax=100		//number of MonteCarlo iterations
+	variable i
+	variable MontCarloMax=100		//number of MonteCarlo iterations
 	Duplicate/O Intensity, MontIntensity
 	Make/O/N=(numpnts(R_distribution), (MontCarloMax)) MontStatWave
 	For(i=0;i<MontCarloMax;i+=1)
@@ -2638,8 +2651,10 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
- static Function IR2Pr_BinWidthInRadia(i)			//calculates the width in radia by taking half distance to point before and after
-	variable i								//returns number in A
+ static Function IR2Pr_BinWidthInRadia(i)			
+	//calculates the width in radia by taking half distance to point before and after
+	variable i								
+	//returns number in A
 
 	string OldDf
 	OldDf=GetDataFolder(1)

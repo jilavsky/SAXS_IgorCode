@@ -1,14 +1,15 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use modern global access method.
-#pragma version=2.73
+#pragma version=2.75
 Constant NI1AversionNumber = 2.74
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//2.75 add to Mask ability to mask off higher than something pixels. Needed for EIgers. 
 //2.74 fix the fix from 2.73 where the CFFactor calculation had a bug. ugh... (line 2438)
 //2.73 add ability to flip/rotate image after load to let users tweak image orientation.
 // modify NewMovie /CF=1 /F=(Movie_FrameRate)/I/Z to /CF=CFfactor to reduce compression artifacts.
@@ -38,8 +39,7 @@ Constant NI1AversionNumber = 2.74
 //2.52	added getHelp button calling to www manual
 //2.51 Fixed old bug where sample thickness was not converted to cm before use and used as mm. This causes old experiments with old calibration constants to be wrong.
 //			old calibration constatnts need to be also scaled by 10 to fix the calibration.
-//			added a lot of 	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-//2.49 Nexus input output fixes.
+//			added a lot of  //2.49 Nexus input output fixes.
 //2.48 changed pinSAXS to SAXS
 //2.47 changed length of name to 23 characters from 17
 //2.47 fixes for WIndows panel resizing.
@@ -93,8 +93,7 @@ Constant NI1AversionNumber = 2.74
 
 //static Function AfterCompiledHook( )			//check if all windows are up to date to match their code
 //
-//	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-//	//these are tools which have been upgraded to this functionality
+// //	//these are tools which have been upgraded to this functionality
 //	//Modeling = LSQF2_MainPanel
 //	string WindowProcNames="NI1A_Convert2Dto1DPanel=NI1A_MainCheckVersion;NI1_CreateBmCntrFieldPanel=NIBC_MainCheckVersion;NEXUS_ConfigurationPanel=Nexus_MainCheckVersion;"
 //
@@ -108,8 +107,7 @@ Constant NI1AversionNumber = 2.74
 Function NI1A_CheckWIndowsProcVersions(WindowProcNames)
 	string WindowProcNames
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	variable i
+ 	variable i
 	string   PanelName
 	string   ProcedureName
 	for(i = 0; i < ItemsInList(WindowProcNames); i += 1)
@@ -125,8 +123,7 @@ End
 //*****************************************************************************************************************
 
 Function NI1A_MainCheckVersion()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DoWindow NI1A_Convert2Dto1DPanel
+ 	DoWindow NI1A_Convert2Dto1DPanel
 	variable OldNikaVersion
 	if(V_Flag)
 		//calibration warning...
@@ -157,8 +154,7 @@ End
 Function NI1_UpdatePanelVersionNumber(panelName, CurentProcVersion)
 	string   panelName
 	variable CurentProcVersion
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DoWIndow $panelName
+ 	DoWIndow $panelName
 	if(V_Flag)
 		GetWindow $(panelName), note
 		SetWindow $(panelName), note=S_Value + "NikaProcVersion:" + num2str(CurentProcVersion) + ";"
@@ -180,8 +176,7 @@ Function NI1_CheckPanelVersionNumber(panelName, CurentProcVersion)
 	string   panelName
 	variable CurentProcVersion
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DoWIndow $panelName
+ 	DoWIndow $panelName
 	if(V_Flag)
 		GetWindow $(panelName), note
 		if(stringmatch(stringbyKey("NikaProcVersion", S_value), num2str(CurentProcVersion))) //matches
@@ -206,8 +201,7 @@ End
 //*******************************************************************************************************************************************
 Function NI1A_Convert2Dto1DMainPanel()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	//first initialize
+ 	//first initialize
 	NI1A_Initialize2Dto1DConversion()
 	IN2G_CheckScreenSize("height", 740)
 	KillWIndow/Z NI1A_Convert2Dto1DPanel
@@ -225,8 +219,7 @@ End
 
 Function NI1A_Initialize2Dto1DConversion()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDf = GetDataFolder(1)
+ 	string OldDf = GetDataFolder(1)
 	variable FirstRun
 	if(!DataFolderExists("root:Packages:Convert2Dto1D"))
 		FirstRun = 1
@@ -238,7 +231,7 @@ Function NI1A_Initialize2Dto1DConversion()
 	//internal loaders
 	string/G ListOfKnownExtensions = ".tif;GeneralBinary;Pilatus/Eiger;Nexus;BrukerCCD;MarCCD;mpa;mp/bin;BSRC/Gold;12IDB_tif;DND/txt;RIGK/Raxis;ADSC;ADSC_A;WinView spe (Princeton);ASCII;ibw;BSL/SAXS;BSL/WAXS;ascii512x512;ascii128x128;ESRFedf;"
 	ListOfKnownExtensions += "SSRLMatSAXS;TPA/XML;Fuji/img;mpa/UC;FITS;.hdf;GE binary;---;" //mpa/bin;mpa/asc;mp/bin;mp/asc
-	//#if (Exists("ccp4unpack"))
+	//#if(Exists("ccp4unpack"))
 	//	ListOfKnownExtensions+="MarIP/xop;"
 	//#endif
 	//add Fit2D known types of PC
@@ -308,6 +301,7 @@ Function NI1A_Initialize2Dto1DConversion()
 	ListOfVariables += "A2DImageRangeMin;A2DImageRangeMax;A2DImageRangeMinLimit;A2DImageRangeMaxLimit;A2DLineoutDisplayLogInt;A2DmaskImage;"
 	ListOfVariables += "RemoveFirstNColumns;RemoveLastNColumns;RemoveFirstNRows;RemoveLastNRows;MaskDisplayLogImage;"
 	ListOfVariables += "MaskOffLowIntPoints;LowIntToMaskOff;FixBackgroundOversubtraction;"
+	ListOfVariables += "MaskOffHighIntPoints;HighIntToMaskOff;"
 	ListOfVariables += "OverwriteDataIfExists;SectorsNumSect;SectorsSectWidth;SectorsGraphStartAngle;SectorsGraphEndAngle;SectorsUseRAWData;SectorsUseCorrData;"
 	ListOfVariables += "DisplayBeamCenterIn2DGraph;DisplaySectorsIn2DGraph;"
 	ListOfVariables += "UseQvector;UseTheta;UseDspacing;UseDistanceFromCenter;"
@@ -730,8 +724,7 @@ End
 
 Function NI1A_Convert2DTo1D()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDf = GetDataFolder(1)
+ 	string OldDf = GetDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
 	NVAR UseSectors     = root:Packages:Convert2Dto1D:UseSectors     //this is for Sector analysis. Only if set ot 1, sector analysis is reuired by user...
@@ -753,7 +746,7 @@ Function NI1A_Convert2DTo1D()
 	string tempListOfProcessedSectors = ""
 	variable TempOrientation, TempHalfWidth
 	//let user run some hook function to modify parameters, if needed here.
-#if (exists("NI1_BeforeConvertDataHook") == 6)
+#if(exists("NI1_BeforeConvertDataHook") == 6)
 	NI1_BeforeConvertDataHook()
 #endif
 	//parameters are set, now process the data as needed..
@@ -846,8 +839,7 @@ End
 //*******************************************************************************************************************************************
 Function NI1A_FixNumPntsIfNeeded(CurOrient)
 	string CurOrient
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	//here we fix the num pnts to max number if requested by user
+ 	//here we fix the num pnts to max number if requested by user
 	string OldDf = GetDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
@@ -857,7 +849,7 @@ Function NI1A_FixNumPntsIfNeeded(CurOrient)
 	NVAR Qmin                = root:Packages:Convert2Dto1D:UserQMin
 	NVAR Qmax                = root:Packages:Convert2Dto1D:UserQMax
 
-	if(QvectorMaxNumPnts) //user wants 1 point = 1 pixel (max num points)... Need to fix the num pnts....
+	if(QvectorMaxNumPnts) //user wants 1 poIntw= 1 pixel (max num points)... Need to fix the num pnts....
 		QbinningLogarithmic = 0 //cannot be log binning...
 		//first lets check lookup table, so we do not have to calculate this always
 		WAVE/Z   MaxNumPntsLookupWv    = root:Packages:Convert2Dto1D:MaxNumPntsLookupWv
@@ -898,7 +890,7 @@ Function NI1A_FixNumPntsIfNeeded(CurOrient)
 		for(i = 0; i < numpnts(MaxNumPntsLookupWv); i += 1)
 			if(cmpstr(MaxNumPntsLookupWvLBL[i], CurOrient) == 0)
 				QvectorNumberPoints = MaxNumPntsLookupWv[i]
-				//	print "Right number of points found in LUT"
+				//	print  "Right number of points found in LUT"
 				return 1
 			endif
 		endfor
@@ -995,7 +987,6 @@ Function NI1A_FixNumPntsIfNeeded(CurOrient)
 		MaxNumPntsLookupWv[numpnts(MaxNumPntsLookupWv) - 1]    = QvectorNumberPoints
 
 		print "Recalculated the right number of points LUT"
-		//killwaves/Z MaskedRadius2DWave
 
 		return 2
 	endif
@@ -1009,8 +1000,7 @@ End
 
 Function NI1A_Create2DPixRadiusWave(DataWave)
 	WAVE DataWave
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDf = GetDataFolder(1)
+ 	string OldDf = GetDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
 	NVAR SampleToCCDDistance = root:Packages:Convert2Dto1D:SampleToCCDDistance //in millimeters
@@ -1066,8 +1056,7 @@ End
 
 Function NI1T_TiltedToCorrectedR(TiltedR, SaDetDistance, alpha)
 	variable TiltedR, SaDetDistance, alpha
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	//this function returns distance from beam center corrected for the effect of tilt
+ 	//this function returns distance from beam center corrected for the effect of tilt
 	//Definitions:
 	//TiltedR is measured distance on detector (in same units as SaDetDistance) in either x or y directions.
 	//	Note, it is positive if the measured x is larger than x of beamstop (or same for y)
@@ -1080,16 +1069,14 @@ End
 
 Function NI1T_CalcThetaForTiltToTheor(radius, Distance, alphaRad)
 	variable radius, Distance, alphaRad
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	variable temp = radius * abs(cos(alphaRad))
+ 	variable temp = radius * abs(cos(alphaRad))
 	temp = temp / sqrt(distance^2 + radius^2 - 2 * Distance * radius * sin(alphaRad))
 	return asin(temp)
 End
 
 Function NI1T_TheoreticalToTilted(TheoreticalR, SaDetDistance, alpha)
 	variable TheoreticalR, SaDetDistance, alpha
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	//this function returns distance on tilted detector compared to theoretical distacne in perpendicular plane
+ 	//this function returns distance on tilted detector compared to theoretical distacne in perpendicular plane
 	//for either x or y directions
 	//definitions
 	// TheoreticalR is distance in either positive or negative direction in perpendicular plane to Sa-det line
@@ -1110,8 +1097,7 @@ End
 //Function NI1BC_CalculatePathWvs(dspacing, wvX,wvY)
 //	wave wvX, wvY
 //	variable dspacing
-//	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-//
+// //
 //	string oldDf=GetDataFOlder(1)
 //	setDataFolder root:Packages:Convert2Dto1D
 //
@@ -1144,11 +1130,12 @@ End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
-Function NI1A_RemoveInfNaNsFrom10Waves(Wv1, wv2, wv3, wv4, wv5, wv6, wv7, wv8, wv9, wv10) //removes NaNs from 3 waves
-	WAVE Wv1, wv2, wv3, wv4, wv5, wv6, wv7, wv8, wv9, wv10 //assume same number of points in the waves
+Function NI1A_RemoveInfNaNsFrom10Waves(Wv1, wv2, wv3, wv4, wv5, wv6, wv7, wv8, wv9, wv10) 
+	WAVE Wv1, wv2, wv3, wv4, wv5, wv6, wv7, wv8, wv9, wv10 
+	//removes NaNs from 3 waves
+	//assume same number of points in the waves
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	variable i = 0, imax = numpnts(Wv1) - 1
+ 	variable i = 0, imax = numpnts(Wv1) - 1
 	for(i = imax; i >= 0; i -= 1)
 		if(numtype(Wv1[i]) != 0)
 			Deletepoints i, 1, Wv1, wv2, wv3, wv4, wv5, wv6, wv7, wv8, wv9, wv10
@@ -1193,8 +1180,7 @@ End
 Function NI1A_SaveDataPerUserReq(CurOrient)
 	string CurOrient
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDf = getDataFOlder(1)
+ 	string OldDf = getDataFOlder(1)
 	if(stringmatch(CurOrient, "*Lp*"))
 		WAVE/Z LineProfileIntensity         = root:Packages:Convert2Dto1D:LineProfileIntensity
 		WAVE/Z LineProfileError             = root:Packages:Convert2Dto1D:LineProfileIntSdev
@@ -1212,7 +1198,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 		if(!WaveExists(LineProfileQx) || numpnts(LineProfileQx) != numpnts(LineProfileQy))
 			Duplicate/O LineProfileQy, LineProfileQx
 		endif
-		Duplicate/O/FREE LineProfileZValsPix, tempWv1234, tempWv1235, tempWv1236
+		Duplicate/FREE LineProfileZValsPix, tempWv1234, tempWv1235, tempWv1236
 	else
 		WAVE/Z Qvector           = root:Packages:Convert2Dto1D:Qvector
 		WAVE/Z Dspacing          = root:Packages:Convert2Dto1D:Dspacing
@@ -1330,6 +1316,8 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 		DataFolderNameL = "root:SAS"
 		LongUseName     = "root:SAS:" + possiblyQuoteName(UseName)
 	endif
+
+	string/g LastProcessedDataSetFolder = LongUseName
 	//split for code for line profile and sectors...
 	if(stringmatch(CurOrient, "*LP*")) //Line profile code goes here...***************
 		//this seems to fail in cases when too much of the detector is covered by NaNs (masked).
@@ -1445,41 +1433,41 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 		if(StoreDataInIgor && DisplayData)
 			SVAR LineProf_CurveType = root:Packages:Convert2Dto1D:LineProf_CurveType
 			if(stringmatch(LineProf_CurveType, "Horizontal Line") || stringmatch(LineProf_CurveType, "GI_Horizontal Line"))
-				WAVE Int  = $("r_" + UseName)
+				WAVE Intw = $("r_" + UseName)
 				WAVE Qvec = $("qy_" + UseName)
 				WAVE err  = $("s_" + UseName)
 				if(DisplayDataAfterProcessing)
-					NI1A_DisplayLineoutAfterProc(int, Qvec, Err, 1, 1)
+					NI1A_DisplayLineoutAfterProc(Intw, Qvec, Err, 1, 1)
 				endif
 			elseif(stringmatch(LineProf_CurveType, "Vertical Line") || stringmatch(LineProf_CurveType, "GI_Vertical Line"))
-				WAVE Int  = $("r_" + UseName)
+				WAVE Intw = $("r_" + UseName)
 				WAVE Qvec = $("qz_" + UseName)
 				WAVE err  = $("s_" + UseName)
 				if(DisplayDataAfterProcessing)
-					NI1A_DisplayLineoutAfterProc(int, Qvec, Err, 1, 1)
+					NI1A_DisplayLineoutAfterProc(Intw, Qvec, Err, 1, 1)
 				endif
 			elseif(stringmatch(LineProf_CurveType, "Ellipse"))
-				WAVE Int  = $("r_" + UseName)
+				WAVE Intw = $("r_" + UseName)
 				WAVE Qvec = $("az_" + UseName)
 				WAVE err  = $("s_" + UseName)
 				if(DisplayDataAfterProcessing)
-					NI1A_DisplayLineoutAfterProc(int, Qvec, Err, 1, 4)
+					NI1A_DisplayLineoutAfterProc(Intw, Qvec, Err, 1, 4)
 				endif
 			else //these are the others, use q value and display as log-log.
-				WAVE Int  = $("r_" + UseName)
+				WAVE Intw = $("r_" + UseName)
 				WAVE Qvec = $("q_" + UseName)
 				WAVE err  = $("s_" + UseName)
 				if(DisplayDataAfterProcessing)
-					NI1A_DisplayLineoutAfterProc(int, Qvec, Err, 1, 1)
+					NI1A_DisplayLineoutAfterProc(Intw, Qvec, Err, 1, 1)
 				endif
 			endif
-			OldNote = note(Int)
+			OldNote = note(Intw)
 			//DataType = "qrs", "trs", "drs", "distrs"
 			Duplicate/FREE Qvec, dQvec
 			dQvec[1, numpnts(Qvec) - 2] = Qvec[p + 1] - Qvec[p - 1]
 			dQvec[0]                    = dQvec[1]
 			dQvec[numpnts(Qvec) - 1]    = dQvec[numpnts(Qvec) - 2]
-			NEXUS_WriteNx1DCanSASNika(UserSampleName, Int, Err, Qvec, dQvec, CurOrient, OldNote)
+			NEXUS_WriteNx1DCanSASNika(UserSampleName, Intw, Err, Qvec, dQvec, CurOrient, OldNote)
 		endif
 		KillWaves/Z tempWv1234
 	else //sectors profiles goes here. *****************
@@ -1493,6 +1481,8 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 				endif
 			endif
 			NewDataFolder/S/O $(LongUseName)
+			LastProcessedDataSetFolder = LongUseName
+			//print LongUseName
 			string/G UserSampleName = OriginalUserName
 			if(UseQvector)
 				Duplicate/O Intensity, $("r_" + UseName)
@@ -1657,25 +1647,25 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 		endif
 		if(DisplayDataAfterProcessing)
 			if(UseQvector)
-				WAVE Int  = $("r_" + UseName)
+				WAVE Intw = $("r_" + UseName)
 				WAVE Qvec = $("q_" + UseName)
 				WAVE err  = $("s_" + UseName)
-				NI1A_DisplayLineoutAfterProc(int, Qvec, Err, 1, 1)
+				NI1A_DisplayLineoutAfterProc(Intw, Qvec, Err, 1, 1)
 			elseif(UseTheta)
-				WAVE Int      = $("r_" + UseName)
+				WAVE Intw     = $("r_" + UseName)
 				WAVE TwoTheta = $("t_" + UseName)
 				WAVE err      = $("s_" + UseName)
-				NI1A_DisplayLineoutAfterProc(int, TwoTheta, Err, 1, 3)
+				NI1A_DisplayLineoutAfterProc(Intw, TwoTheta, Err, 1, 3)
 			elseif(UseDspacing)
-				WAVE Int      = $("r_" + UseName)
+				WAVE Intw     = $("r_" + UseName)
 				WAVE Dspacing = $("d_" + UseName)
 				WAVE err      = $("s_" + UseName)
-				NI1A_DisplayLineoutAfterProc(int, Dspacing, Err, 1, 2)
+				NI1A_DisplayLineoutAfterProc(Intw, Dspacing, Err, 1, 2)
 			elseif(UseDistanceFromCenter)
-				WAVE Int          = $("r_" + UseName)
+				WAVE Intw         = $("r_" + UseName)
 				WAVE DistanceInmm = $("m_" + UseName)
 				WAVE err          = $("s_" + UseName)
-				NI1A_DisplayLineoutAfterProc(int, DistanceInmm, Err, 1, 5)
+				NI1A_DisplayLineoutAfterProc(Intw, DistanceInmm, Err, 1, 5)
 			else
 				abort "Error - no output type selected"
 			endif
@@ -1695,8 +1685,7 @@ End
 Function/S NI1A_TrimCleanDataName(InputName, CurOrient)
 	string InputName, CurOrient
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	NVAR TrimFrontOfName      = root:Packages:Convert2Dto1D:TrimFrontOfName
+ 	NVAR TrimFrontOfName      = root:Packages:Convert2Dto1D:TrimFrontOfName
 	NVAR TrimEndOfName        = root:Packages:Convert2Dto1D:TrimEndOfName
 	SVAR RemoveStringFromName = root:Packages:Convert2Dto1D:RemoveStringFromName
 	string NewName, tempStr
@@ -1722,13 +1711,13 @@ End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
-Function NI1A_DisplayLineoutAfterProc(int, Qvec, Err, NumOfWavesToKeep, typeGraph)
-	WAVE int, Qvec, Err
+Function NI1A_DisplayLineoutAfterProc(Intw, Qvec, Err, NumOfWavesToKeep, typeGraph)
+	WAVE Intw, Qvec, Err
 	variable NumOfWavesToKeep
-	variable typeGraph //1 for q, 2 for d, and 3 for twoTheta, 4 for azimuthal angle
+	variable typeGraph 
+	//1 for q, 2 for d, and 3 for twoTheta, 4 for azimuthal angle
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	NVAR UseBatchProcessing = root:Packages:Convert2Dto1D:UseBatchProcessing
+ 	NVAR UseBatchProcessing = root:Packages:Convert2Dto1D:UseBatchProcessing
 	if(UseBatchProcessing)
 		return 0
 	endif
@@ -1737,14 +1726,14 @@ Function NI1A_DisplayLineoutAfterProc(int, Qvec, Err, NumOfWavesToKeep, typeGrap
 		DoWindow LineuotDisplayPlot_Q
 		if(V_Flag)
 			DoWindow/F LineuotDisplayPlot_Q
-			CheckDisplayed/W=LineuotDisplayPlot_Q $(NameOfWave(Int))
+			CheckDisplayed/W=LineuotDisplayPlot_Q $(NameOfWave(Intw))
 			if(!V_Flag)
-				appendToGraph Int vs Qvec
+				appendToGraph Intw vs Qvec
 				Doupdate
 			endif
 		else
-			//Display/K=1 /W=(348,368,828,587.75) Int vs Qvec as "LineuotDisplayPlot_Q"
-			Display/K=1/W=(350, 350, 350 + 0.5 * IN2G_GetGraphWidthHeight("width"), 350 + 0.5 * IN2G_GetGraphWidthHeight("height")) Int vs Qvec as "LineuotDisplayPlot_Q"
+			//Display/K=1 /W=(348,368,828,587.75) Intwvs Qvec as "LineuotDisplayPlot_Q"
+			Display/K=1/W=(350, 350, 350 + 0.5 * IN2G_GetGraphWidthHeight("width"), 350 + 0.5 * IN2G_GetGraphWidthHeight("height")) Intw vs Qvec as "LineuotDisplayPlot_Q"
 			DoWIndow/C LineuotDisplayPlot_Q
 			AutoPositionWindow/M=1/E/R=NI1A_Convert2Dto1DPanel LineuotDisplayPlot_Q
 			ModifyGraph log=1
@@ -1756,13 +1745,13 @@ Function NI1A_DisplayLineoutAfterProc(int, Qvec, Err, NumOfWavesToKeep, typeGrap
 		DoWindow LineuotDisplayPlot_D
 		if(V_Flag)
 			DoWindow/F LineuotDisplayPlot_D
-			CheckDisplayed/W=LineuotDisplayPlot_D $(NameOfWave(Int))
+			CheckDisplayed/W=LineuotDisplayPlot_D $(NameOfWave(Intw))
 			if(!V_Flag)
-				appendToGraph Int vs Qvec
+				appendToGraph Intw vs Qvec
 			endif
 		else
-			//Display/K=1 /W=(348,368,828,587.75) Int vs Qvec as "LineuotDisplayPlot_D"
-			Display/K=1/W=(350, 350, 350 + 0.5 * IN2G_GetGraphWidthHeight("width"), 350 + 0.5 * IN2G_GetGraphWidthHeight("height")) Int vs Qvec as "LineuotDisplayPlot_D"
+			//Display/K=1 /W=(348,368,828,587.75) Intwvs Qvec as "LineuotDisplayPlot_D"
+			Display/K=1/W=(350, 350, 350 + 0.5 * IN2G_GetGraphWidthHeight("width"), 350 + 0.5 * IN2G_GetGraphWidthHeight("height")) Intw vs Qvec as "LineuotDisplayPlot_D"
 			DoWIndow/C LineuotDisplayPlot_D
 			AutoPositionWindow/M=1/E/R=NI1A_Convert2Dto1DPanel LineuotDisplayPlot_D
 			ModifyGraph log=0
@@ -1774,13 +1763,13 @@ Function NI1A_DisplayLineoutAfterProc(int, Qvec, Err, NumOfWavesToKeep, typeGrap
 		DoWindow LineuotDisplayPlot_T
 		if(V_Flag)
 			DoWindow/F LineuotDisplayPlot_T
-			CheckDisplayed/W=LineuotDisplayPlot_T $(NameOfWave(Int))
+			CheckDisplayed/W=LineuotDisplayPlot_T $(NameOfWave(Intw))
 			if(!V_Flag)
-				appendToGraph Int vs Qvec
+				appendToGraph Intw vs Qvec
 			endif
 		else
-			//Display/K=1 /W=(348,368,828,587.75) Int vs Qvec as "LineuotDisplayPlot_T"
-			Display/K=1/W=(350, 350, 350 + 0.5 * IN2G_GetGraphWidthHeight("width"), 350 + 0.5 * IN2G_GetGraphWidthHeight("height")) Int vs Qvec as "LineuotDisplayPlot_T"
+			//Display/K=1 /W=(348,368,828,587.75) Intw vs Qvec as "LineuotDisplayPlot_T"
+			Display/K=1/W=(350, 350, 350 + 0.5 * IN2G_GetGraphWidthHeight("width"), 350 + 0.5 * IN2G_GetGraphWidthHeight("height")) Intw vs Qvec as "LineuotDisplayPlot_T"
 			DoWIndow/C LineuotDisplayPlot_T
 			AutoPositionWindow/M=1/E/R=NI1A_Convert2Dto1DPanel LineuotDisplayPlot_T
 			ModifyGraph log=0
@@ -1792,13 +1781,13 @@ Function NI1A_DisplayLineoutAfterProc(int, Qvec, Err, NumOfWavesToKeep, typeGrap
 		DoWindow LineuotDisplayPlot_T
 		if(V_Flag)
 			DoWindow/F LineuotDisplayPlot_T
-			CheckDisplayed/W=LineuotDisplayPlot_T $(NameOfWave(Int))
+			CheckDisplayed/W=LineuotDisplayPlot_T $(NameOfWave(Intw))
 			if(!V_Flag)
-				appendToGraph Int vs Qvec
+				appendToGraph Intw vs Qvec
 			endif
 		else
-			//Display/K=1 /W=(348,368,828,587.75) Int vs Qvec as "LineuotDisplayPlot_Az"
-			Display/K=1/W=(350, 350, 350 + 0.5 * IN2G_GetGraphWidthHeight("width"), 350 + 0.5 * IN2G_GetGraphWidthHeight("height")) Int vs Qvec as "LineuotDisplayPlot_Az"
+			//Display/K=1 /W=(348,368,828,587.75) Intw vs Qvec as "LineuotDisplayPlot_Az"
+			Display/K=1/W=(350, 350, 350 + 0.5 * IN2G_GetGraphWidthHeight("width"), 350 + 0.5 * IN2G_GetGraphWidthHeight("height")) Intw vs Qvec as "LineuotDisplayPlot_Az"
 			DoWIndow/C LineuotDisplayPlot_T
 			AutoPositionWindow/M=1/E/R=NI1A_Convert2Dto1DPanel LineuotDisplayPlot_T
 			ModifyGraph log=0
@@ -1810,13 +1799,13 @@ Function NI1A_DisplayLineoutAfterProc(int, Qvec, Err, NumOfWavesToKeep, typeGrap
 		DoWindow LineuotDisplayPlot_T
 		if(V_Flag)
 			DoWindow/F LineuotDisplayPlot_T
-			CheckDisplayed/W=LineuotDisplayPlot_T $(NameOfWave(Int))
+			CheckDisplayed/W=LineuotDisplayPlot_T $(NameOfWave(Intw))
 			if(!V_Flag)
-				appendToGraph Int vs Qvec
+				appendToGraph Intw vs Qvec
 			endif
 		else
-			//Display/K=1 /W=(348,368,828,587.75) Int vs Qvec as "LineuotDisplayPlot_Distacne"
-			Display/K=1/W=(350, 350, 350 + 0.5 * IN2G_GetGraphWidthHeight("width"), 350 + 0.5 * IN2G_GetGraphWidthHeight("height")) Int vs Qvec as "LineuotDisplayPlot_Distacne"
+			//Display/K=1 /W=(348,368,828,587.75) Intw vs Qvec as "LineuotDisplayPlot_Distacne"
+			Display/K=1/W=(350, 350, 350 + 0.5 * IN2G_GetGraphWidthHeight("width"), 350 + 0.5 * IN2G_GetGraphWidthHeight("height")) Intw vs Qvec as "LineuotDisplayPlot_Distacne"
 			DoWIndow/C LineuotDisplayPlot_T
 			AutoPositionWindow/M=1/E/R=NI1A_Convert2Dto1DPanel LineuotDisplayPlot_T
 			ModifyGraph log=0
@@ -1832,7 +1821,7 @@ Function NI1A_DisplayLineoutAfterProc(int, Qvec, Err, NumOfWavesToKeep, typeGrap
 	ModifyGraph mirror=1
 	IN2G_ColorTopGrphRainbow()
 #if Exists("Nika_Hook_AfterDisplayLineout") == 6
-	Nika_Hook_AfterDisplayLineout(int, Qvec, Err)
+	Nika_Hook_AfterDisplayLineout(Intw, Qvec, Err)
 #endif
 
 End
@@ -1865,8 +1854,7 @@ End
 //Function NI1A_setupData(updateLUT)
 //		variable updateLUT
 //
-//		//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-//		wave QVectorWave=root:Packages:Convert2Dto1D:QVectorWave
+//	 //		wave QVectorWave=root:Packages:Convert2Dto1D:QVectorWave
 //		wave CCDImageToConvert=root:Packages:Convert2Dto1D:CCDImageToConvert
 //		wave M_ROIMask=root:Packages:Convert2Dto1D:M_ROIMask
 //		wave EmptyData=root:Packages:Convert2Dto1D:EmptyData
@@ -1886,8 +1874,7 @@ Function NI1A_CreateConversionLUT(updateLUT, QVectorWave, CCDImageToConvert, M_R
 	variable updateLUT
 	WAVE QVectorWave, CCDImageToConvert, M_ROIMask
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDf = GetDataFOlder(1)
+ 	string OldDf = GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
 	if(updateLUT)
@@ -1916,7 +1903,7 @@ Function NI1A_CreateConversionLUT(updateLUT, QVectorWave, CCDImageToConvert, M_R
 	endfor
 	NewIntWave     /= HistWave
 	NewIntErrorWave = sqrt(NewIntErrorWave - HistWave * NewIntWave * NewIntWave) / (HistWave - 1)
-	killwaves/Z tempInt, TempIntSqt, temp2D, tempQ, NewQwave
+	killwaves/Z tempIntw, TempIntSqt, temp2D, tempQ, NewQwave
 End
 
 //*******************************************************************************************************************************************
@@ -1929,8 +1916,7 @@ End
 Function NI1A_CreateMovie()
 	//here we setup user to create movies while reducting data
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	NVAR Movie_Use2DRAWdata       = root:Packages:Convert2Dto1D:Movie_Use2DRAWdata
+ 	NVAR Movie_Use2DRAWdata       = root:Packages:Convert2Dto1D:Movie_Use2DRAWdata
 	NVAR Movie_Use2DProcesseddata = root:Packages:Convert2Dto1D:Movie_Use2DProcesseddata
 	NVAR Movie_Use1DData          = root:Packages:Convert2Dto1D:Movie_Use1DData
 	//	if(Movie_Use2DRAWdata+Movie_Use2DProcesseddata+Movie_Use1DData!=0)
@@ -1957,8 +1943,7 @@ End
 //***********************************************************
 
 Window NI1A_CreateMoviesPanel() : Panel
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	PauseUpdate // building window...
+ 	PauseUpdate // building window...
 	NewPanel/K=1/W=(455, 63, 762, 443) as "Nika Create Movies panel"
 	SetDrawLayer UserBack
 	SetDrawEnv fname="Times New Roman", fsize=18, fstyle=3, textrgb=(0, 0, 65535)
@@ -1988,8 +1973,8 @@ Window NI1A_CreateMoviesPanel() : Panel
 	DrawText 10, 170, "3. Modify the Image/graph "
 	CheckBox Movie_AppendFileName, pos={30, 175}, size={80, 16}, proc=NI1A_MovieCheckProc, title="Append File Name as Legend?"
 	CheckBox Movie_AppendFileName, variable=root:Packages:Convert2Dto1D:Movie_AppendFileName, help={"Check to append file name as legend"}
-	CheckBox Movie_DisplayLogInt, pos={30, 195}, size={80, 16}, proc=NI1A_MovieCheckProc, title="Log Int (2D images only)?"
-	CheckBox Movie_DisplayLogInt, variable=root:Packages:Convert2Dto1D:Movie_DisplayLogInt, help={"Check to append file name as legend"}
+	CheckBox Movie_DisplayLogIntw, pos={30, 195}, size={80, 16}, proc=NI1A_MovieCheckProc, title="Log Intw(2D images only)?"
+	CheckBox Movie_DisplayLogIntw, variable=root:Packages:Convert2Dto1D:Movie_DisplayLogIntw, help={"Check to append file name as legend"}
 
 	SetDrawEnv fstyle=3
 	DrawText 10, 240, "4. Create movie file "
@@ -2021,8 +2006,7 @@ EndMacro
 Function NI1A_MovieCheckProc(cba) : CheckBoxControl
 	STRUCT WMCheckboxAction &cba
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	NVAR Movie_Use2DRAWdata       = root:Packages:Convert2Dto1D:Movie_Use2DRAWdata
+ 	NVAR Movie_Use2DRAWdata       = root:Packages:Convert2Dto1D:Movie_Use2DRAWdata
 	NVAR Movie_Use2DProcesseddata = root:Packages:Convert2Dto1D:Movie_Use2DProcesseddata
 	NVAR Movie_Use1DData          = root:Packages:Convert2Dto1D:Movie_Use1DData
 	NVAR Movie_FileOpened         = root:Packages:Convert2Dto1D:Movie_FileOpened
@@ -2123,8 +2107,7 @@ End
 //***********************************************************
 Function NI1A_MovieRecordFrameIfReq(OneDPlace)
 	variable OneDPlace
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	NVAR FIleOpened = root:Packages:Convert2Dto1D:Movie_FileOpened
+ 	NVAR FIleOpened = root:Packages:Convert2Dto1D:Movie_FileOpened
 	if(!FIleOpened)
 		return 0
 	endif
@@ -2153,8 +2136,7 @@ End
 //***********************************************************
 Function NI1A_MovieCreateUpdate1DGraphF()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDf = getDataFolder(1)
+ 	string OldDf = getDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D:
 
 	NVAR Movie_Use1DData      = root:Packages:Convert2Dto1D:Movie_Use1DData
@@ -2163,7 +2145,7 @@ Function NI1A_MovieCreateUpdate1DGraphF()
 	SVAR UserSampleName       = root:Packages:Convert2Dto1D:UserSampleName
 	SVAR Movie_FileName       = root:Packages:Convert2Dto1D:Movie_FileName
 	NVAR Movie_AppendFileName = root:Packages:Convert2Dto1D:Movie_AppendFileName
-	NVAR Movie_DisplayLogInt  = root:Packages:Convert2Dto1D:Movie_DisplayLogInt
+	NVAR Movie_DisplayLogIntw = root:Packages:Convert2Dto1D:Movie_DisplayLogInt
 
 	if(!Movie_Use1DData) //probably want to do 1D graph for Movie
 		KillWIndow/Z NI1A_MovieCreate1DGraph
@@ -2301,8 +2283,7 @@ End
 //***********************************************************
 Function NI1A_MovieUpdateMain2DImage()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDf = getDataFolder(1)
+ 	string OldDf = getDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D:
 	NVAR Movie_UseMain2DImage = root:Packages:Convert2Dto1D:Movie_UseMain2DImage
 
@@ -2331,8 +2312,7 @@ End
 //***********************************************************
 Function NI1A_MovieCallUserHookFunction()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDf = getDataFolder(1)
+ 	string OldDf = getDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D:
 	NVAR Movie_UseUserHookFnct = root:Packages:Convert2Dto1D:Movie_UseUserHookFnct
 
@@ -2340,7 +2320,7 @@ Function NI1A_MovieCallUserHookFunction()
 		return 0
 	endif
 
-#if (exists("Movie_UserHookFunction") == 6)
+#if(exists("Movie_UserHookFunction") == 6)
 	Movie_UserHookFunction()
 #else
 	Movie_UseUserHookFnct = 0
@@ -2375,8 +2355,7 @@ End
 Function NI1A_MovieButtonProc(ba) : ButtonControl
 	STRUCT WMButtonAction &ba
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	switch(ba.eventCode)
+ 	switch(ba.eventCode)
 		case 2: // mouse up
 			// click code here
 			if(stringmatch(ba.ctrlName, "OpenMovieFile"))
@@ -2408,8 +2387,7 @@ End
 //***********************************************************
 Function NI1A_MovieOpenFile()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	NVAR Movie_FrameRate           = root:Packages:Convert2Dto1D:Movie_FrameRate
+ 	NVAR Movie_FrameRate           = root:Packages:Convert2Dto1D:Movie_FrameRate
 	NVAR Movie_AppendAutomatically = root:Packages:Convert2Dto1D:Movie_AppendAutomatically
 	NVAR Movie_FileOpened          = root:Packages:Convert2Dto1D:Movie_FileOpened
 	//figure out if we need different CF factor, see below.
@@ -2447,8 +2425,7 @@ End
 //***********************************************************
 Function NI1A_MovieCloseFile()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	variable DebugEnab
+ 	variable DebugEnab
 	DebuggerOptions
 	DebugEnab = V_debugOnError //check for debug on error
 	if(DebugEnab) //if it is on,
@@ -2461,7 +2438,7 @@ Function NI1A_MovieCloseFile()
 		string message = GetErrMessage(err)
 		Printf "Error in Movie creation: %s\r", message
 		err = GetRTError(1) // Clear error state
-		Print "Continuing execution"
+		print "Continuing execution"
 	endif
 	if(DebugEnab)
 		DebuggerOptions debugOnError=1 //turn it back on
@@ -2479,8 +2456,7 @@ End
 Function NI1A_MovieAppendTopImage(Manually)
 	variable manually
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	NVAR Movie_Use2DRAWdata        = root:Packages:Convert2Dto1D:Movie_Use2DRAWdata
+ 	NVAR Movie_Use2DRAWdata        = root:Packages:Convert2Dto1D:Movie_Use2DRAWdata
 	NVAR Movie_Use2DProcesseddata  = root:Packages:Convert2Dto1D:Movie_Use2DProcesseddata
 	NVAR Movie_Use1DData           = root:Packages:Convert2Dto1D:Movie_Use1DData
 	NVAR Movie_UseMain2DImage      = root:Packages:Convert2Dto1D:Movie_UseMain2DImage
@@ -2511,7 +2487,7 @@ Function NI1A_MovieAppendTopImage(Manually)
 		SVAR Movie_FileName = root:Packages:Convert2Dto1D:Movie_FileName
 
 		AddMovieFrame
-		Print "Added frame with data : " + Movie_FileName + " to movie"
+		print "Added frame with data : " + Movie_FileName + " to movie"
 	endif
 End
 //***********************************************************

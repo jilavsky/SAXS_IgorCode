@@ -1,14 +1,15 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use modern global access method.
 
-#pragma version=1.30
+#pragma version=1.31
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//1.31 add ability to mask off high intensity points
 //1.30 Remove for MatrixOP /NTHR=0 since it is applicable to 3D matrices only
 //1.29 Fixed to accept tiff as tif extension.
 //1.28 fixed masking of first/last N rows/columns which was not working right.
@@ -58,8 +59,10 @@ Function NI1M_CreateImageROIPanel()
 	NVAR ImageRangeMaxLimit         = root:Packages:Convert2Dto1D:ImageRangeMaxLimit
 	NVAR ImageRangeMinLimit         = root:Packages:Convert2Dto1D:ImageRangeMinLimit
 	NVAR MaskOffLowIntPoints        = root:Packages:Convert2Dto1D:MaskOffLowIntPoints
+	NVAR MaskOffHighIntPoints        = root:Packages:Convert2Dto1D:MaskOffHighIntPoints
 	NVAR UseCalib2DData             = root:Packages:Convert2Dto1D:UseCalib2DData
 	NVAR LowIntToMaskOff            = root:Packages:Convert2Dto1D:LowIntToMaskOff
+	NVAR HighIntToMaskOff            = root:Packages:Convert2Dto1D:HighIntToMaskOff
 	SVAR ListOfKnownExtensions      = root:Packages:Convert2Dto1D:ListOfKnownExtensions
 	SVAR ListOfKnownCalibExtensions = root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions
 
@@ -138,8 +141,15 @@ Function NI1M_CreateImageROIPanel()
 	CheckBox MaskOffLowIntPoints, proc=NI1M_MaskCheckProc, variable=MaskOffLowIntPoints
 	CheckBox MaskOffLowIntPoints, help={"Mask of points with Intensity lower than selected threshold?"}
 	SetVariable LowIntToMaskOff, pos={206, 410}, size={190, 16}, proc=NI1M_Mask_SetVarProc, title="Threshold Intensity :"
-	SetVariable LowIntToMaskOff, help={"Intensity <= this thereshold"}, disable=!(MaskOffLowIntPoints)
+	SetVariable LowIntToMaskOff, help={"Intensity <= this threshold"}, disable=!(MaskOffLowIntPoints)
 	SetVariable LowIntToMaskOff, value=root:Packages:Convert2Dto1D:LowIntToMaskOff
+
+	CheckBox MaskOffHighIntPoints, title="Mask high Intensity points?", pos={10, 425}
+	CheckBox MaskOffHighIntPoints, proc=NI1M_MaskCheckProc, variable=MaskOffHighIntPoints
+	CheckBox MaskOffHighIntPoints, help={"Mask of points with Intensity higher than selected threshold?"}
+	SetVariable HighIntToMaskOff, pos={206, 425}, size={190, 16}, proc=NI1M_Mask_SetVarProc, title="Threshold Intensity :"
+	SetVariable HighIntToMaskOff, help={"Intensity > this threshold"}, disable=!(MaskOffHighIntPoints)
+	SetVariable HighIntToMaskOff, value=root:Packages:Convert2Dto1D:HighIntToMaskOff
 
 	ING2_AddScrollControl()
 	NI1_UpdatePanelVersionNumber("NI1M_ImageROIPanel", 1)
@@ -238,6 +248,20 @@ Function NI1M_MaskCheckProc(ctrlName, checked) : CheckBoxControl
 		NI1M_MaskUpdateColors()
 	endif
 
+	if(cmpstr(ctrlName, "MaskOffHighIntPoints") == 0)
+		DoWindow CCDImageForMask
+		if(!V_Flag)
+			abort
+		else
+			DoWindow/F CCDImageForMask
+		endif
+		SetVariable HighIntToMaskOff, win=NI1M_ImageROIPanel, disable=!(checked)
+		NI1M_MaskUpdateColors()
+	endif
+
+
+
+
 	if(cmpstr(ctrlName, "UseCalib2DData") == 0)
 		SVAR CCDFileExtension           = root:Packages:Convert2Dto1D:CCDFileExtension
 		SVAR ListOfKnownCalibExtensions = root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions
@@ -296,16 +320,22 @@ Function NI1M_saveRoiCopyProc(ctrlName) : ButtonControl
 	//SVAR FileNameToLoad
 	NVAR     MaskOffLowIntPoints = root:Packages:Convert2Dto1D:MaskOffLowIntPoints
 	NVAR     LowIntToMaskOff     = root:Packages:Convert2Dto1D:LowIntToMaskOff
+	NVAR     MaskOffHighIntPoints = root:Packages:Convert2Dto1D:MaskOffHighIntPoints
+	NVAR     HighIntToMaskOff     = root:Packages:Convert2Dto1D:HighIntToMaskOff
 	NVAR     MaskDisplayLogImage = root:Packages:Convert2Dto1D:MaskDisplayLogImage
 	variable TempLowIntToMsk     = LowIntToMaskOff
+	variable TempHighIntToMsk     = HighIntToMaskOff
 	if(MaskDisplayLogImage)
 		TempLowIntToMsk = log(LowIntToMaskOff)
+		TempHighIntToMsk = log(HighIntToMaskOff)
 	endif
 	if(MaskOffLowIntPoints)
 		WAVE MaskCCDImage
-		//	MatrixOP/O  LowIntPointmask = greater(MaskCCDImage -LowIntToMaskOff, 0)
-		//	MatrixOP/O  M_ROIMask =M_ROIMask * greater(MaskCCDImage, LowIntToMaskOff)
 		MatrixOP/O M_ROIMask = M_ROIMask * greater(MaskCCDImage - TempLowIntToMsk, 0)
+	endif
+	if(MaskOffHighIntPoints)
+		WAVE MaskCCDImage
+		MatrixOP/O M_ROIMask = M_ROIMask * greater(0, MaskCCDImage - TempHighIntToMsk)
 	endif
 	redimension/B/U M_ROIMask
 
@@ -340,7 +370,7 @@ End
 Function NI1M_SaveHDFNikaMaskFile(fileNameString, PathNameString, ImageToSaveName)
 	string fileNameString, PathNameString
 	WAVE ImageToSaveName
-#if (exists("HDF5OpenFile") == 4)
+#if(exists("HDF5OpenFile") == 4)
 	string OldDf = GetDataFOlder(1)
 	setDataFOlder root:Packages:Convert2Dto1D
 
@@ -451,7 +481,7 @@ End
 //*******************************************************************************************************************************************
 Function NI1M_LoadOldHdfImage()
 
-#if (exists("HDF5OpenFile") == 4)
+#if(exists("HDF5OpenFile") == 4)
 	DoWindow CCDImageForMask
 	if(!V_Flag)
 		Abort "First create image with some data to use, this button only adds _mask file there to be further edited"
@@ -518,7 +548,8 @@ End
 //*******************************************************************************************************************************************
 
 Function/S NI1M_GetImageWave(grfName)
-	string grfName // use zero len str to speicfy top graph
+	string grfName 
+	// use zero len str to speicfy top graph
 
 	string   s  = ImageNameList(grfName, ";")
 	variable p1 = StrSearch(s, ";", 0)
@@ -595,6 +626,10 @@ Function NI1M_MaskCreateImage()
 	ImageRangeMax      = V_max
 	ImageRangeMinLimit = V_min
 	ImageRangeMaxLimit = V_max
+	NVAR HighIntToMaskOff = root:Packages:Convert2Dto1D:HighIntToMaskOff
+	if(HighIntToMaskOff<1) //default value
+		HighIntToMaskOff = V_max+1
+	endif
 
 	Slider ImageRangeMin, limits={ImageRangeMinLimit, ImageRangeMaxLimit, 0}, win=NI1M_ImageROIPanel
 	Slider ImageRangeMax, limits={ImageRangeMinLimit, ImageRangeMaxLimit, 0}, win=NI1M_ImageROIPanel
@@ -718,7 +753,8 @@ End
 Function NI1M_SliderProc(ctrlName, sliderValue, event) //: SliderControl
 	string   ctrlName
 	variable sliderValue
-	variable event // bit field: bit 0: value set, 1: mouse down, 2: mouse up, 3: mouse moved
+	variable event 
+	// bit field: bit 0: value set, 1: mouse down, 2: mouse up, 3: mouse moved
 
 	if(event & 0x1) // bit 0, value set
 
@@ -758,15 +794,18 @@ Function NI1M_MaskUpdateColors()
 		//now deal with the masking of low values...
 		WAVE MaskCCDImage        = root:Packages:Convert2Dto1D:MaskCCDImage
 		NVAR LowIntToMaskOff     = root:Packages:Convert2Dto1D:LowIntToMaskOff
+		NVAR HighIntToMaskOff     = root:Packages:Convert2Dto1D:HighIntToMaskOff
 		NVAR MaskDisplayLogImage = root:Packages:Convert2Dto1D:MaskDisplayLogImage
 		NVAR MaskOffLowIntPoints = root:Packages:Convert2Dto1D:MaskOffLowIntPoints
-
+		NVAR MaskOffHighIntPoints = root:Packages:Convert2Dto1D:MaskOffHighIntPoints
+		variable tempLimit
 		removeimage/Z/W=CCDImageForMask UnderLevelImage
+		removeimage/Z/W=CCDImageForMask OverLevelImage
 
 		if(MaskOffLowIntPoints)
 			MatrixOp/O UnderLevelImage = MaskCCDImage
 			AppendImage/T/W=CCDImageForMask UnderLevelImage
-			variable tempLimit = LowIntToMaskOff
+			tempLimit = LowIntToMaskOff
 			if(tempLimit < 1e-10)
 				tempLimit = 1e-10
 			endif
@@ -775,6 +814,18 @@ Function NI1M_MaskUpdateColors()
 			endif
 			ModifyImage/W=CCDImageForMask UnderLevelImage, ctab={tempLimit, tempLimit, Terrain, 0}
 			ModifyImage/W=CCDImageForMask UnderLevelImage, minRGB=(65535, 65535, 65535), maxRGB=NaN
+		else
+			killWaves/Z UnderLevelImage
+		endif
+		if(MaskOffHighIntPoints)
+			MatrixOp/O OverLevelImage = MaskCCDImage
+			AppendImage/T/W=CCDImageForMask OverLevelImage
+			tempLimit = HighIntToMaskOff
+			if(MaskDisplayLogImage)
+				tempLimit = log(tempLimit)
+			endif
+			ModifyImage/W=CCDImageForMask OverLevelImage, ctab={tempLimit, tempLimit, Terrain, 0}
+			ModifyImage/W=CCDImageForMask OverLevelImage, maxRGB=(0, 0, 0), minRGB=NaN
 		else
 			killWaves/Z UnderLevelImage
 		endif
@@ -843,6 +894,9 @@ Function NI1M_Mask_SetVarProc(ctrlName, varNum, varStr, varName) : SetVariableCo
 	endif
 
 	if(cmpstr("LowIntToMaskOff", ctrlName) == 0)
+		NI1M_MaskUpdateColors()
+	endif	
+	if(cmpstr("HighIntToMaskOff", ctrlName) == 0)
 		NI1M_MaskUpdateColors()
 	endif
 	setDataFolder OldDf

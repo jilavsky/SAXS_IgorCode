@@ -3,7 +3,7 @@
 constant IR3JversionNumber = 1.16			//Simple Fit panel version number
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -108,8 +108,7 @@ constant SimpleFitsLinPlotMinScale = 0.8
 ///******************************************************************************************
 Function IR3J_SimpleFits()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	IN2G_CheckScreenSize("width",1200)
+ 	IN2G_CheckScreenSize("width",1200)
 	DoWIndow IR3J_SimpleFitsPanel
 	if(V_Flag)
 		DoWindow/F IR3J_SimpleFitsPanel
@@ -145,8 +144,7 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 Function IR3J_SimpleFitsPanelFnct()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	PauseUpdate    		// building window...
+ 	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,530,800) as "Simple Fits & Analysis tool"
 	DoWIndow/C IR3J_SimpleFitsPanel
 	TitleBox MainTitle title="Simple Fits & Analysis tool",pos={120,2},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},fSize=22,fColor=(0,0,52224)
@@ -277,8 +275,7 @@ end
 //************************************************************************************************************
 Function IR3J_CreateCheckGraphs()
 	
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	variable exists1=0
+ 	variable exists1=0
 	DoWIndow IR3J_LogLogDataDisplay
 	if(V_Flag)
 		DoWIndow/hide=? IR3J_LogLogDataDisplay
@@ -324,8 +321,7 @@ end
 Function IR3J_InitSimpleFits()	
 
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFref oldDf= GetDataFolderDFR()
+ 	DFref oldDf= GetDataFolderDFR()
 	string ListOfVariables
 	string ListOfStrings
 	variable i
@@ -622,8 +618,7 @@ End
 Function IR3J_CopyAndAppendData(FolderNameStr)
 	string FolderNameStr
 	
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFref oldDf= GetDataFolderDFR()
+ 	DFref oldDf= GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:SimpleFits					//go into the folder
 		SVAR DataStartFolder=root:Packages:Irena:SimpleFits:DataStartFolder
 		SVAR DataFolderName=root:Packages:Irena:SimpleFits:DataFolderName
@@ -719,8 +714,7 @@ end
 //**********************************************************************************************************
 Function IR3J_CreateLinearizedData()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFref oldDf= GetDataFolderDFR()
+ 	DFref oldDf= GetDataFolderDFR()
 
 	SetDataFolder root:Packages:Irena:SimpleFits					//go into the folder
 	Wave OriginalDataIntWave=root:Packages:Irena:SimpleFits:OriginalDataIntWave
@@ -767,8 +761,7 @@ end
 
 Function IR3J_AppendDataToGraphModel()
 	//this deals with lin-lin model. 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	IR3J_CreateCheckGraphs()
+ 	IR3J_CreateCheckGraphs()
 	variable WhichLegend=0
 	variable startQp, endQp, tmpStQ
 
@@ -860,8 +853,7 @@ end
 
 Function IR3J_AppendDataToGraphLogLog()
 	
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	IR3J_CreateCheckGraphs()
+ 	IR3J_CreateCheckGraphs()
 	variable WhichLegend=0
 	Wave OriginalDataIntWave=root:Packages:Irena:SimpleFits:OriginalDataIntWave
 	Wave OriginalDataQWave=root:Packages:Irena:SimpleFits:OriginalDataQWave
@@ -1013,8 +1005,7 @@ end
 
 static Function IR3J_FitData()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	SVAR SimpleModel = root:Packages:Irena:SimpleFits:SimpleModel
+ 	SVAR SimpleModel = root:Packages:Irena:SimpleFits:SimpleModel
 	strswitch(SimpleModel)	// string switch
 		case "Guinier":				// Regular Guinier, aka: Sphere, globular. 
 			IR3J_FitGuinier("Sphere")
@@ -1068,8 +1059,7 @@ end
 
 static Function IR3J_FitSequenceOfData()
 
-		//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-		//warn user if not saving results...
+	 		//warn user if not saving results...
 		NVAR SaveToNotebook=root:Packages:Irena:SimpleFits:SaveToNotebook
 		NVAR SaveToWaves=root:Packages:Irena:SimpleFits:SaveToWaves
 		NVAR SaveToFolder=root:Packages:Irena:SimpleFits:SaveToFolder
@@ -1169,8 +1159,7 @@ static Function IR3J_SyncCursorsTogether(traceName,CursorName,PointNumber)
 	string traceName,CursorName
 	variable PointNumber
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	IR3J_CreateCheckGraphs()
+ 	IR3J_CreateCheckGraphs()
 	NVAR DataQEnd = root:Packages:Irena:SimpleFits:DataQEnd
 	NVAR DataQstart = root:Packages:Irena:SimpleFits:DataQstart
 	NVAR DataQEndPoint = root:Packages:Irena:SimpleFits:DataQEndPoint
@@ -1271,9 +1260,10 @@ end
 //**********************************************************************************************************
 
 static Function IR3J_FitGuinier(which)
-	string which			//Sphere, Rod, Sheet
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	IR3J_CreateCheckGraphs()
+	string which			
+	
+	//Sphere, Rod, Sheet
+ 	IR3J_CreateCheckGraphs()
 	DFref oldDf= GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:SimpleFits					//go into the folder
 	NVAR DataQEnd = root:Packages:Irena:SimpleFits:DataQEnd
@@ -1561,8 +1551,7 @@ End
 
 static Function IR3J_FitPorod()
 	
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	IR3J_CreateCheckGraphs()
+ 	IR3J_CreateCheckGraphs()
 	DFref oldDf= GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:SimpleFits					//go into the folder
 	NVAR DataQEnd = root:Packages:Irena:SimpleFits:DataQEnd
@@ -1602,8 +1591,7 @@ static Function IR3J_FitPorod()
 	if(UseSMRData)
 		FuncFit IR3J_FitPorodSMR W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /C=T_Constraints /W=OriginalDataErrorWave /I=1
 	else
-		FuncFit PorodInLogLog W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /C=T_Constraints /W=OriginalDataErrorWave /I=1
-	endif
+ 	endif
 	if (V_FitError==0)	// fitting was fine... 
 		Wave W_sigma
 		AchievedChiSquare = V_chisq/(DataQEndPoint-DataQstartPoint)
@@ -1632,8 +1620,7 @@ end
 
 static Function IR3J_FitPowerLaw()
 	
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	IR3J_CreateCheckGraphs()
+ 	IR3J_CreateCheckGraphs()
 	DFref oldDf= GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:SimpleFits					//go into the folder
 	NVAR DataQEnd = root:Packages:Irena:SimpleFits:DataQEnd
@@ -1717,9 +1704,9 @@ end
 //**********************************************************************************************************
 
 Function IR3J_FitSizeDistribution(Which)
-	string Which			//"Volume" or "Number" 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	IR3J_CreateCheckGraphs()
+	string Which			
+	//"Volume" or "Number" 
+ 	IR3J_CreateCheckGraphs()
 	DFref oldDf= GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:SimpleFits					//go into the folder
 	NVAR DataQEnd = root:Packages:Irena:SimpleFits:DataQEnd
@@ -1805,8 +1792,7 @@ end
 
 static Function IR3J_FitSphere()
 	
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	IR3J_CreateCheckGraphs()
+ 	IR3J_CreateCheckGraphs()
 	DFref oldDf= GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:SimpleFits					//go into the folder
 	NVAR DataQEnd = root:Packages:Irena:SimpleFits:DataQEnd
@@ -1904,8 +1890,7 @@ End
 
 static Function IR3J_FitSpheroid()
 	
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	IR3J_CreateCheckGraphs()
+ 	IR3J_CreateCheckGraphs()
 	DFref oldDf= GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:SimpleFits					//go into the folder
 	NVAR DataQEnd = root:Packages:Irena:SimpleFits:DataQEnd
@@ -2015,8 +2000,7 @@ End
 //static
 Function IR3J_CalculateModel()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	IR3J_CreateCheckGraphs()
+ 	IR3J_CreateCheckGraphs()
 	DFref oldDf= GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:SimpleFits					//go into the folder
 	Wave/Z OriginalDataIntWave		=	root:Packages:Irena:SimpleFits:OriginalDataIntWave
@@ -2225,8 +2209,7 @@ end
 //**********************************************************************************************************
 static Function IR3J_SaveResultsToNotebook()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	NVAR SaveToNotebook=root:Packages:Irena:SimpleFits:SaveToNotebook
+ 	NVAR SaveToNotebook=root:Packages:Irena:SimpleFits:SaveToNotebook
 	NVAR SaveToWaves=root:Packages:Irena:SimpleFits:SaveToWaves
 	NVAR SaveToFolder=root:Packages:Irena:SimpleFits:SaveToFolder
 	if(!SaveToNotebook)
@@ -2356,8 +2339,7 @@ end
 //**********************************************************************************************************
 static Function IR3J_SaveResultsToFolder()
 	
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFref oldDf= GetDataFolderDFR()	
+ 	DFref oldDf= GetDataFolderDFR()	
 	SetDataFolder root:Packages:Irena:SimpleFits								//go into the folder
 	NVAR SaveToFolder=root:Packages:Irena:SimpleFits:SaveToFolder
 	if(!SaveToFolder)
@@ -2540,8 +2522,7 @@ end
 //**********************************************************************************************************
 static Function IR3J_SaveResultsToWaves()
 	
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFref oldDf= GetDataFolderDFR()	
+ 	DFref oldDf= GetDataFolderDFR()	
 	NVAR SaveToNotebook=root:Packages:Irena:SimpleFits:SaveToNotebook
 	NVAR SaveToWaves=root:Packages:Irena:SimpleFits:SaveToWaves
 	NVAR SaveToFolder=root:Packages:Irena:SimpleFits:SaveToFolder
@@ -2801,8 +2782,7 @@ end
 
 static Function IR3J_GetTableWithResults()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	SVAR SimpleModel 				= root:Packages:Irena:SimpleFits:SimpleModel
+ 	SVAR SimpleModel 				= root:Packages:Irena:SimpleFits:SimpleModel
 	strswitch(SimpleModel)	// string switch
 		case "Guinier":	// execute if case matches expression
 			DoWindow IR3J_GuinierFitResultsTable
@@ -2879,8 +2859,7 @@ end
 
 Function IR3J_DeleteExistingModelResults()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	SVAR SimpleModel 	= root:Packages:Irena:SimpleFits:SimpleModel
+ 	SVAR SimpleModel 	= root:Packages:Irena:SimpleFits:SimpleModel
 	DoAlert /T="This is delete resutls warning" 1, "This will delete all existing results for model : "+SimpleModel+". Do you WANT to continue?"
 	if(V_Flag==1)
 		strswitch(SimpleModel)	// string switch
@@ -2983,8 +2962,7 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 static Function IR3J_GuinierFitResultsTableFnct() : Table
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DoWIndow IR3J_GuinierFitResultsTable
+ 	DoWIndow IR3J_GuinierFitResultsTable
 	if(V_Flag)
 		DoWIndow/F IR3J_GuinierFitResultsTable 
 	else
@@ -3010,8 +2988,7 @@ static Function IR3J_GuinierFitResultsTableFnct() : Table
 EndMacro
 //*****************************************************************************************************************
 static Function IR3J_GuinRodFitResTblFnct() : Table
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DoWIndow IR3J_GuinierRodFitResultsTable
+ 	DoWIndow IR3J_GuinierRodFitResultsTable
 	if(V_Flag)
 		DoWIndow/F IR3J_GuinierRodFitResultsTable 
 	else
@@ -3037,8 +3014,7 @@ static Function IR3J_GuinRodFitResTblFnct() : Table
 EndMacro
 //*****************************************************************************************************************
 static Function IR3J_GuinSheetFitResTblFnct() : Table
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DoWIndow IR3J_GuinierSheetFitResTable
+ 	DoWIndow IR3J_GuinierSheetFitResTable
 	if(V_Flag)
 		DoWIndow/F IR3J_GuinierSheetFitResTable 
 	else
@@ -3065,8 +3041,7 @@ EndMacro
 
 //*****************************************************************************************************************
 Function IR3J_PorodFitResultsTableFnct() : Table
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DoWIndow IR3J_PorodFitResultsTable
+ 	DoWIndow IR3J_PorodFitResultsTable
 	if(V_Flag)
 		DoWIndow/F IR3J_PorodFitResultsTable 
 	else
@@ -3094,8 +3069,7 @@ Function IR3J_PorodFitResultsTableFnct() : Table
 EndMacro
 //*****************************************************************************************************************
 Function IR3J_PwrLawFitResultsTableFnct() : Table
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DoWIndow IR3J_PwrLawFitResultsTable
+ 	DoWIndow IR3J_PwrLawFitResultsTable
 	if(V_Flag)
 		DoWIndow/F IR3J_PwrLawFitResultsTable 
 	else
@@ -3125,8 +3099,7 @@ EndMacro
 
 //*****************************************************************************************************************
 Function IR3J_SphFFFitResTblFnct() : Table
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DoWIndow IR3J_SphereFFFitResultsTable
+ 	DoWIndow IR3J_SphereFFFitResultsTable
 	if(V_Flag)
 		DoWIndow/F IR3J_SphereFFFitResultsTable 
 	else
@@ -3154,8 +3127,7 @@ EndMacro
 //*****************************************************************************************************************
 
 Function IR3J_SpheroidFFFitResTblFnct() : Table
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DoWIndow IR3J_SpheroidFFFitResultsTable
+ 	DoWIndow IR3J_SpheroidFFFitResultsTable
 	if(V_Flag)
 		DoWIndow/F IR3J_SpheroidFFFitResultsTable 
 	else
@@ -3184,8 +3156,7 @@ EndMacro
 //*****************************************************************************************************************
 //
 //Function IR3J_VolumeSDResTblFnct() : Table
-//	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-//	DoWIndow IR3J_SpheroidFFFitResultsTable
+// //	DoWIndow IR3J_SpheroidFFFitResultsTable
 //	if(V_Flag)
 //		DoWIndow/F IR3J_SpheroidFFFitResultsTable 
 //	else
@@ -3211,8 +3182,7 @@ EndMacro
 //*****************************************************************************************************************
 
 Function IR3J_InvResultsTableFnct() : Table
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DoWIndow IR3J_InvResultsTable
+ 	DoWIndow IR3J_InvResultsTable
 	if(V_Flag)
 		DoWIndow/F IR3J_InvResultsTable 
 	else
@@ -3241,8 +3211,7 @@ EndMacro
 //
 //Function IR3J_NumberSDResTblFnct() : Table
 //	PauseUpdate    		// building window...
-//	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-//	String fldrSav0= GetDataFolder(1)
+// //	String fldrSav0= GetDataFolder(1)
 //	if(!DataFolderExists("root:NumbSizeDistResults:"))
 //		Abort "No Number Size Distribution analysis data exist."
 //	endif
@@ -3313,8 +3282,7 @@ End
 
 static Function IR3J_SetupControlsOnMainpanel()
 	
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	SVAR SimpleModel = root:Packages:Irena:SimpleFits:SimpleModel
+ 	SVAR SimpleModel = root:Packages:Irena:SimpleFits:SimpleModel
 	SVAR Corr1DMethod = root:Packages:Irena:SimpleFits:Corr1DMethod
 	DoWindow IR3J_SimpleFitsPanel
 	if(V_Flag)
@@ -3422,8 +3390,8 @@ FUnction IR3J_InvInitializeBackground()
 		endif
 		CheckDisplayed /W=IR3J_LogLogDataDisplay  IntWave
 		if(V_Flag>0)
-			Cursor/W=IR3J_LogLogDataDisplay /A=1/N=1/P  C  OriginalDataIntWave  BinarySearch(QWave, InvBckgMinQ )
-			Cursor/W=IR3J_LogLogDataDisplay /A=1/N=1/P  D  OriginalDataIntWave  BinarySearch(QWave, InvBckgMaxQ )
+			Cursor/W=IR3J_LogLogDataDisplay /A=1/N=1/P  C , OriginalDataIntWave , BinarySearch(QWave, InvBckgMinQ )
+			Cursor/W=IR3J_LogLogDataDisplay /A=1/N=1/P  D, OriginalDataIntWave , BinarySearch(QWave, InvBckgMaxQ )
 		endif
 	endif
 end
@@ -3464,8 +3432,8 @@ Function IR3J_InvSyncBckgCursors(variable PreferCursors)
 		endif	
 	else
 		//set cursors...
-		Cursor/W=IR3J_LogLogDataDisplay /A=1/N=1/P  C  OriginalDataIntWave  BinarySearch(QWave, InvBckgMinQ )
-		Cursor/W=IR3J_LogLogDataDisplay /A=1/N=1/P  D  OriginalDataIntWave  BinarySearch(QWave, InvBckgMaxQ )
+		Cursor/W=IR3J_LogLogDataDisplay /A=1/N=1/P  C,  OriginalDataIntWave , BinarySearch(QWave, InvBckgMinQ )
+		Cursor/W=IR3J_LogLogDataDisplay /A=1/N=1/P  D , OriginalDataIntWave , BinarySearch(QWave, InvBckgMaxQ )
 	endif
 	IR3J_InvFitBackground()
 
@@ -3718,7 +3686,7 @@ Function IR3J_CalculateInvariant()
 	//Determine point at which slope of integral becomes zero and use that value as Q
 	//checks value of integrand_int_DIF_smth at [index], and if is < 0, records Q
 	//Need to use < 0 because is unlikely to be exactly 0, but will go from (+) to (-)
-	Duplicate/Free IntegrantInt IntegrantInt_DIF IntegrantInt_DIF_smth
+	Duplicate/Free IntegrantInt, IntegrantInt_DIF, IntegrantInt_DIF_smth
 	Differentiate IntegrantInt /X=QWaveTrimmed/D=IntegrantInt_DIF
 	IntegrantInt_DIF_smth = IntegrantInt_DIF 
 	Smooth/EVEN/B 20, IntegrantInt_DIF_smth

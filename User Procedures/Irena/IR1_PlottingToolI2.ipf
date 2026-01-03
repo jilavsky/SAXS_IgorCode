@@ -3,7 +3,7 @@
 #pragma version=2.24
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
@@ -199,7 +199,8 @@ Function IR1P_CreateDataToPlot()
 	//ListOfDataWaveNames contains full path to ploted waves
 	//ListOfGraphFormating contains info, which data should be ploted...
 
-	variable i, imax = floor(ItemsInList(ListOfDataOrgWvNames) / 3) //there should be always 3 items in each list per data set ploted + common units added later
+	variable i 
+	variable imax = floor(ItemsInList(ListOfDataOrgWvNames) / 3) //there should be always 3 items in each list per data set ploted + common units added later
 	string DataX = stringByKey("DataX", ListOfGraphFormating, "=")
 	string DataY = stringByKey("DataY", ListOfGraphFormating, "=")
 	string DataE = stringByKey("DataE", ListOfGraphFormating, "=")
@@ -2366,12 +2367,12 @@ Function IR1P_genGraphCreateDataWF()
 	for(i = 1; i < NumberOfWaves; i += 1)
 		WAVE QWv = $(StringByKey("QWave" + num2str(i), ListOfDataWaveNames, "="))
 		if(QWv[0] < PlottingTool_Q[0]) //data longer on low-q end
-			Duplicate/FREE/O/R=[0, BinarySearch(QWv, PlottingTool_Q[0])] QWv, QWvStart
+			Duplicate/FREE/R=[0, BinarySearch(QWv, PlottingTool_Q[0])] QWv, QWvStart
 			Concatenate/NP/O {QWvStart, PlottingTool_Q}, PlottingTool_QT
 			Duplicate/O PlottingTool_QT, PlottingTool_Q
 		endif
 		if(PlottingTool_Q[numpnts(PlottingTool_Q) - 1] < QWv[numpnts(QWv) - 1]) //data longer on high-q end
-			Duplicate/FREE/O/R=[BinarySearch(QWv, PlottingTool_Q[numpnts(PlottingTool_Q) - 1]), Inf] QWv, QWvEnd
+			Duplicate/FREE/R=[BinarySearch(QWv, PlottingTool_Q[numpnts(PlottingTool_Q) - 1]), Inf] QWv, QWvEnd
 			Concatenate/NP/O {PlottingTool_Q, QWvEnd}, PlottingTool_QT
 			Duplicate/O PlottingTool_QT, PlottingTool_Q
 		endif
@@ -2455,7 +2456,8 @@ End
 //*****************************************************************************************
 
 Function IR1P_Movie3DCreateGraphAddFrame(AddFrame)
-	variable AddFrame //set to 1 if add frame, else just display for user
+	variable AddFrame 
+	//set to 1 if add frame, else just display for user
 
 	NVAR Graph3DClrMax = root:Packages:GeneralplottingTool:Graph3DClrMax
 	variable/G root:Packages:GeneralplottingTool:Graph3DClrMaxBckp
@@ -2543,7 +2545,8 @@ End
 //*****************************************************************************************
 
 Function IR1P_Movie2DCreateGraphAddFrame(AddFrame)
-	variable AddFrame //set to 1 if add frame, else just display for user
+	variable AddFrame 
+	//set to 1 if add frame, else just display for user
 
 	//first need to grab list of displayed data sets as they are in the tool and store it separately...
 	SVAR     DataFoldersInTool    = root:Packages:GeneralplottingTool:ListOfDataFolderNames

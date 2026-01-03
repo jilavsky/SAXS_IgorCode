@@ -1,13 +1,14 @@
-#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.22
+#pragma rtGlobals=3		// Use modern global access method.
+#pragma version=1.23
 Constant IR2RversionNumber=1.19
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.23 change to Pragma globals 3
 //1.22 fix GenCurveFit call, which was failing due to Exists("gencurvefit") returning 4 instead of 3 which was in the code. 
 //1.21 modified graph size control to use IN2G_GetGraphWidthHeight and associated settings. Should work on various display sizes. 
 //1.20 modified fitting to include Igor display with iterations /N=0/W=0
@@ -2551,11 +2552,11 @@ static Function IR2R_SimpleToolFit()
 		//check that the cursors are on the right wave or get them set to the right wave
 		if(cmpstr(CsrWave(A),"OriginalIntensity")!=0)
 			temp = CsrXWaveRef(A)[xcsr(A)]
-			cursor A OriginalIntensity binarysearch(OriginalQvector,temp)
+			cursor A, OriginalIntensity, binarysearch(OriginalQvector,temp)
 		endif
 		if(cmpstr(CsrWave(B),"OriginalIntensity")!=0)
 			temp = CsrXWaveRef(B)[xcsr(B)]
-			cursor B OriginalIntensity binarysearch(OriginalQvector,temp)
+			cursor B, OriginalIntensity, binarysearch(OriginalQvector,temp)
 		endif
 		
 		Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalIntensity, FitIntensityWave		

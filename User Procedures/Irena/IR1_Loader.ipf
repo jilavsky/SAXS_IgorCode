@@ -1,9 +1,9 @@
 #pragma rtGlobals=3 // Use strict wave reference mode and runtime bounds checking
-#pragma IgorVersion=8.04 //requires Igor version 8.03 or higher
+#pragma IgorVersion=9.04 //requires Igor version 8.03 or higher
 #pragma version=2.74
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/

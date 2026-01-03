@@ -1,22 +1,23 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use modern global access method.
-#pragma version=1.86
-#pragma IgorVersion=8.04
+#pragma version=1.87
+#pragma IgorVersion=9.04
 
 //DO NOT renumber Main files every time, these are main release numbers...
 
-Constant CurrentNikaVersionNumber        = 1.86
+Constant CurrentNikaVersionNumber        = 1.87
 Constant FixBackgroundOversubScale       = 1.05 //this is used to fix oversubtracted background. Adds FixBackgroundOversubScale*abs(V_min) to all intensity value.
 Constant NikaNumberOfQCirclesDisp        = 15
 Constant NikaLengthOfPathForPanelDisplay = 100
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
-//1.86		Nika modification for 12IDE USAXS/SAXS/WAXS instrument, Bug release
-//1.86		Beta release, Nika modification for 12IDE USAXS/SAXS/WAXS instrument.
+//1.87	Beta - cleanup and minor modifications
+//1.86	Nika modification for 12IDE USAXS/SAXS/WAXS instrument, Bug release
+//1.86	Beta release, Nika modification for 12IDE USAXS/SAXS/WAXS instrument.
 //1.85 	July2023 release, Fix NI1_SetAllPathsInNika which failed to setup properly very long paths.
 //			1.843 Fix IP9.02 issue with AxisTransform1.2 change. April2023Beta
 //			1.842 February2023 Beta
@@ -274,7 +275,7 @@ static Function AfterCompiledHook() //check if all windows are up to date to mat
 
 	NI1A_CheckWIndowsProcVersions(WindowProcNames)
 	IN2G_ResetSizesForALlPanels(WindowProcNames)
-	IN2G_AddButtonsToBrowser() //adds button to DataBrowser.
+	//IN2G_AddButtonsToBrowser() //adds button to DataBrowser.
 	if((DateTime - LastCheckNika) > 60 * 60 * 12) //run this only once per 12 hours.
 		IN2G_CheckForGraphicsSetting(0)
 		NI1_CheckNikaUpdate(0)
@@ -352,18 +353,15 @@ Function NI1_AboutPanel()
 	DoWindow/C About_Nika_1_Macros
 	SetDrawLayer UserBack
 	SetDrawEnv fsize=18, fstyle=1, textrgb=(16384, 28160, 65280)
-	DrawText 10, 37, "Nika 1 macros for Igor Pro 8.04, 9.x & 10(Beta)"
+	DrawText 10, 37, "Nika 1 macros for Igor Pro 9.05 & 10.x"
 	SetDrawEnv fsize=16, textrgb=(16384, 28160, 65280)
-	DrawText 52, 64, "@ ANL, 2025"
+	DrawText 52, 64, "@ Jan Ilavsky, 2026"
 	DrawText 49, 103, "Release " + num2str(CurrentNikaVersionNumber)
 	DrawText 11, 136, "To get help please contact: ilavsky@anl.gov"
 	DrawText 11, 156, "https://usaxs.xray.aps.anl.gov/software-description"
 
 	DrawText 11, 190, "Set of macros to convert 2D SAS images"
 	DrawText 11, 210, "into 1 D data"
-	//DrawText 11,230,"     "
-	//DrawText 11,250," "
-	//DrawText 11,265,"Igor 8.04 & 9.x compatible"
 End
 
 //*****************************************************************************************************************

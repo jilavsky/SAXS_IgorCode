@@ -5,7 +5,7 @@
 
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -52,8 +52,7 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 Function IRB1_ConcSerPanelFnct()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	PauseUpdate    		// building window...
+ 	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,1195,800) as "Concentration series"
 	DoWIndow/C IRB1_ConcSeriesPanel
 	TitleBox MainTitle title="Concentration series",pos={140,2},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},fSize=22,fColor=(0,0,52224)
@@ -206,8 +205,7 @@ end
 Function IRB1_ConcSeriesListBoxProc(lba) : ListBoxControl
 	STRUCT WMListboxAction &lba
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	Variable row = lba.row
+ 	Variable row = lba.row
 	WAVE/T/Z listWave = lba.listWave
 	WAVE/Z selWave = lba.selWave
 	string WinNameStr=lba.win
@@ -702,7 +700,9 @@ end
 ///**************************************************************************************************
 
 Function IRB1_ConcSerAddDataToPlot(WhichData)
-	variable WhichData			//set to 0 to remove data, 1 for original, 2 for processed, 3 extrapolated. 
+	variable WhichData			
+	//set to 0 to remove data, 1 for original, 2 for processed, 3 extrapolated. 
+	
 	DFref oldDf= GetDataFolderDFR()
 	setDataFolder root:Packages:Irena:ConcSerExtrap
 	DoWIndow IRB1_ConcSeriesPanel
@@ -875,8 +875,7 @@ Function IRB1_ConcSerCursorsSync(traceName,CursorName,PointNumber)
 	string traceName,CursorName
 	variable PointNumber
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	NVAR DataQEnd = root:Packages:Irena:ConcSerExtrap:DataQEnd
+ 	NVAR DataQEnd = root:Packages:Irena:ConcSerExtrap:DataQEnd
 	NVAR DataQstart = root:Packages:Irena:ConcSerExtrap:DataQstart
 	Wave IntWaveA=csrWaveref(A,"IRB1_ConcSeriesPanel#LogLogDataDisplay") 
 	Wave IntWaveB=csrWaveref(B,"IRB1_ConcSeriesPanel#LogLogDataDisplay") 
@@ -1441,7 +1440,7 @@ Function IRB1_ConcSerSetVarProc(sva) : SetVariableControl
 					if(strlen(csrWavname)>0)
 						Cursor /W=IRB1_ConcSeriesPanel#LogLogDataDisplay B  $(csrWavname)  BinarySearch(QWv1, dval) 
 					else
-						Cursor /W=IRB1_ConcSeriesPanel#LogLogDataDisplay B  OrigSamIntensity1  BinarySearch(QWv1, dval) 
+						Cursor /W=IRB1_ConcSeriesPanel#LogLogDataDisplay B,  OrigSamIntensity1,  BinarySearch(QWv1, dval) 
 					endif
 				endif
 			endif
@@ -1452,9 +1451,9 @@ Function IRB1_ConcSerSetVarProc(sva) : SetVariableControl
 				if(V_Flag)
 					csrWavname = CsrWave(A , "IRB1_ConcSeriesPanel#LogLogDataDisplay" , 1)
 					if(strlen(csrWavname)>0)
-						Cursor /W=IRB1_ConcSeriesPanel#LogLogDataDisplay A  $(csrWavname)  BinarySearch(QWv1, dval) 
+						Cursor /W=IRB1_ConcSeriesPanel#LogLogDataDisplay A , $(csrWavname) , BinarySearch(QWv1, dval) 
 					else
-						Cursor /W=IRB1_ConcSeriesPanel#LogLogDataDisplay A  OrigSamIntensity1  BinarySearch(QWv1, dval) 
+						Cursor /W=IRB1_ConcSeriesPanel#LogLogDataDisplay A , OrigSamIntensity1 , BinarySearch(QWv1, dval) 
 					endif
 				endif
 			endif
@@ -1471,8 +1470,7 @@ End
 Function IRB1_ConcSeriesAppendOneDataSet(FolderNameStr)
 	string FolderNameStr
 	
-//	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-//	DfRef OldDf=GetDataFolderDFR()
+// //	DfRef OldDf=GetDataFolderDFR()
 //	SetDataFolder root:Packages:Irena:BioSAXSDataMan					//go into the folder
 //	//IR3D_SetSavedNotSavedMessage(0)
 //	//figure out if we are doing averaging or buffer subtraction
@@ -1651,8 +1649,7 @@ end
 
 Function IRB1_ConcSerInitialize()	
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DfRef OldDf=GetDataFolderDFR()
+ 	DfRef OldDf=GetDataFolderDFR()
 	string ListOfVariables
 	string ListOfStrings
 	variable i

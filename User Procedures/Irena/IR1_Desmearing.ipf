@@ -4,7 +4,7 @@
 
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -613,9 +613,9 @@ Function IR1B_SmearData(Int_to_smear, Q_vec_sm, slitLength, Smeared_int)
 	else
 		newNumPoints = oldNumPnts+300
 	endif
-	Duplicate/O/Free Int_to_smear, tempInt_to_smear
+	 Duplicate/FREE Int_to_smear, tempInt_to_smear
 	Redimension /N=(newNumPoints) tempInt_to_smear		//increase the points here.
-	Duplicate/O/Free Q_vec_sm, tempQ_vec_sm
+	 Duplicate/FREE Q_vec_sm, tempQ_vec_sm
 	Redimension/N=(newNumPoints) tempQ_vec_sm
 	tempQ_vec_sm[oldNumPnts, ] =tempQ_vec_sm[oldNumPnts-1] +20* tempQ_vec_sm[p-oldNumPnts]			//creates extension of number of points up to 20*original length
 	tempInt_to_smear[oldNumPnts, ]  = tempInt_to_smear[oldNumPnts-1] * (1-(tempQ_vec_sm[p]  - tempQ_vec_sm[oldNumPnts])/(20*tempQ_vec_sm[oldNumPnts-1]))//extend the data by simple fixed value... 
@@ -979,10 +979,15 @@ Function IR1B_SetCsrAToExtendData()
 	NVAR BckgStart=root:Packages:Irena_desmearing:BckgStartQ
 
 	if (BckgStart<ExtrapQwave[Wlength-6])
-		Cursor /P /W=CheckTheBackgroundExtns A ExtrapIntwave BinarySearch(ExtrapQwave,BckgStart)
+		Cursor /P /W=CheckTheBackgroundExtns A, ExtrapIntwave, BinarySearch(ExtrapQwave,BckgStart)
 	else
-		Cursor /P /W=CheckTheBackgroundExtns A ExtrapIntwave (Wlength-10)
-		BckgStart=ExtrapQwave(Wlength-10)
+		//fix issues with USANS when dat length is very short...
+		variable Startpnt=Wlength-10
+		if(Startpnt<1)
+			Startpnt = 1
+		endif
+		Cursor /P /W=CheckTheBackgroundExtns A ExtrapIntwave (Startpnt)
+		BckgStart=ExtrapQwave(Startpnt)
 	endif		
 	setDataFolder OldDf
 end
@@ -1011,12 +1016,12 @@ Function IR1B_CursorMoved()
 
 			variable CurentBckgStart=hcsr(A)
 			if (cmpstr(TNAME,"ExtrapIntwave")!=0)			//cursor is not on right wave
-				Cursor /P /W=CheckTheBackgroundExtns A ExtrapIntwave BinarySearch(ExtrapIntWave, CurentBckgStart )
+				Cursor /P /W=CheckTheBackgroundExtns A, ExtrapIntwave, BinarySearch(ExtrapIntWave, CurentBckgStart )
 			endif
 			
 			pointNum = pcsr(A)		//update the cursor position
 			
-			if (pointNum>Wlength-6)			//cursor is not at least 5 points from end move further
+			if (pointNum>Wlength-5)			//cursor is not at least 5 points from end move further
 				Cursor /P /W=CheckTheBackgroundExtns A ExtrapIntwave (Wlength-6)
 			endif		
 		
@@ -1061,7 +1066,8 @@ End
 //*************************************Extends the data using user specified parameters***************
 Function IR1B_ExtendData(Int_wave, Q_vct, Err_wave, slitLength, Qstart, SelectedFunction, RecordFitParam) 
 	wave Int_wave, Q_vct, Err_wave
-	variable slitLength, Qstart, RecordFitParam		//RecordFitParam=1 when we should record fit parameters in logbook
+	variable slitLength, Qstart, RecordFitParam		
+	//RecordFitParam=1 when we should record fit parameters in logbook
 	string SelectedFunction
 	
 	DFref oldDf= GetDataFolderDFR()
@@ -1120,6 +1126,9 @@ Function IR1B_ExtendData(Int_wave, Q_vct, Err_wave, slitLength, Qstart, Selected
 	variable FitFrom=binarySearch(Q_vct, Qstart)					//get at which point of Q start fitting for extension
 	if (FitFrom<=0)		                 								//error in selection of Q fitting range
 		FitFrom=DataLengths-10
+		if(FitFrom<3)
+			FitFrom = floor(DataLengths/2)
+		endif
 		ProblemsWithQ="I did reset Fitting Q range for you..."
 	endif
 	//There seems to be bug, which prevents me from using /D in FuncFit and cursor control
@@ -1844,7 +1853,8 @@ end
 Function IR1B_SliderProc(ctrlName,sliderValue,event) : SliderControl
 	String ctrlName
 	Variable sliderValue
-	Variable event	// bit field: bit 0: value set, 1: mouse down, 2: mouse up, 3: mouse moved
+	Variable event	
+	// bit field: bit 0: value set, 1: mouse down, 2: mouse up, 3: mouse moved
 
 //	if(event %& 0x1)	// bit 0, value set
 //
@@ -1874,7 +1884,7 @@ Function  IR1B_SliderSmoothDSMData(sliderValue)
 
 	setDataFolder root:Packages:Irena_desmearing
 
-	Wave Int=root:Packages:Irena_desmearing:DesmearedIntWave
+	Wave IntW=root:Packages:Irena_desmearing:DesmearedIntWave
 	Wave Qvec=root:Packages:Irena_desmearing:DesmearedQWave
 	Wave Error=root:Packages:Irena_desmearing:DesmearedEWave
 	Wave dQ=root:Packages:Irena_desmearing:DesmeareddQWave
@@ -1884,10 +1894,10 @@ Function  IR1B_SliderSmoothDSMData(sliderValue)
 	Wave DesmearedIntWave=root:Packages:Irena_desmearing:DesmearedIntWave
 	NVAR NormalizedChiSquareDSM=root:Packages:Irena_desmearing:NormalizedChiSquareDSM
 	
-	Duplicate/O Int, Int_log, Error_log
+	Duplicate/O IntW, Int_log, Error_log
 	Duplicate/O Qvec, Qvec_log
 	Qvec_log = log( Qvec)
-	Int_log= log(Int)
+	Int_log= log(IntW)
 	variable scaleMe
 	variable param = -1+10^sliderValue
 	variable startPoint
@@ -1905,15 +1915,15 @@ Function  IR1B_SliderSmoothDSMData(sliderValue)
 	wavestats/Q Int_log
 	scaleMe = 2*(-V_min)
 	Int_log+= scaleMe
-	Error_log= Int_log*( 1/(Int_Log) - 1/(log(Int+Error)))
+	Error_log= Int_log*( 1/(Int_Log) - 1/(log(IntW+Error)))
 	
 	IN2G_SplineSmooth(startPoint,endPoint,Qvec_log,Int_Log,Error_Log,param,SmoothInt,$"")
 	
 	
 	SmoothInt-=scaleMe
 	SmoothInt = 10^SmoothInt
-	duplicate/O Int, ChiSqWv
-	ChiSqWv= (Int-SmoothInt)/SmoothError
+	duplicate/O IntW, ChiSqWv
+	ChiSqWv= (IntW-SmoothInt)/SmoothError
 	ChiSqWv=ChiSqWv^2
 	IN2G_RemNaNsFromAWave(ChiSqWv)	
 	NormalizedChiSquareDSM = sqrt(sum(ChiSqWv))/numpnts(ChiSqWv)
@@ -1933,7 +1943,7 @@ Function  IR1B_SliderSmoothSMRData(sliderValue)
 
 	setDataFolder root:Packages:Irena_desmearing
 
-	Wave Int=root:Packages:Irena_desmearing:OrgIntwave
+	Wave IntW=root:Packages:Irena_desmearing:OrgIntwave
 	Wave Qvec=root:Packages:Irena_desmearing:OrgQwave
 	Wave Error=root:Packages:Irena_desmearing:OrgEwave
 	Wave dQ=root:Packages:Irena_desmearing:OrgdQwave
@@ -1942,7 +1952,7 @@ Function  IR1B_SliderSmoothSMRData(sliderValue)
 	Wave/Z SmoothError=root:Packages:Irena_desmearing:SmoothEwave
 	Wave/Z SmoothdQrror=root:Packages:Irena_desmearing:SmoothdQwave
 	if(!WaveExists(SmoothInt)||!WaveExists(SmoothQvec)||!WaveExists(SmoothError))
-		Duplicate/O Int, SmoothIntWave
+		Duplicate/O IntW, SmoothIntWave
 		Duplicate/O Qvec, SmoothQwave
 		Duplicate/O Error, SmoothEwave
 		Duplicate/O dQ, SmoothdQwave
@@ -1953,23 +1963,23 @@ Function  IR1B_SliderSmoothSMRData(sliderValue)
 	endif
 	NVAR NormalizedChiSquareSMR=root:Packages:Irena_desmearing:NormalizedChiSquareSMR
 	
-	Duplicate/O Int, Int_log, Error_log
+	Duplicate/O IntW, Int_log, Error_log
 	Duplicate/O Qvec, Qvec_log
 	Qvec_log = log( Qvec)
-	Int_log= log(Int)
+	Int_log= log(IntW)
 	variable scaleMe
 	variable param = -1+10^sliderValue
 	wavestats/Q Int_log
 	scaleMe = 2*(-V_min)
 	Int_log+= scaleMe
-	Error_log= Int_log*( 1/(Int_Log) - 1/(log(Int+Error)))
+	Error_log= Int_log*( 1/(Int_Log) - 1/(log(IntW+Error)))
 	
 	IN2G_SplineSmooth(0,numpnts(Int_Log)-1,Qvec_log,Int_Log,Error_Log,param,SmoothInt,$"")
 	
 	SmoothInt-=scaleMe
 	SmoothInt = 10^SmoothInt
-	duplicate/O Int, ChiSqWv
-	ChiSqWv= (Int-SmoothInt)/SmoothError
+	duplicate/O IntW, ChiSqWv
+	ChiSqWv= (IntW-SmoothInt)/SmoothError
 	ChiSqWv=ChiSqWv^2
 	NormalizedChiSquareSMR = sqrt(sum(ChiSqWv))/numpnts(Int_Log)
 

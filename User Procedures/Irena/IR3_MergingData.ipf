@@ -3,7 +3,7 @@
 Constant IR3DversionNumber = 1.23 //Data merging panel version number
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
@@ -974,7 +974,8 @@ End
 //
 
 Function IR3D_CopyAndAppendData(Data1or2, FolderNameStr)
-	variable Data1or2 //set to 1 for Data1, 2 for Data2
+	variable Data1or2 
+	//set to 1 for Data1, 2 for Data2
 	string   FolderNameStr
 
 	DFREF oldDf = GetDataFolderDFR()
@@ -1193,7 +1194,8 @@ End
 //**********************************************************************************************************
 
 Function IR3D_AppendDataToGraph(WhichData)
-	string WhichData //WhichData = "Data1, Data2, Merged
+	string WhichData 
+	//WhichData = "Data1, Data2, Merged
 
 	DoWindow IR3D_DataMergePanel
 	if(!V_Flag)
@@ -1947,12 +1949,12 @@ Function IR3D_AutoScale(autoscale)
 	//	Data2Qshift = 0
 	//	Data1Background = 0
 
-	Duplicate/O/FREE Intensity1, TempInt1
-	Duplicate/O/FREE Intensity2, TempInt2
-	Duplicate/O/FREE Qvector1, TempQ1
-	Duplicate/O/FREE Qvector2, TempQ2
-	Duplicate/O/FREE Error1, TempE1
-	Duplicate/O/FREE Error2, TempE2
+	 Duplicate/FREE Intensity1, TempInt1
+	 Duplicate/FREE Intensity2, TempInt2
+	 Duplicate/FREE Qvector1, TempQ1
+	 Duplicate/FREE Qvector2, TempQ2
+	 Duplicate/FREE Error1, TempE1
+	 Duplicate/FREE Error2, TempE2
 	variable InputNegative = 0
 	Wavestats/Q TempInt1
 	if(V_min < 0)
@@ -2364,10 +2366,10 @@ Function IR3D_MergeDataOverlap()
 		Duplicate/FREE Intensity2, TempdQ2
 	endif
 
-	Duplicate/O/FREE Intensity1, TempInt1
-	Duplicate/O/FREE Intensity2, TempInt2
-	Duplicate/O/FREE Qvector1, TempQ1
-	Duplicate/O/FREE Qvector2, TempQ2
+	 Duplicate/FREE Intensity1, TempInt1
+	 Duplicate/FREE Intensity2, TempInt2
+	 Duplicate/FREE Qvector1, TempQ1
+	 Duplicate/FREE Qvector2, TempQ2
 	IN2G_RemoveNaNsFrom4Waves(TempInt1, TempQ1, TempErr1, TempdQ1)
 	IN2G_RemoveNaNsFrom4Waves(TempInt2, TempQ2, TempErr2, TempdQ2)
 
@@ -2388,10 +2390,10 @@ Function IR3D_MergeDataOverlap()
 		abort "Not enough overlap, cursors set incorrectly. Fix Cursor positions... "
 	endif
 
-	Duplicate/O/FREE/R=[StartQp, EndQp] TempInt1, TempInt1Part, TempInt2Part
-	Duplicate/O/FREE/R=[StartQp, EndQp] TempQ1, TempQ1Part
-	Duplicate/O/FREE/R=[StartQp, EndQp] TempErr1, TempErr1Part, TempErr2Part
-	Duplicate/O/FREE/R=[StartQp, EndQp] TempdQ1, TempdQ1Part, TempdQ2Part
+	 Duplicate/FREE/R=[StartQp, EndQp] TempInt1, TempInt1Part, TempInt2Part
+	 Duplicate/FREE/R=[StartQp, EndQp] TempQ1, TempQ1Part
+	 Duplicate/FREE/R=[StartQp, EndQp] TempErr1, TempErr1Part, TempErr2Part
+	 Duplicate/FREE/R=[StartQp, EndQp] TempdQ1, TempdQ1Part, TempdQ2Part
 
 	TempInt2Part = TempInt2[BinarySearchInterp(TempQ2, TempQ1Part[p])]
 	TempErr2Part = TempErr2[BinarySearchInterp(TempQ2, TempQ1Part[p])]

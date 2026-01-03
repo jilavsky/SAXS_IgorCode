@@ -1,13 +1,17 @@
 #pragma TextEncoding="UTF-8"
-#pragma rtGlobals=2 // do NOT change to rtGlobals=3, uses rtGlobals=2 convention for functionality...
-#pragma version=2.06
+#pragma rtGlobals=3 
+#pragma version=2.07
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+
+//2.07 changed code around line 640 to work around clipping behavior below. Ugly, but seems to work for now.  
+//to convert ot RTglobals=3 for waves, if wave index is outside the wave number range, last point is returned. 
+// testWv={1,2,3}; print testWV[3] returns 3, any higher number returns 3. This is called Clipped. 
 //2.06 still rtGlobals=2. but Fixed use of liberal names for strings and variables as that fails on IP9. IP was never suppose to support liberal names for strings and variables.
 //		 reduced rtGlobals to 2 due to bug on lines 609, 610 , reported bug to Jon Tisher
 //2.05 fixed some values for Be and Mo which were found wrong by John Tishler.
@@ -123,10 +127,15 @@ static Constant CromerBufferEnenergyPrecision = 0.0001 //energy precision at whi
 //Wrap procedures - initialization (when needed) and calculate the values for user.
 
 // ************************************************************************ ********************************************************
-Function/C IR1_Atomic_f_Xray(AtomType, Q, keV) // compute fo(Q)+f'(E)+f''(E), and mu too, call this from a menu
-	string   AtomType // name of atom desired
-	variable Q        // 2*pi/d = 4*pi*sin(theta)/Lambda  (1/Angstroms)
-	variable keV      // energy (keV)
+Function/C IR1_Atomic_f_Xray(AtomType, Q, keV) 
+	string   AtomType 
+	variable Q        
+	variable keV      
+	// compute fo(Q)+f'(E)+f''(E), and mu too, call this from a menu
+	// name of atom desired
+	// 2*pi/d = 4*pi*sin(theta)/Lambda  (1/Angstroms)
+	// energy (keV)
+
 
 	string symbs = ""
 	symbs += "H;H-1;He;Li;Li+1;Be;Be+2;B;C;N;O;O-1;F;F-1;Na;Na+1;Mg;Mg+2;Al;Al+3;Si;Si+4;P;S;Cl;Cl-1;"
@@ -238,7 +247,8 @@ End
 //********************************************************************************************************************************
 Function IR1_Get_f0(AtomType, Q) //returns value of f0
 	string   AtomType
-	variable Q //2*pi/d for scattering
+	variable Q 
+	//2*pi/d for scattering
 
 	variable ScattVct
 	ScattVct = Q / (4 * pi) //this scales the Q to sin(theta)/Lambda from input Q value.
@@ -282,8 +292,9 @@ End
 //********************************************************************************************************************************
 //********************************************************************************************************************************
 static Function Cromer_FindData(AtomType, xk, ReturnWhat)
-	string AtomType, ReturnWhat // FPrime, FDoublePrime, pmu
+	string AtomType, ReturnWhat
 	variable xk
+	 // FPrime, FDoublePrime, pmu
 
 	WAVE/Z   FPrimeDataBase        = root:Packages:CromerCalculations:FPrimeDataBase
 	WAVE/Z/T FPrimeDataBaseAtoms   = root:Packages:CromerCalculations:FPrimeDataBaseAtoms
@@ -623,8 +634,19 @@ static Function/C Cromer_Get_fp(AtomType, xK, ReturnWhat)
 				mm = nx - n1 + 1
 				duplicate/O el, elc
 				duplicate/O sl, slc
-				elc = el[p + n1 - 1] //this fails on rtGl.obals=3, but is intended to be used this way
-				slc = sl[p + n1 - 1] //this fails on rtGl.obals=3, but is intended to be used this way
+				//rtGlobals=2 causes waves to be clipped = request for index higher than wave length returns the last wave point.
+				//rtGlobals=3 fails and returns error
+//				elc = el[p + n1 - 1] //this fails on rtGlobals=3, but is intended to be used this way
+//				slc = sl[p + n1 - 1] //this fails on rtGlobals=3, but is intended to be used this way
+				//solution is kind of ugly here...
+				Duplicate/O el, eltemp
+				Duplicate/O sl, sltemp
+				redimension/N=(numpnts(el)+10) eltemp  
+				redimension/N=(numpnts(sl)+10) sltemp  
+				eltemp[numpnts(el),inf] = el[numpnts(el)-1]
+				sltemp[numpnts(sl),inf] = sl[numpnts(sl)-1]
+				elc = eltemp[p + n1 - 1] //this fails on rtGlobals=3, but is intended to be used this way
+				slc = sltemp[p + n1 - 1] //this fails on rtGlobals=3, but is intended to be used this way		
 				cx  = cAknint(zx, mm, nord, elc, slc, tMatrix)
 				cx  = exp(cx)
 			endif
@@ -706,7 +728,8 @@ End
 
 static Function Cromer_Get_f0(AtomName, Svector)
 	string   AtomName
-	variable Svector //2*pi/d for scattering
+	variable Svector 
+	//2*pi/d for scattering
 	//this function retuns for give scattering vector value of f0 for any atom
 
 	DFREF oldDf = GetDataFolderDFR()

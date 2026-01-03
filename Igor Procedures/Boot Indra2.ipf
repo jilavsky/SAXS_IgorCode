@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version = 2.02
-#pragma IgorVersion=8.04
+#pragma IgorVersion=9.04
 
 //2.02 	June 2025 release,  Fixes for new 12IDE USAXS instrument operations, tested with IP10Beta
 //2.01		Beta release, Changes for 12IDE USAXS/SAXS/WAXS. WIP//2.00		July2023 release
@@ -42,7 +42,7 @@
 
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -63,8 +63,8 @@
 
 Menu "Macros", dynamic
 	IndraMacrosMenuItem(1)
-	IndraMacrosMenuItem(2)
-	IndraMacrosMenuItem(3)
+	//IndraMacrosMenuItem(2)
+	//IndraMacrosMenuItem(3)
 
 //	StrVarOrDefault("root:Packages:USAXSItem1Str","Load USAXS Macros"), LoadIndra2()
 //   if(Exists("LoadIR1Modeling")==6)
@@ -85,40 +85,40 @@ Function/S IndraMacrosMenuItem(itemNumber)
 			if(SVAR_Exists(USAXSItem1Str))
 				return USAXSItem1Str
 			else
-				return "Load USAXS macros"	
+				return "Load USAXS"	
 			endif
 	endif
 
-	if (itemNumber == 2)
-	  if(Exists("LoadIrenaSASMacros")==6)
-			SVAR/Z USAXSItem1Str =  root:Packages:USAXSItem1Str
-			if(SVAR_Exists(USAXSItem1Str))
-				if(StringMatch(USAXSItem1Str, "---" ))
-					return "---"
-				else
-					return "Load USAXS and Irena"
-				endif
-			else
-				return "Load USAXS and Irena"	
-			endif
-		 // return "StrVarOrDefault(\"root:Packages:USAXSItem1Str\",\"Load USAXS+Irena\"), LoadIndraAndIrena()"
- 	 endif
-	endif
-	if (itemNumber == 3)
-	  if(Exists("LoadIrenaSASMacros")==6 && Exists("LoadNika2DSASMacros")==6)
-			SVAR/Z USAXSItem1Str =  root:Packages:USAXSItem1Str
-			if(SVAR_Exists(USAXSItem1Str))
-				if(StringMatch(USAXSItem1Str, "---" ))
-					return "---"
-				else
-					return "Load USAXS, Irena and Nika"
-				endif
-			else
-				return "Load USAXS, Irena and Nika"	
-			endif
-		   // return "StrVarOrDefault(\"root:Packages:USAXSItem1Str\",\"Load USAXS+Irena\"), LoadIndraAndIrena()"
-   	 endif
-	endif
+//	if (itemNumber == 2)
+//	  if(Exists("LoadIrenaSASMacros")==6)
+//			SVAR/Z USAXSItem1Str =  root:Packages:USAXSItem1Str
+//			if(SVAR_Exists(USAXSItem1Str))
+//				if(StringMatch(USAXSItem1Str, "---" ))
+//					return "---"
+//				else
+//					return "Load USAXS and Irena"
+//				endif
+//			else
+//				return "Load USAXS and Irena"	
+//			endif
+//		 // return "StrVarOrDefault(\"root:Packages:USAXSItem1Str\",\"Load USAXS+Irena\"), LoadIndraAndIrena()"
+// 	 endif
+//	endif
+//	if (itemNumber == 3)
+//	  if(Exists("LoadIrenaSASMacros")==6 && Exists("LoadNika2DSASMacros")==6)
+//			SVAR/Z USAXSItem1Str =  root:Packages:USAXSItem1Str
+//			if(SVAR_Exists(USAXSItem1Str))
+//				if(StringMatch(USAXSItem1Str, "---" ))
+//					return "---"
+//				else
+//					return "Load USAXS, Irena and Nika"
+//				endif
+//			else
+//				return "Load USAXS, Irena and Nika"	
+//			endif
+//		   // return "StrVarOrDefault(\"root:Packages:USAXSItem1Str\",\"Load USAXS+Irena\"), LoadIndraAndIrena()"
+//   	 endif
+//	endif
 End
 
 
@@ -128,16 +128,16 @@ Proc LoadUSAXSAndIrena()
 	Execute/P("LoadIrenaSASMacros()")
 end
 Proc LoadUSAXSIrenaandNika()
+	Execute/P("LoadNika2DSASMacros()")
 	Execute/P("LoadUSAXSMacros()")
 	Execute/P("LoadIrenaSASMacros()")
-	Execute/P("LoadNika2DSASMacros()")
 end
 
-Function LoadUSAXSMacros()
-	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))>=8.03)
+Function LoadUSAXS()
+	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))>=9.04)
 		Execute/P "INSERTINCLUDE \"IN2_Load Indra 2\""
 		Execute/P "COMPILEPROCEDURES "
-		Execute/P "IN2N_CreateShowNtbkForLogging(0)"
+		//Execute/P "IN2N_CreateShowNtbkForLogging(0)"
 		Execute/P "ionChamberInitPackage()"
 		NewDataFolder/O root:Packages			//create the folder for string variable
 		string/g root:Packages:USAXSItem1Str
@@ -146,7 +146,7 @@ Function LoadUSAXSMacros()
 		//Execute/P "BuildMenu \"USAXS\""
 		//IN2L_GenerateReadMe()
 	else
-		DoAlert 0, "Your version of Igor is lower than 8.03, these macros need version 8.04 or higher"  
+		DoAlert 0, "Your version of Igor is lower than 9.04, these macros need version 9.05 or higher"  
 	endif
 	
 end

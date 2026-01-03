@@ -4,7 +4,7 @@
 
 Constant NI1BCversionNumber = 2.25
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
@@ -763,10 +763,12 @@ End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 
-Function/C NI1BC_FindTiltedPxPyValues(dspacing, direction) //return complex value px+i*py
-	variable dspacing //find this d-spacing
-	//	variable radx,rady		//estimates for starting points
-	variable direction //this is azimuthal direction in radians
+Function/C NI1BC_FindTiltedPxPyValues(dspacing, direction) 
+	variable dspacing 
+	variable direction 
+	//return complex value px+i*py
+	//find this d-spacing
+	//this is azimuthal direction in radians
 
 	string oldDf = GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
@@ -812,7 +814,8 @@ End
 
 Function NI1BC_FindTiltedQvalues(wvx, wvy, dspacing, BmCntrCCDImg, WindowNameToAttach)
 	WAVE wvx, wvy
-	variable dspacing //find this d-spacing
+	variable dspacing 
+	//find this d-spacing
 	WAVE     BmCntrCCDImg
 	string   WindowNameToAttach
 
@@ -930,8 +933,10 @@ End
 //*******************************************************************************************************************************************
 
 Function NI1BC_GetPixelFromDSpacing(dspacing, direction)
-	variable dspacing  //d in A
-	string   direction //X (horizontal) or Y (vertical)
+	variable dspacing  
+	//d in A
+	string   direction 
+	//X (horizontal) or Y (vertical)
 
 	string oldDf = GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
@@ -991,10 +996,11 @@ End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 
-Function NI1BC_MainSliderProc(ctrlName, sliderValue, event) //: SliderControl
+Function NI1BC_MainSliderProc(ctrlName, sliderValue, event) 
 	string   ctrlName
 	variable sliderValue
-	variable event // bit field: bit 0: value set, 1: mouse down, 2: mouse up, 3: mouse moved
+	variable event
+	// bit field: bit 0: value set, 1: mouse down, 2: mouse up, 3: mouse moved
 
 	if(cmpstr(ctrlName, "ImageRangeMin") == 0 || cmpstr(ctrlName, "ImageRangeMax") == 0)
 		if(event & 0x1) // bit 0, value set
@@ -1190,7 +1196,7 @@ End
 //*******************************************************************************************************************************************
 
 Function NI1BC_Gaussian2D(w, x1, y1)
-	WAVE w; variable x1, y1 //x is chann
+	WAVE w; variable x1, y1 
 	return (w[0] * exp(-((x1 - w[1])^2 + (y1 - w[2])^2) / w[3]^2))
 End
 

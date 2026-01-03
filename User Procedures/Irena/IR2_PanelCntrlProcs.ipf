@@ -3,7 +3,7 @@
 #pragma version=1.66
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
@@ -171,8 +171,7 @@ Function IR2C_AddDataControls(PckgDataFolder, PanelWindowName, AllowedIrenaTypes
 	string PckgDataFolder, PanelWindowName, AllowedIrenaTypes, AllowedResultsTypes, AllowedUserTypes, UserNameString, XUserTypeLookup, EUserTypeLookup
 	variable RequireErrorWaves, AllowModelData, DoNotAddControls
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	variable DontAdd = 0
+ 	variable DontAdd = 0
 	if(!ParamIsDefault(DoNotAddControls))
 		DontAdd = DoNotAddControls
 	endif
@@ -218,8 +217,7 @@ Function IR2C_InitControls(PckgDataFolder, PanelWindowName, AllowedIrenaTypes, A
 	string PckgDataFolder, PanelWindowName, AllowedIrenaTypes, AllowedResultsTypes, AllowedUserTypes, UserNameString, XUserTypeLookup, EUserTypeLookup
 	variable RequireErrorWaves, AllowModelData
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFREF oldDf = GetDataFolderDFR()
+ 	DFREF oldDf = GetDataFolderDFR()
 
 	setdatafolder root:
 	NewDataFolder/O/S root:Packages
@@ -571,8 +569,7 @@ Function IR2C_AddControlsToWndw(PckgDataFolder, PanelWindowName, AllowedIrenaTyp
 	string PckgDataFolder, PanelWindowName, AllowedIrenaTypes, AllowedResultsTypes, AllowedUserTypes, UserNameString, XUserTypeLookup, EUserTypeLookup
 	variable RequireErrorWaves, AllowModelData
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	SVAR ControlProcsLocations      = root:Packages:IrenaControlProcs:ControlProcsLocations
+ 	SVAR ControlProcsLocations      = root:Packages:IrenaControlProcs:ControlProcsLocations
 	SVAR ControlAllowedIrenaTypes   = root:Packages:IrenaControlProcs:ControlAllowedIrenaTypes
 	SVAR ControlAllowedResultsTypes = root:Packages:IrenaControlProcs:ControlAllowedResultsTypes
 	SVAR ControlRequireErrorWvs     = root:Packages:IrenaControlProcs:ControlRequireErrorWvs
@@ -649,8 +646,7 @@ Function IR2C_NamesSetVarProc(SV_Struct) : SetVariableControl
 	STRUCT WMSetVariableAction &SV_Struct
 
 	if(SV_Struct.eventcode == 1 || SV_Struct.eventcode == 2)
-		//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-		string TopPanel
+	 		string TopPanel
 		TopPanel = SV_Struct.win
 		SVAR   ControlProcsLocations      = root:Packages:IrenaControlProcs:ControlProcsLocations
 		string CntrlLocation              = "root:Packages:" + StringByKey(TopPanel, ControlProcsLocations)
@@ -686,8 +682,7 @@ Function IR2C_ModelQSetVarProc(SV_Struct) : SetVariableControl
 	if(SV_Struct.eventcode < 1 || SV_Struct.eventcode > 5)
 		return 0
 	endif
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string   ctrlName = SV_Struct.ctrlName
+ 	string   ctrlName = SV_Struct.ctrlName
 	variable varNum   = SV_Struct.dval
 	string   varStr   = SV_Struct.sVal
 	string   varName  = SV_Struct.vName
@@ -743,8 +738,7 @@ End
 Function IR2C_FixDisplayedControls(WnName)
 	string WnName
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFREF oldDf = GetDataFolderDFR()
+ 	DFREF oldDf = GetDataFolderDFR()
 
 	string TopPanel = WnName
 	//GetWindow $(TopPanel), activeSW		//fix for subwindow controls... This will add teh subwidnow which is selected, I hope that means in which we operate!
@@ -799,8 +793,7 @@ Function IR2C_InputPanelCheckboxProc(CB_Struct)
 		return 0
 	endif
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string   ctrlName = CB_Struct.ctrlName
+ 	string   ctrlName = CB_Struct.ctrlName
 	variable checked  = CB_Struct.checked
 	DFREF    oldDf    = GetDataFolderDFR()
 
@@ -927,8 +920,7 @@ End
 Function/S IR2P_CleanUpPackagesFolder(FolderList)
 	string FolderList
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	FolderList = GrepList(FolderList, "root:packages", 1, ";")
+ 	FolderList = GrepList(FolderList, "root:packages", 1, ";")
 	FolderList = GrepList(FolderList, "root:Packages", 1, ";")
 	FolderList = GrepList(FolderList, "root:raw", 1, ";")
 	FolderList = GrepList(FolderList, "root:Raw", 1, ";")
@@ -944,8 +936,7 @@ Function/S IR2P_GenStringOfFolders([winNm, returnListOfFolders, forceReset])
 
 	//variable startTicks=ticks
 	//part to copy everywhere...
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFREF oldDf = GetDataFolderDFR()
+ 	DFREF oldDf = GetDataFolderDFR()
 
 	string TopPanel
 	if(ParamIsDefault(winNm))
@@ -1216,8 +1207,7 @@ End
 //	string StrList
 //
 //
-//	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-//	variable i
+// //	variable i
 //	string result=""///stringFromList(0,StrList,";")+";"
 //	string tempStr
 //	For(i=0;i<ItemsInList(StrList,";");i+=1)
@@ -1234,8 +1224,7 @@ End
 Function/S IR2P_RemoveDuplicateStrfLst(StrList)
 	string StrList
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	if(ItemsInList(StrList) > 1)
+ 	if(ItemsInList(StrList) > 1)
 		WAVE/T wr = ListToTextWave(StrList, ";") // Returns a free wave
 		FindDuplicates/RT=StrWvUnique wr
 		string result = ""
@@ -1273,8 +1262,7 @@ static Function/S IR2P_ReturnListQRSFolders(ListOfQFolders, AllowQROnly)
 	string   ListOfQFolders
 	variable AllowQROnly
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	if(cmpstr(ListOfQFolders, "---") == 0)
+ 	if(cmpstr(ListOfQFolders, "---") == 0)
 		return "---"
 	endif
 
@@ -1320,8 +1308,7 @@ End
 static Function/S IR2P_CheckForRightINResultsWvs(TopPanel, FullFldrNames, WNMStr)
 	string TopPanel, FullFldrNames, WNMStr
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFREF oldDf = GetDataFolderDFR()
+ 	DFREF oldDf = GetDataFolderDFR()
 
 	SVAR ControlProcsLocations      = root:Packages:IrenaControlProcs:ControlProcsLocations
 	SVAR ControlAllowedIrenaTypes   = root:Packages:IrenaControlProcs:ControlAllowedIrenaTypes
@@ -1393,11 +1380,11 @@ End
 static Function/S IR2P_CheckForRightQRSTripletWvs(TopPanel, ResultingWave, WNMStr)
 	string TopPanel
 	WAVE/T ResultingWave
-	string WNMStr //waveName match string used by user...
+	string WNMStr 
+	//waveName match string used by user...
 	//FullFldrNames
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFREF oldDf = GetDataFolderDFR()
+ 	DFREF oldDf = GetDataFolderDFR()
 
 	SVAR     ControlProcsLocations      = root:Packages:IrenaControlProcs:ControlProcsLocations
 	SVAR     ControlAllowedIrenaTypes   = root:Packages:IrenaControlProcs:ControlAllowedIrenaTypes
@@ -1498,8 +1485,7 @@ Function/S IR2P_ListOfWavesOfType(type, ListOfWaves)
 	//optimized for speed 12/10/2010
 	//wave types: r* should work
 	//wave types : *i
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string tempresult = ""
+ 	string tempresult = ""
 	string tempType   = ""
 	//if(GrepString(type, "^\*" ) )	//r* type
 	//fixed 3/25/2012 after Dale found some bugs looking for his user defined data. Trying to fix and make all working
@@ -1527,8 +1513,7 @@ End
 static Function/S IR2P_CheckForRightUsrTripletWvs(TopPanel, FullFldrNames, DataTypeSearchedFor, WNMStr)
 	string TopPanel, FullFldrNames, DataTypeSearchedFor, WNMStr
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFREF oldDf = GetDataFolderDFR()
+ 	DFREF oldDf = GetDataFolderDFR()
 
 	SVAR     ControlProcsLocations      = root:Packages:IrenaControlProcs:ControlProcsLocations
 	SVAR     ControlAllowedIrenaTypes   = root:Packages:IrenaControlProcs:ControlAllowedIrenaTypes
@@ -1637,8 +1622,7 @@ End
 static Function/S IR2P_CheckForRightIN2TripletWvs(TopPanel, FullFldrNames, DataTypeSearchedFor)
 	string TopPanel, FullFldrNames, DataTypeSearchedFor
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFREF oldDf = GetDataFolderDFR()
+ 	DFREF oldDf = GetDataFolderDFR()
 
 	SVAR     ControlProcsLocations      = root:Packages:IrenaControlProcs:ControlProcsLocations
 	SVAR     ControlAllowedIrenaTypes   = root:Packages:IrenaControlProcs:ControlAllowedIrenaTypes
@@ -1691,10 +1675,10 @@ End
 //*****************************************************************************************************************
 
 Function/S IR2P_ListOfWaves(DataType, MatchMeTo, winNm)
-	string DataType, MatchMeTo, winNm //data type   : Xaxis, Yaxis, Error
+	string DataType, MatchMeTo, winNm 
+	//data type   : Xaxis, Yaxis, Error
 	//Match me to is string to match the type to... Use "*" to get all... Applicable ONLY to Y and error data
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFREF oldDf = GetDataFolderDFR()
+ 	DFREF oldDf = GetDataFolderDFR()
 
 	string TopPanel = winNm
 
@@ -2185,8 +2169,7 @@ End
 Function/S IR2C_ReverseLookup(StrToSearch, Keywrd)
 	string StrToSearch, Keywrd
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string result, tempstr
+ 	string result, tempstr
 	result = ""
 	variable i
 	for(i = 0; i < ItemsInList(StrToSearch, ";"); i += 1)
@@ -2210,8 +2193,7 @@ Function IR2C_PanelPopupControl(Pa) : PopupMenuControl
 	if(Pa.eventCode != 2)
 		return 0
 	endif
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string   ctrlName = Pa.ctrlName
+ 	string   ctrlName = Pa.ctrlName
 	variable popNum   = Pa.popNum
 	string   popStr   = Pa.popStr
 
@@ -2496,23 +2478,26 @@ End
 //*****************************************************************************************************************
 
 Function IR2P_FindFolderWithWaveTypesWV(startDF, levels, WaveTypes, LongShortType, ResultingWave)
-	string startDF, WaveTypes // startDF requires trailing colon.
-	variable levels, LongShortType //set 1 for long type and 0 for short type return
+	string startDF, WaveTypes 
+	// startDF requires trailing colon.
+	variable levels, LongShortType 
+	//set 1 for long type and 0 for short type return
 	WAVE/T ResultingWave
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string dfSave
 	string list = "", templist, tempWvName
 	variable i, skipRest
 
 	dfSave = GetDataFolder(1)
-	//DFREF startDFRef = $(startDF)
 	setDataFolder startDF
-	//templist = IN2G_ConvertDataDirToList(DataFolderDir(2,startDFRef))
 	templist = IN2G_ConvertDataDirToList(DataFolderDir(2))
 	string ListOfRWaves = GrepList(templist, WaveTypes)
 	if(strlen(ListOfRWaves) > 0)
-		if(!stringMatch(ListOfRWaves, "*R_Int;*"))
+		//tedious, but works with imported Matilda data when we have R_Int and BL_R_Int in the Nika like folders 
+		ListOfRWaves =  ReplaceString("R_Int;",ListOfRWaves,"")
+		ListOfRWaves =  ReplaceString("BL_R_Int;",ListOfRWaves,"")
+		//if(!stringMatch(ListOfRWaves, "*R_Int;*"))
+		if(strlen(ListOfRWaves)>2)
 			if(LongShortType)
 				Redimension/N=(numpnts(ResultingWave) + 1) ResultingWave
 				ResultingWave[numpnts(ResultingWave) - 1] = startDF
@@ -2558,8 +2543,7 @@ End
 Function/S IR2C_ReturnKnownToolResults(ToolName, TopPanel)
 	string ToolName, TopPanel
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string KnownToolResults = ""
+ 	string KnownToolResults = ""
 
 	SVAR AllKnownToolsResults = root:Packages:IrenaControlProcs:AllKnownToolsResults
 	string LocallyAllowedResultsData
@@ -2625,8 +2609,7 @@ End
 
 Function/S IR2C_PrepareMatchString(StrIn)
 	string StrIn
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string StrOut = ""
+ 	string StrOut = ""
 	variable ic
 	for(ic = 0; ic < strlen(StrIn); ic += 1)
 		StrOut = StrOut + IR2C_EscapeCharTable(StrIn[ic])
@@ -2638,8 +2621,7 @@ End
 
 Function/S IR2C_EscapeCharTable(cstr)
 	string cstr
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string estr = ""
+ 	string estr = ""
 	strswitch(cstr)
 		case "(":
 			estr = "\\"
@@ -2708,8 +2690,7 @@ End
 Function IR3C_AddDataControls(PckgPathName, PckgDataFolder, PanelWindowName, DefaultExtensionStr, DefaultMatchStr, DefaultSortString, DoubleCLickFnctName)
 	string PckgPathName, PckgDataFolder, PanelWindowName, DefaultExtensionStr, DefaultMatchStr, DefaultSortString, DoubleCLickFnctName
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	variable DontAdd = 0
+ 	variable DontAdd = 0
 	if(stringmatch(PanelWindowName, "*#*")) //# so expect subwindow... Limit only to first child here, else is not allowed for now...
 		//first check for the main window existance...
 		string MainPnlWinName  = StringFromList(0, PanelWindowName, "#")
@@ -2739,8 +2720,7 @@ End
 Function IR3C_AddControlsToWndw(PckgPathName, PckgDataFolder, PanelWindowName, DefaultExtensionStr, DefaultMatchStr, DefaultSortString, DoubleCLickFnctName)
 	string PckgPathName, PckgDataFolder, PanelWindowName, DefaultExtensionStr, DefaultMatchStr, DefaultSortString, DoubleCLickFnctName
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	SVAR ControlProcsLocations  = root:Packages:IrenaListboxProcs:ControlProcsLocations
+ 	SVAR ControlProcsLocations  = root:Packages:IrenaListboxProcs:ControlProcsLocations
 	SVAR ControlPckgPathName    = root:Packages:IrenaListboxProcs:ControlPckgPathName
 	SVAR ControlPanelWindowName = root:Packages:IrenaListboxProcs:ControlPanelWindowName
 	SVAR SortOptionsString      = root:Packages:IrenaListboxProcs:SortOptionsString
@@ -2786,8 +2766,7 @@ End
 //************************************************************************************************************
 Function IR3C_ListBoxProc(lba) : ListBoxControl
 	STRUCT WMListboxAction &lba
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	//Prevent Igor from invoking this before we are done with instance 1
+ 	//Prevent Igor from invoking this before we are done with instance 1
 	lba.blockReentry = 1
 	string   TopPanel = WinName(0, 64)
 	variable row      = lba.row
@@ -2912,8 +2891,7 @@ Function IR3C_PopMenuProc(ctrlName, popNum, popStr) : PopupMenuControl
 	string   ctrlName
 	variable popNum
 	string   popStr
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string TopPanel = WinName(0, 64)
+ 	string TopPanel = WinName(0, 64)
 
 	if(Cmpstr(ctrlName, "SortOptionString") == 0)
 		SVAR   ControlProcsLocations = root:Packages:IrenaListboxProcs:ControlProcsLocations
@@ -2929,8 +2907,7 @@ End
 Function IR3C_SortListOfFilesInWvs(TopPanel)
 	string TopPanel
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	SVAR   ControlProcsLocations = root:Packages:IrenaListboxProcs:ControlProcsLocations
+ 	SVAR   ControlProcsLocations = root:Packages:IrenaListboxProcs:ControlProcsLocations
 	SVAR   ControlPckgPathName   = root:Packages:IrenaListboxProcs:ControlPckgPathName
 	string CntrlLocation         = "root:Packages:" + StringByKey(TopPanel, ControlProcsLocations, "=", ";")
 	string CntrlPathName         = StringByKey(TopPanel, ControlPckgPathName, "=", ";")
@@ -2979,8 +2956,7 @@ Function IR3C_SetVarProc(sva) : SetVariableControl
 	string   ctrlName = sva.ctrlName
 	string   TopPanel = sva.win
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	if(cmpstr(ctrlName, "NameMatchString") == 0)
+ 	if(cmpstr(ctrlName, "NameMatchString") == 0)
 		IR3C_UpdateListOfFilesInWvs(TopPanel)
 		IR3C_SortListOfFilesInWvs(TopPanel)
 	endif
@@ -2995,8 +2971,7 @@ End
 
 Function IR3C_ButtonProc(ba) : ButtonControl
 	STRUCT WMButtonAction &ba
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-
+ 
 	switch(ba.eventCode)
 		case 2: // mouse up
 			string TopPanel = ba.win
@@ -3026,8 +3001,7 @@ End
 Function IR3C_SelectDataPath(TopPanel)
 	string TopPanel
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	SVAR   ControlProcsLocations  = root:Packages:IrenaListboxProcs:ControlProcsLocations
+ 	SVAR   ControlProcsLocations  = root:Packages:IrenaListboxProcs:ControlProcsLocations
 	SVAR   ControlPckgPathName    = root:Packages:IrenaListboxProcs:ControlPckgPathName
 	SVAR   ControlPanelWindowName = root:Packages:IrenaListboxProcs:ControlPanelWindowName
 	string CntrlLocation          = "root:Packages:" + StringByKey(TopPanel, ControlProcsLocations, "=", ";")
@@ -3081,8 +3055,7 @@ End
 Function IR3C_UpdateListOfFilesInWvs(TopPanel)
 	string TopPanel
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	SVAR   ControlProcsLocations  = root:Packages:IrenaListboxProcs:ControlProcsLocations
+ 	SVAR   ControlProcsLocations  = root:Packages:IrenaListboxProcs:ControlProcsLocations
 	SVAR   ControlPckgPathName    = root:Packages:IrenaListboxProcs:ControlPckgPathName
 	SVAR   ControlPanelWindowName = root:Packages:IrenaListboxProcs:ControlPanelWindowName
 	string CntrlLocation          = "root:Packages:" + StringByKey(TopPanel, ControlProcsLocations, "=", ";")
@@ -3104,7 +3077,14 @@ Function IR3C_UpdateListOfFilesInWvs(TopPanel)
 		if(strlen(LocalDataExtension) <= 1)
 			ListOfAllFiles = IndexedFile($(CntrlPathName), -1, "????")
 		else
-			ListOfAllFiles = IndexedFile($(CntrlPathName), -1, LocalDataExtension)
+			//sepcail handling for hdf5 files...
+			if(stringmatch(LocalDataExtension,".h5")||stringmatch(LocalDataExtension,".hdf")||stringmatch(LocalDataExtension,".hdf5"))
+				ListOfAllFiles = IndexedFile($(CntrlPathName), -1, ".h5")
+				ListOfAllFiles += IndexedFile($(CntrlPathName), -1, ".hdf")
+				ListOfAllFiles += IndexedFile($(CntrlPathName), -1, ".hdf5")
+			else
+				ListOfAllFiles = IndexedFile($(CntrlPathName), -1, LocalDataExtension)
+			endif
 		endif
 		if(strlen(NameMatchString) > 0)
 			ListOfAllFiles = GrepList(ListOfAllFiles, NameMatchString)
@@ -3133,8 +3113,7 @@ Function IR3C_SelectDeselectAll(TopPanel, Select)
 	string   TopPanel
 	variable Select
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	SVAR   ControlProcsLocations  = root:Packages:IrenaListboxProcs:ControlProcsLocations
+ 	SVAR   ControlProcsLocations  = root:Packages:IrenaListboxProcs:ControlProcsLocations
 	SVAR   ControlPckgPathName    = root:Packages:IrenaListboxProcs:ControlPckgPathName
 	SVAR   ControlPanelWindowName = root:Packages:IrenaListboxProcs:ControlPanelWindowName
 	string CntrlLocation          = "root:Packages:" + StringByKey(TopPanel, ControlProcsLocations, "=", ";")
@@ -3159,8 +3138,7 @@ End
 Function IR3C_InitControls(PckgPathName, PckgDataFolder, PanelWindowName, DefaultExtensionStr, DefaultMatchStr, DefaultSortString, DoubleCLickFnctName)
 	string PckgPathName, PckgDataFolder, PanelWindowName, DefaultExtensionStr, DefaultMatchStr, DefaultSortString, DoubleCLickFnctName
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFREF oldDf = GetDataFolderDFR()
+ 	DFREF oldDf = GetDataFolderDFR()
 
 	setdatafolder root:
 	NewDataFolder/O/S root:Packages
@@ -3265,8 +3243,7 @@ Function IR3C_MultiAppendControls(ToolPackageFolder, PanelName, DoubleClickFunNm
 	//initialize controls first by running this command
 	//IR2C_AddDataControls("Irena:MultiSaPlotFit","IR3L_MultiSaPlotFitPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
 	//then call this function, it will add listbox and other controls.
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string PathToPackagesFolder = "root:Packages:" + ToolPackageFolder
+ 	string PathToPackagesFolder = "root:Packages:" + ToolPackageFolder
 	IR3C_InitMultiControls(PathToPackagesFolder, PanelName, DoubleClickFunNm, MouseDownFunNm, OnlyUSAXSReducedData, AllowSlitSmearedData)
 	TitleBox Dataselection, win=$(PanelName), title="\Zr130Data selection", size={100, 15}, pos={10, 10}, frame=0, fColor=(0, 0, 65535), labelBack=0
 	Checkbox UseIndra2Data, win=$(PanelName), pos={10, 30}, size={76, 14}, title="USAXS", proc=IR3C_MultiCheckProc, variable=$(PathToPackagesFolder + ":UseIndra2Data")
@@ -3492,8 +3469,7 @@ End
 Function IR3C_MultiListBoxProc(lba) : ListBoxControl
 	STRUCT WMListboxAction &lba
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	variable row        = lba.row
+ 	variable row        = lba.row
 	WAVE/Z/T listWave   = lba.listWave
 	WAVE/Z   selWave    = lba.selWave
 	string   WinNameStr = lba.win
@@ -3621,8 +3597,7 @@ Function IR3C_InitMultiControls(PathToPackagesFolder, PanelName, DoubleClickFunc
 	string   ListOfVariables
 	string   ListOfStrings
 	variable i
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-
+ 
 	string/G root:Packages:IrenaControlProcs:ControlMouseDownFunction
 	SVAR ControlMouseDownFunction = root:Packages:IrenaControlProcs:ControlMouseDownFunction
 	ControlMouseDownFunction = ReplaceStringByKey(PanelName, ControlMouseDownFunction, MouseDownFunction, ":", ";")
@@ -3731,8 +3706,7 @@ End
 Function IR3C_MultiSetVarProc(sva) : SetVariableControl
 	STRUCT WMSetVariableAction &sva
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	variable dval                  = sva.dval
+ 	variable dval                  = sva.dval
 	string   sval                  = sva.sval
 	string   WinNm                 = sva.win
 	string   ctrlName              = sva.ctrlName
@@ -3766,8 +3740,7 @@ Function IR3C_MultiCheckProc(cba) : CheckBoxControl
 	if(cba.eventcode < 1 || cba.eventcode > 2)
 		return 0
 	endif
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	//figure out where are controls
+ 	//figure out where are controls
 	string   ctrlName = cba.ctrlName
 	variable checked  = cba.checked
 	DFREF    oldDf    = GetDataFolderDFR()
@@ -3831,8 +3804,7 @@ End
 Function IR3C_MultiFixPanelControls(TopPanel, CntrlLocationG)
 	string TopPanel, CntrlLocationG
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string CntrlLocation          = "root:Packages:" + CntrlLocationG
+ 	string CntrlLocation          = "root:Packages:" + CntrlLocationG
 	NVAR   UseIndra2Data          = $(CntrlLocation + ":UseIndra2Data")
 	NVAR   UseQRSData             = $(CntrlLocation + ":UseQRSData")
 	NVAR   UseResults             = $(CntrlLocation + ":UseResults")
@@ -3891,8 +3863,7 @@ Function IR3C_MultiPopMenuProc(pa) : PopupMenuControl
 	if(Pa.eventCode != 2)
 		return 0
 	endif
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string   ctrlName = Pa.ctrlName
+ 	string   ctrlName = Pa.ctrlName
 	variable popNum   = Pa.popNum
 	string   popStr   = Pa.popStr
 	//part to copy everywhere...
@@ -3961,8 +3932,7 @@ End
 Function IR3C_MultiUpdListOfAvailFiles(CntrlLocationG)
 	string CntrlLocationG
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFREF  oldDf         = GetDataFolderDFR()
+ 	DFREF  oldDf         = GetDataFolderDFR()
 	string CntrlLocation = "root:Packages:" + CntrlLocationG
 
 	setDataFolder $(CntrlLocation)
@@ -4035,8 +4005,7 @@ End
 Function IR3C_MultiSortListOfAvailFldrs(CntrlLocation)
 	string CntrlLocation
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	SVAR   FolderSortString         = $(CntrlLocation + ":FolderSortString")
+ 	SVAR   FolderSortString         = $(CntrlLocation + ":FolderSortString")
 	WAVE/T ListOfAvailableData      = $(CntrlLocation + ":ListOfAvailableData")
 	WAVE   SelectionOfAvailableData = $(CntrlLocation + ":SelectionOfAvailableData")
 	if(numpnts(ListOfAvailableData) < 2)
@@ -4256,8 +4225,7 @@ Function/S IR3C_MultiGenStringOfFolders(CntrlLocation, StartFolder, UseIndra2Str
 	// AllowQRDataOnly=1 if Q and R data are allowed only (no error wave). For QRS data ONLY!
 	DFREF oldDf = GetDataFolderDFR()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string ListOfQFolders
+ 	string ListOfQFolders
 	string TempStr, tempStr2
 	variable i
 	//	if UseIndra2Structure = 1 we are using Indra2 data, else return all folders

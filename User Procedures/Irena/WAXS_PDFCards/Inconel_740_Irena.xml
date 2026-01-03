@@ -13,13 +13,13 @@
 	Source of data: LaueGo calculation.   -->
 	<data>
 		<d unit="A">2.0676</d><h>1</h><k>1</k><l>1</l><TTH unit="deg_for_Cu">43.784</TTH><F2>1979</F2><Intensity>68436</Intensity><mult>8</mult>
-		<d unit="A">1.7906</d><h>0</h><k>0</k><l>2</l><TTH unit="deg_for_Cu">51.003</TTH><F2>1744.8</F2><Intensity>44638</Intensity><mult>6</mult>
-		<d unit="A">1.2662</d><h>0</h><k>2</k><l>2</l><TTH unit="deg_for_Cu">75.015</TTH><F2>1152.4</F2><Intensity>13969</Intensity><mult>12</mult>
-		<d unit="A">1.0798</d><h>1</h><k>1</k><l>3</l><TTH unit="deg_for_Cu">91.116</TTH><F2>899.38</F2><Intensity>7623.1</Intensity><mult>24</mult>
-		<d unit="A">1.0338</d><h>2</h><k>2</k><l>2</l><TTH unit="deg_for_Cu">96.44</TTH><F2>835.56</F2><Intensity>6409.4</Intensity><mult>8</mult>
+		<d unit="A">1.7906</d><h>0</h><k>0</k><l>2</l><TTH unit="deg_for_Cu">51.004</TTH><F2>1744.8</F2><Intensity>44638</Intensity><mult>6</mult>
+		<d unit="A">1.2662</d><h>0</h><k>2</k><l>2</l><TTH unit="deg_for_Cu">75.012</TTH><F2>1152.4</F2><Intensity>13969</Intensity><mult>12</mult>
+		<d unit="A">1.0798</d><h>1</h><k>1</k><l>3</l><TTH unit="deg_for_Cu">91.114</TTH><F2>899.38</F2><Intensity>7623.1</Intensity><mult>24</mult>
+		<d unit="A">1.0338</d><h>2</h><k>2</k><l>2</l><TTH unit="deg_for_Cu">96.441</TTH><F2>835.56</F2><Intensity>6409.4</Intensity><mult>8</mult>
 		<d unit="A">0.89531</d><h>0</h><k>0</k><l>4</l><TTH unit="deg_for_Cu">118.87</TTH><F2>645.54</F2><Intensity>3534.5</Intensity><mult>6</mult>
 		<d unit="A">0.82159</d><h>1</h><k>3</k><l>3</l><TTH unit="deg_for_Cu">139.55</TTH><F2>549.24</F2><Intensity>2445.4</Intensity><mult>24</mult>
-		<d unit="A">0.80079</d><h>0</h><k>2</k><l>4</l><TTH unit="deg_for_Cu">148.61</TTH><F2>523.14</F2><Intensity>2188.3</Intensity><mult>24</mult>
+		<d unit="A">0.80079</d><h>0</h><k>2</k><l>4</l><TTH unit="deg_for_Cu">148.6</TTH><F2>523.14</F2><Intensity>2188.3</Intensity><mult>24</mult>
 		<d unit="A">0.73102</d><h>2</h><k>2</k><l>4</l><TTH unit="deg_for_Cu">NaN</TTH><F2>440.33</F2><Intensity>1472.3</Intensity><mult>24</mult>
 		<d unit="A">0.68921</d><h>1</h><k>1</k><l>5</l><TTH unit="deg_for_Cu">NaN</TTH><F2>394.91</F2><Intensity>1141.7</Intensity><mult>32</mult>
 		<d unit="A">0.63308</d><h>0</h><k>4</k><l>4</l><TTH unit="deg_for_Cu">NaN</TTH><F2>339.83</F2><Intensity>798.2</Intensity><mult>12</mult>

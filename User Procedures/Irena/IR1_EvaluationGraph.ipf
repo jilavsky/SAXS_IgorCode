@@ -3,7 +3,7 @@
 #pragma version=2.11
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
@@ -553,8 +553,8 @@ Function IR1G_CalculateSurfaceArea(DistributionWv, diametersWv, StartP, EndP, Di
 	DFREF oldDf = GetDataFolderDFR()
 
 	SetDataFolder root:Packages:SASDataEvaluation
-	Duplicate/O/R=(StartP, EndP)/FREE DistributionWv, Dist_temp, ParticleSurface, ParticleVolumes
-	Duplicate/O/R=(StartP, EndP)/FREE diametersWv, Dia_temp, Dia_tempOrig
+	Duplicate/R=(StartP, EndP)/FREE DistributionWv, Dist_temp, ParticleSurface, ParticleVolumes
+	Duplicate/R=(StartP, EndP)/FREE diametersWv, Dia_temp, Dia_tempOrig
 	variable number
 
 	string XWvName = NameOfWave(diametersWv)
@@ -593,8 +593,8 @@ Function IR1G_CalculateNumber(DistributionWv, diametersWv, StartP, EndP, DistWav
 	DFREF oldDf = GetDataFolderDFR()
 
 	SetDataFolder root:Packages:SASDataEvaluation
-	Duplicate/O/R=(StartP, EndP)/FREE DistributionWv, Dist_temp, ParticleVolumes
-	Duplicate/O/R=(StartP, EndP)/FREE diametersWv, Dia_temp, Dia_tempOrig
+	Duplicate/R=(StartP, EndP)/FREE DistributionWv, Dist_temp, ParticleVolumes
+	Duplicate/R=(StartP, EndP)/FREE diametersWv, Dia_temp, Dia_tempOrig
 	variable number
 	//need to fix this in case we have radius wave and not diameter...
 	string XWvName = NameOfWave(diametersWv)
@@ -631,8 +631,8 @@ Function IR1G_CalculateVolume(DistributionWv, diametersWv, StartP, EndP, DistWav
 	DFREF oldDf = GetDataFolderDFR()
 
 	SetDataFolder root:Packages:SASDataEvaluation
-	Duplicate/O/R=(StartP, EndP) DistributionWv, Dist_temp, ParticleVolumes
-	Duplicate/O/R=(StartP, EndP) diametersWv, Dia_temp
+	Duplicate/R=(StartP, EndP) DistributionWv, Dist_temp, ParticleVolumes
+	Duplicate/R=(StartP, EndP) diametersWv, Dia_temp
 	NVAR EvaluatePopulationNumber = root:Packages:SASDataEvaluation:EvaluatePopulationNumber
 	variable volume
 	if(stringmatch(DistWaveName, "*Volume*") || stringmatch(DistWaveName, "*VolDist*"))

@@ -2,11 +2,11 @@
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
 #pragma version = 1.10
-#pragma IgorVersion=8.03
+#pragma IgorVersion=9.03
 
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -168,9 +168,9 @@ Function IN3S_MainPanel()
 		Button BeamlineSurvey,pos={440,110},size={120,17}, proc=IN3S_ButtonProc,title="Beamline Survey", help={"This opens GUI for survey at the beamline"}
 
 		TitleBox Info4 title="\Zr110Current set name : ",pos={300,110},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0
-		SetVariable UserNameForSampleSet,pos={300,130},size={270,20}, proc=IN3S_SetVarProc,title="Set Name: "
+		SetVariable UserNameForSampleSet,pos={300,133},size={270,20}, proc=IN3S_SetVarProc,title="Set Name: "
 		Setvariable UserNameForSampleSet,fStyle=2, variable=root:Packages:SamplePlateSetup:UserNameForSampleSet, help={"Name for these samples"}
-		Button SavePositionSet,pos={440,145},size={120,17}, proc=IN3S_ButtonProc,title="Save Position Set", help={"Saves set of positions with user name"}
+		Button SavePositionSet,pos={440,156},size={120,17}, proc=IN3S_ButtonProc,title="Save Position Set", help={"Saves set of positions with user name"}
 		
    		TabControl TableTabs  pos={0,160},size={590,430},tabLabel(0)="Sample Table", value= 0, proc=IN3S_TableTabsTabProc
 	    TabControl TableTabs  tabLabel(1)="Option Controls",tabLabel(2)="Export Controls"
@@ -199,7 +199,7 @@ Function IN3S_MainPanel()
 			SVAR ExportOrder=root:Packages:SamplePlateSetup:ExportOrder
 			PopupMenu ExportOrderPop,pos={30,340},size={350,21},proc=IN3S_PopMenuProc,title="Export order  :      ", help={"Pick order of scans to export"}
 			PopupMenu ExportOrderPop,mode=1,popvalue=ExportOrder
-			PopupMenu ExportOrderPop,value="USAXS-SAXS-WAXS;SAXS-WAXS-USAXS;USAXS-WAXS-SAXS;"
+			PopupMenu ExportOrderPop,value="USAXS-SAXS-WAXS;SAXS-WAXS-USAXS;USAXS-WAXS-SAXS;USWAXS;"
 
 			CheckBox RunExportHookFunction pos={30,375},size={90,20},title="Run Export hook function? ", help={"Run export hook function"}
 			CheckBox RunExportHookFunction variable=root:Packages:SamplePlateSetup:RunExportHookFunction,  noproc
@@ -419,8 +419,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 	STRUCT WMListboxAction &lba
 	//see IRB1_ConcSeriesListBoxProc
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	Variable row = lba.row
+ 	Variable row = lba.row
 	Variable col = lba.col
 	WAVE/T/Z listWave = lba.listWave
 	WAVE/Z selWave = lba.selWave
@@ -561,8 +560,8 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 						string FromWhere = "Selected Rows"
 						string AddOrderNumber = "No"
 						Prompt NewSampleName, "Write same string in names"
-						Prompt FromWhere, "Where to write?", popup "Selected Rows;Empty only;From first selected row;All;"
-						Prompt AddOrderNumber, "Add Order numbers (0,1,2,3...)?", popup "No;Yes;"
+						Prompt FromWhere, "Where to write?", popup, "Selected Rows;Empty only;From first selected row;All;"
+						Prompt AddOrderNumber, "Add Order numbers (0,1,2,3...)?", popup, "No;Yes;"
 						DoPrompt /Help="Write same string name" "Default name for all positions", NewSampleName, FromWhere, AddOrderNumber
 						if(V_Flag)
 							abort
@@ -634,7 +633,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 						newThickness = DefSaTh
 						Prompt newThickness, "New Thickness [mm] or NaN for empty"
 						string FromWhere2 = "Selected Rows"
-						Prompt FromWhere2, "Where to write?", popup "Selected Rows;Empty only;From first selected row;All;"
+						Prompt FromWhere2, "Where to write?", popup, "Selected Rows;Empty only;From first selected row;All;"
 						DoPrompt /Help="Write new thickness?" "New thickness and where selection", newThickness, FromWhere2
 						if(V_Flag)
 							abort
@@ -1988,6 +1987,26 @@ Function IN3S_WriteListOfCommands(listWaveG, LBSelectionWvG, sxOffset, syOffset,
 			Notebook $nbl text="		#END USAXS measurements \r"
 			break
 
+		case "USWAXS":
+		   Notebook $nbl text="\r"
+		   Notebook $nbl text="		#Combined USAXS - SAXS - WAXS  measurements \r"
+		   Notebook $nbl text="\r"
+		   For(i=0;i<dimsize(listWaveG,0);i+=1)
+		   		if(USAXSAllG || LBSelectionWvG[i][4]==48)
+					if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
+			   			thickness = str2num(listWaveG[i][3])
+			   			thickness = thickness>0 ? thickness : DefaultSampleThickness
+			   			SX=str2num(listWaveG[i][1])+sxOffset
+			   			SY=str2num(listWaveG[i][2])+syOffset
+						Notebook $nbl text="      USAXSscan      "+num2str(SX)+"      "+num2str(SY)+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+TitleModifier+"\"  \r"
+						Notebook $nbl text="      saxsExp        "+num2str(SX)+"      "+num2str(SY)+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+TitleModifier+"\"  \r"
+						Notebook $nbl text="      waxsExp        "+num2str(SX)+"      "+num2str(SY)+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+TitleModifier+"\"  \r"
+						Notebook $nbl text="\r"
+					endif
+				endif   
+		   endfor
+			Notebook $nbl text="		#END of batch of measurements \r"
+			break
 	endswitch
 
 end
@@ -1996,8 +2015,10 @@ end
 //*****************************************************************************************************************
 
 static Function/T IN3S_ExportMacroFile(UseUsername, AppendToExisting)	
-	variable UseUsername		//set to 0 for usaxs.mac, 1 for user choice. 
-	variable AppendToExisting 	//set to 1 if one should append to existing file on desktop. 
+	variable UseUsername		
+	//set to 0 for usaxs.mac, 1 for user choice. 
+	variable AppendToExisting 	
+	//set to 1 if one should append to existing file on desktop. 
 	
 	IN3S_CheckForSensibility()
 	string NewFileName
@@ -2076,6 +2097,7 @@ static Function IN3S_Initialize()
 	//NewDataFolder/O root:AvailableSamplePlates
 
 	string ListOfVariables
+	string/g ListOfPVs
 	string ListOfStrings
 	variable i, j
 	
@@ -2086,6 +2108,13 @@ static Function IN3S_Initialize()
 	ListOfVariables+="RunExportHookFunction;"
 	ListOfVariables+="USAXSScanTime;SAXSScanTime;WAXSScanTime;CalculatedOverAllTime;NumberOfSamples;"
 	ListOfVariables+="TableIsSaved;ExportCurrentPosSet;ExportListOfPosSets;"
+	//now openPVlist
+	ListOfPVs="dataColInProgress;AEROm8sset;AEROm8val;AEROm8rbv;AEROm8velo;AEROm8suse;"
+	ListOfPVs+="AEROm9sset;AEROm9val;AEROm9rbv;AEROm9velo;AEROm9suse;allstop;m58c1m8val;"
+	ListOfPVs+="m58c1m7val;GSlit1Hsize;GSlit1Vsize;"
+	ListOfPVs+="USAXS_hgslit_ap;USAXS_vgslit_ap;USAXS_hslit_ap;USAXS_vslit_ap;"
+	ListOfPVs+="SAXS_hgslit_ap;SAXS_vgslit_ap;SAXS_hslit_ap;SAXS_vslit_ap;"
+	
 
 	ListOfStrings="SelectedPlateName;UserNameForSampleSet;UserName;WarningForUser;"
 	ListOfStrings+="SelectedSampleName;DefaultCommandFileName;TableClipboard;"
@@ -2093,6 +2122,9 @@ static Function IN3S_Initialize()
 	//and here we create them
 	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
 		IN2G_CreateItem("variable",StringFromList(i,ListOfVariables))
+	endfor		
+	for(i=0;i<itemsInList(ListOfPVs);i+=1)	
+		IN2G_CreateItem("variable",StringFromList(i,ListOfPVs))
 	endfor		
 	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
 		IN2G_CreateItem("string",StringFromList(i,ListOfStrings))
@@ -2153,11 +2185,11 @@ static Function IN3S_Initialize()
 	if(USAXSScanTime<30)
 		USAXSScanTime = 90
 	endif
-	if(SAXSScanTime<3)
-		SAXSScanTime = 20
+	if(SAXSScanTime<1)
+		SAXSScanTime = 1
 	endif
-	if(WAXSScanTime<3)
-		WAXSScanTime = 20
+	if(WAXSScanTime<1)
+		WAXSScanTime = 3
 	endif
 	//kill potentially old stuff here
 	killwaves/Z imageWave, M_RGB2Gray, PlateImageTemp
@@ -2365,7 +2397,8 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 static Function IN3S_CreateTablesForPlates(HowManySamples, forceReset)
-	variable HowManySamples, forceReset	//set forceReset=1 to rezero all waves. 
+	variable HowManySamples, forceReset	
+	//set forceReset=1 to rezero all waves. 
 	
 	DFrEF OldDf=GetDataFolderDFR()
 	setdatafolder root:Packages:SamplePlateSetup
@@ -2424,8 +2457,10 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //
-static Function IN3S_InsertDeleteLines(InsertDelete, row, newLines)	//InsertDelete = 1 for insert, 2 for delete
-	variable InsertDelete, row, newLines						//3 duplicate and add there, 4 add at the end. 
+static Function IN3S_InsertDeleteLines(InsertDelete, row, newLines)	
+	//InsertDelete = 1 for insert, 2 for delete
+	variable InsertDelete, row, newLines						
+	//3 duplicate and add there, 4 add at the end. 
 	//newLines used only with InsertDelete=4 and is number of new lines. 
 	
 	Wave/T LBCommandWv = root:Packages:SamplePlateSetup:LBCommandWv
@@ -3400,9 +3435,9 @@ Function IN3S_TrimAndStraightenImage()
 	SetScale/I y 0,yDimension,"mm", PlateImage
 
 	//now we need to fill this image with interpolated lines... 
-	make/N=(NumPx)/O/FREE xwave, ywave
-	make/N=(NumPy)/O/FREE dummy
-	MatrixOP/O/free pWave=indexRows(xWave)
+	make/N=(NumPx)/FREE xwave, ywave
+	make/N=(NumPy)/FREE dummy
+	MatrixOP/FREE pWave=indexRows(xWave)
 
 	MultiThread dummy=IN3S_TrimImgCalcOneLine(p,x1,x2,x3,x4,y1,y2,y3,y4,NumPx-1,NumPy-1,ImageIn,PlateImage, pWave, Pwidth)
 	
@@ -3497,8 +3532,8 @@ ThreadSafe static function IN3S_TrimImgCalcOneLine(i,x1,x2,x3,x4,y1,y2,y3,y4,Num
 		Variable xScale=(xend-xstart)/(NumPx)
 		Variable yScale=(yend-ystart)/(NumPx)
 
-		MatrixOP/O/FREE xwave=xstart+pWave*xScale		//
-		MatrixOP/O/FREE ywave=ystart+pWave*yScale
+		MatrixOP/FREE xwave=xstart+pWave*xScale		//
+		MatrixOP/FREE ywave=ystart+pWave*yScale
 		ImageLineProfile/V xWave=xwave, yWave=ywave, srcwave=M_RGB2Gray, width=Pwidth
 
 		Wave W_ImageLineProfile
@@ -3522,6 +3557,7 @@ Function IN3S_BeamlineSurvey()
 	if(exists("pvOpen")!=4 && IN3SBeamlineSurveyDevelopOn<1)
 		Abort "This is useful only at the beamline on usaxspc14 or usaxspc11" 
 	endif
+	IN3S_InitPvs()
 	/// abort if instrument in use. 
 	IN3S_BeramlineSurveyAbortIfNeeded("Cannot use survey tool")
 	//
@@ -3558,32 +3594,197 @@ Function IN3S_BeamlineSurvey()
 		DoWindow/F BeamlinePlateSetup
 	else
 		IN3S_BeamlineSurveyPanel()
+		ING2_AddScrollControl()
 	endif
 	SetWindow BeamlinePlateSetup  hook(EpicsMon)=IN3S_BeamlineSurveyEpicsHook
 	IN3S_BeamlineSurveyStartEpicsUpdate()
 	//sync epics, RBV and TAR positions here
-#if (exists("pvOpen")==4)
-	variable SxPV, SyPV
-	pvOpen/Q SxPV, "usxAERO:m8.RBV"
-	pvOpen/Q SyPV, "usxAERO:m9.RBV"
-	pvWait 5
+#if(exists("pvOpen")==4)
+	//variable SxPV, SyPV
+	//pvOpen/Q SxPV, "usxAERO:m8.RBV"
+	//pvOpen/Q SyPV, "usxAERO:m9.RBV"
+	//pvWait 5
+	NVAR SxPV = root:Packages:SamplePlateSetup:AEROm8rbv
+	NVAR SyPV = root:Packages:SamplePlateSetup:AEROm9rbv
 	//this needs to be in background function and in 10Hz loop. 	
-	SampleXRBV = IN3S_GetMotorPositions(SxPV)
-	SampleYRBV = IN3S_GetMotorPositions(SyPV)
+	SampleXRBV = IN3S_GetPVVariableValue(SxPV)
+	SampleYRBV = IN3S_GetPVVariableValue(SyPV)
 	//end of background function loop. 
-	pvClose SxPV
-	pvClose SyPV
+	//pvClose SxPV
+	//pvClose SyPV
 #endif
 	SampleXTAR = SampleXRBV
 	SampleYTAR = SampleYRBV
+end
+//*************************************************************************************************
+//*************************************************************************************************
+Function IN3S_InitPvs()
+
+	SetDataFolder root:Packages:SamplePlateSetup
+	
+#if(exists("pvOpen")==4)
+	//do we need to close them first? 
+	
+//	NVAR tmpPvAddr=$("dataColInProgress")
+//	pvClose tmpPvAddr
+//
+//	NVAR tmpPvAddr=$("allstop")
+//	pvClose tmpPvAddr
+//
+//	NVAR tmpPvAddr=$("m58c1m8val")
+//	pvClose tmpPvAddr
+//
+//	NVAR tmpPvAddr=$("m58c1m7val")
+//	pvClose tmpPvAddr
+//
+//	NVAR tmpPvAddr=$("GSlit1Hsize")
+//	pvClose tmpPvAddr
+//
+//	NVAR tmpPvAddr=$("GSlit1Vsize")
+//	pvClose tmpPvAddr
+//
+//	NVAR tmpPvAddr=$("USAXS_hslit_ap")
+//	pvClose tmpPvAddr
+//
+//	NVAR tmpPvAddr=$("USAXS_vslit_ap")
+//	pvClose tmpPvAddr
+//
+//	NVAR tmpPvAddr=$("USAXS_hgslit_ap")
+//	pvClose tmpPvAddr
+//
+//	NVAR tmpPvAddr=$("USAXS_vgslit_ap")
+//	pvClose tmpPvAddr
+//
+//	NVAR tmpPvAddr=$("SAXS_hslit_ap")
+//	pvClose tmpPvAddr
+//
+//	NVAR tmpPvAddr=$("SAXS_vslit_ap")
+//	pvClose tmpPvAddr
+//
+//	NVAR tmpPvAddr=$("SAXS_hgslit_ap")
+//	pvClose tmpPvAddr
+//
+//	NVAR tmpPvAddr=$("SAXS_vgslit_ap")
+//	pvClose tmpPvAddr
+//
+//	NVAR tmpPvAddr=$("AEROm8sset")
+//	pvClose tmpPvAddr
+//
+//	NVAR tmpPvAddr=$("AEROm8val")
+//	pvClose tmpPvAddr
+//
+//	NVAR tmpPvAddr=$("AEROm8rbv")
+//	pvClose tmpPvAddr
+//	
+//	NVAR tmpPvAddr=$("AEROm8velo")
+//	pvClose tmpPvAddr
+//
+//	NVAR tmpPvAddr=$("AEROm8suse")
+//	pvClose tmpPvAddr
+//
+//	NVAR tmpPvAddr=$("AEROm8sset")
+//	pvClose tmpPvAddr
+//
+//	NVAR tmpPvAddr=$("AEROm9val")
+//	pvClose tmpPvAddr
+//
+//	NVAR tmpPvAddr=$("AEROm9rbv")
+//	pvClose tmpPvAddr
+//	
+//	NVAR tmpPvAddr=$("AEROm9velo")
+//	pvClose tmpPvAddr
+//
+//	NVAR tmpPvAddr=$("AEROm9suse")
+//	pvClose tmpPvAddr
+	
+	
+	//now open all of those...
+	NVAR tmpPvAddr=$("dataColInProgress")
+	pvOpen/Q tmpPvAddr, "usxLAX:dataColInProgress"
+
+	NVAR tmpPvAddr=$("allstop")
+	pvOpen/Q tmpPvAddr, "usxLAX:allstop"
+
+	NVAR tmpPvAddr=$("m58c1m8val")
+	pvOpen/Q tmpPvAddr, "usxLAX:m58:c1:m8.VAL"
+
+	NVAR tmpPvAddr=$("m58c1m7val")
+	pvOpen/Q tmpPvAddr, "usxLAX:m58:c1:m7.VAL"
+
+	NVAR tmpPvAddr=$("GSlit1Hsize")
+	pvOpen/Q tmpPvAddr, "usxLAX:GSlit1H:size"
+
+	NVAR tmpPvAddr=$("GSlit1Vsize")
+	pvOpen/Q tmpPvAddr, "usxLAX:GSlit1V:size"
+
+	NVAR tmpPvAddr=$("USAXS_hslit_ap")
+	pvOpen/Q tmpPvAddr, "usxLAX:USAXS_hslit_ap"
+
+	NVAR tmpPvAddr=$("USAXS_vslit_ap")
+	pvOpen/Q tmpPvAddr, "usxLAX:USAXS_vslit_ap"
+
+	NVAR tmpPvAddr=$("USAXS_hgslit_ap")
+	pvOpen/Q tmpPvAddr, "usxLAX:USAXS_hgslit_ap"
+
+	NVAR tmpPvAddr=$("USAXS_vgslit_ap")
+	pvOpen/Q tmpPvAddr, "usxLAX:USAXS_vgslit_ap"
+
+	NVAR tmpPvAddr=$("SAXS_hslit_ap")
+	pvOpen/Q tmpPvAddr, "usxLAX:SAXS_hslit_ap"
+
+	NVAR tmpPvAddr=$("SAXS_vslit_ap")
+	pvOpen/Q tmpPvAddr, "usxLAX:SAXS_vslit_ap"
+
+	NVAR tmpPvAddr=$("SAXS_hgslit_ap")
+	pvOpen/Q tmpPvAddr, "usxLAX:SAXS_hgslit_ap"
+
+	NVAR tmpPvAddr=$("SAXS_vgslit_ap")
+	pvOpen/Q tmpPvAddr, "usxLAX:SAXS_vgslit_ap"
+
+	NVAR tmpPvAddr=$("AEROm8sset")
+	pvOpen/Q tmpPvAddr, "usxAERO:m8.SSET"
+
+	NVAR tmpPvAddr=$("AEROm8val")
+	pvOpen/Q tmpPvAddr, "usxAERO:m8.VAL"
+
+	NVAR tmpPvAddr=$("AEROm8rbv")
+	pvOpen/Q tmpPvAddr, "usxAERO:m8.RBV"
+	
+	NVAR tmpPvAddr=$("AEROm8velo")
+	pvOpen/Q tmpPvAddr, "usxAERO:m8.VELO"
+
+	NVAR tmpPvAddr=$("AEROm8suse")
+	pvOpen/Q tmpPvAddr, "usxAERO:m8.SUSE"
+
+	NVAR tmpPvAddr=$("AEROm9sset")
+	pvOpen/Q tmpPvAddr, "usxAERO:m9.SSET"
+
+	NVAR tmpPvAddr=$("AEROm9val")
+	pvOpen/Q tmpPvAddr, "usxAERO:m9.VAL"
+
+	NVAR tmpPvAddr=$("AEROm9rbv")
+	pvOpen/Q tmpPvAddr, "usxAERO:m9.RBV"
+	
+	NVAR tmpPvAddr=$("AEROm9velo")
+	pvOpen/Q tmpPvAddr, "usxAERO:m9.VELO"
+
+	NVAR tmpPvAddr=$("AEROm9suse")
+	pvOpen/Q tmpPvAddr, "usxAERO:m9.SUSE"
+
+	pvWait 5
+#else
+	abort "No epics available"
+
+#endif
+
 end
 
 //*************************************************************************************************
 //*************************************************************************************************
 static Function IN3S_BeramlineSurveyAbortIfNeeded(string WhyString)
-	variable InstrumentUsed
-#if (exists("pvOpen")==4)
-		InstrumentUsed = IN3S_GetPVVariableValue("usxLAX:dataColInProgress")	
+#if(exists("pvOpen")==4)
+		NVAR InstrUsed = root:Packages:SamplePlateSetup:dataColInProgress
+		variable InstrumentUsed = IN3S_GetPVVariableValue(InstrUsed)	
 		if(InstrumentUsed)
 			abort "Instrument is collecting data, cannot "+WhyString
 		endif
@@ -3631,43 +3832,58 @@ Function IN3S_BeamlineSurveyEpicsHook(s)
 	return 0
 end
 //*************************************************************************************************
-Function IN3S_BackgroundEpics(s) // This is the function that will be called periodically 
-	STRUCT WMBackgroundStruct &s	//note: cannot be static or things will not work. 
+Function IN3S_BackgroundEpics(s) 
+	// This is the function that will be called periodically 
+	STRUCT WMBackgroundStruct &s	
+	//note: cannot be static or things will not work. 
 	NVAR SampleXRBV=root:Packages:SamplePlateSetup:SampleXRBV
 	NVAR SampleYRBV=root:Packages:SamplePlateSetup:SampleYRBV
-#if (exists("pvOpen")==4)
-	variable SxPV, SyPV
-	pvOpen/Q SxPV, "usxAERO:m8.RBV"
-	pvOpen/Q SyPV, "usxAERO:m9.RBV"
-	pvWait 5
+#if(exists("pvOpen")==4)
+	NVAR SxPV = root:Packages:SamplePlateSetup:AEROm8rbv
+	NVAR SyPV = root:Packages:SamplePlateSetup:AEROm9rbv
+	//variable SxPV, SyPV
+	//pvOpen/Q SxPV, "usxAERO:m8.RBV"
+	//pvOpen/Q SyPV, "usxAERO:m9.RBV"
+	//pvWait 5
 	//this needs to be in background function and in 10Hz loop. 	
-	SampleXRBV = IN3S_GetMotorPositions(SxPV)
-	SampleYRBV = IN3S_GetMotorPositions(SyPV)
+	SampleXRBV = IN3S_GetPVVariableValue(SxPV)
+	SampleYRBV = IN3S_GetPVVariableValue(SyPV)
 	//end of background function loop. 
-	pvClose SxPV
-	pvClose SyPV
+	//pvClose SxPV
+	//pvClose SyPV
 #endif
 	return 0
 end
 //*************************************************************************************************
-static function IN3S_GetMotorPositions(SPV)
-	variable SPV
-
-#if (exists("pvOpen")==4)
-	variable tempRBV
-	pvGet SPV, tempRBV
-	return tempRBV
-#endif
-end
+//static function IN3S_GetMotorPosition1s(SPV)
+//	variable SPV
+//
+//#if(exists("pvOpen")==4)
+//	variable tempRBV
+//	pvGet SPV, tempRBV
+//	return tempRBV
+//#endif
+//end
 //*************************************************************************************************
-static function IN3S_GetPVVariableValue(PVString)
-	string  PVString
+//static function IN3S_GetPVVariableValue(PVString)
+//	string  PVString
+//
+//#if(exists("pvOpen")==4)
+//	variable tempRBV, PVv
+//	pvOpen/Q PVv, PVString
+//	pvGet PVv, tempRBV
+//	pvClose PVv
+//	return tempRBV
+//#endif
+//end
+static function IN3S_GetPVVariableValue(PVVar)
+	variable PVVar
 
-#if (exists("pvOpen")==4)
-	variable tempRBV, PVv
-	pvOpen/Q PVv, PVString
-	pvGet PVv, tempRBV
-	pvClose PVv
+#if(exists("pvOpen")==4)
+	variable tempRBV
+	//pvOpen/Q PVv, PVString
+	pvGet PVVar, tempRBV
+	//pvClose PVv
 	return tempRBV
 #endif
 end
@@ -3918,114 +4134,161 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 				IN3S_MoveMotorInEpics("SY",SampleYTAR)
 			endif
 			if(StringMatch(ba.ctrlName, "SyncMotors"))
-#if (exists("pvOpen")==4)
-				variable SxPV, SyPV
-				pvOpen/Q SxPV, "usxAERO:m8.RBV"
-				pvOpen/Q SyPV, "usxAERO:m9.RBV"
-				SampleXTAR = IN3S_GetMotorPositions(SxPV)
-				SampleYTAR = IN3S_GetMotorPositions(SyPV)
-				SampleXRBV = IN3S_GetMotorPositions(SxPV)
-				SampleYRBV = IN3S_GetMotorPositions(SyPV)
-				pvWait 5
-				pvClose SxPV
-				pvClose SyPV
+#if(exists("pvOpen")==4)
+				NVAR SxPV = root:Packages:SamplePlateSetup:AEROm8rbv
+				NVAR SyPV = root:Packages:SamplePlateSetup:AEROm9rbv
+				//variable SxPV, SyPV
+				//pvOpen/Q SxPV, "usxAERO:m8.RBV"
+				//pvOpen/Q SyPV, "usxAERO:m9.RBV"
+				SampleXTAR = IN3S_GetPVVariableValue(SxPV)
+				SampleYTAR = IN3S_GetPVVariableValue(SyPV)
+				SampleXRBV = IN3S_GetPVVariableValue(SxPV)
+				SampleYRBV = IN3S_GetPVVariableValue(SyPV)
+				//pvWait 5
+				//pvClose SxPV
+				//pvClose SyPV
 #endif
 			endif
 			variable InstrumentUsed
 			if(StringMatch(ba.ctrlName, "SetSXAs00"))
-#if (exists("pvOpen")==4)
-					InstrumentUsed = IN3S_GetPVVariableValue("usxLAX:dataColInProgress")	
+#if(exists("pvOpen")==4)
+				NVAR InstrUsed = root:Packages:SamplePlateSetup:dataColInProgress
+				InstrumentUsed = IN3S_GetPVVariableValue(InstrUsed)	
 					if(InstrumentUsed)
 						abort "Instrument is collecting data, cannot move motors"
 					else	
 						//"SX"
-						IN3S_PutEpicsPv("usxAERO:m8.SSET", 1)
+						NVAR m8SSET=root:Packages:SamplePlateSetup:AEROm8sset
+						NVAR m8VAL=root:Packages:SamplePlateSetup:AEROm8val
+						NVAR m8SUSE=root:Packages:SamplePlateSetup:AEROm8suse
+						IN3S_PutEpicsPv(m8SSET, 1)
 						sleep/T 10
-						IN3S_PutEpicsPv("usxAERO:m8.VAL", 0)
+						IN3S_PutEpicsPv(m8VAL, 0)
 						sleep/T 10
-						IN3S_PutEpicsPv("usxAERO:m8.SUSE", 1)
+						IN3S_PutEpicsPv(m8SUSE, 1)
+//						IN3S_PutEpicsPv("usxAERO:m8.SSET", 1)
+//						sleep/T 10
+//						IN3S_PutEpicsPv("usxAERO:m8.VAL", 0)
+//						sleep/T 10
+//						IN3S_PutEpicsPv("usxAERO:m8.SUSE", 1)
 					endif
 				SampleXTAR = 0
 #endif
 			endif		
 			if(StringMatch(ba.ctrlName, "SetSYAs00"))
-#if (exists("pvOpen")==4)
-					InstrumentUsed = IN3S_GetPVVariableValue("usxLAX:dataColInProgress")	
+#if(exists("pvOpen")==4)
+				NVAR InstrUsed = root:Packages:SamplePlateSetup:dataColInProgress
+				InstrumentUsed = IN3S_GetPVVariableValue(InstrUsed)						
+					//InstrumentUsed = IN3S_GetPVVariableValue("usxLAX:dataColInProgress")	
 					if(InstrumentUsed)
 						abort "Instrument is collecting data, cannot move motors"
 					else	
 						//"SY"
-						IN3S_PutEpicsPv("usxAERO:m9.SSET", 1)
+						NVAR m9SSET=root:Packages:SamplePlateSetup:AEROm9sset
+						NVAR m9VAL=root:Packages:SamplePlateSetup:AEROm9val
+						NVAR m9SUSE=root:Packages:SamplePlateSetup:AEROm9suse						
+						IN3S_PutEpicsPv(m9SSET, 1)
 						sleep/T 10
-						IN3S_PutEpicsPv("usxAERO:m9.VAL", 0)
+						IN3S_PutEpicsPv(m9VAL, 0)
 						sleep/T 10
-						IN3S_PutEpicsPv("usxAERO:m9.SUSE", 1)
+						IN3S_PutEpicsPv(m9SUSE, 1)
 					endif
 				SampleYTAR = 0
 #endif
 			endif		
 			if(StringMatch(ba.ctrlName, "STOPMotors"))
-#if (exists("pvOpen")==4)
-					InstrumentUsed = IN3S_GetPVVariableValue("usxLAX:dataColInProgress")	
+#if(exists("pvOpen")==4)
+				NVAR InstrUsed = root:Packages:SamplePlateSetup:dataColInProgress
+				InstrumentUsed = IN3S_GetPVVariableValue(InstrUsed)						
+					//InstrumentUsed = IN3S_GetPVVariableValue("usxLAX:dataColInProgress")	
 					if(InstrumentUsed)
 						abort "Instrument is collecting data, cannot move motors"
 					else	
-						IN3S_PutEpicsPv("usxLAX:allStop", 1)
+						NVAR allSt= root:Packages:SamplePlateSetup:allstop
+						IN3S_PutEpicsPv(allSt, 1)
 					endif
 #endif
 			endif		
 			variable HorSlit, VertSLit, HorGuardSlit, VertGuardSlit
 			if(StringMatch(ba.ctrlName, "OpenSlitsLarge"))
-#if (exists("pvOpen")==4)
-					InstrumentUsed = IN3S_GetPVVariableValue("usxLAX:dataColInProgress")	
+#if(exists("pvOpen")==4)
+					NVAR InstrUsed = root:Packages:SamplePlateSetup:dataColInProgress
+					InstrumentUsed = IN3S_GetPVVariableValue(InstrUsed)				
+					//InstrumentUsed = IN3S_GetPVVariableValue("usxLAX:dataColInProgress")	
 					if(InstrumentUsed)
 						abort "Instrument is collecting data, cannot move motors"
 					else	
 						//c1:m8 is Horizontal slit size
-						IN3S_PutEpicsPv("usxLAX:m58:c1:m8.VAL", 2.5)
-						IN3S_PutEpicsPv("usxLAX:GSlit1H:size", 2.8)
+						NVAR c1m8 = root:Packages:SamplePlateSetup:m58c1m8val
+						NVAR GSlit1H = root:Packages:SamplePlateSetup:GSlit1Hsize
+						NVAR c1m7 = root:Packages:SamplePlateSetup:m58c1m7val
+						NVAR GSlit1V = root:Packages:SamplePlateSetup:GSlit1Vsize
+						IN3S_PutEpicsPv(c1m8, 2.5)
+						IN3S_PutEpicsPv(GSlit1H, 2.8)
 						//c1:m7 is Vertical slit size
-						IN3S_PutEpicsPv("usxLAX:m58:c1:m7.VAL", 1.2)
-						IN3S_PutEpicsPv("usxLAX:GSlit1V:size", 1.4)
+						IN3S_PutEpicsPv(c1m7, 1.2)
+						IN3S_PutEpicsPv(GSlit1V, 1.4)
 					endif
 #endif
 			endif		
 
 			if(StringMatch(ba.ctrlName, "OpenSlitsUSAXS"))
-#if (exists("pvOpen")==4)
-					InstrumentUsed = IN3S_GetPVVariableValue("usxLAX:dataColInProgress")	
+#if(exists("pvOpen")==4)
+					NVAR InstrUsed = root:Packages:SamplePlateSetup:dataColInProgress
+					InstrumentUsed = IN3S_GetPVVariableValue(InstrUsed)				
+					//InstrumentUsed = IN3S_GetPVVariableValue("usxLAX:dataColInProgress")	
 					if(InstrumentUsed)
 						abort "Instrument is collecting data, cannot move motors"
 					else	
-						HorSlit = IN3S_GetPVVariableValue("usxLAX:USAXS_hslit_ap")
-						VertSLit = IN3S_GetPVVariableValue("usxLAX:USAXS_vslit_ap")
-						HorGuardSlit = IN3S_GetPVVariableValue("usxLAX:USAXS_hgslit_ap")
-						VertGuardSlit = IN3S_GetPVVariableValue("usxLAX:USAXS_vgslit_ap")
+						NVAR USHap = root:Packages:SamplePlateSetup:USAXS_hslit_ap
+						NVAR USVap = root:Packages:SamplePlateSetup:USAXS_vslit_ap
+						NVAR GSHap = root:Packages:SamplePlateSetup:USAXS_hgslit_ap
+						NVAR GSVap = root:Packages:SamplePlateSetup:USAXS_vgslit_ap
+
+						HorSlit = IN3S_GetPVVariableValue(USHap)
+						VertSLit = IN3S_GetPVVariableValue(USVap)
+						HorGuardSlit = IN3S_GetPVVariableValue(GSHap)
+						VertGuardSlit = IN3S_GetPVVariableValue(GSVap)
 						//c1:m8 is Horizontal slit size
-						IN3S_PutEpicsPv("usxLAX:m58:c1:m8.VAL", HorSlit)
-						IN3S_PutEpicsPv("usxLAX:GSlit1H:size", HorGuardSlit)
+						NVAR c1m8 = root:Packages:SamplePlateSetup:m58c1m8val
+						NVAR GSlit1H = root:Packages:SamplePlateSetup:GSlit1Hsize
+						NVAR c1m7 = root:Packages:SamplePlateSetup:m58c1m7val
+						NVAR GSlit1V = root:Packages:SamplePlateSetup:GSlit1Vsize						
+						IN3S_PutEpicsPv(c1m8, HorSlit)
+						IN3S_PutEpicsPv(GSlit1H, HorGuardSlit)
 						//c1:m7 is Vertical slit size
-						IN3S_PutEpicsPv("usxLAX:m58:c1:m7.VAL", VertSLit)
-						IN3S_PutEpicsPv("usxLAX:GSlit1V:size", VertGuardSlit)
+						IN3S_PutEpicsPv(c1m7, VertSLit)
+						IN3S_PutEpicsPv(GSlit1V, VertGuardSlit)
 					endif
 #endif
 			endif		
 			if(StringMatch(ba.ctrlName, "OpenSlitsSWAXS"))
-#if (exists("pvOpen")==4)
-					InstrumentUsed = IN3S_GetPVVariableValue("usxLAX:dataColInProgress")	
+#if(exists("pvOpen")==4)
+					NVAR InstrUsed = root:Packages:SamplePlateSetup:dataColInProgress
+					InstrumentUsed = IN3S_GetPVVariableValue(InstrUsed)				
+					//InstrumentUsed = IN3S_GetPVVariableValue("usxLAX:dataColInProgress")	
 					if(InstrumentUsed)
 						abort "Instrument is collecting data, cannot move motors"
 					else	
-						HorSlit = IN3S_GetPVVariableValue("usxLAX:SAXS_hslit_ap")
-						VertSLit = IN3S_GetPVVariableValue("usxLAX:SAXS_vslit_ap")
-						HorGuardSlit = IN3S_GetPVVariableValue("usxLAX:SAXS_hgslit_ap")
-						VertGuardSlit = IN3S_GetPVVariableValue("usxLAX:SAXS_vgslit_ap")
+						NVAR USHap = root:Packages:SamplePlateSetup:SAXS_hslit_ap
+						NVAR USVap = root:Packages:SamplePlateSetup:SAXS_vslit_ap
+						NVAR GSHap = root:Packages:SamplePlateSetup:SAXS_hgslit_ap
+						NVAR GSVap = root:Packages:SamplePlateSetup:SAXS_vgslit_ap
+
+						HorSlit = IN3S_GetPVVariableValue(USHap)
+						VertSLit = IN3S_GetPVVariableValue(USVap)
+						HorGuardSlit = IN3S_GetPVVariableValue(GSHap)
+						VertGuardSlit = IN3S_GetPVVariableValue(GSVap)
 						//c1:m8 is Horizontal slit size
-						IN3S_PutEpicsPv("usxLAX:m58:c1:m8.VAL", HorSlit)
-						IN3S_PutEpicsPv("usxLAX:GSlit1H:size", HorGuardSlit)
+						NVAR c1m8 = root:Packages:SamplePlateSetup:m58c1m8val
+						NVAR GSlit1H = root:Packages:SamplePlateSetup:GSlit1Hsize
+						NVAR c1m7 = root:Packages:SamplePlateSetup:m58c1m7val
+						NVAR GSlit1V = root:Packages:SamplePlateSetup:GSlit1Vsize						
+						IN3S_PutEpicsPv(c1m8, HorSlit)
+						IN3S_PutEpicsPv(GSlit1H, HorGuardSlit)
 						//c1:m8 is Vertical slit size
-						IN3S_PutEpicsPv("usxLAX:m58:c1:m7.VAL", VertSLit)
-						IN3S_PutEpicsPv("usxLAX:GSlit1V:size", VertGuardSlit)
+						IN3S_PutEpicsPv(c1m7, VertSLit)
+						IN3S_PutEpicsPv(GSlit1V, VertGuardSlit)
 					endif
 #endif
 			endif		
@@ -4161,34 +4424,40 @@ end
 //************************************************************************************************************
 
 static Function IN3S_MoveMotorInEpics(WhichMotor,MovePosition)
-	string WhichMotor		//SX or SY
+	string WhichMotor		
+	//SX or SY
 	variable MovePosition	
 	//avoid moving if instrument is running, usxLAX:dataColInProgress = 1
 	variable InstrumentUsed=0
 	variable oldspeed
 	NVAR SlowDown=root:Packages:SamplePlateSetup:SurveySlowSpeed
-#if (exists("pvOpen")==4)
-	InstrumentUsed = IN3S_GetPVVariableValue("usxLAX:dataColInProgress")	
+#if(exists("pvOpen")==4)
+	NVAR InstrUsed = root:Packages:SamplePlateSetup:dataColInProgress
+	InstrumentUsed = IN3S_GetPVVariableValue(InstrUsed)	
 	if(InstrumentUsed)
 		abort "Instrument is collecting data, cannot move motors"
 	else	
 		if(stringMatch(WhichMotor,"SX"))
-			oldspeed = IN3S_GetPVVariableValue("usxAERO:m8.VELO")
+			NVAR sxvelo = root:Packages:SamplePlateSetup:AEROm8velo
+			NVAR sxval = root:Packages:SamplePlateSetup:AEROm8val
+			oldspeed = IN3S_GetPVVariableValue(sxvelo)
 			if(SlowDown)
-				IN3S_PutEpicsPv("usxAERO:m8.VELO", 5)
+				IN3S_PutEpicsPv(sxvelo, 5)
 			endif
-			IN3S_PutEpicsPv("usxAERO:m8.VAL", MovePosition)
+			IN3S_PutEpicsPv(sxval, MovePosition)
 			if(SlowDown)
-				IN3S_PutEpicsPv("usxAERO:m8.VELO", oldspeed)
+				IN3S_PutEpicsPv(sxvelo, oldspeed)
 			endif
 		elseif(stringMatch(WhichMotor,"SY"))
-			oldspeed = IN3S_GetPVVariableValue("usxAERO:m9.VELO")
+			NVAR syvelo = root:Packages:SamplePlateSetup:AEROm9velo
+			NVAR syval = root:Packages:SamplePlateSetup:AEROm9val
+			oldspeed = IN3S_GetPVVariableValue(syvelo)
 			if(SlowDown)
-				IN3S_PutEpicsPv("usxAERO:m9.VELO", 5)
+				IN3S_PutEpicsPv(syvelo, 5)
 			endif
-			IN3S_PutEpicsPv("usxAERO:m9.VAL", MovePosition)
+			IN3S_PutEpicsPv(syval, MovePosition)
 			if(SlowDown)
-				IN3S_PutEpicsPv("usxAERO:m9.VELO", oldspeed)
+				IN3S_PutEpicsPv(syvelo, oldspeed)
 			endif
 		endif
 	endif
@@ -4202,14 +4471,14 @@ end
 //************************************************************************************************************
 
 static Function IN3S_PutEpicsPv(PVAddress, target)	//note, this waits until motor is done moving...
-	string PVAddress
+	variable PVAddress
 	variable target
 	if(numtype(target)==0)			//prevent NaN sent to epics, it will accept it and move to crazy place. 
-#if (exists("pvOpen")==4)
+#if(exists("pvOpen")==4)
 		variable sxRBV
-		pvOpen/T=5 sxRBV, PVAddress				// /T is timeout, should wait only this timeout. 
-		pvPutNumber/Q sxRBV, target				// /Q returns immediately, else waits until completion.  
-		pvClose sxRBV
+		//pvOpen/T=1 sxRBV, PVAddress				// /T is timeout, should wait only this timeout. 
+		pvPutNumber/Q PVAddress, target				// /Q returns immediately, else waits until completion.  
+		//pvClose sxRBV
 #endif	
 	endif
 end

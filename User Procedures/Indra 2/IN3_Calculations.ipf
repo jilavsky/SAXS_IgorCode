@@ -4,7 +4,7 @@
 #pragma version=1.42
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -461,19 +461,19 @@ static Function IN3_ReturnCursorBack(QminDefaultForProcessing)
 		OldStartQValueForEvaluation = Qmin
 		print "Warning - Qmin automatic search was requested. Located Qmin = "+num2str(Qmin)
 		TextBox/C/W=RcurvePlotGraph/N=QminReset/F=0/A=LT "\Zr050Located Qmin based on Int Sa/Bl ratio. Set to calculated Qmin = "+num2str(Qmin)
-		Cursor /P /W=RcurvePlotGraph  A  R_Int  round(BinarySearchInterp(R_Qvec, Qmin ))
-		Cursor /P /W=RcurvePlotGraph  B  R_Int  (numpnts(R_Qvec)-1)
+		Cursor /P /W=RcurvePlotGraph  A, R_Int,  round(BinarySearchInterp(R_Qvec, Qmin ))
+		Cursor /P /W=RcurvePlotGraph  B , R_Int , (numpnts(R_Qvec)-1)
 	elseif(HaveMSAXSCOrrection)			//this is in case of multiple scattering... 
 		OldStartQValueForEvaluation = Qmin
 		print "Warning - too small Qmin detected due to MSAXS. Reset to calculated Qmin = "+num2str(Qmin)
 		print "This can be due to multiple scattering in the sample. Note, you may need to return the Qmin back for other samples" 
 		TextBox/C/W=RcurvePlotGraph/N=QminReset/F=0/A=LT "\Zr050Warning - small Qmin detected due to MSAXS. Reset to calculated Qmin = "+num2str(Qmin)
-		Cursor /P /W=RcurvePlotGraph  A  R_Int  round(BinarySearchInterp(R_Qvec, Qmin ))
-		Cursor /P /W=RcurvePlotGraph  B  R_Int  (numpnts(R_Qvec)-1)
+		Cursor /P /W=RcurvePlotGraph  A,  R_Int,  round(BinarySearchInterp(R_Qvec, Qmin ))
+		Cursor /P /W=RcurvePlotGraph  B,  R_Int,  (numpnts(R_Qvec)-1)
 	else
 		Qmin = OldStartQValueForEvaluation															//any other case... 
-		Cursor /P /W=RcurvePlotGraph  A  R_Int  round(BinarySearchInterp(R_Qvec, Qmin ))
-		Cursor /P /W=RcurvePlotGraph  B  R_Int  (numpnts(R_Qvec)-1)
+		Cursor /P /W=RcurvePlotGraph  A,  R_Int,  round(BinarySearchInterp(R_Qvec, Qmin ))
+		Cursor /P /W=RcurvePlotGraph  B , R_Int , (numpnts(R_Qvec)-1)
 	endif
 
 	setDataFolder OldDf
@@ -1097,10 +1097,10 @@ static Function IN3_RcurvePlot()
 		NVAR TrimDataStart=root:Packages:Indra3:TrimDataStart
 		NVAR TrimDataEnd=root:Packages:Indra3:TrimDataEnd
 		if(TrimDataStart>0)
-			Cursor/P/W=RcurvePlotGraph A R_Int TrimDataStart	
+			Cursor/P/W=RcurvePlotGraph A, R_Int, TrimDataStart	
 		endif
 		if(TrimDataEnd>0)
-			Cursor/P/W=RcurvePlotGraph B R_Int TrimDataEnd	
+			Cursor/P/W=RcurvePlotGraph B, R_Int, TrimDataEnd	
 		endif
 		LegendString+="\r\\K(0,0,0)Blank : "+userFriendlyBlankName
 	endif
@@ -1157,7 +1157,8 @@ static Function IN3_PeakCenter()
 	
 	//create main plot with R curve data
 	//create the other graph
-	Display/K=1/W=(0.431,0.03,0.8,0.399)/FG=(,GT,FR,)/PG=(,,PR,)/HOST=RcurvePlotGraph  PD_Intensity vs AR_encoder
+	//Display/K=1/W=(0.431,0.03,0.8,0.399)/FG=(,FT,FR,)/PG=(,,PR,)/HOST=RcurvePlotGraph  PD_Intensity vs AR_encoder
+	Display/K=1/W=(0.431,0.03,0.9,0.399)/HOST=RcurvePlotGraph  PD_Intensity vs AR_encoder
 	AppendToGraph fit_PD_Intensity,PeakFitWave
 	//modify displayed waves 
 	ModifyGraph mode(PD_Intensity)=3
@@ -1174,8 +1175,8 @@ static Function IN3_PeakCenter()
 	variable start = max(center - 1.5 * (center - PeakCenterFitStartPoint),0)
 	variable end1 = min(center + 1.8 * (PeakCenterFitEndPoint-center),numpnts(AR_encoder))
 	SetAxis bottom AR_encoder[start],AR_encoder[end1]
-	Cursor/P A PD_Intensity PeakCenterFitStartPoint
-	Cursor/P B PD_Intensity PeakCenterFitEndPoint
+	Cursor/P A, PD_Intensity, PeakCenterFitStartPoint
+	Cursor/P B, PD_Intensity, PeakCenterFitEndPoint
 	RenameWindow #,PeakCenter
 	SetActiveSubwindow ##
 
@@ -1215,7 +1216,8 @@ static Function IN3_AlignSampleAndBlank()
 	
 	//create main plot with R curve data
 	//create the other graph
-	Display/K=1/W=(0.431,0.03,0.8,0.399)/FG=(,GT,FR,)/PG=(,,PR,)/HOST=RcurvePlotGraph  R_Int vs R_Qvec
+	//Display/K=1/W=(0.431,0.03,0.8,0.399)/FG=(,FT,FR,)/PG=(,,PR,)/HOST=RcurvePlotGraph  R_Int vs R_Qvec
+	Display/K=1/W=(0.45,0.03,0.9,0.399)/HOST=RcurvePlotGraph  R_Int vs R_Qvec
 	AppendToGraph BL_R_Int vs BL_R_Qvec
 	//modify displayed waves 
 	ModifyGraph mode(R_Int)=3
@@ -1474,7 +1476,8 @@ end
 
 Function IN3_FitModGaussTop(ctrlname, DoNOtChangeLimits) : Buttoncontrol			// calls the Gaussien fit
 	string ctrlname
-	variable DoNOtChangeLimits			//added 6-2017 to prevent some crashes in fitting...   
+	variable DoNOtChangeLimits			
+	//added 6-2017 to prevent some crashes in fitting...   
 	
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Indra3
@@ -1546,7 +1549,7 @@ Function IN3_FitModGaussTop(ctrlname, DoNOtChangeLimits) : Buttoncontrol			// ca
 	Make/O/T/N=3 T_Constraints
 	T_Constraints[0] = {"K3>1.3"}
 	T_Constraints[1] = {"K3<3"}
-	T_Constraints[2] = {"K2<0.0006"}
+	T_Constraints[2] = {"K2<0.003"}	//modified Guass works fine for MSAXS if this number is large enough. 
 	variable V_FitError=0
 	FuncFit/Q/N  IN3_ModifiedGauss W_coef PD_Intensity [PeakCenterFitStartPoint,PeakCenterFitEndPoint]  /X=Ar_encoder /D /W=PD_error /I=1 /C=T_Constraints 	//Gauss
 	//FuncFit/Q/L=50  IN3_ModifiedGauss W_coef PD_Intensity [startPointL,endPointL]  /X=Ar_encoder /D /W=PD_error /I=1 /C=T_Constraints 	//Gauss
@@ -2029,8 +2032,7 @@ end
 
 Function IN3_OnLineDataProcessing()	
 	//create global variables 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	String OldDf=GetDataFolder(1)
+ 	String OldDf=GetDataFolder(1)
 	SetDataFOlder root:Packages:Indra3
 	NewDataFolder/O/S BckgMonitorParams
 	String ListOfVariables, ListOfStrings
@@ -2112,8 +2114,7 @@ Function IN3_BackgrTaskButtonProc(ba) : ButtonControl
 
 	switch( ba.eventCode )
 		case 2: // mouse up
-			//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-			// click code here
+		 			// click code here
 			if(stringmatch("StartBackgrTask",ba.ctrlName))
 				IN3_StartFolderWatchTask()
 			endif
@@ -2137,8 +2138,7 @@ End
 
 Function IN3_StartFolderWatchTask()
 	//Variable numTicks = 5 * 60 // Run every two seconds (120 ticks) 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	NVAR BckgUpdateInterval= root:Packages:Indra3:BckgMonitorParams:BckgUpdateInterval
+ 	NVAR BckgUpdateInterval= root:Packages:Indra3:BckgMonitorParams:BckgUpdateInterval
 		CtrlNamedBackground IN3_MonitorDataFolder, period=BckgUpdateInterval*60, proc=IN3_MonitorFldrBackground 
 		CtrlNamedBackground IN3_MonitorDataFolder, start
 		Printf "USAXS FolderWatch background task (\"IN3_MonitorDataFolder\") started with %d [s] update interval\r", BckgUpdateInterval
@@ -2152,8 +2152,7 @@ End
 //*************************************************************************************************
 
 Function IN3_StopFolderWatchTask()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-   CtrlNamedBackground IN3_MonitorDataFolder, stop
+    CtrlNamedBackground IN3_MonitorDataFolder, stop
 	Printf "FolderWatch background task (\"IN3_MonitorDataFolder\") stopped\r"
 		SVAR BckgStatus = root:Packages:Indra3:BckgMonitorParams:BckgStatus
 		BckgStatus = "   Background job not running   "
@@ -2168,8 +2167,7 @@ End
 Function IN3_BacgroundUpdatesPopMenuProc(pa) : PopupMenuControl
 	STRUCT WMPopupAction &pa
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	switch( pa.eventCode )
+ 	switch( pa.eventCode )
 		case 2: // mouse up
 			Variable popNum = pa.popNum
 			String popStr = pa.popStr
@@ -2196,8 +2194,7 @@ End
 Function IN3_BakcgroundCheckProc(cba) : CheckBoxControl
 	STRUCT WMCheckboxAction &cba
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	switch( cba.eventCode )
+ 	switch( cba.eventCode )
 		case 2: // mouse up
 			Variable checked = cba.checked
 			NVAR BckgConvertData=root:Packages:Indra3:BckgMonitorParams:BckgConvertData
@@ -2230,8 +2227,7 @@ End
 Function IN3_MonitorFldrBackground(s) // This is the function that will be called periodically 
 	STRUCT WMBackgroundStruct &s
 	
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	//this should monitor result of Refresh on the folder and grab the new data set and process it.
+ 	//this should monitor result of Refresh on the folder and grab the new data set and process it.
 	Wave/T ListOf2DSampleData=root:Packages:USAXS_FlyScanImport:WaveOfFiles
 	Wave ListOf2DSampleDataNumbers=root:Packages:USAXS_FlyScanImport:WaveOfSelections
 	NVAR BckgConvertData=root:Packages:Indra3:BckgMonitorParams:BckgConvertData
@@ -2402,7 +2398,7 @@ Function IN3_DesmearData()
 				return 0
 			endif
 			absNormalizedError=abs(DesmNormalizedError) 
-			Duplicate/Free/O absNormalizedError, tmpabsNormalizedError
+			Duplicate/Free absNormalizedError, tmpabsNormalizedError
 			IN2G_RemNaNsFromAWave(tmpabsNormalizedError)
 			endme = sum(tmpabsNormalizedError)/numpnts(absNormalizedError)
 			difff=1 - oldendme/endme
@@ -2497,7 +2493,7 @@ Function IN3_OneDesmearIteration(DesmearIntWave,DesmearQWave,DesmearEWave, origS
 	Redimension/N=(numOfPoints) SmFitIntensity, DesmearIntWave, DesmearQWave, NormalizedError		//cut the data back to original length (Qmax, numOfPoints)
 	
 	NormalizedError=(origSmearedInt-SmFitIntensity)/SmErrors			//NormalizedError (input-my Smeared data)/input errors
-	duplicate/O/Free DesmearIntWave, FastFitIntensity, SlowFitIntensity
+	 Duplicate/FREE DesmearIntWave, FastFitIntensity, SlowFitIntensity
 	//fast convergence
 	FastFitIntensity=DesmearIntWave*(OrigIntToSmear/SmFitIntensity)								
 	//slow convergence
@@ -2516,15 +2512,6 @@ Function IN3_OneDesmearIteration(DesmearIntWave,DesmearQWave,DesmearEWave, origS
 				DesmearIntWave[i]=DesmearIntWave[i]
 			endif	
 		endfor
-//	else
-//		For(i=0;i<(numpnts(FitIntensity));i+=1)
-//			if (abs(NormalizedError[i])>DesmearSwitchOverVal)
-//				DesmearedIntWave[i]=FastFitIntensity[i]
-//			else
-//				DesmearedIntWave[i]=SlowFitIntensity[i]
-//			endif	
-//		endfor
-//	endif	
 	NumberOfIterations+=1
 	//remove the normalized error extremes
 	wavestats/Q NormalizedError
@@ -2543,7 +2530,8 @@ End
 //*************************************Extends the data using user specified parameters***************
 Function IN3_ExtendData(Int_wave, Q_vct, Err_wave, slitLength, Qstart, SelectedFunction) 
 	wave Int_wave, Q_vct, Err_wave
-	variable slitLength, Qstart		//RecordFitParam=1 when we should record fit parameters in logbook
+	variable slitLength, Qstart		
+	//RecordFitParam=1 when we should record fit parameters in logbook
 	string SelectedFunction
 	
 	if (numtype(slitLength)!=0)
@@ -2759,9 +2747,9 @@ Function IN3_SmearData(Int_to_smear, Q_vec_sm, slitLength, Smeared_int)
 	else
 		newNumPoints = oldNumPnts+300
 	endif
-	Duplicate/O/Free Int_to_smear, tempInt_to_smear
+	 Duplicate/FREE Int_to_smear, tempInt_to_smear
 	Redimension /N=(newNumPoints) tempInt_to_smear		//increase the points here.
-	Duplicate/O/Free Q_vec_sm, tempQ_vec_sm
+	 Duplicate/FREE Q_vec_sm, tempQ_vec_sm
 	Redimension/N=(newNumPoints) tempQ_vec_sm
 	tempQ_vec_sm[oldNumPnts, ] =tempQ_vec_sm[oldNumPnts-1] +20* tempQ_vec_sm[p-oldNumPnts]			//creates extension of number of points up to 20*original length
 	tempInt_to_smear[oldNumPnts, ]  = tempInt_to_smear[oldNumPnts-1] * (1-(tempQ_vec_sm[p]  - tempQ_vec_sm[oldNumPnts])/(20*tempQ_vec_sm[oldNumPnts-1]))//extend the data by simple fixed value... 

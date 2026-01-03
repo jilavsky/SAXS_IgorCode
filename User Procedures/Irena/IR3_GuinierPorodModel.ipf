@@ -4,7 +4,7 @@
 Constant IR3GPversionNumber = 1.08
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
@@ -2313,7 +2313,9 @@ End
 
 Function IR3GP_FitLocalGuinier(Level, WhichOne)
 	variable level
-	variable WhichOne //1 for Rg1, 2 for Rg2
+	variable WhichOne 
+	//1 for Rg1, 2 for Rg2
+	
 	DFREF oldDf = GetDataFolderDFR()
 
 	setDataFolder root:Packages:Irena:GuinierPorod
@@ -2495,7 +2497,9 @@ End
 //****************************************************************************************************************
 
 Function IR3GP_FitLocalPorod(Level, whichOne)
-	variable level, WhichOne //1 for d, 2 for S1 and 3 for S2
+	variable level, WhichOne 
+	//1 for d, 2 for S1 and 3 for S2
+	
 	DFREF oldDf = GetDataFolderDFR()
 
 	STRUCT GuinierPorodLevel Par
@@ -3488,7 +3492,7 @@ static Function IR3GP_ConEvAnalyzeEvalResults2(ParamName)
 	string   tempStrName
 	for(j = 0; j < numpnts(ConfEvCoefNames); j += 1)
 		tempStrName = ConfEvCoefNames[j]
-		Duplicate/FREE/O/R=[j][] ConfEvEndValues, tempWv
+		Duplicate/FREE/R=[j][] ConfEvEndValues, tempWv
 		wavestats/Q tempWv
 		IR1_AppendAnyText(tempStrName + " : \taverage = " + num2str(V_avg) + "\tst. dev. = " + num2str(V_sdev), 0)
 

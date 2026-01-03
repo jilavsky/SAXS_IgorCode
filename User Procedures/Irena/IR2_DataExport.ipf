@@ -1,13 +1,14 @@
-#pragma rtGlobals=1 // Use modern global access method.
-#pragma version=1.19
+#pragma rtGlobals=3 // Use modern global access method.
+#pragma version=1.20
 Constant IR2EversionNumber = 1.18
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//1.20	lint - changed Pragma version from 1 to 3, why was this 1 ever??? 
 //1.19 fix ASCII export of USAXS data which was exporting incorrect Q data.
 //1.18 added export of all data from current experiment using IR2E_ExportAllAsNexus(), for now sets dQ=0 for DSM data, sets dQl=slit length and dQw to dQ for SMR data.
 //1.17 fixed dQ USAXS data Nexus export which exported always SMR dQ.

@@ -36,8 +36,7 @@ End
 /////******************************************************************************************
 Function IR3DM_DataManipulationIII()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	IN2G_CheckScreenSize("width", 1200)
+ 	IN2G_CheckScreenSize("width", 1200)
 	DoWIndow IR3DM_DataManIIIPanel
 	if(V_Flag)
 		DoWindow/F IR3DM_DataManIIIPanel
@@ -75,8 +74,7 @@ End
 ////************************************************************************************************************
 Function IR3DM_DataManIIIPanelFnct()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	PauseUpdate // building window...
+ 	PauseUpdate // building window...
 	NewPanel/K=1/W=(2.25, 43.25, 530, 800) as "Data Manipulation"
 	DoWIndow/C IR3DM_DataManIIIPanel
 	TitleBox MainTitle, title="Data Manipulation III", pos={140, 2}, frame=0, fstyle=3, fixedSize=1, font="Times New Roman", size={360, 30}, fSize=22, fColor=(0, 0, 52224)
@@ -148,8 +146,7 @@ End
 
 static Function IR3DM_SetupControlsOnMainpanel()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	//SVAR ManipulationSelected = root:Packages:Irena:DataManIII:ManipulationSelected
+ 	//SVAR ManipulationSelected = root:Packages:Irena:DataManIII:ManipulationSelected
 	DoWindow IR3DM_DataManIIIPanel
 	if(V_Flag)
 		NVAR DeleteData     = root:Packages:Irena:DataManIII:DeleteData
@@ -242,7 +239,6 @@ Function IR3DM_CheckProc(STRUCT WMCheckboxAction &cba) : CheckBoxControl
 		case -1: // control being killed
 			break
 		default:
-			// FIXME(BugproneMissingSwitchDefaultCase)
 			break
 	endswitch
 
@@ -325,9 +321,6 @@ Function IR3DM_ButtonProc(STRUCT WMButtonAction &ba) : ButtonControl
 			break
 		case -1: // control being killed
 			break
-		default:
-			// FIXME(BugproneMissingSwitchDefaultCase)
-			break
 	endswitch
 
 	return 0
@@ -337,8 +330,7 @@ End
 //cannot be static, called from panel.
 Function/S IR3DM_ListAllData()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string AllDataFolders
+ 	string AllDataFolders
 	NVAR UseIndra2Data      = root:Packages:Irena:DataManIII:UseIndra2Data
 	NVAR UseQRSdata         = root:Packages:Irena:DataManIII:UseQRSData
 	NVAR UseResults         = root:Packages:Irena:DataManIII:UseResults
@@ -368,8 +360,7 @@ End
 
 static Function IR3DM_ProcessSequenceOfData(string WhatToDO)
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	//NVAR DelayBetweenProcessing=root:Packages:Irena:DataManIII:DelayBetweenProcessing
+ 	//NVAR DelayBetweenProcessing=root:Packages:Irena:DataManIII:DelayBetweenProcessing
 	WAVE   SelectionOfAvailableData = root:Packages:Irena:DataManIII:SelectionOfAvailableData
 	WAVE/T ListOfAvailableData      = root:Packages:Irena:DataManIII:ListOfAvailableData
 	variable i, imax, HowMany
@@ -395,8 +386,7 @@ End
 //**************************************************************************************
 Function IR3DM_DeleteData(string FolderNameStr)
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFREF oldDf = GetDataFolderDFR()
+ 	DFREF oldDf = GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:DataManIII //go into the folder
 	SVAR DataStartFolder   = root:Packages:Irena:DataManIII:DataStartFolder
 	SVAR DataFolderName    = root:Packages:Irena:DataManIII:DataFolderName
@@ -456,7 +446,8 @@ Function IR3DM_SetVarProc(STRUCT WMSetVariableAction &sva) : SetVariableControl
 
 	variable tempP
 	switch(sva.eventCode)
-		case 1: // mouse up, FIXME(CodeStyleFallthroughCaseRequireComment)
+		case 1: // mouse up
+			break
 		case 2: // Enter key
 			NVAR DataQstart      = root:Packages:Irena:DataManIII:DataQstart
 			NVAR DataQEnd        = root:Packages:Irena:DataManIII:DataQEnd
@@ -494,9 +485,6 @@ Function IR3DM_SetVarProc(STRUCT WMSetVariableAction &sva) : SetVariableControl
 			break
 		case -1: // control being killed
 			break
-		default:
-			// FIXME(BugproneMissingSwitchDefaultCase)
-			break
 	endswitch
 
 	return 0
@@ -524,9 +512,7 @@ Function IR3DM_PopMenuProc(STRUCT WMPopupAction &pa) : PopupMenuControl
 			break
 		case -1: // control being killed
 			break
-		default:
-			// FIXME(BugproneMissingSwitchDefaultCase)
-			break
+
 	endswitch
 
 	return 0
@@ -537,8 +523,7 @@ End
 
 Function IR3DM_CopyAndAppendDataToSubtract(string FolderNameStr)
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFREF oldDf = GetDataFolderDFR()
+ 	DFREF oldDf = GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:DataManIII //go into the folder
 
 	SVAR   DataFolderName    = root:Packages:Irena:DataManIII:DataFolderName
@@ -588,8 +573,7 @@ End
 //**************************************************************************************
 Function IR3DM_CopyAndAppendData(string FolderNameStr)
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFREF oldDf = GetDataFolderDFR()
+ 	DFREF oldDf = GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:DataManIII //go into the folder
 	IR3DM_CreateDM3Graphs()
 	//OK, now we need to do what user wants.
@@ -1051,8 +1035,7 @@ End
 
 Function IR3DM_AppendAveDataToGraphLogLog()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	variable WhichLegend = 0
+ 	variable WhichLegend = 0
 	string Shortname1, SubtractShortName, legendText
 
 	SVAR DataFolderName    = root:Packages:Irena:DataManIII:DataFolderName
@@ -1092,8 +1075,7 @@ End
 
 Function IR3DM_AppendProcessDataToGraphLogLog()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	variable WhichLegend = 0
+ 	variable WhichLegend = 0
 	string Shortname1, SubtractShortName, legendText
 	WAVE/Z Original_Intensity = root:Packages:Irena:DataManIII:Original_Intensity
 	WAVE/Z Original_Q         = root:Packages:Irena:DataManIII:Original_Q
@@ -1185,13 +1167,12 @@ Function IR3DM_GraphWindowHook(STRUCT WMWinHookStruct &s)
 		case 1: // Deactivate
 			// Handle deactivate
 			break
-		case 7: //coursor moved, FIXME(CodeStyleFallthroughCaseRequireComment)
+		case 7: //coursor moved
 			IR3DM_SyncCursorsTogether(s.traceName, s.cursorName, s.pointNumber)
 			hookResult = 1
-		// And so on . . .
-		default:
-			// FIXME(BugproneMissingSwitchDefaultCase)
 			break
+			// And so on . . .
+
 	endswitch
 
 	return hookResult // 0 if nothing done, else 1
@@ -1201,8 +1182,7 @@ End
 
 static Function IR3DM_SyncCursorsTogether(string traceName, string CursorName, variable PointNumber)
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	IR3DM_CreateDM3Graphs()
+ 	IR3DM_CreateDM3Graphs()
 	NVAR DataQEnd           = root:Packages:Irena:DataManIII:DataQEnd
 	NVAR DataQstart         = root:Packages:Irena:DataManIII:DataQstart
 	NVAR DataQEndPoint      = root:Packages:Irena:DataManIII:DataQEndPoint
@@ -1230,8 +1210,7 @@ End
 //**********************************************************************************************************
 Function IR3DM_CreateDM3Graphs()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	variable exists1    = 0
+ 	variable exists1    = 0
 	NVAR     DeleteData = root:Packages:Irena:DataManIII:DeleteData
 	if(DeleteData)
 		KillWindow/Z IR3DM_DataManIIIDataDisplay
@@ -1259,8 +1238,7 @@ End
 
 Function IR3DM_InitDMIII()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFREF oldDf = GetDataFolderDFR()
+ 	DFREF oldDf = GetDataFolderDFR()
 	string   ListOfVariables
 	string   ListOfStrings
 	variable i

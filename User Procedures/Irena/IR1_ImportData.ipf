@@ -1,9 +1,8 @@
 #pragma rtGlobals=3 // Use strict wave reference mode and runtime bounds checking
-#pragma version=2.43
+#pragma version=2.44
+#pragma IgorVersion = 9.04
 
-#if (IgorVersion() < 9) //no need to include, Igor 9 has this by default.
-#include <HDF5 Browser>
-#endif
+
 
 Constant IR1IversionNumber      = 2.42
 Constant IR1IversionNumber2     = 2.36
@@ -11,11 +10,12 @@ Constant IR1IversionNumberNexus = 2.36
 Constant IR1TrimNameLength      = 28
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//2.44 IP9 and higher only, remove import of hdf5 cxop
 //2.43 fix issue with satle dQ import controls which caused issues when after importing dQ one decided not to import it. 
 //2.42 added Force UTF-8 = /ENCG={1,4} to LoadWave commands to be able to import ASCII from 12IDB
 //2.41 fix for HDF5 changes in IP9
@@ -67,8 +67,7 @@ Constant IR1TrimNameLength      = 28
 //this should allow user to import data to Igor - let's deal with 3 column data in ASCII for now
 
 Function IR1I_ImportSASASCIIDataMain()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	IN2G_CheckScreenSize("height", 720)
+ 	IN2G_CheckScreenSize("height", 720)
 	DoWindow IR1I_ImportOtherASCIIData
 	if(V_Flag)
 		DoALert/T="Window conflict notice" 1, "Import Other ASCII data cannot be open while using this tool, close (Yes) or abort (no)?"
@@ -102,8 +101,7 @@ End
 //************************************************************************************************************
 
 Function IR1I_MainCheckVersion()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DoWindow IR1I_ImportData
+ 	DoWindow IR1I_ImportData
 	if(V_Flag)
 		if(!IR1_CheckPanelVersionNumber("IR1I_ImportData", IR1IversionNumber))
 			DoAlert/T="The ASCII Import panel was created by incorrect version of Irena " 1, "Import ASCII may need to be restarted to work properly. Restart now?"
@@ -119,8 +117,7 @@ End
 //************************************************************************************************************
 
 Function IR1I_MainCheckVersion2()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DoWindow IR1I_ImportOtherASCIIData
+ 	DoWindow IR1I_ImportOtherASCIIData
 	if(V_Flag)
 		if(!IR1_CheckPanelVersionNumber("IR1I_ImportOtherASCIIData", IR1IversionNumber2))
 			DoAlert/T="The non-SAS Import panel was created by incorrect version of Irena " 1, "Import non-SAS may need to be restarted to work properly. Restart now?"
@@ -136,8 +133,7 @@ End
 //************************************************************************************************************
 
 Function IR1I_MainCheckVersionNexus()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DoWindow IR1I_ImportNexusCanSASData
+ 	DoWindow IR1I_ImportNexusCanSASData
 	if(V_Flag)
 		if(!IR1_CheckPanelVersionNumber("IR1I_ImportNexusCanSASData", IR1IversionNumberNexus))
 			DoAlert/T="The Nexus Import panel was created by incorrect version of Irena " 1, "Import Nexus canSAS may need to be restarted to work properly. Restart now?"
@@ -156,8 +152,7 @@ End
 //************************************************************************************************************
 
 Proc IR1I_ImportSASASCIIData()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	PauseUpdate // building window...
+ 	PauseUpdate // building window...
 	NewPanel/K=1/W=(3, 40, 430, 760)/N=IR1I_ImportData as "Import SAXS/SANS data"
 	TitleBox MainTitle, title="\Zr200Import SAS ASCII Data in Igor", pos={20, 5}, frame=0, fstyle=3, fixedSize=1, font="Times New Roman", size={350, 24}, anchor=MC, fColor=(0, 0, 52224)
 	TitleBox FakeLine1, title=" ", fixedSize=1, size={330, 3}, pos={16, 40}, frame=0, fColor=(0, 0, 52224), labelBack=(0, 0, 52224)
@@ -316,8 +311,7 @@ EndMacro
 //************************************************************************************************************
 Function IR1_ImportListBoxProc(lba) : ListBoxControl
 	STRUCT WMListboxAction &lba
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-
+ 
 	variable row      = lba.row
 	variable col      = lba.col
 	WAVE/Z/T listWave = lba.listWave
@@ -348,8 +342,7 @@ End
 //************************************************************************************************************
 //************************************************************************************************************
 Function IR1I_ImportDataFnct()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-
+ 
 	string TopPanel         = WinName(0, 64)
 	string OldDf            = getDataFolder(1)
 	WAVE/T WaveOfFiles      = root:Packages:ImportData:WaveOfFiles
@@ -377,97 +370,13 @@ End
 
 //**********************************************************************************************************
 //**********************************************************************************************************
-//**********************************************************************************************************
-//**********************************************************************************************************
-//replaced by IN2G_RebinLogData(Wx,Wy,NumberOfPoints,MinStep,[Wsdev,Wxwidth,W1, W2, W3, W4, W5])
-//Function  IR1I_ImportRebinData(TempInt,TempQ,TempE,TempQr,NumberOfPoints, LogBinParam)
-//	wave TempInt,TempQ,TempE, TempQr
-//	variable NumberOfPoints, LogBinParam
-//
-//	string OldDf
-//	OldDf = GetDataFOlder(1)
-//	NewDataFolder/O/S root:packages
-//	NewDataFolder/O/S root:packages:TempDataRebin
-//
-//	//Log rebinning, if requested....
-//	//create log distribution of points...
-//	make/O/D/FREE/N=(NumberOfPoints) tempNewLogDist, tempNewLogDistBinWidth
-//	make/O/D/FREE/N=(NumberOfPoints) Rebinned_TempQ, Rebinned_tempInt, Rebinned_TempErr
-//	variable StartQ, EndQ
-//	variable RealStart, RealEnd, MinStep, StartX,EndX,startOld
-//	if(TempQ[0]<1e-8)
-//		findlevel/P TempQ, 1e-8
-//		startQ=log(TempQ[ceil(V_LevelX)])
-//		RealStart = TempQ[ceil(V_LevelX)]
-//		MinStep = TempQ[ceil(V_LevelX)+1] - TempQ[ceil(V_LevelX)]
-//	else
-//		startQ=log(TempQ[0])
-//		RealStart =TempQ[0]
-//		MinStep = TempQ[1] - TempQ[0]
-//	endif
-//	endQ=log(TempQ[numpnts(TempQ)-1])
-//	RealEnd = TempQ[numpnts(TempQ)-1]
-//	//this did not guarrantee minimum step... Use method developed for Fly USAXS scans 12/2013
-//	StartX = IN2G_FindCorrectLogScaleStart(RealStart,RealEnd,NumberOfPoints,MinStep)
-//	EndX = StartX +(RealEnd - RealStart)
-//	startQ=log(StartX)
-//	endQ = log(EndX)
-//	tempNewLogDist = startQ + p*(endQ-startQ)/numpnts(tempNewLogDist)
-//	tempNewLogDist = 10^(tempNewLogDist)
-//	startOld = tempNewLogDist[0]
-//	tempNewLogDist += RealStart - startOld
-//	tempNewLogDistBinWidth = tempNewLogDist[p+1] - tempNewLogDist[p]
-//	tempNewLogDistBinWidth[numpnts(tempNewLogDistBinWidth)-1] = tempNewLogDistBinWidth[numpnts(tempNewLogDistBinWidth)-2]
-//	Rebinned_tempInt=0
-//	Rebinned_TempErr=0
-//	variable i, j	//, startIntg=TempQ[1]-TempQ[0]
-//	//first assume that we can step through this easily...
-//	variable cntPoints, BinHighEdge
-//	//variable i will be from 0 to number of new points, moving through destination waves
-//	j=0		//this variable goes through data to be reduced, therefore it goes from 0 to numpnts(TempInt)
-//	For(i=0;i<NumberOfPoints;i+=1)
-//		cntPoints=0
-//		BinHighEdge = tempNewLogDist[i]+tempNewLogDistBinWidth[i]/2
-//		Do
-//			Rebinned_tempInt[i]+=TempInt[j]
-//			Rebinned_TempErr[i]+=TempE[j]
-//			Rebinned_TempQ[i] += TempQ[j]
-//			cntPoints+=1
-//		j+=1
-//		While(TempQ[j]<BinHighEdge && j<numpnts(TempInt))
-//		Rebinned_tempInt[i]/=	cntPoints
-//		Rebinned_TempErr[i]/=cntPoints
-//		Rebinned_TempQ[i]/=cntPoints
-//	endfor
-//
-//	Rebinned_TempQ = (Rebinned_TempQ[p]>0) ? Rebinned_TempQ[p] : NaN
-//	//Rebinned_TempQ[numpnts(Rebinned_TempQ)-1]=NaN
-//
-//	IN2G_RemoveNaNsFrom3Waves(Rebinned_tempInt,Rebinned_TempErr,Rebinned_TempQ)
-//
-//
-//	Redimension/N=(numpnts(Rebinned_tempInt))/D TempInt,TempQ,TempE, TempQr
-//	TempInt=Rebinned_tempInt
-//	TempQ=Rebinned_TempQ
-//	TempE=Rebinned_TempErr
-//	//temp Qr has changed, it now is represented by Q lmits of the new Q wave
-//
-//	TempQr = (TempQ[p]-TempQ[p-1])/2 + (TempQ[p+1] - TempQ[p])/2
-//	TempQr[0] = TempQ[1]-TempQ[0]
-//	TempQr[numpnts(TempQ)-1] = TempQ[numpnts(TempQ)-1] - TempQ[numpnts(TempQ)-2]
-//
-//	setDataFolder OldDF
-//	KillDataFolder/Z root:packages:TempDataRebin
-//end
-
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
 
 Function IR1I_CheckForProperNewFolder()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-
+ 
 	SVAR NewDataFolderName = root:packages:ImportData:NewDataFolderName
 	if(strlen(NewDataFolderName) > 0 && cmpstr(":", NewDataFolderName[strlen(NewDataFolderName) - 1]) != 0)
 		NewDataFolderName = NewDataFolderName + ":"
@@ -478,9 +387,9 @@ End
 //************************************************************************************************************
 //************************************************************************************************************
 Function IR1I_RecordResults(selectedFile)
-	string selectedFile //before or after - that means fit...
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-
+	string selectedFile 
+	//before or after - that means fit...
+ 
 	DFREF oldDf = GetDataFolderDFR()
 
 	setdataFolder root:Packages:ImportData
@@ -617,13 +526,9 @@ End
 Function/S IR1I_TrunkateName(InputName, TrunkateStart, TrunkateEnd, RemoveStringFromName)
 	string InputName, RemoveStringFromName
 	variable TrunkateStart, TrunkateEnd
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-
-	NVAR   Igor8UseLongNames = root:Packages:IrenaConfigFolder:Igor8UseLongNames
+ 
 	string ModName           = ReplaceString(RemoveStringFromName, InputName, "")
-	if(Igor8UseLongNames && IgorVersion() > 7.99) //Igor 8 and user wants long names
-		return IN2G_CreateUserName(ModName, 31, 0, 11)
-	endif
+	return IN2G_CreateUserName(ModName, 31, 0, 11)
 	variable inpuLength   = strlen(ModName)
 	variable removePoints = inpuLength - IR1TrimNameLength
 	string   TempStr      = ModName
@@ -643,8 +548,7 @@ End
 
 Function IR1I_ProcessImpWaves(selectedFile)
 	string selectedFile
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-
+ 
 	variable i, numOfInts, numOfQs, numOfErrs, numOfQErrs, refNum
 	numOfInts  = 0
 	numOfQs    = 0
@@ -1024,8 +928,7 @@ End
 //************************************************************************************************************
 Function/S IR1I_RemoveBadCharacters(StringName)
 	string StringName
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-
+ 
 	//here we can clean up what Igor allows but would be major problem with my code, such as ( or ) from names
 	make/FREE/T/N=0 ListOfBadChars
 	ListOfBadChars = {"(", ")", "{", "}", "%", "&", "$", "#", "@", "*"}
@@ -1042,8 +945,7 @@ End
 
 Function IR1I_ImportOneFile(selectedFile)
 	string selectedFile
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-
+ 
 	NVAR SkipNumberOfLines = root:Packages:ImportData:SkipNumberOfLines
 	NVAR SkipLines         = root:Packages:ImportData:SkipLines
 	NVAR ForceUTF8         = root:Packages:ImportData:ForceUTF8
@@ -1081,11 +983,13 @@ End
 //************************************************************************************************************
 
 Function IR1I_CountHeaderLines(pathName, fileName)
-	string pathName   // Symbolic path name
-	string fileName   // File name or full path
-	string FirstPoint //string containing first point number....
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-
+	string pathName   
+	// Symbolic path name
+	string fileName   
+	// File name or full path
+	string FirstPoint 
+	//string containing first point number....
+ 
 	variable refNum = 0
 
 	Open/R/P=$pathName refNum as fileName
@@ -1122,8 +1026,7 @@ End
 //************************************************************************************************************
 
 Function IR1I_KillAutoWaves()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-
+ 
 	variable i
 	for(i = 0; i <= 100; i += 1)
 		WAVE/Z test = $("wave" + num2str(i))
@@ -1137,8 +1040,7 @@ End
 
 Function IR1I_CreateImportDataFolder(selectedFile)
 	string selectedFile
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-
+ 
 	SVAR NewDataFolderName      = root:packages:ImportData:NewDataFolderName
 	NVAR IncludeExtensionInName = root:packages:ImportData:IncludeExtensionInName
 	NVAR TrunkateStart          = root:packages:ImportData:TrunkateStart
@@ -1180,8 +1082,7 @@ Function IR1I_PopMenuProc(ctrlName, popNum, popStr) : PopupMenuControl
 	string   ctrlName
 	variable popNum
 	string   popStr
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-
+ 
 	if(Cmpstr(ctrlName, "SelectFolderNewData") == 0)
 		SVAR NewDataFolderName = root:packages:ImportData:NewDataFolderName
 		NewDataFolderName = popStr
@@ -1219,8 +1120,7 @@ Function IR1I_SetVarProc(ctrlName, varNum, varStr, varName) : SetVariableControl
 	variable varNum
 	string   varStr
 	string   varName
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-
+ 
 	if(cmpstr(ctrlName, "DataExtensionString") == 0)
 		IR1I_UpdateListOfFilesInWvs()
 	endif
@@ -1239,8 +1139,7 @@ End
 //************************************************************************************************************
 Function IR1I_ButtonProc(ctrlName) : ButtonControl
 	string ctrlName
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-
+ 
 	if(cmpstr(ctrlName, "SelectDataPath") == 0)
 		IR1I_SelectDataPath()
 		IR1I_UpdateListOfFilesInWvs()
@@ -1285,8 +1184,7 @@ End
 
 Function IR1I_SelectDeselectAll(SetNumber)
 	variable setNumber
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-
+ 
 	WAVE WaveOfSelections = root:Packages:ImportData:WaveOfSelections
 
 	WaveOfSelections = SetNumber
@@ -1296,8 +1194,7 @@ End
 //************************************************************************************************************
 //************************************************************************************************************
 Function IR1I_TestImport()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-
+ 
 	string TopPanel = WinName(0, 64)
 
 	WAVE/T WaveOfFiles          = root:Packages:ImportData:WaveOfFiles
@@ -1365,8 +1262,7 @@ End
 //************************************************************************************************************
 //************************************************************************************************************
 Function IR1I_TestImportNotebook()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-
+ 
 	string TopPanel         = WinName(0, 64)
 	WAVE/T WaveOfFiles      = root:Packages:ImportData:WaveOfFiles
 	WAVE   WaveOfSelections = root:Packages:ImportData:WaveOfSelections
@@ -1402,8 +1298,7 @@ End
 //************************************************************************************************************
 //************************************************************************************************************
 Function IR1I_TestPlotData()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-
+ 
 	string TopPanel = WinName(0, 64)
 	string OldDf    = getDataFolder(1)
 
@@ -1481,8 +1376,7 @@ End
 //************************************************************************************************************
 
 Function IR1I_FIxCheckboxesForWaveTypes()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-
+ 
 	string TopPanel    = WinName(0, 64)
 	NVAR   FoundNWaves = root:Packages:ImportData:FoundNWaves
 	variable maxWaves, i
@@ -1532,8 +1426,7 @@ End
 //************************************************************************************************************
 
 Function IR1I_SelectDataPath()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-
+ 
 	NewPath/M="Select path to data to be imported"/O ImportDataPath
 	if(V_Flag != 0)
 		abort
@@ -1550,8 +1443,7 @@ End
 Function IR1I_CheckProc(ctrlName, checked) : CheckBoxControl
 	string   ctrlName
 	variable checked
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string TopPanel = WinName(0, 64)
+ 	string TopPanel = WinName(0, 64)
 
 	NVAR Col1Int  = root:Packages:ImportData:Col1Int
 	NVAR Col1Qvec = root:Packages:ImportData:Col1Qvec
@@ -2192,8 +2084,7 @@ End
 //************************************************************************************************************
 Function IR1I_UpdateListOfFilesInWvs()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	SVAR   DataPathName     = root:Packages:ImportData:DataPathName
+ 	SVAR   DataPathName     = root:Packages:ImportData:DataPathName
 	SVAR   DataExtension    = root:Packages:ImportData:DataExtension
 	SVAR   NameMatchString  = root:Packages:ImportData:NameMatchString
 	WAVE/T WaveOfFiles      = root:Packages:ImportData:WaveOfFiles
@@ -2236,8 +2127,7 @@ End
 
 Function IR1I_InitializeImportData()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDf = GetDataFolder(1)
+ 	string OldDf = GetDataFolder(1)
 
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:ImportData
@@ -2350,8 +2240,7 @@ End
 //************************************************************************************************************
 
 Function IR1I_ImportOtherASCIIMain()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	//IR1_KillGraphsAndPanels()
+ 	//IR1_KillGraphsAndPanels()
 	IN2G_CheckScreenSize("height", 720)
 	DoWindow IR1I_ImportData
 	if(V_Flag)
@@ -2386,8 +2275,7 @@ End
 //************************************************************************************************************
 
 Function IR1I_ImportOtherASCIIDataFnct()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	PauseUpdate // building window...
+ 	PauseUpdate // building window...
 	NewPanel/K=1/W=(3, 40, 430, 760)/N=IR1I_ImportOtherASCIIData as "Import non-SAS data"
 	TitleBox MainTitle, title="\Zr200Import non SAS ASCII Data in Igor", pos={20, 5}, frame=0, fstyle=3, fixedSize=1, font="Times New Roman", size={400, 24}, anchor=MC, fColor=(0, 0, 52224)
 	TitleBox FakeLine1, title=" ", fixedSize=1, size={330, 3}, pos={16, 40}, frame=0, fColor=(0, 0, 52224), labelBack=(0, 0, 52224)
@@ -2526,8 +2414,7 @@ End
 //************************************************************************************************************
 //************************************************************************************************************
 Function IR1I_ImportDataFnct2()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-
+ 
 	string TopPanel = WinName(0, 64)
 	string OldDf    = getDataFolder(1)
 
@@ -2659,8 +2546,7 @@ End
 
 Function IR1I_ProcessImpWaves2(selectedFile)
 	string selectedFile
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-
+ 
 	variable i, numOfInts, numOfQs, numOfErrs, numOfQErrs, refNum
 	numOfInts  = 0
 	numOfQs    = 0
@@ -2973,8 +2859,7 @@ End
 //************************************************************************************************************
 
 Function IR1I_ImportNexusCanSASMain()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	//IR1_KillGraphsAndPanels()
+ 	//IR1_KillGraphsAndPanels()
 	IN2G_CheckScreenSize("height", 720)
 	DoWindow IR1I_ImportData
 	if(V_Flag)
@@ -3019,8 +2904,7 @@ End
 //************************************************************************************************************
 
 Function IR1I_ImportNexusDataFnct()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	PauseUpdate // building window...
+ 	PauseUpdate // building window...
 	NewPanel/K=1/W=(3, 40, 430, 620)/N=IR1I_ImportNexusCanSASData as "Import Nexus canSAS data"
 	TitleBox MainTitle, title="\Zr200Import Nexus canSAS Data in Igor", pos={20, 5}, frame=0, fstyle=3, fixedSize=1, font="Times New Roman", size={400, 24}, anchor=MC, fColor=(0, 0, 52224)
 	IR3C_AddDataControls("ImportDataPath", "ImportData", "IR1I_ImportNexusCanSASData", "", "", "", "IR1I_NexusDoubleClickFUnction")
@@ -3124,8 +3008,7 @@ End
 //************************************************************************************************************
 //************************************************************************************************************
 Function IR1I_ImportDataFnctNexus()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-
+ 
 	string TopPanel = WinName(0, 64)
 	string OldDf    = getDataFolder(1)
 	variable timerRefNum, microSeconds
@@ -3196,17 +3079,7 @@ Function IR1I_NexusOpenHdf5File()
 			//			if (V_flag == 0)					// Open OK?
 			//				HDf5Browser#UpdateAfterFileCreateOrOpen(0, browserName, locFileID, S_path, S_fileName)
 			//			endif
-#if (IgorVersion() < 9)
-			HDf5Browser#CreateNewHDF5Browser()
-			browserName = WinName(0, 64)
-			HDF5OpenFile/R/P=Convert2Dto1DDataPath locFileID as FileName
-			if(V_flag == 0) // Open OK?
-				HDf5Browser#UpdateAfterFileCreateOrOpen(0, browserName, locFileID, S_path, S_fileName)
-			endif
-#else
 			HDf5Browser#CreateNewHDF5Browser("Convert2Dto1DDataPath", FileName, 1, browserName)
-#endif
-
 			if(!OpenMultipleFiles)
 				return 0
 			endif

@@ -14,7 +14,7 @@ Constant NumPntsPsi   = 41  //21 ~ 1.5 sec, 41 ~ 3 sec, 61 ~ 4.5 sec, 91 ~ 6.5 s
 
 Constant PrintFitProgress = 0 //print steps while fitting
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
@@ -427,7 +427,8 @@ End
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 Function IR3F_AttachTags(Attach)
-	variable Attach //=1 when attach, 0 when only remeove.
+	variable Attach 
+	//=1 when attach, 0 when only remeove.
 
 	NVAR HideTagsAlways = root:Packages:Irena:CylinderModels:HideTagsAlways
 	Tag/W=IR3F_LogLogDataDisplay/K/N=CylTag
@@ -1370,7 +1371,7 @@ End
 //Function Fit_ParCSProfile(pw, yw, xw) : FitFunc
 //	WAVE pw, yw, xw
 //
-//	//Duplicate/O/Free xw, yw
+//	// Duplicate/FREE xw, yw
 //	variable length, radius, AspectRatio, Shell1th, Shell1SLD, Shell2th, Shell2SLD,background
 //	Length		=pw[0]
 //	radius		=pw[1]
@@ -1436,7 +1437,7 @@ End
 //Function Fit_CoreShellEllCylinder(pw, yw, xw) : FitFunc
 //	WAVE pw, yw, xw
 //
-//	//Duplicate/O/Free xw, yw
+//	// Duplicate/FREE xw, yw
 //	variable Length, radius, AspectRatio, ShellThick, SLD, scale, background
 //	Length		=pw[0]
 //	radius		=pw[1]

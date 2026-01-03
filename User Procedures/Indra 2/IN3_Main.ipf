@@ -1,20 +1,20 @@
-#pragma rtFunctionErrors=1
-#pragma TextEncoding="UTF-8"
-#pragma rtGlobals=3 // Use modern global access method.
-#pragma version=2.02
-#pragma IgorVersion=8.04
+#pragma rtFunctionErrors = 1
+#pragma TextEncoding     = "UTF-8"
+#pragma rtGlobals        = 3 // Use modern global access method.
+#pragma version          = 2.02
+#pragma IgorVersion      = 8.04
 
 //DO NOT renumber Main files every time, these are main release numbers...
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
 //2.02 	June 2025 release,  Fixes for new 12IDE USAXS instrument operations, tested with IP10Beta
 //2.01		Beta release, Changes for 12IDE USAXS/SAXS/WAXS. WIP//2.00		July2023 release
-//2.01 remove default removeDropouts and removeOscillations, should not be needed anymore. 
+//2.01 remove default removeDropouts and removeOscillations, should not be needed anymore.
 //2.00 tweaks for APS-U USAXS instrument.
 //1.99 added ability to load jpg image if user wants to see data collection image (and it exists...).
 //1.98  September2020 release.
@@ -64,18 +64,18 @@ Constant CalMaxRatioUseSamFWHM           = 1.12
 //************************************************************************************************************
 //****************************************************************************************
 
-Function IN3_Main()
-
-	string OldDf = GetDataFolder(1)
-
-	IN3_Initialize()
-	KillWIndow/Z RcurvePlotGraph
-	KillWIndow/Z USAXSDataReduction
-	IN3_MainPanel()
-	ING2_AddScrollControl()
-	IN3_UpdatePanelVersionNumber("USAXSDataReduction", IN3_ReduceDataMainVersionNumber)
-	setDataFolder OldDf
-End
+//Function IN3_Main()
+//
+//	string OldDf = GetDataFolder(1)
+//
+//	IN3_Initialize()
+//	KillWIndow/Z RcurvePlotGraph
+//	KillWIndow/Z USAXSDataReduction
+//	IN3_MainPanel()
+//	ING2_AddScrollControl()
+//	IN3_UpdatePanelVersionNumber("USAXSDataReduction", IN3_ReduceDataMainVersionNumber)
+//	setDataFolder OldDf
+//End
 
 //************************************************************************************************************
 //************************************************************************************************************
@@ -427,7 +427,7 @@ Function IN3_MainPanelNew()
 	setDataFolder OldDf
 	NI3_TabPanelControl("", 0)
 
-	NVAR disableMe=root:Packages:Indra3:RemoveDropouts
+	NVAR disableMe = root:Packages:Indra3:RemoveDropouts
 	CheckBox RemoveDropouts, pos={20, 665}, size={150, 14}, title="Remove Flyscan dropouts?", proc=IN3_MainPanelCheckBox
 	CheckBox RemoveDropouts, variable=root:Packages:Indra3:RemoveDropouts, help={"Check, if you want to remove flyscan dropouts"}
 	SetVariable RemoveDropoutsAvePnts, pos={20, 685}, size={150, 22}, title="Intg. pnts (~50) =", frame=1, disable=!disableMe
@@ -480,6 +480,7 @@ Function IN3_FailedLoadMessage(string Filename) : Panel
 	DrawText 10, 100, "This message should disapper in 3 seconds on its own"
 	DoUpdate
 End
+
 //************************************************************************************************************
 //************************************************************************************************************
 Function/S IN3_USAXSScanLoadHdf5File2(variable LoadManyDataSets)
@@ -597,7 +598,7 @@ Function/S IN3_USAXSScanLoadHdf5File2(variable LoadManyDataSets)
 			endif
 
 			print "Imported HDF5 file : " + FileName
-#if (exists("AfterFlyImportHook") == 6)
+#if(exists("AfterFlyImportHook") == 6)
 			AfterFlyImportHook(HDF5RawFolderWithData)
 #endif
 			string tempStrProcessedName
@@ -638,6 +639,7 @@ Function IN3_USAXSDataRedCheckVersion()
 		endif
 	endif
 End
+
 //************************************************************************************************************
 //************************************************************************************************************
 ///////////////////////////////////////////
@@ -855,7 +857,7 @@ Function IN3_KillPrefsButtonProc(STRUCT WMButtonAction &ba) : ButtonControl
 			endif
 			break
 		default:
-			// FIXME(BugproneMissingSwitchDefaultCase)
+			return 0
 			break
 	endswitch
 	return 0
@@ -1095,284 +1097,284 @@ End
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-
-Function IN3_MainPanel()
-
-	string oldDf = GetDataFolder(1)
-	setDataFolder root:Packages:Indra3
-
-	PauseUpdate // building window...
-	NewPanel/K=1/W=(2.25, 43.25, 390, 710) as "USAXS data reduction"
-	DoWindow/C USAXSDataReduction
-	TitleBox Title, title="\Zr210USAXS data reduction panel", pos={40, 3}, frame=0, fstyle=3, size={300, 24}, fColor=(1, 4, 52428), anchor=MC
-	TitleBox Info1, title="\Zr100To limit range of data being used for subtraction, set cursor A", pos={5, 565}, frame=0, fstyle=1, anchor=MC, size={380, 20}, fColor=(1, 4, 52428)
-	TitleBox Info2, title="\Zr100 on first point and B on last point of either sample of blank data", pos={5, 580}, frame=0, fstyle=1, anchor=MC, size={380, 20}, fColor=(1, 4, 52428)
-	//some local controls
-	CheckBox IsBlank, pos={20, 35}, size={90, 14}, proc=IN3_MainPanelCheckBox, title="Process as blank"
-	CheckBox IsBlank, variable=root:Packages:Indra3:IsBlank, help={"Check, if you want to process this run as blank"}
-	Button GetHelp, pos={290, 25}, size={80, 15}, fColor=(65535, 32768, 32768), proc=IN3_InputPanelButtonProc, title="Get Help", help={"Open www manual page for this tool"}
-	Button GetReadme, pos={290, 40}, size={80, 15}, proc=IN3_InputPanelButtonProc, title="Read me", help={"Open Read me short instructions"}
-
-	//use general controls package, modify asnecessary
-	string AllowedUserTypes = "USAXS_PD;"
-	string XUserTypeLookup  = "USAXS_PD:AR_Encoder;"
-	IR2C_AddDataControls("Indra3", "USAXSDataReduction", "", "", AllowedUserTypes, "USAXS raw data", XUserTypeLookup, "", 0, 0)
-	SVAR DataFolderName = root:Packages:Indra3:DataFolderName
-	DataFolderName = "---"
-	PopupMenu QvecDataName, disable=1
-	PopupMenu IntensityDataName, disable=1
-	PopupMenu ErrorDataName, disable=1
-	CheckBox UseQRSData, disable=1
-	CheckBox UseUserDefinedData, disable=1
-	SetVariable WaveMatchStr, disable=1
-	NVAR useUserDefinedData = root:Packages:Indra3:UseUserDefinedData
-	UseUserDefinedData = 1
-	//more local controls.
-	SVAR BlankName = root:Packages:Indra3:BlankName
-	string temppopStr
-	if(strlen(BlankName) > 3)
-		temppopStr = BlankName
-	else
-		temppopStr = "---"
-	endif
-	PopupMenu SelectBlankFolder, pos={8, 80}, size={180, 21}, proc=IN3_InputPopMenuProc, title="Blank folder", help={"Select folder with Blank data"}
-	PopupMenu SelectBlankFolder, mode=1, popvalue=temppopStr, value=#"\"---;\"+IN3_GenStringOfFolders(1)"
-	NVAR IsBlank = root:Packages:Indra3:IsBlank
-	PopupMenu SelectBlankFolder, disable=IsBlank
-
-	Button ProcessData, pos={5, 110}, size={110, 20}, proc=IN3_InputPanelButtonProc, title="Load and process", help={"Load data and process them"}
-	Button SelectNextSampleAndProcess, pos={120, 110}, size={145, 20}, proc=IN3_InputPanelButtonProc, title="Load Process Save next", help={"Select next sample in order - process - and save"}
-	Button SaveResults, pos={270, 110}, size={110, 20}, proc=IN3_InputPanelButtonProc, title="Save Data", help={"Save results into original folder"}
-	NVAR UserSavedData = root:Packages:Indra3:UserSavedData
-	if(!UserSavedData)
-		Button SaveResults, fColor=(65280, 0, 0)
-		TitleBox SavedData, pos={200, 135}, title="  Data   NOT   saved  ", fColor=(0, 0, 0), frame=1, labelBack=(65280, 0, 0)
-	else
-		Button SaveResults
-		TitleBox SavedData, pos={200, 135}, title="  Data   are   saved  ", fColor=(0, 0, 0), labelBack=(47872, 47872, 47872), frame=2
-	endif
-	SetVariable userFriendlySamplename, title="Sample name:", pos={5, 160}, size={380, 20}, disable=2, labelBack=(65535, 65535, 65535)
-	SetVariable userFriendlySamplename, variable=root:Packages:Indra3:userFriendlySamplename, format="", limits={-1, 1, 1}
-	SetVariable userFriendlySamplename, frame=0, fstyle=1, help={"Name of current data set loaded"}
-
-	SetVariable OriginalDataFolder, title="Folder name:", pos={5, 180}, size={380, 20}, disable=2, labelBack=(65535, 65535, 65535)
-	SetVariable OriginalDataFolder, variable=root:Packages:Indra3:userFriendlySampleDFName, format="", limits={-1, 1, 1}
-	SetVariable OriginalDataFolder, frame=0, fstyle=1, help={"Folder from which current data set was loaded"}
-
-	//Data Tabs definition
-	TabControl DataTabs, pos={2, 200}, size={380, 320}, proc=NI3_TabPanelControl
-	TabControl DataTabs, tabLabel(0)="Sample", tabLabel(1)="Diode"
-	TabControl DataTabs, tabLabel(2)="Geometry", tabLabel(3)="Calibration", tabLabel(4)="MSAXS", value=0
-	//tab 0 Sample controls
-	NVAR CalculateWeight    = root:Packages:Indra3:CalculateWeight
-	NVAR CalculateThickness = root:Packages:Indra3:CalculateThickness
-	NVAR CalibrateToWeight  = root:Packages:Indra3:CalibrateToWeight
-	NVAR CalibrateToVolume  = root:Packages:Indra3:CalibrateToVolume
-	NVAR CalibrateArbitrary = root:Packages:Indra3:CalibrateArbitrary
-
-	CheckBox CalibrateArbitrary, pos={20, 225}, size={90, 14}, proc=IN3_MainPanelCheckBox, title="Calibrate Arbitrary"
-	CheckBox CalibrateArbitrary, variable=root:Packages:Indra3:CalibrateArbitrary, help={"Check, if you not want to calibrate data"}
-	CheckBox CalibrateToVolume, pos={20, 240}, size={90, 14}, proc=IN3_MainPanelCheckBox, title="Calibrate [cm2/cm3]"
-	CheckBox CalibrateToVolume, variable=root:Packages:Indra3:CalibrateToVolume, help={"Check, if you want to calibrate data to sample volume"}
-	CheckBox CalibrateToWeight, pos={20, 255}, size={90, 14}, proc=IN3_MainPanelCheckBox, title="Calibrate [cm2/g]"
-	CheckBox CalibrateToWeight, variable=root:Packages:Indra3:CalibrateToWeight, help={"Check, if you want to calibrate data to sample weight"}
-
-	CheckBox CalculateThickness, pos={220, 230}, size={90, 14}, proc=IN3_MainPanelCheckBox, title="Calculate Thickness"
-	CheckBox CalculateThickness, variable=root:Packages:Indra3:CalculateThickness, help={"Check, if you want to calculate sample thickness from transmission"}
-
-	CheckBox CalculateWeight, pos={220, 252}, size={90, 14}, proc=IN3_MainPanelCheckBox, title="Calculate Weight", disable=CalibrateToVolume
-	CheckBox CalculateWeight, variable=root:Packages:Indra3:CalculateWeight, help={"Check, if you want to calculate sample weight from transmission"}
-
-	SetVariable SampleThickness, pos={5, 285}, size={280, 22}, title="\Zr120Sample Thickness [mm] =", bodyWidth=100
-	SetVariable SampleThickness, proc=IN3_ParametersChanged
-	SetVariable SampleThickness, limits={0, Inf, 0}, variable=root:Packages:Indra3:SampleThickness, noedit=(CalculateThickness || CalculateWeight) //, frame=!(CalculateThickness&&CalculateWeight)
-	SetVariable OverideSampleThickness, pos={555, 285}
-
-	Button RecoverDefault, pos={290, 283}, size={80, 20}, proc=IN3_InputPanelButtonProc, title="Spec value", help={"Reload original value from spec record"}
-
-	SetVariable SampleTransmission, pos={5, 335}, size={280, 22}, title="\Zr120Sample Transmission ="
-	SetVariable SampleTransmission, bodyWidth=100, proc=IN3_ParametersChanged
-	SetVariable SampleTransmission, limits={0, Inf, 0}, variable=root:Packages:Indra3:SampleTransmission, noedit=0, frame=0
-
-	SetVariable SampleLinAbsorption, pos={5, 360}, size={280, 22}, title="\Zr120Sample absorp. coef [1/cm] ="
-	SetVariable SampleLinAbsorption, proc=IN3_ParametersChanged, bodyWidth=100
-	SetVariable SampleLinAbsorption, limits={0, Inf, 0}, variable=root:Packages:Indra3:SampleLinAbsorption, noedit=!CalculateThickness, frame=CalculateThickness
-
-	SetVariable SampleDensity, pos={5, 385}, size={280, 22}, title="\Zr120Sample density [g/cm3] ="
-	SetVariable SampleDensity, proc=IN3_ParametersChanged, bodyWidth=100
-	SetVariable SampleDensity, limits={0, Inf, 0}, variable=root:Packages:Indra3:SampleDensity, noedit=!CalculateWeight, frame=CalculateWeight
-
-	SetVariable SampleWeightInBeam, pos={5, 410}, size={300, 22}, title="\Zr120Sample weight [g/cm2 bm area] ="
-	SetVariable SampleWeightInBeam, proc=IN3_ParametersChanged, bodyWidth=100
-	SetVariable SampleWeightInBeam, limits={0, Inf, 0}, variable=root:Packages:Indra3:SampleWeightInBeam, noedit=CalculateWeight, frame=!CalculateWeight
-
-	SetVariable SampleFilledFraction, pos={5, 410}, size={280, 22}, title="\Zr120Sample filled fraction =", help={"amount of sample filled by material, 1 - porosity as fraction"}
-	SetVariable SampleFilledFraction, proc=IN3_ParametersChanged, bodyWidth=100
-	SetVariable SampleFilledFraction, limits={0, Inf, 0}, variable=root:Packages:Indra3:SampleFilledFraction, noedit=!CalculateThickness, frame=CalculateThickness
-
-	SetVariable USAXSPinTvalue, pos={5, 435}, size={280, 22}, title="\Zr120pinDiode Transmission  =", help={"If exists, measured transmission by pin diode"}
-	SetVariable USAXSPinTvalue, bodyWidth=100
-	SetVariable USAXSPinTvalue, limits={0, 1, 0}, variable=root:Packages:Indra3:USAXSPinTvalue, noedit=1, frame=CalculateWeight
-
-	CheckBox UsePinTransmission, pos={290, 437}, size={90, 14}, proc=IN3_MainPanelCheckBox, title="Use?" //, disable=CalibrateToVolume
-	CheckBox UsePinTransmission, variable=root:Packages:Indra3:UsePinTransmission, help={"Use pin diode trnamission (if exists)"}
-
-	SetVariable PeakToPeakTransmission, pos={5, 455}, size={300, 22}, title="\Zr120Peak-to-Peak T =", frame=0, noedit=1
-	SetVariable PeakToPeakTransmission, bodyWidth=100
-	SetVariable PeakToPeakTransmission, limits={0, Inf, 0}, variable=root:Packages:Indra3:SampleTransmissionPeakToPeak
-	SetVariable MSAXSCorrectionT0, pos={5, 475}, size={300, 22}, title="MSAXS/SAXS Cor =", frame=0, noedit=1
-	SetVariable MSAXSCorrectionT0, bodyWidth=100
-	SetVariable MSAXSCorrectionT0, limits={0, Inf, 0}, variable=root:Packages:Indra3:MSAXSCorrection
-
-	SetVariable FlyScanRebinToPoints, pos={5, 495}, size={300, 22}, title="\Zr120FlyScan rebin to ="
-	SetVariable FlyScanRebinToPoints, bodyWidth=100, proc=IN3_ParametersChanged
-	SetVariable FlyScanRebinToPoints, limits={0, Inf, 0}, variable=root:Packages:Indra3:FlyScanRebinToPoints
-
-	//tab 2 - geometry controls
-
-	SetVariable SpecCommand, pos={8, 230}, size={370, 22}, disable=2, title="Command:"
-	SetVariable SpecCommand, frame=0, fstyle=1
-	SetVariable SpecCommand, limits={0, Inf, 0}, variable=root:Packages:Indra3:SpecCommand
-
-	SetVariable PhotoDiodeSize, pos={8, 250}, size={250, 22}, title="PD size [mm] ="
-	SetVariable PhotoDiodeSize, proc=IN3_ParametersChanged
-	SetVariable PhotoDiodeSize, limits={0, Inf, 0}, variable=root:Packages:Indra3:PhotoDiodeSize
-	SetVariable Wavelength, pos={8, 275}, size={250, 22}, title="Wavelength [A] ="
-	SetVariable Wavelength, proc=IN3_ParametersChanged
-	SetVariable Wavelength, limits={0, Inf, 0}, variable=root:Packages:Indra3:Wavelength
-	SetVariable SDDistance, pos={8, 300}, size={250, 22}, title="SD distance [mm] ="
-	SetVariable SDDistance, proc=IN3_ParametersChanged
-	SetVariable SDDistance, limits={0, Inf, 0}, variable=root:Packages:Indra3:SDDistance
-
-	SetVariable SlitLength, pos={8, 325}, size={250, 22}, title="Slit Length [A^-1] =", frame=0, disable=2
-	SetVariable SlitLength, proc=IN3_ParametersChanged
-	SetVariable SlitLength, limits={0, Inf, 0}, variable=root:Packages:Indra3:SlitLength
-	SetVariable NumberOfSteps, pos={8, 350}, size={250, 22}, title="Number of steps =", disable=2, frame=0
-	SetVariable NumberOfSteps, proc=IN3_ParametersChanged
-	SetVariable NumberOfSteps, limits={0, Inf, 0}, variable=root:Packages:Indra3:NumberOfSteps
-
-	//tab 1 Diode controls
-	SetVariable VtoF, pos={29, 230}, size={200, 22}, proc=IN3_UPDParametersChanged, title="UPD V to f factor :"
-	SetVariable VtoF, format="%3.1e"
-	SetVariable VtoF, limits={0, Inf, 0}, value=root:Packages:Indra3:UPD_Vfc
-	SetVariable Gain1, pos={29, 255}, size={200, 22}, proc=IN3_UPDParametersChanged, title="Gain 1 :"
-	SetVariable Gain1, format="%3.1e", labelBack=(65280, 0, 0)
-	SetVariable Gain1, limits={0, Inf, 0}, value=root:Packages:Indra3:UPD_G1
-	SetVariable Gain2, pos={29, 277}, size={200, 22}, proc=IN3_UPDParametersChanged, title="Gain 2 :"
-	SetVariable Gain2, format="%3.1e", labelBack=(0, 52224, 0)
-	SetVariable Gain2, limits={0, Inf, 0}, value=root:Packages:Indra3:UPD_G2
-	SetVariable Gain3, pos={29, 299}, size={200, 22}, proc=IN3_UPDParametersChanged, title="Gain 3 :"
-	SetVariable Gain3, format="%3.1e", labelBack=(0, 0, 65280)
-	SetVariable Gain3, limits={0, Inf, 0}, value=root:Packages:Indra3:UPD_G3
-	SetVariable Gain4, pos={29, 321}, size={200, 22}, proc=IN3_UPDParametersChanged, title="Gain 4 :"
-	SetVariable Gain4, format="%3.1e", labelBack=(65280, 35512, 15384)
-	SetVariable Gain4, limits={0, Inf, 0}, value=root:Packages:Indra3:UPD_G4
-	SetVariable Gain5, pos={29, 343}, size={200, 22}, proc=IN3_UPDParametersChanged, title="Gain 5 :"
-	SetVariable Gain5, format="%3.1e", labelBack=(29696, 4096, 44800)
-	SetVariable Gain5, limits={0, Inf, 0}, value=root:Packages:Indra3:UPD_G5
-	NVAR UPD_DK1Err = root:packages:Indra3:UPD_DK1Err
-	NVAR UPD_DK2Err = root:packages:Indra3:UPD_DK2Err
-	NVAR UPD_DK3Err = root:packages:Indra3:UPD_DK3Err
-	NVAR UPD_DK4Err = root:packages:Indra3:UPD_DK4Err
-	NVAR UPD_DK5Err = root:packages:Indra3:UPD_DK5Err
-	SetVariable Bkg1, pos={20, 365}, size={200, 18}, proc=IN3_UPDParametersChanged, title="Background 1"
-	SetVariable Bkg1, format="%g", labelBack=(65280, 0, 0)
-	SetVariable Bkg1, limits={-Inf, Inf, UPD_DK1Err}, value=root:Packages:Indra3:UPD_DK1
-	SetVariable Bkg2, pos={20, 387}, size={200, 18}, proc=IN3_UPDParametersChanged, title="Background 2"
-	SetVariable Bkg2, format="%g", labelBack=(0, 52224, 0)
-	SetVariable Bkg2, limits={-Inf, Inf, UPD_DK2Err}, value=root:Packages:Indra3:UPD_DK2
-	SetVariable Bkg3, pos={20, 409}, size={200, 18}, proc=IN3_UPDParametersChanged, title="Background 3"
-	SetVariable Bkg3, format="%g", labelBack=(0, 0, 65280)
-	SetVariable Bkg3, limits={-Inf, Inf, UPD_DK3Err}, value=root:Packages:Indra3:UPD_DK3
-	SetVariable Bkg4, pos={20, 431}, size={200, 18}, proc=IN3_UPDParametersChanged, title="Background 4"
-	SetVariable Bkg4, format="%g", labelBack=(65280, 35512, 15384)
-	SetVariable Bkg4, limits={-Inf, Inf, UPD_DK4Err}, value=root:Packages:Indra3:UPD_DK4
-	SetVariable Bkg5, pos={20, 453}, size={200, 18}, proc=IN3_UPDParametersChanged, title="Background 5"
-	SetVariable Bkg5, format="%g", labelBack=(29696, 4096, 44800)
-	SetVariable Bkg5, limits={-Inf, Inf, UPD_DK5Err}, value=root:Packages:Indra3:UPD_DK5
-	SetVariable Bkg1Err, pos={225, 365}, size={90, 18}, title="Err"
-	SetVariable Bkg1Err, format="%2.2g", labelBack=(65280, 0, 0)
-	SetVariable Bkg1Err, limits={-Inf, Inf, 0}, value=root:Packages:Indra3:UPD_DK1Err, noedit=1
-	SetVariable Bkg2Err, pos={225, 387}, size={90, 18}, title="Err"
-	SetVariable Bkg2Err, format="%2.2g", labelBack=(0, 52224, 0)
-	SetVariable Bkg2Err, limits={-Inf, Inf, 0}, value=root:Packages:Indra3:UPD_DK2Err, noedit=1
-	SetVariable Bkg3Err, pos={225, 409}, size={90, 18}, title="Err"
-	SetVariable Bkg3Err, format="%2.2g", labelBack=(0, 0, 65280)
-	SetVariable Bkg3Err, limits={-Inf, Inf, 0}, value=root:Packages:Indra3:UPD_DK3Err, noedit=1
-	SetVariable Bkg4Err, pos={225, 431}, size={90, 18}, title="Err"
-	SetVariable Bkg4Err, format="%2.2g", labelBack=(65280, 35512, 15384)
-	SetVariable Bkg4Err, limits={-Inf, Inf, 0}, value=root:Packages:Indra3:UPD_DK4Err, noedit=1
-	SetVariable Bkg5Err, pos={225, 453}, size={90, 18}, title="Err"
-	SetVariable Bkg5Err, format="%2.2g", labelBack=(29696, 4096, 44800)
-	SetVariable Bkg5Err, limits={-Inf, Inf, 0}, value=root:Packages:Indra3:UPD_DK5Err, noedit=1
-	SetVariable Bkg5Overwrite, pos={20, 475}, size={300, 18}, proc=IN3_UPDParametersChanged, title="Overwrite Background 5"
-	SetVariable Bkg5Overwrite, format="%g"
-	SetVariable Bkg5Overwrite, limits={0, Inf, 0}, value=root:Packages:Indra3:OverwriteUPD_DK5
-	SetVariable SubtractFlatBackground, pos={8, 497}, size={300, 22}, title="Subtract Flat background=", frame=1
-	SetVariable SubtractFlatBackground, proc=IN3_ParametersChanged
-	SetVariable SubtractFlatBackground, limits={0, Inf, 1}, variable=root:Packages:Indra3:SubtractFlatBackground
-
-	//calibration stuff...
-	SetVariable MaximumIntensity, pos={8, 230}, size={300, 22}, title="Sample Maximum Intensity =", frame=0, disable=2
-	SetVariable MaximumIntensity, limits={0, Inf, 0}, variable=root:Packages:Indra3:MaximumIntensity
-	SetVariable PeakWidth, pos={8, 250}, size={300, 22}, title="Sample Peak Width [deg]=", frame=0, disable=2
-	SetVariable PeakWidth, limits={0, Inf, 0}, variable=root:Packages:Indra3:PeakWidth
-	SetVariable PeakWidthArcSec, pos={8, 270}, size={300, 22}, title="Sample Peak Width [arc sec]=", frame=0, disable=2
-	SetVariable PeakWidthArcSec, limits={0, Inf, 0}, variable=root:Packages:Indra3:PeakWidthArcSec
-
-	SetVariable BlankMaximum, pos={8, 300}, size={300, 22}, title="Blank Maximum Intensity =  ", frame=1
-	SetVariable BlankMaximum, proc=IN3_ParametersChanged
-	SetVariable BlankMaximum, limits={0, Inf, 0}, variable=root:Packages:Indra3:BlankMaximum
-	SetVariable BlankWidth, pos={8, 320}, size={300, 22}, title="Blank Peak Width [deg] =    ", frame=1
-	SetVariable BlankWidth, proc=IN3_ParametersChanged
-	SetVariable BlankWidth, limits={0, Inf, 0}, variable=root:Packages:Indra3:BlankFWHM
-	SetVariable BlankWidthArcSec, pos={8, 340}, size={300, 22}, title="Blank Peak Width [arc sec]=", frame=1
-	SetVariable BlankWidthArcSec, proc=IN3_ParametersChanged
-	SetVariable BlankWidthArcSec, limits={0, Inf, 0}, variable=root:Packages:Indra3:BlankWidth
-
-	Button RecoverDefaultBlnkVals, pos={200, 370}, size={80, 20}, proc=IN3_InputPanelButtonProc, title="Spec values", help={"Reload original value from spec record"}
-
-	CheckBox CalibrateUseSampleFWHM, pos={8, 440}, size={300, 14}, proc=IN3_MainPanelCheckBox, title="Use Sample FWHM for calibration?"
-	CheckBox CalibrateUseSampleFWHM, variable=root:Packages:Indra3:CalibrateUseSampleFWHM, help={"Check, if you want to use FWHM for absolute intensity calibration"}
-
-	//MSAXS stuff
-	CheckBox UseMSAXSCorrection, pos={8, 230}, size={300, 14}, proc=IN3_MainPanelCheckBox, title="MSAXS correctinon absolute intensity?"
-	CheckBox UseMSAXSCorrection, variable=root:Packages:Indra3:UseMSAXSCorrection, help={"Check, if you want to use MSAXS correction"}
-
-	SetVariable MSAXSCorrection, pos={8, 250}, size={300, 22}, title="MSAXS Correction =", frame=0, disable=2
-	SetVariable MSAXSCorrection, limits={0, Inf, 0}, variable=root:Packages:Indra3:MSAXSCorrection
-	SetVariable MSAXSStartPoint, pos={8, 270}, size={300, 22}, title="MSAXS start point =", frame=0, disable=2
-	SetVariable MSAXSStartPoint, limits={0, Inf, 0}, variable=root:Packages:Indra3:MSAXSStartPoint
-	SetVariable MSAXSEndPoint, pos={8, 290}, size={300, 22}, title="MSAXS end point =", frame=0, disable=2
-	SetVariable MSAXSEndPoint, limits={0, Inf, 0}, variable=root:Packages:Indra3:MSAXSEndPoint
-	setDataFolder OldDf
-	NI3_TabPanelControl("", 0)
-
-	NVAR tmpVal = root:Packages:Indra3:RemoveDropouts
-	CheckBox RemoveDropouts, pos={8, 525}, size={150, 14}, title="Remove Flyscan dropouts?", proc=IN3_MainPanelCheckBox
-	CheckBox RemoveDropouts, variable=root:Packages:Indra3:RemoveDropouts, help={"Check, if you want to remove flyscan dropouts"}
-	SetVariable RemoveDropoutsAvePnts, pos={8, 545}, size={150, 22}, title="Intg. pnts (~50) =", frame=1, disable=!tmpVal
-	SetVariable RemoveDropoutsAvePnts, limits={10, 100, 10}, variable=root:Packages:Indra3:RemoveDropoutsAvePnts, proc=IN3_ParametersChanged
-
-	SetVariable RemoveDropoutsTime, pos={200, 525}, size={180, 22}, title="Drpt. Time [s] =", frame=1, disable=!tmpVal
-	SetVariable RemoveDropoutsTime, limits={0.01, 5, 0.1}, variable=root:Packages:Indra3:RemoveDropoutsTime, proc=IN3_ParametersChanged
-	SetVariable RemoveDropoutsFraction, pos={200, 545}, size={180, 22}, title="Drp Int. fract. (0.1-0.7) =", frame=1, disable=!tmpVal
-	SetVariable RemoveDropoutsFraction, limits={0, 1, 0.1}, variable=root:Packages:Indra3:RemoveDropoutsFraction, proc=IN3_ParametersChanged
-
-	//modify any parameetrs not for old spe scans
-	NVAR SmoothRCurveData = root:Packages:Indra3:SmoothRCurveData
-	CheckBox SmoothRCurveData, pos={10, 590}, size={150, 14}, title="Smooth?", proc=IN3_MainPanelCheckBox
-	CheckBox SmoothRCurveData, variable=root:Packages:Indra3:SmoothRCurveData, help={"Check, if you want to smooth the data when reducing it"}
-
-	CheckBox FindMinQForData, pos={10, 610}, size={150, 14}, title="Find MinQ automatically?", noproc
-	CheckBox FindMinQForData, variable=root:Packages:Indra3:FindMinQForData, help={"Check, if you want to locate min-q for data start"}
-	SetVariable MinQMinFindRatio, pos={200, 610}, size={150, 22}, title="I_S/I_Bl ratio =", frame=1
-	SetVariable MinQMinFindRatio, limits={1, 10, 0.1}, variable=root:Packages:Indra3:MinQMinFindRatio, noproc
-
-	Button Recalculate, pos={50, 635}, size={120, 20}, proc=IN3_InputPanelButtonProc, title="Recalculate", help={"Recalculate the data"}
-	Button RemovePoint, pos={200, 635}, size={170, 20}, proc=IN3_InputPanelButtonProc, title="Remove point with csr A", help={"Remove point with cursor A"}
-End
-
+//
+//Function IN3_MainPanel()
+//
+//	string oldDf = GetDataFolder(1)
+//	setDataFolder root:Packages:Indra3
+//
+//	PauseUpdate // building window...
+//	NewPanel/K=1/W=(2.25, 43.25, 390, 710) as "USAXS data reduction"
+//	DoWindow/C USAXSDataReduction
+//	TitleBox Title, title="\Zr210USAXS data reduction panel", pos={40, 3}, frame=0, fstyle=3, size={300, 24}, fColor=(1, 4, 52428), anchor=MC
+//	TitleBox Info1, title="\Zr100To limit range of data being used for subtraction, set cursor A", pos={5, 565}, frame=0, fstyle=1, anchor=MC, size={380, 20}, fColor=(1, 4, 52428)
+//	TitleBox Info2, title="\Zr100 on first point and B on last point of either sample of blank data", pos={5, 580}, frame=0, fstyle=1, anchor=MC, size={380, 20}, fColor=(1, 4, 52428)
+//	//some local controls
+//	CheckBox IsBlank, pos={20, 35}, size={90, 14}, proc=IN3_MainPanelCheckBox, title="Process as blank"
+//	CheckBox IsBlank, variable=root:Packages:Indra3:IsBlank, help={"Check, if you want to process this run as blank"}
+//	Button GetHelp, pos={290, 25}, size={80, 15}, fColor=(65535, 32768, 32768), proc=IN3_InputPanelButtonProc, title="Get Help", help={"Open www manual page for this tool"}
+//	Button GetReadme, pos={290, 40}, size={80, 15}, proc=IN3_InputPanelButtonProc, title="Read me", help={"Open Read me short instructions"}
+//
+//	//use general controls package, modify asnecessary
+//	string AllowedUserTypes = "USAXS_PD;"
+//	string XUserTypeLookup  = "USAXS_PD:AR_Encoder;"
+//	IR2C_AddDataControls("Indra3", "USAXSDataReduction", "", "", AllowedUserTypes, "USAXS raw data", XUserTypeLookup, "", 0, 0)
+//	SVAR DataFolderName = root:Packages:Indra3:DataFolderName
+//	DataFolderName = "---"
+//	PopupMenu QvecDataName, disable=1
+//	PopupMenu IntensityDataName, disable=1
+//	PopupMenu ErrorDataName, disable=1
+//	CheckBox UseQRSData, disable=1
+//	CheckBox UseUserDefinedData, disable=1
+//	SetVariable WaveMatchStr, disable=1
+//	NVAR useUserDefinedData = root:Packages:Indra3:UseUserDefinedData
+//	UseUserDefinedData = 1
+//	//more local controls.
+//	SVAR BlankName = root:Packages:Indra3:BlankName
+//	string temppopStr
+//	if(strlen(BlankName) > 3)
+//		temppopStr = BlankName
+//	else
+//		temppopStr = "---"
+//	endif
+//	PopupMenu SelectBlankFolder, pos={8, 80}, size={180, 21}, proc=IN3_InputPopMenuProc, title="Blank folder", help={"Select folder with Blank data"}
+//	PopupMenu SelectBlankFolder, mode=1, popvalue=temppopStr, value=#"\"---;\"+IN3_GenStringOfFolders(1)"
+//	NVAR IsBlank = root:Packages:Indra3:IsBlank
+//	PopupMenu SelectBlankFolder, disable=IsBlank
+//
+//	Button ProcessData, pos={5, 110}, size={110, 20}, proc=IN3_InputPanelButtonProc, title="Load and process", help={"Load data and process them"}
+//	Button SelectNextSampleAndProcess, pos={120, 110}, size={145, 20}, proc=IN3_InputPanelButtonProc, title="Load Process Save next", help={"Select next sample in order - process - and save"}
+//	Button SaveResults, pos={270, 110}, size={110, 20}, proc=IN3_InputPanelButtonProc, title="Save Data", help={"Save results into original folder"}
+//	NVAR UserSavedData = root:Packages:Indra3:UserSavedData
+//	if(!UserSavedData)
+//		Button SaveResults, fColor=(65280, 0, 0)
+//		TitleBox SavedData, pos={200, 135}, title="  Data   NOT   saved  ", fColor=(0, 0, 0), frame=1, labelBack=(65280, 0, 0)
+//	else
+//		Button SaveResults
+//		TitleBox SavedData, pos={200, 135}, title="  Data   are   saved  ", fColor=(0, 0, 0), labelBack=(47872, 47872, 47872), frame=2
+//	endif
+//	SetVariable userFriendlySamplename, title="Sample name:", pos={5, 160}, size={380, 20}, disable=2, labelBack=(65535, 65535, 65535)
+//	SetVariable userFriendlySamplename, variable=root:Packages:Indra3:userFriendlySamplename, format="", limits={-1, 1, 1}
+//	SetVariable userFriendlySamplename, frame=0, fstyle=1, help={"Name of current data set loaded"}
+//
+//	SetVariable OriginalDataFolder, title="Folder name:", pos={5, 180}, size={380, 20}, disable=2, labelBack=(65535, 65535, 65535)
+//	SetVariable OriginalDataFolder, variable=root:Packages:Indra3:userFriendlySampleDFName, format="", limits={-1, 1, 1}
+//	SetVariable OriginalDataFolder, frame=0, fstyle=1, help={"Folder from which current data set was loaded"}
+//
+//	//Data Tabs definition
+//	TabControl DataTabs, pos={2, 200}, size={380, 320}, proc=NI3_TabPanelControl
+//	TabControl DataTabs, tabLabel(0)="Sample", tabLabel(1)="Diode"
+//	TabControl DataTabs, tabLabel(2)="Geometry", tabLabel(3)="Calibration", tabLabel(4)="MSAXS", value=0
+//	//tab 0 Sample controls
+//	NVAR CalculateWeight    = root:Packages:Indra3:CalculateWeight
+//	NVAR CalculateThickness = root:Packages:Indra3:CalculateThickness
+//	NVAR CalibrateToWeight  = root:Packages:Indra3:CalibrateToWeight
+//	NVAR CalibrateToVolume  = root:Packages:Indra3:CalibrateToVolume
+//	NVAR CalibrateArbitrary = root:Packages:Indra3:CalibrateArbitrary
+//
+//	CheckBox CalibrateArbitrary, pos={20, 225}, size={90, 14}, proc=IN3_MainPanelCheckBox, title="Calibrate Arbitrary"
+//	CheckBox CalibrateArbitrary, variable=root:Packages:Indra3:CalibrateArbitrary, help={"Check, if you not want to calibrate data"}
+//	CheckBox CalibrateToVolume, pos={20, 240}, size={90, 14}, proc=IN3_MainPanelCheckBox, title="Calibrate [cm2/cm3]"
+//	CheckBox CalibrateToVolume, variable=root:Packages:Indra3:CalibrateToVolume, help={"Check, if you want to calibrate data to sample volume"}
+//	CheckBox CalibrateToWeight, pos={20, 255}, size={90, 14}, proc=IN3_MainPanelCheckBox, title="Calibrate [cm2/g]"
+//	CheckBox CalibrateToWeight, variable=root:Packages:Indra3:CalibrateToWeight, help={"Check, if you want to calibrate data to sample weight"}
+//
+//	CheckBox CalculateThickness, pos={220, 230}, size={90, 14}, proc=IN3_MainPanelCheckBox, title="Calculate Thickness"
+//	CheckBox CalculateThickness, variable=root:Packages:Indra3:CalculateThickness, help={"Check, if you want to calculate sample thickness from transmission"}
+//
+//	CheckBox CalculateWeight, pos={220, 252}, size={90, 14}, proc=IN3_MainPanelCheckBox, title="Calculate Weight", disable=CalibrateToVolume
+//	CheckBox CalculateWeight, variable=root:Packages:Indra3:CalculateWeight, help={"Check, if you want to calculate sample weight from transmission"}
+//
+//	SetVariable SampleThickness, pos={5, 285}, size={280, 22}, title="\Zr120Sample Thickness [mm] =", bodyWidth=100
+//	SetVariable SampleThickness, proc=IN3_ParametersChanged
+//	SetVariable SampleThickness, limits={0, Inf, 0}, variable=root:Packages:Indra3:SampleThickness, noedit=(CalculateThickness || CalculateWeight) //, frame=!(CalculateThickness&&CalculateWeight)
+//	SetVariable OverideSampleThickness, pos={555, 285}
+//
+//	Button RecoverDefault, pos={290, 283}, size={80, 20}, proc=IN3_InputPanelButtonProc, title="Spec value", help={"Reload original value from spec record"}
+//
+//	SetVariable SampleTransmission, pos={5, 335}, size={280, 22}, title="\Zr120Sample Transmission ="
+//	SetVariable SampleTransmission, bodyWidth=100, proc=IN3_ParametersChanged
+//	SetVariable SampleTransmission, limits={0, Inf, 0}, variable=root:Packages:Indra3:SampleTransmission, noedit=0, frame=0
+//
+//	SetVariable SampleLinAbsorption, pos={5, 360}, size={280, 22}, title="\Zr120Sample absorp. coef [1/cm] ="
+//	SetVariable SampleLinAbsorption, proc=IN3_ParametersChanged, bodyWidth=100
+//	SetVariable SampleLinAbsorption, limits={0, Inf, 0}, variable=root:Packages:Indra3:SampleLinAbsorption, noedit=!CalculateThickness, frame=CalculateThickness
+//
+//	SetVariable SampleDensity, pos={5, 385}, size={280, 22}, title="\Zr120Sample density [g/cm3] ="
+//	SetVariable SampleDensity, proc=IN3_ParametersChanged, bodyWidth=100
+//	SetVariable SampleDensity, limits={0, Inf, 0}, variable=root:Packages:Indra3:SampleDensity, noedit=!CalculateWeight, frame=CalculateWeight
+//
+//	SetVariable SampleWeightInBeam, pos={5, 410}, size={300, 22}, title="\Zr120Sample weight [g/cm2 bm area] ="
+//	SetVariable SampleWeightInBeam, proc=IN3_ParametersChanged, bodyWidth=100
+//	SetVariable SampleWeightInBeam, limits={0, Inf, 0}, variable=root:Packages:Indra3:SampleWeightInBeam, noedit=CalculateWeight, frame=!CalculateWeight
+//
+//	SetVariable SampleFilledFraction, pos={5, 410}, size={280, 22}, title="\Zr120Sample filled fraction =", help={"amount of sample filled by material, 1 - porosity as fraction"}
+//	SetVariable SampleFilledFraction, proc=IN3_ParametersChanged, bodyWidth=100
+//	SetVariable SampleFilledFraction, limits={0, Inf, 0}, variable=root:Packages:Indra3:SampleFilledFraction, noedit=!CalculateThickness, frame=CalculateThickness
+//
+//	SetVariable USAXSPinTvalue, pos={5, 435}, size={280, 22}, title="\Zr120pinDiode Transmission  =", help={"If exists, measured transmission by pin diode"}
+//	SetVariable USAXSPinTvalue, bodyWidth=100
+//	SetVariable USAXSPinTvalue, limits={0, 1, 0}, variable=root:Packages:Indra3:USAXSPinTvalue, noedit=1, frame=CalculateWeight
+//
+//	CheckBox UsePinTransmission, pos={290, 437}, size={90, 14}, proc=IN3_MainPanelCheckBox, title="Use?" //, disable=CalibrateToVolume
+//	CheckBox UsePinTransmission, variable=root:Packages:Indra3:UsePinTransmission, help={"Use pin diode trnamission (if exists)"}
+//
+//	SetVariable PeakToPeakTransmission, pos={5, 455}, size={300, 22}, title="\Zr120Peak-to-Peak T =", frame=0, noedit=1
+//	SetVariable PeakToPeakTransmission, bodyWidth=100
+//	SetVariable PeakToPeakTransmission, limits={0, Inf, 0}, variable=root:Packages:Indra3:SampleTransmissionPeakToPeak
+//	SetVariable MSAXSCorrectionT0, pos={5, 475}, size={300, 22}, title="MSAXS/SAXS Cor =", frame=0, noedit=1
+//	SetVariable MSAXSCorrectionT0, bodyWidth=100
+//	SetVariable MSAXSCorrectionT0, limits={0, Inf, 0}, variable=root:Packages:Indra3:MSAXSCorrection
+//
+//	SetVariable FlyScanRebinToPoints, pos={5, 495}, size={300, 22}, title="\Zr120FlyScan rebin to ="
+//	SetVariable FlyScanRebinToPoints, bodyWidth=100, proc=IN3_ParametersChanged
+//	SetVariable FlyScanRebinToPoints, limits={0, Inf, 0}, variable=root:Packages:Indra3:FlyScanRebinToPoints
+//
+//	//tab 2 - geometry controls
+//
+//	SetVariable SpecCommand, pos={8, 230}, size={370, 22}, disable=2, title="Command:"
+//	SetVariable SpecCommand, frame=0, fstyle=1
+//	SetVariable SpecCommand, limits={0, Inf, 0}, variable=root:Packages:Indra3:SpecCommand
+//
+//	SetVariable PhotoDiodeSize, pos={8, 250}, size={250, 22}, title="PD size [mm] ="
+//	SetVariable PhotoDiodeSize, proc=IN3_ParametersChanged
+//	SetVariable PhotoDiodeSize, limits={0, Inf, 0}, variable=root:Packages:Indra3:PhotoDiodeSize
+//	SetVariable Wavelength, pos={8, 275}, size={250, 22}, title="Wavelength [A] ="
+//	SetVariable Wavelength, proc=IN3_ParametersChanged
+//	SetVariable Wavelength, limits={0, Inf, 0}, variable=root:Packages:Indra3:Wavelength
+//	SetVariable SDDistance, pos={8, 300}, size={250, 22}, title="SD distance [mm] ="
+//	SetVariable SDDistance, proc=IN3_ParametersChanged
+//	SetVariable SDDistance, limits={0, Inf, 0}, variable=root:Packages:Indra3:SDDistance
+//
+//	SetVariable SlitLength, pos={8, 325}, size={250, 22}, title="Slit Length [A^-1] =", frame=0, disable=2
+//	SetVariable SlitLength, proc=IN3_ParametersChanged
+//	SetVariable SlitLength, limits={0, Inf, 0}, variable=root:Packages:Indra3:SlitLength
+//	SetVariable NumberOfSteps, pos={8, 350}, size={250, 22}, title="Number of steps =", disable=2, frame=0
+//	SetVariable NumberOfSteps, proc=IN3_ParametersChanged
+//	SetVariable NumberOfSteps, limits={0, Inf, 0}, variable=root:Packages:Indra3:NumberOfSteps
+//
+//	//tab 1 Diode controls
+//	SetVariable VtoF, pos={29, 230}, size={200, 22}, proc=IN3_UPDParametersChanged, title="UPD V to f factor :"
+//	SetVariable VtoF, format="%3.1e"
+//	SetVariable VtoF, limits={0, Inf, 0}, value=root:Packages:Indra3:UPD_Vfc
+//	SetVariable Gain1, pos={29, 255}, size={200, 22}, proc=IN3_UPDParametersChanged, title="Gain 1 :"
+//	SetVariable Gain1, format="%3.1e", labelBack=(65280, 0, 0)
+//	SetVariable Gain1, limits={0, Inf, 0}, value=root:Packages:Indra3:UPD_G1
+//	SetVariable Gain2, pos={29, 277}, size={200, 22}, proc=IN3_UPDParametersChanged, title="Gain 2 :"
+//	SetVariable Gain2, format="%3.1e", labelBack=(0, 52224, 0)
+//	SetVariable Gain2, limits={0, Inf, 0}, value=root:Packages:Indra3:UPD_G2
+//	SetVariable Gain3, pos={29, 299}, size={200, 22}, proc=IN3_UPDParametersChanged, title="Gain 3 :"
+//	SetVariable Gain3, format="%3.1e", labelBack=(0, 0, 65280)
+//	SetVariable Gain3, limits={0, Inf, 0}, value=root:Packages:Indra3:UPD_G3
+//	SetVariable Gain4, pos={29, 321}, size={200, 22}, proc=IN3_UPDParametersChanged, title="Gain 4 :"
+//	SetVariable Gain4, format="%3.1e", labelBack=(65280, 35512, 15384)
+//	SetVariable Gain4, limits={0, Inf, 0}, value=root:Packages:Indra3:UPD_G4
+//	SetVariable Gain5, pos={29, 343}, size={200, 22}, proc=IN3_UPDParametersChanged, title="Gain 5 :"
+//	SetVariable Gain5, format="%3.1e", labelBack=(29696, 4096, 44800)
+//	SetVariable Gain5, limits={0, Inf, 0}, value=root:Packages:Indra3:UPD_G5
+//	NVAR UPD_DK1Err = root:packages:Indra3:UPD_DK1Err
+//	NVAR UPD_DK2Err = root:packages:Indra3:UPD_DK2Err
+//	NVAR UPD_DK3Err = root:packages:Indra3:UPD_DK3Err
+//	NVAR UPD_DK4Err = root:packages:Indra3:UPD_DK4Err
+//	NVAR UPD_DK5Err = root:packages:Indra3:UPD_DK5Err
+//	SetVariable Bkg1, pos={20, 365}, size={200, 18}, proc=IN3_UPDParametersChanged, title="Background 1"
+//	SetVariable Bkg1, format="%g", labelBack=(65280, 0, 0)
+//	SetVariable Bkg1, limits={-Inf, Inf, UPD_DK1Err}, value=root:Packages:Indra3:UPD_DK1
+//	SetVariable Bkg2, pos={20, 387}, size={200, 18}, proc=IN3_UPDParametersChanged, title="Background 2"
+//	SetVariable Bkg2, format="%g", labelBack=(0, 52224, 0)
+//	SetVariable Bkg2, limits={-Inf, Inf, UPD_DK2Err}, value=root:Packages:Indra3:UPD_DK2
+//	SetVariable Bkg3, pos={20, 409}, size={200, 18}, proc=IN3_UPDParametersChanged, title="Background 3"
+//	SetVariable Bkg3, format="%g", labelBack=(0, 0, 65280)
+//	SetVariable Bkg3, limits={-Inf, Inf, UPD_DK3Err}, value=root:Packages:Indra3:UPD_DK3
+//	SetVariable Bkg4, pos={20, 431}, size={200, 18}, proc=IN3_UPDParametersChanged, title="Background 4"
+//	SetVariable Bkg4, format="%g", labelBack=(65280, 35512, 15384)
+//	SetVariable Bkg4, limits={-Inf, Inf, UPD_DK4Err}, value=root:Packages:Indra3:UPD_DK4
+//	SetVariable Bkg5, pos={20, 453}, size={200, 18}, proc=IN3_UPDParametersChanged, title="Background 5"
+//	SetVariable Bkg5, format="%g", labelBack=(29696, 4096, 44800)
+//	SetVariable Bkg5, limits={-Inf, Inf, UPD_DK5Err}, value=root:Packages:Indra3:UPD_DK5
+//	SetVariable Bkg1Err, pos={225, 365}, size={90, 18}, title="Err"
+//	SetVariable Bkg1Err, format="%2.2g", labelBack=(65280, 0, 0)
+//	SetVariable Bkg1Err, limits={-Inf, Inf, 0}, value=root:Packages:Indra3:UPD_DK1Err, noedit=1
+//	SetVariable Bkg2Err, pos={225, 387}, size={90, 18}, title="Err"
+//	SetVariable Bkg2Err, format="%2.2g", labelBack=(0, 52224, 0)
+//	SetVariable Bkg2Err, limits={-Inf, Inf, 0}, value=root:Packages:Indra3:UPD_DK2Err, noedit=1
+//	SetVariable Bkg3Err, pos={225, 409}, size={90, 18}, title="Err"
+//	SetVariable Bkg3Err, format="%2.2g", labelBack=(0, 0, 65280)
+//	SetVariable Bkg3Err, limits={-Inf, Inf, 0}, value=root:Packages:Indra3:UPD_DK3Err, noedit=1
+//	SetVariable Bkg4Err, pos={225, 431}, size={90, 18}, title="Err"
+//	SetVariable Bkg4Err, format="%2.2g", labelBack=(65280, 35512, 15384)
+//	SetVariable Bkg4Err, limits={-Inf, Inf, 0}, value=root:Packages:Indra3:UPD_DK4Err, noedit=1
+//	SetVariable Bkg5Err, pos={225, 453}, size={90, 18}, title="Err"
+//	SetVariable Bkg5Err, format="%2.2g", labelBack=(29696, 4096, 44800)
+//	SetVariable Bkg5Err, limits={-Inf, Inf, 0}, value=root:Packages:Indra3:UPD_DK5Err, noedit=1
+//	SetVariable Bkg5Overwrite, pos={20, 475}, size={300, 18}, proc=IN3_UPDParametersChanged, title="Overwrite Background 5"
+//	SetVariable Bkg5Overwrite, format="%g"
+//	SetVariable Bkg5Overwrite, limits={0, Inf, 0}, value=root:Packages:Indra3:OverwriteUPD_DK5
+//	SetVariable SubtractFlatBackground, pos={8, 497}, size={300, 22}, title="Subtract Flat background=", frame=1
+//	SetVariable SubtractFlatBackground, proc=IN3_ParametersChanged
+//	SetVariable SubtractFlatBackground, limits={0, Inf, 1}, variable=root:Packages:Indra3:SubtractFlatBackground
+//
+//	//calibration stuff...
+//	SetVariable MaximumIntensity, pos={8, 230}, size={300, 22}, title="Sample Maximum Intensity =", frame=0, disable=2
+//	SetVariable MaximumIntensity, limits={0, Inf, 0}, variable=root:Packages:Indra3:MaximumIntensity
+//	SetVariable PeakWidth, pos={8, 250}, size={300, 22}, title="Sample Peak Width [deg]=", frame=0, disable=2
+//	SetVariable PeakWidth, limits={0, Inf, 0}, variable=root:Packages:Indra3:PeakWidth
+//	SetVariable PeakWidthArcSec, pos={8, 270}, size={300, 22}, title="Sample Peak Width [arc sec]=", frame=0, disable=2
+//	SetVariable PeakWidthArcSec, limits={0, Inf, 0}, variable=root:Packages:Indra3:PeakWidthArcSec
+//
+//	SetVariable BlankMaximum, pos={8, 300}, size={300, 22}, title="Blank Maximum Intensity =  ", frame=1
+//	SetVariable BlankMaximum, proc=IN3_ParametersChanged
+//	SetVariable BlankMaximum, limits={0, Inf, 0}, variable=root:Packages:Indra3:BlankMaximum
+//	SetVariable BlankWidth, pos={8, 320}, size={300, 22}, title="Blank Peak Width [deg] =    ", frame=1
+//	SetVariable BlankWidth, proc=IN3_ParametersChanged
+//	SetVariable BlankWidth, limits={0, Inf, 0}, variable=root:Packages:Indra3:BlankFWHM
+//	SetVariable BlankWidthArcSec, pos={8, 340}, size={300, 22}, title="Blank Peak Width [arc sec]=", frame=1
+//	SetVariable BlankWidthArcSec, proc=IN3_ParametersChanged
+//	SetVariable BlankWidthArcSec, limits={0, Inf, 0}, variable=root:Packages:Indra3:BlankWidth
+//
+//	Button RecoverDefaultBlnkVals, pos={200, 370}, size={80, 20}, proc=IN3_InputPanelButtonProc, title="Spec values", help={"Reload original value from spec record"}
+//
+//	CheckBox CalibrateUseSampleFWHM, pos={8, 440}, size={300, 14}, proc=IN3_MainPanelCheckBox, title="Use Sample FWHM for calibration?"
+//	CheckBox CalibrateUseSampleFWHM, variable=root:Packages:Indra3:CalibrateUseSampleFWHM, help={"Check, if you want to use FWHM for absolute intensity calibration"}
+//
+//	//MSAXS stuff
+//	CheckBox UseMSAXSCorrection, pos={8, 230}, size={300, 14}, proc=IN3_MainPanelCheckBox, title="MSAXS correctinon absolute intensity?"
+//	CheckBox UseMSAXSCorrection, variable=root:Packages:Indra3:UseMSAXSCorrection, help={"Check, if you want to use MSAXS correction"}
+//
+//	SetVariable MSAXSCorrection, pos={8, 250}, size={300, 22}, title="MSAXS Correction =", frame=0, disable=2
+//	SetVariable MSAXSCorrection, limits={0, Inf, 0}, variable=root:Packages:Indra3:MSAXSCorrection
+//	SetVariable MSAXSStartPoint, pos={8, 270}, size={300, 22}, title="MSAXS start point =", frame=0, disable=2
+//	SetVariable MSAXSStartPoint, limits={0, Inf, 0}, variable=root:Packages:Indra3:MSAXSStartPoint
+//	SetVariable MSAXSEndPoint, pos={8, 290}, size={300, 22}, title="MSAXS end point =", frame=0, disable=2
+//	SetVariable MSAXSEndPoint, limits={0, Inf, 0}, variable=root:Packages:Indra3:MSAXSEndPoint
+//	setDataFolder OldDf
+//	NI3_TabPanelControl("", 0)
+//
+//	NVAR tmpVal = root:Packages:Indra3:RemoveDropouts
+//	CheckBox RemoveDropouts, pos={8, 525}, size={150, 14}, title="Remove Flyscan dropouts?", proc=IN3_MainPanelCheckBox
+//	CheckBox RemoveDropouts, variable=root:Packages:Indra3:RemoveDropouts, help={"Check, if you want to remove flyscan dropouts"}
+//	SetVariable RemoveDropoutsAvePnts, pos={8, 545}, size={150, 22}, title="Intg. pnts (~50) =", frame=1, disable=!tmpVal
+//	SetVariable RemoveDropoutsAvePnts, limits={10, 100, 10}, variable=root:Packages:Indra3:RemoveDropoutsAvePnts, proc=IN3_ParametersChanged
+//
+//	SetVariable RemoveDropoutsTime, pos={200, 525}, size={180, 22}, title="Drpt. Time [s] =", frame=1, disable=!tmpVal
+//	SetVariable RemoveDropoutsTime, limits={0.01, 5, 0.1}, variable=root:Packages:Indra3:RemoveDropoutsTime, proc=IN3_ParametersChanged
+//	SetVariable RemoveDropoutsFraction, pos={200, 545}, size={180, 22}, title="Drp Int. fract. (0.1-0.7) =", frame=1, disable=!tmpVal
+//	SetVariable RemoveDropoutsFraction, limits={0, 1, 0.1}, variable=root:Packages:Indra3:RemoveDropoutsFraction, proc=IN3_ParametersChanged
+//
+//	//modify any parameetrs not for old spe scans
+//	NVAR SmoothRCurveData = root:Packages:Indra3:SmoothRCurveData
+//	CheckBox SmoothRCurveData, pos={10, 590}, size={150, 14}, title="Smooth?", proc=IN3_MainPanelCheckBox
+//	CheckBox SmoothRCurveData, variable=root:Packages:Indra3:SmoothRCurveData, help={"Check, if you want to smooth the data when reducing it"}
+//
+//	CheckBox FindMinQForData, pos={10, 610}, size={150, 14}, title="Find MinQ automatically?", noproc
+//	CheckBox FindMinQForData, variable=root:Packages:Indra3:FindMinQForData, help={"Check, if you want to locate min-q for data start"}
+//	SetVariable MinQMinFindRatio, pos={200, 610}, size={150, 22}, title="I_S/I_Bl ratio =", frame=1
+//	SetVariable MinQMinFindRatio, limits={1, 10, 0.1}, variable=root:Packages:Indra3:MinQMinFindRatio, noproc
+//
+//	Button Recalculate, pos={50, 635}, size={120, 20}, proc=IN3_InputPanelButtonProc, title="Recalculate", help={"Recalculate the data"}
+//	Button RemovePoint, pos={200, 635}, size={170, 20}, proc=IN3_InputPanelButtonProc, title="Remove point with csr A", help={"Remove point with cursor A"}
+//End
+//
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************

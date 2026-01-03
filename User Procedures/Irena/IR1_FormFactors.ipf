@@ -7,7 +7,7 @@ Constant AlwaysRecalculateFF = 0 //set to 1 to recalculate always the FF.
 #define UseXOPforFFCalcs
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
@@ -104,7 +104,7 @@ Function IR1T_InitFormFactors()
 
 	string/G ListOfFormFactors = "Spheroid;Cylinder;CylinderAR;Disk;CoreShell;CoreShellShell;CoreShellCylinder;User;Integrated_Spheroid;Fractal Aggregate;"
 	ListOfFormFactors += "NoFF_setTo1;SphereWHSLocMonoSq;Janus CoreShell Micelle 1;Janus CoreShell Micelle 2;Janus CoreShell Micelle 3;CoreShellPrecipitate;" //Unified_Sphere;"//"
-#if (exists("ParallelepipedX") && defined(UseXOPforFFCalcs))
+#if(exists("ParallelepipedX") && defined(UseXOPforFFCalcs))
 	ListOfFormFactors += "---NIST XOP : ;RectParallelepiped;"
 #endif
 	string/G ListOfFormFactorsSD = "Spheroid;Cylinder;CylinderAR;" //Unified_Sphere;Unified_Rod;Unified_RodAR;Unified_Disk;Unified_Tube;"
@@ -181,14 +181,23 @@ End
 // this one is in the direct modeling and needs to be fixed right...
 
 Function IR1T_GenerateGMatrix(Gmatrix, Q_vec, R_dist, VolumePower, ParticleModel, ParticlePar1, ParticlePar2, ParticlePar3, ParticlePar4, ParticlePar5, User_FormFactorFnct, User_FormFactorVol, [ParticlePar6, ParticlePar7, ParticlePar8, ParticlePar9, ParticlePar10])
-	WAVE     Gmatrix       //result, will be checked if it is needed to recalculate, redimensioned and reculated, if necessary
-	WAVE     Q_vec         //Q vectors, in A-1
-	WAVE     R_dist        //radia in A
-	variable VolumePower   //if rest of the code uses volume distribution, set to 1, if number distribution, use 2 (1: G=V*F^2; 2: G=V^2*F^2)
-	string   ParticleModel //one of known Particle models
-	variable ParticlePar1, ParticlePar2, ParticlePar3, ParticlePar4, ParticlePar5 //possible parameters, let's hope no one needs more than 5
-	string User_FormFactorFnct, User_FormFactorVol //these contain names for user form factor functions
-	variable ParticlePar6, ParticlePar7, ParticlePar8, ParticlePar9, ParticlePar10 //Optional parameters when needed...
+	WAVE     Gmatrix       
+	WAVE     Q_vec        
+	WAVE     R_dist        
+	variable VolumePower   
+	string   ParticleModel 
+	variable ParticlePar1, ParticlePar2, ParticlePar3, ParticlePar4, ParticlePar5 
+	string User_FormFactorFnct, User_FormFactorVol 
+	variable ParticlePar6, ParticlePar7, ParticlePar8, ParticlePar9, ParticlePar10 
+	//result, will be checked if it is needed to recalculate, redimensioned and reculated, if necessary
+	 //Q vectors, in A-1
+	//radia in A
+	//if rest of the code uses volume distribution, set to 1, if number distribution, use 2 (1: G=V*F^2; 2: G=V^2*F^2)
+	//one of known Particle models
+	//possible parameters, let's hope no one needs more than 5
+	//these contain names for user form factor functions
+	//Optional parameters when needed...
+	
 
 	//parameters description:
 	//spheroid				AspectRatio = ParticlePar1
@@ -359,7 +368,7 @@ Function IR1T_GenerateGMatrix(Gmatrix, Q_vec, R_dist, VolumePower, ParticleModel
 			else //OK, spheroid...
 				for(i = 0; i < N; i += 1) //calculate the G matrix in columns!!!
 					currentR = R_dist[i] //this is current radius
-#if (Exists("EllipsoidFormX") && defined(UseXOPforFFCalcs))
+#if(Exists("EllipsoidFormX") && defined(UseXOPforFFCalcs))
 					//The input variables are (and output)
 					//[0] scale
 					//[1] Axis of rotation
@@ -437,7 +446,7 @@ Function IR1T_GenerateGMatrix(Gmatrix, Q_vec, R_dist, VolumePower, ParticleModel
 				currentR = R_dist[i] //this is current radius
 				tempVal1 = IR1T_StartOfBinInDiameters(R_dist, i)
 				tempVal2 = IR1T_EndOfBinInDiameters(R_dist, i)
-#if (Exists("CylinderFormX") && defined(UseXOPforFFCalcs))
+#if(Exists("CylinderFormX") && defined(UseXOPforFFCalcs))
 				//The input variables are (and output)
 				//[0] scale
 				//[1] cylinder RADIUS (A)
@@ -474,7 +483,7 @@ Function IR1T_GenerateGMatrix(Gmatrix, Q_vec, R_dist, VolumePower, ParticleModel
 				length   = 2 * ParticlePar1 * currentR //and this is length - aspect ratio * currrentR * 2
 				tempVal1 = IR1T_StartOfBinInDiameters(R_dist, i)
 				tempVal2 = IR1T_EndOfBinInDiameters(R_dist, i)
-#if (Exists("CylinderFormX") && defined(UseXOPforFFCalcs))
+#if(Exists("CylinderFormX") && defined(UseXOPforFFCalcs))
 				//The input variables are (and output)
 				//[0] scale
 				//[1] cylinder RADIUS (A)
@@ -547,7 +556,7 @@ Function IR1T_GenerateGMatrix(Gmatrix, Q_vec, R_dist, VolumePower, ParticleModel
 				Gmatrix[][i] = TempWave[p] //and here put it into G wave
 			endfor
 		elseif(cmpstr(ParticleModel, "RectParallelepiped") == 0) // parralelepiped
-#if (Exists("ParallelepipedX") && defined(UseXOPforFFCalcs))
+#if(Exists("ParallelepipedX") && defined(UseXOPforFFCalcs))
 			make/O/N=7/D RecParallParams
 			Make/FREE/N=3 RecParallSidePars
 			RecParallSidePars = {2, 2 * ParticlePar1, 2 * ParticlePar2}
@@ -950,8 +959,9 @@ End
 //*****************************************************************************************************************
 //static
 threadsafe Function IR1T_CalculateCoreShellFFPoints(Qvalue, radius, VolumePower, radiusMin, radiusMax, Param1, Param2, Param3, Param4, VolDefL)
-	variable Qvalue, radius, radiusMin, radiusMax, Param1, Param2, Param3, Param4, VolumePower //does the math for Sphere Form factor function
+	variable Qvalue, radius, radiusMin, radiusMax, Param1, Param2, Param3, Param4, VolumePower 
 	string VolDefL
+	//does the math for Sphere Form factor function
 	//Param1 is skin thickness in A
 	//Param2 is core rho (not delta rho squared)
 	//Param3 is shell rho (not delta rho squared)
@@ -1214,8 +1224,10 @@ End
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
-static Function IR1T_CalcIntgTubeFFPoints(Qvalue, radius, VolumePower, radiusMin, radiusMax, Length, WallThickness, CoreShellCoreRho, CoreShellShellRho, CoreShellSolvntRho) //we have to integrate from 0 to 1 over cos(th)
-	variable Qvalue, radius, Length, radiusMin, radiusMax, WallThickness, CoreShellCoreRho, CoreShellShellRho, CoreShellSolvntRho, VolumePower //and integrate over points in QR...
+static Function IR1T_CalcIntgTubeFFPoints(Qvalue, radius, VolumePower, radiusMin, radiusMax, Length, WallThickness, CoreShellCoreRho, CoreShellShellRho, CoreShellSolvntRho) 
+	variable Qvalue, radius, Length, radiusMin, radiusMax, WallThickness, CoreShellCoreRho, CoreShellShellRho, CoreShellSolvntRho, VolumePower 
+	//we have to integrate from 0 to 1 over cos(th)
+	//and integrate over points in QR...
 
 	DFREF oldDf = GetDataFolderDFR()
 
@@ -1241,7 +1253,7 @@ static Function IR1T_CalcIntgTubeFFPoints(Qvalue, radius, VolumePower, radiusMin
 	variable stepR = (radiusMax - radiusMin / 2) / (numbOfSteps - 1) //step in R associated with above, we need this to calculate volume
 	variable i
 
-	Make/D/O/N=181/FREE IntgWave
+	Make/D/N=181/FREE IntgWave
 	SetScale/I x, 0, (pi / 2), "", IntgWave
 	variable tempRad
 	SVAR CoreShellVolumeDefinition = CoreShellVolumeDefinition
@@ -1339,7 +1351,8 @@ End
 //*****************************************************************************************************************
 
 static Function IR1T_CalcTubeFFPoints(Qvalue, radius, Length, WallThickness, CoreShellCoreRho, CoreShellShellRho, CoreShellSolvntRho, Alpha)
-	variable Qvalue, radius, Length, WallThickness, CoreShellCoreRho, CoreShellShellRho, CoreShellSolvntRho, Alpha //does the math for cylinder Form factor function
+	variable Qvalue, radius, Length, WallThickness, CoreShellCoreRho, CoreShellShellRho, CoreShellSolvntRho, Alpha 
+	//does the math for cylinder Form factor function
 
 	variable LargeBesArg = 0.5 * Qvalue * length * Cos(Alpha)
 	variable LargeBes
@@ -1482,8 +1495,10 @@ End
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
-threadsafe static Function IR1_CalcIntgCylinderFFPnts(Qvalue, radius, VolumePower, radiusMin, radiusMax, Length) //we have to integrate from 0 to 1 over cos(th)
-	variable Qvalue, Length, radius, radiusMin, radiusMax, VolumePower //and integrate over points in QR...
+threadsafe static Function IR1_CalcIntgCylinderFFPnts(Qvalue, radius, VolumePower, radiusMin, radiusMax, Length) 
+	variable Qvalue, Length, radius, radiusMin, radiusMax, VolumePower 
+	//we have to integrate from 0 to 1 over cos(th)
+	//and integrate over points in QR...
 
 	variable QR    = Qvalue * radius //OK, these are just some limiting values
 	variable QRMin = Qvalue * radiusMin
@@ -1499,7 +1514,7 @@ threadsafe static Function IR1_CalcIntgCylinderFFPnts(Qvalue, radius, VolumePowe
 	variable stepR = (radiusMax - radiusMin) / (numbOfSteps - 1) //step in R associated with above, we need this to calculate volume
 	variable i
 
-	Make/D/O/N=181/FREE IntgWave //change 8/26/2011: chnaged to /Free and reduced number of point to 181, 500 seems really too much for 90 degrees integration
+	Make/D/N=181/FREE IntgWave //change 8/26/2011: chnaged to /Free and reduced number of point to 181, 500 seems really too much for 90 degrees integration
 	SetScale/I x, 0, (pi / 2), "", IntgWave
 	variable tempRad
 
@@ -1524,8 +1539,10 @@ End
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
-threadsafe static Function IR1_CalcIntgDiskFFPnts(Qvalue, radius, VolumePower, LengthMin, LengthMax, Length) //we have to integrate from 0 to 1 over cos(th)
-	variable Qvalue, Length, radius, LengthMin, LengthMax, VolumePower //and integrate over points in QR...
+threadsafe static Function IR1_CalcIntgDiskFFPnts(Qvalue, radius, VolumePower, LengthMin, LengthMax, Length) 
+	variable Qvalue, Length, radius, LengthMin, LengthMax, VolumePower 
+	//we have to integrate from 0 to 1 over cos(th)
+	//and integrate over points in QR...
 
 	variable QL    = Qvalue * Length //OK, these are just some limiting values
 	variable QLMin = Qvalue * LengthMin
@@ -1541,7 +1558,7 @@ threadsafe static Function IR1_CalcIntgDiskFFPnts(Qvalue, radius, VolumePower, L
 	variable stepL = (LengthMax - LengthMin) / (numbOfSteps - 1) //step in R associated with above, we need this to calculate volume
 	variable i
 
-	Make/D/O/N=181/FREE IntgWave //change 8/26/2011: changed to /Free and reduced number of point to 181, 500 seems really too much for 90 degrees integration
+	Make/D/N=181/FREE IntgWave //change 8/26/2011: changed to /Free and reduced number of point to 181, 500 seems really too much for 90 degrees integration
 	SetScale/I x, 0, (pi / 2), "", IntgWave
 	variable tempLength
 
@@ -1571,7 +1588,8 @@ End
 //*****************************************************************************************************************
 
 threadsafe static Function IR1T_CalcCylinderFFPoints(Qvalue, radius, Length, Alpha)
-	variable Qvalue, radius, Length, Alpha //does the math for cylinder Form factor function
+	variable Qvalue, radius, Length, Alpha 
+	//does the math for cylinder Form factor function
 
 	variable LargeBesArg = 0.5 * Qvalue * length * Cos(Alpha)
 	variable LargeBes
@@ -1611,8 +1629,9 @@ End
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 static Function IR1T_CalculateSphereFormFactor(FRwave, Qw, radius)
-	WAVE Qw, FRwave //returns column (FRwave) for column of Qw and radius
+	WAVE Qw, FRwave 
 	variable radius
+	//returns column (FRwave) for column of Qw and radius
 
 	Multithread FRwave = IR1T_CalculateSphereFFPoints(Qw[p], radius) //calculates the formula
 	FRwave *= FRwave //second power of the value
@@ -1644,7 +1663,8 @@ End
 //*****************************************************************************************************************
 
 threadsafe static Function IR1T_CalculateIntgSphereFFPnts(Qvalue, Radius, VolumePower, RadiusMin, RadiusMax)
-	variable Qvalue, Radius, RadiusMin, RadiusMax, VolumePower //does the math for Sphere Form factor function
+	variable Qvalue, Radius, RadiusMin, RadiusMax, VolumePower 
+	//does the math for Sphere Form factor function
 
 	variable QR    = Qvalue * Radius //OK, these are just some limiting values
 	variable QRMin = Qvalue * RadiusMin
@@ -1680,9 +1700,11 @@ End
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
-threadsafe static Function IR1T_BinWidthInRadia(R_distribution, i) //calculates the width in radia by taking half distance to point before and after
+threadsafe static Function IR1T_BinWidthInRadia(R_distribution, i) 
+	//calculates the width in radia by taking half distance to point before and after
 	WAVE     R_distribution
-	variable i //returns number in A
+	variable i 
+	//returns number in A
 
 	variable width
 	variable Imax = numpnts(R_distribution)
@@ -1708,8 +1730,10 @@ End
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
-static Function IR1T_StartOfBinInDiameters(D_distribution, i) //calculates the start of the bin in radii by taking half distance to point before and after
-	variable i //returns number in A
+static Function IR1T_StartOfBinInDiameters(D_distribution, i) 
+	//calculates the start of the bin in radii by taking half distance to point before and after
+	variable i 
+	//returns number in A
 	WAVE     D_distribution
 
 	variable start
@@ -1737,8 +1761,10 @@ End
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
-static Function IR1T_EndOfBinInDiameters(D_distribution, i) //calculates the start of the bin in radii by taking half distance to point before and after
-	variable i //returns number in A
+static Function IR1T_EndOfBinInDiameters(D_distribution, i) 
+	//calculates the start of the bin in radii by taking half distance to point before and after
+	variable i 
+	//returns number in A
 	WAVE     D_distribution
 
 	variable endL
@@ -1781,7 +1807,8 @@ End
 //*****************************************************************************************************************
 
 static Function IR1T_CalcSpheroidFormFactor(FRwave, Qw, radius, AR)
-	WAVE Qw, FRwave //returns column (FRwave) for column of Qw and radius
+	WAVE Qw, FRwave 
+	//returns column (FRwave) for column of Qw and radius
 	variable radius, AR
 
 	FRwave = IR1T_CalcIntgSpheroidFFPoints(Qw[p], radius, AR) //calculates the formula
@@ -1794,14 +1821,15 @@ End
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //this needs to be used in Simple fit models also.
-Function IR1T_CalcIntgSpheroidFFPoints(Qvalue, radius, AR) //we have to integrate from 0 to 1 over cos(th)
+Function IR1T_CalcIntgSpheroidFFPoints(Qvalue, radius, AR) 
+	//we have to integrate from 0 to 1 over cos(th)
 	variable Qvalue, radius, AR
 
 	string OldDf
 	OldDf = GetDataFolder(1)
 	setDataFolder root:Packages:FormFactorCalc
 
-	Make/O/D/N=50/FREE IntgWave
+	Make/D/N=50/FREE IntgWave
 	SetScale/I x, 0, 1, "", IntgWave
 	multithread IntgWave = IR1T_CalcSpheroidFFPoints(Qvalue, radius, AR, x) //this
 	IntgWave *= IntgWave //calculate second power before integration, thsi was bug
@@ -1817,7 +1845,8 @@ End
 //*****************************************************************************************************************
 
 threadsafe static Function IR1T_CalculateSphereFFPoints(Qvalue, radius)
-	variable Qvalue, radius //does the math for Sphere Form factor function
+	variable Qvalue, radius 
+	//does the math for Sphere Form factor function
 	variable QR = Qvalue * radius
 
 	return (3 / (QR * QR * QR)) * (sin(QR) - (QR * cos(QR)))
@@ -1830,7 +1859,8 @@ End
 //*****************************************************************************************************************
 
 threadsafe static Function IR1T_CalcSpheroidFFPoints(Qvalue, radius, AR, CosTh)
-	variable Qvalue, radius, AR, CosTh //does the math for Spheroid Form factor function
+	variable Qvalue, radius, AR, CosTh 
+	//does the math for Spheroid Form factor function
 	variable QR = Qvalue * radius * sqrt(1 + (((AR * AR) - 1) * CosTh * CosTh))
 
 	return (3 / (QR * QR * QR)) * (sin(QR) - (QR * cos(QR)))
@@ -1853,8 +1883,10 @@ End
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
-threadsafe static Function IR1T_CalcIntgIntgSpheroidFFPnts(Qvalue, radius, VolumePower, radiusMin, radiusMax, AR) //we have to integrate from 0 to 1 over cos(th)
-	variable Qvalue, AR, radius, radiusMin, radiusMax, VolumePower //and integrate over points in QR...
+threadsafe static Function IR1T_CalcIntgIntgSpheroidFFPnts(Qvalue, radius, VolumePower, radiusMin, radiusMax, AR) 
+	//we have to integrate from 0 to 1 over cos(th)
+	variable Qvalue, AR, radius, radiusMin, radiusMax, VolumePower 
+	//and integrate over points in QR...
 
 	variable QR    = Qvalue * radius //OK, these are just some limiting values
 	variable QRMin = Qvalue * radiusMin
@@ -1869,7 +1901,7 @@ threadsafe static Function IR1T_CalcIntgIntgSpheroidFFPnts(Qvalue, radius, Volum
 	variable step  = (QRMax - QRMin) / (numbOfSteps - 1)         //step in QR
 	variable stepR = (radiusMax - radiusMin) / (numbOfSteps - 1) //step in R associated with above, we need this to calculate volume
 	variable i
-	Make/D/O/N=50/FREE IntgWave
+	Make/D/N=50/FREE IntgWave
 	SetScale/P x, 0, 0.02, "", IntgWave
 	variable tempRad
 
@@ -1899,7 +1931,8 @@ End
 //*****************************************************************************************************************
 
 threadsafe static Function IR1T_CalcFractAggFormFactor(FRwave, Qw, currentR, VolumePower, Param1, Param2)
-	WAVE Qw, FRwave //returns column (FRwave) for column of Qw and diameter
+	WAVE Qw, FRwave 
+	//returns column (FRwave) for column of Qw and diameter
 	variable currentR, Param1, Param2, VolumePower
 	//Param1 is primary particle radius
 	//Param2 is fractal dimension
@@ -1937,7 +1970,8 @@ End
 //*****************************************************************************************************************
 
 threadsafe static Function IR1T_CalculateFractAggSQPoints(Qvalue, R, r0, D)
-	variable Qvalue, R, r0, D //does the math for S(Q) factor function
+	variable Qvalue, R, r0, D 
+	//does the math for S(Q) factor function
 
 	variable QR = Qvalue * R
 	variable tempResult
@@ -2032,7 +2066,8 @@ End
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 Function IR1T_ExampleSphereFFPoints(Qvalue, radius, par1, par2, par3, par4, par5)
-	variable Qvalue, radius, par1, par2, par3, par4, par5 //does the math for Sphere Form factor function
+	variable Qvalue, radius, par1, par2, par3, par4, par5 
+	//does the math for Sphere Form factor function
 	variable QR = Qvalue * radius
 
 	return (3 / (QR * QR * QR)) * (sin(QR) - (QR * cos(QR)))

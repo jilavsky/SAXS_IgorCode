@@ -4,7 +4,7 @@
 Constant IR1AversionNumber = 2.28
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
@@ -2742,7 +2742,8 @@ End
 //*****************************************************************************************************************
 
 Function IR1A_GraphMeasuredData(Package)
-	string Package //tells me, if this is called from Unified or LSQF
+	string Package 
+	//tells me, if this is called from Unified or LSQF
 	//this function graphs data into the various graphs as needed
 
 	DFREF oldDf = GetDataFolderDFR()
@@ -3615,7 +3616,8 @@ End
 ///******************************************************************************************
 
 Function IR1A_CalculateNormalizedError(CalledWhere)
-	string CalledWhere // "fit" or "graph"
+	string CalledWhere 
+	// "fit" or "graph"
 
 	string OldDf
 	OldDf = GetDataFolder(1)

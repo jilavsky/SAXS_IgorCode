@@ -1,14 +1,15 @@
-#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.53
+#pragma rtGlobals=3		// Use modern global access method.
+#pragma version=1.54
 
 
 constant ChangeFromGaussToSlit=2
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.54 change to pragma version=3
 //1.53 add requested feature to add ccontrols to have graph axis linear-or-log and change color of model_set1
 //1.52 reviewed pixel smearing (still think it is working correctly) and modified IR2L_FinishSmearingOfData() to use multiple threads. 
 //1.51 added option to save population results from scripting tool. 
@@ -501,11 +502,11 @@ Function IR2L_RemoveAllDataSets()
 			NVAR UseTheData_set=$("UseTheData_set"+num2str(i))	//set them not to be used
 			UseTheData_set=0
 			SVAR Fldr=$("root:Packages:IR2L_NLSQF:FolderName_set"+num2str(i))
-			SVAR Int=$("root:Packages:IR2L_NLSQF:IntensityDataName_set"+num2str(i))
+			SVAR IntN=$("root:Packages:IR2L_NLSQF:IntensityDataName_set"+num2str(i))
 			SVAR Qvec=$("root:Packages:IR2L_NLSQF:QvecDataName_set"+num2str(i))
 			SVAR Err = $("root:Packages:IR2L_NLSQF:ErrorDataName_set"+num2str(i))
 			Fldr=""
-			Int=""
+			IntN=""
 			Qvec=""
 			Err=""
 			Wave/Z IntWv=$("root:Packages:IR2L_NLSQF:Intensity_set"+num2str(i))
@@ -1828,12 +1829,12 @@ Function IR2L_setQMinMax(whichDataSet)
 	
 	variable QmaxPoint=binarysearch(CurQ, Qmax_set)
 	if(QmaxPoint<0)
-		QmaxPoint=numpnts(CurQ)
+		QmaxPoint=numpnts(CurQ)-1
 		Qmax_set=CurQ[inf]
 	endif
 	
 	CurMask[0,QminPoint]=1
-	CurMask[QminPoint,QmaxPoint+1]=5
+	CurMask[QminPoint,QmaxPoint]=5
 	CurMask[QmaxPoint,inf]=1
 	DoWindow LSQF_MainGraph
 	if(V_Flag)
@@ -2852,7 +2853,8 @@ end
 //*****************************************************************************************************************
 
 Function IR2L_AddRemoveTagsToGraph(AddAlso)
-	variable AddAlso		//set to 1 if you want to add new tags not only removce old ones
+	variable AddAlso		
+	//set to 1 if you want to add new tags not only removce old ones
 	
 	DFref oldDf= GetDataFolderDFR()
 
@@ -3495,7 +3497,7 @@ Function IR2L_SvNbk_Graphs(color)
 	endif
 End
 
-end
+
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -3620,9 +3622,12 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-Function IR2L_AppendAnyText(TextToBeInserted, level)		//this function checks for existance of notebook
-	string TextToBeInserted						//and appends text to the end of the notebook
-	variable level 								//formating level... 0 for base, 1 and higher define my own
+Function IR2L_AppendAnyText(TextToBeInserted, level)		
+	//this function checks for existance of notebook
+	string TextToBeInserted						
+	//and appends text to the end of the notebook
+	variable level 								
+	//formating level... 0 for base, 1 and higher define my own
 	    
 	TextToBeInserted=TextToBeInserted+"\r"
     SVAR/Z nbl=root:Packages:IR2L_NLSQF:NotebookName
@@ -4175,7 +4180,7 @@ static Function IR2L_ConEvAnalyzeEvalResults2(ParamName)
 	string tempStrName
 	For(j=0;j<numpnts(ConfEvCoefNames);j+=1)
 		tempStrName=ConfEvCoefNames[j]
-		Duplicate/Free/O/R=[j][] ConfEvEndValues, tempWv
+		Duplicate/Free/R=[j][] ConfEvEndValues, tempWv
 		wavestats/Q tempWv
 		//IR1_AppendAnyText(tempStrName+" : \taverage = "+num2str(V_avg)+"\tst. dev. = "+num2str(V_sdev), 0)	
 		IR1_AppendAnyText(tempStrName+" : \taverage +/- st. dev. = \t"+IN2G_roundToUncertainity(V_avg, V_sdev,2), 0)	
@@ -4470,6 +4475,7 @@ static Function IR2L_ConEvAnalyzeEvalResults(ParamName,SortForAnalysis,FittedPar
 		EndValuesGraphAvg = V_avg
 		EndValuesGraphMin = V_avg-V_sdev
 		EndValuesGraphMax = V_avg+V_sdev
+		Wave Level1RgStartValue
 		AppendToGraph EndValuesGraphMax,EndValuesGraphMin,EndValuesGraphAvg vs Level1RgStartValue	
 		ModifyGraph lstyle(EndValuesGraphMax)=1,rgb(EndValuesGraphMax)=(0,0,0)
 		ModifyGraph lstyle(EndValuesGraphMin)=1,rgb(EndValuesGraphMin)=(0,0,0)
@@ -5558,8 +5564,8 @@ Function IR2L_FinishSmearingOfData()
 				if(StringMatch(SmearingType, "None" ))
 					//nothing happens here... but how did we get here anyway??? 
 					//print "No pixel smearing necessary"
-				   Duplicate/O/Free ModelIntensity, ModelIntPixelSmeared
-				   Duplicate/O/Free ModelQ, ModelQPixelSmeared
+				    Duplicate/FREE ModelIntensity, ModelIntPixelSmeared
+				    Duplicate/FREE ModelQ, ModelQPixelSmeared
 				else		//need to smear these... 
 					Wave ResolutionsWave=$("root:Packages:IR2L_NLSQF:ResolutionsWave_set"+num2str(i))
 					// With Width we are using rectangular "slit" - 
@@ -5567,8 +5573,8 @@ Function IR2L_FinishSmearingOfData()
 					//we will need to get the resolutions - for now handle fixed one
 					variable timerRefNum, microSeconds
 					timerRefNum = StartMSTimer
-				   Duplicate/O/Free OrigModelQ, ModelIntPixelSmeared
-				   Duplicate/O/Free OrigModelQ, ModelQPixelSmeared
+				    Duplicate/FREE OrigModelQ, ModelIntPixelSmeared
+				    Duplicate/FREE OrigModelQ, ModelQPixelSmeared
 					//timerRefNum = StartMSTimer
 					// this should use multiple cores, should be faster... 
 					//multithread ModelIntPixelSmeared = IR2L_SmearByFunction(ModelIntensity,ModelQ, ResolutionsWave, OrigModelQ[p],ResolutionsWave[p], SmearingIgnoreSmalldQ, SmearingType)
@@ -5910,8 +5916,10 @@ end
 //**********************************************************************************
 //**********************************************************************************
 
-Function IR2L_CalculateIntensity(skipCreateDistWvs, fitting) //Calculate distribution waves and distributions for all used population populations and all data sets...
-	variable skipCreateDistWvs, fitting  	//set to 1 if skip changing the Radius/Diameter waves.. Use when using "semiAuto"
+Function IR2L_CalculateIntensity(skipCreateDistWvs, fitting) 
+	//Calculate distribution waves and distributions for all used population populations and all data sets...
+	variable skipCreateDistWvs, fitting  	
+	//set to 1 if skip changing the Radius/Diameter waves.. Use when using "semiAuto"
 	//set fitting = 1 to skip some of the stuff to speed up fitting
 	//find which pops and data sets are used
 	variable pop, dataSet, i, j 
@@ -6558,7 +6566,7 @@ Function IR2L_CalcSumOfDistribution() //Sums the existing populations and create
 
 	Sort DistRadia, DistRadia
 	//check if some of the point are the same, that causes trobles later. remove the points
-	variable imax=numpnts(DistRadia)
+	variable imax=numpnts(DistRadia)-1
 	For(i=imax;i>0;i-=1)
 		if(DistRadia(i)==DistRadia(i-1))
 			DeletePoints i,1, DistRadia
@@ -6982,8 +6990,10 @@ Function IR2L_CalcIntPopXDataSetY(pop,dataSet)
 end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-Function IR1_StartOfBinInDiameters(D_distribution,i)			//calculates the start of the bin in radii by taking half distance to point before and after
-	variable i								//returns number in A
+Function IR1_StartOfBinInDiameters(D_distribution,i)			
+	//calculates the start of the bin in radii by taking half distance to point before and after
+	variable i								
+	//returns number in A
 	Wave D_distribution
 	
 	variable start
@@ -7005,8 +7015,10 @@ end
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-Function IR1_BinWidthInDiameters(D_distribution,i)			//calculates the width in diameters by taking half distance to point before and after
-	variable i								//returns number in A
+Function IR1_BinWidthInDiameters(D_distribution,i)			
+	//calculates the width in diameters by taking half distance to point before and after
+	variable i								
+	//returns number in A
 	Wave D_distribution
 	
 	variable width
@@ -7028,8 +7040,10 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
-Function IR1_EndOfBinInDiameters(D_distribution,i)			//calculates the start of the bin in radii by taking half distance to point before and after
-	variable i								//returns number in A
+Function IR1_EndOfBinInDiameters(D_distribution,i)			
+	//calculates the start of the bin in radii by taking half distance to point before and after
+	variable i								
+	//returns number in A
 	Wave D_distribution
 	
 	variable endL
@@ -7908,7 +7922,7 @@ Function IR2L_LSWCumulative(xx,location,scale, shape)
 			
 	variable result, pointsNeeded=ceil(xx/30+30)
 	//points neede is at least 30 and max out around 370 for 10000 A location
-	make/D /O/N=(PointsNeeded)/Free temp_LSWwav 
+	make/D/N=(PointsNeeded)/Free temp_LSWwav 
 	
 	SetScale/P x 10,(xx/(numpnts(temp_LSWwav)-3)),"", temp_LSWwav	
 	//this sets scale so the model wave x scale covers area from 10 A over the needed point...

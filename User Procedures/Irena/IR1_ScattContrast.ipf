@@ -5,7 +5,7 @@
 Constant IR1K_CurrentPanelVersion = 2.27
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
@@ -1115,7 +1115,8 @@ End
 Function IR1K_ScatCont2SliderProc(ctrlName, sliderValue, event)
 	string   ctrlName
 	variable sliderValue
-	variable event // bit field: bit 0: value set, 1: mouse down, 2: mouse up, 3: mouse moved
+	variable event 
+	// bit field: bit 0: value set, 1: mouse down, 2: mouse up, 3: mouse moved
 
 	if((cmpstr(ctrlName, "ElementSelection") == 0) && (event & 0x1)) // bit 0, value set
 		//do something here
@@ -1414,7 +1415,8 @@ Function IR1K_ListBoxProc(ctrlName, row, col, event)
 	string   ctrlName
 	variable row
 	variable col
-	variable event //1=mouse down, 2=up, 3=dbl click, 4=cell select with mouse or keys
+	variable event 
+	//1=mouse down, 2=up, 3=dbl click, 4=cell select with mouse or keys
 	//5=cell select with shift key, 6=begin edit, 7=end
 
 	if(cmpstr(ctrlName, "CompoundSelection") == 0)
@@ -2331,7 +2333,8 @@ End
 //**********************************************************************************************************
 
 Function IR1K_Calculate(which)
-	variable which //this is which compound to calculate, yet to be decided which form this will be in...
+	variable which 
+	//this is which compound to calculate, yet to be decided which form this will be in...
 
 	DFREF oldDf = GetDataFolderDFR()
 

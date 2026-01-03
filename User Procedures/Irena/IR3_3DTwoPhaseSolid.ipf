@@ -3,7 +3,7 @@
 #pragma version=1.02
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
@@ -992,8 +992,7 @@ End
 //******************************************************************************************************************************************************
 Function IR3T_InitializeTwoPhaseSys()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFREF oldDf = GetDataFolderDFR()
+ 	DFREF oldDf = GetDataFolderDFR()
 
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:TwoPhaseSolidModel
@@ -1032,8 +1031,7 @@ static Function IR3T_SetInitialValues()
 	//and here set default values...
 	//template: IR1A_SetInitialValues(enforce)
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFREF oldDf = GetDataFolderDFR()
+ 	DFREF oldDf = GetDataFolderDFR()
 
 	setDataFolder root:Packages:TwoPhaseSolidModel
 	variable ListOfVariables
@@ -1478,9 +1476,12 @@ End
 //what to do here?
 
 Function IR3T_UseFFTtoGenerateMatrix(Gr, Radii, alfaValue, BoxDivisions, BoxSide)
-	WAVE Gr, radii //this is covariance function (1D)
-	variable alfaValue //this is cut off value
-	variable BoxDivisions, BoxSide //Divisions is number of pixels per side, Side is length in A
+	WAVE Gr, radii 
+	//this is covariance function (1D)
+	variable alfaValue 
+	//this is cut off value
+	variable BoxDivisions, BoxSide 
+	//Divisions is number of pixels per side, Side is length in A
 
 	//need to add radius 0 = Gr = 1
 	Duplicate/O Gr, GRtemp, Radiitemp
@@ -1632,8 +1633,10 @@ End
 //******************************************************************************************************************************************
 
 Function IR3T_Autocorelate3D(MatIn, ExtendByAverage)
-	variable ExtendByAverage //if set to 1, extend by ave density (3D solid), 0 extend by 0 (simple shapes)
-	WAVE     MatIn           //3D matrix which needs to be autocorelated. Assume 0 and 1 for now.
+	variable ExtendByAverage 
+	//if set to 1, extend by ave density (3D solid), 0 extend by 0 (simple shapes)
+	WAVE     MatIn           
+	//3D matrix which needs to be autocorelated. Assume 0 and 1 for now.
 	//this autocorelates Mat with itself.
 	variable startT = ticks
 	variable i
@@ -1909,7 +1912,8 @@ End
 ///*************************************************************************************************************************************
 //
 threadsafe Function IR3T_Formula4_SpectralFnct(Kvector, gR, Radii)
-	variable Kvector //this is Q value, or here called k
+	variable Kvector 
+	//this is Q value, or here called k
 	WAVE gR, Radii
 	//this sums for each k vector over all r and g(r) using paper formula 4
 	Make/FREE/N=(numpnts(Radii))/D tempVals
@@ -1920,7 +1924,8 @@ End
 ///*************************************************************************************************************************************
 //
 threadsafe Function IR3T_ConvertSpectrFtoGr(Radius, SpectralFk, Kvector)
-	variable Radius //this is Q value, or here called k
+	variable Radius 
+	//this is Q value, or here called k
 	WAVE SpectralFk, Kvector
 	//this sums for each k vector over all r and g(r) using paper formula 4
 	Make/FREE/N=(numpnts(Kvector))/D tempVals

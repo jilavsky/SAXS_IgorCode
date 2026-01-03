@@ -3,7 +3,7 @@
 #pragma version=1.
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
@@ -350,7 +350,8 @@ End
 
 Function IR3T_CalcRadialAveProfile3D(My3DWaveIn, minRadStep)
 	WAVE     My3DWaveIn
-	variable minRadStep //this is minimum step in radii. normally 1, but we can try smaller numbers.
+	variable minRadStep 
+	//this is minimum step in radii. normally 1, but we can try smaller numbers.
 	//this calculates radial profile of intensity for 3D Wave = Autocorrelation function
 	//Distance in pixels ---  from the center  ---
 	//does not have to be cube...

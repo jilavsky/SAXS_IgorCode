@@ -5,7 +5,7 @@
 
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -139,8 +139,8 @@ Function IN3_SmoothRData()
 				//endif
 				if((tmpPD_range[i-StartPoints]!=tmpPD_range[i])||(tmpPD_range[i+EndPoints]!=tmpPD_range[i]))
 					//range change, do not average, use line fitting to get the point... 
-					Duplicate/Free/O/R=[i-StartPoints,i+EndPoints-1] TempIntLog, tempR
-					Duplicate/O/Free/R=[i-StartPoints,i+EndPoints-1] Qvector, tempQ
+					Duplicate/Free/R=[i-StartPoints,i+EndPoints-1] TempIntLog, tempR
+					 Duplicate/FREE/R=[i-StartPoints,i+EndPoints-1] Qvector, tempQ
 
 					WaveStats /Q tempR
 					if(V_npnts>V_numNans+5)
@@ -153,8 +153,8 @@ Function IN3_SmoothRData()
 						R_Error[i]=R_Error[i]		//crude approximation
 					endif
 				else	//R must be symmetric around the i or the method below will not work right. 
-					Duplicate/Free/O/R=[i-StartPoints,i+EndPoints] TempIntLog, tempR
-					Duplicate/O/Free/R=[i-StartPoints,i+EndPoints] Qvector, tempQ
+					Duplicate/Free/R=[i-StartPoints,i+EndPoints] TempIntLog, tempR
+					 Duplicate/FREE/R=[i-StartPoints,i+EndPoints] Qvector, tempQ
 					startX =  tempQ[0] 
 					endX =  tempQ[numpnts(tempQ)-1]
 					SmoothIntensity[i] = areaXY(tempQ, tempR, startX,endX)
@@ -214,8 +214,8 @@ Function IN3_FitPeakCenterEstimate()
 	if(V_Flag)		//set the cursors appropriately, if graph already exists
 		String ExistingSubWindows=ChildWindowList("RcurvePlotGraph") 
 		if(stringmatch(ExistingSubWindows,"*PeakCenter*"))
-			Cursor/P/W=RcurvePlotGraph#PeakCenter A PD_Intensity PeakCenterFitStartPoint
-			Cursor/P/W=RcurvePlotGraph#PeakCenter B PD_Intensity PeakCenterFitEndPoint	
+			Cursor/P/W=RcurvePlotGraph#PeakCenter A, PD_Intensity, PeakCenterFitStartPoint
+			Cursor/P/W=RcurvePlotGraph#PeakCenter B, PD_Intensity, PeakCenterFitEndPoint	
 		endif
 	endif
 	IN3_FitGaussTop("")

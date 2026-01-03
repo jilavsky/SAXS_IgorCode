@@ -2,7 +2,7 @@
 #pragma version=1.56
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
@@ -1030,7 +1030,7 @@ End
 
 //************************************************************************************************************
 //************************************************************************************************************
-Function/S NI1_9IDCSetDefaultConfiguration()
+Function/S NI1_9IDCSetDefaultConfiguration([string PathStr, string FileNameStr])
 
 	NI1A_Initialize2Dto1DConversion()
 	NI1BC_InitCreateBmCntrFile()
@@ -1588,13 +1588,20 @@ Function/S NI1_9IDCSetDefaultConfiguration()
 	endif
 	//PathInfo/S Convert2Dto1DDataPath
 	//PathInfo/S Convert2Dto1DEmptyDarkPath
-	variable refnum
-	Open/D/R/T=".hdf" refnum
-	if(strlen(S_FileName) < 1)
-		abort
+	string FileName
+	string pathInforStrL
+	if(ParamIsDefault(PathStr) && ParamIsDefault(FileNameStr))
+		variable refnum
+		Open/D/R/T=".hdf" refnum
+		if(strlen(S_FileName) < 1)
+			abort
+		endif
+		FileName      = StringFromList(ItemsInList(S_FileName, ":") - 1, S_FileName, ":")
+		pathInforStrL = RemoveListItem(ItemsInList(S_FileName, ":") - 1, S_FileName, ":")
+	else
+		FileName = FileNameStr
+		pathInforStrL = PathStr
 	endif
-	string FileName      = StringFromList(ItemsInList(S_FileName, ":") - 1, S_FileName, ":")
-	string pathInforStrL = RemoveListItem(ItemsInList(S_FileName, ":") - 1, S_FileName, ":")
 
 	//NewPath/C/O/M="Select path to your data" Convert2Dto1DDataPath
 	NewPath/O Convert2Dto1DDataPath, pathInforStrL

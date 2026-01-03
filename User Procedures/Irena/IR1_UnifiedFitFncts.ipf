@@ -5,7 +5,7 @@
 
 constant IR2UversionNumber=2.23 			//Evaluation panel version number. 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -3133,7 +3133,7 @@ Function IR2U_PlotCalcInvariantFnct()			//JIL 2017 - created to create the funny
 				appendtograph backrq2 vs backqq2
 				ModifyGraph rgb(frontrq2)=(8738,8738,8738)
 				ModifyGraph rgb(backrq2)=(8738,8738,8738)
-				Cursor /A=1  A  rq2  0
+				Cursor /A=1  A , rq2 , 0
 				Tag/C/N=text1/F=0/A=LC frontrq2,100,"Level Used = "+Num2str(SelectedQlevel)
 			endif	
 
@@ -5402,7 +5402,7 @@ static Function IR1A_ConEvAnalyzeEvalResults2(ParamName)
 	string tempStrName
 	For(j=0;j<numpnts(ConfEvCoefNames);j+=1)
 		tempStrName=ConfEvCoefNames[j]
-		Duplicate/Free/O/R=[j][] ConfEvEndValues, tempWv
+		Duplicate/Free/R=[j][] ConfEvEndValues, tempWv
 		wavestats/Q tempWv
 		IR1_AppendAnyText(tempStrName+" : \taverage = "+num2str(V_avg)+"\tst. dev. = "+num2str(V_sdev), 0)	
 		
@@ -7439,7 +7439,8 @@ end
 
 
 Function IR1A_RecordResults(CalledFromWere)
-	string CalledFromWere	//before or after - that means fit...
+	string CalledFromWere	
+	//before or after - that means fit...
 	
 
 	DFref oldDf= GetDataFolderDFR()

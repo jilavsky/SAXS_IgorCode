@@ -4,7 +4,7 @@
 Constant IRVversionNumber = 2.11
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
@@ -690,142 +690,7 @@ End
 ///******************************************************************************************
 ///******************************************************************************************
 ///******************************************************************************************
-//
-//Function IR1V_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
-//	String ctrlName
-//	Variable popNum
-//	String popStr
-//
-//	DFref oldDf= GetDataFolderDFR()
 
-//	setDataFolder root:Packages:FractalsModel
-//		NVAR UseIndra2Data=root:Packages:FractalsModel:UseIndra2Data
-//		NVAR UseQRSData=root:Packages:FractalsModel:UseQRSdata
-//		SVAR IntDf=root:Packages:FractalsModel:IntensityWaveName
-//		SVAR QDf=root:Packages:FractalsModel:QWaveName
-//		SVAR EDf=root:Packages:FractalsModel:ErrorWaveName
-//		SVAR Dtf=root:Packages:FractalsModel:DataFolderName
-//
-//	if (cmpstr(ctrlName,"SelectDataFolder")==0)
-//		//here we do what needs to be done when we select data folder
-//		Dtf=popStr
-//		PopupMenu IntensityDataName mode=1
-//		PopupMenu QvecDataName mode=1
-//		PopupMenu ErrorDataName mode=1
-//		if (UseIndra2Data)
-//			if(stringmatch(IR1_ListOfWaves("DSM_Int","FractalsModel",0,0), "*M_BKG_Int*") &&stringmatch(IR1_ListOfWaves("DSM_Qvec","FractalsModel",0,0), "*M_BKG_Qvec*")  &&stringmatch(IR1_ListOfWaves("DSM_Error","FractalsModel",0,0), "*M_BKG_Error*") )
-//				IntDf="M_BKG_Int"
-//				QDf="M_BKG_Qvec"
-//				EDf="M_BKG_Error"
-//				PopupMenu IntensityDataName value="M_BKG_Int;M_DSM_Int;DSM_Int"
-//				PopupMenu QvecDataName value="M_BKG_Qvec;M_DSM_Qvec;DSM_Qvec"
-//				PopupMenu ErrorDataName value="M_BKG_Error;M_DSM_Error;DSM_Error"
-//			elseif(stringmatch(IR1_ListOfWaves("DSM_Int","FractalsModel",0,0), "*BKG_Int*") &&stringmatch(IR1_ListOfWaves("DSM_Qvec","FractalsModel",0,0), "*BKG_Qvec*")  &&stringmatch(IR1_ListOfWaves("DSM_Error","FractalsModel",0,0), "*BKG_Error*") )
-//				IntDf="BKG_Int"
-//				QDf="BKG_Qvec"
-//				EDf="BKG_Error"
-//				PopupMenu IntensityDataName value="BKG_Int;DSM_Int"
-//				PopupMenu QvecDataName value="BKG_Qvec;DSM_Qvec"
-//				PopupMenu ErrorDataName value="BKG_Error;DSM_Error"
-//			elseif(stringmatch(IR1_ListOfWaves("DSM_Int","FractalsModel",0,0), "*M_DSM_Int*") &&stringmatch(IR1_ListOfWaves("DSM_Qvec","FractalsModel",0,0), "*M_DSM_Qvec*")  &&stringmatch(IR1_ListOfWaves("DSM_Error","FractalsModel",0,0), "*M_DSM_Error*") )
-//				IntDf="M_DSM_Int"
-//				QDf="M_DSM_Qvec"
-//				EDf="M_DSM_Error"
-//				PopupMenu IntensityDataName value="M_DSM_Int;DSM_Int"
-//				PopupMenu QvecDataName value="M_DSM_Qvec;DSM_Qvec"
-//				PopupMenu ErrorDataName value="M_DSM_Error;DSM_Error"
-//			else
-//				if(!stringmatch(IR1_ListOfWaves("DSM_Int","FractalsModel",0,0), "*M_DSM_Int*") &&!stringmatch(IR1_ListOfWaves("DSM_Qvec","FractalsModel",0,0), "*M_DSM_Qvec*")  &&!stringmatch(IR1_ListOfWaves("DSM_Error","FractalsModel",0,0), "*M_DSM_Error*") )
-//					IntDf="DSM_Int"
-//					QDf="DSM_Qvec"
-//					EDf="DSM_Error"
-//					PopupMenu IntensityDataName value="DSM_Int"
-//					PopupMenu QvecDataName value="DSM_Qvec"
-//					PopupMenu ErrorDataName value="DSM_Error"
-//				endif
-//			endif
-//		else
-//			IntDf=""
-//			QDf=""
-//			EDf=""
-//			PopupMenu IntensityDataName value="---"
-//			PopupMenu QvecDataName  value="---"
-//			PopupMenu ErrorDataName  value="---"
-//		endif
-//		if(UseQRSdata)
-//			IntDf=""
-//			QDf=""
-//			EDf=""
-//			PopupMenu IntensityDataName  value="---;"+IR1_ListOfWaves("DSM_Int","FractalsModel",0,0)
-//			PopupMenu QvecDataName  value="---;"+IR1_ListOfWaves("DSM_Qvec","FractalsModel",0,0)
-//			PopupMenu ErrorDataName  value="---;"+IR1_ListOfWaves("DSM_Error","FractalsModel",0,0)
-//		endif
-//		if(!UseQRSdata && !UseIndra2Data)
-//			IntDf=""
-//			QDf=""
-//			EDf=""
-//			PopupMenu IntensityDataName  value="---;"+IR1_ListOfWaves("DSM_Int","FractalsModel",0,0)
-//			PopupMenu QvecDataName  value="---;"+IR1_ListOfWaves("DSM_Qvec","FractalsModel",0,0)
-//			PopupMenu ErrorDataName  value="---;"+IR1_ListOfWaves("DSM_Error","FractalsModel",0,0)
-//		endif
-//		if (cmpstr(popStr,"---")==0)
-//			IntDf=""
-//			QDf=""
-//			EDf=""
-//			PopupMenu IntensityDataName  value="---"
-//			PopupMenu QvecDataName  value="---"
-//			PopupMenu ErrorDataName  value="---"
-//		endif
-//	endif
-//
-//	if (cmpstr(ctrlName,"IntensityDataName")==0)
-//		//here goes what needs to be done, when we select this popup...
-//		if (cmpstr(popStr,"---")!=0)
-//			IntDf=popStr
-//			if (UseQRSData && strlen(QDf)==0 && strlen(EDf)==0)
-//				QDf="q"+popStr[1,inf]
-//				EDf="s"+popStr[1,inf]
-//				Execute ("PopupMenu QvecDataName mode=1, value=root:Packages:FractalsModel:QWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Qvec\",\"FractalsModel\",0,0)")
-//				Execute ("PopupMenu ErrorDataName mode=1, value=root:Packages:FractalsModel:ErrorWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Error\",\"FractalsModel\",0,0)")
-//			endif
-//		else
-//			IntDf=""
-//		endif
-//	endif
-//
-//	if (cmpstr(ctrlName,"QvecDataName")==0)
-//		//here goes what needs to be done, when we select this popup...
-//		if (cmpstr(popStr,"---")!=0)
-//			QDf=popStr
-//			if (UseQRSData && strlen(IntDf)==0 && strlen(EDf)==0)
-//				IntDf="r"+popStr[1,inf]
-//				EDf="s"+popStr[1,inf]
-//				Execute ("PopupMenu IntensityDataName mode=1, value=root:Packages:FractalsModel:IntensityWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Int\",\"FractalsModel\",0,0)")
-//				Execute ("PopupMenu ErrorDataName mode=1, value=root:Packages:FractalsModel:ErrorWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Error\",\"FractalsModel\",0,0)")
-//			endif
-//		else
-//			QDf=""
-//		endif
-//	endif
-//
-//	if (cmpstr(ctrlName,"ErrorDataName")==0)
-//		//here goes what needs to be done, when we select this popup...
-//		if (cmpstr(popStr,"---")!=0)
-//			EDf=popStr
-//			if (UseQRSData && strlen(IntDf)==0 && strlen(QDf)==0)
-//				IntDf="r"+popStr[1,inf]
-//				QDf="q"+popStr[1,inf]
-//				Execute ("PopupMenu IntensityDataName mode=1, value=root:Packages:FractalsModel:IntensityWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Int\",\"FractalsModel\",0,0)")
-//				Execute ("PopupMenu QvecDataName mode=1, value=root:Packages:FractalsModel:QWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Qvec\",\"FractalsModel\",0,0)")
-//			endif
-//		else
-//			EDf=""
-//		endif
-//	endif
-//	setDataFolder oldDF
-//end
-//
-//
 
 ///******************************************************************************************
 ///******************************************************************************************
@@ -1907,7 +1772,8 @@ End
 ///******************************************************************************************
 
 Function IR1V_SphereFFSquared(which, Qvalue)
-	variable Qvalue, which //does the math for Sphere Form factor function
+	variable Qvalue, which 
+	//does the math for Sphere Form factor function
 
 	NVAR     Radius = $("MassFr" + num2str(which) + "_Radius")
 	variable QR     = Qvalue * radius
@@ -1921,7 +1787,8 @@ End
 ///******************************************************************************************
 
 Function IR1V_UnifiedSphereFFSquared(Radius, Qvalue, PDI)
-	variable Qvalue, Radius, PDI //does the math for Unified fit Sphere Form factor function
+	variable Qvalue, Radius, PDI 
+	//does the math for Unified fit Sphere Form factor function
 
 	//NVAR Radius=$("MassFr"+num2str(which)+"_Radius")
 	variable G1 = 1, P1 = 4, Rg1 = sqrt(3 / 5) * radius
@@ -2072,7 +1939,8 @@ End
 ///******************************************************************************************
 
 Function IR1V_CalculateNormalizedError(CalledWhere)
-	string CalledWhere // "fit" or "graph"
+	string CalledWhere 
+	// "fit" or "graph"
 
 	string OldDf
 	OldDf = GetDataFolder(1)

@@ -4,7 +4,7 @@
 Constant IR2LversionNumber = 1.25
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
@@ -1069,14 +1069,14 @@ Function IR2L_AppendOrRemoveLocalPopInts()
 	endfor
 
 	if(UseTheDataSet && DisplaySinglePopInt && UseThePop)
-		WAVE/Z Int  = $("root:Packages:IR2L_NLSQF:IntensityModel_set" + num2str(whichDataSet) + "_pop" + num2str(whichPopSet))
+		WAVE/Z IntW  = $("root:Packages:IR2L_NLSQF:IntensityModel_set" + num2str(whichDataSet) + "_pop" + num2str(whichPopSet))
 		WAVE/Z Qvec = $("root:Packages:IR2L_NLSQF:Qmodel_set" + num2str(whichDataSet))
-		if(!WaveExists(Int) || !WaveExists(Qvec))
+		if(!WaveExists(IntW) || !WaveExists(Qvec))
 			return 1
 		endif
 		Checkdisplayed/W=LSQF_MainGraph $("IntensityModel_set" + num2str(whichDataSet) + "_pop" + num2str(whichPopSet))
 		if(V_Flag == 0)
-			AppendToGraph/W=LSQF_MainGraph Int vs Qvec
+			AppendToGraph/W=LSQF_MainGraph IntW vs Qvec
 			ModifyGraph/W=LSQF_MainGraph lstyle($("IntensityModel_set" + num2str(whichDataSet) + "_pop" + num2str(whichPopSet)))=8
 			ModifyGraph/W=LSQF_MainGraph rgb($("IntensityModel_set" + num2str(whichDataSet) + "_pop" + num2str(whichPopSet)))=(0, 0, 0)
 		endif
@@ -1155,8 +1155,16 @@ Function IR2L_FormatInputGraph()
 	NVAR GraphXMax           = root:Packages:IR2L_NLSQF:GraphXMax
 	NVAR GraphYMin           = root:Packages:IR2L_NLSQF:GraphYMin
 	NVAR GraphYMax           = root:Packages:IR2L_NLSQF:GraphYMax
-	NVAR GraphXLog           = root:Packages:IR2L_NLSQF:GraphXLog
-	NVAR GraphYLog           = root:Packages:IR2L_NLSQF:GraphYLog
+	NVAR/Z GraphXLog           = root:Packages:IR2L_NLSQF:GraphXLog
+	NVAR/Z GraphYLog           = root:Packages:IR2L_NLSQF:GraphYLog
+	if(!NVAR_Exists(GraphXLog))
+		variable/g root:Packages:IR2L_NLSQF:GraphXLog
+		variable/g root:Packages:IR2L_NLSQF:GraphYLog
+		NVAR GraphXLog           = root:Packages:IR2L_NLSQF:GraphXLog
+		NVAR GraphYLog           = root:Packages:IR2L_NLSQF:GraphYLog
+		GraphXLog = 1
+		GraphYLog = 1
+	endif
 	SVAR IntCalibrationUnits = root:Packages:IR2L_NLSQF:IntCalibrationUnits
 	DoWindow LSQF_MainGraph
 	if(V_Flag)
@@ -1327,7 +1335,8 @@ End
 //*****************************************************************************************************************
 
 Function IR2L_Fitting(SkipDialogs)
-	variable SkipDialogs //if set to 0 we present dialogs for user, if 1 we skip them. Called from scripting tool
+	variable SkipDialogs 
+	//if set to 0 we present dialogs for user, if 1 we skip them. Called from scripting tool
 
 	DFREF oldDf = GetDataFolderDFR()
 
@@ -2058,7 +2067,7 @@ Function IR2L_CheckFittingParamsFnct()
 		SetDimLabel 0, i, $(CoefNames[i]), Gen_Constraints
 	endfor
 	if(UseGeneticOptimization)
-		Edit/HOST=#/W=(0.05, 0.25, 0.95, 0.865) Gen_Constraints.ld W_coef
+		Edit/HOST=#/W=(0.05, 0.25, 0.95, 0.865) Gen_Constraints.ld, W_coef
 		ModifyTable format(Point)=1, width(Point)=0, alignment(W_coef.y)=1, sigDigits(W_coef.y)=4
 		ModifyTable width(W_coef.y)=90, title(W_coef.y)="Start value", width(Gen_Constraints.l)=142
 		ModifyTable alignment(Gen_Constraints.d)=1, sigDigits(Gen_Constraints.d)=4, width(Gen_Constraints.d)=72
@@ -2178,7 +2187,8 @@ End
 //*****************************************************************************************************************
 
 Function IR2L_RecordResults(CalledFromWere)
-	string CalledFromWere //before or after - that means fit...
+	string CalledFromWere 
+	//before or after - that means fit...
 
 	DFREF oldDf = GetDataFolderDFR()
 

@@ -1,14 +1,15 @@
-#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=4.17
+#pragma rtGlobals=3	// Use modern global access method.
+#pragma version=4.18
 Constant IR2HversionNumber = 4.13
 
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//4.18 change #pragma rtGlobals=1 to 3. 
 //4.17 fix GenCurveFit call, which was failing due to Exists("gencurvefit") returning 4 instead of 3 which was in the code. 
 //4.16 added check for errors = 0 
 //4.15 added display of units for Intensity
@@ -984,10 +985,12 @@ static Function IR2H_AttachTags()
 		CiccBenTxt += "Layer thickness = "+num2str(BC_CoatingsThickness)+" A"+" +/- "+num2str(BC_CoatingsThicknessError)+"\r"
 		CiccBenTxt += "Scat. Length dens = "+num2str(BC_LayerScatLengthDens)+" cm^-2"+" +/- "+num2str(BC_LayerScatLengthDensError)
 		Tag/W=IR2H_LogLogPlotGels /C/N=CiccBenTag OriginalIntensity, attachPoint,CiccBenTxt
+		Wave OriginalIntQ3
 		CheckDisplayed /W=IR2H_IQ4_Q_PlotGels OriginalIntQ3
 		if(V_Flag)
 			Tag/W=IR2H_IQ4_Q_PlotGels /C/N=CiccBenTag OriginalIntQ3, attachPoint,CiccBenTxt
 		endif
+		wave OriginalIntQ4
 		CheckDisplayed /W=IR2H_IQ4_Q_PlotGels OriginalIntQ4
 		if(V_Flag)
 			Tag/W=IR2H_IQ4_Q_PlotGels /C/N=CiccBenTag OriginalIntQ4, attachPoint,CiccBenTxt
@@ -1060,6 +1063,7 @@ Function IR2H_CalcAndPlotResiduals(OriginalIntensity,OriginalError, DBModelInten
 	
 	DoWindow IR2H_ResidualsPlot
 	if(!V_Flag)
+		wave DBModelQvector
 		Display/K=1 /W=(667,585,1328,804) Residuals vs DBModelQvector as "Residuals"
 		DoWindow/C IR2H_ResidualsPlot
 		ModifyGraph mode=2
@@ -1422,6 +1426,7 @@ static Function IR2H_AppendModelToMeasuredData()
 
 	if(UseSlitSmearedData)
 		AppendToGraph/W=IR2H_IQ4_Q_PlotGels IQ3 vs Qvec
+		Wave OriginalIntQ3
 		checkdisplayed /W=IR2H_IQ4_Q_PlotGels OriginalIntQ3
 		if(V_Flag)
 			ErrorBars/W=IR2H_IQ4_Q_PlotGels OriginalIntQ3 Y,wave=(root:Packages:Gels_Modeling:OriginalErrQ3,root:Packages:Gels_Modeling:OriginalErrQ3)
@@ -1434,6 +1439,7 @@ static Function IR2H_AppendModelToMeasuredData()
 		endif
 	else
 		AppendToGraph/W=IR2H_IQ4_Q_PlotGels IQ4 vs Qvec
+		Wave OriginalIntQ4
 		checkdisplayed /W=IR2H_IQ4_Q_PlotGels OriginalIntQ4
 		if(V_Flag)
 			ErrorBars/W=IR2H_IQ4_Q_PlotGels OriginalIntQ4 Y,wave=(root:Packages:Gels_Modeling:OriginalErrQ4,root:Packages:Gels_Modeling:OriginalErrQ4)
@@ -2404,10 +2410,10 @@ static Function IR2H_ConstructTheFittingCommand()
 			//check that cursors are actually on hte right wave...
 			//make sure the cursors are on the right waves..
 			if (cmpstr(CsrWave(A, "IR2H_LogLogPlotGels"),"IntensityOriginal")!=0)
-				Cursor/P/W=IR2H_LogLogPlotGels A  OriginalIntensity  binarysearch(OriginalQvector, CsrXWaveRef(A) [pcsr(A, "IR2H_LogLogPlotGels")])
+				Cursor/P/W=IR2H_LogLogPlotGels A , OriginalIntensity , binarysearch(OriginalQvector, CsrXWaveRef(A) [pcsr(A, "IR2H_LogLogPlotGels")])
 			endif
 			if (cmpstr(CsrWave(B, "IR2H_LogLogPlotGels"),"IntensityOriginal")!=0)
-				Cursor/P /W=IR2H_LogLogPlotGels B  OriginalIntensity  binarysearch(OriginalQvector,CsrXWaveRef(B) [pcsr(B, "IR2H_LogLogPlotGels")])
+				Cursor/P /W=IR2H_LogLogPlotGels B , OriginalIntensity , binarysearch(OriginalQvector,CsrXWaveRef(B) [pcsr(B, "IR2H_LogLogPlotGels")])
 			endif
 			Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalIntensity, FitIntensityWave		
 			Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalQvector, FitQvectorWave
@@ -2472,10 +2478,10 @@ static Function IR2H_ConstructTheFittingCommand()
 			//check that cursors are actually on hte right wave...
 			//make sure the cursors are on the right waves..
 			if (cmpstr(CsrWave(A, "IR2H_LogLogPlotGels"),"IntensityOriginal")!=0)
-				Cursor/P/W=IR2H_LogLogPlotGels A  OriginalIntensity  binarysearch(OriginalQvector, CsrXWaveRef(A) [pcsr(A, "IR2H_LogLogPlotGels")])
+				Cursor/P/W=IR2H_LogLogPlotGels A , OriginalIntensity , binarysearch(OriginalQvector, CsrXWaveRef(A) [pcsr(A, "IR2H_LogLogPlotGels")])
 			endif
 			if (cmpstr(CsrWave(B, "IR2H_LogLogPlotGels"),"IntensityOriginal")!=0)
-				Cursor/P /W=IR2H_LogLogPlotGels B  OriginalIntensity  binarysearch(OriginalQvector,CsrXWaveRef(B) [pcsr(B, "IR2H_LogLogPlotGels")])
+				Cursor/P /W=IR2H_LogLogPlotGels B , OriginalIntensity,  binarysearch(OriginalQvector,CsrXWaveRef(B) [pcsr(B, "IR2H_LogLogPlotGels")])
 			endif
 			Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalIntensity, FitIntensityWave		
 			Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalQvector, FitQvectorWave

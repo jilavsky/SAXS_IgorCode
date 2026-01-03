@@ -1,6 +1,6 @@
-#pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.32
-#pragma IgorVersion = 8.03
+L#pragma rtGlobals=2		// Use modern global access method.
+#pragma version = 2.33
+#pragma IgorVersion = 9.04
 
 //control constants
 constant IrenaDebugLevel=1
@@ -17,27 +17,24 @@ Constant TypicalPanelHorizontalSize = 350
    //For releases uncomment the next line and set to correct version number:
 //Strconstant ManualVersionString = "en/1.4/"					//1.4 is December2018 release
 //Strconstant ManualVersionString = "en/1.5.1/"				//this was for September2020 release. 
-Strconstant ManualVersionString = "en/1.5.3/"				//July2023 release. 
+Strconstant ManualVersionString = "en/1.5.5/"				//January2026 beta release. 
 //*** For development version uncomment next line, it points to latest (development) version of manuals:
 //Strconstant ManualVersionString = "en/latest/"		//this is for beta version, so it sees current version of manual. 
 strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan-ilavsky/IrenaNikaRecords/VersionCheck.php?"
-//this is probably useless... strconstant strConstVerCheckwwwAddress="http://usaxs.xray.aps.anl.gov/staff/ilavsky/IrenaNikaRecords/VersionCheck.php?"
-//constant useUserFileNames = 0			//this controls, if IN2G_ReturnUserSampleName(FolderPathToData) returns folder name (=0) or SmapleName (string, if exists, =1)
 //replaced with root:Packages:IrenaConfigFolder:UseUserNameString
 // Names handling: 
 //  IN2G_ReturnUserSampleName(FolderPathToData) returns name, either folder name or content of UserName string
 //  IN2G_CreateUserName(NameIn,MaxShortLength, MakeUnique, FolderWaveStrNum) returns name for specific element
-//  On Igor 7 always less than 31 characters. On Igor 8 optionally more, based on constats above.  
-//
 //Igor 9 handling:
 // disabled IN2G_CheckScreenSize, not needed since IP9 can scale panels down. 
 //  
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
+//2.33	upgrade to IP9, remvoe some older code not needed
 //2.32 fix IP8.x bug
 //2.31 fix IN2G_AddWaveStatistics to write statistics data in Y wave data folder. 
 //2.30 added IN2G_Find2DDataInFolderTree, needed to search for 2D images in imported HDF5 folder tree. 
@@ -526,7 +523,6 @@ Menu "TracePopup"
       "Save as pxp", IN2G_SaveTopGraphPXP()
 end
 
-	#if (IgorVersion()>8.99)
 
 Menu "GraphPopup"
        "Save as jpg", IN2G_SaveTopGraphJpg()
@@ -535,231 +531,182 @@ Menu "GraphPopup"
        "Make limits Nice", IN2G_MakeGrphLimitsNice()
 End
 
-#else       
-
-Menu "GraphPopup"
-       "Save as jpg", IN2G_SaveTopGraphJpg()
-       "Save as pxp", IN2G_SaveTopGraphPXP()
-       "Clone this window with data", IN2G_CloneWindow()
-       "Make limits Nice", IN2G_MakeGrphLimitsNice()
-End
-
-#endif
-
-//DataBrowser  right click menu... 
-//here is add to DataBrowser buttons, it will be in after compile hooks. 
-//this is for Igor 8 and 7, in Igor 9 this is in Data browser right click menu...
-
-
-Function IN2G_AddButtonsToBrowser()
-#if (IgorVersion()<9)
-	CreateBrowser
-	ModifyBrowser appendUserButton={'SampleName-to-Values',"IN2G_ExtractInfoFromFldrname()"}
-	ModifyBrowser appendUserButton={'Graph w1 vs w2',"IN2G_PlotBrowserSelectionXY()"}
-#endif
-end
 
 //this is right click Igor 9+ Data Browser functions, so they do not need to be buttons. 
 
-#if (IgorVersion()>8.99)		
-			Menu "DataBrowserObjectsPopup", dynamic		
-				"--"
-				// Only one of these menu items will be visible,
-				// depending on whether or not a modifier key is pressed
-				// when the menu is first displayed.
-				IN2G_Display1vs2MenuString(0),/Q,IN2G_PlotBrowserSelectionXY(0)
-				IN2G_Display1vs2MenuString(1),/Q,IN2G_PlotBrowserSelectionXY(1)
-				IN2G_Append1vs2MenuString(0),/Q,IN2G_AppendBrowserSelectionXY(0)
-				IN2G_Append1vs2MenuString(1),/Q,IN2G_AppendBrowserSelectionXY(1)
-				IN2G_ShowTextWaveInfoMenuString(), /Q, IN2G_ExtractInfoFromFldrname()
-				IN2G_DisplayDuplicateItemStr(), /Q, IN2G_BrowserDuplicateItem()
-				"--"		
-			End
+Menu "DataBrowserObjectsPopup", dynamic		
+		"--"
+		// Only one of these menu items will be visible,
+		// depending on whether or not a modifier key is pressed
+		// when the menu is first displayed.
+		IN2G_Display1vs2MenuString(0),/Q,IN2G_PlotBrowserSelectionXY(0)
+		IN2G_Display1vs2MenuString(1),/Q,IN2G_PlotBrowserSelectionXY(1)
+		IN2G_Append1vs2MenuString(0),/Q,IN2G_AppendBrowserSelectionXY(0)
+		IN2G_Append1vs2MenuString(1),/Q,IN2G_AppendBrowserSelectionXY(1)
+		IN2G_ShowTextWaveInfoMenuString(), /Q, IN2G_ExtractInfoFromFldrname()
+		IN2G_DisplayDuplicateItemStr(), /Q, IN2G_BrowserDuplicateItem()
+		"--"		
+End
 
-			//************************************************************************************************
-			FUnction/S IN2G_DisplayDuplicateItemStr()
-				if(strlen(GetBrowserSelection(-1))>0)		//this is cumbersome way to check if DataBrowser exists... hm... 
-					String menuText = ""
-					String BrowserSelStr = GetBrowserSelection(0)
-					string LastFldr
-					if(strlen(BrowserSelStr)>0)	
-						Wave/Z w=$(BrowserSelStr)
-						if(DataFolderExists(BrowserSelStr)||WaveExists(w))
-							LastFldr = StringFromList(ItemsInList(BrowserSelStr,":")-1,BrowserSelStr,":")
-							sprintf menuText, "Duplicate %s", LastFldr
-						endif
-					endif
-					return menuText	
-				endif		
-			end
-			//************************************************************************************************
-			Function IN2G_BrowserDuplicateItem()
-				String BrowserSelStr = GetBrowserSelection(0)
-				string NewItemNameStr, LastNameStr, OldItemStr, tempStr
-				variable OrderNum
-				if(strlen(BrowserSelStr)>0)
-					Wave/Z w=$(BrowserSelStr)
-					if(DataFolderExists(BrowserSelStr))	
-						LastNameStr = StringFromList(ItemsInList(BrowserSelStr,":")-1,BrowserSelStr,":")
-						NewItemNameStr = RemoveFromList(LastNameStr, BrowserSelStr, ":")+PossiblyQUoteName(IN2G_RemoveExtraQuote(LastNameStr,1,1)+"_dup")
-						if(DataFolderExists(NewItemNameStr))
-							OrderNum=0
-							Do
-								tempStr=NewItemNameStr+num2str(OrderNum)
-								OrderNum+=1
-							while(DataFolderExists(tempStr)&&OrderNum<20)
-							if(OrderNum>19)
-								DoAlert /T="Cannot duplicate folder" 0, "Cannot duplicate folder, all allowed duplicates exist"
-							else
-								NewItemNameStr=tempStr
-							endif
-						endif
-						OldItemStr = RemoveEnding(BrowserSelStr, ":")
-						DuplicateDataFolder $(OldItemStr), $(NewItemNameStr)
-					elseif(WaveExists(w))
-						LastNameStr = StringFromList(ItemsInList(BrowserSelStr,":")-1,BrowserSelStr,":")
-						NewItemNameStr = RemoveFromList(LastNameStr, BrowserSelStr, ":")+PossiblyQUoteName(IN2G_RemoveExtraQuote(LastNameStr,1,1)+"_dup")
-						Wave/Z oldWv=$(NewItemNameStr)
-						if(WaveExists(oldWv))
-							OrderNum=0
-							Do
-								tempStr=NewItemNameStr+num2str(OrderNum)
-								OrderNum+=1
-								Wave/Z oldWv=$(NewItemNameStr)
-							while(WaveExists(oldWv)&&OrderNum<20)
-							if(OrderNum>19)
-								DoAlert /T="Cannot duplicate wave" 0, "Cannot duplicate wave, all allowed duplicates exist"
-							else
-								NewItemNameStr=tempStr
-							endif
-						endif
-						OldItemStr = RemoveEnding(BrowserSelStr, ":")
-						Duplicate $(OldItemStr), $(NewItemNameStr)
-					endif
-				endif
-			end
-			//************************************************************************************************
-			Function/S IN2G_ShowTextWaveInfoMenuString()
-				WAVE/Z w1
-				String menuText = ""
-				Variable textWaveSelected = IN2G_GetSelectedTextWave(w1)
-				if (textWaveSelected)
-					sprintf menuText, "%s to Values", NameOfWave(w1)
-				endif
-				return menuText
-			End
-			//************************************************************************************************
-			// Returns the truth that the first selected object is a text wave.
-			Function IN2G_GetSelectedTextWave(WAVE/Z &w1)
-				if (strlen(GetBrowserSelection(-1)) == 0)	// If true, DB is not open
-					return 0
-				endif
-				
-				WAVE/Z w1 = $(GetBrowserSelection(0))	// may be null
-				if (WaveExists(w1) && (WaveType(w1, 1) == 2))
-					return 1
-				endif
-				return 0
-			End
-			//************************************************************************************************
-			// If the Data Browser object list has
-			// two numeric waves selected, sets
-			// w1 to be the top selected wave and w2 to be
-			// the bottom selected wave. If reverse1and2
-			// is true, then the order is reversed.
-			// Returns 1 if the first two selected objects
-			// are numeric waves and 0 otherwise.
-			Function IN2G_GetWave1AndWave2(WAVE/Z &w1, WAVE/Z &w2, Variable reverse1and2)
-				Variable twoNumericWavesSelected = 0
-				if (strlen(GetBrowserSelection(-1)) == 0)
-					return 0	// Data Browser is not open
-				endif
-				// Reverse w1 and w2 if a modifier key is pressed.
-				Variable keyState = GetKeyState(0)
-				WAVE/Z w1 = $(GetBrowserSelection(reverse1and2 ? 1 : 0))	// may be null
-				WAVE/Z w2 = $(GetBrowserSelection(reverse1and2 ? 0 : 1))	// may be null
-				if (WaveExists(w1) && WaveExists(w2) && (WaveType(w1, 1) == 1) && (WaveType(w2, 1) == 1))
-					twoNumericWavesSelected = 1
-				endif
-				return twoNumericWavesSelected
-			End
-			//************************************************************************************************
-			// If reverse1and2 is false, do Display 1 vs 2
-			// If reverse1and2 is true, do Display 2 vs 1
-			Function/S IN2G_Display1vs2MenuString(Variable reverse1and2)
-				WAVE/Z w1, w2
-				if (reverse1and2 != (GetKeyState(0) != 0))
-					return ""
-				endif
-				
-				Variable twoNumericWavesSelected = IN2G_GetWave1AndWave2(w1, w2, reverse1and2)
-				String menuText = ""
-				if (twoNumericWavesSelected)
-					sprintf menuText, "Display %s vs %s", NameOfWave(w1), NameOfWave(w2)
-				endif
-				return menuText
-			End
-			//************************************************************************************************
-			// If reverse1and2 is false, do Display 1 vs 2
-			// If reverse1and2 is true, do Display 2 vs 1
-			Function/S IN2G_Append1vs2MenuString(Variable reverse1and2)
-				WAVE/Z w1, w2
-				if (reverse1and2 != (GetKeyState(0) != 0))
-					return ""
-				endif
-				
-				Variable twoNumericWavesSelected = IN2G_GetWave1AndWave2(w1, w2, reverse1and2)
-				String menuText = ""
-				if (twoNumericWavesSelected)
-					sprintf menuText, "AppendToGraph/W=%s %s vs %s", WinName(0,1), NameOfWave(w1), NameOfWave(w2)
-				endif
-				return menuText
-			End
-			//************************************************************************************************		
-			Function IN2G_AppendBrowserSelectionXY(Variable reverse1and2)
-				WAVE/Z w1, w2
-				Variable twoNumericWavesSelected = IN2G_GetWave1AndWave2(w1, w2, reverse1and2)
-				if (twoNumericWavesSelected)
-					AppendToGraph/W=$(WinName(0,1)) w1 vs w2 //as NameofWave(w1)+" vs "+NameofWave(w2)
-					//Label left (NameofWave(w1))
-					//Label bottom (NameofWave(w2))
-				endif
-			End
-			//************************************************************************************************		
-			Function IN2G_PlotBrowserSelectionXY(Variable reverse1and2)
-				WAVE/Z w1, w2
-				Variable twoNumericWavesSelected = IN2G_GetWave1AndWave2(w1, w2, reverse1and2)
-				if (twoNumericWavesSelected)
-					Display/K=1 w1 vs w2 as NameofWave(w1)+" vs "+NameofWave(w2)
-					Label left (NameofWave(w1))
-					Label bottom (NameofWave(w2))
-				endif
-			End
-		//************************************************************************************************
-			
-
-#else
-		//************************************************************************************************
-		Function IN2G_PlotBrowserSelectionXY()
-			if (strlen(GetBrowserSelection(-1)) == 0)	// If true, DB is not open
-				return 0
+//************************************************************************************************
+FUnction/S IN2G_DisplayDuplicateItemStr()
+	if(strlen(GetBrowserSelection(-1))>0)		//this is cumbersome way to check if DataBrowser exists... hm... 
+		String menuText = ""
+		String BrowserSelStr = GetBrowserSelection(0)
+		string LastFldr
+		if(strlen(BrowserSelStr)>0)	
+			Wave/Z w=$(BrowserSelStr)
+			if(DataFolderExists(BrowserSelStr)||WaveExists(w))
+				LastFldr = StringFromList(ItemsInList(BrowserSelStr,":")-1,BrowserSelStr,":")
+				sprintf menuText, "Duplicate %s", LastFldr
 			endif
-			// Reverse w1 and w2 if a modifier key is pressed.
-			Variable keyState = GetKeyState(0)
-			WAVE/Z Wave1 = $(GetBrowserSelection((keyState == 0) ? 0 : 1))	// may be null
-			WAVE/Z Wave2 = $(GetBrowserSelection((keyState == 0) ? 1 : 0))	// may be null
-			if (WaveExists(Wave1) && WaveExists(Wave2) && (WaveType(Wave1, 1) == 1) && (WaveType(Wave2, 1) == 1))
-				Display/K=1 Wave1 vs Wave2 as NameofWave(Wave1)+" vs "+NameofWave(Wave2)
-				Label left (NameofWave(Wave1))
-				Label bottom (NameofWave(Wave2))
-			else
-				return 0
+		endif
+		return menuText	
+	endif		
+end
+//************************************************************************************************
+Function IN2G_BrowserDuplicateItem()
+	String BrowserSelStr = GetBrowserSelection(0)
+	string NewItemNameStr, LastNameStr, OldItemStr, tempStr
+	variable OrderNum
+	if(strlen(BrowserSelStr)>0)
+		Wave/Z w=$(BrowserSelStr)
+		if(DataFolderExists(BrowserSelStr))	
+			LastNameStr = StringFromList(ItemsInList(BrowserSelStr,":")-1,BrowserSelStr,":")
+			NewItemNameStr = RemoveFromList(LastNameStr, BrowserSelStr, ":")+PossiblyQUoteName(IN2G_RemoveExtraQuote(LastNameStr,1,1)+"_dup")
+			if(DataFolderExists(NewItemNameStr))
+				OrderNum=0
+				Do
+					tempStr=NewItemNameStr+num2str(OrderNum)
+					OrderNum+=1
+				while(DataFolderExists(tempStr)&&OrderNum<20)
+				if(OrderNum>19)
+					DoAlert /T="Cannot duplicate folder" 0, "Cannot duplicate folder, all allowed duplicates exist"
+				else
+					NewItemNameStr=tempStr
+				endif
 			endif
-			return 1
-		end
-		//************************************************************************************************
-
-#endif
+			OldItemStr = RemoveEnding(BrowserSelStr, ":")
+			DuplicateDataFolder $(OldItemStr), $(NewItemNameStr)
+		elseif(WaveExists(w))
+			LastNameStr = StringFromList(ItemsInList(BrowserSelStr,":")-1,BrowserSelStr,":")
+			NewItemNameStr = RemoveFromList(LastNameStr, BrowserSelStr, ":")+PossiblyQUoteName(IN2G_RemoveExtraQuote(LastNameStr,1,1)+"_dup")
+			Wave/Z oldWv=$(NewItemNameStr)
+			if(WaveExists(oldWv))
+				OrderNum=0
+				Do
+					tempStr=NewItemNameStr+num2str(OrderNum)
+					OrderNum+=1
+					Wave/Z oldWv=$(NewItemNameStr)
+				while(WaveExists(oldWv)&&OrderNum<20)
+				if(OrderNum>19)
+					DoAlert /T="Cannot duplicate wave" 0, "Cannot duplicate wave, all allowed duplicates exist"
+				else
+					NewItemNameStr=tempStr
+				endif
+			endif
+			OldItemStr = RemoveEnding(BrowserSelStr, ":")
+			Duplicate $(OldItemStr), $(NewItemNameStr)
+		endif
+	endif
+end
+//************************************************************************************************
+Function/S IN2G_ShowTextWaveInfoMenuString()
+	WAVE/Z w1
+	String menuText = ""
+	Variable textWaveSelected = IN2G_GetSelectedTextWave(w1)
+	if (textWaveSelected)
+		sprintf menuText, "%s to Values", NameOfWave(w1)
+	endif
+	return menuText
+End
+//************************************************************************************************
+// Returns the truth that the first selected object is a text wave.
+Function IN2G_GetSelectedTextWave(WAVE/Z &w1)
+	if (strlen(GetBrowserSelection(-1)) == 0)	// If true, DB is not open
+		return 0
+	endif
+	
+	WAVE/Z w1 = $(GetBrowserSelection(0))	// may be null
+	if (WaveExists(w1) && (WaveType(w1, 1) == 2))
+		return 1
+	endif
+	return 0
+End
+//************************************************************************************************
+// If the Data Browser object list has
+// two numeric waves selected, sets
+// w1 to be the top selected wave and w2 to be
+// the bottom selected wave. If reverse1and2
+// is true, then the order is reversed.
+// Returns 1 if the first two selected objects
+// are numeric waves and 0 otherwise.
+Function IN2G_GetWave1AndWave2(WAVE/Z &w1, WAVE/Z &w2, Variable reverse1and2)
+	Variable twoNumericWavesSelected = 0
+	if (strlen(GetBrowserSelection(-1)) == 0)
+		return 0	// Data Browser is not open
+	endif
+	// Reverse w1 and w2 if a modifier key is pressed.
+	Variable keyState = GetKeyState(0)
+	WAVE/Z w1 = $(GetBrowserSelection(reverse1and2 ? 1 : 0))	// may be null
+	WAVE/Z w2 = $(GetBrowserSelection(reverse1and2 ? 0 : 1))	// may be null
+	if (WaveExists(w1) && WaveExists(w2) && (WaveType(w1, 1) == 1) && (WaveType(w2, 1) == 1))
+		twoNumericWavesSelected = 1
+	endif
+	return twoNumericWavesSelected
+End
+//************************************************************************************************
+// If reverse1and2 is false, do Display 1 vs 2
+// If reverse1and2 is true, do Display 2 vs 1
+Function/S IN2G_Display1vs2MenuString(Variable reverse1and2)
+	WAVE/Z w1, w2
+	if (reverse1and2 != (GetKeyState(0) != 0))
+		return ""
+	endif
+	
+	Variable twoNumericWavesSelected = IN2G_GetWave1AndWave2(w1, w2, reverse1and2)
+	String menuText = ""
+	if (twoNumericWavesSelected)
+		sprintf menuText, "Display %s vs %s", NameOfWave(w1), NameOfWave(w2)
+	endif
+	return menuText
+End
+//************************************************************************************************
+// If reverse1and2 is false, do Display 1 vs 2
+// If reverse1and2 is true, do Display 2 vs 1
+Function/S IN2G_Append1vs2MenuString(Variable reverse1and2)
+	WAVE/Z w1, w2
+	if (reverse1and2 != (GetKeyState(0) != 0))
+		return ""
+	endif
+	
+	Variable twoNumericWavesSelected = IN2G_GetWave1AndWave2(w1, w2, reverse1and2)
+	String menuText = ""
+	if (twoNumericWavesSelected)
+		sprintf menuText, "AppendToGraph/W=%s %s vs %s", WinName(0,1), NameOfWave(w1), NameOfWave(w2)
+	endif
+	return menuText
+End
+//************************************************************************************************		
+Function IN2G_AppendBrowserSelectionXY(Variable reverse1and2)
+	WAVE/Z w1, w2
+	Variable twoNumericWavesSelected = IN2G_GetWave1AndWave2(w1, w2, reverse1and2)
+	if (twoNumericWavesSelected)
+		AppendToGraph/W=$(WinName(0,1)) w1 vs w2 //as NameofWave(w1)+" vs "+NameofWave(w2)
+		//Label left (NameofWave(w1))
+		//Label bottom (NameofWave(w2))
+	endif
+End
+//************************************************************************************************		
+Function IN2G_PlotBrowserSelectionXY(Variable reverse1and2)
+	WAVE/Z w1, w2
+	Variable twoNumericWavesSelected = IN2G_GetWave1AndWave2(w1, w2, reverse1and2)
+	if (twoNumericWavesSelected)
+		Display/K=1 w1 vs w2 as NameofWave(w1)+" vs "+NameofWave(w2)
+		Label left (NameofWave(w1))
+		Label bottom (NameofWave(w2))
+	endif
+End
 
 //************************************************************************************************
 //************************************************************************************************
@@ -805,12 +752,8 @@ Function IN2G_SaveTopGraphPXP()
 				NewName = UserSampleName
 			endif
 		endif
-#if (IgorVersion()>8.99)
 		//SaveGraphCopy /I/T=1 /W=$(topWindow)	  			//this is h5xp
 		SaveGraphCopy /I /W=$(NewName)	  			//this is pxp
-#else
-		SaveGraphCopy /I /W=$(NewName)	  				//this is pxp
-#endif
 end
 //************************************************************************************************
 //************************************************************************************************
@@ -1190,28 +1133,12 @@ Function/T IN2G_CreateUserName(NameIn,I7MaxShortLength, MakeUnique, FolderWaveSt
 	//FolderWaveStrNum - 11 for folder, 1 for wave, 3 for string 4 for number
 	
 	NVAR useIgor8LongNames = root:Packages:IrenaConfigFolder:Igor8UseLongNames
+	useIgor8LongNames=1
+	
 	NVAR/Z Igor7LongNamesWarning = root:Packages:IrenaConfigFolder:Igor7LongNamesWarning
 	string resultStr
 	resultStr =  IN2G_RemoveExtraQuote(NameIn,1,1)
-	if(strlen(resultStr)>I7MaxShortLength)
-		if((IgorVersion()>7.99 && !useIgor8LongNames) || IgorVersion()<7.99)
-			if(!NVAR_Exists(Igor7LongNamesWarning))
-				variable/g root:Packages:IrenaConfigFolder:Igor7LongNamesWarning
-				NVAR Igor7LongNamesWarning = root:Packages:IrenaConfigFolder:Igor7LongNamesWarning
-				Igor7LongNamesWarning = 1
-				if(IgorVersion()<7.99)
-					DoAlert /T="Long name use detected" 0, "Igor 7 has 32 characters limit for names. Your name "+resultStr+" is "+num2str(strlen(resultStr))+" long. It will be truncated. Consider upgrading to Igor 8 where names can be up to 256 characters long."
-				elseif(IgorVersion()>7.99 && !useIgor8LongNames)
-					DoAlert /T="Long name use detected" 0, "Name "+resultStr+" is "+num2str(strlen(resultStr))+" chars long. Current Nika/Indra/Irena setting is "+num2str(I7MaxShortLength)+" char max. Names will be truncated. Allow lengths up to 256 characters long using \"Config fonts, uncertainties, names\"."
-				endif
-			endif
-		endif
-	endif			
-	if(useIgor8LongNames && IgorVersion()>7.99)		//Igor 8 and user wants long names 
-		resultStr = resultStr 
-	else			//create a short name
-		resultStr = resultStr[0,I7MaxShortLength-1]
-	endif
+	
 	if (FolderWaveStrNum == 3 || FolderWaveStrNum == 4 )		// 1 for waves, 11 for folders, 3 and 4 for strings and variables
 		resultStr = CleanupName(resultStr, 1)						// variables and strings must have only non liberal names anyway... 
 	endif
@@ -2092,8 +2019,8 @@ Function IN2G_ReadIrenaGUIPackagePrefs(ForceRead)
 				 if(numtype(Defs.Igor8UseLongNames)==0)
 				 	Igor8UseLongNames = Defs.Igor8UseLongNames
 				 else
-				 	Igor8UseLongNames = 0
-				 	print "Set Igor8UseLongNames to 0" 
+				 	Igor8UseLongNames = 1
+				 	//print "Set Igor8UseLongNames to 1" 
 				 endif	
 				 if(numtype(Defs.UseUserNameString)==0)
 				 	UseUserNameString = Defs.UseUserNameString
@@ -2154,7 +2081,7 @@ Function IN2G_ReadIrenaGUIPackagePrefs(ForceRead)
 				DoWIndow NI1A_Convert2Dto1DPanel
 				if(V_Flag)
 					PopupMenu ColorTablePopup,win=NI1A_Convert2Dto1DPanel,popvalue=ColorTableName
-#if (Exists("NI1A_TopCCDImageUpdateColors")==6)					
+#if(Exists("NI1A_TopCCDImageUpdateColors")==6)					
 					NI1A_TopCCDImageUpdateColors(1)
 #endif
 				endif
@@ -2482,13 +2409,7 @@ end
 Function IN2G_PanelResizePanelSize(s)
 	STRUCT WMWinHookStruct &s
 		//add to the end of panel forming macro these two lines:
-		//	IR1_PanelAppendSizeRecordNote()
-		//	SetWindow kwTopWin,hook(ResizePanelControls)=IR1_PanelResizeFontSize
-		//for font scaling in Titlebox use "\ZrnnnText is here" - scales font by nnn%. Do not use fixed font then. 
-		//getmouse /W=$(s.winName)
-		//print V_Flag
-		//print V_left
-//debug
+
 	if ( s.eventCode == 6 && (WinType(s.winName)==7))	// resized and is panel, not usable for others. 
 		////IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		GetWindow $(s.winName), note
@@ -2533,12 +2454,7 @@ Function IN2G_PanelResizePanelSize(s)
 		OriginalHeight = NumberByKey("PanelHeight", OrigInfo, ":", ";")	//pixels
 		CurWidth = abs(right-left) 													//with DC is pixels
 		CurHeight = abs(bottom-top)													//with DC is pixels
-#if (IgorVersion()>8.99)	//Igor 9, use expand on whole panel... 
-		//variable/g LastMessage
-		//if(abs(lastmessage-datetime)<60*30)
-		//	print "In Igor 9 right click on panel and select expansion -> and select scale of original size you prefer" 
-		//	lastmessage=dateTime
-		//endif
+
 		variable scaleWidth, scaleheight
 		scaleWidth = CurWidth/OriginalWidth
 		scaleheight = CurHeight/OriginalHeight
@@ -2557,145 +2473,12 @@ Function IN2G_PanelResizePanelSize(s)
 		MoveTop = top
 		MoveRight = left+newWidth
 		moveBottom = top+newHeight
-#else
-		if(CurWidth<OriginalWidth && CurHeight<OriginalHeight)
-			moveLeft = left//*moveConvFac
-			MoveTop  = top//*moveConvFac
-			MoveRight = (left+OriginalWidth)//*moveConvFac
-			moveBottom = (top+OriginalHeight)//*moveConvFac
-			horScale = 1*moveConvFac
-			verScale = 1*moveConvFac
-		elseif(CurWidth<OriginalWidth && CurHeight>=OriginalHeight)		
-			//MoveWindow left, top, left+OriginalWidth, top+CurHeight
-			moveLeft = left//*moveConvFac
-			MoveTop  = top//*moveConvFac
-			MoveRight = (left+OriginalWidth)//*moveConvFac
-			moveBottom = (top+CurHeight)//*moveConvFac
-			horScale = 1*moveConvFac
-			verScale = CurHeight / (OriginalHeight)	*moveConvFac
-		elseif(CurWidth>=OriginalWidth && CurHeight<OriginalHeight)
-			//MoveWindow left, top, left+CurWidth, top+OriginalHeight
-			moveLeft = left//*moveConvFac
-			MoveTop = top//*moveConvFac
-			MoveRight = (left+CurWidth)//*moveConvFac
-			moveBottom = (top+OriginalHeight)//*moveConvFac
-			verScale = 1 *moveConvFac
-			horScale = curWidth/OriginalWidth*moveConvFac
-		else
-			moveLeft = left//*moveConvFac
-			MoveTop = top//*moveConvFac
-			MoveRight = (right)//*moveConvFac
-			moveBottom = (bottom)//*moveConvFac
-			verScale = CurHeight /OriginalHeight *moveConvFac
-			horScale = curWidth/OriginalWidth *moveConvFac
-		endif
-		//MoveWindow/W=$(s.winName) moveLeft, MoveTop, MoveRight, moveBottom
-		//	print "Moved to "+num2str(moveLeft) +", "+num2str(MoveTop) +", "+num2str(MoveRight) +", "+num2str(moveBottom)
-		MoveWindow/W=$(s.winName) moveLeft, MoveTop, MoveRight, moveBottom
-		//make sure the window is in the existing field fo view if user changed drastically scrfeen resolution... 
-		if(MoveLeft>0.8*ScreenWidth || MoveTop>0.8*ScreenHeight)
-			moveLeft = 0.8*ScreenWidth
-			MoveTop = 0.8*ScreenHeight
-			MoveWindow/W=$(s.winName) moveLeft, MoveTop, -1, -1
-		endif		
-		
-		variable scale= min(horScale, verScale )
-		string FontName = IN2G_LkUpDfltStr("DefaultFontType")  //returns font with ' in the beggining and end as needed for Graph formating
-		FontName = ReplaceString("'", FontName, "") 				//remove the thing....
-		FontName = StringFromList(0,GrepList(FontList(";"), FontName))		//check that similar font exists, if more found use the first one. 
-		if(strlen(FontName)<3)											//if we did tno find the font, use default. 
-			FontName="_IgorSmall"
-		endif
-		DefaultGUIFont /W=$(s.winName) all= {FontName, ceil(scale*str2num(IN2G_LkUpDfltVar("defaultFontSize"))), 0 }
-		DefaultGUIFont /W=$(s.winName) button= {FontName, ceil(scale*str2num(IN2G_LkUpDfltVar("defaultFontSize"))), 0 }
-		DefaultGUIFont /W=$(s.winName) checkbox= {FontName, ceil(scale*str2num(IN2G_LkUpDfltVar("defaultFontSize"))), 0 }
-		DefaultGUIFont /W=$(s.winName) tabcontrol= {FontName, ceil(scale*str2num(IN2G_LkUpDfltVar("defaultFontSize"))), 0 }
-		DefaultGUIFont /W=$(s.winName) popup= {FontName, ceil(scale*str2num(IN2G_LkUpDfltVar("defaultFontSize"))), 0 }
-		DefaultGUIFont /W=$(s.winName) panel= {FontName, ceil(scale*str2num(IN2G_LkUpDfltVar("defaultFontSize"))), 0 }
-		variable i, j
-		variable OrigCntrlV_left, OrigCntrlV_top, NewCntrolV_left, NewCntrlV_top, OrigCntrlV_right, OrigCntrlV_bottom
-		variable OrigWidth, OrigHeight, NewWidth, NewHeight, OrigBodyWidth, NewCntrlV_right, NewCntrlV_bottom
-		string ControlsRecords=""
-		string ListOfPanels=s.winName+";"
-		string TmpNm="", tmpName1
-		string controlslist=""
-		string tmpPanelName
-		string SubwindowList=ChildWindowList(s.winName)		//do we have subwindows? 
-		if(Strlen(SubwindowList)>0)
-			ListOfPanels+=SubwindowList
-		endif
-		controlslist = ControlNameList(s.winName, ";")
-		For(i=0;i<ItemsInList(controlslist, ";");i+=1)
-			TmpNm = StringFromList(i, controlslist, ";")			
-			OrigCntrlV_left=NumberByKey(TmpNm+"Left", OrigInfo, ":", ";")
-			OrigCntrlV_top=NumberByKey(TmpNm+"Top", OrigInfo, ":", ";")
-			OrigWidth=NumberByKey(TmpNm+"Width", OrigInfo, ":", ";")
-			OrigHeight=NumberByKey(TmpNm+"Height", OrigInfo, ":", ";")
-			NewCntrolV_left=OrigCntrlV_left* horScale 
-			NewCntrlV_top = OrigCntrlV_top * verScale
-			NewWidth = OrigWidth * horScale
-			NewHeight = OrigHeight * verScale
-			ModifyControl $(TmpNm) pos = {NewCntrolV_left,NewCntrlV_top}, size={NewWidth,NewHeight}, win=$(s.winName) 
-			//special cases...
-			ControlInfo/W=$(s.winName) $(TmpNm)
-			if(abs(V_Flag)==5 ||abs(V_Flag)==3)		//SetVariable
-				OrigBodyWidth=NumberByKey(TmpNm+"bodyWidth", OrigInfo, ":", ";")
-				if(numtype(OrigBodyWidth)==0)
-					ModifyControl $(TmpNm)  bodywidth =horScale*OrigBodyWidth, win=$(s.winName) 
-				endif
-			endif
-		endfor
-		For(j=1;j<ItemsInList(ListOfPanels,";");j+=1)
-				tmpPanelName = StringFromList(j, ListOfPanels,";")
-				tmpName1 = StringFromList(0, ListOfPanels,";")+"#"+StringFromList(j, ListOfPanels,";")
-				setActiveSubwindow $tmpName1
-				controlslist = ControlNameList(tmpName1, ";")		
-				//fix for embedded graphs. These have no controls on them...
-				//question - this now works for graph subwindows on panels. 
-				//any other types need special treatment? 
-				if(strlen(controlslist)<2)	//this is embedded graph, not panel actually...
-					//			//print V_left; print V_right; print V_top; print V_Bottom
-					//			ControlsRecords+=tmpName1+"Left:"+num2str(V_left)+";"+tmpName1+"Right:"+num2str(V_width)+";"+tmpName1+"Top:"+num2str(V_top)+";"+tmpName1+"Bottom:"+num2str(V_Height)+";"
-					OrigCntrlV_left=NumberByKey(tmpName1+"Left", OrigInfo, ":", ";")
-					OrigCntrlV_top=NumberByKey(tmpName1+"Top", OrigInfo, ":", ";")
-					OrigCntrlV_right=NumberByKey(tmpName1+"Right", OrigInfo, ":", ";")
-					OrigCntrlV_bottom=NumberByKey(tmpName1+"Bottom", OrigInfo, ":", ";")
-					NewCntrolV_left=OrigCntrlV_left* horScale 
-					NewCntrlV_top = OrigCntrlV_top * verScale
-					NewCntrlV_right = OrigCntrlV_right* horScale 
-					NewCntrlV_bottom = OrigCntrlV_bottom* verScale
-					MoveSubwindow /W=$(tmpName1) fnum=(NewCntrolV_left, NewCntrlV_top, NewCntrlV_right, NewCntrlV_bottom)		
-				else
-					For(i=0;i<ItemsInList(controlslist, ";");i+=1)
-						TmpNm = StringFromList(i, controlslist, ";")			
-						OrigCntrlV_left=NumberByKey(tmpPanelName+TmpNm+"Left", OrigInfo, ":", ";")
-						OrigCntrlV_top=NumberByKey(tmpPanelName+TmpNm+"Top", OrigInfo, ":", ";")
-						OrigWidth=NumberByKey(tmpPanelName+TmpNm+"Width", OrigInfo, ":", ";")
-						OrigHeight=NumberByKey(tmpPanelName+TmpNm+"Height", OrigInfo, ":", ";")
-						NewCntrolV_left=OrigCntrlV_left* horScale 
-						NewCntrlV_top = OrigCntrlV_top * verScale
-						NewWidth = OrigWidth * horScale
-						NewHeight = OrigHeight * verScale
-						ModifyControl $(TmpNm) win=$(tmpName1),pos = {NewCntrolV_left,NewCntrlV_top}, size={NewWidth,NewHeight}
-						//special cases...
-						ControlInfo/W=$(tmpName1) $(TmpNm)
-						if(abs(V_Flag)==5 ||abs(V_Flag)==3)		//SetVariable
-							OrigBodyWidth=NumberByKey(tmpPanelName+TmpNm+"bodyWidth", OrigInfo, ":", ";")
-							if(numtype(OrigBodyWidth)==0)
-								ModifyControl $(TmpNm)  bodywidth =horScale*OrigBodyWidth, win=$(tmpName1)
-							endif
-						endif
-					endfor
-				endif
-				SetActiveSubwindow $(StringFromList(0, ListOfPanels,";"))
-		endfor
-#endif
 		//Better way, let's lets store it in preferences...
 		STRUCT IrenaNikaPanelSizePos PrefsPos
 		PrefsPos.version = kPrefsVersion
 		PrefsPos.panelCoords[0] = MoveRight-moveLeft		//width
 		PrefsPos.panelCoords[1] = moveBottom-MoveTop		//height
-		PrefsPos.panelCoords[2] = moveLeft						//left
+		PrefsPos.panelCoords[2] = moveLeft					//left
 		PrefsPos.panelCoords[3] = MoveTop						//top
 		PrefsPos.panelCoords[4] = MoveRight					//right
 		PrefsPos.panelCoords[5] = moveBottom					//bottom
@@ -2798,9 +2581,7 @@ Function IN2G_ResetPanelSize(PanelNameLocal, setSizeIfNeeded)
 	if(keys>0 || FoundValidPrefs<1 || DoNotRestorePanelSizes)		//ANY modifier key was pressed or no/incorrect pref file was found, reset the size
 		//nothing to do here, resetting size
 	else
-//debug	
-#if (IgorVersion()>8.99)	//Igor 9, use expand on whole panel... 
-	//need to figure out how much to resize the panel here. 
+		//need to figure out how much to resize the panel here. 
 		variable curExpand, newExpand
 		//curExpand=PanelResolution($PanelNameLocal)/PanelResolution("")
 		modifyPanel/W=$(PanelNameLocal) expand=1
@@ -2808,13 +2589,6 @@ Function IN2G_ResetPanelSize(PanelNameLocal, setSizeIfNeeded)
 		//V_left, V_top, V_right, V_bottom
 		newExpand = 0.5*((width/(V_right-V_left))+(Height/(V_bottom-V_top)))
 		modifyPanel/W=$(PanelNameLocal) expand=newExpand
-//		GetWindow $PanelNameLocal wsize
-//		Width = V_right - V_left
-//		Height = V_bottom - V_top
-//		MoveWindow/W=$PanelNameLocal Left, Top, Left+Width, Top+Height
-#else
-		MoveWindow/W=$PanelNameLocal Left, Top, Left+Width, Top+Height
-#endif
 	endif
 	//and save new widnwos position. 
 	GetWindow $PanelNameLocal wsize
@@ -3954,11 +3728,11 @@ End
 //FUNCTIONS AND PROCEDURES FOR USE IN ALL INDRA 2 MACROS	
 Function ING2_AddScrollControl()
 	//string WindowName
-	getWindow kwTopWin, wsizeDC
+//	getWindow kwTopWin, wsizeDC
 	//CheckBox ScrollWidown title="\\W614",proc=IN2G_ScrollWindowCheckProc, pos={V_right-75,2}
 	////IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	Button ScrollButtonUp title="\\W617",pos={(V_right-V_left)-17,2},size={15,15}, proc=IN2G_ScrollButtonProc
-	Button ScrollButtonDown title="\\W623",pos={(V_right-V_left)-17,17},size={15,15}, proc=IN2G_ScrollButtonProc
+//	Button ScrollButtonUp title="\\W617",pos={(V_right-V_left)-17,2},size={15,15}, proc=IN2G_ScrollButtonProc
+//	Button ScrollButtonDown title="\\W623",pos={(V_right-V_left)-17,17},size={15,15}, proc=IN2G_ScrollButtonProc
 end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -4627,7 +4401,6 @@ Function IN2G_ShowHideErrorBars(ShowErroBars, [topGraphStr])
 	else
 		topGraph=topGraphStr	
 	endif
-#if (IgorVersion()>=8)
 	if(strlen(topGraph)>0)
 		TraceNames=TraceNameList(topGraph,";",3)
 		numTraces =  ItemsInList(TraceNames)
@@ -4639,7 +4412,7 @@ Function IN2G_ShowHideErrorBars(ShowErroBars, [topGraphStr])
 				endif
 			endfor	
 	endif
-#endif
+
 end
 
 //*****************************************************************************************************************
@@ -6095,14 +5868,13 @@ Function IN2G_ScreenWidthHeight(what)			//keeps graphs the same size on all scre
 	TopHeight = TopHeight *screenresolution/96
 
 	if(stringmatch(IgorInfo(2),"Windows"))
-		//For Igor above 7.03 we can get the TopHeight from measureement...
-		if(NumberByKey("IGORVERS", IgorInfo(0))>7.02)		//this would crash anything before 7.03
-			GetWindow kwCmdHist wsize
-			variable SmallHeight = V_bottom-V_top
-			GetWindow kwCmdHist wsizeOuter
-			variable LargeHeight = V_bottom-V_top
-			TopHeight = LargeHeight - SmallHeight 
-		endif
+
+		GetWindow kwCmdHist wsize
+		variable SmallHeight = V_bottom-V_top
+		GetWindow kwCmdHist wsizeOuter
+		variable LargeHeight = V_bottom-V_top
+		TopHeight = LargeHeight - SmallHeight 
+
 		GetWindow kwFrameInner  wsize 
 		 height = ((V_bottom - V_top)-TopHeight)* ScreenRes
 		 width = (V_right - V_left)*ScreenRes
@@ -6146,14 +5918,13 @@ Function IN2G_GetGraphWidthHeight(what)			//keeps graphs the same size on all sc
 	//FillGraphHorizontalRatio
 
 	if(stringmatch(IgorInfo(2),"Windows"))
-		//For Igor above 7.03 we can get the TopHeight from measureement...
-		if(NumberByKey("IGORVERS", IgorInfo(0))>7.02)		//this would crash anything before 7.03
-			GetWindow kwCmdHist wsize
-			variable SmallHeight = V_bottom-V_top
-			GetWindow kwCmdHist wsizeOuter
-			variable LargeHeight = V_bottom-V_top
-			TopHeight = LargeHeight - SmallHeight 
-		endif
+
+		GetWindow kwCmdHist wsize
+		variable SmallHeight = V_bottom-V_top
+		GetWindow kwCmdHist wsizeOuter
+		variable LargeHeight = V_bottom-V_top
+		TopHeight = LargeHeight - SmallHeight 
+
 		GetWindow kwFrameInner  wsize
 		 height = ((V_bottom - V_top)-TopHeight)* ScreenRes
 		 width = (V_right - V_left)*ScreenRes
@@ -6754,7 +6525,7 @@ Function IN2G_GenerateLegendForGraph(fntsize,WNoteName,RemoveRepeated)  //genera
 	endif
 	variable repeated=0
 	string NewLegend=""
-#if (Exists("IN2G_LkUpDfltStr")==6)
+#if(Exists("IN2G_LkUpDfltStr")==6)
 	NewLegend ="\\F"+IN2G_LkUpDfltStr("FontType")
 #endif	
 	NewLegend +="\\Z"+fntsizeStr
@@ -7654,35 +7425,40 @@ Function IN2G_CheckScreenSize(which,MinVal)
 	// which = height, width, 
 	//MinVal is in pixles
 	
-	////IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-#if (IgorVersion()>8.1)
-	return 1
-#endif
-
-	if (cmpstr(which,"width")!=0 && cmpstr(which,"height")!=0)
-		Abort "Error in IN2G_CheckScreenSize procedure. Major bug. Contact me: ilavsky@aps.anl.gov, please)"
-	endif
+	//pretty much useless since IP9, so just print instructions for small screens
+	
+//	////IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+//#if(IgorVersion()>8.1)
+//	return 1
+//#endif
+//
+//	if (cmpstr(which,"width")!=0 && cmpstr(which,"height")!=0)
+//		Abort "Error in IN2G_CheckScreenSize procedure. Major bug. Contact me: ilavsky@aps.anl.gov, please)"
+//	endif
 	variable currentSizeInPixles=IN2G_ScreenWidthHeight(which)*100			//needs to be corrected 
-	NVAR/Z PreventIrenaNikaScreenSizeCheck = root:Packages:PreventIrenaNikaScreenSizeCheck
-	variable PreventCheck = 0
-	if(NVAR_exists(PreventIrenaNikaScreenSizeCheck))
-		PreventCheck=PreventIrenaNikaScreenSizeCheck
-	endif
-	if(!PreventCheck)
+//	NVAR/Z PreventIrenaNikaScreenSizeCheck = root:Packages:PreventIrenaNikaScreenSizeCheck
+//	variable PreventCheck = 0
+//	if(NVAR_exists(PreventIrenaNikaScreenSizeCheck))
+//		PreventCheck=PreventIrenaNikaScreenSizeCheck
+//	endif
+//	if(!PreventCheck)
 		if (currentSizeInPixles<MinVal)
-			if (cmpstr(which,"height")==0)
-				print "Height of your screen is too small. If you want to prevent checking screen size (it may make your system not usable)"
-				print " run following function in command line: PreventIrenaNikaScreenSizeCheck(1)"
-				print " to restore screen size check back, run PreventIrenaNikaScreenSizeCheck(0)"
-				Abort "Height of your screen is too small for this panel. You have : "+num2str(floor(currentSizeInPixles))+", you need : "+num2str(floor(MinVal))+". On Windows you may : maximize the Igor widnow, reduce dpi setting (% scaling in Display settings), or increase display resolution. On Mac increase display resolution."
-			else
-				print "Width of your screen is too small. If you want to prevent checking screen size (it may make your system not usable)"
-				print " run following function in command line: PreventIrenaNikaScreenSizeCheck(1)"
-				print " to restore screen size check back, run PreventIrenaNikaScreenSizeCheck(0)"
-				Abort "Width of your screen is too small for this panel. You have : "+num2str(floor(currentSizeInPixles))+", you need : "+num2str(floor(MinVal))+". On Windows you may : maximize the Igor window, reduce dpi setting (% scaling in Display settings) or increase display resolution. On Mac increase display resolution."
-			endif
+			print "Screen size is smaller than expected to fit the panel. If panel si too large, right click and use \"Expansion\" to shrink as needed"
+
+
+//			if (cmpstr(which,"height")==0)
+//				print "Height of your screen is too small. If you want to prevent checking screen size (it may make your system not usable)"
+//				print " run following function in command line: PreventIrenaNikaScreenSizeCheck(1)"
+//				print " to restore screen size check back, run PreventIrenaNikaScreenSizeCheck(0)"
+//				Abort "Height of your screen is too small for this panel. You have : "+num2str(floor(currentSizeInPixles))+", you need : "+num2str(floor(MinVal))+". On Windows you may : maximize the Igor widnow, reduce dpi setting (% scaling in Display settings), or increase display resolution. On Mac increase display resolution."
+//			else
+//				print "Width of your screen is too small. If you want to prevent checking screen size (it may make your system not usable)"
+//				print " run following function in command line: PreventIrenaNikaScreenSizeCheck(1)"
+//				print " to restore screen size check back, run PreventIrenaNikaScreenSizeCheck(0)"
+//				Abort "Width of your screen is too small for this panel. You have : "+num2str(floor(currentSizeInPixles))+", you need : "+num2str(floor(MinVal))+". On Windows you may : maximize the Igor window, reduce dpi setting (% scaling in Display settings) or increase display resolution. On Mac increase display resolution."
+//			endif
 		endif
-	endif
+//	endif
 end
 
 Function PreventIrenaNikaScreenSizeCheck(YesNo)
@@ -7740,7 +7516,7 @@ Function IN2G_InputPeriodicTable(ButonFunctionName, NewWindowName, NewWindowTitl
 	Button Cu,pos={left+200,top+45},size={20,15},proc=$(ButonFunctionName),title="\Zr090Cu" 
 	Button Zn,pos={left+220,top+45},size={20,15},proc=$(ButonFunctionName),title="\Zr090Zn" 
 	Button Ga,pos={left+240,top+45},size={20,15},proc=$(ButonFunctionName),title="\Zr090Ga" 
-	Button Ge,pos={left+260,top+45},size={20,15},proc=$(ButonFunctionName),title="\Zr090Ge" 
+	Button Ge,pos={left+260,top+45},size={20,15},proc=$(ButonFunctionName),title="\Zr090Ge"
 	Button As,pos={left+280,top+45},size={20,15},proc=$(ButonFunctionName),title="\Zr090As" 
 	Button Se,pos={left+300,top+45},size={20,15},proc=$(ButonFunctionName),title="\Zr090Se" 
 	Button Br,pos={left+320,top+45},size={20,15},proc=$(ButonFunctionName),title="\Zr090Br" 

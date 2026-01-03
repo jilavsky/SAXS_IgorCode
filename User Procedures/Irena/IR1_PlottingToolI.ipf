@@ -6,7 +6,7 @@
 Constant IR1PversionNumber=2.33
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -231,7 +231,8 @@ end
 //**************************************************************************************************
 
 Function/T IR1P_ListOfWaves(DataType)
-	string DataType			//data type   : Xaxis, Yaxis, Error
+	string DataType			
+	//data type   : Xaxis, Yaxis, Error
 	
 	NVAR UseIndra2Data=root:packages:GeneralplottingTool:UseIndra2Data
 	NVAR UseQRSData=root:packages:GeneralplottingTool:UseQRSData
@@ -2337,11 +2338,7 @@ end
 //*************************************************************************************************************
 Function IR1P_GizmoFunctionality()
 	KillWIndow/Z testGizmo
-#if (IgorVersion()<6.99)		//Igor 6
-	Execute("NewGizmo/i/Z/N=testGizmo")
-#else
 	NewGizmo /I /N=testGizmo /K=1
-#endif
 	DoWIndow testGizmo
 	if(V_Flag)
 		KillWIndow/Z testGizmo
@@ -2585,7 +2582,7 @@ End
 		// add Gizmo procedures
 		//#include <All Gizmo Procedures>
 
-end
+
 //*************************************************************************************************************
 //*************************************************************************************************************
 //*************************************************************************************************************
@@ -2623,15 +2620,15 @@ Function IR1P_genGraphCreateDataGizmo()
 //•triplet [][0]=PlottingTool_q[p]
 //•triplet [][1]=0
 //•triplet [][2]=PlottingTool_Int_M[p][0]
-	Make/O/Free/N=0 IntWvTmp, OrderTmp, QWvTmp
+	Make/Free/N=0 IntWvTmp, OrderTmp, QWvTmp
 	variable j
 	For(i=0;i<NumberOfWaves;i+=1)
 		Wave IntWv=$(StringByKey("IntWave"+num2str(i), ListOfDataWaveNames  , "="))
 		Wave QWv=$(StringByKey("QWave"+num2str(i), ListOfDataWaveNames  , "="))
 		//Wave/Z EWv=$(StringByKey("EWave"+num2str(i), ListOfDataWaveNames  , "="))
 		//duplicate and clean up of negative intensities and Q=0 points...
-		Duplicate/Free/O IntWv, IntWvClean
-		Duplicate/Free/O QWv, QWvClean
+		Duplicate/Free IntWv, IntWvClean
+		Duplicate/Free QWv, QWvClean
 		for(j=numpnts(QWv)-1;j>=0;j-=1)
 			if(IntWvClean[j]<=0 && QWvClean[j]<=0)
 				DeletePoints j, 1, IntWvClean, QWvClean
@@ -2639,13 +2636,13 @@ Function IR1P_genGraphCreateDataGizmo()
 		endfor
 		
 		Concatenate /NP /O  {QWvTmp, QWvClean}, QWvTmp2
-		Duplicate/O/Free IntWvClean, OrderTmp2
+		 Duplicate/FREE IntWvClean, OrderTmp2
 		OrderTmp2 = i
 		Concatenate /NP /O  {IntWvTmp, IntWvClean}, IntWvTmp2
 		Concatenate /NP /O  {OrderTmp, OrderTmp2}, OrderTmp2
-		Duplicate/O/Free OrderTmp2, OrderTmp
-		Duplicate/O/Free IntWvTmp2, IntWvTmp
-		Duplicate/O/Free QWvTmp2, QWvTmp		
+		 Duplicate/FREE OrderTmp2, OrderTmp
+		 Duplicate/FREE IntWvTmp2, IntWvTmp
+		 Duplicate/FREE QWvTmp2, QWvTmp		
 	endfor
 		if(GraphLogX)
 			QWvTmp = log(QWvTmp[p])

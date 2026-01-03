@@ -5,7 +5,7 @@
 
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -1017,8 +1017,8 @@ Function IN3_CalculateMSAXSCorrection()
 			variable tmpStart
 			tmpStart = (start-8)>1 ? start-8 : 1
  			SetAxis/W=USAXSDataReduction#MSAXSGraph bottom R_Qvec[tmpStart],R_Qvec[end1+8]
-			Cursor/P/W=USAXSDataReduction#MSAXSGraph  A  R_Int  start
-			Cursor/P/W=USAXSDataReduction#MSAXSGraph  B  R_Int  end1
+			Cursor/P/W=USAXSDataReduction#MSAXSGraph  A,  R_Int,  start
+			Cursor/P/W=USAXSDataReduction#MSAXSGraph  B,  R_Int,  end1
 		endif
 		variable IntegralIntensitySample
 		IntegralIntensitySample= (areaXY( R_Qvec,R_Int,  -Qmin, Qmax))
@@ -1156,8 +1156,8 @@ Function IN3_FormatMSAXSGraph()
 		variable end1 = ROUND(BinarySearchInterp(R_Qvec, Qmax ))
 //		PRINT START, "   ", end1
 		SetAxis/W=USAXSDataReduction#MSAXSGraph bottom R_Qvec[start],R_Qvec[end1+8]
-		Cursor/P/W=USAXSDataReduction#MSAXSGraph  A  R_Int  start
-		Cursor/P/W=USAXSDataReduction#MSAXSGraph  B  R_Int  end1
+		Cursor/P/W=USAXSDataReduction#MSAXSGraph  A,  R_Int,  start
+		Cursor/P/W=USAXSDataReduction#MSAXSGraph  B,  R_Int,  end1
 		SetWindow USAXSDataReduction, hook(named)=IN3_MSAXSHookFunction
 
 	endif
@@ -1187,10 +1187,10 @@ Function IN3_MSAXSHookFunction(H_Struct)
 		String ExistingSubWindows=ChildWindowList("USAXSDataReduction") 
 		if(stringmatch(ExistingSubWindows,"*MSAXSGraph*"))
 			if(strlen(csrinfo(A,"USAXSDataReduction#MSAXSGraph"))<1)
-				Cursor/P/W=USAXSDataReduction#MSAXSGraph A PD_Intensity start
+				Cursor/P/W=USAXSDataReduction#MSAXSGraph A, PD_Intensity, start
 			endif
 			if(strlen(csrinfo(B,"USAXSDataReduction#MSAXSGraph"))<1)
-				Cursor/P/W=USAXSDataReduction#MSAXSGraph B PD_Intensity end1
+				Cursor/P/W=USAXSDataReduction#MSAXSGraph B, PD_Intensity, end1
 			endif
 		endif
 		Qmin = min(R_Qvec[pcsr(A, "USAXSDataReduction#MSAXSGraph")], R_Qvec[pcsr(B, "USAXSDataReduction#MSAXSGraph")])

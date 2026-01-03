@@ -1,18 +1,19 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
-#pragma version=2.74
-#pragma IgorVersion=8.04
+#pragma version=2.75
+#pragma IgorVersion=9.04
 
 //DO NOT renumber Main files every time, these are main release numbers...
 //define manual date and release verison 
-constant CurrentIrenaVersionNumber = 2.74		//change version of Boot Irena1 modeling.ipf to get proper check version. 
+constant CurrentIrenaVersionNumber = 2.75		//change version of Boot Irena1 modeling.ipf to get proper check version. 
 
 //*************************************************************************
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************
 
+//2.75	Beta - cleanup of tthe code and some serious under the hood changes. 
 //2.74 	Minor release to capture minor changes related to new USAXS 12IDE instrument, bug release. 
 //2.74		Beta release, minor changes, bug fixes. 
 //2.73   Added Ellipsoid Cylinder support
@@ -135,8 +136,7 @@ constant CurrentIrenaVersionNumber = 2.74		//change version of Boot Irena1 model
 
 //report any problems to: ilavsky@aps.anl.gov
 //Comment for me: Limit yourself to less than 30 items in the menu, Windows are limited to 30 items. Note: "---" counts as one item!
-//comment - add these: 		//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-//and these 						//IN2G_PrintDebugStatement(IrenaDebugLevel, 0..5 ,"Error message")
+//comment - add these: 	 //and these 						//IN2G_PrintDebugStatement(IrenaDebugLevel, 0..5 ,"Error message")
 
 
 Menu "GraphMarquee", dynamic
@@ -323,9 +323,8 @@ end
 Function/S IR2_MacrosMenuItem()
 	if((Exists("ShowResizeControlsPanel")==6))
 		return "ShowResizeControlsPanel"
-	else
-		return ""
 	endif
+	return ""
 end
 
 //****************************************************************************************
@@ -367,9 +366,9 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	IR2C_CheckWindowsProcVersions(WindowProcNames)
 	IN2G_CheckPlatformGUIFonts()
 	IN2G_ResetSizesForAllPanels(WindowProcNames) 
-	IN2G_AddButtonsToBrowser()		//adds button to DataBrowser. 
+	//IN2G_AddButtonsToBrowser()		//adds button to DataBrowser. 
  
-	if((DateTime - LastCheckIrena)>60*60*12)		//run this only once per 12 hours. 
+	if((DateTime - LastCheckIrena)>(60*60*12))		//run this only once per 12 hours. 
 		IR2C_CheckIrenaUpdate(0) 
 		IN2G_CheckForGraphicsSetting(0)
 		print "*** >>>  Irena version: "+num2str(CurrentIrenaVersionNumber)+", compiled on "+date()+"  "+time()
@@ -428,7 +427,8 @@ end
 Function IR1_UpdatePanelVersionNumber(panelName, CurentProcVersion, AddResizeHookFunction)
 	string panelName
 	variable CurentProcVersion
-	variable AddResizeHookFunction  		//set to 0 for no, 1 for simple Irena one and 2 for Wavemetrics one
+	variable AddResizeHookFunction  		
+	//set to 0 for no, 1 for simple Irena one and 2 for Wavemetrics one
 	DoWIndow $panelName
 	if(V_Flag)
 		GetWindow $(panelName), note
@@ -456,9 +456,8 @@ Function IR1_CheckPanelVersionNumber(panelName, CurentProcVersion)
 		GetWindow $(panelName), note
 		if(stringmatch(stringbyKey("IrenaProcVersion",S_value),num2str(CurentProcVersion))) //matches
 			return 1
-		else
-			return 0
 		endif
+		return 0
 	else
 		return 1
 	endif
@@ -471,7 +470,7 @@ end
 Function ZoomAndSetLimits()
 	//this will zoom graph and set limits to the appropriate numbers
 	GetMarquee/K left, bottom
-	if(!stringmatch(S_MarqueeWin"GeneralGraph"))
+	if(!stringmatch(S_MarqueeWin,"GeneralGraph"))
 		return 0	
 	endif
 	SVAR ListOfGraphFormating=root:Packages:GeneralplottingTool:ListOfGraphFormating
@@ -776,75 +775,7 @@ Function IR2_GetIrenaManuscript()
 
 end
 
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//Function IR2_OpenIrenaManual()
-//	//this function writes batch file and starts the manual.
-//	//we need to write following batch file: "C:\Program Files\WaveMetrics\Igor Pro Folder\User Procedures\Irena\Irena manual.pdf"
-//	//on Mac we just fire up the Finder with Mac type path... 
-//	DoAlert /T="PDF manuals removed" 0, "pdf manuals are not distributed with the packages anymore. Use web manuals. If needed download pdf file from the web" 
-//	//check where we run...
-//		//string WhereIsIgor
-//		//pathInfo Igor
-////		string WhereIsManual
-////		string WhereAreProcedures=RemoveEnding(FunctionPath(""),"IR1_Main.ipf")
-////		String manualPath = ParseFilePath(5,"Irena Manual.pdf","*",0,0)
-////       	String cmd 
-////	
-////	variable refnum
-////	GetFileFolderInfo/Z=1/Q WhereAreProcedures+manualPath
-////	variable foundIt=V_Flag
-////	variable ManualModDate=V_modificationDate
-////	printf "The current manual date is: %+015.4f\r", V_modificationDate
-////	if(ManualModDate>0)
-////		//print  V_modificationDate
-////		print "Found version of Manual is from : " + secs2Date(ManualModDate,1)
-////	endif
-////	if(foundIt!=0 || ManualModDate<CurrentManualDateInSecs)
-////       	NewPath/O/Q tempPath, WhereAreProcedures
-////		DoAlert 1,  "Local copy of manual not found or is obsolete. Should Igor try to download from APS public web site?"
-////		if(V_Flag==1)
-////			//string url="ftp://ftp.xray.aps.anl.gov/pub/usaxs/Irena Manual.pdf"		
-////			string httpPath =  ReplaceString(" ", "http://ftp.xray.aps.anl.gov/usaxs/Irena Manual.pdf", "%20")		//handle just spaces here... 
-////			String fileBytes, tempPathStr
-////			Variable error = GetRTError(1)
-////			 fileBytes = FetchURL(httpPath)
-////			 error = GetRTError(1)
-////			 sleep/S 0.2
-////			 if(error!=0)
-////				 print "Manual download FAILED, please download from directly from Irena web page "
-////			else
-////				Open/P=tempPath  refNum as "Irena Manual.pdf"
-////				FBinWrite refNum, fileBytes
-////				Close refNum
-////				SetFileFolderInfo/P=tempPath/RO=0  "Irena Manual.pdf"		
-////			endif
-////		else
-////			abort
-////		endif
-////		killPath tempPath	
-////	endif
-////	
-////	if (stringmatch(IgorInfo(2), "*Macintosh*"))
-////             //  manualPath = "User Procedures:Irena:Irena manual.pdf"
-////               sprintf cmd "tell application \"Finder\" to open \"%s\"",WhereAreProcedures+manualPath
-////               ExecuteScriptText cmd
-////      		if (strlen(S_value)>2)
-//////			DoAlert 0, S_value
-////		endif
-////
-////	else 
-////		//manualPath = "User Procedures\Irena\Irena manual.pdf"
-////		//WhereIsIgor=WhereIsIgor[0,1]+"\\"+IN2G_ChangePartsOfString(WhereIsIgor[2,inf],":","\\")
-////		WhereAreProcedures=ParseFilePath(5,WhereAreProcedures,"*",0,0)
-////		whereIsManual = "\"" + WhereAreProcedures+manualPath+"\""
-////		NewNotebook/F=0 /N=NewBatchFile
-////		Notebook NewBatchFile, text=whereIsManual//+"\r"
-////		SaveNotebook/O NewBatchFile as SpecialDirPath("Temporary", 0, 1, 0 )+"StartManual.bat"
-////		KillWIndow/Z NewBatchFile
-////		ExecuteScriptText "\""+SpecialDirPath("Temporary", 0, 1, 0 )+"StartManual.bat\""
-////	endif
-//end
+
 ////*****************************************************************************************************************
 //*****************************************************************************************************************
 Function IR2_OpenHelpMoviePage()
@@ -891,9 +822,9 @@ Function IR1_AboutPanel()
 	NewPanel/K=1 /W=(173.25,50,580,460)/N=About_Irena_1_Macros as "About Irena Macros"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 20,fstyle= 1,textrgb= (16384,28160,65280)
-	DrawText 23,30,"Irena macros for Igor Pro 8.04, 9.x & 10(Beta)"
+	DrawText 23,30,"Irena macros for Igor Pro 9.05 & 10.x"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
-	DrawText 100,60,"@ ANL, 2025"
+	DrawText 100,60,"@ Jan Ilavsky, 2026"
 	DrawText 10,80,"release "+num2str(CurrentIrenaVersionNumber)
 	DrawText 11,100,"To get help please contact: ilavsky@anl.gov"
 	SetDrawEnv textrgb= (0,0,65535)
@@ -945,355 +876,6 @@ end
 ////*****************************************************************************************************************
 ////*****************************************************************************************************************
 ////*****************************************************************************************************************
-//
-//Function IR1S_Initialize()
-//	//function, which creates the folder for SAS modeling and creates the strings and variables
-//	
-//	DFref oldDf= GetDataFolderDFR()
-
-//	
-//	NewDataFolder/O/S root:Packages
-//	NewdataFolder/O/S root:Packages:SAS_Modeling
-//	
-//	string ListOfVariables
-//	string ListOfStrings
-//	
-//	//here define the lists of variables and strings needed, separate names by ;...
-//	
-//	ListOfVariables="UseIndra2Data;UseQRSdata;NumberOfDistributions;DisplayVD;DisplayND;CurrentTab;UseInterference;UseLSQF;UseGenOpt;"
-//	ListOfVariables+="Dist1NumberOfPoints;Dist1Contrast;Dist1Location;Dist1Scale;Dist1Shape;Dist1Mean;Dist1Median;Dist1Mode;Dist1LocHighLimit;Dist1LocLowLimit;Dist1ScaleHighLimit;Dist1ScaleLowLimit;"
-//	ListOfVariables+="Dist1ShapeHighLimit;Dist1ShapeLowLimit;Dist1LocStep;Dist1ShapeStep;Dist1ScaleStep;Dist1FitShape;Dist1FitLocation;Dist1FitScale;Dist1VolFraction;"
-//	ListOfVariables+="Dist1VolHighLimit;Dist1VolLowLimit;Dist1FitVol;Dist1NegligibleFraction;Dist1ScatShapeParam1;Dist1ScatShapeParam2;Dist1ScatShapeParam3;Dist1FWHM;"
-//	ListOfVariables+="Dist2NumberOfPoints;Dist2Contrast;Dist2Location;Dist2Scale;Dist2Shape;Dist2Mean;Dist2Median;Dist2Mode;Dist2LocHighLimit;Dist2LocLowLimit;Dist2ScaleHighLimit;Dist2ScaleLowLimit;"
-//	ListOfVariables+="Dist2ShapeHighLimit;Dist2ShapeLowLimit;Dist2LocStep;Dist2ShapeStep;Dist2ScaleStep;Dist2FitShape;Dist2FitLocation;Dist2FitScale;Dist2VolFraction;"
-//	ListOfVariables+="Dist2VolHighLimit;Dist2VolLowLimit;Dist2FitVol;Dist2NegligibleFraction;Dist2ScatShapeParam1;Dist2ScatShapeParam2;Dist2ScatShapeParam3;Dist2FWHM;"
-//	ListOfVariables+="Dist3NumberOfPoints;Dist3Contrast;Dist3Location;Dist3Scale;Dist3Shape;Dist3Mean;Dist3Median;Dist3Mode;Dist3LocHighLimit;Dist3LocLowLimit;Dist3ScaleHighLimit;Dist3ScaleLowLimit;"
-//	ListOfVariables+="Dist3ShapeHighLimit;Dist3ShapeLowLimit;Dist3LocStep;Dist3ShapeStep;Dist3ScaleStep;Dist3FitShape;Dist3FitLocation;Dist3FitScale;Dist3VolFraction;"
-//	ListOfVariables+="Dist3VolHighLimit;Dist3VolLowLimit;Dist3FitVol;Dist3NegligibleFraction;Dist3ScatShapeParam1;Dist3ScatShapeParam2;Dist3ScatShapeParam3;Dist3FWHM;"
-//	ListOfVariables+="Dist4NumberOfPoints;Dist4Contrast;Dist4Location;Dist4Scale;Dist4Shape;Dist4Mean;Dist4Median;Dist4Mode;Dist4LocHighLimit;Dist4LocLowLimit;Dist4ScaleHighLimit;Dist4ScaleLowLimit;"
-//	ListOfVariables+="Dist4ShapeHighLimit;Dist4ShapeLowLimit;Dist4LocStep;Dist4ShapeStep;Dist4ScaleStep;Dist4FitShape;Dist4FitLocation;Dist4FitScale;Dist4VolFraction;"
-//	ListOfVariables+="Dist4VolHighLimit;Dist4VolLowLimit;Dist4FitVol;Dist4NegligibleFraction;Dist4ScatShapeParam1;Dist4ScatShapeParam2;Dist4ScatShapeParam3;Dist4FWHM;"
-//	ListOfVariables+="Dist5NumberOfPoints;Dist5Contrast;Dist5Location;Dist5Scale;Dist5Shape;Dist5Mean;Dist5Median;Dist5Mode;Dist5LocHighLimit;Dist5LocLowLimit;Dist5ScaleHighLimit;Dist5ScaleLowLimit;"
-//	ListOfVariables+="Dist5ShapeHighLimit;Dist5ShapeLowLimit;Dist5LocStep;Dist5ShapeStep;Dist5ScaleStep;Dist5FitShape;Dist5FitLocation;Dist5FitScale;Dist5VolFraction;"
-//	ListOfVariables+="Dist5VolHighLimit;Dist5VolLowLimit;Dist5FitVol;Dist5NegligibleFraction;Dist5ScatShapeParam1;Dist5ScatShapeParam2;Dist5ScatShapeParam3;Dist5FWHM;"
-//	ListOfVariables+="SASBackground;SASBackgroundStep;FitSASBackground;UseNumberDistribution;UseVolumeDistribution;UpdateAutomatically;"
-//	ListOfVariables+="SASBackgroundError;Dist1LocationError;Dist1ScaleError;Dist1ShapeError;Dist1VolFractionError;"
-//	ListOfVariables+="Dist1LocationError;Dist1ScaleError;Dist1ShapeError;Dist1VolFractionError;"
-//	ListOfVariables+="Dist2LocationError;Dist2ScaleError;Dist2ShapeError;Dist2VolFractionError;"
-//	ListOfVariables+="Dist3LocationError;Dist3ScaleError;Dist3ShapeError;Dist3VolFractionError;"
-//	ListOfVariables+="Dist4LocationError;Dist4ScaleError;Dist4ShapeError;Dist4VolFractionError;"
-//	ListOfVariables+="Dist5LocationError;Dist5ScaleError;Dist5ShapeError;Dist5VolFractionError;"
-//	ListOfVariables+="Dist1UseInterference;Dist1InterferencePhi;Dist1InterferenceEta;Dist1InterferencePhiLL;Dist1InterferencePhiHL;Dist1InterferenceEtaLL;Dist1InterferenceEtaHL;"
-//	ListOfVariables+="Dist2UseInterference;Dist2InterferencePhi;Dist2InterferenceEta;Dist2InterferencePhiLL;Dist2InterferencePhiHL;Dist2InterferenceEtaLL;Dist2InterferenceEtaHL;"
-//	ListOfVariables+="Dist3UseInterference;Dist3InterferencePhi;Dist3InterferenceEta;Dist3InterferencePhiLL;Dist3InterferencePhiHL;Dist3InterferenceEtaLL;Dist3InterferenceEtaHL;"
-//	ListOfVariables+="Dist4UseInterference;Dist4InterferencePhi;Dist4InterferenceEta;Dist4InterferencePhiLL;Dist4InterferencePhiHL;Dist4InterferenceEtaLL;Dist4InterferenceEtaHL;"
-//	ListOfVariables+="Dist5UseInterference;Dist5InterferencePhi;Dist5InterferenceEta;Dist5InterferencePhiLL;Dist5InterferencePhiHL;Dist5InterferenceEtaLL;Dist5InterferenceEtaHL;"
-//	ListOfVariables+="Dist1FitInterferencePhi;Dist2FitInterferencePhi;Dist3FitInterferencePhi;Dist4FitInterferencePhi;Dist5FitInterferencePhi;"
-//	ListOfVariables+="Dist1FitInterferenceETA;Dist2FitInterferenceETA;Dist3FitInterferenceETA;Dist4FitInterferenceETA;Dist5FitInterferenceETA;"
-//	ListOfVariables+="Dist1InterferencePhiError;Dist1InterferenceEtaError;Dist2InterferencePhiError;Dist2InterferenceEtaError;"
-//	ListOfVariables+="Dist3InterferencePhiError;Dist3InterferenceEtaError;Dist4InterferencePhiError;Dist4InterferenceEtaError;"
-//	ListOfVariables+="Dist5InterferencePhiError;Dist5InterferenceEtaError;"	
-//	ListOfVariables+="UseSlitSmearedData;SlitLength;"	
-//	//Ok add chance to fit the shape parameters
-//	ListOfVariables+="Dist1FitScatShapeParam1;Dist1ScatShapeParam1LowLimit;Dist1ScatShapeParam1HighLimit;Dist1FitScatShapeParam2;Dist1ScatShapeParam2LowLimit;Dist1ScatShapeParam2HighLimit;Dist1FitScatShapeParam3;Dist1ScatShapeParam3LowLimit;Dist1ScatShapeParam3HighLimit;"
-//	ListOfVariables+="Dist2FitScatShapeParam1;Dist2ScatShapeParam1LowLimit;Dist2ScatShapeParam1HighLimit;Dist2FitScatShapeParam2;Dist2ScatShapeParam2LowLimit;Dist2ScatShapeParam2HighLimit;Dist2FitScatShapeParam3;Dist2ScatShapeParam3LowLimit;Dist2ScatShapeParam3HighLimit;"
-//	ListOfVariables+="Dist3FitScatShapeParam1;Dist3ScatShapeParam1LowLimit;Dist3ScatShapeParam1HighLimit;Dist3FitScatShapeParam2;Dist3ScatShapeParam2LowLimit;Dist3ScatShapeParam2HighLimit;Dist3FitScatShapeParam3;Dist3ScatShapeParam3LowLimit;Dist3ScatShapeParam3HighLimit;"
-//	ListOfVariables+="Dist4FitScatShapeParam1;Dist4ScatShapeParam1LowLimit;Dist4ScatShapeParam1HighLimit;Dist4FitScatShapeParam2;Dist4ScatShapeParam2LowLimit;Dist4ScatShapeParam2HighLimit;Dist4FitScatShapeParam3;Dist4ScatShapeParam3LowLimit;Dist4ScatShapeParam3HighLimit;"
-//	ListOfVariables+="Dist5FitScatShapeParam1;Dist5ScatShapeParam1LowLimit;Dist5ScatShapeParam1HighLimit;Dist5FitScatShapeParam2;Dist5ScatShapeParam2LowLimit;Dist5ScatShapeParam2HighLimit;Dist5FitScatShapeParam3;Dist5ScatShapeParam3LowLimit;Dist5ScatShapeParam3HighLimit;"
-//	ListOfVariables+="Dist1ScatShapeParam4;Dist1ScatShapeParam5;"
-//	ListOfVariables+="Dist2ScatShapeParam4;Dist2ScatShapeParam5;"
-//	ListOfVariables+="Dist3ScatShapeParam4;Dist3ScatShapeParam5;"
-//	ListOfVariables+="Dist4ScatShapeParam4;Dist4ScatShapeParam5;"
-//	ListOfVariables+="Dist5ScatShapeParam4;Dist5ScatShapeParam5;"
-//	ListOfVariables+="Dist1ScatShapeParam1Error;Dist1ScatShapeParam2Error;Dist1ScatShapeParam3Error;"
-//	ListOfVariables+="Dist2ScatShapeParam1Error;Dist2ScatShapeParam2Error;Dist2ScatShapeParam3Error;"
-//	ListOfVariables+="Dist3ScatShapeParam1Error;Dist3ScatShapeParam2Error;Dist3ScatShapeParam3Error;"
-//	ListOfVariables+="Dist4ScatShapeParam1Error;Dist4ScatShapeParam2Error;Dist4ScatShapeParam3Error;"
-//	ListOfVariables+="Dist5ScatShapeParam1Error;Dist5ScatShapeParam2Error;Dist5ScatShapeParam3Error;WallThicknessSpreadInFract;"
-//	ListOfVariables+="Dist1UserFFParam1;Dist1UserFFParam2;Dist1UserFFParam3;Dist1UserFFParam4;Dist1UserFFParam5;"
-//	ListOfVariables+="Dist2UserFFParam1;Dist2UserFFParam2;Dist2UserFFParam3;Dist2UserFFParam4;Dist2UserFFParam5;"
-//	ListOfVariables+="Dist3UserFFParam1;Dist3UserFFParam2;Dist3UserFFParam3;Dist3UserFFParam4;Dist3UserFFParam5;"
-//	ListOfVariables+="Dist4UserFFParam1;Dist4UserFFParam2;Dist4UserFFParam3;Dist4UserFFParam4;Dist4UserFFParam5;"
-//	ListOfVariables+="Dist5UserFFParam1;Dist5UserFFParam2;Dist5UserFFParam3;Dist5UserFFParam4;Dist5UserFFParam5;"
-//
-//	ListOfStrings="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;"
-//	ListOfStrings+="Dist1ShapeModel;Dist1DistributionType;Dist1UserFormFactorFnct;Dist1UserVolumeFnct;"
-//	ListOfStrings+="Dist2ShapeModel;Dist2DistributionType;Dist2UserFormFactorFnct;Dist2UserVolumeFnct;"
-//	ListOfStrings+="Dist3ShapeModel;Dist3DistributionType;Dist3UserFormFactorFnct;Dist3UserVolumeFnct;"
-//	ListOfStrings+="Dist4ShapeModel;Dist4DistributionType;Dist4UserFormFactorFnct;Dist4UserVolumeFnct;"
-//	ListOfStrings+="Dist5ShapeModel;Dist5DistributionType;Dist5UserFormFactorFnct;Dist5UserVolumeFnct;"
-//	
-//	String/g GaussEquation="P(x)=(1/(Width*sqrt(2*pi)) * exp(-(x-Mean)^2/(2*Width^2))"
-//	String/g LogNormalEquation="P(x)=(1/((x-Min)*Mean*sqrt(2*pi)) * exp(-ln((x-Mean)/sdev)^2/(2*sdev^2))"
-//	String/g LSWEquation="P(x)=A*(loc^2*exp(-loc/(1.5-loc)))/((1.5-loc)^(11/3)*(3+loc)^(7/3))"
-//	String/g PowerLawEquation="P(x)= x ^ -(1+(6-slope))"
-//	
-//	variable i
-//	//and here we create them
-//	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
-//		IN2G_CreateItem("variable",StringFromList(i,ListOfVariables))
-//	endfor		
-//				
-//	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
-//		IN2G_CreateItem("string",StringFromList(i,ListOfStrings))
-//	endfor	
-//	//cleanup after possible previous fitting stages...
-//	Wave/Z CoefNames=root:Packages:SAS_Modeling:CoefNames
-//	Wave/Z CoefficientInput=root:Packages:SAS_Modeling:CoefficientInput
-//	KillWaves/Z CoefNames, CoefficientInput
-//	
-//	IR1S_SetInitialValues()
-//end
-//
-//
-////*****************************************************************************************************************
-////*****************************************************************************************************************
-////*****************************************************************************************************************
-////*****************************************************************************************************************
-////*****************************************************************************************************************
-//
-//Function IR1S_SetInitialValues()
-//	//and here set default values...
-//
-//	DFref oldDf= GetDataFolderDFR()
-
-//	setDataFolder root:Packages:SAS_Modeling
-//	NVAR UseQRSData=root:Packages:SAS_Modeling:UseQRSData
-//	NVAR UseIndra2data=root:Packages:SAS_Modeling:UseIndra2data
-//	NVAR NumberOfDistributions=root:Packages:SAS_Modeling:NumberOfDistributions
-//	NVAR DisplayND=root:Packages:SAS_Modeling:DisplayND
-//	NVAR DisplayVD=root:Packages:SAS_Modeling:DisplayVD
-//	NVAR FitSASBackground=root:Packages:SAS_Modeling:FitSASBackground
-//	NVAR UseNumberDistribution=root:Packages:SAS_Modeling:UseNumberDistribution
-//	NVAR UseVolumeDistribution=root:Packages:SAS_Modeling:UseVolumeDistribution						
-//	NVAR UpdateAutomatically=root:Packages:SAS_Modeling:UpdateAutomatically
-//	
-//	if (UseQRSData)
-//		UseIndra2data=0
-//	endif
-//	NumberOfDistributions=0
-//	DisplayND=0
-//	DisplayVD=1
-//	
-//	if (FitSASBackground==0)
-//		FitSASBackground=1
-//	endif
-//	
-//	if (UseNumberDistribution==0 && UseVolumeDistribution==0)
-//		 UseVolumeDistribution=1
-//		 UseNumberDistribution=0
-//	endif
-//		
-//	NVAR UseLSQF
-//	NVAR UseGenOpt
-//	if(UseLSQF+UseGenOpt!=1)
-//		UseLSQF=1
-//		UseGenOpt=0
-//	endif
-//	
-//	UpdateAutomatically=0
-//
-//	//and here we set distribution specific parameters....
-//	
-//	IR1S_SetInitialValuesForAdist(1)	//dist 1
-//	IR1S_SetInitialValuesForAdist(2)	//dist 2
-//	IR1S_SetInitialValuesForAdist(3)	//dist 3
-//	IR1S_SetInitialValuesForAdist(4)	//dist 4
-//	IR1S_SetInitialValuesForAdist(5)	//dist 5
-//
-//	setDataFolder oldDF
-//	
-//end	
-//
-//
-////*****************************************************************************************************************
-////*****************************************************************************************************************
-////*****************************************************************************************************************
-////*****************************************************************************************************************
-////*****************************************************************************************************************
-//
-//Function IR1S_SetInitialValuesForAdist(distNum)
-//	variable distNum
-//	//default values for distribution 1
-//	DFref oldDf= GetDataFolderDFR()
-
-//	
-//	setDataFOlder root:Packages:SAS_Modeling
-//	
-//	SVAR testStr =$("Dist"+num2str(distNum)+"UserFormFactorFnct")
-//	if(strlen(testStr)<1)
-//		testStr = "IR1T_ExampleSphereFFPoints"
-//	endif
-//	SVAR testStr =$("Dist"+num2str(distNum)+"UserVolumeFnct")
-//	if(strlen(testStr)<1)
-//		testStr = "IR1T_ExampleSphereVolume"
-//	endif
-//	
-//	NVAR testVar=$("Dist"+num2str(distNum)+"NumberOfPoints")
-//	if (testVar==0)
-//		 testVar=50
-//	endif
-//	NVAR testVar=$("Dist"+num2str(distNum)+"ScatShapeParam1")
-//	if(testVar==0)
-//		 testVar=1
-//	endif
-//	NVAR testVar=$("Dist"+num2str(distNum)+"ScatShapeParam2")
-//	if (testVar==0)
-//		 testVar=1
-//	endif
-//	NVAR testVar=$("Dist"+num2str(distNum)+"ScatShapeParam3")
-//	if (testVar==0)
-//		 testVar=1
-//	endif
-//	
-//	NVAR testVar=$("Dist"+num2str(distNum)+"NegligibleFraction")
-//	if (testVar==0)
-//		 testVar=0.01
-//	endif
-//	NVAR testVar=$("Dist"+num2str(distNum)+"VolHighLimit")
-//	if (testVar==0)
-//		 testVar=0.99
-//	endif
-//	NVAR testVar=$("Dist"+num2str(distNum)+"VolLowLimit")
-//	if (testVar==0)
-//		 testVar=0.00001
-//	endif
-//	NVAR testVar=$("Dist"+num2str(distNum)+"VolFraction")
-//	if (testVar==0)
-//		 testVar=0.05
-//	endif
-//	NVAR testVar=$("Dist"+num2str(distNum)+"FitVol")
-//	if (testVar==0)
-//		 testVar=1
-//	endif
-//	NVAR testVar=$("Dist"+num2str(distNum)+"FitShape")
-//	if (testVar==0)
-//		 testVar=1
-//	endif
-//	NVAR testVar=$("Dist"+num2str(distNum)+"FitLocation")
-//	if (testVar==0)
-//		 testVar=0
-//	endif
-//	NVAR testVar=$("Dist"+num2str(distNum)+"FitScale")
-//	if (testVar==0)
-//		 testVar=1
-//	endif
-//	NVAR testVar=$("Dist"+num2str(distNum)+"Contrast")
-//	if (testVar==0)
-//		 testVar=100
-//	endif
-//	NVAR testVar=$("Dist"+num2str(distNum)+"Scale")
-//	if (testVar==0)
-//		if (distNum==1)
-//				 testVar=100
-//		endif
-//		if (distNum==2)
-//				 testVar=400
-//		endif
-//		if (distNum==3)
-//				 testVar=800
-//		endif
-//		if (distNum==4)
-//				 testVar=1600
-//		endif
-//		if (distNum==5)
-//				 testVar=3200
-//		endif
-//	endif
-//	NVAR testVar=$("Dist"+num2str(distNum)+"Location")
-//	if (testVar==0)
-//		 testVar=0
-//	endif
-//	NVAR testVar=$("Dist"+num2str(distNum)+"Shape")
-//	if (testVar==0)
-//		 testVar=0.5
-//	endif
-//	NVAR testVar=$("Dist"+num2str(distNum)+"LocHighLimit")
-//	if (testVar==0)
-//		 testVar=1000000
-//	endif
-//	NVAR testVar=$("Dist"+num2str(distNum)+"LocLowLimit")
-//	if (testVar==0)
-//		 testVar=10
-//	endif
-//	NVAR testVar=$("Dist"+num2str(distNum)+"ScaleHighLimit")
-//	if (testVar==0)
-//		 testVar=100000
-//	endif
-//	NVAR testVar=$("Dist"+num2str(distNum)+"ScaleLowLimit")
-//	if (testVar==0)
-//		 testVar=5
-//	endif
-//	NVAR testVar=$("Dist"+num2str(distNum)+"ShapeHighLimit")
-//	if (testVar==0)
-//		 testVar=0.9
-//	endif
-//	NVAR testVar=$("Dist"+num2str(distNum)+"ShapeLowLimit")
-//	if (testVar==0)
-//		 testVar=0.1
-//	endif
-//	NVAR testVar=$("Dist"+num2str(distNum)+"LocStep")
-//	if (testVar==0)
-//		 testVar=50
-//	endif
-//	NVAR testVar=$("Dist"+num2str(distNum)+"ShapeStep")
-//	if (testVar==0)
-//		 testVar=0.1
-//	endif
-//	NVAR testVar=$("Dist"+num2str(distNum)+"ScaleStep")
-//	if (testVar==0)
-//		 testVar=10
-//	endif
-//	SVAR testStr=$("Dist"+num2str(distNum)+"ShapeModel")
-//	if(strlen(testStr)==0)
-//		testStr="spheroid"
-//	endif
-//	SVAR testStr=$("Dist"+num2str(distNum)+"DistributionType")
-//	if(strlen(testStr)==0)
-//		testStr="LogNormal"
-//	endif
-//	
-//	NVAR testVar=$("Dist"+num2str(distNum)+"FitScatShapeParam1")
-//	if (testVar==0)
-//		 testVar=0
-//	endif
-//	NVAR testVar=$("Dist"+num2str(distNum)+"FitScatShapeParam2")
-//	if (testVar==0)
-//		 testVar=0
-//	endif
-//	NVAR testVar=$("Dist"+num2str(distNum)+"FitScatShapeParam3")
-//	if (testVar==0)
-//		 testVar=0
-//	endif
-//	NVAR testVar=$("Dist"+num2str(distNum)+"UseInterference")
-//	if (testVar==0)
-//		 testVar=0
-//	endif
-//	NVAR testVar=$("Dist"+num2str(distNum)+"InterferencePhi")
-//	if (testVar==0)
-//		 testVar=1
-//	endif
-//	NVAR testVar=$("Dist"+num2str(distNum)+"InterferencePhiHL")
-//	if (testVar==0)
-//		 testVar=8
-//	endif
-//	NVAR testVar=$("Dist"+num2str(distNum)+"InterferenceEta")
-//	if (testVar==0)
-//		 testVar=200
-//	endif
-//	NVAR testVar=$("Dist"+num2str(distNum)+"InterferenceEtaLL")
-//	if (testVar==0)
-//		 testVar=0
-//	endif
-//	NVAR testVar=$("Dist"+num2str(distNum)+"InterferenceEtaHL")
-//	if (testVar==0)
-//		 testVar=10000
-//	endif
-//
-//	setDataFolder oldDf
-//end
-//
-
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -1301,7 +883,8 @@ end
 //*****************************************************************************************************************
 
 Function IR1_GraphMeasuredData(Package)
-	string Package	//tells me, if this is called from Unified or LSQF
+	string Package	
+	//tells me, if this is called from Unified or LSQF
 	//this function graphs data into the various graphs as needed
 	
 	DFref oldDf= GetDataFolderDFR()
@@ -1442,31 +1025,6 @@ Proc  IR1_IQ4_Q_PlotLSQF()
 EndMacro
 
 
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-
-//Window IR1_IQ4_Q_PlotLSQF() : Graph
-//	PauseUpdate    		// building window...
-//	String fldrSav= GetDataFolder(1)
-//	SetDataFolder root:Packages:SAS_Modeling:
-//	Display /W=(295.5,237.5,753.75,421.25)/K=1  OriginalIntQ4 vs OriginalQvector as "IQ4_Q_Plot"
-//	SetDataFolder fldrSav
-//	ModifyGraph mode=3
-//	ModifyGraph msize=1
-//	ModifyGraph log=1
-//	ModifyGraph mirror=1
-//	Label left "Intensity * Q^4"
-//	Label bottom "Q [A\\S-1\\M]"
-//	Legend/W=IR1_IQ4_Q_Plot/N=text0/J/F=0/A=MC/X=-29.74/Y=37.76 "\\s(OriginalIntQ4) Experimental intensity * Q^4"
-//	ErrorBars/Y=1 OriginalIntQ4 Y,wave=(:Packages:SAS_Modeling:OriginalErrQ4,:Packages:SAS_Modeling:OriginalErrQ4)
-//	//and now some controls
-//	ControlBar 30
-//	Button SaveStyle size={80,20}, pos={50,5},proc=IR1U_StyleButtonCotrol,title="Save Style"
-//	Button ApplyStyle size={80,20}, pos={150,5},proc=IR1U_StyleButtonCotrol,title="Apply Style"
-//EndMacro
 
 
 //*****************************************************************************************************************
@@ -1855,7 +1413,8 @@ end
 //*****************************************************************************************************************
 
 Function IR1_ExportASCIIResults(standardOrUser)
-	string standardOrUser			//"standard" or "User", depending where called from...
+	string standardOrUser			
+	//"standard" or "User", depending where called from...
 
 	//here we need to copy the export results out of Igor
 	//before that we need to also attach note to teh waves with the results
@@ -1925,7 +1484,7 @@ Function IR2C_CheckIrenaUpdate(CalledFromMenu)
 
 	IN2G_ReadIrenaGUIPackagePrefs(0)
 	NVAR LastUpdateCheckIrena=root:Packages:IrenaConfigFolder:LastUpdateCheckIrena	
-	if(datetime - LastUpdateCheckIrena >30 * 24 * 60 * 60 || CalledFromMenu)
+	if((datetime - LastUpdateCheckIrena) >(30 * 24 * 60 * 60) || CalledFromMenu)
 			//call check version procedure and advise user on citations
 			IR2C_CheckVersions()
 			IN2G_SubmitCheckRecordToWeb("Irena "+num2str(CurrentIrenaVersionNumber))
@@ -2636,7 +2195,7 @@ threadsafe Function IR1_ArdellCumulative(xpos,location,scale, shape)
 	//this function calcualtes cumulative probabliltiy for Ardell distribution
 	//only scale is useful parameters here ans is 2-3... 
 	variable result
-	Make/O/N=200/Free TempPWave, TepNorWave
+	Make/N=200/Free TempPWave, TepNorWave
 	variable start = max(1, location/20 )
 	start = min(start,xpos)
 	SetScale/I x start,xpos,"", TempPWave
@@ -2659,7 +2218,7 @@ Function IR1_SZCumulative(xpos,location,scale, shape)
 	//until I find the formula for SZ I will use numberical method, slower but should work... 
 	
 	variable result
-	Make/O/N=500/Free tempSZDistWv
+	Make/N=500/Free tempSZDistWv
 	SetScale/I x 0,xpos,"", tempSZDistWv
 	tempSZDistWv =  IR1_SchulzZimmProbability(x,location,scale, shape)
 //	doupdate
@@ -2791,8 +2350,10 @@ end
 ////*****************************************************************************************************************
 //
 //
-Function IR1L_AppendAnyText(TextToBeInserted)		//this function checks for existance of notebook
-	string TextToBeInserted						//and appends text to the end of the notebook
+Function IR1L_AppendAnyText(TextToBeInserted)		
+	//this function checks for existance of notebook
+	string TextToBeInserted						
+	//and appends text to the end of the notebook
 	    
 	TextToBeInserted=TextToBeInserted+"\r"
     SVAR/Z nbl=root:Packages:SAS_Modeling:NotebookName
@@ -2804,8 +2365,9 @@ Function IR1L_AppendAnyText(TextToBeInserted)		//this function checks for exista
 	endif
 end
 
-Function IR1L_AppendAnyPorodText(TextToBeInserted)		//**DWS
-	string TextToBeInserted						//and appends text to the end of the notebook
+Function IR1L_AppendAnyPorodText(TextToBeInserted)		
+	string TextToBeInserted						
+	//and appends text to the end of the notebook
 	    
 	TextToBeInserted=TextToBeInserted+"\r"
    SVAR/Z nbl=root:Packages:Irena_AnalUnifFit:PorodNotebookName
@@ -2896,16 +2458,7 @@ end
 ////*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-//
-//Function IR1S_UpdateModeMedianMean()
-//
-//	NVAR NumberOfDistributions=root:Packages:SAS_Modeling:NumberOfDistributions
-//	
-//	variable i
-//	For (i=1;i<=NumberOfDistributions;i+=1)
-//		IR1S_UpdtSeparateMMM(i)
-//	endfor
-//end
+
 //
 //
 Function IR1_CreateLoggbook()
@@ -2943,83 +2496,6 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-//*****************************************************************************************************************
-//
-//Function IR1S_UpdtSeparateMMM(distNum)
-//	Variable distNum
-//
-//	DFref oldDf= GetDataFolderDFR()
-
-//	SetDataFolder root:Packages:SAS_Modeling
-//
-//	NVAR DistMean=$("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Mean")
-//	NVAR DistMedian=$("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Median")
-//	NVAR DistMode=$("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Mode")
-//	NVAR DistLocation=$("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Location")
-//	NVAR DistScale=$("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Scale")
-//	NVAR DistShape=$("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Shape")
-//	NVAR DistFWHM=$("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"FWHM")
-//	SVAR DistDistributionType=$("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"DistributionType")
-//	NVAR UseNumberDistribution=root:Packages:SAS_Modeling:UseNumberDistribution
-//
-//	Wave Distdiameters=$("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"diameters")
-//	
-//	Duplicate/O Distdiameters, Temp_Probability, Temp_Cumulative, Another_temp
-//	Redimension/D Temp_Probability, Temp_Cumulative, Another_temp
-//		if (cmpstr(DistDistributionType,"LogNormal")==0)
-//			Temp_Probability=IR1_LogNormProbability(Distdiameters,DistLocation,DistScale, DistShape)
-//			Temp_Cumulative=IR1_LogNormCumulative(Distdiameters,DistLocation,DistScale, DistShape)
-//		endif
-//		if (cmpstr(DistDistributionType,"Gauss")==0)
-//			Temp_Probability=IR1_GaussProbability(Distdiameters,DistLocation,DistScale, DistShape)
-//			Temp_Cumulative=IR1_GaussCumulative(Distdiameters,DistLocation,DistScale, DistShape)
-//		endif
-//		if (cmpstr(DistDistributionType,"LSW")==0)
-//			Temp_Probability=IR1_LSWProbability(Distdiameters,DistLocation,DistScale, DistShape)
-//			Temp_Cumulative=IR1_LSWCumulative(Distdiameters,DistLocation,DistScale, DistShape)
-//		endif
-//		if (cmpstr(DistDistributionType,"PowerLaw")==0)
-//			Temp_Probability=NaN
-//			Temp_Cumulative=NaN
-//		endif
-//
-//	
-//		Another_temp=Distdiameters*Temp_Probability
-//		DistMean=areaXY(Distdiameters, Another_temp,0,inf)					//Sum P(R)*R*deltaR
-//		DistMedian=Distdiameters[BinarySearchInterp(Temp_Cumulative, 0.5 )]		//R for which cumulative probability=0.5
-//		FindPeak/P/Q Temp_Probability
-//		DistMode=Distdiameters[V_PeakLoc]								//location of maximum on the P(R)
-//		
-//		DistFWHM=IR1_FindFWHM(Temp_Probability,Distdiameters)				//Ok, this is monkey approach
-//
-//		if (cmpstr(DistDistributionType,"PowerLaw")==0)
-//			DistFWHM=NaN
-//			DistMode=NaN
-//			DistMedian=NaN
-//			DistMean=NaN
-//		endif
-//	DoWindow IR1S_ControlPanel
-//	if (V_Flag)
-//		SetVariable $("DIS"+num2str(distNum)+"_Mode"),value= $("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Mode"), format="%.1f", win=IR1S_ControlPanel 
-//		SetVariable $("DIS"+num2str(distNum)+"_Median"),value= $("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Median"), format="%.1f", win=IR1S_ControlPanel 
-//		SetVariable $("DIS"+num2str(distNum)+"_Mean"),value= $("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Mean"), format="%.1f", win=IR1S_ControlPanel 
-//		SetVariable $("DIS"+num2str(distNum)+"_FWHM"),value= $("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"FWHM"), format="%.1f", win=IR1S_ControlPanel 
-//	endif
-//	DoWindow IR1U_ControlPanel
-//	if (V_Flag)
-//		SetVariable $("DIS"+num2str(distNum)+"_Mode"),value= $("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Mode"), format="%.1f", win=IR1U_ControlPanel 
-//		SetVariable $("DIS"+num2str(distNum)+"_Median"),value= $("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Median"), format="%.1f", win=IR1U_ControlPanel 
-//		SetVariable $("DIS"+num2str(distNum)+"_Mean"),value= $("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Mean"), format="%.1f", win=IR1U_ControlPanel 
-//		SetVariable $("DIS"+num2str(distNum)+"_FWHM"),value= $("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"FWHM"), format="%.1f", win=IR1U_ControlPanel 
-//	endif
-//	
-//	
-//	KillWaves/Z Temp_Probability, Temp_Cumulative, Another_Temp
-//
-//	setDataFolder OldDf
-//end
-
-
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -3342,31 +2818,11 @@ end
 ////*****************************************************************************************************************
 ////*****************************************************************************************************************
 ////*****************************************************************************************************************
-////*****************************************************************************************************************
-////
-////Function/T IR1_ListOfWavesOfType(type,ListOfWaves)
-////		string type, ListOfWaves
-////		
-////		variable i
-////		string tempresult=""
-////		for (i=0;i<ItemsInList(ListOfWaves);i+=1)
-////			if (stringMatch(StringFromList(i,ListOfWaves),type+"*"))
-////				tempresult+=StringFromList(i,ListOfWaves)+";"
-////			endif
-////		endfor
-////
-////	return tempresult
-////end
-//
-////*****************************************************************************************************************
-////*****************************************************************************************************************
-////*****************************************************************************************************************
-////*****************************************************************************************************************
-////*****************************************************************************************************************
 
 Function/T IR1_ListIndraWavesForPopups(WhichWave,WhereAreControls,IncludeSMR,OneOrTwo)
 	string WhichWave,WhereAreControls
-	variable IncludeSMR, OneOrtwo		//if IncludeSMR=-1 then ONLY SMR data!
+	variable IncludeSMR, OneOrtwo		
+	//if IncludeSMR=-1 then ONLY SMR data!
 
 	string AllWavesInt
 	string AllWavesQ 	

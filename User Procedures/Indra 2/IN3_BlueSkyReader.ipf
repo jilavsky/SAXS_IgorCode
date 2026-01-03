@@ -1,11 +1,11 @@
-#pragma rtFunctionErrors=1
-#pragma TextEncoding="UTF-8"
-#pragma rtGlobals=3 // Use modern global access method and strict wave access
-#pragma DefaultTab={3, 20, 4} // Set default tab width in Igor Pro 9 and later
-#pragma version=1.06
+#pragma rtFunctionErrors = 1
+#pragma TextEncoding     = "UTF-8"
+#pragma rtGlobals        = 3          // Use modern global access method and strict wave access
+#pragma DefaultTab       = {3, 20, 4} // Set default tab width in Igor Pro 9 and later
+#pragma version          = 1.06
 
 //this is available ONLY, if JSONXOP is installed and json_functions.ipf is in User Procedures.
-#if (exists("JSONXOP_GetValue") == 4)
+#if(exists("JSONXOP_GetValue") == 4)
 
 //#include "json_functions"
 static Constant JSON_ZFLAG_DEFAULT = 0
@@ -103,8 +103,7 @@ StrConstant DefaultUSAXScatalog = "usaxs" //set to name of default catalog, like
 ///******************************************************************************************
 Function IR3BS_BlueSkyPlot()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	IN2G_CheckScreenSize("width", 1000)
+ 	IN2G_CheckScreenSize("width", 1000)
 	IN2G_CheckScreenSize("height", 670)
 	DoWIndow IR3BS_BlueSkyPlotPanel
 	if(V_Flag)
@@ -229,7 +228,7 @@ Function IR3BS_Init()
 		NumberOfScansToImport = 10
 	endif
 	SVAR ListOfScanTypes
-	ListOfScanTypes = "tune_ar;tune_a2rp;tune_mr;tune_dx;tune_dy;all;"
+	ListOfScanTypes = "tune_ar;tune_a2rp;tune_mr;tune_dx;tune_dy;find_ar;all;"
 	SVAR ScanTypeToUse
 	if(strlen(ScanTypeToUse) < 1)
 		ScanTypeToUse = "all"
@@ -246,8 +245,7 @@ End
 //************************************************************************************************************
 Function IR3BS_BlueSkyPlotPanelFnct()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	PauseUpdate // building window...
+ 	PauseUpdate // building window...
 	NewPanel/K=1/W=(5.25, 43.25, 605, 820) as "BlueSky plotting tool"
 	DoWIndow/C IR3BS_BlueSkyPlotPanel
 	TitleBox MainTitle, title="\Zr220BlueSky Data plotting tool", pos={140, 1}, frame=0, fstyle=3, fixedSize=1, font="Times New Roman", size={360, 30}, fColor=(0, 0, 52224)
@@ -354,12 +352,13 @@ Function IN3BS_ListBoxMenuProc(STRUCT WMListboxAction &lba) : ListBoxControl
 
 			break
 		default:
-			// FIXME(BugproneMissingSwitchDefaultCase)
+			return 0
 			break
 	endswitch
 
 	return 0
 End
+
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
@@ -378,6 +377,7 @@ Function IR3BS_ImportSelected(variable PlotAll)
 		IN2G_LegendTopGrphFldr(12, 20, 1, 0)
 	endif
 End
+
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
@@ -573,9 +573,9 @@ Function IR3BS_SetVarProc(STRUCT WMSetVariableAction &sva) : SetVariableControl
 
 	variable tempP
 	switch(sva.eventCode)
-		case 1: // mouse up, FIXME(CodeStyleFallthroughCaseRequireComment)
+		case 1: // mouse up, 
+			//nothing to do here. 
 		case 2: // Enter key
-
 			if(stringmatch(sva.ctrlName, "StartMoth"))
 				//NVAR LineThickness = root:Packages:Irena:MultiSamplePlot:LineThickness
 			endif
@@ -586,7 +586,7 @@ Function IR3BS_SetVarProc(STRUCT WMSetVariableAction &sva) : SetVariableControl
 		case -1: // control being killed
 			break
 		default:
-			// FIXME(BugproneMissingSwitchDefaultCase)
+			return 0
 			break
 	endswitch
 	DoWIndow/F IR3BS_BlueSkyPlotPanel
@@ -664,11 +664,12 @@ Function IR3BS_ButtonProc(STRUCT WMButtonAction &ba) : ButtonControl
 		case -1: // control being killed
 			break
 		default:
-			// FIXME(BugproneMissingSwitchDefaultCase)
+			return 0
 			break
 	endswitch
 	return 0
 End
+
 //**********************************************************************************************************
 //**********************************************************************************************************
 //************************************************************************************************************
@@ -1262,6 +1263,7 @@ Function IR3BS_UdateListBoxScans()
 	SelectionOfAvailableData = 0
 
 End
+
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
@@ -1274,7 +1276,7 @@ Function IR3S_CheckProc(STRUCT WMCheckboxAction &cba) : CheckBoxControl
 		case -1: // control being killed
 			break
 		default:
-			// FIXME(BugproneMissingSwitchDefaultCase)
+			return 0
 			break
 	endswitch
 
@@ -1310,7 +1312,7 @@ Function IR3BS_PopMenuProc(STRUCT WMPopupAction &pa) : PopupMenuControl
 		case -1: // control being killed
 			break
 		default:
-			// FIXME(BugproneMissingSwitchDefaultCase)
+			return 0
 			break
 	endswitch
 

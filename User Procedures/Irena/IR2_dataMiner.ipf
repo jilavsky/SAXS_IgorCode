@@ -1,15 +1,16 @@
-#pragma rtGlobals=1 // Use modern global access method.
-#pragma version=1.18
+#pragma rtGlobals=3 // Use modern global access method.
+#pragma version=1.19
 
 Constant IR2MversionNumber = 1.13 //Data mining tool version number
 Constant IR3BversionNumber = 0.1  //MetadataBrowser tool version number.
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//1.19 lint, changed to Prgama version 3 from 1. WHy was this ever 1? 
 //1.18 changed extracted number and time waves into double precision. Needed for time waves.
 //1.17 fix DateTime extracted wave bug, cannot name wave DATETIME, need to use DatTimeW
 //1.16 fix extracting 1 digit data, was skipping due to bug. (could not extract for example 1).
@@ -128,8 +129,7 @@ End
 ///******************************************************************************************
 Function IR3B_MetadataBrowser()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	IN2G_CheckScreenSize("width", 1000)
+ 	IN2G_CheckScreenSize("width", 1000)
 	IN2G_CheckScreenSize("height", 670)
 	DoWIndow IR3B_MetadataBrowserPanel
 	if(V_Flag)
@@ -165,8 +165,7 @@ End
 //************************************************************************************************************
 //************************************************************************************************************
 Function IR3B_MetadataBrowserPanelFnct()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	PauseUpdate // building window...
+ 	PauseUpdate // building window...
 	NewPanel/K=1/W=(5.25, 43.25, 800, 820) as "Metadata Browser tool"
 	DoWIndow/C IR3B_MetadataBrowserPanel
 	TitleBox MainTitle, title="\Zr220Metadata Browser", pos={140, 1}, frame=0, fstyle=3, fixedSize=1, font="Times New Roman", size={360, 30}, fColor=(0, 0, 52224)
@@ -248,8 +247,7 @@ End
 Function IR3B_ButtonProc(ba) : ButtonControl
 	STRUCT WMButtonAction &ba
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	variable i
+ 	variable i
 	string   FoldernameStr
 	switch(ba.eventCode)
 		case 2: // mouse up
@@ -305,16 +303,14 @@ End
 Function IR3B_PopMenuProc(pa) : PopupMenuControl
 	STRUCT WMPopupAction &pa
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string   ctrlName = Pa.ctrlName
+ 	string   ctrlName = Pa.ctrlName
 	variable popNum   = Pa.popNum
 	string   popStr   = Pa.popStr
 
 	if(Pa.eventcode != 2)
 		return 0
 	endif
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	if(stringmatch(ctrlName, "ExtractFromFileName"))
+ 	if(stringmatch(ctrlName, "ExtractFromFileName"))
 		//do something here
 		IR3B_AddToSelectedItems("Extract" + popStr, 1)
 	endif
@@ -329,8 +325,7 @@ End
 Function IR3B_SetVarProc(sva) : SetVariableControl
 	STRUCT WMSetVariableAction &sva
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	variable tempP
+ 	variable tempP
 	switch(sva.eventCode)
 		case 1: // mouse up
 		case 2: // Enter key
@@ -357,8 +352,7 @@ End
 Function IR3B_MultiListBoxProc(lba) : ListBoxControl
 	STRUCT WMListboxAction &lba
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	variable row        = lba.row
+ 	variable row        = lba.row
 	WAVE/Z/T listWave   = lba.listWave
 	WAVE/Z   selWave    = lba.selWave
 	string   WinNameStr = lba.win
@@ -402,8 +396,7 @@ End
 
 static Function IR3B_DisplayMetadataResults()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFREF OldDf        = GetDataFolderDFR()
+ 	DFREF OldDf        = GetDataFolderDFR()
 	SVAR  FldrWithData = root:Packages:Irena:MetadataBrowser:SaveToFoldername
 	if(!DataFolderExists(FldrWithData))
 		setDataFolder OldDF
@@ -439,8 +432,7 @@ End
 
 static Function IR3B_DeleteMetadataResults()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFREF OldDf = GetDataFolderDFR()
+ 	DFREF OldDf = GetDataFolderDFR()
 	DoAlert/T="Are you sure???" 1, "Extracted metadata waves will be deleted, are you REALLY sure you want to do this?"
 	if(V_Flag)
 		SVAR FldrWithData = root:Packages:Irena:MetadataBrowser:SaveToFoldername
@@ -470,8 +462,7 @@ End
 //**************************************************************************************
 static Function IR3B_PlotSelectedResults()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFREF OldDf = GetDataFolderDFR()
+ 	DFREF OldDf = GetDataFolderDFR()
 	//get needed values...
 	ControlInfo/W=IR3B_MetadataBrowserPanel PlotXWave
 	string XwaveNm = S_Value
@@ -495,10 +486,10 @@ End
 //**************************************************************************************
 static Function IR3B_AddToSelectedItems(ItemToAddorRemove, Add)
 	string   ItemToAddorRemove
-	variable Add //Add=1 to add, 0 to remove
+	variable Add 
+	//Add=1 to add, 0 to remove
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string KeyName  = StringFromList(0, ItemToAddorRemove, "=")
+ 	string KeyName  = StringFromList(0, ItemToAddorRemove, "=")
 	WAVE/T listWave = root:Packages:Irena:MetadataBrowser:SeletectedItems
 	WAVE   selWave  = root:Packages:Irena:MetadataBrowser:SelectionOfSelectedItems
 	//no issue to remove it first, if it is nto there, no issue.
@@ -528,8 +519,7 @@ End
 //**************************************************************************************
 Function IR3B_DoubleClickAction(FoldernameStr)
 	string FoldernameStr
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-
+ 
 	IR3B_DisplayWaveNote(FoldernameStr)
 End
 //**************************************************************************************
@@ -538,8 +528,7 @@ End
 
 Function IR3B_MouseDownAction(FoldernameStr)
 	string FoldernameStr
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-
+ 
 	IR3B_DisplayWaveNote(FoldernameStr)
 End
 //**********************************************************************************************************
@@ -547,8 +536,7 @@ End
 static Function IR3B_DisplayTestMetadataValues(ParameterSelected)
 	string ParameterSelected
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFREF OldDf = GetDataFolderDFR()
+ 	DFREF OldDf = GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:MetadataBrowser //go into the folder
 	string KeyName = StringFromList(0, ParameterSelected, "=")
 
@@ -602,8 +590,7 @@ End
 static Function/S IR3B_FindSpecificMetadata(FolderNameStr, KeyString)
 	string FolderNameStr, KeyString
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	SVAR   DataFolderName    = root:Packages:Irena:MetadataBrowser:DataFolderName
+ 	SVAR   DataFolderName    = root:Packages:Irena:MetadataBrowser:DataFolderName
 	SVAR   IntensityWaveName = root:Packages:Irena:MetadataBrowser:IntensityWaveName
 	string result            = ""
 	if(strlen(FolderNameStr) > 0) //if strlen(FolderNameStr)=0, this is called from other other and all is set here...
@@ -643,8 +630,7 @@ End
 static Function IR3B_ExtrMtdtFromOneFolder(FolderNameStr)
 	string FolderNameStr
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFREF OldDf = GetDataFolderDFR()
+ 	DFREF OldDf = GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:MetadataBrowser //go into the folder
 	SVAR SaveToFoldername  = root:Packages:Irena:MetadataBrowser:SaveToFoldername
 	SVAR DataStartFolder   = root:Packages:Irena:MetadataBrowser:DataStartFolder
@@ -734,7 +720,7 @@ static Function IR3B_ExtrMtdtFromOneFolder(FolderNameStr)
 					if(numtype(TimeInSeconds) == 0) //looks like time!
 						CleanKeyName = CleanupName(KeyString[0, 24], 0) + "TimeW"
 						WAVE/Z TmpTimeWv = $(CleanKeyName)
-						if(!WaveExists(TmpStrWv))
+						if(!WaveExists(TmpTimeWv))
 							Make/O/D/N=(NumberOfExtractedItems + 1) $(CleanKeyName)
 						endif
 						WAVE TmpTimeWv = $(CleanKeyName)
@@ -767,8 +753,7 @@ End
 static Function IR3B_DisplayWaveNote(FolderNameStr)
 	string FolderNameStr
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFREF OldDf = GetDataFolderDFR()
+ 	DFREF OldDf = GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:MetadataBrowser //go into the folder
 	SVAR DataStartFolder   = root:Packages:Irena:MetadataBrowser:DataStartFolder
 	SVAR DataFolderName    = root:Packages:Irena:MetadataBrowser:DataFolderName
@@ -829,8 +814,7 @@ End
 //**********************************************************************************************************
 
 static Function IR3B_InitMetadataBrowser()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFREF OldDf = GetDataFolderDFR()
+ 	DFREF OldDf = GetDataFolderDFR()
 	string   ListOfVariables
 	string   ListOfStrings
 	variable i
@@ -1138,8 +1122,10 @@ End
 ///******************************************************************************************
 
 Function/S IR2M_ListFoldersWithSubfolders(startDF, levels)
-	string   startDF // startDF requires trailing colon.
-	variable levels  //set 1 for long type and 0 for short type return
+	string   startDF 
+	// startDF requires trailing colon.
+	variable levels  
+	//set 1 for long type and 0 for short type return
 	//
 	string dfSave
 	string list = "", templist, tempWvName, tempWaveType
@@ -1895,6 +1881,7 @@ Function IR2M_CreateOutputTable()
 	SVAR WaveNotes_ListToFind  = root:Packages:DataMiner:WaveNotes_ListToFind
 	SVAR Others_FolderForWaves = root:Packages:DataMiner:Others_FolderForWaves
 	SVAR FolderMatchString     = root:Packages:DataMiner:FolderMatchString
+	Wave/T DataFolderName =root:Packages:DataMiner:DataFolderName
 
 	variable tempVal
 	SetDataFolder $("root:" + Others_FolderForWaves)
@@ -2667,7 +2654,8 @@ Function IR2M_ListBoxProc(ctrlName, row, col, event) : ListBoxControl
 	string   ctrlName
 	variable row
 	variable col
-	variable event //1=mouse down, 2=up, 3=dbl click, 4=cell select with mouse or keys
+	variable event 
+	//1=mouse down, 2=up, 3=dbl click, 4=cell select with mouse or keys
 	//5=cell select with shift key, 6=begin edit, 7=end
 
 	if(event == 4)
@@ -3075,7 +3063,8 @@ Function IR2M_InitDataMiner()
 End
 
 Function IR2M_RainbowColorizeTraces(rev)
-	variable rev //Reverses coloring order if non-zero
+	variable rev 
+	//Reverses coloring order if non-zero
 
 	variable k, km
 	variable r, g, b, scale

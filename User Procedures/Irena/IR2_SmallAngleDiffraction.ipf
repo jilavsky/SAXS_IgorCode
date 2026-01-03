@@ -1,13 +1,14 @@
-#pragma rtGlobals=1 // Use modern global access method.
-#pragma version=1.20
+#pragma rtGlobals=3 // Use modern global access method.
+#pragma version=1.21
 Constant IR2DversionNumber = 1.15
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//1.21 change to prgagma version 3
 //1.20 fix GenCurveFit call, which was failing due to Exists("gencurvefit") returning 4 instead of 3 which was in the code.
 //1.19 added units to Intensity
 //1.18 modified graph size control to use IN2G_GetGraphWidthHeight and associated settings. Should work on various display sizes.
@@ -1491,9 +1492,9 @@ Function IR2D_AppendRemoveResiduals()
 			ModifyGraph mirror(left)=1
 		endif
 	elseif(!V_Flag && AppendResiduals)
-		CheckDisplayed/W=IR2D_LogLogPlotSAD NormalizedResidual
+		CheckDisplayed/W=IR2D_LogLogPlotSAD NormalizedResiduals
 		if(V_Flag)
-			RemoveFromGraph/W=IR2D_LogLogPlotSAD NormalizedResidual
+			RemoveFromGraph/W=IR2D_LogLogPlotSAD NormalizedResiduals
 			ModifyGraph mirror(left)=1
 		endif
 		AppendToGraph/W=IR2D_LogLogPlotSAD/R Residuals vs ModelQvector
@@ -2460,7 +2461,7 @@ Function IR2D_CheckFittingParamsFnct()
 		SetDimLabel 0, i, $(CoefNames[i]), Gen_Constraints
 	endfor
 	if(UseGeneticOptimization)
-		Edit/HOST=#/W=(0.05, 0.25, 0.95, 0.865) Gen_Constraints.ld W_coef
+		Edit/HOST=#/W=(0.05, 0.25, 0.95, 0.865) Gen_Constraints.ld, W_coef
 		//		ModifyTable format(Point)=1,width(Point)=0, width(Gen_Constraints)=110
 		//		ModifyTable alignment(W_coef)=1,sigDigits(W_coef)=4,title(W_coef)="Curent value"
 		//		ModifyTable alignment(Gen_Constraints)=1,sigDigits(Gen_Constraints)=4,title(Gen_Constraints)="Limits"
@@ -2535,8 +2536,13 @@ Function IR2D_FitFunction(w, yw, xw) : FitFunc
 		TempVar = w[i]
 	endfor
 	IR2D_CalculateIntensity(1)
+	Wave ModelQvector
 	WAVE ModelIntensity
-	yw = ModelIntensity
+	//these above are in selected range in number of points, just in case the fitting asks different number of points number points. 
+	//was: 
+	//yw = ModelIntensity
+	//iddoit proof? 
+	yw = interp(xw[p],ModelQvector, ModelIntensity)
 
 	setDataFolder oldDF
 End
@@ -2553,7 +2559,8 @@ End
 //*****************************************************************************************************************
 
 Function IR2D_RecordResults(CalledFromWere)
-	string CalledFromWere //before or after - that means fit...
+	string CalledFromWere 
+	//before or after - that means fit...
 
 	DFREF oldDf = GetDataFolderDFR()
 
@@ -2676,9 +2683,13 @@ Function IR2D_UpdatePeakParams()
 			wavestats/Q Intensity
 			PeakPosition  = Qvec[V_maxloc]
 			PeakDPosition = 2 * pi / PeakPosition
-			FindLevels/Q Intensity, V_max / 2
-			WAVE W_FindLevels
-			PeakFWHM = abs(Qvec[W_FindLevels[1]] - Qvec[W_FindLevels[0]])
+			FindLevels/Q/N=2 Intensity, V_max / 2
+			if(V_Flag==0)
+				WAVE W_FindLevels
+				PeakFWHM = abs(Qvec[W_FindLevels[1]] - Qvec[W_FindLevels[0]])
+			else
+				PeakFWHM = 0
+			endif
 		endif
 	endfor
 

@@ -4,7 +4,7 @@
 #pragma version=2.09
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -33,7 +33,7 @@
 //2.03 added mutlithread and MatrixOp/NTHR=1 whre seemed possible to use multile cores
 //2.02 added license for ANL
 
-
+  
 
 //Comment: Modified Wavemetrics procedure, changed names to free from WM stuff, 
 //modified to suit my needs
@@ -115,10 +115,7 @@ Function NI1_CreateImageLineProfileGraph()
 	SetVariable position,pos={408,35},size={107,19},proc=NI1_ImLineProfWidthSetVarProc,title="position"
 	SetVariable position,help={"Center row or column."},format="%g"
 	SetVariable position,limits={-inf,Inf,1},value= root:Packages:NI1_ImProcess:LineProfile:position
-//	Button checkpoint,pos={350,4},size={80,20},proc=NI1_ImLineProfCPButtonProc,title="Checkpoint"
-//	Button checkpoint,help={"Click to save and graph current profile."}
-//	Button remove,pos={440,4},size={69,20},proc=NI1_ImLineProfRemoveButtonProc,title="Remove"
-//	Button remove,help={"Removes profile lines (if any) from target image."}
+
 	Button SaveCurrentLineout,pos={400,4},size={80,20},proc=NI1_SquareButtonProc,title="Save Lineout"
 	Button SaveCurrentLineout,help={"Click in this button to terminate the path editing mode."}
  
@@ -139,19 +136,13 @@ Function NI1_CreateImageLineProfileGraph()
 	CheckBox DisplayUsingLogScaleX,help={"Use log scale on x axis?"}
 	CheckBox DisplayUsingLogScaleX,variable= root:Packages:NI1_ImProcess:LineProfile:DisplayUsingLogScaleX
 
-//	Button lineProfileHelpButt,pos={220,4},size={50,20},proc=lineProfileHelpProc,title="Help"
-//	Button startPathProfileButton,pos={4,34},size={130,20},proc=NI1_StartEditingPathProfile,title="Start Editing Path"
-//	Button startPathProfileButton,help={"After clicking in this button edit the path drawn on the top image.  Click in the Finished button when you are done."}
-//	Button finishPathProfileButton,pos={140,34},size={130,20},proc=NI1_FinishFHPathProfile,title="Finished Editing"
-//	Button finishPathProfileButton,help={"Click in this button to terminate the path editing mode."}
 	SetWindow kwTopWin,hook=NI1_ImageLineProfileWindowProc
 	
 	NI1_CalculateQdTTHwaves()
 	
 	NI1_ImLineProfileModeProc("",1,"")
 
-//	Wave LineProfileY= root:WinGlobals:$(imageGraphName):LineProfileY
-//	ModifyGraph/W=$imageGraphName offset(lineProfileY)={0,0}	
+
 End
 
 Function NI1_SquareGraphCheckProc(ctrlName,checked) : CheckBoxControl
@@ -234,7 +225,8 @@ end
 
 Function NI1_FindFirstLastNotNaNPoint(inputWave, FirstOrLast)
 	wave inputWave
-	variable FirstOrLast		//1 for frist, 2 for last
+	variable FirstOrLast		
+	//1 for frist, 2 for last
 	
 	variable i
 	if(FirstOrLast==1)
@@ -282,7 +274,8 @@ end
 // Call after changing either position, width or profileMode
 //  This creates the waves that are used with the lineProfile operation.
 Function NI1_UpdatePositionAndWidth(initLines)
-	Variable initLines																	// 17FEB03
+	Variable initLines																	
+	// 17FEB03
 	
 	NVAR profileMode= root:Packages:NI1_ImProcess:LineProfile:profileMode
 	NVAR width= root:Packages:NI1_ImProcess:LineProfile:width
@@ -290,10 +283,10 @@ Function NI1_UpdatePositionAndWidth(initLines)
 	NVAR position= root:Packages:NI1_ImProcess:LineProfile:position
 
 	WAVE/Z w= $NI1_GetImageWave(imageGraphName)		// the target matrix
-	WAVE/Z LineProfileY= root:WinGlobals:$(imageGraphName):LineProfileY
-	WAVE/Z LineProfileX= root:WinGlobals:$(imageGraphName):LineProfileX
-	WAVE/Z FHLineProfileY= root:WinGlobals:$(imageGraphName):FHLineProfileY
-	WAVE/Z FHLineProfileX= root:WinGlobals:$(imageGraphName):FHLineProfileX
+	WAVE/Z LineProfileY= $("root:WinGlobals:"+imageGraphName+":LineProfileY")
+	WAVE/Z LineProfileX= $("root:WinGlobals:"+imageGraphName+":LineProfileX")
+	WAVE/Z FHLineProfileY= $("root:WinGlobals:"+imageGraphName+":FHLineProfileY")
+	WAVE/Z FHLineProfileX= $("root:WinGlobals:"+imageGraphName+":FHLineProfileX")
 	
 	if( (WaveExists(w)==0) %| (WaveExists(LineProfileY)==0) %| (WaveExists(LineProfileX)==0) %| (WaveExists(FHLineProfileX)==0)%| (WaveExists(FHLineProfileY)==0))
 		return -1
@@ -395,9 +388,9 @@ Function NI1_ImageLineProfileNew(newImageGraphName)
 
 	// store the final width and position
 	if(strlen(imageGraphName)>0)
-		NVAR NI1_LP_width= root:WinGlobals:$(imageGraphName):NI1_LP_width
-		NVAR NI1_LP_pos= root:WinGlobals:$(imageGraphName):NI1_LP_pos
-		NVAR NI1_LP_profileMode= root:WinGlobals:$(imageGraphName):NI1_LP_profileMode
+		NVAR NI1_LP_width= $("root:WinGlobals:"+imageGraphName+":NI1_LP_width")
+		NVAR NI1_LP_pos= $("root:WinGlobals:"+imageGraphName+":NI1_LP_pos")
+		NVAR NI1_LP_profileMode= $("root:WinGlobals:"+imageGraphName+":NI1_LP_profileMode")
 		NI1_LP_pos=position
 		NI1_LP_width=width
 		NI1_LP_profileMode=profileMode
@@ -466,9 +459,9 @@ Function NI1_ImageLineProfileNew(newImageGraphName)
 		NI1_LP_pos=position
 	else										// this is a revisit, but we could have a new mode so check the boundaries on position.
 		SetDataFolder $newImageGraphName
-		NVAR LP_width= root:WinGlobals:$(newImageGraphName):NI1_LP_width
-		NVAR LP_pos= root:WinGlobals:$(newImageGraphName):NI1_LP_pos
-		NVAR LP_profileMode= root:WinGlobals:$(newImageGraphName):NI1_LP_profileMode
+		NVAR LP_width= $("root:WinGlobals:"+newImageGraphName+":NI1_LP_width")
+		NVAR LP_pos= $("root:WinGlobals:"+newImageGraphName+":NI1_LP_pos")
+		NVAR LP_profileMode= $("root:WinGlobals:"+newImageGraphName+":NI1_LP_profileMode")
 		width=LP_width
 		position=LP_pos
 		profileMode=LP_profileMode
@@ -566,10 +559,10 @@ Function NI1_ImageLineProfileUpdate(newImageGraphName)
 	
 	imageGraphName= newImageGraphName
 
-	NVAR NI1_LP_profileMode= root:WinGlobals:$(imageGraphName):NI1_LP_profileMode
-	NVAR NI1_LP_width= root:WinGlobals:$(imageGraphName):NI1_LP_width
-	NVAR NI1_LP_pos= root:WinGlobals:$(imageGraphName):NI1_LP_pos
-	SVAR S_TraceOffsetInfo= root:WinGlobals:$(imageGraphName):S_TraceOffsetInfo
+	NVAR NI1_LP_profileMode= $("root:WinGlobals:"+imageGraphName+":NI1_LP_profileMode")
+	NVAR NI1_LP_width= $("root:WinGlobals:"+imageGraphName+":NI1_LP_width")
+	NVAR NI1_LP_pos= $("root:WinGlobals:"+imageGraphName+":NI1_LP_pos")
+	SVAR S_TraceOffsetInfo= $("root:WinGlobals:"+imageGraphName+":S_TraceOffsetInfo")
 	
 	profileMode= NI1_LP_profileMode
 	PopupMenu profileModePop, mode=profileMode
@@ -578,8 +571,8 @@ Function NI1_ImageLineProfileUpdate(newImageGraphName)
 	position= NI1_LP_pos
 	
 	NI1_UpdatePositionAndWidth(1)				// 4
-	Wave LineProfileY= root:WinGlobals:$(imageGraphName):LineProfileY
-	Wave LineProfileX= root:WinGlobals:$(imageGraphName):LineProfileX
+	Wave LineProfileY= $("root:WinGlobals:"+imageGraphName+":LineProfileY")
+	Wave LineProfileX= $("root:WinGlobals:"+imageGraphName+":LineProfileX")
 	
 	Variable xoff,yoff
 	Variable w2=width/2
@@ -634,23 +627,23 @@ Function NI1_LineProfileDependency(s)
 	endif
 	
 	// remember current params for possible revisit
-	NVAR/Z NI1_LP_width=  root:WinGlobals:$(imageGraphName):NI1_LP_width
+	NVAR/Z NI1_LP_width=  $("root:WinGlobals:"+imageGraphName+":NI1_LP_width")
 	if(!NVAR_Exists(NI1_LP_width))
 		variable/g $("root:WinGlobals:"+imageGraphName+":NI1_LP_width")
-		NVAR NI1_LP_width=  root:WinGlobals:$(imageGraphName):NI1_LP_width
+		NVAR NI1_LP_width=  $("root:WinGlobals:"+imageGraphName+":NI1_LP_width")
 	endif
 //	NI1_LP_width= width		// save for reactivate after visiting a different image plot
-	NVAR/Z NI1_LP_pos= root:WinGlobals:$(imageGraphName):NI1_LP_pos
+	NVAR/Z NI1_LP_pos= $("root:WinGlobals:"+imageGraphName+":NI1_LP_pos")
 	if(!NVAR_Exists(NI1_LP_pos))
 		variable/g $("root:WinGlobals:"+imageGraphName+":NI1_LP_pos")
-		NVAR NI1_LP_pos=  root:WinGlobals:$(imageGraphName):NI1_LP_pos
+		NVAR NI1_LP_pos=  $("root:WinGlobals:"+imageGraphName+":NI1_LP_pos")
 	endif
 //	NI1_LP_pos= position
-	NVAR/Z NI1_LP_profileMode= root:WinGlobals:$(imageGraphName):NI1_LP_profileMode
+	NVAR/Z NI1_LP_profileMode= $("root:WinGlobals:"+imageGraphName+":NI1_LP_profileMode")
 	if(!NVAR_Exists(NI1_LP_profileMode))
 		variable/g $("root:WinGlobals:"+imageGraphName+":NI1_LP_profileMode")
-		NVAR NI1_LP_profileMode=  root:WinGlobals:$(imageGraphName):NI1_LP_profileMode
-	endif
+		NVAR NI1_LP_profileMode=  $("root:WinGlobals:"+imageGraphName+":NI1_LP_profileMode")
+	endif 
 //	NI1_LP_profileMode= profileMode
 
 	WAVE/Z w= $NI1_GetImageWave(imageGraphName)		// the target matrix
@@ -722,8 +715,8 @@ Function NI1_DoLineProfile(wsrc,pos,width,profileMode)
 	Make/O/N=2 xWave,yWave
 
 	SVAR imageGraphName= root:Packages:NI1_ImProcess:LineProfile:imageGraphName
-	Wave LineProfileY= root:WinGlobals:$(imageGraphName):LineProfileY
-	Wave LineProfileX= root:WinGlobals:$(imageGraphName):LineProfileX
+	Wave LineProfileY= $("root:WinGlobals:"+imageGraphName+":LineProfileY")
+	Wave LineProfileX= $("root:WinGlobals:"+imageGraphName+":LineProfileX")
 	
 	// the ImageLineProfile operation works in pixels.  We therefore need to translate
 	// between the values in the waves and true pixel numbers.
@@ -773,9 +766,9 @@ Function NI1_DoLineProfile(wsrc,pos,width,profileMode)
 		default:	   // all the freehand modes
 			pmFlag=0							// 22OCT02
 			SVAR imageGraphName= root:Packages:NI1_ImProcess:LineProfile:imageGraphName
-			Wave FHLineProfileY= root:WinGlobals:$(imageGraphName):FHLineProfileY
+			Wave FHLineProfileY= $("root:WinGlobals:"+imageGraphName+":FHLineProfileY")
 			// 24AUG01 FHLineProfileY=(FHLineProfileY-DimOffset(w,1))/DimDelta(w,1)
-			Wave FHLineProfileX= root:WinGlobals:$(imageGraphName):FHLineProfileX
+			Wave FHLineProfileX= $("root:WinGlobals:"+imageGraphName+":FHLineProfileX")
 			// 24AUG01 FHLineProfileX=(FHLineProfileX-DimOffset(w,0))/DimDelta(w,0)
 			// 23OCT02 added /SC
 			if(allowSliderControl==0)
@@ -1009,7 +1002,7 @@ Function NI1_ImageLineProfileCheckpoint()
 	Wave/Z profileR=root:Packages:NI1_ImProcess:LineProfile:profileR
 	Wave/Z profileG=root:Packages:NI1_ImProcess:LineProfile:profileG
 	Wave/Z profileB=root:Packages:NI1_ImProcess:LineProfile:profileB
-	NVAR NI1_LP_checkpoint= root:WinGlobals:$(imageGraphName):NI1_LP_checkpoint
+	NVAR NI1_LP_checkpoint= $("root:WinGlobals:"+imageGraphName+":NI1_LP_checkpoint")
 	NVAR isColor=root:Packages:NI1_ImProcess:LineProfile:isColor
 	
 	NI1_LP_checkpoint += 1							// start at 1
@@ -1177,7 +1170,7 @@ Function NI1_ImLineProfileModeProc(ctrlName,popNum,popStr) : PopupMenuControl
 		NI1_ImageLineProfileUpdateProc()
 	endif
 	
-	NVAR NI1_LP_profileMode= root:WinGlobals:$(imageGraphName):NI1_LP_profileMode
+	NVAR NI1_LP_profileMode= $("root:WinGlobals:"+imageGraphName+":NI1_LP_profileMode")
 	NI1_LP_profileMode= popNum
 
 	NI1_UpdatePositionAndWidth(1)				// 1
@@ -1319,7 +1312,7 @@ Function NI1_ImLineProfRemoveButtonProc(ctrlName) : ButtonControl
 		SetWindow kwTopWin,hook=$""
 		DoWindow/F $imageGraphName
 		RemoveFromGraph/Z LineProfileY,FHLineProfileY
-		KillDataFolder root:WinGlobals:$(imageGraphName)
+		KillDataFolder $("root:WinGlobals:"+imageGraphName)
 		DoWindow/F NI1_ImageLineProfileGraph		// this be us
 		DoUpdate									// don't let following fire
 		SetWindow kwTopWin,hook=NI1_ImageLineProfileWindowProc
@@ -1348,8 +1341,8 @@ End
 Function NI1_PrepareFHPathProfilePanel()	
 
 	SVAR imageGraphName= root:Packages:NI1_ImProcess:LineProfile:imageGraphName
-	Wave FHLineProfileY= root:WinGlobals:$(imageGraphName):FHLineProfileY
-	Wave FHLineProfileX= root:WinGlobals:$(imageGraphName):FHLineProfileX
+	Wave FHLineProfileY= $("root:WinGlobals:"+imageGraphName+":FHLineProfileY")
+	Wave FHLineProfileX= $("root:WinGlobals:"+imageGraphName+":FHLineProfileX")
 	Wave w= $NI1_GetImageWave(imageGraphName)	
 	DoWindow/F $imageGraphName
 	
@@ -1397,7 +1390,7 @@ Function NI1_StartEditingPathProfile(ctrlName) : ButtonControl
 	DoWindow/F 	$imageGraphName
 
 	// now check to see if this is a new image, in which case we need to append the wave
-	Wave FHLineProfileY= root:WinGlobals:$(imageGraphName):FHLineProfileY
+	Wave FHLineProfileY= $("root:WinGlobals:"+imageGraphName+":FHLineProfileY")
 	CheckDisplayed/W=$imageGraphName FHLineProfileY
 	
 	if(V_Flag==0)
@@ -1414,8 +1407,8 @@ Function NI1_FHLineProfileDependency(ywave,xwave)
 	NVAR profileMode= root:Packages:NI1_ImProcess:LineProfile:profileMode
 	NVAR width= root:Packages:NI1_ImProcess:LineProfile:width
 	SVAR imageGraphName= root:Packages:NI1_ImProcess:LineProfile:imageGraphName
-	Wave FHLineProfileY= root:WinGlobals:$(imageGraphName):FHLineProfileY
-	Wave FHLineProfileX= root:WinGlobals:$(imageGraphName):FHLineProfileX
+	Wave FHLineProfileY= $("root:WinGlobals:"+imageGraphName+":FHLineProfileY")
+	Wave FHLineProfileX= $("root:WinGlobals:"+imageGraphName+":FHLineProfileX")
 	WAVE/Z profile= root:Packages:NI1_ImProcess:LineProfile:profile
 	NewDataFolder/O/S NI1_tmp
 	
@@ -1561,37 +1554,6 @@ Function NI1_ClearFHTraces()
 	imageGraphName= ""						// vip to get initializations right
 End
 //*******************************************************************************************************
-//Function NI1_minWave(w,d)
-//	Wave w
-//	Variable d
-//	
-//	if(DimDelta(w,d)>0)
-//		return DimOffset(w,d)
-//	endif
-//	
-//	return DimOffset(w,d)+DimSize(w,d)*DimDelta(w,d)
-//End
-//
-////*******************************************************************************************************
-//Function NI1_maxWave(w,d)
-//	Wave w
-//	Variable d
-//	
-//	if(DimDelta(w,d)<0)
-//		return DimOffset(w,d)
-//	endif
-//	
-//	return DimOffset(w,d)+DimSize(w,d)*DimDelta(w,d)
-//End
-//
-//Function NI1_printwaves(wa,wb)
-//	Wave wa,wb
-//	
-//	Variable i
-//	for(i=0;i<Dimsize(wa,0);i+=1)
-//		print wa[i],wb[i]
-//	endfor
-//End
 //*******************************************************************************************************
 // 09JAN03
 // Given a name of an image e.g., "graph0", the following function returns the plane displayed in the
@@ -1628,7 +1590,8 @@ end
 // graph. A zero length string is returned if failure.
 //
 Function/S NI1_GetImageWave(grfName)
-	String grfName							// use zero len str to speicfy top graph
+	String grfName							
+	// use zero len str to speicfy top graph
 
 	String s= ImageNameList(grfName, ";")
 	Variable p1= StrSearch(s,";",0)

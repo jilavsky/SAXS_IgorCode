@@ -41,7 +41,7 @@
 // ==================================================================
 
 
-#if ( ! Exists("XmlOpenFile") )
+#if( ! Exists("XmlOpenFile") )
 	// BEFORE we do anything else, check that XMLutils XOP is available.
 	// No XMLutils XOP: provide dummy function so that IgorPro can compile dependent support code
 

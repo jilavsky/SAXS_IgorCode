@@ -4,7 +4,7 @@
 #pragma version=1.23
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
@@ -21,8 +21,7 @@
 //RSoXS support
 
 Function NI1_RSoXSCreateGUI()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DoWIndow NI1A_Convert2Dto1DPanel
+ 	DoWIndow NI1A_Convert2Dto1DPanel
 	if(!V_Flag)
 		NI1A_Convert2Dto1DMainPanel()
 	endif
@@ -42,8 +41,7 @@ End
 Function NI1_RSoXSFindI0File()
 	variable refNum, i
 	string LineContent
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	NVAR ColumnNamesLineNo = root:Packages:Nika_RSoXS:ColumnNamesLineNo
+ 	NVAR ColumnNamesLineNo = root:Packages:Nika_RSoXS:ColumnNamesLineNo
 	SVAR I0ColumnLabels    = root:Packages:Nika_RSoXS:I0ColumnLabels
 	SVAR I0FileNamePath    = root:Packages:Nika_RSoXS:I0FileNamePath
 	Open/R/T=".txt" refNum
@@ -71,8 +69,7 @@ End
 
 Function NI1_RSoXSSetPanelControls()
 	DoWIndow RSoXSMainPanel
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	if(V_Flag)
+ 	if(V_Flag)
 		SVAR I0DataToLoad         = root:Packages:Nika_RSoXS:I0DataToLoad
 		SVAR I0ColumnLabels       = root:Packages:Nika_RSoXS:I0ColumnLabels
 		SVAR PhotoDiodeDatatoLoad = root:Packages:Nika_RSoXS:PhotoDiodeDatatoLoad
@@ -89,8 +86,7 @@ End
 
 Function NI1_RSoXSLoadI0()
 	//this loads I0 records and deals with them.
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDf = getDataFOlder(1)
+ 	string OldDf = getDataFOlder(1)
 	setDataFolder root:Packages:Nika_RSoXS
 	SVAR I0FileNamePath       = root:Packages:Nika_RSoXS:I0FileNamePath
 	SVAR I0DataToLoad         = root:Packages:Nika_RSoXS:I0DataToLoad
@@ -158,8 +154,7 @@ End
 Function NI1_RSoXSFindCorrectionFactor(SampleName)
 	string sampleName
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	WAVE/Z w2D = root:Packages:Convert2Dto1D:CCDImageToConvert
+ 	WAVE/Z w2D = root:Packages:Convert2Dto1D:CCDImageToConvert
 	if(!WaveExists(w2D))
 		Abort "Image file not found "
 	endif
@@ -178,8 +173,7 @@ End
 Function NI1_RSoXSFindNormalFactor(SampleName)
 	string sampleName
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	WAVE/Z w2D = root:Packages:Convert2Dto1D:CCDImageToConvert
+ 	WAVE/Z w2D = root:Packages:Convert2Dto1D:CCDImageToConvert
 	if(!WaveExists(w2D))
 		Abort "Image file not found "
 	endif
@@ -208,8 +202,7 @@ End
 
 Function NI1_RSoXSInitialize()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDf = GetDataFolder(1)
+ 	string OldDf = GetDataFolder(1)
 	newDataFOlder/O root:Packages
 	newDataFolder/O/S root:Packages:Nika_RSoXS
 
@@ -486,8 +479,7 @@ End
 //************************************************************************************************************
 
 Function NI1_RSoXSConfigureNika()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-
+ 
 	//				NVAR UseSampleTransmission = root:Packages:Convert2Dto1D:UseSampleTransmission
 	//				NVAR UseEmptyField = root:Packages:Convert2Dto1D:UseEmptyField
 	NVAR UseI0ToCalibrate     = root:Packages:Convert2Dto1D:UseI0ToCalibrate
@@ -548,8 +540,7 @@ End
 //************************************************************************************************************
 //************************************************************************************************************
 Function NI1_RSoXSCopyDarkOnImport()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	WAVE/Z DarkFieldData = root:Packages:Convert2Dto1D:DarkFieldData
+ 	WAVE/Z DarkFieldData = root:Packages:Convert2Dto1D:DarkFieldData
 	if(WaveExists(DarkFieldData))
 		string   oldNote      = note(DarkFieldData)
 		variable ExposureTime = NumberByKey("EXPOSURE", OldNote, "=", ";")
@@ -565,8 +556,7 @@ End
 //************************************************************************************************************
 //************************************************************************************************************
 Function NI1_RSoXSRestoreDarkOnImport()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	WAVE     CCDImageToConvert = root:Packages:Convert2Dto1D:CCDImageToConvert
+ 	WAVE     CCDImageToConvert = root:Packages:Convert2Dto1D:CCDImageToConvert
 	string   SampleNote        = note(CCDImageToConvert)
 	variable SampleTime        = NumberByKey("EXPOSURE", SampleNote, "=", ";")
 	string   ExpectedDarkname  = "DarkFieldData_" + ReplaceString(".", num2str(SampleTime), "p")
@@ -589,8 +579,7 @@ End
 //************************************************************************************************************
 
 Function NI1_RSoXSLoadHeaderValues()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	WAVE     CCDImageToConvert = root:Packages:Convert2Dto1D:CCDImageToConvert
+ 	WAVE     CCDImageToConvert = root:Packages:Convert2Dto1D:CCDImageToConvert
 	string   SampleNote        = note(CCDImageToConvert)
 	variable SampleTime        = NumberByKey("EXPOSURE", SampleNote, "=", ";")
 	variable Energy            = NumberByKey("Beamline Energy", SampleNote, "=", ";")
@@ -665,8 +654,7 @@ Function NI1A_Create2DQWaveALS(DataWave)
 
 	phi = phi * (pi / 180) // Convert to radians
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	setDataFolder root:Packages:Convert2Dto1D
+ 	setDataFolder root:Packages:Convert2Dto1D
 
 	WAVE/Z Q2DWave
 	string NoteStr
@@ -707,8 +695,7 @@ End
 
 Function NI1A_CorrectDataPerUserReqA(orientation)
 	string orientation
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDf = GetDataFolder(1)
+ 	string OldDf = GetDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
 	SVAR CalibrationFormula     = root:Packages:Convert2Dto1D:CalibrationFormula
@@ -1805,9 +1792,13 @@ End
 //-negannulus r1-r2@xcenter,ycenter   remove an annular region of masked pixels from the mask
 
 static Function NI1_12IDC_AddAnnulusMask(MaskWave, MaskSpecs, MaskIt)
-	WAVE     MaskWave  //thsi is Mask file
-	string   MaskSpecs //thsi specifying mask location
-	variable MaskIt    //1 to mask off pixels, 0 to unmask pixels.
+	WAVE     MaskWave  
+	string   MaskSpecs 
+	variable MaskIt    
+	//this is Mask file
+	//this specifying mask location
+	//1 to mask off pixels, 0 to unmask pixels.
+
 	//-a r1-r2@xcenter,ycenter
 	//-annulus r1-r2@xcenter,ycenter Add an annular region of pixels to the mask.  The annulus is
 	//                               specified by its inner and outer radii and its center, which
@@ -1839,9 +1830,13 @@ static Function NI1_12IDC_AddAnnulusMask(MaskWave, MaskSpecs, MaskIt)
 End
 
 static Function NI1_12IDC_AddCircleMask(MaskWave, MaskSpecs, MaskIt)
-	WAVE     MaskWave  //thsi is Mask file
-	string   MaskSpecs //thsi specifying mask location
-	variable MaskIt    //1 to mask off pixels, 0 to unmask pixels.
+	WAVE     MaskWave  
+	string   MaskSpecs 
+	variable MaskIt    
+	//thsi is Mask file
+	//thsi specifying mask location
+	//1 to mask off pixels, 0 to unmask pixels.
+
 	//-circle radius@xcenter,ycenter Add a circle of masked pixels to the mask.  The circle is specified
 	//                               by its radius and its center, which may be floating point
 	//                               values  e.g.,  -circle 14@774,309
@@ -1863,9 +1858,13 @@ static Function NI1_12IDC_AddCircleMask(MaskWave, MaskSpecs, MaskIt)
 End
 
 static Function NI1_12IDC_AddRectangleMask(MaskWave, MaskSpecs, MaskIt)
-	WAVE     MaskWave  //thsi is Mask file
-	string   MaskSpecs //thsi specifying mask location
-	variable MaskIt    //1 to mask off pixels, 0 to unmask pixels.
+	WAVE     MaskWave  
+	string   MaskSpecs 
+	variable MaskIt    
+	//thsi is Mask file
+	//thsi specifying mask location
+	//1 to mask off pixels, 0 to unmask pixels.
+
 	//-r rectspec
 	//-rect rectspec                 Add a rectangle of masked pixels to the mask.  The rectangle can
 	//                               be given in two different forms e.g. '10,15,80,250' specifies a

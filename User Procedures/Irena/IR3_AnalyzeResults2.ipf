@@ -4,7 +4,7 @@
 #pragma version=0.2
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2025, Argonne National Laboratory
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
@@ -29,8 +29,7 @@ Constant IR3EversionNumber = 0.1 //AnalyzeResults panel version number
 /////******************************************************************************************
 Function IR3E_AnalyzeResults()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	IN2G_CheckScreenSize("width", 1200)
+ 	IN2G_CheckScreenSize("width", 1200)
 	DoWIndow IR3E_AnalyzeResultsPanel
 	if(V_Flag)
 		DoWindow/F IR3E_AnalyzeResultsPanel
@@ -65,8 +64,7 @@ End
 ////************************************************************************************************************
 ////************************************************************************************************************
 Function IR3E_AnalyzeResultsPanelFnct()
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	PauseUpdate // building window...
+ 	PauseUpdate // building window...
 	NewPanel/K=1/W=(2.25, 43.25, 530, 800) as "Analyze results"
 	DoWIndow/C IR3E_AnalyzeResultsPanel
 	TitleBox MainTitle, title="Analyze Results", pos={140, 2}, frame=0, fstyle=3, fixedSize=1, font="Times New Roman", size={360, 30}, fSize=22, fColor=(0, 0, 52224)
@@ -158,8 +156,7 @@ End
 
 Function IR3E_SetupControlsOnMainPanel()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	SVAR AnalysisMethodSelected = root:Packages:Irena:AnalyzeResults:AnalysisMethodSelected
+ 	SVAR AnalysisMethodSelected = root:Packages:Irena:AnalyzeResults:AnalysisMethodSelected
 	DoWindow IR3E_AnalyzeResultsPanel
 	if(V_Flag)
 
@@ -353,8 +350,7 @@ End
 
 static Function IR3E_AnalyzeSequenceOfData()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	//warn user if not saving results...
+ 	//warn user if not saving results...
 	NVAR SaveToNotebook         = root:Packages:Irena:AnalyzeResults:SaveToNotebook
 	NVAR SaveToWaves            = root:Packages:Irena:AnalyzeResults:SaveToWaves
 	NVAR SaveToFolder           = root:Packages:Irena:AnalyzeResults:SaveToFolder
@@ -397,8 +393,7 @@ End
 Function IR3E_CopyAndAppendData(FolderNameStr)
 	string FolderNameStr
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFREF oldDf = GetDataFolderDFR()
+ 	DFREF oldDf = GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:AnalyzeResults //go into the folder
 	SVAR DataStartFolder    = root:Packages:Irena:AnalyzeResults:DataStartFolder
 	SVAR DataFolderName     = root:Packages:Irena:AnalyzeResults:DataFolderName
@@ -482,8 +477,7 @@ End
 
 Function IR3E_AppendDataToGraph()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	IR3E_CreateAnalyzeResultsGraphs()
+ 	IR3E_CreateAnalyzeResultsGraphs()
 	variable WhichLegend = 0
 	string Shortname1
 	WAVE OriginalYDataWave     = root:Packages:Irena:AnalyzeResults:OriginalYDataWave
@@ -563,8 +557,7 @@ static Function IR3E_SyncCursorsTogether(traceName, CursorName, PointNumber)
 	string traceName, CursorName
 	variable PointNumber
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	IR3E_CreateAnalyzeResultsGraphs()
+ 	IR3E_CreateAnalyzeResultsGraphs()
 	NVAR DataQEnd          = root:Packages:Irena:AnalyzeResults:DataQEnd
 	NVAR DataQstart        = root:Packages:Irena:AnalyzeResults:DataQstart
 	NVAR DataQEndPoint     = root:Packages:Irena:AnalyzeResults:DataQEndPoint
@@ -592,8 +585,7 @@ End
 //**********************************************************************************************************
 Function IR3E_CreateAnalyzeResultsGraphs()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	variable exists1 = 0
+ 	variable exists1 = 0
 	DoWIndow IR3E_MainDataDisplay
 	if(V_Flag)
 		DoWIndow/HIDE=? IR3E_MainDataDisplay
@@ -616,8 +608,7 @@ End
 
 Function IR3E_InitAnalyzeResults()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFREF oldDf = GetDataFolderDFR()
+ 	DFREF oldDf = GetDataFolderDFR()
 	string   ListOfVariables
 	string   ListOfStrings
 	variable i
@@ -737,8 +728,7 @@ End
 //**********************************************************************************************************
 Function IR3E_SaveResultsToNotebook()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	NVAR SaveToNotebook = root:Packages:Irena:AnalyzeResults:SaveToNotebook
+ 	NVAR SaveToNotebook = root:Packages:Irena:AnalyzeResults:SaveToNotebook
 	NVAR SaveToWaves    = root:Packages:Irena:AnalyzeResults:SaveToWaves
 	NVAR SaveToFolder   = root:Packages:Irena:AnalyzeResults:SaveToFolder
 	if(!SaveToNotebook)
@@ -805,8 +795,7 @@ End
 //**********************************************************************************************************
 Function IR3E_SaveResultsToFolder()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFREF oldDf = GetDataFolderDFR()
+ 	DFREF oldDf = GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:AnalyzeResults //go into the folder
 	NVAR SaveToNotebook = root:Packages:Irena:AnalyzeResults:SaveToNotebook
 	NVAR SaveToWaves    = root:Packages:Irena:AnalyzeResults:SaveToWaves
@@ -896,8 +885,7 @@ End
 //**********************************************************************************************************
 Function IR3E_SaveResultsToWaves()
 
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DFREF oldDf          = GetDataFolderDFR()
+ 	DFREF oldDf          = GetDataFolderDFR()
 	NVAR  SaveToNotebook = root:Packages:Irena:AnalyzeResults:SaveToNotebook
 	NVAR  SaveToWaves    = root:Packages:Irena:AnalyzeResults:SaveToWaves
 	NVAR  SaveToFolder   = root:Packages:Irena:AnalyzeResults:SaveToFolder
@@ -984,8 +972,7 @@ End
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 Function IR3E_ResAnalSizeDistResultsTableFnct() : Table
-	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DoWIndow IR3E_ResAnalSizeDistResultsTable
+ 	DoWIndow IR3E_ResAnalSizeDistResultsTable
 	if(V_Flag)
 		DoWIndow/F IR3E_ResAnalSizeDistResultsTable
 	else
@@ -1134,12 +1121,12 @@ Function IR3E_SDCalculateStatistics()
 		wavestats/Q/P DistShort
 		variable maximum = V_max
 		variable maxLoc  = V_maxLoc
-		Duplicate/O/R=[0, maxLoc]/FREE DistShort, temp_wv1
-		Duplicate/O/R=[0, maxLoc]/FREE DimensionShort, temp_DWwv1
+		Duplicate/R=[0, maxLoc]/FREE DistShort, temp_wv1
+		Duplicate/R=[0, maxLoc]/FREE DimensionShort, temp_DWwv1
 		wavestats/Q/P temp_wv1
 		variable OneMin = V_min
-		Duplicate/O/R=[maxLoc, numpnts(DistShort) - 1]/FREE DistShort, temp_wv2
-		Duplicate/O/R=[maxLoc, numpnts(DistShort) - 1]/FREE DimensionShort, temp_DWwv2
+		Duplicate/R=[maxLoc, numpnts(DistShort) - 1]/FREE DistShort, temp_wv2
+		Duplicate/R=[maxLoc, numpnts(DistShort) - 1]/FREE DimensionShort, temp_DWwv2
 		wavestats/Q/P temp_wv2
 		variable TwoMin = V_min
 		if(OneMin > (maximum / 2) || TwoMin > (maximum / 2))
