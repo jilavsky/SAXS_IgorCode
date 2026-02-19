@@ -437,7 +437,7 @@ Function/S IN4_ProcessOneUSAXSScan(Samplename)
 	IN4_RebinDataIfNeeded("root:Packages:Indra4:SampleData")	
 	IN4_DesmearData("root:Packages:Indra4:SampleData")
 	IN4_SaveUSAXSDataInNexus(SampleName)
-	PathForUSAXSData = IN4_CopyUSAXSToFolder("root:Packages:Indra4:SampleData", "_IN4")		//this copies the data into folder. use second string not to overwrite old data
+	PathForUSAXSData = IN4_CopyUSAXSToFolder("root:Packages:Indra4:SampleData", "")		//this copies the data into folder. 2026-01-10 let's allow to overwrite old data, remvoe additional IN4 in folder names
 
 	SetDataFolder oldDf
 	return PathForUSAXSData
@@ -723,7 +723,7 @@ static Function/S IN4_ImportDataSet(FileName)
 	endif
 	
 	RealSampleName = RemoveEnding(RemoveEnding(FileName,actualExtension),".")	//TODO: sanitize properly sample name here to make it Igor friendly		
-	RealSampleName = RealSampleName+"_NX"		//this adds _NX to the end to indicate, it came from Nexus file. 
+	RealSampleName = RealSampleName 		//this adds _NX to the end to indicate, it came from Nexus file. 
 
 	PathInfo Indra4DataPath
 	string PathToFileWithData = IN4_FIndProperPathToData(S_path,"usaxs") 
@@ -762,11 +762,11 @@ static Function/S IN4_ImportDataSet(FileName)
 			//for sequences, the file loaded may not be the same as we asked for, so we need to fix things... 
 			loadedFileShort = removeending(loadedFile,".hdf")
 			if(!stringmatch(loadedFile,SampleName))
-				KillDataFolder /Z  $("root:SAXS:"+loadedFileShort+"_NX")				
-				RenameDataFolder $("root:SAXS:"+RealSampleName) , $(loadedFileShort+"_NX")
+				KillDataFolder /Z  $("root:SAXS:"+loadedFileShort )				
+				RenameDataFolder $("root:SAXS:"+RealSampleName) , $(loadedFileShort )
 			endif
 			loadedFileShort = removeending(loadedFile,".hdf")
-			pathToForData="root:SAXS:"+loadedFileShort+"_NX"
+			pathToForData="root:SAXS:"+loadedFileShort 
 			ImportedFolders += pathToForData+";"
 		endif
 		//print "Imported SAXS data for : "+ PathToFileWithData+loadedFile
@@ -782,11 +782,11 @@ static Function/S IN4_ImportDataSet(FileName)
 			//for sequences, the file loaded may not be the same as we asked for, so we need to fix things... 
 			if(!stringmatch(loadedFile,SampleName))
 				loadedFileShort = removeending(loadedFile,".hdf")
-				KillDataFolder /Z  $("root:WAXS:"+loadedFileShort+"_NX")
-				RenameDataFolder $("root:WAXS:"+RealSampleName) , $(loadedFileShort+"_NX")
+				KillDataFolder /Z  $("root:WAXS:"+loadedFileShort )
+				RenameDataFolder $("root:WAXS:"+RealSampleName) , $(loadedFileShort )
 			endif
 			loadedFileShort = removeending(loadedFile,".hdf")
-			pathToForData="root:WAXS:"+loadedFileShort+"_NX"
+			pathToForData="root:WAXS:"+loadedFileShort 
 			ImportedFolders += pathToForData+";"
 		endif
 		//print "Imported WAXS data for : "+ PathToFileWithData+loadedFile

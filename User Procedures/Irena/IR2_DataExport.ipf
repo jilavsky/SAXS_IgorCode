@@ -662,6 +662,7 @@ Function IR2E_ExportTheData()
 	if(!WaveExists(TempE))
 		Duplicate/FREE TempX, TempE
 		TempE = 0
+		//TempE = 0.03*TempY
 	endif
 	if(UseIndra2Data)
 		WAVE/Z TempdX = $(DataFolderName + ReplaceString("Qvec", QWavename, "dQ"))

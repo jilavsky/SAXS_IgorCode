@@ -166,7 +166,7 @@ Function IN2_RemoveUSAXSMacros()
 	Execute/P "DELETEINCLUDE \"IN2_Load Indra 2\""
 	Execute/P "COMPILEPROCEDURES "
 	SVAR strChange=root:Packages:USAXSItem1Str
-	strChange= "Load USAXS Macros"
+	strChange= "Load USAXS"
 	BuildMenu "USAXS"
 	DoWindow USAXSQuickManual
 end

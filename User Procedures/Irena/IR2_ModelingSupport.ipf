@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.54
+#pragma version=1.55
 
 
 constant ChangeFromGaussToSlit=2
@@ -9,6 +9,8 @@ constant ChangeFromGaussToSlit=2
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.55 minor fixes:
+	// line 5773 add possiblyQuoteName since users use also liberal names...  
 //1.54 change to pragma version=3
 //1.53 add requested feature to add ccontrols to have graph axis linear-or-log and change color of model_set1
 //1.52 reviewed pixel smearing (still think it is working correctly) and modified IR2L_FinishSmearingOfData() to use multiple threads. 
@@ -5771,7 +5773,7 @@ Function IR2L_PrepareSetsQvectors()
 						Wave ResolutionsWave = $("root:Packages:IR2L_NLSQF:ResolutionsWave_set"+num2str(i))
 						ResolutionsWave = OrigModelQ[p]*0.01*SmearingFWHM				//for this settings, this is in % of Q, need to convert to Q units
 					else																				//this is wave. Need to find it and create it here...
-						Wave/Z UserSelResWv=$(DataFolder+SmearingWaveName)
+						Wave/Z UserSelResWv=$(DataFolder+possiblyquotename(SmearingWaveName))
 						if(!WaveExists(UserSelResWv) || (numpnts(Qwave)!=numpnts(UserSelResWv)))
 							Abort "Wrong Resolution wave selected, either does not exist or has wrong number of points"
 						endif

@@ -2,7 +2,7 @@
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
 #pragma IgorVersion=9.04		//requires Igor version 9.04 or higher, uses IP9 and IP10 code. 
-#pragma version=0.7				//placeholder for file versions, eventually
+#pragma version=0.8				//placeholder for file versions, eventually
 
 Constant IN4_mainPanelVersion = 0.7
 
@@ -10,6 +10,7 @@ Constant IN4_mainPanelVersion = 0.7
 
 
 // notes, comments:
+//0.8 	2026-01-10 remove _NX from the code. Loosk verified, let;s not confuse users anymore. 
 //0.7 	2025-03 beta use at the beamline
 //0.61	Added some parameters to pass to Igor code data reduction, sped up the graphing of data. 
 //0.6	first usable version released to beamline. Tested for Flyscans. 

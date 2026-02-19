@@ -2,7 +2,7 @@
 #pragma TextEncoding     = "UTF-8"
 #pragma rtGlobals        = 3          // Use modern global access method and strict wave access
 #pragma DefaultTab       = {3, 20, 4} // Set default tab width in Igor Pro 9 and later
-#pragma version          = 1.06
+#pragma version          = 1.08
 
 //this is available ONLY, if JSONXOP is installed and json_functions.ipf is in User Procedures.
 #if(exists("JSONXOP_GetValue") == 4)
@@ -23,6 +23,8 @@ Menu "USAXS"
 	"Bluesky Plots", IR3BS_BlueSkyPlot()
 End
 
+//1.08 fixes for Tiled 2.2. This will be nightmare. 
+//1.07 fixes for Tiled 2.2 installed on USAXS January 2026. WIll need more fixes as we collect data. 
 //1.06 add ability to get data file and path to data from tiled. Change display of table to make it more useful.
 //1.05 add display of sample name for USAXS, SAXS, and WAXS instead of non existing detectors
 //1.04 fixes to IN3BS_ImportDataAndPlot to record all data in json so we can use them for analysis.
@@ -32,7 +34,8 @@ End
 //1.00 original version, kind of works
 
 //server address.
-StrConstant ServerAddress = "http://usaxscontrol.xray.aps.anl.gov:8020" //usaxcontrol
+StrConstant ServerAddress = "http://usaxscontrol.xray.aps.anl.gov:8000" 		//usaxcontrol, 8000 is Tiled from 1/9/2026
+//StrConstant ServerAddress = "http://otz:8020" 		//usaxcontrol, 8000 is Tiled from 1/9/2026
 //strconstant ServerAddress="http://10.211.55.7:8020"							//Ubuntu test machine
 
 //strconstant ServerAddress="http://wow.xray.aps.anl.gov:8010"
@@ -40,7 +43,8 @@ StrConstant ServerAddress = "http://usaxscontrol.xray.aps.anl.gov:8020" //usaxco
 //strconstant ServerAddress="http://otz.xray.aps.anl.gov:8020"
 //strconstant ServerAddress="https://tiled-demo.blueskyproject.io"
 //strconstant DefaultUSAXScatalog="idb_usaxs_retired_2023-12-05"		//set to name of default catalog, likely "usaxs" when in operations
-StrConstant DefaultUSAXScatalog = "usaxs" //set to name of default catalog, likely "usaxs" when in operations
+S//trConstant DefaultUSAXScatalog = "raw" //set to name of default catalog, likely "raw" using 2026+ tiled writer/reader
+StrConstant DefaultUSAXScatalog = "usaxs_MongoDB" //set to name of default catalog, likely "usaxs" on otz
 
 //how to install tiled: https://github.com/BCDA-APS/tiled-template/blob/main/docs/create.md
 //Igor JSON xop:  	https://www.wavemetrics.com/node/20976
@@ -399,18 +403,22 @@ Function IN3BS_ImportDataAndPlot(variable selRow, variable saveTheData, variable
 		abort
 	endif
 
-	//string TempAddress = ServerAddress+"/api/v1/search/"+CatalogUsed+"/"
-	string TempAddress = ServerAddress + "/api/v1/node/full/" + Prefix + "/"
+	//string TempAddress = ServerAddress+"/api/v1/search/"+CatalogUsed+"/"				
+	string TempAddress = ServerAddress + "/api/v1/node/full/" + Prefix + "/"		 
 	//this provides ONLY data and is very small...
 	//something to note. These return different parts of the data... Smaller or larger tree
-	TempAddress += PrunedListOfAvailableData[selRow][5] + "/primary/data?format=json" //	this results in 267 lines with /search and ONLY data with /node/full <<<<
-	//TempAddress +=PrunedListOfAvailableData[selRow][5]+"/primary?format=json"			// 	this results in 1300 lines with /search
-	//TempAddress +=PrunedListOfAvailableData[selRow][5]+"?format=json"					//	this results in giant json with 7.6k lines with /search
+			// this is old Tiled (pre 2026)
+			//TempAddress += PrunedListOfAvailableData[selRow][5] + "/primary/data?format=json" //	this results in 267 lines with /search and ONLY data with /node/full <<<<
+	// this is tiled 2.2 from January 2026
+	TempAddress += PrunedListOfAvailableData[selRow][5] + "/primary/data?format=json&include=data" 			//	otz, returns ONLY data arrays, nothing else. Anything else returns metadata without data itself. 
+	//TempAddress += PrunedListOfAvailableData[selRow][5] + "/primary/internal?format=json&include=data" //	new tiled? this results in 267 lines with /search and ONLY data with /node/full <<<<
+	//TempAddress +=PrunedListOfAvailableData[selRow][5]+"/primary?format=json&include=data"			// 	this results in 1300 lines with /search
+	//TempAddress +=PrunedListOfAvailableData[selRow][5]+"?format=json&include=data"					//	this results in giant json with 7.6k lines with /search
 	// 	selection above makes difference for data adresses.
 	//Identify the data and get the url for the arrays...
 	//TempAddress = ServerAddress+"/api/v1/full/"+Prefix+"/"
 	//TempAddress +=PrunedListOfAvailableData[selRow][3]+"/metadata/start?format=json"		//	can I get just some of the metadata here?  <<<<
-	//print TempAddress
+	print TempAddress
 	URLRequest/Z url=TempAddress
 	if(V_Flag != 0)
 		abort "Server not available"
@@ -421,17 +429,17 @@ Function IN3BS_ImportDataAndPlot(variable selRow, variable saveTheData, variable
 		abort "Cannot parse server response"
 	endif
 	variable jsonId = V_Value
-	//if we need to check who the json looks like, this will dump the json to history as formatted string
-	//	JSONXOP_Dump jsonId
-	//	JSONXOP_Dump /IND=3 jsonID 	//this adds indents so one can read the damned thing.
-	//	DoWindow jsonTextOut
-	//	if(!V_Flag)
-	//		NewNotebook/F=1/K=1/O/N=jsonTextOut	//create notebook for output
-	//	endif
-	//	Notebook jsonTextOut, selection={startOfFile,startOfFile }
-	//	Notebook jsonTextOut, text=S_Value
-	//
-	//	//print S_Value		//-- prints the file in history and works.
+	//if we need to check how the json looks like, this will dump the json to history as formatted string
+//	//	JSONXOP_Dump jsonId
+//		JSONXOP_Dump /IND=3 jsonID 	//this adds indents so one can read the damned thing.
+//		DoWindow jsonTextOut
+//		if(!V_Flag)
+//			NewNotebook/F=1/K=1/O/N=jsonTextOut	//create notebook for output
+//		endif
+//		Notebook jsonTextOut, selection={startOfFile,startOfFile }
+//		Notebook jsonTextOut, text=S_Value
+//	//
+	//print S_Value		//-- prints the file in history and works.
 	//	JSONXOP_Release jsonId
 	//	abort
 
@@ -530,6 +538,10 @@ Function IN3BS_ImportDataAndPlot(variable selRow, variable saveTheData, variable
 		//these are non standard data with potentially multiple detectors
 		for(i = 0; i < numpnts(Keys); i += 1)
 			wvName = Keys[i]
+			//so,metimes we have key="time"
+			if(stringmatch(wvName,"time")==1)
+				wvName+="_wv"
+			endif
 			WAVE tmpWvFree = WaveRefs[i]
 			Duplicate/O tmpWvFree, $(wvName)
 		endfor
@@ -810,7 +822,7 @@ Function IR3BS_GetJSONScanData()
 	NVAR NumberOfScansToImport = root:Packages:Irena:BlueSkySamplePlot:NumberOfScansToImport
 
 	//SERVER/node/search/CATALOG?page[offset]=0&filter[time_range][condition][since]=FROM_START_TIME&filter[time_range][condition][until]=BEFORE_END_TIME&sort=time
-	variable startTimeSec = date2secs((StartYear), (StartMonth), (StartDay)) - 2082844800 - Date2secs(-1, -1, -1) //convert to Python time and fix to UTC time which BS is using.
+	variable startTimeSec = date2secs((StartYear), (StartMonth), (StartDay)) - 2082844800 //- Date2secs(-1, -1, -1) //convert to Python time and fix to UTC time which BS is using.
 	variable endTimeSec   = startTimeSec + NumOfHours * 60 * 60
 	if(beforeDate)
 		endTimeSec = startTimeSec - NumOfHours * 60 * 60
@@ -853,24 +865,33 @@ Function IR3BS_GetJSONScanData()
 		TempAddress = ServerAddress + "/api/v1/search/" //this needs to be reset here...
 		if(AllDates)
 			if(beforeDate) //this reads in reverse order last N scans from date selected.
-				TempAddress += Prefix + "/?page[offset]=" + num2str(OffsetStart) + "&page[limit]=" + num2str(chunkToDownload) + "&sort=-time"
+				//TempAddress += Prefix + "/?page[offset]=" + num2str(OffsetStart) + "&page[limit]=" + num2str(chunkToDownload) + "&sort=-metadata.start.time"
+				TempAddress += Prefix + "/?page[offset]=" + num2str(OffsetStart) + "&page[limit]=" + num2str(chunkToDownload) + "&sort=-time"	//otz
 			else
-				//TempAddress +=CatalogUsed+"?page[offset]=00&page[limit]="+num2str(NumberOfScansToImport)+"&sort=time"
-				TempAddress += Prefix + "/?page[offset]=" + num2str(OffsetStart) + "&page[limit]=" + num2str(chunkToDownload) + "&sort=time"
+				TempAddress +=CatalogUsed+"?page[offset]=00&page[limit]="+num2str(NumberOfScansToImport)+"&sort=time"
+				//TempAddress += Prefix + "/?page[offset]=" + num2str(OffsetStart) + "&page[limit]=" + num2str(chunkToDownload) + "&sort=metadata.start.time"
 			endif
 
 		else //from/before date
 			if(beforeDate)
 				if(NumOfHours > 0)
-					TempAddress += Prefix + "/?page[offset]=" + num2str(OffsetStart) + "&page[limit]=" + num2str(chunkToDownload) + "&filter[time_range][condition][until]=" + StartTimeStr + "&filter[time_range][condition][since]=" + EndTimeStr
+					TempAddress += Prefix + "/?page[offset]=" + num2str(OffsetStart) + "&page[limit]=" + num2str(chunkToDownload) 
+					//TempAddress += "&filter[comparison][condition][key]=start.time&filter[comparison][condition][operator]=ge&filter[comparison][condition][value]=" + StartTimeStr + "&filter[comparison2][condition][key]=start.time&filter[comparison2][condition][operator]=le&filter[comparison2][condition][value]=" + EndTimeStr
+					TempAddress += "&filter[time_range][condition][until]=" + StartTimeStr + "&filter[time_range][condition][since]=" + EndTimeStr
 				else
-					TempAddress += Prefix + "/?page[offset]=" + num2str(OffsetStart) + "&page[limit]=" + num2str(chunkToDownload) + "&filter[time_range][condition][until]=" + StartTimeStr //+"&filter[time_range][condition][until]="+EndTimeStr
+					TempAddress += Prefix + "/?page[offset]=" + num2str(OffsetStart) + "&page[limit]=" + num2str(chunkToDownload) 
+					//TempAddress += "&filter[comparison][condition][key]=start.time&filter[comparison][condition][operator]=ge&filter[comparison][condition][value]=" + StartTimeStr
+					TempAddress += "&filter[time_range][condition][until]=" + StartTimeStr //+"&filter[time_range][condition][until]="+EndTimeStr
 				endif
 			else
 				if(NumOfHours > 0)
-					TempAddress += Prefix + "/?page[offset]=" + num2str(OffsetStart) + "&page[limit]=" + num2str(chunkToDownload) + "&filter[time_range][condition][since]=" + StartTimeStr + "&filter[time_range][condition][until]=" + EndTimeStr
+					TempAddress += Prefix + "/?page[offset]=" + num2str(OffsetStart) + "&page[limit]=" + num2str(chunkToDownload) 
+					//TempAddress += "&filter[comparison][condition][key]=start.time&filter[comparison][condition][operator]=ge&filter[comparison][condition][value]=" + StartTimeStr + "&filter[comparison2][condition][key]=start.time&filter[comparison2][condition][operator]=le&filter[comparison2][condition][value]=" + EndTimeStr
+					TempAddress += "&filter[time_range][condition][since]=" + StartTimeStr + "&filter[time_range][condition][until]=" + EndTimeStr
 				else
-					TempAddress += Prefix + "/?page[offset]=" + num2str(OffsetStart) + "&page[limit]=" + num2str(chunkToDownload) + "&filter[time_range][condition][since]=" + StartTimeStr //+"&filter[time_range][condition][until]="+EndTimeStr
+					TempAddress += Prefix + "/?page[offset]=" + num2str(OffsetStart) + "&page[limit]=" + num2str(chunkToDownload) 
+					//TempAddress += "&filter[comparison][condition][key]=start.time&filter[comparison][condition][operator]=ge&filter[comparison][condition][value]=" + StartTimeStr
+					TempAddress += "&filter[time_range][condition][since]=" + StartTimeStr //+"&filter[time_range][condition][until]="+EndTimeStr
 				endif
 			endif
 			if(!StringMatch(ScanTypeToUse, "all"))
@@ -880,13 +901,17 @@ Function IR3BS_GetJSONScanData()
 			//&filter[scan_id][condition][scan_ids]=SCAN_ID
 			if(beforeDate)
 				TempAddress += "&filter[time_range][condition][timezone]=US/Central&sort=-time"
+				//TempAddress += "&sort=-metadata.start.time"
 				//note: sort=-time sorts in inverse chronological order.
 			else
 				TempAddress += "&filter[time_range][condition][timezone]=US/Central&sort=time"
+				//TempAddress += "&sort=metadata.start.time"
 			endif
-			//example
-			//http://usaxscontrol:8020/api/v1/node/search/20idb_usaxs?page[offset]=0&page[limit]=100&filter[time_range][condition][since]=1671235200&filter[time_range][condition][until]=1671321600&filter[time_range][condition][timezone]=US/Central&sort=time
-			//http://usaxscontrol:8020/api/v1/node/search/20idb_usaxs?page[offset]=100&page[limit]=100&filter[time_range][condition][since]=1671235200&filter[time_range][condition][until]=1671321600&filter[time_range][condition][timezone]=US/Central&sort=time
+			//example of new tiled 2.2 querry for time range. Ouch
+			//http://usaxscontrol.xray.aps.anl.gov:8000/api/v1/search/raw?page[offset]=0&page[limit]=10
+			//&filter[comparison][condition][key]=start.time&filter[comparison][condition][operator]=ge&filter[comparison][condition][value]=1770098400
+			//&filter[comparison2][condition][key]=start.time&filter[comparison2][condition][operator]=le&filter[comparison2][condition][value]=1770184800&fields=metadata&omit_links=true
+			
 		endif
 		TempAddress += "&fields=metadata&omit_links=true" //this maps everything outside metadata to null, including links. Makes everything smaller and faster. .
 		//print TempAddress
@@ -1144,7 +1169,8 @@ Function IR3BS_GetJSONScanData()
 				tempAddress  = "/data/" + num2str(i) + Strpath2 + "plan_name"
 				tempPlanName = JSON_GetString(jsonID, tempAddress, ignoreErr = 1)
 				if(strlen(tempPlanName) < 1)
-					abort "Cannot find proper data location. This is bug"
+					//abort "Cannot find proper data location. This is bug"
+					print "Did not find any data in requested time range!"
 				endif
 			endif
 		endif
