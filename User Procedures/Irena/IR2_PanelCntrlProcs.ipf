@@ -1,6 +1,6 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use modern global access method.
-#pragma version=1.66
+#pragma version=1.67
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
@@ -8,6 +8,8 @@
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//1.67 found major bug in UI - if other tools place multiple QRS data sets int eh same folder, we cannot get to them using the new toolbox. 
+//			no real solution, fix looks very complex. At least added warning in history area. 
 //1.66 add to USAXS combination of Detector=Xdata, this is for Tiled imported tune scans. Also fixed IR3C_GenStringOfFolders2
 //1.65 added SimpleFits Power Law
 //1.64 added SimpleFits 1DCorrelation results: Corr1DZ_N for X and Y are: Corr1DK_N or Corr1DGammaA_N or Corr1DGammaI_N
@@ -3557,6 +3559,7 @@ Function IR3C_MultiListBoxProc(lba) : ListBoxControl
 					return 0
 				endif
 				FoldernameStr = listWave[row]
+				IR3C_WarnIfMultipleQRSDataSets(TopPanel, CntrlLocation, FoldernameStr)
 				if(strlen(ControlMouseDownFunctionName) > 0)
 					Execute(ControlMouseDownFunctionName + "(\"" + FoldernameStr + "\")")
 				endif
@@ -3585,6 +3588,29 @@ Function IR3C_MultiListBoxProc(lba) : ListBoxControl
 End
 //**************************************************************************************
 //**************************************************************************************
+Function IR3C_WarnIfMultipleQRSDataSets(ControlPanelName, CntrlLocation, FolderNameString)
+	string ControlPanelName, CntrlLocation, FolderNameString
+
+	NVAR UseQRSdata= $("root:Packages:" + CntrlLocation + ":UseQRSdata")
+	if(UseQRSdata)
+		SVAR DataMatchString  = $("root:Packages:" + CntrlLocation + ":DataMatchString")
+		SVAR DataStartFolder = $("root:Packages:" + CntrlLocation + ":DataStartFolder")
+		SVAR DataFolderName = $("root:Packages:" + CntrlLocation + ":DataFolderName")
+		DataFolderName = DataStartFolder+FolderNameString
+		string XaxisList =  IR2P_ListOfWaves("Xaxis", "", ControlPanelName)
+		string YaxisList =  IR2P_ListOfWaves("Yaxis", "*", ControlPanelName)
+		if(ItemsInList(XaxisList)>1 && ItemsInList(YaxisList)>1)
+		print "*** ! ! ! ***"
+			print "Warning! found multiple data sets in this folder. New GUI tools handle only one data set per folder"
+			print "Found :      " + XaxisList
+			print "Will use > : " + stringfromlist(0,XaxisList)
+			print "To fix this, move manually data into different folders"  
+		endif
+		
+	endif
+	
+	return 0
+end
 //**************************************************************************************
 //**************************************************************************************
 
@@ -3684,7 +3710,7 @@ Function IR3C_InitMultiControls(PathToPackagesFolder, PanelName, DoubleClickFunc
 	if(strlen(ResultsGenerationToUse) < 1)
 		ResultsGenerationToUse = "Latest"
 	endif
-	Make/O/T/N=(0) ListOfAvailableData
+	Make/O/T/N=(0) ListOfAvailableData		
 	Make/O/N=(0) SelectionOfAvailableData
 
 	NVAR UseIndra2Data
