@@ -1462,9 +1462,27 @@ Function IR3J_FitPorodSMR(w,yw,xw) : FitFunc
 	Wave w,yw,xw
 	NVAR SlitLength	 =	root:Packages:Irena:SimpleFits:SlitLength
 	duplicate/free yw, ywSM
-	yw = PorodInLogLog(w,xw[p])
+	yw = IR3J_PorodInLogLog(w,xw[p])
 	IR1B_SmearData(yw, xw, SlitLength, ywSM)
 	yw=ywSM	
+End
+//*****************************************************************************************************************
+Function IR3J_PorodInLogLog(w,Q) : FitFunc
+	Wave w
+	Variable Q
+
+	//CurveFitDialog/ These comments were created by the Curve Fitting dialog. Altering them will
+	//CurveFitDialog/ make the function less convenient to work with in the Curve Fitting dialog.
+	//CurveFitDialog/ Equation:
+	//CurveFitDialog/ f(Q) = PorodConst * Q^4 + Background
+	//CurveFitDialog/ End of Equation
+	//CurveFitDialog/ Independent Variables 1
+	//CurveFitDialog/ Q
+	//CurveFitDialog/ Coefficients 2
+	//CurveFitDialog/ w[0] = PorodConst
+	//CurveFitDialog/ w[1] = Background
+
+	return w[0] * Q^(-4) + w[1]
 End
 //*****************************************************************************************************************
 Function IR3J_FitPowerLawSMR(w,yw,xw) : FitFunc
@@ -1591,6 +1609,7 @@ static Function IR3J_FitPorod()
 	if(UseSMRData)
 		FuncFit IR3J_FitPorodSMR W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /C=T_Constraints /W=OriginalDataErrorWave /I=1
 	else
+		FuncFit PorodInLogLog W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /C=T_Constraints /W=OriginalDataErrorWave /I=1
  	endif
 	if (V_FitError==0)	// fitting was fine... 
 		Wave W_sigma
