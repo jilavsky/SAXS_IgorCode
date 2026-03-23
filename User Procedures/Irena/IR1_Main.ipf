@@ -147,6 +147,9 @@ End
 Menu "SAS"
 	help = {"Irena SAS modeling macros, version 2.54 released 1/5/2014 by Jan Ilavsky"}
 	Submenu "Data import & export"
+		"Import SAXS / WAXS / Nexus data (combined)", IR3I_ImportDataMain()
+		help={"Combined import panel for ASCII SAXS/WAXS and Nexus CanSAS data"}
+		"---"
 		"Import ASCII SAS data", IR1I_ImportSASASCIIDataMain()
 		help={"Import Small-angle scattering data from ASCII file into Igor for use with macros"}
 		"Import ASCII WAXS or other data", IR1I_ImportOtherASCIIMain()
