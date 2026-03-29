@@ -66,34 +66,34 @@ Constant IR1TrimNameLength      = 28
 
 //this should allow user to import data to Igor - let's deal with 3 column data in ASCII for now
 
-Function IR1I_ImportSASASCIIDataMain()
- 	IN2G_CheckScreenSize("height", 720)
-	DoWindow IR1I_ImportOtherASCIIData
-	if(V_Flag)
-		DoALert/T="Window conflict notice" 1, "Import Other ASCII data cannot be open while using this tool, close (Yes) or abort (no)?"
-		if(V_flag == 1)
-			KillWIndow/Z IR1I_ImportOtherASCIIData
-		else
-			abort
-		endif
-	endif
-	DoWindow IR1I_ImportNexusCanSASData
-	if(V_Flag)
-		DoALert/T="Window conflict notice" 1, "Import Nexus data cannot be open while using this tool, close (Yes) or abort (no)?"
-		if(V_flag == 1)
-			KillWIndow/Z IR1I_ImportNexusCanSASData
-		else
-			abort
-		endif
-	endif
-	KillWIndow/Z IR1I_ImportData
-	IR1I_InitializeImportData()
-	Execute("IR1I_ImportSASASCIIData()")
-	ING2_AddScrollControl()
-	IR1_UpdatePanelVersionNumber("IR1I_ImportData", IR1IversionNumber, 1)
-	//fix checboxes
-	IR1I_FIxCheckboxesForWaveTypes()
-End
+//Function IR1I_ImportSASASCIIDataMain()
+// 	IN2G_CheckScreenSize("height", 720)
+//	DoWindow IR1I_ImportOtherASCIIData
+//	if(V_Flag)
+//		DoALert/T="Window conflict notice" 1, "Import Other ASCII data cannot be open while using this tool, close (Yes) or abort (no)?"
+//		if(V_flag == 1)
+//			KillWIndow/Z IR1I_ImportOtherASCIIData
+//		else
+//			abort
+//		endif
+//	endif
+//	DoWindow IR1I_ImportNexusCanSASData
+//	if(V_Flag)
+//		DoALert/T="Window conflict notice" 1, "Import Nexus data cannot be open while using this tool, close (Yes) or abort (no)?"
+//		if(V_flag == 1)
+//			KillWIndow/Z IR1I_ImportNexusCanSASData
+//		else
+//			abort
+//		endif
+//	endif
+//	KillWIndow/Z IR1I_ImportData
+//	IR1I_InitializeImportData()
+//	Execute("IR1I_ImportSASASCIIData()")
+//	ING2_AddScrollControl()
+//	IR1_UpdatePanelVersionNumber("IR1I_ImportData", IR1IversionNumber, 1)
+//	//fix checboxes
+//	IR1I_FIxCheckboxesForWaveTypes()
+//End
 
 //************************************************************************************************************
 //************************************************************************************************************
@@ -106,9 +106,9 @@ Function IR1I_MainCheckVersion()
 		if(!IR1_CheckPanelVersionNumber("IR1I_ImportData", IR1IversionNumber))
 			DoAlert/T="The ASCII Import panel was created by incorrect version of Irena " 1, "Import ASCII may need to be restarted to work properly. Restart now?"
 			if(V_flag == 1)
-				IR1I_ImportSASASCIIDataMain()
+				IR3I_ImportDataMain()
 			else //at least reinitialize the variables so we avoid major crashes...
-				IR1I_InitializeImportData()
+				IR3I_InitializeImportData()
 			endif
 		endif
 	endif
@@ -116,35 +116,35 @@ End
 //************************************************************************************************************
 //************************************************************************************************************
 
-Function IR1I_MainCheckVersion2()
- 	DoWindow IR1I_ImportOtherASCIIData
-	if(V_Flag)
-		if(!IR1_CheckPanelVersionNumber("IR1I_ImportOtherASCIIData", IR1IversionNumber2))
-			DoAlert/T="The non-SAS Import panel was created by incorrect version of Irena " 1, "Import non-SAS may need to be restarted to work properly. Restart now?"
-			if(V_flag == 1)
-				IR1I_ImportOtherASCIIMain()
-			else //at least reinitialize the variables so we avoid major crashes...
-				IR1I_InitializeImportData()
-			endif
-		endif
-	endif
-End
+//Function IR1I_MainCheckVersion2()
+// 	DoWindow IR1I_ImportOtherASCIIData
+//	if(V_Flag)
+//		if(!IR1_CheckPanelVersionNumber("IR1I_ImportOtherASCIIData", IR1IversionNumber2))
+//			DoAlert/T="The non-SAS Import panel was created by incorrect version of Irena " 1, "Import non-SAS may need to be restarted to work properly. Restart now?"
+//			if(V_flag == 1)
+//				IR1I_ImportOtherASCIIMain()
+//			else //at least reinitialize the variables so we avoid major crashes...
+//				IR1I_InitializeImportData()
+//			endif
+//		endif
+//	endif
+//End
 //************************************************************************************************************
 //************************************************************************************************************
 
-Function IR1I_MainCheckVersionNexus()
- 	DoWindow IR1I_ImportNexusCanSASData
-	if(V_Flag)
-		if(!IR1_CheckPanelVersionNumber("IR1I_ImportNexusCanSASData", IR1IversionNumberNexus))
-			DoAlert/T="The Nexus Import panel was created by incorrect version of Irena " 1, "Import Nexus canSAS may need to be restarted to work properly. Restart now?"
-			if(V_flag == 1)
-				Execute/P ("IR1I_ImportNexusCanSASMain()")
-			else //at least reinitialize the variables so we avoid major crashes...
-				IR1I_InitializeImportData()
-			endif
-		endif
-	endif
-End
+//Function IR1I_MainCheckVersionNexus()
+// 	DoWindow IR1I_ImportNexusCanSASData
+//	if(V_Flag)
+//		if(!IR1_CheckPanelVersionNumber("IR1I_ImportNexusCanSASData", IR1IversionNumberNexus))
+//			DoAlert/T="The Nexus Import panel was created by incorrect version of Irena " 1, "Import Nexus canSAS may need to be restarted to work properly. Restart now?"
+//			if(V_flag == 1)
+//				Execute/P ("IR1I_ImportNexusCanSASMain()")
+//			else //at least reinitialize the variables so we avoid major crashes...
+//				IR1I_InitializeImportData()
+//			endif
+//		endif
+//	endif
+//End
 
 //************************************************************************************************************
 //************************************************************************************************************
@@ -1352,9 +1352,13 @@ Function IR1I_TestPlotData()
 	WAVE/Z TempError
 	WAVE/Z TempQError
 	if(WaveExists(TempIntensity) && WaveExists(TempQvector))
-		Display/K=1/N=FilePlotPreview TempIntensity vs TempQvector as "Preview of the data"
-		MoveWindow/W=FilePlotPreview 450, 5, 1000, 400
-		AutoPositionWindow/M=0/R=$(TopPanel) FilePlotPreview
+		Display/K=1/N=IR1I_ImportData TempIntensity vs TempQvector as "Preview of the data"
+		MoveWindow/W=IR1I_ImportData 450, 5, 1000, 400
+		AutoPositionWindow/M=0/R=$(TopPanel) IR1I_ImportData
+		DoWIndow FilePreview
+		if(V_Flag)
+			AutoPositionWindow/M=1/R=FilePreview IR1I_ImportData
+		endif
 		TextBox/C/N=text0/A=MC selectedfile
 		if(WaveExists(TempError))
 			if(!WaveExists(TempQError))
@@ -1364,7 +1368,8 @@ Function IR1I_TestPlotData()
 			endif
 		endif
 		DoWindow IR1I_ImportData
-		if(V_Flag)
+		NVAR 	SAXSData=root:Packages:ImportData:SAXSData
+		if(V_Flag && SAXSData)
 			ModifyGraph log=1
 		endif
 	endif
@@ -2231,6 +2236,9 @@ Function IR1I_InitializeImportData()
 		QvectInDegrees = 0
 	endif
 
+	//init various names.
+	IR1I_CheckProc("", 1)
+	
 	IR1I_UpdateListOfFilesInWvs()
 End
 
@@ -2239,35 +2247,35 @@ End
 //************************************************************************************************************
 //************************************************************************************************************
 
-Function IR1I_ImportOtherASCIIMain()
- 	//IR1_KillGraphsAndPanels()
-	IN2G_CheckScreenSize("height", 720)
-	DoWindow IR1I_ImportData
-	if(V_Flag)
-		DoALert/T="Window conflict notice" 1, "Import SAS ASCII data cannot be open while using this tool, close (Yes) or abort (no)?"
-		if(V_flag == 1)
-			KillWIndow/Z IR1I_ImportData
-		else
-			abort
-		endif
-	endif
-	DoWindow IR1I_ImportNexusCanSASData
-	if(V_Flag)
-		DoALert/T="Window conflict notice" 1, "Import Nexus data cannot be open while using this tool, close (Yes) or abort (no)?"
-		if(V_flag == 1)
-			KillWIndow/Z IR1I_ImportNexusCanSASData
-		else
-			abort
-		endif
-	endif
-	KillWIndow/Z IR1I_ImportOtherASCIIData
-	IR1I_InitializeImportData()
-	IR1I_ImportOtherASCIIDataFnct()
-	ING2_AddScrollControl()
-	IR1_UpdatePanelVersionNumber("IR1I_ImportOtherASCIIData", IR1IversionNumber2, 1)
-	//fix checboxes
-	//IR1I_FIxCheckboxesForWaveTypes()
-End
+//Function IR1I_ImportOtherASCIIMain()
+// 	//IR1_KillGraphsAndPanels()
+//	IN2G_CheckScreenSize("height", 720)
+//	DoWindow IR1I_ImportData
+//	if(V_Flag)
+//		DoALert/T="Window conflict notice" 1, "Import SAS ASCII data cannot be open while using this tool, close (Yes) or abort (no)?"
+//		if(V_flag == 1)
+//			KillWIndow/Z IR1I_ImportData
+//		else
+//			abort
+//		endif
+//	endif
+//	DoWindow IR1I_ImportNexusCanSASData
+//	if(V_Flag)
+//		DoALert/T="Window conflict notice" 1, "Import Nexus data cannot be open while using this tool, close (Yes) or abort (no)?"
+//		if(V_flag == 1)
+//			KillWIndow/Z IR1I_ImportNexusCanSASData
+//		else
+//			abort
+//		endif
+//	endif
+//	KillWIndow/Z IR1I_ImportOtherASCIIData
+//	IR1I_InitializeImportData()
+//	IR1I_ImportOtherASCIIDataFnct()
+//	ING2_AddScrollControl()
+//	IR1_UpdatePanelVersionNumber("IR1I_ImportOtherASCIIData", IR1IversionNumber2, 1)
+//	//fix checboxes
+//	//IR1I_FIxCheckboxesForWaveTypes()
+//End
 
 //************************************************************************************************************
 //************************************************************************************************************
@@ -2857,44 +2865,44 @@ End
 
 //************************************************************************************************************
 //************************************************************************************************************
-
-Function IR1I_ImportNexusCanSASMain()
- 	//IR1_KillGraphsAndPanels()
-	IN2G_CheckScreenSize("height", 720)
-	DoWindow IR1I_ImportData
-	if(V_Flag)
-		DoALert/T="Window conflict notice" 1, "Import SAS ASCII data cannot be open while using this tool, close (Yes) or abort (no)?"
-		if(V_flag == 1)
-			KillWIndow/Z IR1I_ImportData
-		else
-			abort
-		endif
-	endif
-	DoWindow IR1I_ImportOtherASCIIData
-	if(V_Flag)
-		DoALert/T="Window conflict notice" 1, "Import Nexus data cannot be open while using this tool, close (Yes) or abort (no)?"
-		if(V_flag == 1)
-			KillWIndow/Z IR1I_ImportOtherASCIIData
-		else
-			abort
-		endif
-	endif
-	KillWIndow/Z IR1I_ImportOtherASCIIData
-	IR1I_InitializeImportData()
-	IR1I_ImportNexusDataFnct()
-	ING2_AddScrollControl()
-	IR1_UpdatePanelVersionNumber("IR1I_ImportNexusCanSASData", IR1IversionNumberNexus, 1)
-	//fix these checkboxes;
-	NVAR UseFileNameasFolder     = root:Packages:ImportData:UseFileNameasFolder
-	NVAR UsesasEntryNameAsFolder = root:Packages:ImportData:UsesasEntryNameAsFolder
-	NVAR UseTitleNameAsFolder    = root:Packages:ImportData:UseTitleNameAsFolder
-	if((UseFileNameasFolder + UsesasEntryNameAsFolder + UseTitleNameAsFolder) != 1)
-		UseFileNameasFolder     = 0
-		UsesasEntryNameAsFolder = 0
-		UseTitleNameAsFolder    = 1
-	endif
-
-End
+//
+//Function IR1I_ImportNexusCanSASMain()
+// 	//IR1_KillGraphsAndPanels()
+//	IN2G_CheckScreenSize("height", 720)
+//	DoWindow IR1I_ImportData
+//	if(V_Flag)
+//		DoALert/T="Window conflict notice" 1, "Import SAS ASCII data cannot be open while using this tool, close (Yes) or abort (no)?"
+//		if(V_flag == 1)
+//			KillWIndow/Z IR1I_ImportData
+//		else
+//			abort
+//		endif
+//	endif
+//	DoWindow IR1I_ImportOtherASCIIData
+//	if(V_Flag)
+//		DoALert/T="Window conflict notice" 1, "Import Nexus data cannot be open while using this tool, close (Yes) or abort (no)?"
+//		if(V_flag == 1)
+//			KillWIndow/Z IR1I_ImportOtherASCIIData
+//		else
+//			abort
+//		endif
+//	endif
+//	KillWIndow/Z IR1I_ImportOtherASCIIData
+//	IR1I_InitializeImportData()
+//	IR1I_ImportNexusDataFnct()
+//	ING2_AddScrollControl()
+//	IR1_UpdatePanelVersionNumber("IR1I_ImportNexusCanSASData", IR1IversionNumberNexus, 1)
+//	//fix these checkboxes;
+//	NVAR UseFileNameasFolder     = root:Packages:ImportData:UseFileNameasFolder
+//	NVAR UsesasEntryNameAsFolder = root:Packages:ImportData:UsesasEntryNameAsFolder
+//	NVAR UseTitleNameAsFolder    = root:Packages:ImportData:UseTitleNameAsFolder
+//	if((UseFileNameasFolder + UsesasEntryNameAsFolder + UseTitleNameAsFolder) != 1)
+//		UseFileNameasFolder     = 0
+//		UsesasEntryNameAsFolder = 0
+//		UseTitleNameAsFolder    = 1
+//	endif
+//
+//End
 
 //************************************************************************************************************
 //************************************************************************************************************

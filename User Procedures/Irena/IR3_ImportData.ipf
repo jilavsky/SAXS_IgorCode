@@ -137,7 +137,7 @@ Proc IR3I_ImportDataPanel()
 
 	PauseUpdate	// building window …
 
-	NewPanel/K=1/W=(3, 40, 430, 760)/N=IR3I_ImportData as "Import SAXS/WAXS/Nexus Data"
+	NewPanel/K=1/W=(3, 40, 430, 850)/N=IR3I_ImportData as "Import SAXS/WAXS/Nexus Data"
 
 	// ── Title ───────────────────────────────────────────────────────────────
 	TitleBox MainTitle, title="\Zr200Import SAXS / WAXS / Nexus Data in Igor", pos={20, 5}, frame=0, fstyle=3
@@ -148,10 +148,12 @@ Proc IR3I_ImportDataPanel()
 	//    display, match name, extension, sort popup, list box, Select All,
 	//    Deselect All).  We override the list box size and button positions. ──
 	IR3C_AddDataControls("ImportDataPath", "ImportData", "IR3I_ImportData", "", "", "", "IR3I_DoubleClickFnct")
-	ListBox ListOfAvailableData, size={220, 477}, pos={5, 113}
-	Button SelectAll, pos={5, 595}
-	Button DeSelectAll, pos={120, 595}
-	PopupMenu SortOptionString, pos={5, 90}
+	ListBox ListOfAvailableData, size={220, 320}, pos={5, 113}
+	Button SelectAll, pos={5, 440}
+	Button DeSelectAll, pos={120, 440}
+	SetVariable NameMatchString, pos={5,90}, size={180,20}
+	PopupMenu SortOptionString, pos={195, 90}
+	SetVariable DataExtensionString, pos={280,90}, size={135,20}
 
 	// Get Help button (top-right corner)
 	Button GetHelp, pos={335, 53}, size={80, 15}, fColor=(65535, 32768, 32768), proc=IR3I_ButtonProc, title="Get Help"
@@ -167,11 +169,11 @@ Proc IR3I_ImportDataPanel()
 	PopupMenu DataFormatPopup, mode=1, popvalue=root:Packages:ImportData:DataFormatType
 	PopupMenu DataFormatPopup, value="ASCII SAXS/SANS;ASCII WAXS;Nexus CanSAS"
 
-	CheckBox SAXSData, pos={230, 160}, size={16, 14}, proc=IR3I_CheckProc, title="SAXS data?", mode=1
+	CheckBox SAXSData, pos={250, 160}, size={16, 14}, proc=IR3I_CheckProc, title="SAXS data?", mode=1
 	CheckBox SAXSData, variable=root:Packages:ImportData:SAXSData
 	CheckBox SAXSData, help={"Select for SAXS data (Q-space). Default folder: root:SAS"}
 
-	CheckBox WAXSData, pos={230, 178}, size={16, 14}, proc=IR3I_CheckProc, title="WAXS data?", mode=1
+	CheckBox WAXSData, pos={250, 178}, size={16, 14}, proc=IR3I_CheckProc, title="WAXS data?", mode=1
 	CheckBox WAXSData, variable=root:Packages:ImportData:WAXSData
 	CheckBox WAXSData, help={"Select for WAXS data (real space / 2-theta). Default folder: root:WAXS"}
 
@@ -252,42 +254,42 @@ Proc IR3I_ImportDataPanel()
 	//    Placed in the same y-range as Section B; shown/hidden via IR3I_UpdateFormatUI().
 	//    These controls start invisible (disable=2) and are revealed for Nexus format.
 
-	TitleBox NXTitle, title="\Zr140Nexus folder naming", pos={230, 246}, frame=0, fstyle=1, fixedSize=1, size={185, 18}, disable=2
+	TitleBox NXTitle, title="\Zr140Nexus folder naming", pos={230, 246}, frame=0, fstyle=1, fixedSize=1, size={185, 18}, disable=1
 
-	CheckBox UseFileNameAsFolderNX,      pos={230, 268}, size={16, 14}, proc=IR3I_CheckProc, mode=1, disable=2
+	CheckBox UseFileNameAsFolderNX,      pos={230, 268}, size={16, 14}, proc=IR3I_CheckProc, mode=1, disable=1
 	CheckBox UseFileNameAsFolderNX,      title="Use file name as folder name"
 	CheckBox UseFileNameAsFolderNX,      variable=root:Packages:ImportData:UseFileNameAsFolder
 	CheckBox UseFileNameAsFolderNX,      help={"Name the data folder after the HDF5 file name"}
 
-	CheckBox UsesasEntryNameAsFolderNX,  pos={230, 286}, size={16, 14}, proc=IR3I_CheckProc, mode=1, disable=2
+	CheckBox UsesasEntryNameAsFolderNX,  pos={230, 286}, size={16, 14}, proc=IR3I_CheckProc, mode=1, disable=1
 	CheckBox UsesasEntryNameAsFolderNX,  title="Use sasEntry name as folder"
 	CheckBox UsesasEntryNameAsFolderNX,  variable=root:Packages:ImportData:UsesasEntryNameAsFolder
 	CheckBox UsesasEntryNameAsFolderNX,  help={"Name the data folder after the NXcanSAS entry name"}
 
-	CheckBox UseTitleNameAsFolderNX,     pos={230, 304}, size={16, 14}, proc=IR3I_CheckProc, mode=1, disable=2
+	CheckBox UseTitleNameAsFolderNX,     pos={230, 304}, size={16, 14}, proc=IR3I_CheckProc, mode=1, disable=1
 	CheckBox UseTitleNameAsFolderNX,     title="Use sasTitle as folder name"
 	CheckBox UseTitleNameAsFolderNX,     variable=root:Packages:ImportData:UseTitleNameAsFolder
 	CheckBox UseTitleNameAsFolderNX,     help={"Name the data folder after the sample title stored in the file"}
 
-	Button OpenFileInBrowser, pos={230, 326}, size={185, 20}, proc=IR3I_ButtonProc, title="Open File in HDF5 Browser", disable=2
+	Button OpenFileInBrowser, pos={230, 326}, size={185, 20}, proc=IR3I_ButtonProc, title="Open File in HDF5 Browser", disable=1
 	Button OpenFileInBrowser, help={"Inspect the selected HDF5/Nexus file in the HDF5 browser"}
 
-	TitleBox NXMetaTitle, title="\Zr140Include in wave note", pos={230, 352}, frame=0, fstyle=1, fixedSize=1, size={185, 18}, disable=2
+	TitleBox NXMetaTitle, title="\Zr140Include in wave note", pos={230, 352}, frame=0, fstyle=1, fixedSize=1, size={185, 18}, disable=1
 
-	CheckBox NX_InclsasInstrument, pos={230, 372}, size={16, 14}, noproc, title="Include sasInstrument?", disable=2
+	CheckBox NX_InclsasInstrument, pos={230, 372}, size={16, 14}, noproc, title="Include sasInstrument?", disable=1
 	CheckBox NX_InclsasInstrument, variable=root:Packages:ImportData:NX_InclsasInstrument
 	CheckBox NX_InclsasInstrument, help={"Add sasInstrument group values to wave note on import"}
 
-	CheckBox NX_Incl_sasSample, pos={230, 390}, size={16, 14}, noproc, title="Include sasSample?", disable=2
+	CheckBox NX_Incl_sasSample, pos={230, 390}, size={16, 14}, noproc, title="Include sasSample?", disable=1
 	CheckBox NX_Incl_sasSample, variable=root:Packages:ImportData:NX_Incl_sasSample
 	CheckBox NX_Incl_sasSample, help={"Add sasSample group values to wave note on import"}
 
-	CheckBox NX_Inclsasnote, pos={230, 408}, size={16, 14}, noproc, title="Include sasNote?", disable=2
+	CheckBox NX_Inclsasnote, pos={230, 408}, size={16, 14}, noproc, title="Include sasNote?", disable=1
 	CheckBox NX_Inclsasnote, variable=root:Packages:ImportData:NX_Inclsasnote
 	CheckBox NX_Inclsasnote, help={"Add sasNote group values to wave note on import"}
 
 	// Preview button also works for Nexus (to inspect a file in the notebook)
-	Button PreviewNX, pos={230, 430}, size={185, 20}, proc=IR3I_ButtonProc, title="Preview file in notebook", disable=2
+	Button PreviewNX, pos={230, 430}, size={185, 20}, proc=IR3I_ButtonProc, title="Preview file in notebook", disable=1
 	Button PreviewNX, help={"Open the selected file as text in a notebook (for ASCII inspection)"}
 
 	// ── Bottom section: common processing and naming options ─────────────────
@@ -295,159 +297,159 @@ Proc IR3I_ImportDataPanel()
 	//    Panel is scrollable so users can reach them.
 
 	// Header divider
-	TitleBox ProcessTitle, title="\Zr140─────  Data processing options  ─────", pos={5, 622}, frame=0, fstyle=1, fixedSize=1, size={415, 18}, fColor=(0, 0, 52224)
+	TitleBox ProcessTitle, title="\Zr140─────  Data processing options  ─────", pos={25, 460}, frame=0, fstyle=1, fixedSize=1, size={415, 18}, fColor=(0, 0, 52224)
 
 	// Skip header lines (ASCII only – hidden for Nexus)
-	CheckBox SkipLines, pos={5, 643}, size={16, 14}, proc=IR3I_CheckProc, title="Skip header lines?", variable=root:Packages:ImportData:SkipLines
+	CheckBox SkipLines, pos={5, 475}, size={16, 14}, proc=IR3I_CheckProc, title="Skip header lines?", variable=root:Packages:ImportData:SkipLines
 	CheckBox SkipLines, help={"Manually skip a fixed number of header lines before numeric data"}
-	SetVariable SkipNumberOfLines, pos={160, 643}, size={90, 19}, proc=IR3I_SetVarProc, title="Count:"
+	SetVariable SkipNumberOfLines, pos={70, 485}, size={80, 19}, proc=IR3I_SetVarProc, title="Count:"
 	SetVariable SkipNumberOfLines, help={"Number of header lines to skip"}, variable=root:Packages:ImportData:SkipNumberOfLines
 	SetVariable SkipNumberOfLines, disable=(!root:Packages:ImportData:SkipLines)
 
 	// Q / X units
-	CheckBox QvectorInA,  pos={5, 666}, size={16, 14}, proc=IR3I_CheckProc, title="Q/X units [1/A, deg, A]"
+	CheckBox QvectorInA,  pos={160, 480}, size={16, 14}, proc=IR3I_CheckProc, title="Q/X units [1/A, deg, A]"
 	CheckBox QvectorInA,  variable=root:Packages:ImportData:QvectInA
 	CheckBox QvectorInA,  help={"X axis is in 1/Angstrom, degree, or Angstrom – no conversion needed"}
-	CheckBox QvectorInNM, pos={220, 666}, size={16, 14}, proc=IR3I_CheckProc, title="Q/X units [1/nm or nm]"
+	CheckBox QvectorInNM, pos={300, 480}, size={16, 14}, proc=IR3I_CheckProc, title="Q/X units [1/nm or nm]"
 	CheckBox QvectorInNM, variable=root:Packages:ImportData:QvectInNM
 	CheckBox QvectorInNM, help={"X axis is in 1/nm or nm – will be converted to 1/A or A"}
 
 	// Error creation (ASCII only – hidden for Nexus)
-	CheckBox CreateSQRTErrors,    pos={5, 686}, size={16, 14}, proc=IR3I_CheckProc, title="Create SQRT(I) errors?"
+	CheckBox CreateSQRTErrors,    pos={5, 500}, size={16, 14}, proc=IR3I_CheckProc, title="Create SQRT(I) errors?"
 	CheckBox CreateSQRTErrors,    variable=root:Packages:ImportData:CreateSQRTErrors
 	CheckBox CreateSQRTErrors,    help={"If file has no error column, create errors as sqrt(Intensity)"}
-	CheckBox CreatePercentErrors, pos={200, 686}, size={16, 14}, proc=IR3I_CheckProc, title="Create n% errors?"
+	CheckBox CreatePercentErrors, pos={160, 500}, size={16, 14}, proc=IR3I_CheckProc, title="Create n% errors?"
 	CheckBox CreatePercentErrors, variable=root:Packages:ImportData:CreatePercentErrors
 	CheckBox CreatePercentErrors, help={"Create errors as a fixed percentage of intensity"}
-	SetVariable PercentErrorsToUse, pos={340, 686}, size={70, 19}, proc=IR3I_SetVarProc, title="n%:"
+	SetVariable PercentErrorsToUse, pos={300, 500}, size={70, 19}, proc=IR3I_SetVarProc, title="n%:"
 	SetVariable PercentErrorsToUse, value=root:packages:ImportData:PercentErrorsToUse
 	SetVariable PercentErrorsToUse, disable=!(root:Packages:ImportData:CreatePercentErrors)
 	SetVariable PercentErrorsToUse, help={"Percentage to use when creating percentage-based errors"}
 
 	// Miscellaneous flags
-	CheckBox ForceUTF8,               pos={5, 706}, size={16, 14}, proc=IR3I_CheckProc, title="Force UTF-8 encoding?"
+	CheckBox ForceUTF8,               pos={300, 440}, size={16, 14}, proc=IR3I_CheckProc, title="Force UTF-8 encoding?"
 	CheckBox ForceUTF8,               variable=root:Packages:ImportData:ForceUTF8
 	CheckBox ForceUTF8,               help={"Force UTF-8 file encoding – use if you have import encoding problems"}
-	CheckBox RemoveNegativeIntensities,pos={220, 706}, size={16, 14}, proc=IR3I_CheckProc, title="Remove Int<=0?"
+	CheckBox RemoveNegativeIntensities,pos={300, 460}, size={16, 14}, proc=IR3I_CheckProc, title="Remove Int<=0?"
 	CheckBox RemoveNegativeIntensities,variable=root:Packages:ImportData:RemoveNegativeIntensities
 	CheckBox RemoveNegativeIntensities,help={"Remove data points where intensity is zero or negative"}
 
 	// Q-range trimming
-	CheckBox TrimData, pos={5, 726}, size={16, 14}, proc=IR3I_CheckProc, title="Trim Q/X range?"
+	CheckBox TrimData, pos={5, 515}, size={16, 14}, proc=IR3I_CheckProc, title="Trim Q/X range?"
 	CheckBox TrimData, variable=root:Packages:ImportData:TrimData
 	CheckBox TrimData, help={"Trim the X/Q range of imported data"}
-	SetVariable TrimDataQMin, pos={140, 724}, size={130, 19}, title="Min=", proc=IR3I_SetVarProc
+	SetVariable TrimDataQMin, pos={140, 515}, size={100, 19}, title="Min=", proc=IR3I_SetVarProc
 	SetVariable TrimDataQMin, limits={0, Inf, 0}, value=root:packages:ImportData:TrimDataQMin
 	SetVariable TrimDataQMin, disable=!(root:Packages:ImportData:TrimData)
 	SetVariable TrimDataQMin, help={"Minimum Q (or X) value – points below this are removed"}
-	SetVariable TrimDataQMax, pos={285, 724}, size={130, 19}, title="Max=", proc=IR3I_SetVarProc
+	SetVariable TrimDataQMax, pos={285, 515}, size={100, 19}, title="Max=", proc=IR3I_SetVarProc
 	SetVariable TrimDataQMax, limits={0, Inf, 0}, value=root:packages:ImportData:TrimDataQMax
 	SetVariable TrimDataQMax, disable=!(root:Packages:ImportData:TrimData)
 	SetVariable TrimDataQMax, help={"Maximum Q (or X) value – points above this are removed"}
 
 	// Log-scale point reduction
-	CheckBox ReduceNumPnts, pos={5, 746}, size={16, 14}, proc=IR3I_CheckProc, title="Reduce to N log-spaced points?"
+	CheckBox ReduceNumPnts, pos={5, 530}, size={16, 14}, proc=IR3I_CheckProc, title="Reduce to N log-spaced points?"
 	CheckBox ReduceNumPnts, variable=root:Packages:ImportData:ReduceNumPnts
 	CheckBox ReduceNumPnts, help={"Rebin data onto a log-spaced Q grid with the target number of points"}
-	SetVariable TargetNumberOfPoints, pos={230, 744}, size={185, 19}, title="Target N pts:", proc=IR3I_SetVarProc
-	SetVariable TargetNumberOfPoints, limits={10, 2000, 0}, value=root:packages:ImportData:TargetNumberOfPoints
+	SetVariable TargetNumberOfPoints, pos={180, 530}, size={150, 19}, title="Target N pts:", proc=IR3I_SetVarProc
+	SetVariable TargetNumberOfPoints, limits={10, 2000, 0}, value=root:packages:ImportData:TargetNumberOfPoints, bodywidth=80
 	SetVariable TargetNumberOfPoints, disable=!(root:Packages:ImportData:ReduceNumPnts)
 	SetVariable TargetNumberOfPoints, help={"Target number of points after log-scale rebinning"}
 
 	// Scaling
-	CheckBox ScaleImportedDataCheckbox, pos={5, 766}, size={16, 14}, proc=IR3I_CheckProc, title="Scale imported data?"
+	CheckBox ScaleImportedDataCheckbox, pos={5, 545}, size={16, 14}, proc=IR3I_CheckProc, title="Scale imported data?"
 	CheckBox ScaleImportedDataCheckbox, variable=root:Packages:ImportData:ScaleImportedData
 	CheckBox ScaleImportedDataCheckbox, help={"Multiply intensity (and error) by a constant factor on import"}
-	SetVariable ScaleImportedDataBy, pos={200, 764}, size={215, 19}, title="Factor:", proc=IR3I_SetVarProc
-	SetVariable ScaleImportedDataBy, limits={1e-32, Inf, 1}, value=root:packages:ImportData:ScaleImportedDataBy
+	SetVariable ScaleImportedDataBy, pos={180, 545}, size={150, 19}, title="Factor:", proc=IR3I_SetVarProc
+	SetVariable ScaleImportedDataBy, limits={1e-32, Inf, 1}, value=root:packages:ImportData:ScaleImportedDataBy, bodywidth=80
 	SetVariable ScaleImportedDataBy, disable=!(root:Packages:ImportData:ScaleImportedData)
 	SetVariable ScaleImportedDataBy, help={"Multiplicative scaling factor applied to intensity and errors"}
 
 	// Slit smearing (SAS ASCII only)
-	CheckBox SlitSmearDataCheckbox, pos={5, 786}, size={16, 14}, proc=IR3I_CheckProc, title="Slit-smear imported data?"
+	CheckBox SlitSmearDataCheckbox, pos={5, 560}, size={16, 14}, proc=IR3I_CheckProc, title="Slit-smear imported data?"
 	CheckBox SlitSmearDataCheckbox, variable=root:Packages:ImportData:SlitSmearData
 	CheckBox SlitSmearDataCheckbox, help={"Apply slit-smearing convolution to intensity and errors on import"}
-	SetVariable SlitLength, pos={200, 784}, size={215, 19}, title="Slit length:", proc=IR3I_SetVarProc
+	SetVariable SlitLength, pos={200, 560}, size={150, 19}, title="Slit length [1/A]:", proc=IR3I_SetVarProc
 	SetVariable SlitLength, limits={1e-32, Inf, 0}, value=root:packages:ImportData:SlitLength
 	SetVariable SlitLength, disable=!(root:Packages:ImportData:SlitSmearData)
 	SetVariable SlitLength, help={"Slit length in Q units (1/Angstrom) for smearing convolution"}
 
 	// Calibration units (radio buttons)
-	CheckBox DataCalibratedArbitrary, pos={5, 806}, size={16, 14}, mode=1, proc=IR3I_CheckProc
+	CheckBox DataCalibratedArbitrary, pos={25, 575}, size={16, 14}, mode=1, proc=IR3I_CheckProc
 	CheckBox DataCalibratedArbitrary, title="Relative scale", variable=root:Packages:ImportData:DataCalibratedArbitrary
 	CheckBox DataCalibratedArbitrary, help={"Intensity is on a relative / arbitrary scale"}
-	CheckBox DataCalibratedVolume,    pos={130, 806}, size={16, 14}, mode=1, proc=IR3I_CheckProc
+	CheckBox DataCalibratedVolume,    pos={150, 575}, size={16, 14}, mode=1, proc=IR3I_CheckProc
 	CheckBox DataCalibratedVolume,    title="cm\S-1\Msr\S-1\M", variable=root:Packages:ImportData:DataCalibratedVolume
 	CheckBox DataCalibratedVolume,    help={"Intensity is calibrated to absolute volume units cm^-1 sr^-1"}
-	CheckBox DataCalibratedWeight,    pos={260, 806}, size={16, 14}, mode=1, proc=IR3I_CheckProc
+	CheckBox DataCalibratedWeight,    pos={270, 575}, size={16, 14}, mode=1, proc=IR3I_CheckProc
 	CheckBox DataCalibratedWeight,    title="cm\S2\Mg\S-1\Msr\S-1\M", variable=root:Packages:ImportData:DataCalibratedWeight
 	CheckBox DataCalibratedWeight,    help={"Intensity is calibrated to absolute weight units cm^2/g sr^-1"}
 
 	// ── Naming options ────────────────────────────────────────────────────────
-	TitleBox NamingTitle, title="\Zr140─────  Naming & wave conventions  ─────", pos={5, 828}, frame=0, fstyle=1, fixedSize=1, size={415, 18}, fColor=(0, 0, 52224)
+	TitleBox NamingTitle, title="\Zr140─────  Naming & wave conventions  ─────", pos={55, 590}, frame=0, fstyle=1, fixedSize=1, size={415, 18}, fColor=(0, 0, 52224)
 
-	CheckBox UseFileNameAsFolder,     pos={5, 849}, size={16, 14}, proc=IR3I_CheckProc, title="Use file name as folder name?"
+	CheckBox UseFileNameAsFolder,     pos={5, 610}, size={16, 14}, proc=IR3I_CheckProc, title="Use file name as folder name?"
 	CheckBox UseFileNameAsFolder,     variable=root:Packages:ImportData:UseFileNameAsFolder
 	CheckBox UseFileNameAsFolder,     help={"Create a sub-folder named after each imported file"}
-	CheckBox IncludeExtensionInName,  pos={260, 849}, size={16, 14}, proc=IR3I_CheckProc, title="Include extension?"
+	CheckBox IncludeExtensionInName,  pos={260, 610}, size={16, 14}, proc=IR3I_CheckProc, title="Include extension?"
 	CheckBox IncludeExtensionInName,  variable=root:Packages:ImportData:IncludeExtensionInName
 	CheckBox IncludeExtensionInName,  disable=!(root:Packages:ImportData:UseFileNameAsFolder)
 	CheckBox IncludeExtensionInName,  help={"Include the file extension in the folder/wave name"}
 
-	CheckBox UseIndra2Names, pos={5, 867}, size={16, 14}, proc=IR3I_CheckProc, title="Use USAXS (Indra) names?"
+	CheckBox UseIndra2Names, pos={5, 625}, size={16, 14}, proc=IR3I_CheckProc, title="Use USAXS (Indra) names?"
 	CheckBox UseIndra2Names, variable=root:Packages:ImportData:UseIndra2Names
 	CheckBox UseIndra2Names, help={"Wave naming: DSM_Qvec / DSM_Int / DSM_Error (Indra 2 convention)"}
-	CheckBox ImportSMRdata,  pos={200, 867}, size={16, 14}, proc=IR3I_CheckProc, title="Slit-smeared data?"
+	CheckBox ImportSMRdata,  pos={200, 625}, size={16, 14}, proc=IR3I_CheckProc, title="Slit-smeared data?"
 	CheckBox ImportSMRdata,  variable=root:Packages:ImportData:ImportSMRdata
 	CheckBox ImportSMRdata,  disable=!root:Packages:ImportData:UseIndra2Names
 	CheckBox ImportSMRdata,  help={"Changes Indra names to SMR_Qvec / SMR_Int / SMR_Error"}
 
-	CheckBox UseQRSNames, pos={5, 885}, size={16, 14}, proc=IR3I_CheckProc, title="Use QRS wave names?"
+	CheckBox UseQRSNames, pos={5, 640}, size={16, 14}, proc=IR3I_CheckProc, title="Use QRS wave names?"
 	CheckBox UseQRSNames, variable=root:Packages:ImportData:UseQRSNames
 	CheckBox UseQRSNames, help={"Wave naming: Q_<name> / R_<name> / S_<name> / W_<name>"}
-	CheckBox UseQISNames, pos={170, 885}, size={16, 14}, proc=IR3I_CheckProc, title="Use QIS (NIST) names?"
+	CheckBox UseQISNames, pos={170, 640}, size={16, 14}, proc=IR3I_CheckProc, title="Use QIS (NIST) names?"
 	CheckBox UseQISNames, variable=root:Packages:ImportData:UseQISNames
 	CheckBox UseQISNames, help={"Wave naming: <name>_q / <name>_i / <name>_s / <name>_w (NIST convention)"}
-	CheckBox AutomaticallyOverwrite, pos={330, 885}, size={16, 14}, proc=IR3I_CheckProc, title="Auto overwrite?"
+	CheckBox AutomaticallyOverwrite, pos={330, 640}, size={16, 14}, proc=IR3I_CheckProc, title="Auto overwrite?"
 	CheckBox AutomaticallyOverwrite, variable=root:Packages:ImportData:AutomaticallyOverwrite
 	CheckBox AutomaticallyOverwrite, disable=!(root:Packages:ImportData:UseFileNameAsFolder)
 	CheckBox AutomaticallyOverwrite, help={"Silently overwrite existing waves of the same name"}
 
 	// Name truncation options
-	CheckBox TrunkateStart, pos={5, 903}, size={16, 14}, proc=IR3I_CheckProc, title="Truncate long names at start?"
+	CheckBox TrunkateStart, pos={5, 655}, size={16, 14}, proc=IR3I_CheckProc, title="Truncate long names at start?"
 	CheckBox TrunkateStart, variable=root:Packages:ImportData:TrunkateStart
 	CheckBox TrunkateStart, help={"For names longer than the Igor limit, remove characters from the front"}
-	CheckBox TrunkateEnd,   pos={240, 903}, size={16, 14}, proc=IR3I_CheckProc, title="Truncate at end?"
+	CheckBox TrunkateEnd,   pos={240, 655}, size={16, 14}, proc=IR3I_CheckProc, title="Truncate at end?"
 	CheckBox TrunkateEnd,   variable=root:Packages:ImportData:TrunkateEnd
 	CheckBox TrunkateEnd,   help={"For names longer than the Igor limit, remove characters from the end"}
 
-	SetVariable RemoveStringFromName, pos={5, 923}, size={410, 19}, title="Remove string from name:", noproc
+	SetVariable RemoveStringFromName, pos={5, 675}, size={310, 19}, title="Remove string from name:", noproc
 	SetVariable RemoveStringFromName, value=root:packages:ImportData:RemoveStringFromName
 	SetVariable RemoveStringFromName, help={"Any occurrences of this string are removed from the imported name"}
 
 	// Wave and folder name fields
-	SetVariable NewDataFolderName, pos={5, 945}, size={410, 19}, title="Data folder:", proc=IR3I_SetVarProc
+	SetVariable NewDataFolderName, pos={5, 695}, size={410, 19}, title="Data folder:", proc=IR3I_SetVarProc
 	SetVariable NewDataFolderName, value=root:packages:ImportData:NewDataFolderName
 	SetVariable NewDataFolderName, help={"Target Igor folder. Use <fileName> as a placeholder for the file name."}
 
-	SetVariable NewQwaveName, pos={5, 967}, size={200, 19}, title="Q / X wave name:", proc=IR3I_SetVarProc
+	SetVariable NewQwaveName, pos={5, 715}, size={300, 19}, title="Q / X wave name:", proc=IR3I_SetVarProc
 	SetVariable NewQwaveName, value=root:packages:ImportData:NewQWaveName
 	SetVariable NewQwaveName, help={"Name for the Q (or X) wave. Use <fileName> for the file name."}
 
-	SetVariable NewIntensityWaveName, pos={5, 987}, size={200, 19}, title="Intensity wave name:", proc=IR3I_SetVarProc
+	SetVariable NewIntensityWaveName, pos={5, 735}, size={300, 19}, title="Intensity wave name:", proc=IR3I_SetVarProc
 	SetVariable NewIntensityWaveName, value=root:packages:ImportData:NewIntensityWaveName
 	SetVariable NewIntensityWaveName, help={"Name for the intensity (Y) wave. Use <fileName> for the file name."}
 
-	SetVariable NewErrorWaveName, pos={5, 1007}, size={200, 19}, title="Error wave name:", proc=IR3I_SetVarProc
+	SetVariable NewErrorWaveName, pos={5, 755}, size={300, 19}, title="Error wave name:", proc=IR3I_SetVarProc
 	SetVariable NewErrorWaveName, value=root:packages:ImportData:NewErrorWaveName
 	SetVariable NewErrorWaveName, help={"Name for the intensity-uncertainty wave. Use <fileName> for the file name."}
 
-	SetVariable NewQErrorWaveName, pos={5, 1027}, size={200, 19}, title="dQ / dX wave name:", proc=IR3I_SetVarProc
+	SetVariable NewQErrorWaveName, pos={5, 775}, size={300, 19}, title="dQ / dX wave name:", proc=IR3I_SetVarProc
 	SetVariable NewQErrorWaveName, value=root:packages:ImportData:NewQErrorWaveName
 	SetVariable NewQErrorWaveName, help={"Name for the Q-resolution wave. Use <fileName> for the file name."}
 
 	// ── Import button ─────────────────────────────────────────────────────────
-	Button ImportData, pos={280, 980}, size={130, 40}, proc=IR3I_ButtonProc, title="Import Selected Data"
+	Button ImportData, pos={310, 725}, size={110, 40}, proc=IR3I_ButtonProc, title="Import Selected Data"
 	Button ImportData, help={"Import all selected files using the settings above"}
 
 EndMacro
@@ -625,7 +627,7 @@ Function IR3I_UpdateFormatUI()
 	SetVariable Wavelength,     win=IR3I_ImportData, disable=(!isTthInt * 2)
 
 	// Section B – ASCII column mapping
-	variable asciiDisable = isNexus ? 2 : 0
+	variable asciiDisable = isNexus ? 1 : 0
 	TitleBox  ColMapTitle,  win=IR3I_ImportData, disable=asciiDisable
 	TitleBox  ColHdrCol,    win=IR3I_ImportData, disable=asciiDisable
 	TitleBox  ColHdrQ,      win=IR3I_ImportData, disable=asciiDisable
@@ -662,12 +664,15 @@ Function IR3I_UpdateFormatUI()
 	CheckBox Col6Int,    win=IR3I_ImportData, disable=asciiDisable
 	CheckBox Col6Error,  win=IR3I_ImportData, disable=asciiDisable
 	CheckBox Col6QError, win=IR3I_ImportData, disable=asciiDisable
-	SetVariable FoundNWaves, win=IR3I_ImportData, disable=(isNexus ? 2 : 2)  // always read-only display
+	//SetVariable FoundNWaves, win=IR3I_ImportData, disable=(isNexus ? 2 : 2)  // always read-only display
+	SetVariable FoundNWaves, win=IR3I_ImportData, disable=(isNexus ? 1 : 2)  // always read-only display
 	Button TestImport, win=IR3I_ImportData, disable=asciiDisable
 	Button Plot,       win=IR3I_ImportData, disable=asciiDisable
+	Button Preview,       win=IR3I_ImportData, disable=asciiDisable
+	
 
 	// Section C – Nexus-specific controls
-	variable nexusDisable = isASCII ? 2 : 0
+	variable nexusDisable = isASCII ? 1 : 0
 	TitleBox  NXTitle,                   win=IR3I_ImportData, disable=nexusDisable
 	CheckBox  UseFileNameAsFolderNX,     win=IR3I_ImportData, disable=nexusDisable
 	CheckBox  UsesasEntryNameAsFolderNX, win=IR3I_ImportData, disable=nexusDisable
