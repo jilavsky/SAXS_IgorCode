@@ -1,4 +1,4 @@
-L#pragma rtGlobals=2		// Use modern global access method.
+#pragma rtGlobals=2		// Use modern global access method.
 #pragma version = 2.33
 #pragma IgorVersion = 9.04
 
@@ -17,7 +17,7 @@ Constant TypicalPanelHorizontalSize = 350
    //For releases uncomment the next line and set to correct version number:
 //Strconstant ManualVersionString = "en/1.4/"					//1.4 is December2018 release
 //Strconstant ManualVersionString = "en/1.5.1/"				//this was for September2020 release. 
-Strconstant ManualVersionString = "en/1.5.5/"				//January2026 beta release. 
+Strconstant ManualVersionString = "en/1.6.0/"				//January2026 beta release. 
 //*** For development version uncomment next line, it points to latest (development) version of manuals:
 //Strconstant ManualVersionString = "en/latest/"		//this is for beta version, so it sees current version of manual. 
 strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan-ilavsky/IrenaNikaRecords/VersionCheck.php?"
@@ -4946,21 +4946,21 @@ Function IN2G_FolderSelectSetVarProc(ctrlName,varNum,varStr,varName) : SetVariab
 
 		variable isOK=0
 		setDataFolder CurrentFolder
-		NewName = (cleanupName((NewName)[0,31],AllowLiberal))
+		NewName = cleanupName((NewName)[0,31],AllowLiberal)
 //		NewName = (possiblyQuoteName(NewName))
-				if (AllowLiberal)		//liberal names allowed, check for wave name (can be liberal)
-					if (CheckName(NewName,1)==0)
-						isOK=1
-					else
-						isOK=0
-					endif
-				else					//liberal names not allowed, check for variable (cannot be liberal)
-					if (CheckName(NewName,3)==0)
-						isOK=1
-					else
-						isOK=0
-					endif
-				endif
+		if (AllowLiberal)		//liberal names allowed, check for wave name (can be liberal)
+			if (CheckName(NewName,1)==0)
+				isOK=1
+			else
+				isOK=0
+			endif
+		else					//liberal names not allowed, check for variable (cannot be liberal)
+			if (CheckName(NewName,3)==0)
+				isOK=1
+			else
+				isOK=0
+			endif
+		endif
 		if (!isOK)
 				if (FolderOrFile>1)
 					Button Done, title="NotUnique",disable=2,fColor=(0,0,0),win=IN2G_FolderSelectPanelPanel
