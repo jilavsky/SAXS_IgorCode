@@ -1,6 +1,6 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version = 1.18
+#pragma version = 1.19
 #include "HDF5Gateway"
 
 
@@ -11,6 +11,7 @@ constant kPrintNexusrecord = 0			//set to 1 to print flood of Nexus parameters i
 
 // support of Nexus files
 
+//1.19 removed most print statements which are noisy and slow down imports. 
 //1.18 intended for use with IP9 and higher, remove hdf include call. 
 //1.17 check that if we are reading Nexus file with multiple samples there that we will use sasEntry or sasTile as names. 
 //1.16 fixes for Nexus writer and reader to improve sasView and Irena itself compatibility. 
@@ -2884,7 +2885,7 @@ static Function/T NEXUS_ReadOne1DcanSASDataset(PathToDataSet, DataTitleStr, sour
 	else
 		NewDataName = IN2G_RemoveExtraQuote(DataTitleStr,1,1)
 	endif
-	print "Created new data folder : "+ GetDataFOlder(1)
+	//print "Created new data folder : "+ GetDataFOlder(1)
 	string NewFolderFullPath=GetDataFolder(1)
 	setDataFolder PathToDataSet
 	//get basic waves, Q and I must be in attributes
@@ -3106,7 +3107,7 @@ static Function  NEXUS_ConvertQRStoIrena(NewDataName, NewFolderFullPath, isSlitS
 		if(WaveExists(dQWv))
 			Rename dQWv, SMR_dQ
 		endif
-		print "Renamed Slit smeared data from "+NewFolderFullPath+" from QRS names to USAXS names, new location is "+GetDataFolder(1)
+		//print "Renamed Slit smeared data from "+NewFolderFullPath+" from QRS names to USAXS names, new location is "+GetDataFolder(1)
 	else
 		Rename IntWv, DSM_Int
 		Rename QWv, DSM_Qvec
@@ -3114,7 +3115,7 @@ static Function  NEXUS_ConvertQRStoIrena(NewDataName, NewFolderFullPath, isSlitS
 		if(WaveExists(dQWv))
 			Rename dQWv, DSM_dQ
 		endif
-		print "Renamed USAXS data from "+NewFolderFullPath+" from QRS names to USAXS names, new location is "+GetDataFolder(1)
+		//print "Renamed USAXS data from "+NewFolderFullPath+" from QRS names to USAXS names, new location is "+GetDataFolder(1)
 	endif
 	//SlitLength="+num2str(SlitLength)+";"
 	SetDataFolder saveDFR		// and restore
@@ -3190,15 +3191,15 @@ static Function NEXUS_WriteOutNexusData(NewDataName, NewFolderFullPath, sourceFi
 		Intunits="Units=Arbitrary;"	
 	endif
 	print "Imported data from  : "+ sourceFileName
-	print "Created new I and Q data  : "+ PossiblyQuoteName("r_"+tempStrName) +"   "+PossiblyQuoteName("q_"+tempStrName)
-	print "Found Intensity units  : "+ StringByKey("units", note(Iwv), "=", "\r")+"   converted to : "+Intunits
-	print "Found Q units  : "+ Qunits+ "   converted to [1/A] by scaling using conversion factor of : "+ConversionFactorQ
+	//print "Created new I and Q data  : "+ PossiblyQuoteName("r_"+tempStrName) +"   "+PossiblyQuoteName("q_"+tempStrName)
+	//print "Found Intensity units  : "+ StringByKey("units", note(Iwv), "=", "\r")+"   converted to : "+Intunits
+	//print "Found Q units  : "+ Qunits+ "   converted to [1/A] by scaling using conversion factor of : "+ConversionFactorQ
 
 
 	if(HaveIdev)
 		DUplicate/O IdevWv, $(NewFolderFullPath+PossiblyQuoteName("s_"+tempStrName))
 		Wave NewIdevwv=$(NewFolderFullPath+PossiblyQuoteName("s_"+tempStrName))
-		print "Created new Idev data  : "+ PossiblyQuoteName("s_"+tempStrName) 
+		//print "Created new Idev data  : "+ PossiblyQuoteName("s_"+tempStrName) 
 	endif
 	if(HaveQdev)
 		DUplicate/O QdevWv, $(NewFolderFullPath+PossiblyQuoteName("w_"+tempStrName))
@@ -3206,7 +3207,7 @@ static Function NEXUS_WriteOutNexusData(NewDataName, NewFolderFullPath, sourceFi
 		if(stringmatch(Qunits,"nm*"))		//assume Q in nm^-1, need to scale by 10x
 			NewQdevwv*=10
 		endif
-		print "Created new Qres data  : "+ PossiblyQuoteName("w_"+tempStrName)
+		//print "Created new Qres data  : "+ PossiblyQuoteName("w_"+tempStrName)
 	endif
 	//main wave exist.
 	

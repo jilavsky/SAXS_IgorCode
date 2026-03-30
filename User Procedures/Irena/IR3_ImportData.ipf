@@ -66,7 +66,7 @@ Function IR3I_ImportDataMain()
 	ING2_AddScrollControl()
 	IR1_UpdatePanelVersionNumber("IR3I_ImportData", IR3IversionNumber, 1)
 	IR3I_UpdateFormatUI()
-	IR1I_FIxCheckboxesForWaveTypes()
+	//IR1I_FIxCheckboxesForWaveTypes()
 
 End
 
@@ -120,6 +120,8 @@ Function IR3I_InitializeImportData()
 		WAXSData = 0
 	endif
 
+	//fix names, is faling when not run
+	IR1I_ImportOtherSetNames()
 	setDataFolder root:
 
 End
@@ -133,7 +135,7 @@ End
 //    Bottom (y=622+)   : common processing options, naming options, import button
 //************************************************************************************************************
 //************************************************************************************************************
-Proc IR3I_ImportDataPanel()
+Function IR3I_ImportDataPanel()
 
 	PauseUpdate	// building window …
 
@@ -166,7 +168,8 @@ Proc IR3I_ImportDataPanel()
 
 	PopupMenu DataFormatPopup, pos={230, 133}, size={185, 21}, proc=IR3I_PopMenuProc, title="Format:"
 	PopupMenu DataFormatPopup, help={"Select the type of data file to import"}
-	PopupMenu DataFormatPopup, mode=1, popvalue=root:Packages:ImportData:DataFormatType
+	SVAR DFMT=root:Packages:ImportData:DataFormatType
+	PopupMenu DataFormatPopup, mode=1, popvalue=DFMT
 	PopupMenu DataFormatPopup, value="ASCII SAXS/SANS;ASCII WAXS;Nexus CanSAS"
 
 	CheckBox SAXSData, pos={250, 160}, size={16, 14}, proc=IR3I_CheckProc, title="SAXS data?", mode=1
@@ -180,7 +183,8 @@ Proc IR3I_ImportDataPanel()
 	// WAXS data sub-type – only relevant for ASCII WAXS format
 	PopupMenu ImportDataType, pos={230, 198}, size={185, 21}, proc=IR3I_PopMenuProc, title="X-axis:"
 	PopupMenu ImportDataType, help={"For ASCII WAXS: choose what the X column represents"}
-	PopupMenu ImportDataType, mode=1, popvalue=root:Packages:ImportData:DataTypeToImport
+	SVAR DTP=root:Packages:ImportData:DataTypeToImport
+	PopupMenu ImportDataType, mode=1, popvalue=DTP
 	PopupMenu ImportDataType, value=#"root:Packages:ImportData:ListOfKnownDataTypes"
 
 	// Wavelength – only required when WAXS + Tth-Int is selected
@@ -289,8 +293,8 @@ Proc IR3I_ImportDataPanel()
 	CheckBox NX_Inclsasnote, help={"Add sasNote group values to wave note on import"}
 
 	// Preview button also works for Nexus (to inspect a file in the notebook)
-	Button PreviewNX, pos={230, 430}, size={185, 20}, proc=IR3I_ButtonProc, title="Preview file in notebook", disable=1
-	Button PreviewNX, help={"Open the selected file as text in a notebook (for ASCII inspection)"}
+	//Button PreviewNX, pos={240, 430}, size={175, 18}, proc=IR3I_ButtonProc, title="Preview file in notebook", disable=1
+	//Button PreviewNX, help={"Open the selected file as text in a notebook (for ASCII inspection)"}
 
 	// ── Bottom section: common processing and naming options ─────────────────
 	//    Full-width controls, start at y=622 so they fall below the file list.
@@ -304,7 +308,8 @@ Proc IR3I_ImportDataPanel()
 	CheckBox SkipLines, help={"Manually skip a fixed number of header lines before numeric data"}
 	SetVariable SkipNumberOfLines, pos={70, 485}, size={80, 19}, proc=IR3I_SetVarProc, title="Count:"
 	SetVariable SkipNumberOfLines, help={"Number of header lines to skip"}, variable=root:Packages:ImportData:SkipNumberOfLines
-	SetVariable SkipNumberOfLines, disable=(!root:Packages:ImportData:SkipLines)
+	NVAR skip=root:Packages:ImportData:SkipLines
+	SetVariable SkipNumberOfLines, disable=(!skip)
 
 	// Q / X units
 	CheckBox QvectorInA,  pos={160, 480}, size={16, 14}, proc=IR3I_CheckProc, title="Q/X units [1/A, deg, A]"
@@ -323,14 +328,15 @@ Proc IR3I_ImportDataPanel()
 	CheckBox CreatePercentErrors, help={"Create errors as a fixed percentage of intensity"}
 	SetVariable PercentErrorsToUse, pos={300, 500}, size={70, 19}, proc=IR3I_SetVarProc, title="n%:"
 	SetVariable PercentErrorsToUse, value=root:packages:ImportData:PercentErrorsToUse
-	SetVariable PercentErrorsToUse, disable=!(root:Packages:ImportData:CreatePercentErrors)
+	NVAR pct=root:Packages:ImportData:CreatePercentErrors
+	SetVariable PercentErrorsToUse, disable=!(pct)
 	SetVariable PercentErrorsToUse, help={"Percentage to use when creating percentage-based errors"}
 
 	// Miscellaneous flags
-	CheckBox ForceUTF8,               pos={300, 440}, size={16, 14}, proc=IR3I_CheckProc, title="Force UTF-8 encoding?"
+	CheckBox ForceUTF8,               pos={300, 450}, size={16, 14}, proc=IR3I_CheckProc, title="Force UTF-8 encoding?"
 	CheckBox ForceUTF8,               variable=root:Packages:ImportData:ForceUTF8
 	CheckBox ForceUTF8,               help={"Force UTF-8 file encoding – use if you have import encoding problems"}
-	CheckBox RemoveNegativeIntensities,pos={300, 460}, size={16, 14}, proc=IR3I_CheckProc, title="Remove Int<=0?"
+	CheckBox RemoveNegativeIntensities,pos={300, 465}, size={16, 14}, proc=IR3I_CheckProc, title="Remove Int<=0?"
 	CheckBox RemoveNegativeIntensities,variable=root:Packages:ImportData:RemoveNegativeIntensities
 	CheckBox RemoveNegativeIntensities,help={"Remove data points where intensity is zero or negative"}
 
@@ -340,11 +346,12 @@ Proc IR3I_ImportDataPanel()
 	CheckBox TrimData, help={"Trim the X/Q range of imported data"}
 	SetVariable TrimDataQMin, pos={140, 515}, size={100, 19}, title="Min=", proc=IR3I_SetVarProc
 	SetVariable TrimDataQMin, limits={0, Inf, 0}, value=root:packages:ImportData:TrimDataQMin
-	SetVariable TrimDataQMin, disable=!(root:Packages:ImportData:TrimData)
+	NVAR trim=root:Packages:ImportData:TrimData
+	SetVariable TrimDataQMin, disable=!(trim)
 	SetVariable TrimDataQMin, help={"Minimum Q (or X) value – points below this are removed"}
 	SetVariable TrimDataQMax, pos={285, 515}, size={100, 19}, title="Max=", proc=IR3I_SetVarProc
 	SetVariable TrimDataQMax, limits={0, Inf, 0}, value=root:packages:ImportData:TrimDataQMax
-	SetVariable TrimDataQMax, disable=!(root:Packages:ImportData:TrimData)
+	SetVariable TrimDataQMax, disable=!(trim)
 	SetVariable TrimDataQMax, help={"Maximum Q (or X) value – points above this are removed"}
 
 	// Log-scale point reduction
@@ -353,7 +360,8 @@ Proc IR3I_ImportDataPanel()
 	CheckBox ReduceNumPnts, help={"Rebin data onto a log-spaced Q grid with the target number of points"}
 	SetVariable TargetNumberOfPoints, pos={180, 530}, size={150, 19}, title="Target N pts:", proc=IR3I_SetVarProc
 	SetVariable TargetNumberOfPoints, limits={10, 2000, 0}, value=root:packages:ImportData:TargetNumberOfPoints, bodywidth=80
-	SetVariable TargetNumberOfPoints, disable=!(root:Packages:ImportData:ReduceNumPnts)
+	NVAR reduce=root:Packages:ImportData:ReduceNumPnts
+	SetVariable TargetNumberOfPoints, disable=!(reduce)
 	SetVariable TargetNumberOfPoints, help={"Target number of points after log-scale rebinning"}
 
 	// Scaling
@@ -362,7 +370,8 @@ Proc IR3I_ImportDataPanel()
 	CheckBox ScaleImportedDataCheckbox, help={"Multiply intensity (and error) by a constant factor on import"}
 	SetVariable ScaleImportedDataBy, pos={180, 545}, size={150, 19}, title="Factor:", proc=IR3I_SetVarProc
 	SetVariable ScaleImportedDataBy, limits={1e-32, Inf, 1}, value=root:packages:ImportData:ScaleImportedDataBy, bodywidth=80
-	SetVariable ScaleImportedDataBy, disable=!(root:Packages:ImportData:ScaleImportedData)
+	NVAR scale=root:Packages:ImportData:ScaleImportedData
+	SetVariable ScaleImportedDataBy, disable=!(scale)
 	SetVariable ScaleImportedDataBy, help={"Multiplicative scaling factor applied to intensity and errors"}
 
 	// Slit smearing (SAS ASCII only)
@@ -371,7 +380,8 @@ Proc IR3I_ImportDataPanel()
 	CheckBox SlitSmearDataCheckbox, help={"Apply slit-smearing convolution to intensity and errors on import"}
 	SetVariable SlitLength, pos={200, 560}, size={150, 19}, title="Slit length [1/A]:", proc=IR3I_SetVarProc
 	SetVariable SlitLength, limits={1e-32, Inf, 0}, value=root:packages:ImportData:SlitLength
-	SetVariable SlitLength, disable=!(root:Packages:ImportData:SlitSmearData)
+	NVAR smear=root:Packages:ImportData:SlitSmearData
+	SetVariable SlitLength, disable=!(smear)
 	SetVariable SlitLength, help={"Slit length in Q units (1/Angstrom) for smearing convolution"}
 
 	// Calibration units (radio buttons)
@@ -393,7 +403,8 @@ Proc IR3I_ImportDataPanel()
 	CheckBox UseFileNameAsFolder,     help={"Create a sub-folder named after each imported file"}
 	CheckBox IncludeExtensionInName,  pos={260, 610}, size={16, 14}, proc=IR3I_CheckProc, title="Include extension?"
 	CheckBox IncludeExtensionInName,  variable=root:Packages:ImportData:IncludeExtensionInName
-	CheckBox IncludeExtensionInName,  disable=!(root:Packages:ImportData:UseFileNameAsFolder)
+	NVAR SameFldr=root:Packages:ImportData:UseFileNameAsFolder
+	CheckBox IncludeExtensionInName,  disable=!(SameFldr)
 	CheckBox IncludeExtensionInName,  help={"Include the file extension in the folder/wave name"}
 
 	CheckBox UseIndra2Names, pos={5, 625}, size={16, 14}, proc=IR3I_CheckProc, title="Use USAXS (Indra) names?"
@@ -401,7 +412,8 @@ Proc IR3I_ImportDataPanel()
 	CheckBox UseIndra2Names, help={"Wave naming: DSM_Qvec / DSM_Int / DSM_Error (Indra 2 convention)"}
 	CheckBox ImportSMRdata,  pos={200, 625}, size={16, 14}, proc=IR3I_CheckProc, title="Slit-smeared data?"
 	CheckBox ImportSMRdata,  variable=root:Packages:ImportData:ImportSMRdata
-	CheckBox ImportSMRdata,  disable=!root:Packages:ImportData:UseIndra2Names
+	NVAR useIndra2=root:Packages:ImportData:UseIndra2Names
+	CheckBox ImportSMRdata,  disable=!useIndra2
 	CheckBox ImportSMRdata,  help={"Changes Indra names to SMR_Qvec / SMR_Int / SMR_Error"}
 
 	CheckBox UseQRSNames, pos={5, 640}, size={16, 14}, proc=IR3I_CheckProc, title="Use QRS wave names?"
@@ -412,7 +424,7 @@ Proc IR3I_ImportDataPanel()
 	CheckBox UseQISNames, help={"Wave naming: <name>_q / <name>_i / <name>_s / <name>_w (NIST convention)"}
 	CheckBox AutomaticallyOverwrite, pos={330, 640}, size={16, 14}, proc=IR3I_CheckProc, title="Auto overwrite?"
 	CheckBox AutomaticallyOverwrite, variable=root:Packages:ImportData:AutomaticallyOverwrite
-	CheckBox AutomaticallyOverwrite, disable=!(root:Packages:ImportData:UseFileNameAsFolder)
+	CheckBox AutomaticallyOverwrite, disable=!(SameFldr)
 	CheckBox AutomaticallyOverwrite, help={"Silently overwrite existing waves of the same name"}
 
 	// Name truncation options
@@ -451,6 +463,10 @@ Proc IR3I_ImportDataPanel()
 	// ── Import button ─────────────────────────────────────────────────────────
 	Button ImportData, pos={310, 725}, size={110, 40}, proc=IR3I_ButtonProc, title="Import Selected Data"
 	Button ImportData, help={"Import all selected files using the settings above"}
+
+
+	//fix GUI
+	//IR3I_PopMenuProc("DataFormatPopup", whichListItem(DFMT,"ASCII SAXS/SANS;ASCII WAXS;Nexus CanSAS")+1, DFMT)
 
 EndMacro
 
@@ -497,7 +513,7 @@ Function IR3I_ButtonProc(ctrlName) : ButtonControl
 		IR3I_ImportSelectedData()
 	endif
 	if(cmpstr(ctrlName, "OpenFileInBrowser") == 0)
-		IR1I_NexusOpenHdf5File()
+		IR1I_NexusOpenHdf5File("ImportDataPath")
 	endif
 	if(cmpstr(ctrlName, "GetHelp") == 0)
 		// Points to the same online manual section as the old ASCII importer.

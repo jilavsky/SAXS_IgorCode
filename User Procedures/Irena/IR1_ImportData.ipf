@@ -1173,7 +1173,7 @@ Function IR1I_ButtonProc(ctrlName) : ButtonControl
 		IR1I_ImportDataFnctNexus()
 	endif
 	if(cmpstr(ctrlName, "OpenFileInBrowser") == 0)
-		IR1I_NexusOpenHdf5File()
+		IR1I_NexusOpenHdf5File("ImportDataPath")
 	endif
 
 End
@@ -2217,8 +2217,8 @@ Function IR1I_InitializeImportData()
 	NVAR DataCalibratedVolume
 	NVAR DataCalibratedWeight
 	if(DataCalibratedArbitrary + DataCalibratedVolume + DataCalibratedWeight != 1)
-		DataCalibratedArbitrary = 1
-		DataCalibratedVolume    = 0
+		DataCalibratedArbitrary = 0
+		DataCalibratedVolume    = 1
 		DataCalibratedWeight    = 0
 	endif
 	NVAR TrunkateStart
@@ -2236,8 +2236,6 @@ Function IR1I_InitializeImportData()
 		QvectInDegrees = 0
 	endif
 
-	//init various names.
-	IR1I_CheckProc("", 1)
 	
 	IR1I_UpdateListOfFilesInWvs()
 End
@@ -3055,7 +3053,8 @@ End
 
 //************************************************************************************************************
 //************************************************************************************************************
-Function IR1I_NexusOpenHdf5File()
+Function IR1I_NexusOpenHdf5File(PathName)
+	string PathName
 
 	WAVE/T WaveOfFiles      = root:Packages:ImportData:WaveOfFiles
 	WAVE   WaveOfSelections = root:Packages:ImportData:WaveOfSelections
@@ -3081,13 +3080,14 @@ Function IR1I_NexusOpenHdf5File()
 	for(i = 0; i < numpnts(WaveOfSelections); i += 1)
 		if(WaveOfSelections[i])
 			FileName = WaveOfFiles[i]
+			browserName = FileName
 			//			HDf5Browser#CreateNewHDF5Browser()
 			//		 	browserName = WinName(0, 64)
 			//			HDF5OpenFile/R /P=ImportDataPath locFileID as FileName
 			//			if (V_flag == 0)					// Open OK?
 			//				HDf5Browser#UpdateAfterFileCreateOrOpen(0, browserName, locFileID, S_path, S_fileName)
 			//			endif
-			HDf5Browser#CreateNewHDF5Browser("Convert2Dto1DDataPath", FileName, 1, browserName)
+			HDf5Browser#CreateNewHDF5Browser(PathName, FileName, 1, browserName)
 			if(!OpenMultipleFiles)
 				return 0
 			endif
