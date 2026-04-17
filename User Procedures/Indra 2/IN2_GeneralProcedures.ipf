@@ -1,4 +1,4 @@
-L#pragma rtGlobals=2		// Use modern global access method.
+#pragma rtGlobals=2		// Use modern global access method.
 #pragma version = 2.33
 #pragma IgorVersion = 9.04
 
@@ -17,7 +17,7 @@ Constant TypicalPanelHorizontalSize = 350
    //For releases uncomment the next line and set to correct version number:
 //Strconstant ManualVersionString = "en/1.4/"					//1.4 is December2018 release
 //Strconstant ManualVersionString = "en/1.5.1/"				//this was for September2020 release. 
-Strconstant ManualVersionString = "en/1.5.5/"				//January2026 beta release. 
+Strconstant ManualVersionString = "en/1.6.0/"				//January2026 beta release. 
 //*** For development version uncomment next line, it points to latest (development) version of manuals:
 //Strconstant ManualVersionString = "en/latest/"		//this is for beta version, so it sees current version of manual. 
 strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan-ilavsky/IrenaNikaRecords/VersionCheck.php?"
@@ -509,8 +509,13 @@ strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
+//=======================================================================================
+// SECTION: Menu Definitions
+//   Adds custom entries to Igor's Macros, GraphMarquee, TracePopup, GraphPopup,
+//   and DataBrowserObjectsPopup right-click context menus.
+//=======================================================================================
 Menu "Macros"
-	"Color waves.../1", IN2G_ColorTraces() //Ctrl+1  
+	"Color waves.../1", IN2G_ColorTraces() //Ctrl+1
 End
 
 Menu "GraphMarquee"
@@ -548,6 +553,12 @@ Menu "DataBrowserObjectsPopup", dynamic
 		"--"		
 End
 
+//=======================================================================================
+// SECTION: Data Browser Right-Click Menu Functions
+//   Implements DataBrowserObjectsPopup menu items: display/append wave pairs, extract
+//   text wave info, duplicate selected folders or waves. Helper functions determine
+//   which menu items are visible based on the current Data Browser selection.
+//=======================================================================================
 //************************************************************************************************
 FUnction/S IN2G_DisplayDuplicateItemStr()
 	if(strlen(GetBrowserSelection(-1))>0)		//this is cumbersome way to check if DataBrowser exists... hm... 
@@ -708,6 +719,11 @@ Function IN2G_PlotBrowserSelectionXY(Variable reverse1and2)
 	endif
 End
 
+//=======================================================================================
+// SECTION: Graph Save / Export and Window Recreation Utilities
+//   Functions for saving the top graph as JPEG or Igor pxp, and for searching window
+//   recreation strings for specific key information (e.g., margin values).
+//=======================================================================================
 //************************************************************************************************
 //************************************************************************************************
 
@@ -768,7 +784,14 @@ Function/S IN2G_FindInRecreation(WInRecIn, keyToFind)
 	LineToParse = LineToParse[strsearch(LineToParse, keyToFInd, 0), inf]+","
 	LineToParse = IN2G_TrimFrontBackWhiteSpace(LineToParse)
 	return LineToParse
-end//************************************************************************************************
+end
+//=======================================================================================
+// SECTION: Data Browser Info Extraction / Folder Path Utilities
+//   Functions for extracting structured sample metadata from folder names, identifying
+//   name components (e.g., scan number, sample ID), and forcibly deleting folders
+//   (cross-platform). Also includes a threadsafe helper for sort-index extraction.
+//=======================================================================================
+//************************************************************************************************
 //************************************************************************************************
 
 Function IN2G_ExtractInfoFromFldrname()
@@ -1074,6 +1097,13 @@ threadsafe Function IN2G_FindNumIndxForSort(StrnameIn)
 	endfor
 	return 0
 end
+//=======================================================================================
+// SECTION: General Data Management and Naming Utilities
+//   Miscellaneous utilities: finding available result folder names, building Igor menu
+//   strings, converting text waves to string lists, creating user-friendly names,
+//   duplicating embedded graph subwindows, sanitizing strings for grep, retrieving
+//   user sample names, returning axis labels, and converting Q waves to log spacing.
+//=======================================================================================
 //************************************************************************************************
 //************************************************************************************************
 
@@ -1318,8 +1348,14 @@ Function IN2G_ConvertTologspacing(WaveToRebin,MinStep)
 		WaveToRebin = tempNewLogDist
 end		
 
-//**************************************************************** 
-//**************************************************************** 
+//=======================================================================================
+// SECTION: Update Checking / File Version Management
+//   Functions for submitting version-check records to the web, checking platform
+//   graphics settings and GUI fonts, filtering invisible files from lists, opening
+//   the web manual, finding file version strings, and listing loaded procedure files.
+//=======================================================================================
+//****************************************************************
+//****************************************************************
 Function IN2G_SubmitCheckRecordToWeb(WhichPackage)
 	string WhichPackage
 	
@@ -1755,6 +1791,12 @@ structure IrenaPanelDefaults
 	uint32 reserved[77]			// Reserved for future use
 	
 endstructure
+//=======================================================================================
+// SECTION: Configuration / Package Preferences
+//   Functions for the Irena/Nika/Indra configuration panel: initializing settings,
+//   managing GUI font lists, saving and loading package preferences to/from Igor
+//   experiment files, panel control procedures, and looking up default values.
+//=======================================================================================
 //***********************************************************
 //***********************************************************
 
@@ -2391,6 +2433,12 @@ Function IN2G_ChangePanelControlsStyle()
 
 end
 //***********************************************************
+//=======================================================================================
+// SECTION: Panel Resizing and Scaling
+//   Attaches resize hooks to panels so that controls reposition/resize when the user
+//   drags the panel window. Also: resetting all panels to stored sizes, saving and
+//   reading panel size information in window notes, and point/pixel conversion.
+//=======================================================================================
 //***********************************************************
 //***********************************************************
 //***********************************************************
@@ -2731,6 +2779,11 @@ End
 //	endif
 //end
 //
+//=======================================================================================
+// SECTION: Graph / Window Utilities
+//   Functions for cloning windows (graph or table) with their data, color-coding
+//   wave traces, and inserting a subwindow at the current graph marquee selection.
+//=======================================================================================
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 Function IN2G_CloneWindow()
@@ -2968,6 +3021,12 @@ Function IN2G_CreateSubwindowAtMarqee()
        Execute rm
 end
 
+//=======================================================================================
+// SECTION: Coordinate Conversions (Q <-> d-spacing <-> 2-theta)
+//   One-line conversion functions between scattering vector Q (inverse Angstrom),
+//   d-spacing (Angstrom), and two-theta (degrees). Wavelength parameter is accepted
+//   for uniformity but is only used for 2-theta conversions.
+//=======================================================================================
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 Function IN2G_ConvertQtoD(Qval,wavelength)	//D is in A, Q in A^-1
@@ -3084,6 +3143,12 @@ Strconstant WebAddressForConfFile ="https://raw.githubusercontent.com/jilavsky/S
 Strconstant NameOfConfFile ="IgorInstallerConfig.xml"
 Strconstant NameOfUpdateMessageFile ="UpdateMessage.ifn"
 
+//=======================================================================================
+// SECTION: Version Checking / Update System / XML Parsing
+//   Functions for checking online for new package versions, displaying update messages,
+//   parsing release lists and content from the update server, and XML attribute/tag
+//   parsing utilities used in CanSAS/Nexus file reading.
+//=======================================================================================
 
 Function IN2G_CheckForNewVersion(WhichPackage)
 	string WhichPackage
@@ -3370,6 +3435,12 @@ End
 //
 
 //*****************************************************************************************************************
+//=======================================================================================
+// SECTION: Folder Utilities / Slit Smearing Check / Log Rebinning
+//   Functions for estimating data folder size, checking slit-smearing Q-range validity,
+//   rebinning data on a log scale with optional error propagation and minimum step
+//   enforcement, and finding optimal log scale starting values.
+//=======================================================================================
 //*************************************************************************************************************************************
 // Calculates the experiment size and returns it in bytes
 // Last Modified 2012/07/09 by Jamie Boyd
@@ -3722,10 +3793,16 @@ End
 //		return LastStartAngle
 //	endif
 //end
+//=======================================================================================
+// SECTION: Panel Scroll Control / Wave Name Lookup / Data Utilities
+//   ING2_AddScrollControl adds a scroll button to panels. Also: finding new elements
+//   between two text waves, returning existing wave names by match pattern or regex,
+//   creating arbitrary data folders, and printing waves to the history area.
+//=======================================================================================
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-//FUNCTIONS AND PROCEDURES FOR USE IN ALL INDRA 2 MACROS	
+//FUNCTIONS AND PROCEDURES FOR USE IN ALL INDRA 2 MACROS
 Function ING2_AddScrollControl()
 	//string WindowName
 //	getWindow kwTopWin, wsizeDC
@@ -3897,6 +3974,12 @@ End
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
+//=======================================================================================
+// SECTION: Error Generation / Number Rounding / String Formatting
+//   Functions for generating synthetic SAXS errors from intensity data, rounding
+//   numbers to significant figures or decimal places, formatting values paired with
+//   their uncertainties, fixing Windows file paths, and extracting folder names.
+//=======================================================================================
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
@@ -4055,6 +4138,13 @@ Function/S IN2G_ExtractFldrNmFromPntr(FullPointerToWaveVarStr)
 	endif
 end
 
+//=======================================================================================
+// SECTION: Graph Formatting / Visualization
+//   Functions for removing data from graphs, color-coding traces with rainbow colors,
+//   adding wave statistics annotations, making axis limits nice, varying markers and
+//   line styles, offsetting traces, generating folder-based legends, and showing/
+//   hiding error bars on the top graph.
+//=======================================================================================
 ////*****************************************************************************************************************
 ////*****************************************************************************************************************
 Function IN2G_RemoveDataFromGraph([topGraphStr])
@@ -4856,21 +4946,21 @@ Function IN2G_FolderSelectSetVarProc(ctrlName,varNum,varStr,varName) : SetVariab
 
 		variable isOK=0
 		setDataFolder CurrentFolder
-		NewName = (cleanupName((NewName)[0,31],AllowLiberal))
+		NewName = cleanupName((NewName)[0,31],AllowLiberal)
 //		NewName = (possiblyQuoteName(NewName))
-				if (AllowLiberal)		//liberal names allowed, check for wave name (can be liberal)
-					if (CheckName(NewName,1)==0)
-						isOK=1
-					else
-						isOK=0
-					endif
-				else					//liberal names not allowed, check for variable (cannot be liberal)
-					if (CheckName(NewName,3)==0)
-						isOK=1
-					else
-						isOK=0
-					endif
-				endif
+		if (AllowLiberal)		//liberal names allowed, check for wave name (can be liberal)
+			if (CheckName(NewName,1)==0)
+				isOK=1
+			else
+				isOK=0
+			endif
+		else					//liberal names not allowed, check for variable (cannot be liberal)
+			if (CheckName(NewName,3)==0)
+				isOK=1
+			else
+				isOK=0
+			endif
+		endif
 		if (!isOK)
 				if (FolderOrFile>1)
 					Button Done, title="NotUnique",disable=2,fColor=(0,0,0),win=IN2G_FolderSelectPanelPanel
@@ -4950,6 +5040,13 @@ static Function IN2G_FolderSelectPanelW(TitleString,FolderOrFile,AllowNew,AllowD
 EndMacro
 //*****************************************************************************************************************
 //*****************************************************************************************************************
+//=======================================================================================
+// SECTION: String / Quote Utilities, Math Utilities, Error Propagation
+//   IR1G_UpdateSetVarStep updates a SetVariable control step size. Also: removing
+//   extra quotes from liberal names, replacing string delimiters, integrating XY data,
+//   creating Igor global variables/strings by name, and error propagation math
+//   (division, multiplication, addition/subtraction).
+//=======================================================================================
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -5191,6 +5288,11 @@ end
 
 
 
+//=======================================================================================
+// SECTION: Graph Size Axis / Guinier Axis Annotation
+//   Functions for appending d-spacing size axes and Guinier axes to log-log SAXS
+//   graphs, linking them to the primary Q axis with appropriate scaling and labels.
+//=======================================================================================
 //**********************************************************************************************
 //**********************************************************************************************
 
@@ -5546,6 +5648,11 @@ end
 //	return str2
 //end
 
+//=======================================================================================
+// SECTION: Wave Note Utilities
+//   Functions for appending, replacing, and reading key:value pairs in Igor wave notes.
+//   Covers operations on single waves, lists of waves, and all waves in a folder.
+//=======================================================================================
 //**********************************************************************************************
 //**********************************************************************************************
 
@@ -5788,6 +5895,11 @@ Function IN2G_KillWavesFromList(WvList)
 		KillWaves/Z $(StringFromList(i, WvList))
 	endfor
 end
+//=======================================================================================
+// SECTION: Graph Styling / Color Waves / Screen Size / Cursor Point Editing
+//   Standard graph style macro, color wave generation, screen and graph size utilities,
+//   and button controls for setting NaN values at cursor positions or resetting axes.
+//=======================================================================================
 //**********************************************************************************************
 //**********************************************************************************************
 
@@ -6091,6 +6203,12 @@ End
 //	
 //end
 
+//=======================================================================================
+// SECTION: Folder Search / Data Discovery
+//   Functions for searching folder trees for 2D/3D data waves, for folders containing
+//   specific wave types (single type code or type list), and legacy alternate versions
+//   of the folder search routines (IN2G_NewFindFolderWithWaveTypes is unused).
+//=======================================================================================
 //**********************************************************************************************
 //**********************************************************************************************
 
@@ -6316,6 +6434,12 @@ Function/S IN2G_NewFindFolderWithWaveTypes(startDF, levels, WaveTypes, LongShort
         return list
 End
 
+//=======================================================================================
+// SECTION: NaN Removal / Data Cleaning / Log Interpolation
+//   Functions for removing NaN-containing points from sets of 1 to 10 synchronized
+//   waves, log-interpolating intensity to new Q points, and replacing negative
+//   intensity values with NaN. Also includes axis units string lookup (single-use).
+//=======================================================================================
 //**********************************************************************************************
 //**********************************************************************************************
 Function IN2G_RemoveNaNsFrom3Waves(Wv1,wv2,wv3)							//removes NaNs from 3 waves
@@ -6472,6 +6596,13 @@ Function IN2G_ReplaceNegValsByNaNWaves(Wv1,wv2,wv3)			//replaces Negative values
 	endfor
 end
 
+//=======================================================================================
+// SECTION: Legend Generation / Data Export / File Name Utilities / Folder Scan
+//   Functions for generating graph legends from wave notes, exporting selected data
+//   from a folder to ASCII files, fixing file names from SPEC data, zapping control
+//   codes from strings, creating unique folder/file names, trimming export waves,
+//   pasting wave notes to text waves, and universal folder scanning with callbacks.
+//=======================================================================================
 //************************************************************************************************************************
 //************************************************************************************************************************
 Function/S IN2G_ReturnUnitsForYAxis(Ywave)
@@ -6906,6 +7037,12 @@ Function IN2G_PasteWnoteToWave(waveNm, textWv,separator)
 	endfor
 end
 
+//=======================================================================================
+// SECTION: Universal Folder Scan / USAXS Scan Utilities
+//   IN2G_UniversalFolderScan recursively applies a callback function to each subfolder.
+//   IN2G_CheckTheFolderName verifies folder name consistency in wave notes.
+//   IN2G_CreateListOfScans and IN2G_AppendScanNumAndComment support USAXS scan logging.
+//=======================================================================================
 //************************************************************************************************
 //************************************************************************************************
 
@@ -7023,6 +7160,13 @@ end
 //***********************************************************************************************
 //***********************************************************************************************
 
+//=======================================================================================
+// SECTION: Size Distribution Math / Screen Check / Periodic Table / Spline Smoothing
+//   Functions for computing size distribution statistics (volume fraction, number
+//   density, specific surface, mean diameters, standard deviations) from a volume
+//   size distribution FD over a diameter range. Also: screen size checking (disabled
+//   for IP9), an unused interactive periodic table panel, and cubic spline smoothing.
+//=======================================================================================
 //Little math for the SAS results
 
 //Volume Fraction Result is dimensionless
@@ -7643,6 +7787,11 @@ End
 //	DSM_Int_smooth = 10^DSM_Int_smooth
 //end
 //**********************************************************************	*/
+//=======================================================================================
+// SECTION: Spline Smoothing / Panel Scroll Button
+//   IN2G_SplineSmooth performs cubic spline smoothing on XY data with error weights.
+//   IN2G_ScrollButtonProc and IN2G_ScrollHook implement vertical panel scrolling.
+//=======================================================================================
 Function IN2G_SplineSmooth(n1,n2,xWv,yWv,dyWv,S,AWv,CWv)
 	variable n1,n2,S
 	Wave/Z xWv,yWv,dyWv,AWv,CWv

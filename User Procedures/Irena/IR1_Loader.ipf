@@ -89,6 +89,9 @@
 #include "IR3_MultiDataPlot", version >= 1.06
 #include "IR3_SimpleFits", version >= 1.17
 #include "IR3_WAXSDiffraction", version >= 1.17
+//new tools 2026-02
+#include "IR3_ImportData", version >= 1.00
+
 
 //bio tools
 #include "IRB1_bioSAXS", version >= 1.02

@@ -147,12 +147,15 @@ End
 Menu "SAS"
 	help = {"Irena SAS modeling macros, version 2.54 released 1/5/2014 by Jan Ilavsky"}
 	Submenu "Data import & export"
-		"Import ASCII SAS data", IR1I_ImportSASASCIIDataMain()
-		help={"Import Small-angle scattering data from ASCII file into Igor for use with macros"}
-		"Import ASCII WAXS or other data", IR1I_ImportOtherASCIIMain()
-		help={"Import Other type data from ASCII file into Igor for use with macros"}
-		"Import Nexus canSAS data", IR1I_ImportNexusCanSASMain()
-		help={"Import data from Nexus CanSAS conforming data sets"}
+		"Import SAXS / WAXS / Nexus data (combined)", IR3I_ImportDataMain()
+		help={"Combined import panel for ASCII SAXS/WAXS and Nexus CanSAS data"}
+		"---"
+		//"Import ASCII SAS data", IR1I_ImportSASASCIIDataMain()
+		//help={"Import Small-angle scattering data from ASCII file into Igor for use with macros"}
+		//"Import ASCII WAXS or other data", IR1I_ImportOtherASCIIMain()
+		//help={"Import Other type data from ASCII file into Igor for use with macros"}
+		//"Import Nexus canSAS data", IR1I_ImportNexusCanSASMain()
+		//help={"Import data from Nexus CanSAS conforming data sets"}
 		"Import canSAS XML data", CS_XMLGUIImportDataMain(defaultType="QRS",defaultQUnits="1/A")
 		help={"Import data from XML CanSAS conforming data sets"}
 		"---"
@@ -351,7 +354,7 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	endif	
 	//these are tools which have been upgraded to this functionality 
 	string WindowProcNames="LSQF2_MainPanel=IR2L_MainCheckVersion;IR2H_ControlPanel=IR2H_MainCheckVersion;DataMiningTool=IR2M_MainCheckVersion;DataManipulationII=IR3M_MainCheckVersion;"
-	WindowProcNames+="IR1I_ImportData=IR1I_MainCheckVersion;IR2S_ScriptingToolPnl=IR2S_MainCheckVersion;IR1R_SizesInputPanel=IR1R_MainCheckVersion;IR1A_ControlPanel=IR1A_MainCheckVersion;"
+	WindowProcNames+="IR1I_ImportData=IR1I_MainCheckVersion;IR3I_ImportData=IR3I_MainCheckVersion;IR2S_ScriptingToolPnl=IR2S_MainCheckVersion;IR1R_SizesInputPanel=IR1R_MainCheckVersion;IR1A_ControlPanel=IR1A_MainCheckVersion;"
 	WindowProcNames+="IR1P_ControlPanel=IR1P_MainCheckVersion;IR2R_ReflSimpleToolMainPanel=IR2R_MainCheckVersion;IR3DP_MainPanel=IR3GP_MainCheckVersion;"
 	WindowProcNames+="IR1V_ControlPanel=IR1V_MainCheckVersion;IR2D_ControlPanel=IR2D_MainCheckVersion;IR2Pr_ControlPanel=IR2Pr_MainCheckVersion;UnivDataExportPanel=IR2E_MainCheckVersion;"
 	WindowProcNames+="IR1D_DataManipulationPanel=IR1D_MainCheckVersion;IR3D_DataMergePanel=IR3D_MainCheckVersion;IR3W_WAXSPanel=IR3W_MainCheckVersion;"

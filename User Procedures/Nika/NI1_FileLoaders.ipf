@@ -2612,20 +2612,66 @@ Function/S NI2_LoadGeneralHDFFile(CalledFrom, fileName, PathName, NewWaveName)
 	endif
 	Wave Found2DWave = $(StringFromList(0,ListOf2DData))
 	//now we need to fix this from 3D (1xNxM) to 2D (NxM) waves
-	Duplicate/O Found2DWave, $(NewWaveName)
-	wave Nika2DWave=$(NewWaveName)
-	if(WaveDims(Nika2DWave)>2)
-		variable D0, D1,D2
-		D0=DimSize(Nika2DWave, 0)
-		D1=DimSize(Nika2DWave, 1)
-		D2=DimSize(Nika2DWave, 2)
-		if(D0==1)
-			Redimension /N=(D1, D2) Nika2DWave
-		elseif(D2==1)
-			Redimension /N=(D0, D1) Nika2DWave
+	//Duplicate/O Found2DWave, $(NewWaveName)
+	//3-5-2026 modification for 20ID HESAXS
+	//it is writing data in either 3 dimensional or 4 diemnsional arrays
+	// the first dimensions are always exposures, we need to sum over that.
+	// if 4 dims, then the second is degenerative with single layer, needs to be dropped. 
+	// last 2 dimensions are image. 	
+	//complication, file contains data, data_dark and one more data set. 
+	// we need the data (expcet when they wrote it accidentally in data_dark. 
+	//this data comes on tehlist as first, but this may not be guarranteed. This is fragile for now. 
+		variable D0, D1,D2, D3
+		Variable it
+		if(WaveDims(Found2DWave)==3)
+		//this assumes the degenerative or iterative dimension is first, Python way and HDF5 way. Typically (1,500,2000) or (5,200,2000) 
+		//so the first number is number of images. And we sum all images together. 
+//			D0=DimSize(Found2DWave, 0)
+//			D1=DimSize(Found2DWave, 1)
+//			D2=DimSize(Found2DWave, 2)
+//			Make/O/N=(D1,D2) sumWave
+//			sumWave = 0
+//			for(it=0; it<D0; it+=1)
+//	   		 	sumWave += Found2DWave[it][p][q]		//this is very slow
+//			endfor
+			SumDimension/D=0/DEST=sumwave Found2DWave   // w2D becomes (500,3000)
+			sumwave = sumwave[p][q] < 1e5 ? sumwave[p][q] : nan
+			Duplicate/O sumWave, $(NewWaveName)
+		elseif(WaveDims(Found2DWave)==4)
+			D0=DimSize(Found2DWave, 0)
+			D1=DimSize(Found2DWave, 1)
+			D2=DimSize(Found2DWave, 2)
+			D3=DimSize(Found2DWave, 3)
+			//Make/O/N=(D2,D3) sumWave1
+			//sumWave1 = 0
+			//for(it=0; it<D0; it+=1)
+	   		// 	sumWave1 += Found2DWave[it][0][p][q]
+			//endfor
+			SumDimension/D=0/DEST=sumwave3d Found2DWave   // w4D becomes wave3d (1,500,3000)
+			SumDimension/D=0/DEST=sumwave1 sumwave3d   		// wave3d becomes wave2d (500,3000)
+			//SumDimension/D=0/DEST=sumwave1 Found2DWave     // tmp is (1,500,3000)
+			//Redimension/N=(D2,D3) sumwave1      				// now tmp is 2D (500,3000)
+			sumwave1 = sumwave1[p][q] < 1e5 ? sumwave1[p][q] : nan
+			Duplicate/O sumWave1, $(NewWaveName)
 		endif
+		killwaves/Z sumwave3d, sumWave1, sumWave
+	//end of fix
+	wave Nika2DWave=$(NewWaveName)
+
+	//this below does not work, but the above should have taken care of this anyway. 
+//	if(WaveDims(Nika2DWave)>2)
+//		//variable D0, D1,D2
+//		D0=DimSize(Nika2DWave, 0)
+//		D1=DimSize(Nika2DWave, 1)
+//		D2=DimSize(Nika2DWave, 2)
+//		if(D0==1)
+//			Redimension /N=(D1, D2) Nika2DWave
+//		elseif(D2==1)
+//			Redimension /N=(D0, D1) Nika2DWave
+//		endif
 		
-	endif
+//	endif
+	
 	KillDataFolder/Z root:Packages:TempHDFLoad
 	
 	return NewWaveName
