@@ -44,11 +44,12 @@
 		<File>User Procedures/Irena/IR3_3DTwoPhaseSolid.ipf</File>		
 		<File>User Procedures/Irena/IR3_Anisotropy.ipf</File>		
 		<File>User Procedures/Irena/IR3_GuinierPorodModel.ipf</File>
-		<File>User Procedures/Irena/IR3_ImportData.ihf</File>
+		<File>User Procedures/Irena/IR3_ImportData.ipf</File>
 		<File>User Procedures/Irena/IR3_MergingData.ipf</File>
 		<File>User Procedures/Irena/IR3_SimpleFits.ipf</File>
 		<File>User Procedures/Irena/IR3_MultiDataPlot.ipf</File>
 		<File>User Procedures/Irena/IR3_WAXSDiffraction.ipf</File>
+		<File>User Procedures/Irena/IR3_WAXSDiffraction.ihf</File>
 		<File>User Procedures/Irena/IRB1_bioSAXS.ipf</File>
 		<File>User Procedures/Irena/IRB1_EvaluationTools.ipf</File>
 		<File>User Procedures/Irena/IR3_DataManipulationIII.ipf</File>			
