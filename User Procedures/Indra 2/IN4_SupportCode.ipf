@@ -723,7 +723,7 @@ static Function/S IN4_ImportDataSet(FileName)
 	endif
 	
 	RealSampleName = RemoveEnding(RemoveEnding(FileName,actualExtension),".")	//TODO: sanitize properly sample name here to make it Igor friendly		
-	RealSampleName = RealSampleName 		//this adds _NX to the end to indicate, it came from Nexus file. 
+	RealSampleName = PossiblyQuoteName(cleanupname(RealSampleName,1)) 		//this adds _NX to the end to indicate, it came from Nexus file. 
 
 	PathInfo Indra4DataPath
 	string PathToFileWithData = IN4_FIndProperPathToData(S_path,"usaxs") 

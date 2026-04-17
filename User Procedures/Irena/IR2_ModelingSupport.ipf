@@ -8041,6 +8041,10 @@ Function IR2L_CalculateRg(Dimension,VolumeDistribution,DimensionIsDiameter)
 	//print Areaxy(LocDimension,Integrant)
 	//print Areaxy(LocDimension,VolumeDistribution)
 	Rg=sqrt(Areaxy(LocDimension,Integrant)/Areaxy(LocDimension,VolumeDistribution))
+	//this is incorrect, proper Rg is shape dependent...
+	//for cylinder, for examle: Rg²(r) = r²/2 + length²/12
+	//and for other shapes may vary. 
+	print "RG is valid for spheres only!" 
 	return Rg
 end
 //*****************************************************************************************************************

@@ -1,7 +1,7 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version = 1.10
+#pragma version = 1.11
 #pragma IgorVersion=9.03
 
 
@@ -13,6 +13,7 @@
 
 //this is tool to setup Sample Plates for USAXS, survey sample positions, and generate Command files. 
 
+//1.11 allow numberst starting the filenames.  
 //1.10 Add option for slow speed for moving around. Tweak for 12ID and new Aerotech motors. 
 //1.09 Change PVs for 20IDB upgraded instrument. 
 //1.08 add Export list of saved sets. Increased version number of the panel.   
@@ -860,10 +861,17 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 			break
 		case 7: // finish edit
 			//cleanup the name, if Column 0
+			string tempStrName=""
 			if(col==0)
 				string Username=listWave[row][col]
 				if(strlen(Username)>0)
-					listWave[row][col] = CleanupName(Username, 0 , 40)
+					tempStrName = Username
+					tempStrName = replaceString("%",tempStrName,"pct")
+					tempStrName = CleanupName(tempStrName, 0 , 50)	//this will potentially add X in front of the name which is not needed, starting numbers as names are fine...
+					if (stringmatch(tempStrName[0],"X")==1 && stringmatch(Username[0],"X")!=1)
+						tempStrName = tempStrName[1,inf]
+					endif
+					listWave[row][col]  = tempStrName
 					DoWIndow BeamlinePlateSetup
 					if(V_Flag)
 						SVAR SelectedSampleName = root:Packages:SamplePlateSetup:SelectedSampleName
