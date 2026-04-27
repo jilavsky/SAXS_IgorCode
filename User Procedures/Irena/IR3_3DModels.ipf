@@ -3720,7 +3720,7 @@ Function IR3P_Read1DDataFile()
 
 	SVAR CurrentFolderName=root:packages:POVPDBImport:CurrentFolderName
 	SetDataFOlder $(CurrentFolderName)
-	IR1I_KillAutoWaves()
+	IR3I_KillAutoWaves()
 	KillWaves/Z Qwave, IntWave
 	LoadWave/Q/A/D/G/D
 	Wave Wave0

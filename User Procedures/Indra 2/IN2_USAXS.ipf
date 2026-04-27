@@ -220,7 +220,11 @@ Function IN3_CheckWIndowsProcVersions(WindowProcNames)
 		ProcedureName = StringFromList(1, StringFromList(i, WindowProcNames, ";")  , "=")
 		DoWIndow $(PanelName)
 		if(V_Flag)
-			Execute (ProcedureName+"()") 
+			if(strlen(functionInfo(ProcedureName))>3)
+				Execute (ProcedureName+"()") 
+			else
+				DoWIndow/K/Z $(PanelName)		
+			endif
 		endif
 	endfor
 	 

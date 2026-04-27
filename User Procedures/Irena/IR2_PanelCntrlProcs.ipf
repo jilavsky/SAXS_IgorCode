@@ -3569,6 +3569,7 @@ Function IR3C_MultiListBoxProc(lba) : ListBoxControl
 			SVAR ControlDoubleClickFunction = root:Packages:IrenaControlProcs:ControlDoubleClickFunction
 			DoubleClickFunctionName = StringByKey(WinNameStr, ControlDoubleClickFunction, ":", ";")
 			FoldernameStr           = listWave[row]
+			IR3C_WarnIfMultipleQRSDataSets(TopPanel, CntrlLocation, FoldernameStr)
 			if(strlen(DoubleClickFunctionName) > 0)
 				Execute(DoubleClickFunctionName + "(\"" + FoldernameStr + "\")")
 			endif

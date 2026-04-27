@@ -2,7 +2,9 @@
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
 
+#pragma version=1.01
 
+// 1.01  added energy and wavelength to wave note. 
 // here belongs any code which imports and exports data and does other stuff, except data reduction
 
 //**********************************************************************************************************
@@ -12,7 +14,7 @@
 Function/S IN4_ProcessSelectedData(FileNameList)		
 	//note, at this moment this seems to be called with list of 1 file each time 
 	string FileNameList									
-	//while th=is codeshoudl be able to handle a list fo files. 
+	//while th=is code should be able to handle a list fo files. 
 
 	NVAR UsePython = root:Packages:Indra4:UsePythonCode
 	SVAR BlankFileName = root:Packages:Indra4:BlankFileName
@@ -987,12 +989,23 @@ Function/S ReadMyNXcanSASSWAXS(DataPathStr, SAXSorWAXS, filenameInput)
 	//Matilda_version = 1.0.0 
 	//this let's us make future changes and also deal with Igor saved data differently, if needed. 
 	
-	
+    location = "entry/instrument/monochromator/"
+    HDF5OpenGroup /Z fileID, location, groupID
+    if (V_Flag==0)
+    	HDF5LoadData /Q /N=energyWv /O groupID, "energy" 
+    	HDF5LoadData /Q /N=wavelengthWv /O groupID, "wavelength" 
+    	Wave energyWv
+    	Wave wavelengthWv
+    	Variable energy=energyWv[0]
+    	Variable wavelength=wavelengthWv[0]
+    	killWaves energyWv, wavelengthWv
+	    HDF5CloseGroup groupID
+    endif	
 
     location = "entry/QRS_data/"
     HDF5OpenGroup /Z fileID, location, groupID
     if (V_Flag==0)
-    	IN4_LoadWaveAndAppendAttribs(groupID, "R_Int", "Intensity")	//cannot use anything matching R_Int as it breask QRS data search
+    	IN4_LoadWaveAndAppendAttribs(groupID, "R_Int", "Intensity")	//cannot use anything matching R_Int as it breaks QRS data search
     	IN4_LoadWaveAndAppendAttribs(groupID, "R_Qvec", "Q")
     	IN4_LoadWaveAndAppendAttribs(groupID, "R_Error", "Error")
 	    HDF5CloseGroup groupID
@@ -1002,7 +1015,7 @@ Function/S ReadMyNXcanSASSWAXS(DataPathStr, SAXSorWAXS, filenameInput)
     location = "entry/Blank_data/"
     HDF5OpenGroup /Z fileID, location, groupID
     if (V_Flag==0)
-    	IN4_LoadWaveAndAppendAttribs(groupID, "BL_R_Int", "Intensity")	//cannot use anything matching R_Int as it breask QRS data search
+    	IN4_LoadWaveAndAppendAttribs(groupID, "BL_R_Int", "Intensity")	//cannot use anything matching R_Int as it breaks QRS data search
     	IN4_LoadWaveAndAppendAttribs(groupID, "BL_R_Qvec", "Q")
     	IN4_LoadWaveAndAppendAttribs(groupID, "BL_R_Error", "Error")
 	    HDF5CloseGroup groupID
@@ -1027,8 +1040,27 @@ Function/S ReadMyNXcanSASSWAXS(DataPathStr, SAXSorWAXS, filenameInput)
     	IN4_LoadWaveAndAppendAttribs(groupID, "q_"+DataNameStr, "Q")
     	IN4_LoadWaveAndAppendAttribs(groupID, "s_"+DataNameStr, "Idev")
     	IN4_LoadWaveAndAppendAttribs(groupID, "w_"+DataNameStr, "Qdev")
-
 	    HDF5CloseGroup groupID
+   		WAVE Wv=$("r_"+DataNameStr)
+    	string oldnote = note(Wv)
+    	oldNote+="energy="+num2str(energy)+";"   
+    	oldNote+="wavelength="+num2str(wavelength)+";"   
+    	note/K/NOCR Wv, oldNote
+   		WAVE Wv=$("q_"+DataNameStr)
+    	oldnote = note(Wv)
+    	oldNote+="energy="+num2str(energy)+";"   
+    	oldNote+="wavelength="+num2str(wavelength)+";"   
+    	note/K/NOCR Wv, oldNote
+   		WAVE Wv=$("s_"+DataNameStr)
+    	oldnote = note(Wv)
+    	oldNote+="energy="+num2str(energy)+";"   
+    	oldNote+="wavelength="+num2str(wavelength)+";"   
+    	note/K/NOCR Wv, oldNote
+   		WAVE Wv=$("w_"+DataNameStr)
+    	oldnote = note(Wv)
+    	oldNote+="energy="+num2str(energy)+";"   
+    	oldNote+="wavelength="+num2str(wavelength)+";"   
+    	note/K/NOCR Wv, oldNote
     	
     endif
     HDF5CloseFile fileID
@@ -1225,7 +1257,19 @@ static Function ReadMyNXcanSASUSAXS(filenameInput)
 	//Matilda_version = 1.0.0 
 	//Indra_version=4.0.0
 	//this let's us make future changes and also deal with Igor saved data differently, if needed. 
-
+	//need to also get instrument data, so let's read instrument/monochromator group
+    location = "entry/instrument/monochromator/"
+    HDF5OpenGroup /Z fileID, location, groupID
+    if (V_Flag==0)
+    	HDF5LoadData /Q /N=energyWv /O groupID, "energy" 
+    	HDF5LoadData /Q /N=wavelengthWv /O groupID, "wavelength" 
+    	Wave energyWv
+    	Wave wavelengthWv
+    	Variable energy=energyWv[0]
+    	Variable wavelength=wavelengthWv[0]
+    	killWaves energyWv, wavelengthWv
+	    HDF5CloseGroup groupID
+    endif
 
     location = "entry/QRS_data/"
     HDF5OpenGroup /Z fileID, location, groupID
@@ -1268,7 +1312,21 @@ static Function ReadMyNXcanSASUSAXS(filenameInput)
     	WAVE SMR_Int
     	string oldnote = note(SMR_Int)
     	oldNote+="SlitLength="+num2str(Slitlength)+";"   
+    	oldNote+="energy="+num2str(energy)+";"   
+    	oldNote+="wavelength="+num2str(wavelength)+";"   
     	note/K/NOCR SMR_Int, oldNote
+    	WAVE SMR_Qvec
+    	oldnote = note(SMR_Qvec)
+    	oldNote+="SlitLength="+num2str(Slitlength)+";"   
+    	oldNote+="energy="+num2str(energy)+";"   
+    	oldNote+="wavelength="+num2str(wavelength)+";"   
+    	note/K/NOCR SMR_Qvec, oldNote
+    	WAVE SMR_Error
+    	oldnote = note(SMR_Error)
+    	oldNote+="SlitLength="+num2str(Slitlength)+";"   
+    	oldNote+="energy="+num2str(energy)+";"   
+    	oldNote+="wavelength="+num2str(wavelength)+";"   
+    	note/K/NOCR SMR_Error, oldNote
     endif
 
     // Find the first SASentries without '_SMR'
@@ -1280,6 +1338,21 @@ static Function ReadMyNXcanSASUSAXS(filenameInput)
     	IN4_LoadWaveAndAppendAttribs(groupID, "DSM_Error", "Idev")
     	IN4_LoadWaveAndAppendAttribs(groupID, "DSM_dQ", "Qdev")
 	    HDF5CloseGroup groupID
+    	WAVE DSM_Int
+    	string oldnoted = note(DSM_Int)
+    	oldnoted+="energy="+num2str(energy)+";"   
+    	oldnoted+="wavelength="+num2str(wavelength)+";"   
+    	note/K/NOCR DSM_Int, oldnoted
+    	WAVE DSM_Qvec
+    	oldnoted = note(DSM_Qvec)
+    	oldnoted+="energy="+num2str(energy)+";"   
+    	oldnoted+="wavelength="+num2str(wavelength)+";"   
+    	note/K/NOCR DSM_Qvec, oldnoted
+    	WAVE DSM_Error
+    	oldnoted = note(DSM_Error)
+    	oldnoted+="energy="+num2str(energy)+";"   
+    	oldnoted+="wavelength="+num2str(wavelength)+";"   
+    	note/K/NOCR DSM_Error, oldnoted
     	
     endif
     HDF5CloseFile fileID

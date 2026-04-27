@@ -248,6 +248,13 @@ Function IN4_SetInitialValues()
 	if(USAXSMinQMinFindRatio<1.01)
 		USAXSMinQMinFindRatio = 1.3
 	endif	
+	NVAR IncludeSAXS= root:Packages:Indra4:IncludeSAXS
+	NVAR IncludeWAXS= root:Packages:Indra4:IncludeWAXS
+	//NVAR IncludeImage= root:Packages:Indra4:
+	NVAR IncludeUSAXS= root:Packages:Indra4:IncludeUSAXS
+	IncludeSAXS=1
+	IncludeWAXS=1
+	IncludeUSAXS =1
 end
 
 //************************************************************************************************************

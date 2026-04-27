@@ -13,7 +13,8 @@ constant CurrentIrenaVersionNumber = 2.75		//change version of Boot Irena1 model
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************
 
-//2.75	Beta - cleanup of tthe code and some serious under the hood changes. 
+//2.75 	Cleanup as noted for beta, AI merged three Import tools into one. Cleanup continues. 
+//2.75	Beta - cleanup of the code and some serious under the hood changes. 
 //2.74 	Minor release to capture minor changes related to new USAXS 12IDE instrument, bug release. 
 //2.74		Beta release, minor changes, bug fixes. 
 //2.73   Added Ellipsoid Cylinder support
@@ -393,7 +394,11 @@ Function IR2C_CheckWIndowsProcVersions(WindowProcNames)
 		ProcedureName = StringFromList(1, StringFromList(i, WindowProcNames, ";")  , "=")
 		DoWIndow $(PanelName)
 		if(V_Flag)
-			Execute (ProcedureName+"()") 
+			if(strlen(functionInfo(ProcedureName))>3)
+				Execute (ProcedureName+"()") 
+			else
+				DoWIndow/K/Z $(PanelName)
+			endif
 		endif
 	endfor
 	 
@@ -2763,7 +2768,7 @@ Function IR1_KillGraphsAndPanels()
 	ListOfWindows += "IR3D_DataMergePanel;IRB1_PDDFInterfacePanel;IR3J_SimpleFitsPanel;IRB1_DataManipulationPanel;IR3J_LinDataDisplay;"
 	ListOfWindows += "IR3L_MultiSamplePlotPanel;IR3J_LogLogDataDisplay;IR3L_MultiSamplePlotPanel;IRB1_ImportBioSAXSASCIIData;"
 	ListOfWindows += "IR2E_MultipleDataSelectionPnl;IR3W_WAXSPanel;IRB1_ConcSeriesPanel;IR3S_SysSpecModelsPanel;IR3S_LogLogDataDisplay;"
-	ListOfWindows += "IR3DM_DataManIIIPanel;IR3DM_LogLogDataDisplay;"
+	ListOfWindows += "IR3DM_DataManIIIPanel;IR3DM_LogLogDataDisplay;IR3I_ImportData;"
 	
 	
 	variable i

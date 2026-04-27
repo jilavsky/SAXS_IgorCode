@@ -1,6 +1,6 @@
 #pragma rtGlobals=3 // Use strict wave reference mode and runtime bounds checking
 #pragma IgorVersion=9.04 //requires Igor version 8.03 or higher
-#pragma version=2.74
+#pragma version=2.75
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//2.75  remove IR1I_Import data, repalce with IR3I_IMportData
 //2.74  Sync with main version number
 //2.27  Added Ellipsoid Cylinder tool
 //2.26	  October2021 release
@@ -57,7 +58,7 @@
 #include "IR1_EvaluationGraph", version >= 2.11
 #include "IR1_FormFactors", version >= 2.30
 #include "IR1_Fractals", version >= 2.13
-#include "IR1_ImportData", version >= 2.43
+//#include "IR1_ImportData", version >= 2.43
 #include "IR1_Main", version >= 2.74
 #include "IR1_PlottingToolI", version >= 2.34
 #include "IR1_PlottingToolI2", version >= 2.24
@@ -90,7 +91,7 @@
 #include "IR3_SimpleFits", version >= 1.17
 #include "IR3_WAXSDiffraction", version >= 1.17
 //new tools 2026-02
-#include "IR3_ImportData", version >= 1.00
+#include "IR3_ImportData", version >= 1.01
 
 
 //bio tools

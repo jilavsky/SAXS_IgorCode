@@ -1,6 +1,6 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version = 1.19
+#pragma version = 1.20
 #include "HDF5Gateway"
 
 
@@ -11,6 +11,7 @@ constant kPrintNexusrecord = 0			//set to 1 to print flood of Nexus parameters i
 
 // support of Nexus files
 
+//1.20 fixes for IR3I_ImportData changes. 
 //1.19 removed most print statements which are noisy and slow down imports. 
 //1.18 intended for use with IP9 and higher, remove hdf include call. 
 //1.17 check that if we are reading Nexus file with multiple samples there that we will use sasEntry or sasTile as names. 
@@ -2862,6 +2863,9 @@ static Function/T NEXUS_ReadOne1DcanSASDataset(PathToDataSet, DataTitleStr, sour
 	//create place for data
 	string tmpFlrdName=IN2G_CreateUserName(IN2G_RemoveExtraQuote(DataTitleStr,1,1),28, 0, 11)
 	NewDataFolder/O/S $(tmpFlrdName)
+	// Save parent folder info: used when FoundSasEntries>1 to nest subfolders correctly in ImportedSAS.
+	string parentFolderPath      = GetDataFolder(1)	// full path for cleanup
+	string parentFolderShortName = GetDataFolder(0)	// short name for nested move destination
 	//need to add one more layer and in this case, it is the last item in the path
 	string NewDataName = stringFromList(ItemsInList(PathToDataSet,":")-1,PathToDataSet, ":")
 	NewDataName = IN2G_RemoveExtraQuote(NewDataName,1,1)
@@ -2884,6 +2888,11 @@ static Function/T NEXUS_ReadOne1DcanSASDataset(PathToDataSet, DataTitleStr, sour
 		NewDataFolder/O/S $(tmpFldrName)
 	else
 		NewDataName = IN2G_RemoveExtraQuote(DataTitleStr,1,1)
+	endif
+	// When FoundSasEntries>1 the current folder is a subfolder; nest it under the parent in ImportedSAS.
+	string moveParent = ""
+	if (FoundSasEntries > 1) 
+	  		moveParent= parentFolderShortName 
 	endif
 	//print "Created new data folder : "+ GetDataFOlder(1)
 	string NewFolderFullPath=GetDataFolder(1)
@@ -2957,13 +2966,16 @@ static Function/T NEXUS_ReadOne1DcanSASDataset(PathToDataSet, DataTitleStr, sour
 	string PathToExportedName = PathToDataSet+"IGORWaveNote:Wname"
 	variable isUSAXS=0
 	Wave/Z/T OldExportedWavename=$(PathToExportedName)
+	NVAR UseIndra2Names = root:Packages:ImportData:UseIndra2Names
 	if(WaveExists(OldExportedWavename))
 		if(StringMatch(OldExportedWavename[0], "*DSM_Int" ) || StringMatch(OldExportedWavename[0], "*SMR_Int" ))
 			isUSAXS=1
 		endif
+	elseif(UseIndra2Names)
+		isUSAXS=1
 	endif
 	
-	//basic waves shoudl be located.
+	//basic waves should be located.
 	//copy them to new place using qrs naming system:
 	//new name is q_NewDataName  etc...
 	//string newNameShort=(DataTitleStr+NewDataName)
@@ -2980,15 +2992,15 @@ static Function/T NEXUS_ReadOne1DcanSASDataset(PathToDataSet, DataTitleStr, sour
 				Duplicate/Free/R=[ii][] IdevWv, IdevWvIwv
 				Redimension/N=(dimsize(IdevWvIwv,1)) IdevWvIwv
 				NEXUS_WriteOutNexusData(NewDataName, NewFolderFullPath, sourceFileName, PathToDataSet, InclNX_SasIns,InclNX_SASSam,InclNX_SASNote, tmpIwv, Qwv, IdevWv=IdevWvIwv, QdevWv=QdevWv, indx=ii )
-				NEXUS_MoveQRSperQrange(NewDataName, NewFolderFullPath)	
+				NEXUS_MoveQRSperQrange(NewDataName, NewFolderFullPath, moveParent)
 			elseif(WaveExists(IdevWv))
 				Duplicate/Free/R=[ii][] IdevWv, IdevWvIwv
 				Redimension/N=(dimsize(IdevWvIwv,1)) IdevWvIwv
 				NEXUS_WriteOutNexusData(NewDataName, NewFolderFullPath, sourceFileName, PathToDataSet, InclNX_SasIns,InclNX_SASSam,InclNX_SASNote, tmpIwv, Qwv, IdevWv=IdevWvIwv, indx=ii)
-				NEXUS_MoveQRSperQrange(NewDataName, NewFolderFullPath)	
+				NEXUS_MoveQRSperQrange(NewDataName, NewFolderFullPath, moveParent)
 			else
 				NEXUS_WriteOutNexusData(NewDataName, NewFolderFullPath, sourceFileName, PathToDataSet, InclNX_SasIns,InclNX_SASSam,InclNX_SASNote, tmpIwv, Qwv, indx=ii )
-				NEXUS_MoveQRSperQrange(NewDataName, NewFolderFullPath)	
+				NEXUS_MoveQRSperQrange(NewDataName, NewFolderFullPath, moveParent)
 			endif
 			SetDataFolder dataDFR		// and restore
 		endfor	
@@ -3001,21 +3013,29 @@ static Function/T NEXUS_ReadOne1DcanSASDataset(PathToDataSet, DataTitleStr, sour
 			if(isUSAXS)
 				NEXUS_ConvertQRStoIrena(NewDataName, NewFolderFullPath, isSlitSmeared)	
 			else
-				NEXUS_MoveQRSperQrange(NewDataName, NewFolderFullPath)	
+				NEXUS_MoveQRSperQrange(NewDataName, NewFolderFullPath, moveParent)
 			endif
 		elseif(WaveExists(IdevWv))
 			NEXUS_WriteOutNexusData(NewDataName, NewFolderFullPath, sourceFileName, PathToDataSet, InclNX_SasIns,InclNX_SASSam,InclNX_SASNote, Iwv, Qwv, IdevWv=IdevWv )
 			if(isUSAXS)
 				NEXUS_ConvertQRStoIrena(NewDataName, NewFolderFullPath, isSlitSmeared)		
 			else
-				NEXUS_MoveQRSperQrange(NewDataName, NewFolderFullPath)	
+				NEXUS_MoveQRSperQrange(NewDataName, NewFolderFullPath, moveParent)
 			endif
 		else
 			NEXUS_WriteOutNexusData(NewDataName, NewFolderFullPath, sourceFileName, PathToDataSet, InclNX_SasIns,InclNX_SASSam,InclNX_SASNote, Iwv, Qwv )
-			NEXUS_MoveQRSperQrange(NewDataName, NewFolderFullPath)	
+			NEXUS_MoveQRSperQrange(NewDataName, NewFolderFullPath, moveParent)
 		endif
 	endif
 
+
+	// When FoundSasEntries>1, each call to this function moves one subfolder out of the parent
+	// into root:ImportedSAS:parentFldrName:. The parent folder in ImportedData is now empty;
+	// kill it so it is not left as an empty shell. It will be re-created by the next iteration
+	// (NewDataFolder/O/S above) when there are more SASdata groups to process.
+	if(FoundSasEntries > 1)
+		KillDataFolder/Z $(parentFolderPath)
+	endif
 
 	SetDataFolder saveDFR		// and restore
 	return NewDataName
@@ -3024,23 +3044,39 @@ end
 ////**********************************************************************************************
 ////**********************************************************************************************
 
-static Function  NEXUS_MoveQRSperQrange(NewDataName, NewFolderFullPath)
-	string NewDataName, NewFolderFullPath
-	
+static Function  NEXUS_MoveQRSperQrange(NewDataName, NewFolderFullPath, parentFldrName)
+	string NewDataName, NewFolderFullPath, parentFldrName
+	// parentFldrName: when non-empty, create a named parent in the destination so the subfolder
+	// lands at root:ImportedSAS:parentFldrName:NewDataName instead of root:ImportedSAS:NewDataName.
+	// Pass "" to get the original flat behaviour (FoundSasEntries == 1 case).
+
 	DFREF saveDFR = GetDataFolderDFR()		// Save
 	//this should be QRS data in ImportedData Folder
 	SetDataFolder NewFolderFullPath
-	string AllWaves= IN2G_CreateListOfItemsInFolder(GetDataFolder(1),2)	
+	string AllWaves= IN2G_CreateListOfItemsInFolder(GetDataFolder(1),2)
 	string QName = RemoveEnding(GrepList(AllWaves, "^q_"),";")
 	Wave QWv=$(QName)
-	if(WaveMin(QWv)>0.5)		//Qmin<0.5 means this must be WAXS
+	string destRoot
+	NVAR SAXSData = root:Packages:ImportData:SAXSData
+	NVAR WAXSData = root:Packages:ImportData:WAXSData
+	if(WaveMin(QWv)>0.5)		//Qmin>0.5 means this must be WAXS
 		NewDataFOlder/O root:ImportedWAXS
-		MoveDataFolder /O=1 $(NewFolderFullPath), root:ImportedWAXS:
-		print "Moved QRS data from "+NewFolderFullPath+" to root:ImportedWAXS:"+NewDataName
+		destRoot = "root:ImportedWAXS"
+		SAXSData = 0
+		WAXSData = 1
 	else
 		NewDataFOlder/O root:ImportedSAS
-		MoveDataFolder /O=1 $(NewFolderFullPath), root:ImportedSAS:
-		print "Moved QRS data from "+NewFolderFullPath+" to root:ImportedSAS:"+NewDataName
+		destRoot = "root:ImportedSAS"
+		SAXSData = 1
+		WAXSData = 0	
+	endif
+	if(strlen(parentFldrName) > 0)
+		NewDataFolder/O $(destRoot+":"+PossiblyQuoteName(parentFldrName))
+		MoveDataFolder /O=1 $(NewFolderFullPath), $(destRoot+":"+PossiblyQuoteName(parentFldrName)+":")
+		print "Moved QRS data from "+NewFolderFullPath+" to "+destRoot+":"+parentFldrName+":"+NewDataName
+	else
+		MoveDataFolder /O=1 $(NewFolderFullPath), $(destRoot+":")
+		print "Moved QRS data from "+NewFolderFullPath+" to "+destRoot+":"+NewDataName
 	endif
 	
 	
