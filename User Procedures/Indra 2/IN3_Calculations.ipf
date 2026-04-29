@@ -148,7 +148,7 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 			IN3_GetDiodeTransmission(0)
 			IN3_RecalculateData(1)
 			TabControl DataTabs , value= 0, win=USAXSDataReduction
-			NI3_TabPanelControl("",0)
+			IN3_TabPanelControl("",0)
 			IN3_DesmearData()
 			DoWIndow/F USAXSDataReduction
 			ResumeUpdate
@@ -193,7 +193,7 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 		IN3_RecalculateData(1)
 		IN3_DesmearData()
 		TabControl DataTabs , value= 0, win=USAXSDataReduction
-		NI3_TabPanelControl("",0)
+		IN3_TabPanelControl("",0)
 		DoWIndow/F USAXSDataReduction
 		if (cmpstr(ctrlName,"SelectNextSampleAndProcess")==0)
 			IN3_SaveData()	
@@ -898,11 +898,11 @@ Function IN3_MainPanelCheckBox(ctrlName,checked) : CheckBoxControl
 	NVAR CalculateWeight=root:Packages:Indra3:CalculateWeight
 	NVAR CalculateThickness=root:Packages:Indra3:CalculateThickness
 	if (cmpstr("CalculateThickness",ctrlName)==0)
-		NI3_TabPanelControl("",0)
+		IN3_TabPanelControl("",0)
 		IN3_CalcSampleWeightOrThickness()
 	endif
 	if (cmpstr("CalculateWeight",ctrlName)==0)
-		NI3_TabPanelControl("",0)
+		IN3_TabPanelControl("",0)
 		IN3_CalcSampleWeightOrThickness()
 	endif
 
@@ -916,7 +916,7 @@ Function IN3_MainPanelCheckBox(ctrlName,checked) : CheckBoxControl
 				CalibrateToWeight = 0
 			endif
 		endif
-		NI3_TabPanelControl("",0)
+		IN3_TabPanelControl("",0)
 	endif
 	
 	if(stringmatch("CalibrateToWeight",ctrlName) )
@@ -929,7 +929,7 @@ Function IN3_MainPanelCheckBox(ctrlName,checked) : CheckBoxControl
 				CalibrateToVolume = 1
 			endif
 		endif
-		NI3_TabPanelControl("",0)
+		IN3_TabPanelControl("",0)
 	endif
 
 	if(stringmatch("CalibrateArbitrary",ctrlName) )
@@ -942,14 +942,14 @@ Function IN3_MainPanelCheckBox(ctrlName,checked) : CheckBoxControl
 				CalibrateToVolume = 1
 			endif
 		endif
-		NI3_TabPanelControl("",0)
+		IN3_TabPanelControl("",0)
 	endif
 	
 	if (cmpstr("UseMSAXSCorrection",ctrlName)==0)
 		IF(checked)
 			 UsePinTransmission=0
 		endif
-		NI3_TabPanelControl("",4)
+		IN3_TabPanelControl("",4)
 		IN3_RecalculateData(3)
 		IN3_DesmearData()
 	endif
@@ -957,8 +957,8 @@ Function IN3_MainPanelCheckBox(ctrlName,checked) : CheckBoxControl
 		IF(checked)
 			 UseMSAXSCorrection=0
 		endif
-		NI3_TabPanelControl("",0)
-		IN3_RecalculateData(3)
+		IN3_TabPanelControl("",0)
+		IN3_TabPanelControl("",3)
 		IN3_DesmearData()
 	endif
 	if (cmpstr("RemoveDropouts",ctrlName)==0)
@@ -971,7 +971,7 @@ Function IN3_MainPanelCheckBox(ctrlName,checked) : CheckBoxControl
 	endif
 	
 	if (cmpstr("DesmearData",ctrlName)==0)
-		NI3_TabPanelControl("",5)
+		IN3_TabPanelControl("",5)
 		IN3_RecalculateData(1)
 		IN3_DesmearData()
 	endif
@@ -1876,7 +1876,7 @@ End
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
-Function NI3_TabPanelControl(name,tab)
+Function IN3_TabPanelControl(name,tab)
 	String name
 	Variable tab
 

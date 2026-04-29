@@ -188,7 +188,7 @@ Function IN3_MainPanelNew()
 	CheckBox SmartSelectBlank, variable=root:Packages:Indra3:SmartSelectBlank, help={"Check, if you want to try to select Blank smartly (using order numbers)"}
 
 	//Data Tabs definition
-	TabControl DataTabs, pos={4, 340}, size={410, 320}, proc=NI3_TabPanelControl
+	TabControl DataTabs, pos={4, 340}, size={410, 320}, proc=IN3_TabPanelControl
 	TabControl DataTabs, tabLabel(0)="Sample", tabLabel(1)="Diode"
 	TabControl DataTabs, tabLabel(2)="Geometry", tabLabel(3)="Calibration", tabLabel(4)="MSAXS", tabLabel(5)="Desmear", value=0
 	//tab 0 Sample controls
@@ -425,7 +425,7 @@ Function IN3_MainPanelNew()
 	PopupMenu BackgroundFnct, mode=1, value="PowerLaw w flat;flat;power law;Porod;", popvalue=BackgroundFunction
 
 	setDataFolder OldDf
-	NI3_TabPanelControl("", 0)
+	IN3_TabPanelControl("", 0)
 
 	NVAR disableMe = root:Packages:Indra3:RemoveDropouts
 	CheckBox RemoveDropouts, pos={20, 665}, size={150, 14}, title="Remove Flyscan dropouts?", proc=IN3_MainPanelCheckBox

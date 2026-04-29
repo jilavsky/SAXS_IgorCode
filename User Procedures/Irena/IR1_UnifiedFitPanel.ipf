@@ -1,7 +1,7 @@
 #pragma rtGlobals=3 // Use strict wave reference mode and runtime bounds checking
 #pragma version=2.28
 
-Constant IR1AversionNumber = 2.28
+Constant IR1AversionNumber = 2.29
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
@@ -9,6 +9,7 @@ Constant IR1AversionNumber = 2.28
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//2.29 fix minor GUI but with no limits in Unified fit fitting...
 //2.28 remove k factor and use (per Greg): if P is more than 3 then k=1 and if P is less than 3 k = 1.06
 //		change Link B to inot "Estimate B from" because it is wild guess.
 //		removed "In this mass fractal from lower level" option as this is lot more complciated...
@@ -2303,7 +2304,9 @@ Function IR1A_InputPanelCheckboxProc(ctrlName, checked) : CheckBoxControl
 
 	if(cmpstr(ctrlName, "UseNoLimits") == 0)
 		//here we control the data structure checkbox
-		IR1A_TabPanelControl("Checkbox", 0)
+		//need to find out current displaye tab from the panel, panel USAXSDataReduction, tabs: DataTabs
+		ControlInfo /W=IR1A_ControlPanel DistTabs
+		IR1A_TabPanelControl("Checkbox", V_value)
 	elseif(cmpstr(ctrlName, "Level1MassFractal") == 0)
 		//here we control the data structure checkbox
 		NVAR Level1MassFractal = root:Packages:Irena_UnifFit:Level1MassFractal
