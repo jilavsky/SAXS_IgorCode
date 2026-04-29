@@ -12,7 +12,16 @@ It runs on Wavemetrics Igor Pro version 8.04 and higher.
 Modification history:
 _____________________________________________________________________________________
 
+2.05 1/6/2026
+
+Add new tool to import data from automatically reduced data using Matilda. For details see this link.
+Fix Scattering strength modeling tool which models if samples scattering will be observable in measurements.  
+Bug fixes, major internal code cleanup
+2.02 6/27/2025
+
+Major revision to support 12IDE USAXS/SAXS/WAXS instrument. Required for all users with data after January 2025.
 2.00 7/16/2023
+
 Maintenance, fixes for USAXS step scanning (Fall 2022 - Spring 2023, 20ID). 
 
 1.99 10/10/2021

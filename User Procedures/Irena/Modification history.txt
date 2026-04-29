@@ -9,6 +9,14 @@ It runs on Wavemetrics Igor Pro version 8.04 and higher.
 
 Modification history:
 ********************************************
+
+2.75 1/6/2026
+Significant internal code cleanup. No user facing changes.
+Bug fixes
+
+2.74  6/27/2025
+Minor bug release, nothing major. 
+
 2.72 7/16/2023
 Fixed Anomalous Contrast calculator which failed to run in old experiments due to lookup tables incompatibility. Needed proper reinitialization. 
 Fixed Guinier-Porod fitting where fitting small Q range was failing. 
@@ -103,7 +111,7 @@ Promoted required minimum version to 7.05 due to bug in Igor prior of this versi
 Panels now restore prior size and position. This is set when you drag lower-right corner to scale them up. Data stored on the user computer and size is limited to 50% width and 90% height of current screen size. Hold down any modifier key and size will be reset to original default state. 
 Merge two data sets - added option of sorting qrs names by xyz_string, needed for Nika. Added SMR and DSM data to USAXS.
 Modeling - added calculation of Rg for size distributions. Requested by Dale Schaefer. 
-Unified fit - changes to two phase systems requested by Dale. Added ability to handle multiple levels at the same time where possibleÉ 
+Unified fit - changes to two phase systems requested by Dale. Added ability to handle multiple levels at the same time where possibleï¿½ 
 Data merging tool - modified Optimize code to prevent failures, hopefully improved fitting capabilities. 
 WAXS - Added option to import free AMS diffraction data (http://rruff.geo.arizona.edu/AMS/result.php) - this database contains d, hkl, intensities for minerals. 
 All packages - internal changes and improvements resulting in less and cleaner code. 
@@ -134,14 +142,14 @@ Silently fixed bug in ScreenResolution check for Windows computers, which printe
 Updated manual
 Modified Nexus support, added new library to use it. 
 Moved some common functions to IN2G_GeneralProcedures
-Fix to QRS names which failed on names containing string ÒspecÓ in the name. 
+Fix to QRS names which failed on names containing string ï¿½specï¿½ in the name. 
 Added checkbox for slit smeared/desmeared USAXS data in Merge 2 data sets tool. 
-Small-angle diffraction - when user selects ÒoversampleÓ the parameters for peaks (d, q, width) are now calculated at 5x higher resolution than measured Q points. 
+Small-angle diffraction - when user selects ï¿½oversampleï¿½ the parameters for peaks (d, q, width) are now calculated at 5x higher resolution than measured Q points. 
 Desmearing - propagate dQ and if does not exist, create dQ based on points distance. 
 Pair Distance Distribution - changed Matrix solving method since the one used was deprecated by Igor 7. 
 Plotting tool - added ability to add top 2pi/Q linked axis. Using Transform axis package from Igor Pro. Added few new styles and modified existing settings. Fixed Gizmo for Igor 7 which stopped working due to Gizmo function syntax changes. 
 WAXS - removed LaueGo capability and added import of PDF-4+ xml files. Fixed help file. 
-Modeling II - if you hold any modifier key (shift/ctrl/opt/altÉ) while clicking on parameters change arrows, the step for next step is set 10x smaller. This enables making small changes to the values. Just keep holding the modifier key, first step is still large, subsequent are small. 
+Modeling II - if you hold any modifier key (shift/ctrl/opt/altï¿½) while clicking on parameters change arrows, the step for next step is set 10x smaller. This enables making small changes to the values. Just keep holding the modifier key, first step is still large, subsequent are small. 
 Size distribution - fixed Regularization for Igor 7, modified trust ranges which were using wrong logic. Now large size is estimated 2pi/Q while small size pi/Q.  
 Fixed slow down caused by debugging messages function
 
@@ -177,21 +185,21 @@ Data Manipulation I - enabled Q shifts and added MergeData2, which optimizes sca
  
 
 2.57 3/8/2015
-Fractals model - added Qc as transitional Q value when surface fractal changes to PorodÕs slope at high Q. Set to 0 if not needed. 
+Fractals model - added Qc as transitional Q value when surface fractal changes to Porodï¿½s slope at high Q. Set to 0 if not needed. 
 Modeling II - added MassFractal and SurfaceFractal - models are copied form Fractals tool, so users need to read manual for that tool 
 Modeling II - added controls which enable to select, which additional graphs are displayed. Choices are SizeDistribution, Residuals, and IQ^4 vs Q. These two graphs are now matching colors to the main Graph colors for easier navigation when multiple data sets are used. 
 Modeling II - minor bug fixes: Catch when slit length is set incorrectly (too small or too large), set properly Dv and Dv limits for Fractals and some other ones. 
 Modeling II - Scale data by now actually works. It was never programmed to work (it is cumbersome to make it operational, so it may have some unforeseen consequences). Tread carefully!
 Scripting tool - added hook function after data set is loaded, before it is fitted, for user to do something which needs to be done. Check the code. For now only for Modeling II.   
 Scripting tool - fixed preservation of user choices on errors and intensity scaling for Modeling II and Size Distribution. 
-Scattering contrast calculator -  Modified description for exp(-Mu*T) as Transmission. Users seem to be missing the pointÉ 
-Size distribution - added colored bar at the top of the graph - Òtrust indicatorÓ - which indicates, which sizes can be trusted and which are suspect/totally uncertain. Based on 2*pi/Q values used for fitting. 
+Scattering contrast calculator -  Modified description for exp(-Mu*T) as Transmission. Users seem to be missing the pointï¿½ 
+Size distribution - added colored bar at the top of the graph - ï¿½trust indicatorï¿½ - which indicates, which sizes can be trusted and which are suspect/totally uncertain. Based on 2*pi/Q values used for fitting. 
 Data manipulation II - added divide by data set (requested feature). 
 
 
 2.56 8/20/2014
 ASCII export - fixed bug which prevented Multiple QRS data export.  
-Plotting tool I - made ÒZoom and Set limitsÓ marquee item dynamic, so it shows only on the right graph. 
+Plotting tool I - made ï¿½Zoom and Set limitsï¿½ marquee item dynamic, so it shows only on the right graph. 
 Plotting tool I - added Int*Q^3 as plotting data option
 Unified fit - fixed bug in GUI of level 2 not showing Link B to G/Rg/P
 Unified fit - minor change of GUI - changed Surface to Volume description to: pi*B/Q which is also S/(V*fi(1-fi)). 
@@ -207,7 +215,7 @@ FitPowerLawWithCursors and FitLineWithCursors now follow user selected font size
 2.54 1/5/2014
 All files - extended copyright to 2005 - 2014
 Installer - version 1.23 will overwrite stale links to hdf5 xops, created on OSX when updating Igor from 6.2x to 6.3x etc. 
-ASCII Import - added ÒRemoveFromNameStringÓ which allows users to remove part of name which is of no interest. 
+ASCII Import - added ï¿½RemoveFromNameStringï¿½ which allows users to remove part of name which is of no interest. 
 ASCII Import - import data as double precision to avoid some users running out of precision when their intensity has unusual values due to calibration. also made minor change in Modeling II to address this. 
 ASCII Import - modified log-q points rebinning to keep minimum q step (matching difference between the first two points after trimming). This should be more robust. 
 Control Procedures - minor fix to handle weird transient bug and some case when the controls were failing. Fixes for handling of Irena results and QIS data type.
@@ -215,7 +223,7 @@ Plotting tool - modified to have infinite number of colors and symbols (well, re
 Plotting tool - minor fix for Change Graph details panel visibility
 Data manipulation I - added controls for Units of the input data (just show) and output data (select).  
 Data manipulation II - added Units controls. 
-Analytical models - added Rg cutoff parameter to Unified level. Requested featureÉ
+Analytical models - added Rg cutoff parameter to Unified level. Requested featureï¿½
 Analytical models - added linking of Rg cutoff to Corr. Lengths and added ability to display separate data for the tabs. Minor improvements. 
 Analytical models - added residuals plot per user request. 
 Modeling II - fixed export of Schulz-Zimm distribution parameters to notebook and waves, which seemed to unfinished. 
@@ -232,15 +240,15 @@ Reflectivity - fixed annoying bug which caused sliders to be drawn over one of t
 2.53 11/23/2013
 Force users to use Igor 6.3x
 Controls procedures - enabled use of following characters in names: (){}%#^$?|&@ 
-É note: this means the Fldr and Wv match fields are now Òstring matchÓ matching part of the name, cannot use Grep commands with control characters, as I have to escape all of the control characters as they are now considered part of the nameÉ  
-Form factors/Modeling II - added Parallelepiped using NIST XOP. If the XOP is installed, this shape is available and works. FastÉ Need to convert more Form factors to XOP, it is fast!
+ï¿½ note: this means the Fldr and Wv match fields are now ï¿½string matchï¿½ matching part of the name, cannot use Grep commands with control characters, as I have to escape all of the control characters as they are now considered part of the nameï¿½  
+Form factors/Modeling II - added Parallelepiped using NIST XOP. If the XOP is installed, this shape is available and works. Fastï¿½ Need to convert more Form factors to XOP, it is fast!
 Data manipulation 1 - fix log rebinning when Q data starts with points where Q<=0. This used to fail. 
 Data manipulation I - added simple method of merging data (for different q ranges). Sets background for Data1 and scales Data2 (and optimizes the two values to get best fit). 
 Data manipulation I - preserve cursor positions through adding data.
 Controls procedures - modified handling Irena results waves, mainly the Y wave. Faster. 
 Controls procedures - modified to avoids showing folders, which are disallowed by use of wave name grep string. This was showing parent folder before, which caused some confusion. 
 Controls procedures - fixed case when it was unable to get to folders with same names in different parent folders. 
-Control procedures - QRS data handling fixes (againÉ) Minor location of controls fixes. 
+Control procedures - QRS data handling fixes (againï¿½) Minor location of controls fixes. 
 Control procedures - Fixed time delay when the Folder match string was retained for 5 seconds due to cashing. 
 Scripting tool - modified to set cursors to first and last point of data, if they are not set by user ahead of fitting. 
 All panels - Added check to detect, that experiment moved from other platform (Win/OSX) and if detected, reset fonts to default of the new platform. 
@@ -262,7 +270,7 @@ Plotting Tool I - fixed minor bug caused by Igor Pro behavior change which cause
 Export ASCII data - modified GUI to be more obvious (user problems) and changed Listbox mode to enable range of data selection for multiple data sets. 
 Import ASCII - Removed error when file being imported has less columns than found originally, if these are not being imported and used.
 Import ASCII - enabled use of following characters in names: (){}%#^$?|&@ 
-Data Manipulation I - disabled Q shift, letÕs see if anyone complains. 
+Data Manipulation I - disabled Q shift, letï¿½s see if anyone complains. 
 Reflectivity - minor change in behavior, when starting or recovering parameters, it will set all sliders to the middle of their range. 
 Reflectivity - attempted to fix when some users have data with NaNs and attempt to fit to them, which fails. Cleaning up NaNs from data before fit now. 
  
@@ -287,7 +295,7 @@ ASCII Data Import - Remove Int<0 is now Remove Int<=0. Note that on import the a
 All panels - changed orientation of the two arrows at the top right to move content of the window. Wrong logic used originally, now same as regular PC/Mac GUI system.  
 Size distribution - reduced significantly the number of available form factors. Complex FFs make no sense in this tool. 
 Scripting tool - modified calling routines to avoid getting stale state of controls. This should prevent "error, report it" message. 
-All tools - changed all cases when I used "Save in É" in buttons to "Store in É" to prevent confusion of users that this actually saves Igor experiment. 
+All tools - changed all cases when I used "Save in ï¿½" in buttons to "Store in ï¿½" to prevent confusion of users that this actually saves Igor experiment. 
 Main procedures - Changed all web addresses to new xray.aps.anl.gov, changed Manual and Manuscript download to http protocol, ftp was failing.  
 Guinier-Porod fit - finally local fits to smeared data seems to be under control. Updated manual with real description of the tool and elevated the version to 1.0, first release version. Need to finish some nice outputs, but I think it is finally useable even on smeared data. 
 Reflectivity - added option to calculate model at 5x denser Q points. Check and fixed some GUI problems. Need to update manual, it is obsolete, but do nto have time now. 
@@ -310,7 +318,7 @@ Added panel version control for: Fractals tool, Small-angle diffraction, ASCII e
 Data Manipulation II - modified to add ability to create errors (=uncertainties), scale and rebin to number of points. Modified GUI to separate processing, errors generation and post processing (scaling/rebinning). 
 Plotting tool II - changed how error bars are displayed and enables SMR data error bars.
 Plotting tool I - added ability to use calibration unit (arbitrary, cm2/cm3 or cm2/g) from the USAXS data. Added checkbox to avoid units checking.  
-ASCII Import data - added controls to select import units for Intensity [options: Arbitrary, VolumeÉcm2/cm3, WeightÉcm2/g] 
+ASCII Import data - added controls to select import units for Intensity [options: Arbitrary, Volumeï¿½cm2/cm3, Weightï¿½cm2/g] 
 
 
 2.50 1/4/2013
@@ -411,26 +419,26 @@ Scripting tool: Fixed minor bug in controls of Size distribution and added contr
 2.43 1/10/2012
 Modeling II major upgrade. Now there are 10 "populations", each can be either size distribution, Unified level, or Diffraction peak. ALso added Normalized residual display and made some more fixes and changes. Added "Add tags to graph" option and cleaned up the notebook output so it is more useful. 
 Started upgrading tools to be aware which version of Irena they were run with and force user to restart tool when panel opened with old version is detected. Should prevent some of the crashes when incompatible up[grade is done. 
-Changed how the loader works. Now the loader will look for files relatively related to the loader files itself. This should enable in the future having multiple Irena packages installed and be able to switch among them. I am not sure why would any user need to have it, but I need it myself for debugging purposesÉ 
+Changed how the loader works. Now the loader will look for files relatively related to the loader files itself. This should enable in the future having multiple Irena packages installed and be able to switch among them. I am not sure why would any user need to have it, but I need it myself for debugging purposesï¿½ 
 Unified fit - modified so parameters change their limits as they are changed from GUI. 
 
 
 2.42 11/15/2011
-Small Angle Diffraction tool É Fixed the PercusYevickSQFQ to use F(Q)^2
+Small Angle Diffraction tool ï¿½ Fixed the PercusYevickSQFQ to use F(Q)^2
 FormFactorPackage - per user request I have modified what can be to make as many FF as possible multithreaded. Now it uses multiple cores, when possible. Also I have modified some integration waves in the code to reduce the cpu time. 
 
 2.41 7/29/2011
-Modeling II É Changed Unified fit included to use Contrast (both G and B are multiplied by the contrast),. This should enable to use with data sets with different contrasts for the Unified data, such as combined neutron/X-ray data or Anomalous X-ray data. Fixed display bug which prevented Rg, B, and P to appear in some cases. 
-Modeling II É Added Core-Shell-Shell form factor per request. 
-Modeling II É Fixed display issue when Contrast was displayed even for CoreShell models for which it is NOT used. NOTE: as it is, these models cannot be used with multiple data sets with different contrasts since the form factor parameters contain the contrasts.  
-Modeling II É Fixed bug in export of data when Model data are used. Now user is asked to for name for new (will be created) or existing folder so the data are safely saved in way user can figure out. 
-Modeling II É Fixed logbook record when it recorded wrong type of distribution type in the logbook. User reported bug.
-Modeling II É Fixed storing of the results, now storing the individual distribution results (as waves) works. This has not been apparently ever finished.
-Modeling II É Changed limits on Structure factor parameter 1 - previously if it was smaller than 10 or so, it was reset to 50, it was getting into my way and so the limit is changed to 0.5.  
+Modeling II ï¿½ Changed Unified fit included to use Contrast (both G and B are multiplied by the contrast),. This should enable to use with data sets with different contrasts for the Unified data, such as combined neutron/X-ray data or Anomalous X-ray data. Fixed display bug which prevented Rg, B, and P to appear in some cases. 
+Modeling II ï¿½ Added Core-Shell-Shell form factor per request. 
+Modeling II ï¿½ Fixed display issue when Contrast was displayed even for CoreShell models for which it is NOT used. NOTE: as it is, these models cannot be used with multiple data sets with different contrasts since the form factor parameters contain the contrasts.  
+Modeling II ï¿½ Fixed bug in export of data when Model data are used. Now user is asked to for name for new (will be created) or existing folder so the data are safely saved in way user can figure out. 
+Modeling II ï¿½ Fixed logbook record when it recorded wrong type of distribution type in the logbook. User reported bug.
+Modeling II ï¿½ Fixed storing of the results, now storing the individual distribution results (as waves) works. This has not been apparently ever finished.
+Modeling II ï¿½ Changed limits on Structure factor parameter 1 - previously if it was smaller than 10 or so, it was reset to 50, it was getting into my way and so the limit is changed to 0.5.  
 All - fixed inability to select any folder/data when no checkbox was selected. 
 Small-angle diffraction - added LorenzSquared peak, Skewed Normal, Percus-Yevick S(q), and Percus-Yevick S(q)*F(q) as another peak shapes. 
 Small-angle diffraction - fixed few bugs: FitRg had typo and so Rg was never fitted. 
-PDDF É added display of Gamma function (gamma = pddf/(4*pi*r^2)) per requestÉ Is anyone actually using this? 
+PDDF ï¿½ added display of Gamma function (gamma = pddf/(4*pi*r^2)) per requestï¿½ Is anyone actually using this? 
 Bug fix - fixed bug which caused problems compiling when Genetic optimization xop was not present. 
 
 2.40 June 16, 2011
@@ -452,7 +460,7 @@ Import ASCII tool will now prevent users from cresting n% errors on import with 
 Modified Data Manipulation II to be able to subtract one wave from many waves.  
 Fixes for Igor 6.20.
 Added Ciccariello-Benedetti tool to Analytical models. I still have questions on calibration of slit smeared data (difference between infinite and finite slit length), but it may work now. Manual chapter added. 
-Added preconfigured special plots into Ploting tool I. (Porod, Guinier, Kratky,É). Will need to add fits also. May be next release...
+Added preconfigured special plots into Ploting tool I. (Porod, Guinier, Kratky,ï¿½). Will need to add fits also. May be next release...
 
 2.37 2/23/2010
 Data manipulation - enable errors of 0 values to let users use wrong errors from some instruments. NOTE: other tools will fail, if errors are 0!

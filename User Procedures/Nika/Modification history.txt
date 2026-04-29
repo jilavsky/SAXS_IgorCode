@@ -10,6 +10,14 @@ It runs on Wavemetrics Igor Pro version 8.04 and higher.
 
 Modification history:
 ********************************************
+
+1.87 1/6/2026
+Significant internal changes in code, no major user facing changes.
+Bug fixes
+
+1.86 6/25/2025
+Bug fix release, nothing major.
+
 1.85 7/16/2023
 Fix for IP9.02
 minor improvements. 
@@ -85,7 +93,7 @@ Added Update Message to CheckForUpdate code. If present, it will display a messa
 Made Igor 7 compatible ONLY. Thanks to GeneralProcedures changes will not work on Igor 6. 
 Version check - using Github now. 
 Added buttons with links to web based manual pages to each tool.
-Reduced number of characters allowed in name to 18, Ellipse was adding too many characters and was creating errorsÉ 
+Reduced number of characters allowed in name to 18, Ellipse was adding too many characters and was creating errorsï¿½ 
 
 1.76, 5/1/2017
 Version 1.75 updated with on line manuals, Igor 6 release only. 
@@ -116,16 +124,16 @@ Modified USAXS/SAXS/WAXS configurator for Pilatus 200kw and use of empty backgro
 1.72 2/1/2016
 Igor 7 compatibility release
 Modified FITS loader to handle data from different sources, as long as we are looking for sufficiently large 2D image (either in primary or any extension). 
-Added small function in Menu which enables to set all paths for Nika to the same place (sample, empty, Calibration, maskÉ). Can be changed later, but helps to setup easily. 
+Added small function in Menu which enables to set all paths for Nika to the same place (sample, empty, Calibration, maskï¿½). Can be changed later, but helps to setup easily. 
 Modified check for updates macro to use http once, if it fails use ftp, if that fails also then bail out and give error. Should be much easier for users who are on systems without net connectivity. 
 Added time stamp to the Live processing print statements for user orientation. 
 
 
 1.70 10/30/2015
 Verified to work on Igor 7 beta 1
-Added Configuration manager - allows users to have multiple fully configured ÒversionsÓ of Nika inside one experiment and switch between them for convenience. Great if you have two different sample-to-detector distances etc. 
+Added Configuration manager - allows users to have multiple fully configured ï¿½versionsï¿½ of Nika inside one experiment and switch between them for convenience. Great if you have two different sample-to-detector distances etc. 
 File import - modified Pilatus img file loader - sample which contained 4096 bytes header was provided by user, so I added code which checks for the header and if present, skips the header and stores the header in the wave note. Some minor changes to logic of all Pilatus file types, hopefully I did not break anything. 
-9ID/15ID normalization SAXS - minor fix. WAXS, well, it is still settling down, not sure what the right numbers areÉ 
+9ID/15ID normalization SAXS - minor fix. WAXS, well, it is still settling down, not sure what the right numbers areï¿½ 
 
 1.69 never released
 Major addition - created new calculation of the Q resolution using integration width of pixel (that used to be there), beam size and pixel size. Added beam size controls. If set to 0, ignored. 
@@ -148,7 +156,7 @@ Mask tool - fix bug which caused the Listbox to be always empty.
 
 
 1.66 8/20/2014
-Main panel - moved dezinering controls from tab4 to tab2, some users thought that dezinering was available only for Empty/dark and not for sample imagesÉ 
+Main panel - moved dezinering controls from tab4 to tab2, some users thought that dezinering was available only for Empty/dark and not for sample imagesï¿½ 
 Hook functions - added new: ImportedImageHookFunction which can be used to modify any image after load, AfterDisplayImageHook, which modifies detector images displayed by Nika. Fixed PilatusHookFunction. 
 Removed some print statements to reduce amount of information in history area. 
 Added Cbf file format importer (it has compression, so it was bit more work). 
@@ -171,7 +179,7 @@ Installer - version 1.23 will handle stale links to hdf5 xops.
 Beam center utils - added many more lines for Lab6, Si, and Ce standards. Modified to disable fitting both SDD and Wavelength, very unlikely this would be possible with most data
 
 1.63 11/23/2013
-Added calibration of Intensity popup and ÒUnits=ArbitraryÓ or Òcm2/cm3Ó or Òcm2/gÓ for Intensity to help Irena to handle calibration of data. 
+Added calibration of Intensity popup and ï¿½Units=Arbitraryï¿½ or ï¿½cm2/cm3ï¿½ or ï¿½cm2/gï¿½ for Intensity to help Irena to handle calibration of data. 
 Attempted to add cbf Pilatus file format, but example data provided by user were incorrect, so code has been disabled again. 
 
 1.62 7/23/2013
@@ -230,7 +238,7 @@ Fixed new (2/2012) Nexus file format reading.
 1.54 1/10/2012
 Nika now checks what version of Nika tools was used to create Main panel and Beam center panel and if old version is found, it forces users to restart the tool. This should prevent nasty crashes when I update the tools and user opens old Igor experiments.
 Added option to generate intensity as function of distance from center in mm. Requested feature apparently useful for calibrations. 
-Changed how the loader works. Now the loader will look for files relatively related tho the loader files itself. This should enable in the future having multiple Irena packages installed and be able to switch among them. I am not sure why would any user need to have it, but I need it myself for debugging purposesÉ 
+Changed how the loader works. Now the loader will look for files relatively related tho the loader files itself. This should enable in the future having multiple Irena packages installed and be able to switch among them. I am not sure why would any user need to have it, but I need it myself for debugging purposesï¿½ 
 Modified (Josh actually) BSL file loader to add ability to load different bit order from BSL files. WHy these guys cannot pick one bit order is really big question. 
 
 
@@ -245,9 +253,9 @@ Changed behavior. If line profile has all q values negative since it is in direc
 Changed behavior - DANGEROUS - I tried to catch errors in loading files and skip failed loads. 
 Added Pilatus 300k and Pilatus 300k-w per request. 
 Added capability to create movies out of either 2D images (RAW/Corrected) or 1D lineouts. Includes ability to use user hook function in case it is needed (advanced users).
-Added ability to sort file names in the main listbox by three different methods, including trying to find index number (must be É_001.tif,i.e., preceded by _ and followed by .)
+Added ability to sort file names in the main listbox by three different methods, including trying to find index number (must be ï¿½_001.tif,i.e., preceded by _ and followed by .)
 Some changes to Prev graph logic, so it can now use angles from -180 to 540 degrees to enable creating contiguous image which spans 0. Did I mess up something else??? 
-Pixel sensitivity É added ability to use mask if present in the system. Also now when Pix2D file is saved, it is also left in the code for use. 
+Pixel sensitivity ï¿½ added ability to use mask if present in the system. Also now when Pix2D file is saved, it is also left in the code for use. 
 Mask tool - fixed bug which prevented loading existing hdf file mask into the tool. 
 
 1.50 June 17, 2011
@@ -256,9 +264,9 @@ GISAXS part. Modified saving data so when ImagelIneProfile produces points with 
 GISAXS. When saving data along line on detector, they will not be sorted according to value of Q. Is that right thing to do???
 
 1.49 May 31, 2011
-Fixed and updated Tilts math. New math and ability to display the diffraction lines deformed by tilting. Seems to work fine and verifies as much as I can check it, but needs more testing. Need input from usersÉ Redesigned a bit the GUI for Beam center and Geometry corrections for easier operationsÉ 
+Fixed and updated Tilts math. New math and ability to display the diffraction lines deformed by tilting. Seems to work fine and verifies as much as I can check it, but needs more testing. Need input from usersï¿½ Redesigned a bit the GUI for Beam center and Geometry corrections for easier operationsï¿½ 
 Changed saving Mask - now saved in simple hdf5 file with both image data and mask recreation macro. Therefore you can now edit existing mask by using the mask tool. It is still possible to use old tif masks (_mask.tif) or new masks (_mask.hdf). Old masks cannot be edited. 
-Started working on hdf5 loader. This will take some time an detesting and is likely going to require some GYI similar to binary loader since the structure of hdf can be really complexÉ 
+Started working on hdf5 loader. This will take some time an detesting and is likely going to require some GYI similar to binary loader since the structure of hdf can be really complexï¿½ 
 Fixed bug in Pilatus loader which caused error when loading if type was not reselected. 
 Added Nexus file loader to support USAXS Pilatus pinhole SAXS. It uses HDf5, but has simpler defined structure so it is easier to read and flatten for Nika. All metadata are stored in the wavenotes. 
 BeamCenterUtils  : Fixed bug when BeamCenterUtils gave NaN image when loaded with "Log Image?" checked. Logical error in loading which was reversed by checking and unchecking that checkbox. 
@@ -269,7 +277,7 @@ Removed CursorMovedHook function to avoid conflicts, converted to Window hook fu
 
 1.48 November 18, 2010
 Added ANL license according to other APS products.
-Added FITS as input file format. NOTE: this is special version of the FITS file format (which generic definition is in: R. J. Hanisch et al.: FITS standard, Astronomy & Astrophysics 376, 359Ð380 (2001)). It is likely  going to fail on other files, but it is not clear how this is used in SAXS community at this time. 
+Added FITS as input file format. NOTE: this is special version of the FITS file format (which generic definition is in: R. J. Hanisch et al.: FITS standard, Astronomy & Astrophysics 376, 359ï¿½380 (2001)). It is likely  going to fail on other files, but it is not clear how this is used in SAXS community at this time. 
 Fix for Igor 6.21 new version of TransformAxis1.2.  
 
 1.47 September 1, 2010
@@ -279,7 +287,7 @@ Fixes for Igor 6.20 problems.
 
 1.44 3/3/2010
 fixed bug in adding Q scale to images which caused issues when used with InvertImages checkbox. 
-Added match strings for same and empty/dark names so one can navigate better through large datasets. Use with * if needed. É not yet in the manual. 
+Added match strings for same and empty/dark names so one can navigate better through large datasets. Use with * if needed. ï¿½ not yet in the manual. 
 
 1.43  2/23/2010
 Added ability to display CCD image (just the main image) with Qx/Qy or Qy/QZ axes instead of pixels. It is bit cumbersome but should be transparent to users. 
