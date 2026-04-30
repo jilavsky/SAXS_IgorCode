@@ -1,7 +1,7 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use modern global access method.
-#pragma version=2.75
-Constant NI1AversionNumber = 2.74
+#pragma version=2.76
+Constant NI1AversionNumber = 2.76
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
@@ -9,6 +9,7 @@ Constant NI1AversionNumber = 2.74
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//2.76 change _9IDC to _usx for all USAXS code
 //2.75 add to Mask ability to mask off higher than something pixels. Needed for EIgers. 
 //2.74 fix the fix from 2.73 where the CFFactor calculation had a bug. ugh... (line 2438)
 //2.73 add ability to flip/rotate image after load to let users tweak image orientation.
@@ -833,7 +834,7 @@ Function NI1A_Convert2DTo1D()
 		endif
 	endif
 	//here we will create special waves in case we are using 9IDC SAXS...
-	NI1_9IDCCreateSMRSAXSdata(tempListOfProcessedSectors)
+	NI1_usxCreateSMRSAXSdata(tempListOfProcessedSectors)
 
 	setDataFolder OldDf
 End
@@ -1196,7 +1197,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 		WAVE/Z LineProfileQz                = root:Packages:Convert2Dto1D:LineProfileQz
 		WAVE/Z LineProfileZValsPix          = root:Packages:Convert2Dto1D:LineProfileZValsPix
 		WAVE/Z LineProfileDspacingWidth     = root:Packages:Convert2Dto1D:LineProfileDspacingWidth
-		WAVE/Z LineProfileDistacneInmmWidth = root:Packages:Convert2Dto1D:LineProfileDistacneInmmWidth
+		WAVE/Z LineProfileDistanceInmmWidth = root:Packages:Convert2Dto1D:LineProfileDistanceInmmWidth
 		WAVE/Z LineProfileTwoThetaWidth     = root:Packages:Convert2Dto1D:LineProfileTwoThetaWidth
 		WAVE/Z LineProfiledQvalues          = root:Packages:Convert2Dto1D:LineProfiledQvalues
 		if(!WaveExists(LineProfileQx) || numpnts(LineProfileQx) != numpnts(LineProfileQy))
@@ -1210,7 +1211,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 		WAVE/Z TwoThetaWidth     = root:Packages:Convert2Dto1D:TwoThetaWidth
 		WAVE/Z DspacingWidth     = root:Packages:Convert2Dto1D:DspacingWidth
 		WAVE/Z DistanceInmm      = root:Packages:Convert2Dto1D:DistanceInmm
-		WAVE/Z DistacneInmmWidth = root:Packages:Convert2Dto1D:DistacneInmmWidth
+		WAVE/Z DistanceInmmWidth = root:Packages:Convert2Dto1D:DistanceInmmWidth
 		WAVE/Z Intensity         = root:Packages:Convert2Dto1D:Intensity
 		WAVE/Z Error             = root:Packages:Convert2Dto1D:Error
 		WAVE/Z Qsmearing         = root:Packages:Convert2Dto1D:Qsmearing
@@ -1475,7 +1476,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 		endif
 		KillWaves/Z tempWv1234
 	else //sectors profiles goes here. *****************
-		NI1A_RemoveInfNaNsFrom10Waves(Intensity, Qvector, Error, Qsmearing, TwoTheta, TwoThetaWidth, Dspacing, DspacingWidth, DistanceInmm, DistacneInmmWidth)
+		NI1A_RemoveInfNaNsFrom10Waves(Intensity, Qvector, Error, Qsmearing, TwoTheta, TwoThetaWidth, Dspacing, DspacingWidth, DistanceInmm, DistanceInmmWidth)
 		if(StoreDataInIgor)
 			NewDataFolder/O/S $(DataFolderNameL)
 			if(DataFolderExists(LongUseName) && !OverwriteDataIfExists)
@@ -1511,7 +1512,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 				Duplicate/O DistanceInmm, $("m_" + UseName)
 				note $("m_" + UseName), "Units=mm;"
 				Duplicate/O Error, $("s_" + UseName)
-				Duplicate/O DistacneInmmWidth, $("w_" + UseName)
+				Duplicate/O DistanceInmmWidth, $("w_" + UseName)
 			else
 				abort "Error - no output type selected"
 			endif
@@ -1631,7 +1632,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 			elseif(UseDspacing)
 				Save/A/G/M="\r\n"/P=Convert2Dto1DOutputPath Dspacing, Intensity, Error, DspacingWidth as (UseName + ".dat")
 			elseif(UseDistanceFromCenter)
-				Save/A/G/M="\r\n"/P=Convert2Dto1DOutputPath DistanceInmm, Intensity, Error, DistacneInmmWidth as (UseName + ".dat")
+				Save/A/G/M="\r\n"/P=Convert2Dto1DOutputPath DistanceInmm, Intensity, Error, DistanceInmmWidth as (UseName + ".dat")
 			else
 				abort "Error - no output type selected"
 			endif
@@ -1647,7 +1648,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 		elseif(UseDspacing)
 			NEXUS_WriteNx1DCanSASNika(UserSampleName, Intensity, Error, Dspacing, DspacingWidth, CurOrient, OldNote)
 		elseif(UseDistanceFromCenter)
-			NEXUS_WriteNx1DCanSASNika(UserSampleName, Intensity, Error, DistanceInmm, DistacneInmmWidth, CurOrient, OldNote)
+			NEXUS_WriteNx1DCanSASNika(UserSampleName, Intensity, Error, DistanceInmm, DistanceInmmWidth, CurOrient, OldNote)
 		endif
 		if(DisplayDataAfterProcessing)
 			if(UseQvector)

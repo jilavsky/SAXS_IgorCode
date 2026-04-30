@@ -501,7 +501,7 @@ Function IN4_initProcessSWAXSdata(fileName, isSAXS)
 	endif
 	//now start Nika
 	NI1_APSConfigureNika()
-	DoWIndow/hide=1 NI1_9IDCConfigPanel
+	DoWIndow/hide=1 NI1_usxConfigPanel
 	NVAR SAXSGenSmearedPinData = root:Packages:Convert2Dto1D:SAXSGenSmearedPinData
 	SAXSGenSmearedPinData = 0
 	NVAR SAXSDeleteTempPinData = root:Packages:Convert2Dto1D:SAXSDeleteTempPinData
@@ -543,7 +543,7 @@ Function IN4_initProcessSWAXSdata(fileName, isSAXS)
 	
 
 	variable i
-	//now we need to do what is normally done in NI1_9IDCButtonProc when user selects the "Set default settings button...
+	//now we need to do what is normally done in NI1_usxButtonProc when user selects the "Set default settings button...
 	//first kill the Nexus loader file in case we are using same name for SAXS and WAXS...
 	KillDataFolder/Z root:Packages:NexusImportTMP:
 	//now we should be able to read this in without challenges?
@@ -556,7 +556,7 @@ Function IN4_initProcessSWAXSdata(fileName, isSAXS)
 
 	fileName = IN4_FixDataFileName(fileName, SWAXSPathStr, "hdf")
 
-	selectedFile = NI1_9IDCSetDefaultConfiguration(PathStr=SWAXSPathStr, FileNameStr=fileName)
+	selectedFile = NI1_usxSetDefaultConfiguration(PathStr=SWAXSPathStr, FileNameStr=fileName)
 
 	//reset these parameters as they may have been changed from above called routines. 
 	if(isSAXS)
@@ -593,7 +593,7 @@ Function IN4_initProcessSWAXSdata(fileName, isSAXS)
 		endif
 	endfor
 	NI1A_DisplayOneDataSet()
-	NI1_9IDCConfigNexus()
+	NI1_usxConfigNexus()
 	
 
 	
@@ -610,8 +610,8 @@ Function IN4_initProcessSWAXSdata(fileName, isSAXS)
 
 	//and create mask automatically...
 	if(isSAXS)
-		NI1_9IDCCreateSAXSPixMask()
-		TitleBox LoadBlankWarning, win=NI1_9IDCConfigPanel, title="\\Zr150>>>> Load Empty/Blank and set Slit legth; ... done   <<<<"
+		NI1_usxCreateSAXSPixMask()
+		TitleBox LoadBlankWarning, win=NI1_usxConfigPanel, title="\\Zr150>>>> Load Empty/Blank and set Slit legth; ... done   <<<<"
 		//force user to find Slit length oif needed
 		variable DesmearData           = 0
 		NVAR   SAXSGenSmearedPinData = root:Packages:Convert2Dto1D:SAXSGenSmearedPinData
@@ -620,21 +620,21 @@ Function IN4_initProcessSWAXSdata(fileName, isSAXS)
 		SAXSGenSmearedPinData = 0 //user is generating desmeared data, likely does not need smeared SAXS data
 		//				else
 		//					NVAR USAXSSlitLength = root:Packages:Convert2Dto1D:USAXSSlitLength
-		//					USAXSSlitLength = NI1_9IDCFIndSlitLength()
-		//					NI1_9IDCSetLineWIdth()
+		//					USAXSSlitLength = NI1_usxFIndSlitLength()
+		//					NI1_usxSetLineWIdth()
 		//				endif
 		//			else
 		//				NVAR USAXSSlitLength = root:Packages:Convert2Dto1D:USAXSSlitLength
-		//				USAXSSlitLength = NI1_9IDCFIndSlitLength()
-		//				NI1_9IDCSetLineWIdth()
+		//				USAXSSlitLength = NI1_usxFIndSlitLength()
+		//				NI1_usxSetLineWIdth()
 		//			endif
 	elseif(!isSAXS)		//WAXS
 		NVAR UseLineProfile = root:Packages:Convert2Dto1D:UseLineProfile //uncheck just in case leftover from SAXS
 		UseLineProfile = 0
 		NVAR WAXSSubtractBlank = root:Packages:Convert2Dto1D:WAXSSubtractBlank
-		NI1_9IDCWAXSBlankSUbtraction(WAXSSubtractBlank)
-		NI1_9IDCCreateWAXSPixMask()
-		TitleBox LoadBlankWarning, win=NI1_9IDCConfigPanel, title="\\Zr150>>>> Load Empty/Blank; ... done   <<<<"
+		NI1_usxWAXSBlankSUbtraction(WAXSSubtractBlank)
+		NI1_usxCreateWAXSPixMask()
+		TitleBox LoadBlankWarning, win=NI1_usxConfigPanel, title="\\Zr150>>>> Load Empty/Blank; ... done   <<<<"
 	endif
 	//end of mask creation
 	//set user to Empty?Dasrk tab

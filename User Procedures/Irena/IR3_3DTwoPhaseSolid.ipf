@@ -1,6 +1,6 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use modern global access method and strict wave access.
-#pragma version=1.02
+#pragma version=1.03
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
@@ -8,6 +8,8 @@
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//1.03 Bug fixes: slider range for large grids, Nyquist Q limit (factor-of-2 error), NaN mask used Q as point index, missing /Z wave guard in Display1D.
+//1.03 Optimization: replace per-point Optimize/Integrate1D in g(r) and TheorAutoCorrFnct with precomputed LUT + interp (~100x speedup for Step 3); precompute Q²·I(Q) for DACF step.
 //1.02 fix Intensity plotting scaling.
 //1.01 modified GSR generation to use MatrixOp and time to calculate (50x50x50) went from 30+ sec to 4.
 //1.00 first version, added code for Two Phase solid based on
@@ -440,14 +442,17 @@ Function IR3T_Calc1DSASData()
 	NVAR     HighQEnd      = root:Packages:TwoPhaseSolidModel:HighQExtrapolationEnd
 	//print HighQEnd
 	//print 2*pi/BoxResolution
-	variable MaxMeaningfulQmax = min(2 * pi / VoxelSize, HighQStart)
+	variable MaxMeaningfulQmax = min(pi / VoxelSize, HighQStart)
 	variable MinMeaningfulQmin = 2 * pi / BoxSideSize
 	//TheoreticalIntensityDACF
 	variable MaxMeaningfulPnt = BinarySearch(AutoCorQWv, MaxMeaningfulQmax)
 	if(MaxMeaningfulPnt > 0)
 		AutoCorIntensity[MaxMeaningfulPnt, numpnts(AutoCorIntensity) - 1] = NaN
 	endif
-	AutoCorIntensity[0, MinMeaningfulQmin] = NaN
+	variable MinMeaningfulPnt = BinarySearch(AutoCorQWv, MinMeaningfulQmin)
+	if(MinMeaningfulPnt > 0)
+		AutoCorIntensity[0, MinMeaningfulPnt] = NaN
+	endif
 	IN2G_RemoveNaNsFrom2Waves(AutoCorIntensity, AutoCorQWv)
 
 	WAVE     OriginalIntensity = root:Packages:TwoPhaseSolidModel:OriginalIntensity
@@ -1185,7 +1190,9 @@ Function IR3T_GenerateTwoPhaseSolid()
 	//  >>>>   Step 1 from Quintanilla  <<<<<<
 	//********************************************
 	print "Calculating Gamma_alfa(r)" //calculate formula 1	, convert Intensity to Debye Autocorreclation Function DACF
-	multithread PhaseAutocorFnct = IR3T_ConvertIntToDACF(PhaseAutocorFnctRadii[p], Intensity, Qvec) //this is really Debye Autocorreclation Function
+	Duplicate/FREE Intensity, WeightedInt
+	WeightedInt = Intensity[p] * Qvec[p]^2    // precompute Q^2*I(Q) once rather than repeating inside each threadsafe call
+	multithread PhaseAutocorFnct = IR3T_ConvertIntToDACF(PhaseAutocorFnctRadii[p], WeightedInt, Qvec) //this is really Debye Autocorreclation Function
 	print "Gamma_alfa(r) calculation time was " + num2str((ticks - startTicks) / 60) + " sec"
 	//renormalize
 	variable MaxValue = wavemax(PhaseAutocorFnct)
@@ -1242,8 +1249,19 @@ Function IR3T_GenerateTwoPhaseSolid()
 	Duplicate/O PhaseAutocorFnct, XiFunctionQuint
 	//XiFunctionQuint = PhaseAutocorFnct - GammAlfa0^2		//not needed, this is proper Xi function QUintanilla assumes
 	variable alfaValueQ = -1 * alfaValue
-	//print "Calculating g(r) using code in Quantanilla paper"
-	multithread AutoCorfnctGr = IR3T_ProperCalcgr(alfaValueQ, XiFunctionQuint[p]) //this is correct way of calculating gr
+	// Build lookup table F(g) = Integrate1D(IR3T_JanCalcOfRInt, 0, g) / (2pi).
+	// alfa is squared in the integrand so sign does not matter; one LUT serves both inverse and forward lookups.
+	// Replaces per-point Optimize/Integrate1D (~100x speedup for this step).
+	print "Building g(r) lookup table"
+	make/FREE/N=1 alfaLutWv
+	alfaLutWv[0] = alfaValue
+	Make/FREE/N=3000 gGrid_LUT, Fg_LUT
+	gGrid_LUT = -0.9 + p * (0.9999 - (-0.9)) / (3000 - 1)
+	multithread Fg_LUT = IR3T_EvalFg(gGrid_LUT[p], alfaLutWv)
+	variable Fg_LUT_min = Fg_LUT[0]
+	variable Fg_LUT_max = Fg_LUT[numpnts(Fg_LUT) - 1]
+	// Inverse lookup: for each XiFunctionQuint value, find g — clamp to LUT range (same as Optimize bounds).
+	AutoCorfnctGr = interp(min(Fg_LUT_max, max(Fg_LUT_min, XiFunctionQuint[p])), Fg_LUT, gGrid_LUT)
 	//AutoCorfnctGr[0]=1																							//first point is 1 by definition and code gets NaN
 	variable AutoCorfnctGr0 = AutoCorfnctGr[0]
 	AutoCorfnctGr /= AutoCorfnctGr0
@@ -1314,7 +1332,11 @@ Function IR3T_GenerateTwoPhaseSolid()
 	//these are steps 7 and 8
 	//evaluate TheoreticalAutocorrelationFnct as function of R from gR
 	Duplicate/O Radii, RadiiTheorAutoCorrFnct, TheorAutoCorrFnct
-	TheorAutoCorrFnct = IR3T_CalcTheorAutocorF(alfaValue, AutoCorfnctGr[p])
+	// Forward lookup: given g (AutoCorfnctGr), compute F(g) using the same LUT built above.
+	// Replaces single-threaded per-point Integrate1D. Clamp to LUT range for out-of-bounds g values.
+	variable gGrid_LUT_min = gGrid_LUT[0]
+	variable gGrid_LUT_max = gGrid_LUT[numpnts(gGrid_LUT) - 1]
+	TheorAutoCorrFnct = interp(min(gGrid_LUT_max, max(gGrid_LUT_min, AutoCorfnctGr[p])), gGrid_LUT, Fg_LUT)
 	//some calibration fixes...
 	WAVE TwoPhaseSolidMatrix = root:Packages:TwoPhaseSolidModel:TwoPhaseSolidMatrix
 	wavestats/Q TwoPhaseSolidMatrix
@@ -1727,13 +1749,13 @@ End
 ///******************************************************************************************************************************************
 ///******************************************************************************************************************************************
 
-threadsafe Function IR3T_ConvertIntToDACF(Radius, Intensity, Qvec) //formula 1 in SAXSMorph/Quntanilla, DACF is Debye Autocorelation Function
+threadsafe Function IR3T_ConvertIntToDACF(Radius, WeightedInt, Qvec) //formula 1 in SAXSMorph/Quntanilla, DACF is Debye Autocorelation Function
 	variable Radius
-	WAVE Intensity, Qvec
-	Make/FREE/N=(numpnts(Intensity))/D QRWave
-	QRWave = sinc(Qvec[p] * Radius) //(sin(Qvec[p]*Radius))/(Qvec[p]*Radius)
-	matrixOP/FREE tempWave = powR(Qvec, 2) * Intensity * QRWave
-	return 4 * pi * areaXY(Qvec, TempWave)
+	WAVE WeightedInt, Qvec    // WeightedInt = Q^2 * Intensity, precomputed once by caller
+	Make/FREE/N=(numpnts(Qvec))/D sincWave
+	sincWave = sinc(Qvec[p] * Radius) //(sin(Qvec[p]*Radius))/(Qvec[p]*Radius)
+	matrixOP/FREE tempWave = WeightedInt * sincWave
+	return 4 * pi * areaXY(Qvec, tempWave)
 End
 ///*************************************************************************************************************************************
 ///*************************************************************************************************************************************
@@ -1821,6 +1843,16 @@ threadsafe Function IR3T_JanCalcOfRInt(pWave, xvalue) //this is integral inside 
 	part1 = exp(-1 * alfa * alfa / (1 + xvalue))
 	part2 = sqrt(1 - xvalue * xvalue)
 	return part1 / part2
+End
+///*************************************************************************************************************************************
+///*************************************************************************************************************************************
+// Helper: evaluates F(g) = Integrate1D(IR3T_JanCalcOfRInt, 0, g) / (2pi) for a single g value.
+// Used to build the lookup table that replaces per-point Optimize/Integrate1D in IR3T_GenerateTwoPhaseSolid.
+// alfa^2 is squared in the integrand, so the same LUT applies for both +alfa and -alfa.
+threadsafe Function IR3T_EvalFg(gVal, alfaWv)
+	variable gVal
+	WAVE     alfaWv
+	return Integrate1D(IR3T_JanCalcOfRInt, 0, gVal, 1, 100, alfaWv) / (2 * pi)
 End
 ///*************************************************************************************************************************************
 ///*************************************************************************************************************************************
@@ -2113,8 +2145,13 @@ static Function IR3T_Display1DTempData()
 		setDataFOlder OldDf
 		return 0
 	endif
-	WAVE DebyePhCorrFnctRadii = root:Packages:TwoPhaseSolidModel:DebyePhCorrRadii
-	WAVE DebyePhCorrFnct      = root:Packages:TwoPhaseSolidModel:DebyePhCorrFnct
+	WAVE/Z DebyePhCorrFnctRadii = root:Packages:TwoPhaseSolidModel:DebyePhCorrRadii
+	WAVE/Z DebyePhCorrFnct      = root:Packages:TwoPhaseSolidModel:DebyePhCorrFnct
+	if(!WaveExists(DebyePhCorrFnct) || !WaveExists(DebyePhCorrFnctRadii))
+		DoAlert 0, "Run 'Calculate 1D' first to create the Debye phase correlation function data."
+		setDataFOlder OldDf
+		return 0
+	endif
 	DoWIndow DebyePhCorrFnctGraph
 	if(V_Flag)
 		DoWIndow/F DebyePhCorrFnctGraph
@@ -2177,7 +2214,7 @@ Function IR3T_TwoPhaseSolid2DImage() : Graph
 		SetAxis/A/R left
 		ControlBar 50
 		Slider LayerSlider, pos={8.00, 3.00}, size={200.00, 47.00}, proc=IR3T_2DImageSliderProc
-		Slider LayerSlider, limits={0, 100, 1}, value=0, vert=0
+		Slider LayerSlider, limits={0, DimSize(TwoPhaseSolidMatrix, 2) - 1, 1}, value=0, vert=0
 	endif
 End
 //******************************************************************************************************************************************************

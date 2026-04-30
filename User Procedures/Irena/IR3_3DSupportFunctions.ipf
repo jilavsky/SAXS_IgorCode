@@ -292,11 +292,11 @@ Function IR3T_CalcAutoCorelIntensity(My3DWv, Qmin, Qmax, NumQSteps)
 	DebyePhCorrFnct = DebyePhCorrFnct * tempweight
 	//	//print (ticks-starttik)/60
 	//create output waves with resulting 1D Intensit
-	make/O/N=(NumQSteps)/D AutoCorIntensity, AutoCorQWv
+	make/O/N=(NumQSteps)/D AutoCorIntensityWv, AutoCorQWv
 	AutoCorQWv = Qmin + p * (Qmax - Qmin) / (NumQSteps - 1)
 	IN2G_ConvertTologspacing(AutoCorQWv, 0) //creates log-q spacing in the PDFQWv
-	//multithread AutoCorIntensity =  IR3T_CalcIntensityPDF(PDFQWv[p],PDFWave,RadiiWave)								//this is PDF from IR3T_CreatePDFIntensity
-	multithread AutoCorIntensity = abs(IR3T_ConvertDACFToInt(DebyePhCorrRadii, DebyePhCorrFnct, AutoCorQWv)) //and this is equivalent using Autocoreelation function
+	//multithread AutoCorIntensityWv =  IR3T_CalcIntensityPDF(PDFQWv[p],PDFWave,RadiiWave)								//this is PDF from IR3T_CreatePDFIntensity
+	multithread AutoCorIntensityWv = abs(IR3T_ConvertDACFToInt(DebyePhCorrRadii, DebyePhCorrFnct, AutoCorQWv)) //and this is equivalent using Autocoreelation function
 
 	Print "5/5 Calculated 1D intensity using Autocorrelation of 3D object."
 
@@ -578,11 +578,16 @@ End
 
 Function IR3T_RemoveTailZeroes(PDFwave, RadiusWave)
 	WAVE PDFwave, RadiusWave
-	variable i = numpnts(PDFwave) - 1
+	// Walk backwards to find last non-near-zero value; keep one trailing zero after it.
+	// Single DeletePoints call avoids the original off-by-one and potential out-of-bounds.
+	variable lastGood = numpnts(PDFwave) - 1
 	do
-		DeletePoints i, 1, PDFwave, RadiusWave
-		i -= 1
-	while(PDFwave[i - 1] < 1e-15)
+		lastGood -= 1
+	while(lastGood > 0 && PDFwave[lastGood] < 1e-15)
+	variable deleteCount = numpnts(PDFwave) - (lastGood + 2)
+	if(deleteCount > 0)
+		DeletePoints lastGood + 2, deleteCount, PDFwave, RadiusWave
+	endif
 End
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
@@ -667,14 +672,14 @@ End
 //**************************************************************************************************************************************************************
 Function IR3T_FindNearestPrimeSize(ValueIn)
 	variable ValueIn
-
-	make/N=12/FREE PrimeList, PrimeList3
+	// Returns next power-of-2 strictly above ValueIn, for efficient FFT sizing.
+	// List covers 2^0..2^19 (up to 524288); clamps to max if ValueIn exceeds range.
+	make/N=20/FREE PrimeList   // 2^p for p=0..19, already monotonically sorted
 	PrimeList = 2^p
-	//PrimeList3 = 3^p
-	//Concatenate /O/NP {PrimeList2,PrimeList3}, PrimeList
-	sort PrimeList, PrimeList
-	variable index
-	index = BinarySearch(PrimeList, ValueIn)
+	variable index = BinarySearch(PrimeList, ValueIn)
+	if(index + 1 >= numpnts(PrimeList))
+		return PrimeList[numpnts(PrimeList) - 1]
+	endif
 	return PrimeList[index + 1]
 End
 //**************************************************************************************************************************************************************

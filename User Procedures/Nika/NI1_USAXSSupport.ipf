@@ -1,5 +1,5 @@
 #pragma rtGlobals=3 // Use modern global access method.
-#pragma version=1.56
+#pragma version=1.57
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//1.57 change _9IDC to _usx for all USAXS code
 //1.56 tweaks for Eiger WAXS detector
 //1.55 added 12IDE USAXS/SAXS/WAXS works also. started 11-2024
 //1.54 added 20ID beamline to support, USAXS/SAXS/WAXS in 2022-2023
@@ -131,13 +132,13 @@ Function NI1_APSConfigureNika()
 		NI1A_UpdateDataListBox()
 	endif
 	//create config panel
-	DoWindow NI1_9IDCConfigPanel
+	DoWindow NI1_usxConfigPanel
 	if(V_Flag)
-		DoWindow/F NI1_9IDCConfigPanel
+		DoWindow/F NI1_usxConfigPanel
 	else
-		NI1_9IDCConfigPanelFunction()
+		NI1_usxConfigPanelFunction()
 	endif
-	AutopositionWindow/M=0 NI1_9IDCConfigPanel
+	AutopositionWindow/M=0 NI1_usxConfigPanel
 
 	setDataFolder OldDFf
 End
@@ -145,10 +146,10 @@ End
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
-Function NI1_9IDCConfigPanelFunction() : Panel
+Function NI1_usxConfigPanelFunction() : Panel
 	PauseUpdate // building window...
-	NewPanel/K=1/W=(470, 87, 1016, 439)/N=NI1_9IDCConfigPanel
-	DoWindow/C NI1_9IDCConfigPanel
+	NewPanel/K=1/W=(470, 87, 1016, 439)/N=NI1_usxConfigPanel
+	DoWindow/C NI1_usxConfigPanel
 	SetDrawLayer UserBack
 	SetDrawEnv fsize=18, fstyle=3, textrgb=(16385, 16388, 65535)
 	DrawText 10, 25, "USAXS SAXS/WAXS Nexus file configuration"
@@ -157,52 +158,52 @@ Function NI1_9IDCConfigPanelFunction() : Panel
 	DrawText 10, 60, "WAXS : default Eiger/Pilatus in USAXS/SAXS/WAXS"
 	DrawText 10, 77, "WAXS-Dex : ! RARE ! Dexela 2315 in USAXS/SAXS/WAXS"
 	///DrawText 10, 77, "SAXS     : large SAXS camera in the 15ID-D (only SAXS, no USAXS)"
-	Checkbox SAXSSelection, pos={10, 90}, size={100, 20}, variable=root:Packages:Convert2Dto1D:USAXSSAXSselector, proc=NI1_9IDCCheckProc
+	Checkbox SAXSSelection, pos={10, 90}, size={100, 20}, variable=root:Packages:Convert2Dto1D:USAXSSAXSselector, proc=NI1_usxCheckProc
 	Checkbox SAXSSelection, title="SAXS", help={"Use to configure Nika for SAXS"}
-	Checkbox USAXSWAXSselector, pos={120, 90}, size={100, 20}, variable=root:Packages:Convert2Dto1D:USAXSWAXSselector, proc=NI1_9IDCCheckProc
+	Checkbox USAXSWAXSselector, pos={120, 90}, size={100, 20}, variable=root:Packages:Convert2Dto1D:USAXSWAXSselector, proc=NI1_usxCheckProc
 	Checkbox USAXSWAXSselector, title="WAXS (standard)", help={"Common detecctor - Use to configure Nika for WAXS using Pilatus"}
-	Checkbox USAXSWAXSDexselector, pos={230, 90}, size={100, 20}, variable=root:Packages:Convert2Dto1D:USAXSWAXSDexselector, proc=NI1_9IDCCheckProc
+	Checkbox USAXSWAXSDexselector, pos={230, 90}, size={100, 20}, variable=root:Packages:Convert2Dto1D:USAXSWAXSDexselector, proc=NI1_usxCheckProc
 	Checkbox USAXSWAXSDexselector, title="WAXS-Dex (rare)", help={"Rare detector - Use to configure Nika for WAXS using Dexela"}
 
 	Checkbox DisplayJPGFile, pos={370, 90}, size={100, 20}, variable=root:Packages:Convert2Dto1D:DisplayJPGFile, noproc
 	Checkbox DisplayJPGFile, title="Display JPG File", help={"Display jpg file if it was collected... "}
 
-	Button Open9IDCManual, pos={430, 5}, size={100, 20}, proc=NI1_9IDCButtonProc, title="Open manual"
+	Button Open9IDCManual, pos={430, 5}, size={100, 20}, proc=NI1_usxButtonProc, title="Open manual"
 	Button Open9IDCManual, help={"Open manual"}
-	Button OpenReadme9IDC, pos={430, 25}, size={100, 20}, proc=NI1_9IDCButtonProc, title="Open Instructions"
+	Button OpenReadme9IDC, pos={430, 25}, size={100, 20}, proc=NI1_usxButtonProc, title="Open Instructions"
 	Button OpenReadme9IDC, help={"Open reademe with instructions"}
 
 	NVAR ReadParametersFromEachFile = root:Packages:Convert2Dto1D:ReadParametersFromEachFile
-	Checkbox ReadParametersFromEachFile, pos={229, 115}, size={100, 20}, variable=root:Packages:Convert2Dto1D:ReadParametersFromEachFile, proc=NI1_9IDCCheckProc
+	Checkbox ReadParametersFromEachFile, pos={229, 115}, size={100, 20}, variable=root:Packages:Convert2Dto1D:ReadParametersFromEachFile, proc=NI1_usxCheckProc
 	Checkbox ReadParametersFromEachFile, title="Read Parameters from data files", help={"In this case we will read geometry values from each data file"}
 
-	Checkbox UsePixSensitiveMask, pos={229, 140}, size={100, 20}, variable=root:Packages:Convert2Dto1D:UsePixSensitiveMask, proc=NI1_9IDCCheckProc
+	Checkbox UsePixSensitiveMask, pos={229, 140}, size={100, 20}, variable=root:Packages:Convert2Dto1D:UsePixSensitiveMask, proc=NI1_usxCheckProc
 	Checkbox UsePixSensitiveMask, title="Mask less sensitive pixels", help={"Creates complicated mask which covers less sensitive pixles"}
 
-	Button ConfigureDefaultMethods, pos={29, 115}, size={150, 20}, proc=NI1_9IDCButtonProc, title="Set default settings"
+	Button ConfigureDefaultMethods, pos={29, 115}, size={150, 20}, proc=NI1_usxButtonProc, title="Set default settings"
 	Button ConfigureDefaultMethods, help={"Sets default methods for the data reduction at 9IDC (or 15IDD)"}
 
-	Button CalibrateDistance, pos={29, 138}, size={150, 20}, proc=NI1_9IDCButtonProc, title="Calibrate geometry"
+	Button CalibrateDistance, pos={29, 138}, size={150, 20}, proc=NI1_usxButtonProc, title="Calibrate geometry"
 	Button CalibrateDistance, help={"Configures for geometry calibration"}
 
-	Button ConfigureWaveNoteParameters, pos={229, 138}, size={200, 20}, proc=NI1_9IDCButtonProc, title="Read geometry from wave note", disable=ReadParametersFromEachFile
+	Button ConfigureWaveNoteParameters, pos={229, 138}, size={200, 20}, proc=NI1_usxButtonProc, title="Read geometry from wave note", disable=ReadParametersFromEachFile
 	Button ConfigureWaveNoteParameters, help={"Sets default geometry values based on image currently loaded in the Nika package"}
-	SetVariable USAXSSlitLength, pos={29, 175}, size={150, 20}, proc=NI1_9IDCSetVarProc, title="Slit length", variable=root:Packages:Convert2Dto1D:USAXSSlitLength
+	SetVariable USAXSSlitLength, pos={29, 175}, size={150, 20}, proc=NI1_usxSetVarProc, title="Slit length", variable=root:Packages:Convert2Dto1D:USAXSSlitLength
 	SetVariable USAXSSlitLength, help={"USAXS slit length in 1/A"}
-	Button SetUSAXSSlitLength, pos={229, 170}, size={200, 20}, proc=NI1_9IDCButtonProc, title="Set Slit Legnth"
+	Button SetUSAXSSlitLength, pos={229, 170}, size={200, 20}, proc=NI1_usxButtonProc, title="Set Slit Legnth"
 	Button SetUSAXSSlitLength, help={"Locate USAXS data from which to get the Slit length"}
-	Checkbox WAXSUseBlank, pos={229, 167}, size={100, 20}, variable=root:Packages:Convert2Dto1D:WAXSSubtractBlank, proc=NI1_9IDCCheckProc
+	Checkbox WAXSUseBlank, pos={229, 167}, size={100, 20}, variable=root:Packages:Convert2Dto1D:WAXSSubtractBlank, proc=NI1_usxCheckProc
 	Checkbox WAXSUseBlank, title="WAXS use Blank", help={"Controls if WAXS will subtacrt Empty/Blank image"}
 
 	SetVariable DexelaOffsetScale, pos={229, 175}, size={200, 16}, title="Scale offset"
 	SetVariable DexelaOffsetScale, help={"How much to scale offset, used to preven negative intensities"}
 	SetVariable DexelaOffsetScale, limits={0, 1, 0.01}, value=root:Packages:Convert2Dto1D:DexelaOffsetScale
 
-	//	Button WAXSUseBlank,pos={229,160},size={200,20},proc=NI1_9IDCButtonProc,title="WAXS Do NOT use Blank"
+	//	Button WAXSUseBlank,pos={229,160},size={200,20},proc=NI1_usxButtonProc,title="WAXS Do NOT use Blank"
 	//	Button WAXSUseBlank,help={"Push NOT to use blank with 200kw WAXS"}, fColor=(30583,30583,30583)
-	//	Button CreateBadPIXMASK,pos={229,190},size={200,20},proc=NI1_9IDCButtonProc,title="Create SAXS/WAXS mask"
+	//	Button CreateBadPIXMASK,pos={229,190},size={200,20},proc=NI1_usxButtonProc,title="Create SAXS/WAXS mask"
 	//	Button CreateBadPIXMASK,help={"Create mask for Pilatus 100 SAXS and 200kw WAXS"}
-	Checkbox SAXSGenSmearedPinData, pos={29, 220}, size={150, 20}, variable=root:Packages:Convert2Dto1D:SAXSGenSmearedPinData, proc=NI1_9IDCCheckProc
+	Checkbox SAXSGenSmearedPinData, pos={29, 220}, size={150, 20}, variable=root:Packages:Convert2Dto1D:SAXSGenSmearedPinData, proc=NI1_usxCheckProc
 	Checkbox SAXSGenSmearedPinData, title="Create Smeared Data", help={"Set to create smeared data for merging with USAXS"}
 	Checkbox SAXSDeleteTempPinData, pos={229, 220}, size={150, 20}, variable=root:Packages:Convert2Dto1D:SAXSDeleteTempPinData, noproc
 	Checkbox SAXSDeleteTempPinData, title="Delete temp Data", help={"Delete the sector and line averages"}
@@ -244,11 +245,11 @@ Function NI1_9IDCConfigPanelFunction() : Panel
 
 	TitleBox LoadBlankWarning, pos={20, 320}, size={400, 20}, title="\\Zr150>>>>    Push \"Set default settings\" button now     <<<<"
 	TitleBox LoadBlankWarning, fColor=(52428, 1, 1), help={"Instructions to follow..."}
-	NI1_9IDCDisplayAndHideControls()
+	NI1_usxDisplayAndHideControls()
 End
 //************************************************************************************************************
 //************************************************************************************************************
-Function NI1_9IDCDisplayAndHideControls()
+Function NI1_usxDisplayAndHideControls()
 
 	NVAR     USAXSSAXSselector    = root:Packages:Convert2Dto1D:USAXSSAXSselector
 	NVAR     USAXSWAXSselector    = root:Packages:Convert2Dto1D:USAXSWAXSselector
@@ -258,27 +259,27 @@ Function NI1_9IDCDisplayAndHideControls()
 	variable DisplayWAXSCntrls    = USAXSSAXSselector || USAXSWAXSselector || USAXSWAXSDexselector
 	NVAR     QvectorMaxNumPnts    = root:Packages:Convert2Dto1D:QvectorMaxNumPnts
 
-	Checkbox SAXSGenSmearedPinData, win=NI1_9IDCConfigPanel, disable=DisplayPinCntrls
-	Checkbox SAXSDeleteTempPinData, win=NI1_9IDCConfigPanel, disable=DisplayPinCntrls
+	Checkbox SAXSGenSmearedPinData, win=NI1_usxConfigPanel, disable=DisplayPinCntrls
+	Checkbox SAXSDeleteTempPinData, win=NI1_usxConfigPanel, disable=DisplayPinCntrls
 
-	Button ConfigureWaveNoteParameters, win=NI1_9IDCConfigPanel, disable=ReadVals
-	Checkbox WAXSUseBlank, win=NI1_9IDCConfigPanel, disable=!(USAXSWAXSselector && USAXSWAXSDexselector)
-	SetVariable DexelaOffsetScale, win=NI1_9IDCConfigPanel, disable=!(USAXSWAXSDexselector)
-	//	Button CreateBadPIXMASK,win= NI1_9IDCConfigPanel, disable = USAXSBigSAXSselector
-	Button SetUSAXSSlitLength, win=NI1_9IDCConfigPanel, disable=DisplayPinCntrls
-	SetVariable USAXSSlitLength, win=NI1_9IDCConfigPanel, disable=DisplayPinCntrls
+	Button ConfigureWaveNoteParameters, win=NI1_usxConfigPanel, disable=ReadVals
+	Checkbox WAXSUseBlank, win=NI1_usxConfigPanel, disable=!(USAXSWAXSselector && USAXSWAXSDexselector)
+	SetVariable DexelaOffsetScale, win=NI1_usxConfigPanel, disable=!(USAXSWAXSDexselector)
+	//	Button CreateBadPIXMASK,win= NI1_usxConfigPanel, disable = USAXSBigSAXSselector
+	Button SetUSAXSSlitLength, win=NI1_usxConfigPanel, disable=DisplayPinCntrls
+	SetVariable USAXSSlitLength, win=NI1_usxConfigPanel, disable=DisplayPinCntrls
 
-	CheckBox QvectorMaxNumPnts, win=NI1_9IDCConfigPanel, disable=(DisplayPinCntrls)
-	SetVariable QbinPoints, win=NI1_9IDCConfigPanel, disable=(DisplayPinCntrls || QvectorMaxNumPnts)
+	CheckBox QvectorMaxNumPnts, win=NI1_usxConfigPanel, disable=(DisplayPinCntrls)
+	SetVariable QbinPoints, win=NI1_usxConfigPanel, disable=(DisplayPinCntrls || QvectorMaxNumPnts)
 	//This is for WAXS
-	CheckBox UseQvector, win=NI1_9IDCConfigPanel, disable=!(USAXSWAXSselector || USAXSWAXSDexselector)
-	CheckBox UseDspacing, win=NI1_9IDCConfigPanel, disable=!(USAXSWAXSselector || USAXSWAXSDexselector)
-	CheckBox UseTheta, win=NI1_9IDCConfigPanel, disable=!(USAXSWAXSselector || USAXSWAXSDexselector)
+	CheckBox UseQvector, win=NI1_usxConfigPanel, disable=!(USAXSWAXSselector || USAXSWAXSDexselector)
+	CheckBox UseDspacing, win=NI1_usxConfigPanel, disable=!(USAXSWAXSselector || USAXSWAXSDexselector)
+	CheckBox UseTheta, win=NI1_usxConfigPanel, disable=!(USAXSWAXSselector || USAXSWAXSDexselector)
 End
 //************************************************************************************************************
 //************************************************************************************************************
 
-Function NI1_9IDCCheckProc(cba) : CheckBoxControl
+Function NI1_usxCheckProc(cba) : CheckBoxControl
 	STRUCT WMCheckboxAction &cba
 
 	switch(cba.eventCode)
@@ -291,34 +292,34 @@ Function NI1_9IDCCheckProc(cba) : CheckBoxControl
 			if(stringmatch(cba.ctrlName, "ReadParametersFromEachFile"))
 				NVAR NX_ReadParametersOnLoad = root:Packages:Irena_Nexus:NX_ReadParametersOnLoad
 				NX_ReadParametersOnLoad = cba.checked
-				NI1_9IDCDisplayAndHideControls()
+				NI1_usxDisplayAndHideControls()
 			endif
 			if(stringmatch(cba.ctrlName, "USAXSWAXSselector"))
-				TitleBox LoadBlankWarning, win=NI1_9IDCConfigPanel, title="\\Zr150>>>>    Push \"Set default settings\" button now     <<<<"
+				TitleBox LoadBlankWarning, win=NI1_usxConfigPanel, title="\\Zr150>>>>    Push \"Set default settings\" button now     <<<<"
 				if(checked)
 					USAXSWAXSDexselector = 0
 					USAXSSAXSselector    = 0
 					//USAXSWAXSDexselector=0
 				endif
-				NI1_9IDCDisplayAndHideControls()
+				NI1_usxDisplayAndHideControls()
 			endif
 			if(stringmatch(cba.ctrlName, "SAXSSelection"))
-				TitleBox LoadBlankWarning, win=NI1_9IDCConfigPanel, title="\\Zr150>>>>    Push \"Set default settings\" button now     <<<<"
+				TitleBox LoadBlankWarning, win=NI1_usxConfigPanel, title="\\Zr150>>>>    Push \"Set default settings\" button now     <<<<"
 				if(checked)
 					USAXSWAXSselector    = 0
 					USAXSSAXSselector    = 1
 					USAXSWAXSDexselector = 0
 				endif
-				NI1_9IDCDisplayAndHideControls()
+				NI1_usxDisplayAndHideControls()
 			endif
 			if(stringmatch(cba.ctrlName, "USAXSWAXSDexselector"))
-				TitleBox LoadBlankWarning, win=NI1_9IDCConfigPanel, title="\\Zr150>>>>    Push \"Set default settings\" button now     <<<<"
+				TitleBox LoadBlankWarning, win=NI1_usxConfigPanel, title="\\Zr150>>>>    Push \"Set default settings\" button now     <<<<"
 				if(checked)
 					USAXSWAXSDexselector = 1
 					USAXSSAXSselector    = 0
 					USAXSWAXSselector    = 0
 				endif
-				NI1_9IDCDisplayAndHideControls()
+				NI1_usxDisplayAndHideControls()
 			endif
 
 			if(stringmatch(cba.ctrlName, "UsePixSensitiveMask"))
@@ -330,17 +331,17 @@ Function NI1_9IDCCheckProc(cba) : CheckBoxControl
 			//					USAXSSAXSselector=0
 			//					USAXSWAXSselector=0
 			//				endif
-			//				NI1_9IDCDisplayAndHideControls()
+			//				NI1_usxDisplayAndHideControls()
 			//			endif
 			if(stringmatch(cba.ctrlName, "WAXSUseBlank"))
-				NI1_9IDCWAXSBlankSUbtraction(checked)
+				NI1_usxWAXSBlankSUbtraction(checked)
 			endif
 			if(USAXSWAXSDexselector + USAXSSAXSselector + USAXSWAXSselector != 1)
-				TitleBox LoadBlankWarning, win=NI1_9IDCConfigPanel, title="\\Zr150>>>>    Push \"Set default settings\" button now     <<<<"
+				TitleBox LoadBlankWarning, win=NI1_usxConfigPanel, title="\\Zr150>>>>    Push \"Set default settings\" button now     <<<<"
 				USAXSWAXSDexselector = 0
 				USAXSSAXSselector    = 1
 				USAXSWAXSselector    = 0
-				NI1_9IDCDisplayAndHideControls()
+				NI1_usxDisplayAndHideControls()
 			endif
 
 			if(stringmatch(cba.CtrlName, "SAXSGenSmearedPinData"))
@@ -349,7 +350,7 @@ Function NI1_9IDCCheckProc(cba) : CheckBoxControl
 					NVAR USAXSSlitLength    = root:Packages:Convert2Dto1D:USAXSSlitLength
 					SVAR LineProf_CurveType = root:Packages:Convert2Dto1D:LineProf_CurveType
 					if(USAXSSlitLength < 0.001 || numtype(USAXSSlitLength) != 0) //slit length not set, force user to find it...
-						USAXSSlitLength = NI1_9IDCFIndSlitLength()
+						USAXSSlitLength = NI1_usxFIndSlitLength()
 					endif
 					UseLineProfile     = 1
 					LineProf_CurveType = "Vertical Line"
@@ -368,14 +369,14 @@ End
 
 //************************************************************************************************************
 //************************************************************************************************************
-Function NI1_9IDCSetVarProc(sva) : SetVariableControl
+Function NI1_usxSetVarProc(sva) : SetVariableControl
 	STRUCT WMSetVariableAction &sva
 
 	switch(sva.eventCode)
 		case 1: // mouse up
-			NI1_9IDCSetLineWIdth()
+			NI1_usxSetLineWIdth()
 		case 2: // Enter key
-			NI1_9IDCSetLineWIdth()
+			NI1_usxSetLineWIdth()
 		case 3: // Live update
 			variable dval = sva.dval
 			string   sval = sva.sval
@@ -426,7 +427,7 @@ End
 //************************************************************************************************************
 //************************************************************************************************************
 
-Function NI1_9IDCButtonProc(ba) : ButtonControl
+Function NI1_usxButtonProc(ba) : ButtonControl
 	STRUCT WMButtonAction &ba
 
 	switch(ba.eventCode)
@@ -441,7 +442,7 @@ Function NI1_9IDCButtonProc(ba) : ButtonControl
 				NI1_Open9IDCManual()
 			endif
 			if(stringmatch("OpenReadme9IDC", ba.CtrlName))
-				NI1_9IDCCreateHelpNbk()
+				NI1_usxCreateHelpNbk()
 			endif
 			if(stringmatch("ConfigureDefaultMethods", ba.CtrlName) || stringmatch("CalibrateDistance", ba.CtrlName))
 				//first kill the Nexus loader file in case we are using same name for SAXS and WAXS...
@@ -452,7 +453,7 @@ Function NI1_9IDCButtonProc(ba) : ButtonControl
 				SVAR SampleNameMatchStr = root:Packages:Convert2Dto1D:SampleNameMatchStr
 				SampleNameMatchStr = ""
 				string selectedFile
-				selectedFile = NI1_9IDCSetDefaultConfiguration()
+				selectedFile = NI1_usxSetDefaultConfiguration()
 				WAVE   SelectionsofCCDDataInCCDPath = root:Packages:Convert2Dto1D:ListOf2DSampleDataNumbers
 				WAVE/T ListOfCCDDataInCCDPath       = root:Packages:Convert2Dto1D:ListOf2DSampleData
 				SelectionsofCCDDataInCCDPath = 0
@@ -462,7 +463,7 @@ Function NI1_9IDCButtonProc(ba) : ButtonControl
 					endif
 				endfor
 				NI1A_DisplayOneDataSet()
-				NI1_9IDCConfigNexus()
+				NI1_usxConfigNexus()
 				NVAR ReadVals = root:Packages:Convert2Dto1D:ReadParametersFromEachFile
 				if(ReadVals)
 					for(i = 0; i < numpnts(SelectionsofCCDDataInCCDPath); i += 1)
@@ -474,8 +475,8 @@ Function NI1_9IDCButtonProc(ba) : ButtonControl
 				endif
 				//and create mask automatically...
 				if(isSAXS)
-					NI1_9IDCCreateSAXSPixMask()
-					TitleBox LoadBlankWarning, win=NI1_9IDCConfigPanel, title="\\Zr150>>>> Load Empty/Blank and set Slit legth; ... done   <<<<"
+					NI1_usxCreateSAXSPixMask()
+					TitleBox LoadBlankWarning, win=NI1_usxConfigPanel, title="\\Zr150>>>> Load Empty/Blank and set Slit legth; ... done   <<<<"
 					//force user to find Slit length oif needed
 					NVAR/Z DesmearData           = root:Packages:Indra3:DesmearData
 					NVAR   SAXSGenSmearedPinData = root:Packages:Convert2Dto1D:SAXSGenSmearedPinData
@@ -484,21 +485,21 @@ Function NI1_9IDCButtonProc(ba) : ButtonControl
 							SAXSGenSmearedPinData = 0 //user is generating desmeared data, likely does not need smeared SAXS data
 						else
 							NVAR USAXSSlitLength = root:Packages:Convert2Dto1D:USAXSSlitLength
-							USAXSSlitLength = NI1_9IDCFIndSlitLength()
-							NI1_9IDCSetLineWIdth()
+							USAXSSlitLength = NI1_usxFIndSlitLength()
+							NI1_usxSetLineWIdth()
 						endif
 					else
 						NVAR USAXSSlitLength = root:Packages:Convert2Dto1D:USAXSSlitLength
-						USAXSSlitLength = NI1_9IDCFIndSlitLength()
-						NI1_9IDCSetLineWIdth()
+						USAXSSlitLength = NI1_usxFIndSlitLength()
+						NI1_usxSetLineWIdth()
 					endif
 				elseif(isWAXS || isDexelaWAXS)
 					NVAR UseLineProfile = root:Packages:Convert2Dto1D:UseLineProfile //uncheck just in case leftover from SAXS
 					UseLineProfile = 0
 					NVAR WAXSSubtractBlank = root:Packages:Convert2Dto1D:WAXSSubtractBlank
-					NI1_9IDCWAXSBlankSUbtraction(WAXSSubtractBlank)
-					NI1_9IDCCreateWAXSPixMask()
-					TitleBox LoadBlankWarning, win=NI1_9IDCConfigPanel, title="\\Zr150>>>> Load Empty/Blank; ... done   <<<<"
+					NI1_usxWAXSBlankSUbtraction(WAXSSubtractBlank)
+					NI1_usxCreateWAXSPixMask()
+					TitleBox LoadBlankWarning, win=NI1_usxConfigPanel, title="\\Zr150>>>> Load Empty/Blank; ... done   <<<<"
 				endif
 				//end of mask creation
 				//set user to Empty?Dasrk tab
@@ -578,12 +579,12 @@ Function NI1_9IDCButtonProc(ba) : ButtonControl
 			endif
 
 			if(stringmatch("ConfigureWaveNoteParameters", ba.CtrlName))
-				NI1_9IDCWaveNoteValuesNx()
+				NI1_usxWaveNoteValuesNx()
 			endif
 			if(stringmatch("SetUSAXSSlitLength", ba.CtrlName))
 				NVAR USAXSSlitLength = root:Packages:Convert2Dto1D:USAXSSlitLength
-				USAXSSlitLength = NI1_9IDCFIndSlitLength()
-				NI1_9IDCSetLineWIdth()
+				USAXSSlitLength = NI1_usxFIndSlitLength()
+				NI1_usxSetLineWIdth()
 			endif
 			break
 		case -1: // control being killed
@@ -595,7 +596,7 @@ End
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
-Function NI1_9IDCConfigNexus()
+Function NI1_usxConfigNexus()
 
 	NEXUS_ResetParamXRef(1)
 	NEXUS_GuessParamXRef()
@@ -621,20 +622,20 @@ Function NI1_9IDCConfigNexus()
 	//print OldNOte
 	if((stringMatch("9ID", Beamline) || stringMatch("20ID", Beamline) || stringMatch("12ID", Beamline)) && (stringMatch("Pilatus", StringByKey("data:model", OldNOte, "=", ";")) || stringMatch("Eiger2", StringByKey("data:model", OldNOte, "=", ";"))))
 		//		//9ID data from 2015 onwards...
-		//		Wavelength = NumberByKey(NI1_9IDCFindKeyStr("monochromator:wavelength=", OldNote), OldNote  , "=" , ";")
+		//		Wavelength = NumberByKey(NI1_usxFindKeyStr("monochromator:wavelength=", OldNote), OldNote  , "=" , ";")
 		//		XRayEnergy = 12.3984/Wavelength
 		if(useSAXS) //the title in NX files seems to be unusable for now...
 			ListOfParamsAndPaths[0][0] = "UserSampleName"
 			ListOfParamsAndPaths[0][1] = ""
-			//			PixelSizeX = NumberByKey(NI1_9IDCFindKeyStr("detector:x_pixel_size=", OldNote), OldNote  , "=" , ";")
-			//			PixelSizeY = NumberByKey(NI1_9IDCFindKeyStr("detector:y_pixel_size=", OldNote), OldNote  , "=" , ";")
-			//			HorizontalTilt = NumberByKey(NI1_9IDCFindKeyStr("pin_ccd_tilt_x=", OldNote), OldNote  , "=" , ";")
-			//			VerticalTilt = NumberByKey(NI1_9IDCFindKeyStr("pin_ccd_tilt_y=", OldNote), OldNote  , "=" , ";")
-			//			BeamCenterX = NumberByKey(NI1_9IDCFindKeyStr("pin_ccd_center_x_pixel=", OldNote), OldNote  , "=" , ";")
-			//			BeamCenterY = NumberByKey(NI1_9IDCFindKeyStr("pin_ccd_center_y_pixel=", OldNote), OldNote  , "=" , ";")
-			//			SampleToCCDdistance = NumberByKey(NI1_9IDCFindKeyStr("detector:distance=", OldNote), OldNote  , "=" , ";")
-			//			BeamSizeX = NumberByKey(NI1_9IDCFindKeyStr("shape:xsize=", OldNote), OldNote  , "=" , ";")
-			//			BeamSizeY = NumberByKey(NI1_9IDCFindKeyStr("shape:ysize=", OldNote), OldNote  , "=" , ";")
+			//			PixelSizeX = NumberByKey(NI1_usxFindKeyStr("detector:x_pixel_size=", OldNote), OldNote  , "=" , ";")
+			//			PixelSizeY = NumberByKey(NI1_usxFindKeyStr("detector:y_pixel_size=", OldNote), OldNote  , "=" , ";")
+			//			HorizontalTilt = NumberByKey(NI1_usxFindKeyStr("pin_ccd_tilt_x=", OldNote), OldNote  , "=" , ";")
+			//			VerticalTilt = NumberByKey(NI1_usxFindKeyStr("pin_ccd_tilt_y=", OldNote), OldNote  , "=" , ";")
+			//			BeamCenterX = NumberByKey(NI1_usxFindKeyStr("pin_ccd_center_x_pixel=", OldNote), OldNote  , "=" , ";")
+			//			BeamCenterY = NumberByKey(NI1_usxFindKeyStr("pin_ccd_center_y_pixel=", OldNote), OldNote  , "=" , ";")
+			//			SampleToCCDdistance = NumberByKey(NI1_usxFindKeyStr("detector:distance=", OldNote), OldNote  , "=" , ";")
+			//			BeamSizeX = NumberByKey(NI1_usxFindKeyStr("shape:xsize=", OldNote), OldNote  , "=" , ";")
+			//			BeamSizeY = NumberByKey(NI1_usxFindKeyStr("shape:ysize=", OldNote), OldNote  , "=" , ";")
 		elseif(useWAXS)
 			ListOfParamsAndPaths[0][0] = "UserSampleName"
 			ListOfParamsAndPaths[0][1] = ""
@@ -644,38 +645,38 @@ Function NI1_9IDCConfigNexus()
 			ListOfParamsAndPaths[1][1] = ":entry:sample:thickness"
 
 			ListOfParamsAndPaths[5][0] = "SampleToCCDDistance"
-			ListOfParamsAndPaths[5][1] = ":entry:" + NI1_9IDCFindKeyStr("detector:distance=", OldNote)
+			ListOfParamsAndPaths[5][1] = ":entry:" + NI1_usxFindKeyStr("detector:distance=", OldNote)
 
 			ListOfParamsAndPaths[8][0] = "BeamCenterX"
-			ListOfParamsAndPaths[8][1] = ":entry:" + NI1_9IDCFindKeyStr("waxs_ccd_center_x_pixel=", OldNote)
+			ListOfParamsAndPaths[8][1] = ":entry:" + NI1_usxFindKeyStr("waxs_ccd_center_x_pixel=", OldNote)
 
 			ListOfParamsAndPaths[9][0] = "BeamCenterY"
-			ListOfParamsAndPaths[9][1] = ":entry:" + NI1_9IDCFindKeyStr("waxs_ccd_center_y_pixel=", OldNote)
+			ListOfParamsAndPaths[9][1] = ":entry:" + NI1_usxFindKeyStr("waxs_ccd_center_y_pixel=", OldNote)
 
 			ListOfParamsAndPaths[10][0] = "BeamSizeX"
-			ListOfParamsAndPaths[10][1] = ":entry:" + NI1_9IDCFindKeyStr("shape:xsize=", OldNote)
+			ListOfParamsAndPaths[10][1] = ":entry:" + NI1_usxFindKeyStr("shape:xsize=", OldNote)
 			ListOfParamsAndPaths[11][0] = "BeamSizeY"
-			ListOfParamsAndPaths[11][1] = ":entry:" + NI1_9IDCFindKeyStr("shape:ysize=", OldNote)
+			ListOfParamsAndPaths[11][1] = ":entry:" + NI1_usxFindKeyStr("shape:ysize=", OldNote)
 
 			ListOfParamsAndPaths[12][0] = "PixelSizeX"
-			ListOfParamsAndPaths[12][1] = ":entry:" + NI1_9IDCFindKeyStr("x_pixel_size=", OldNote)
+			ListOfParamsAndPaths[12][1] = ":entry:" + NI1_usxFindKeyStr("x_pixel_size=", OldNote)
 			ListOfParamsAndPaths[13][0] = "PixelSizeY"
-			ListOfParamsAndPaths[13][1] = ":entry:" + NI1_9IDCFindKeyStr("y_pixel_size=", OldNote)
+			ListOfParamsAndPaths[13][1] = ":entry:" + NI1_usxFindKeyStr("y_pixel_size=", OldNote)
 
 			ListOfParamsAndPaths[14][0] = "HorizontalTilt"
-			ListOfParamsAndPaths[14][1] = ":entry:" + NI1_9IDCFindKeyStr("waxs_ccd_tilt_x=", OldNote)
+			ListOfParamsAndPaths[14][1] = ":entry:" + NI1_usxFindKeyStr("waxs_ccd_tilt_x=", OldNote)
 			ListOfParamsAndPaths[15][0] = "VerticalTilt"
-			ListOfParamsAndPaths[15][1] = ":entry:" + NI1_9IDCFindKeyStr("waxs_ccd_tilt_y=", OldNote)
-			//			PixelSizeX = NumberByKey(NI1_9IDCFindKeyStr("waxs_detector:x_pixel_size=", OldNote), OldNote  , "=" , ";")
-			//			PixelSizeY = NumberByKey(NI1_9IDCFindKeyStr("waxs_detector:y_pixel_size=", OldNote), OldNote  , "=" , ";")
-			//			HorizontalTilt = NumberByKey(NI1_9IDCFindKeyStr("waxs_ccd_tilt_x=", OldNote), OldNote  , "=" , ";")
-			//			VerticalTilt = NumberByKey(NI1_9IDCFindKeyStr("waxs_ccd_tilt_y=", OldNote), OldNote  , "=" , ";")
+			ListOfParamsAndPaths[15][1] = ":entry:" + NI1_usxFindKeyStr("waxs_ccd_tilt_y=", OldNote)
+			//			PixelSizeX = NumberByKey(NI1_usxFindKeyStr("waxs_detector:x_pixel_size=", OldNote), OldNote  , "=" , ";")
+			//			PixelSizeY = NumberByKey(NI1_usxFindKeyStr("waxs_detector:y_pixel_size=", OldNote), OldNote  , "=" , ";")
+			//			HorizontalTilt = NumberByKey(NI1_usxFindKeyStr("waxs_ccd_tilt_x=", OldNote), OldNote  , "=" , ";")
+			//			VerticalTilt = NumberByKey(NI1_usxFindKeyStr("waxs_ccd_tilt_y=", OldNote), OldNote  , "=" , ";")
 
-			//			BeamCenterX = NumberByKey(NI1_9IDCFindKeyStr("waxs_ccd_center_x_pixel=", OldNote), OldNote  , "=" , ";")
-			//			BeamCenterY = NumberByKey(NI1_9IDCFindKeyStr("waxs_ccd_center_y_pixel=", OldNote), OldNote  , "=" , ";")
-			//			SampleToCCDdistance = NumberByKey(NI1_9IDCFindKeyStr("waxs_detector:distance=", OldNote), OldNote  , "=" , ";")
-			//			BeamSizeX = NumberByKey(NI1_9IDCFindKeyStr("shape:xsize=", OldNote), OldNote  , "=" , ";")
-			//			BeamSizeY = NumberByKey(NI1_9IDCFindKeyStr("shape:ysize=", OldNote), OldNote  , "=" , ";")
+			//			BeamCenterX = NumberByKey(NI1_usxFindKeyStr("waxs_ccd_center_x_pixel=", OldNote), OldNote  , "=" , ";")
+			//			BeamCenterY = NumberByKey(NI1_usxFindKeyStr("waxs_ccd_center_y_pixel=", OldNote), OldNote  , "=" , ";")
+			//			SampleToCCDdistance = NumberByKey(NI1_usxFindKeyStr("waxs_detector:distance=", OldNote), OldNote  , "=" , ";")
+			//			BeamSizeX = NumberByKey(NI1_usxFindKeyStr("shape:xsize=", OldNote), OldNote  , "=" , ";")
+			//			BeamSizeY = NumberByKey(NI1_usxFindKeyStr("shape:ysize=", OldNote), OldNote  , "=" , ";")
 		endif
 	elseif(stringMatch("9ID", StringByKey("instrument:source:facility_beamline", OldNOte, "=", ";")) && stringMatch("Dexela 2315", StringByKey("Metadata:Model", OldNOte, "=", ";")))
 		//this is Dexela WAXS = useWAXSDexela - same as Pilatus WAXS, except this one has offset for each frame.
@@ -687,38 +688,38 @@ Function NI1_9IDCConfigNexus()
 		ListOfParamsAndPaths[1][1] = ":entry:sample:thickness"
 
 		ListOfParamsAndPaths[5][0] = "SampleToCCDDistance"
-		ListOfParamsAndPaths[5][1] = ":entry:" + NI1_9IDCFindKeyStr("detector:distance=", OldNote)
+		ListOfParamsAndPaths[5][1] = ":entry:" + NI1_usxFindKeyStr("detector:distance=", OldNote)
 
 		ListOfParamsAndPaths[8][0] = "BeamCenterX"
-		ListOfParamsAndPaths[8][1] = ":entry:" + NI1_9IDCFindKeyStr("waxs_ccd_center_x_pixel=", OldNote)
+		ListOfParamsAndPaths[8][1] = ":entry:" + NI1_usxFindKeyStr("waxs_ccd_center_x_pixel=", OldNote)
 
 		ListOfParamsAndPaths[9][0] = "BeamCenterY"
-		ListOfParamsAndPaths[9][1] = ":entry:" + NI1_9IDCFindKeyStr("waxs_ccd_center_y_pixel=", OldNote)
+		ListOfParamsAndPaths[9][1] = ":entry:" + NI1_usxFindKeyStr("waxs_ccd_center_y_pixel=", OldNote)
 
 		ListOfParamsAndPaths[10][0] = "BeamSizeX"
-		ListOfParamsAndPaths[10][1] = ":entry:" + NI1_9IDCFindKeyStr("shape:xsize=", OldNote)
+		ListOfParamsAndPaths[10][1] = ":entry:" + NI1_usxFindKeyStr("shape:xsize=", OldNote)
 		ListOfParamsAndPaths[11][0] = "BeamSizeY"
-		ListOfParamsAndPaths[11][1] = ":entry:" + NI1_9IDCFindKeyStr("shape:ysize=", OldNote)
+		ListOfParamsAndPaths[11][1] = ":entry:" + NI1_usxFindKeyStr("shape:ysize=", OldNote)
 
 		ListOfParamsAndPaths[12][0] = "PixelSizeX"
-		ListOfParamsAndPaths[12][1] = ":entry:" + NI1_9IDCFindKeyStr("x_pixel_size=", OldNote)
+		ListOfParamsAndPaths[12][1] = ":entry:" + NI1_usxFindKeyStr("x_pixel_size=", OldNote)
 		ListOfParamsAndPaths[13][0] = "PixelSizeY"
-		ListOfParamsAndPaths[13][1] = ":entry:" + NI1_9IDCFindKeyStr("y_pixel_size=", OldNote)
+		ListOfParamsAndPaths[13][1] = ":entry:" + NI1_usxFindKeyStr("y_pixel_size=", OldNote)
 
 		ListOfParamsAndPaths[14][0] = "HorizontalTilt"
-		ListOfParamsAndPaths[14][1] = ":entry:" + NI1_9IDCFindKeyStr("waxs_ccd_tilt_x=", OldNote)
+		ListOfParamsAndPaths[14][1] = ":entry:" + NI1_usxFindKeyStr("waxs_ccd_tilt_x=", OldNote)
 		ListOfParamsAndPaths[15][0] = "VerticalTilt"
-		ListOfParamsAndPaths[15][1] = ":entry:" + NI1_9IDCFindKeyStr("waxs_ccd_tilt_y=", OldNote)
+		ListOfParamsAndPaths[15][1] = ":entry:" + NI1_usxFindKeyStr("waxs_ccd_tilt_y=", OldNote)
 	else
 		NVAR ReadVals = root:Packages:Convert2Dto1D:ReadParametersFromEachFile
 		ReadVals = 0
-		DOWINDOW/F NI1_9IDCConfigPanel
-		NI1_9IDCDisplayAndHideControls()
+		DOWINDOW/F NI1_usxConfigPanel
+		NI1_usxDisplayAndHideControls()
 		Abort "These data cannot be read from each file, likely too old. Try button \"Read geometry from wave note\", it is smarter"
 	endif
 End
 //************************************************************************************************************
-Function NI1_9IDCCreateSAXSPixMask()
+Function NI1_usxCreateSAXSPixMask()
 
 	string OldDF = GetDataFolder(1)
 	SetDataFolder root:Packages:Convert2Dto1D
@@ -729,7 +730,7 @@ Function NI1_9IDCCreateSAXSPixMask()
 	endif
 	string OldNOte = note(w2D)
 
-	variable Year = NumberByKey(NI1_9IDCFindKeyStr("start_time=", OldNote), OldNote, "=", ";")
+	variable Year = NumberByKey(NI1_usxFindKeyStr("start_time=", OldNote), OldNote, "=", ";")
 
 	NVAR/Z UsePixSensitiveMask = root:Packages:Convert2Dto1D:UsePixSensitiveMask
 	if(!NVAR_Exists(UsePixSensitiveMask))
@@ -818,7 +819,7 @@ Function NI1_9IDCCreateSAXSPixMask()
 End
 //************************************************************************************************************
 //************************************************************************************************************
-Function NI1_9IDCCreateWAXSPixMask()
+Function NI1_usxCreateWAXSPixMask()
 
 	string OldDF = GetDataFolder(1)
 	SetDataFolder root:Packages:Convert2Dto1D
@@ -880,7 +881,7 @@ Function NI1_9IDCCreateWAXSPixMask()
 		notestr += "DrawRect -1,485,196,495\r"
 		note M_ROIMask, notestr
 	elseif(DimSize(M_ROIMask, 1) > 1500 && !USAXSWAXSDexselector) //Eiger.
-		print "Fix default mask in NI1_9IDCCreateWAXSPixMask"
+		print "Fix default mask in NI1_usxCreateWAXSPixMask"
 		//hor 		vert
 		// these are in between chip dead areas
 		M_ROIMask[0, 511][513, 514]   = 0
@@ -935,7 +936,7 @@ End
 //************************************************************************************************************
 //************************************************************************************************************
 
-Function NI1_9IDCSetLineWIdth()
+Function NI1_usxSetLineWIdth()
 
 	NVAR USAXSSlitLength = root:Packages:Convert2Dto1D:USAXSSlitLength
 	//slit length is USAXS is distacne from center line to the end of the slit, so the totla width of this path needs to be 2*slitLength
@@ -978,7 +979,7 @@ End
 
 //************************************************************************************************************
 //************************************************************************************************************
-Function NI1_9IDCWAXSBlankSUbtraction(Yes)
+Function NI1_usxWAXSBlankSUbtraction(Yes)
 	variable Yes
 
 	NVAR UseSampleTransmission = root:Packages:Convert2Dto1D:UseSampleTransmission
@@ -1030,7 +1031,7 @@ End
 
 //************************************************************************************************************
 //************************************************************************************************************
-Function/S NI1_9IDCSetDefaultConfiguration([string PathStr, string FileNameStr])
+Function/S NI1_usxSetDefaultConfiguration([string PathStr, string FileNameStr])
 
 	NI1A_Initialize2Dto1DConversion()
 	NI1BC_InitCreateBmCntrFile()
@@ -1158,13 +1159,13 @@ Function/S NI1_9IDCSetDefaultConfiguration([string PathStr, string FileNameStr])
 		SVAR EmptyMonitorFnct  = root:Packages:Convert2Dto1D:EmptyMonitorFnct
 		SVAR SampleThicknFnct  = root:Packages:Convert2Dto1D:SampleThicknFnct
 
-		SampleTransmFnct  = "NI1_9IDCSFIndTransmission"
-		SampleMonitorFnct = "NI1_9IDCSFindI0"
-		EmptyMonitorFnct  = "NI1_9IDCSFindEfI0"
-		SampleThicknFnct  = "NI1_9IDCSFindThickness"
+		SampleTransmFnct  = "NI1_usxSFIndTransmission"
+		SampleMonitorFnct = "NI1_usxSFindI0"
+		EmptyMonitorFnct  = "NI1_usxSFindEfI0"
+		SampleThicknFnct  = "NI1_usxSFindThickness"
 
 		NVAR WAXSSubtractBlank = root:Packages:Convert2Dto1D:WAXSSubtractBlank
-		NI1_9IDCWAXSBlankSUbtraction(WAXSSubtractBlank)
+		NI1_usxWAXSBlankSUbtraction(WAXSSubtractBlank)
 
 		NI1A_SetCalibrationFormula()
 
@@ -1369,10 +1370,10 @@ Function/S NI1_9IDCSetDefaultConfiguration([string PathStr, string FileNameStr])
 		SVAR EmptyMonitorFnct  = root:Packages:Convert2Dto1D:EmptyMonitorFnct
 		SVAR SampleThicknFnct  = root:Packages:Convert2Dto1D:SampleThicknFnct
 
-		SampleTransmFnct  = "NI1_9IDCFIndTransmission"
-		SampleMonitorFnct = "NI1_9IDCFindI0"
-		EmptyMonitorFnct  = "NI1_9IDCFindEfI0"
-		SampleThicknFnct  = "NI1_9IDCFIndThickness"
+		SampleTransmFnct  = "NI1_usxFIndTransmission"
+		SampleMonitorFnct = "NI1_usxFindI0"
+		EmptyMonitorFnct  = "NI1_usxFindEfI0"
+		SampleThicknFnct  = "NI1_usxFIndThickness"
 
 		NI1A_SetCalibrationFormula()
 
@@ -1528,10 +1529,10 @@ Function/S NI1_9IDCSetDefaultConfiguration([string PathStr, string FileNameStr])
 		//				SVAR EmptyMonitorFnct = root:Packages:Convert2Dto1D:EmptyMonitorFnct
 		//				SVAR SampleThicknFnct = root:Packages:Convert2Dto1D:SampleThicknFnct
 		//
-		//				SampleTransmFnct = "NI1_9IDCSFIndTransmission"
-		//				SampleMonitorFnct = "NI1_9IDCSFindI0"
-		//				EmptyMonitorFnct = "NI1_9IDCSFindEfI0"
-		//				SampleThicknFnct = "NI1_9IDCSFindThickness"
+		//				SampleTransmFnct = "NI1_usxSFIndTransmission"
+		//				SampleMonitorFnct = "NI1_usxSFindI0"
+		//				EmptyMonitorFnct = "NI1_usxSFindEfI0"
+		//				SampleThicknFnct = "NI1_usxSFindThickness"
 		//
 		//				NI1A_SetCalibrationFormula()
 		//
@@ -1669,7 +1670,7 @@ End
 //************************************************************************************************************
 //************************************************************************************************************
 
-Function/S NI1_9IDCFindWaveNoteValue(StringKeyName)
+Function/S NI1_usxFindWaveNoteValue(StringKeyName)
 	string StringKeyName
 
 	WAVE/Z w2D = root:Packages:Convert2Dto1D:CCDImageToConvert
@@ -1677,10 +1678,10 @@ Function/S NI1_9IDCFindWaveNoteValue(StringKeyName)
 		Abort "Load one Image file first so the tool can read the wave note information"
 	endif
 	string OldNOte = note(w2D)
-	return StringByKey(NI1_9IDCFindKeyStr(StringKeyName + "=", OldNote), OldNote, "=", ";")
+	return StringByKey(NI1_usxFindKeyStr(StringKeyName + "=", OldNote), OldNote, "=", ";")
 End
 
-Function/S NI1_9IDCFindEmptyNoteValue(StringKeyName)
+Function/S NI1_usxFindEmptyNoteValue(StringKeyName)
 	string StringKeyName
 
 	WAVE/Z w2D = root:Packages:Convert2Dto1D:EmptyData
@@ -1688,10 +1689,10 @@ Function/S NI1_9IDCFindEmptyNoteValue(StringKeyName)
 		Abort "Load Empty Image file first so the tool can read the wave note information"
 	endif
 	string OldNOte = note(w2D)
-	return StringByKey(NI1_9IDCFindKeyStr(StringKeyName + "=", OldNote), OldNote, "=", ";")
+	return StringByKey(NI1_usxFindKeyStr(StringKeyName + "=", OldNote), OldNote, "=", ";")
 End
 
-Function/S NI1_9IDCFindDarkNoteValue(StringKeyName)
+Function/S NI1_usxFindDarkNoteValue(StringKeyName)
 	string StringKeyName
 
 	WAVE/Z w2D = root:Packages:Convert2Dto1D:DarkFieldData
@@ -1699,12 +1700,12 @@ Function/S NI1_9IDCFindDarkNoteValue(StringKeyName)
 		Abort "Load one Image file first so the tool can read the wave note information"
 	endif
 	string OldNOte = note(w2D)
-	return StringByKey(NI1_9IDCFindKeyStr(StringKeyName + "=", OldNote), OldNote, "=", ";")
+	return StringByKey(NI1_usxFindKeyStr(StringKeyName + "=", OldNote), OldNote, "=", ";")
 End
 
 //************************************************************************************************************
 //************************************************************************************************************
-Function NI1_9IDCWaveNoteValuesNx()
+Function NI1_usxWaveNoteValuesNx()
 
 	//check for 2D wave presence, if not present throw user error with instructions
 	WAVE/Z w2D = root:Packages:Convert2Dto1D:CCDImageToConvert
@@ -1729,33 +1730,33 @@ Function NI1_9IDCWaveNoteValuesNx()
 	NVAR BeamSizeX           = root:Packages:Convert2Dto1D:BeamSizeX
 	NVAR BeamSizeY           = root:Packages:Convert2Dto1D:BeamSizeY
 
-	if((stringMatch("15ID", StringByKey(NI1_9IDCFindKeyStr("facility_beamline=", OldNote), OldNOte, "=", ";")) || stringMatch("9ID", StringByKey(NI1_9IDCFindKeyStr("facility_beamline=", OldNote), OldNOte, "=", ";"))) && stringMatch("Pilatus", StringByKey(NI1_9IDCFindKeyStr("model=", OldNote), OldNOte, "=", ";")))
-		Wavelength = NumberByKey(NI1_9IDCFindKeyStr("monochromator:wavelength=", OldNote), OldNote, "=", ";")
+	if((stringMatch("15ID", StringByKey(NI1_usxFindKeyStr("facility_beamline=", OldNote), OldNOte, "=", ";")) || stringMatch("9ID", StringByKey(NI1_usxFindKeyStr("facility_beamline=", OldNote), OldNOte, "=", ";"))) && stringMatch("Pilatus", StringByKey(NI1_usxFindKeyStr("model=", OldNote), OldNOte, "=", ";")))
+		Wavelength = NumberByKey(NI1_usxFindKeyStr("monochromator:wavelength=", OldNote), OldNote, "=", ";")
 		XRayEnergy = 12.3984 / Wavelength
 		if(useSAXS)
-			PixelSizeX = NumberByKey(NI1_9IDCFindKeyStr("pin_ccd_pixel_size_x=", OldNote), OldNote, "=", ";")
-			PixelSizeY = NumberByKey(NI1_9IDCFindKeyStr("pin_ccd_pixel_size_y=", OldNote), OldNote, "=", ";")
+			PixelSizeX = NumberByKey(NI1_usxFindKeyStr("pin_ccd_pixel_size_x=", OldNote), OldNote, "=", ";")
+			PixelSizeY = NumberByKey(NI1_usxFindKeyStr("pin_ccd_pixel_size_y=", OldNote), OldNote, "=", ";")
 			if(numtype(PixelSizeX) != 0) //old data from 15ID
-				PixelSizeX = NumberByKey(NI1_9IDCFindKeyStr("x_pixel_size=", OldNote), OldNote, "=", ";")
-				PixelSizeY = NumberByKey(NI1_9IDCFindKeyStr("y_pixel_size=", OldNote), OldNote, "=", ";")
+				PixelSizeX = NumberByKey(NI1_usxFindKeyStr("x_pixel_size=", OldNote), OldNote, "=", ";")
+				PixelSizeY = NumberByKey(NI1_usxFindKeyStr("y_pixel_size=", OldNote), OldNote, "=", ";")
 			endif
-			HorizontalTilt      = NumberByKey(NI1_9IDCFindKeyStr("pin_ccd_tilt_x=", OldNote), OldNote, "=", ";")
-			VerticalTilt        = NumberByKey(NI1_9IDCFindKeyStr("pin_ccd_tilt_y=", OldNote), OldNote, "=", ";")
-			BeamCenterX         = NumberByKey(NI1_9IDCFindKeyStr("pin_ccd_center_x_pixel=", OldNote), OldNote, "=", ";")
-			BeamCenterY         = NumberByKey(NI1_9IDCFindKeyStr("pin_ccd_center_y_pixel=", OldNote), OldNote, "=", ";")
-			SampleToCCDdistance = NumberByKey(NI1_9IDCFindKeyStr("distance=", OldNote), OldNote, "=", ";")
-			BeamSizeX           = NumberByKey(NI1_9IDCFindKeyStr("aperture:hsize=", OldNote), OldNote, "=", ";")
-			BeamSizeY           = NumberByKey(NI1_9IDCFindKeyStr("aperture:vsize=", OldNote), OldNote, "=", ";")
+			HorizontalTilt      = NumberByKey(NI1_usxFindKeyStr("pin_ccd_tilt_x=", OldNote), OldNote, "=", ";")
+			VerticalTilt        = NumberByKey(NI1_usxFindKeyStr("pin_ccd_tilt_y=", OldNote), OldNote, "=", ";")
+			BeamCenterX         = NumberByKey(NI1_usxFindKeyStr("pin_ccd_center_x_pixel=", OldNote), OldNote, "=", ";")
+			BeamCenterY         = NumberByKey(NI1_usxFindKeyStr("pin_ccd_center_y_pixel=", OldNote), OldNote, "=", ";")
+			SampleToCCDdistance = NumberByKey(NI1_usxFindKeyStr("distance=", OldNote), OldNote, "=", ";")
+			BeamSizeX           = NumberByKey(NI1_usxFindKeyStr("aperture:hsize=", OldNote), OldNote, "=", ";")
+			BeamSizeY           = NumberByKey(NI1_usxFindKeyStr("aperture:vsize=", OldNote), OldNote, "=", ";")
 		elseif(useWAXS)
-			PixelSizeX          = NumberByKey(NI1_9IDCFindKeyStr("x_pixel_size=", OldNote), OldNote, "=", ";")
-			PixelSizeY          = NumberByKey(NI1_9IDCFindKeyStr("y_pixel_size=", OldNote), OldNote, "=", ";")
-			HorizontalTilt      = NumberByKey(NI1_9IDCFindKeyStr("waxs_ccd_tilt_x=", OldNote), OldNote, "=", ";")
-			VerticalTilt        = NumberByKey(NI1_9IDCFindKeyStr("waxs_ccd_tilt_y=", OldNote), OldNote, "=", ";")
-			BeamCenterX         = NumberByKey(NI1_9IDCFindKeyStr("waxs_ccd_center_x_pixel=", OldNote), OldNote, "=", ";")
-			BeamCenterY         = NumberByKey(NI1_9IDCFindKeyStr("waxs_ccd_center_y_pixel=", OldNote), OldNote, "=", ";")
-			SampleToCCDdistance = NumberByKey(NI1_9IDCFindKeyStr("distance=", OldNote), OldNote, "=", ";")
-			BeamSizeX           = NumberByKey(NI1_9IDCFindKeyStr("aperture:hsize=", OldNote), OldNote, "=", ";")
-			BeamSizeY           = NumberByKey(NI1_9IDCFindKeyStr("aperture:vsize=", OldNote), OldNote, "=", ";")
+			PixelSizeX          = NumberByKey(NI1_usxFindKeyStr("x_pixel_size=", OldNote), OldNote, "=", ";")
+			PixelSizeY          = NumberByKey(NI1_usxFindKeyStr("y_pixel_size=", OldNote), OldNote, "=", ";")
+			HorizontalTilt      = NumberByKey(NI1_usxFindKeyStr("waxs_ccd_tilt_x=", OldNote), OldNote, "=", ";")
+			VerticalTilt        = NumberByKey(NI1_usxFindKeyStr("waxs_ccd_tilt_y=", OldNote), OldNote, "=", ";")
+			BeamCenterX         = NumberByKey(NI1_usxFindKeyStr("waxs_ccd_center_x_pixel=", OldNote), OldNote, "=", ";")
+			BeamCenterY         = NumberByKey(NI1_usxFindKeyStr("waxs_ccd_center_y_pixel=", OldNote), OldNote, "=", ";")
+			SampleToCCDdistance = NumberByKey(NI1_usxFindKeyStr("distance=", OldNote), OldNote, "=", ";")
+			BeamSizeX           = NumberByKey(NI1_usxFindKeyStr("aperture:hsize=", OldNote), OldNote, "=", ";")
+			BeamSizeY           = NumberByKey(NI1_usxFindKeyStr("aperture:vsize=", OldNote), OldNote, "=", ";")
 		endif
 		print "Set experimental settinsg and geometry from file :" + Current2DFileName
 		print "Wavelength = " + num2str(Wavelength)
@@ -1767,33 +1768,33 @@ Function NI1_9IDCWaveNoteValuesNx()
 		print "BeamSizeX = " + num2str(BeamSizeX)
 		print "BeamSizeY = " + num2str(BeamSizeY)
 		print "SampleToCCDdistance = " + num2str(SampleToCCDdistance)
-	elseif((stringMatch("9ID", StringByKey(NI1_9IDCFindKeyStr("facility_beamline=", OldNote), OldNOte, "=", ";"))) && stringMatch("XRD0820", StringByKey(NI1_9IDCFindKeyStr("model=", OldNote), OldNOte, "=", ";")))
-		Wavelength = NumberByKey(NI1_9IDCFindKeyStr("monochromator:wavelength=", OldNote), OldNote, "=", ";")
+	elseif((stringMatch("9ID", StringByKey(NI1_usxFindKeyStr("facility_beamline=", OldNote), OldNOte, "=", ";"))) && stringMatch("XRD0820", StringByKey(NI1_usxFindKeyStr("model=", OldNote), OldNOte, "=", ";")))
+		Wavelength = NumberByKey(NI1_usxFindKeyStr("monochromator:wavelength=", OldNote), OldNote, "=", ";")
 		XRayEnergy = 12.3984 / Wavelength
 		if(useSAXS)
-			PixelSizeX = NumberByKey(NI1_9IDCFindKeyStr("pin_ccd_pixel_size_x=", OldNote), OldNote, "=", ";")
-			PixelSizeY = NumberByKey(NI1_9IDCFindKeyStr("pin_ccd_pixel_size_y=", OldNote), OldNote, "=", ";")
+			PixelSizeX = NumberByKey(NI1_usxFindKeyStr("pin_ccd_pixel_size_x=", OldNote), OldNote, "=", ";")
+			PixelSizeY = NumberByKey(NI1_usxFindKeyStr("pin_ccd_pixel_size_y=", OldNote), OldNote, "=", ";")
 			if(numtype(PixelSizeX) != 0) //old data from 15ID
-				PixelSizeX = NumberByKey(NI1_9IDCFindKeyStr("x_pixel_size=", OldNote), OldNote, "=", ";")
-				PixelSizeY = NumberByKey(NI1_9IDCFindKeyStr("y_pixel_size=", OldNote), OldNote, "=", ";")
+				PixelSizeX = NumberByKey(NI1_usxFindKeyStr("x_pixel_size=", OldNote), OldNote, "=", ";")
+				PixelSizeY = NumberByKey(NI1_usxFindKeyStr("y_pixel_size=", OldNote), OldNote, "=", ";")
 			endif
-			HorizontalTilt      = NumberByKey(NI1_9IDCFindKeyStr("pin_ccd_tilt_x=", OldNote), OldNote, "=", ";")
-			VerticalTilt        = NumberByKey(NI1_9IDCFindKeyStr("pin_ccd_tilt_y=", OldNote), OldNote, "=", ";")
-			BeamCenterX         = NumberByKey(NI1_9IDCFindKeyStr("pin_ccd_center_x_pixel=", OldNote), OldNote, "=", ";")
-			BeamCenterY         = NumberByKey(NI1_9IDCFindKeyStr("pin_ccd_center_y_pixel=", OldNote), OldNote, "=", ";")
-			SampleToCCDdistance = NumberByKey(NI1_9IDCFindKeyStr("distance=", OldNote), OldNote, "=", ";")
-			BeamSizeX           = NumberByKey(NI1_9IDCFindKeyStr("aperture:hsize=", OldNote), OldNote, "=", ";")
-			BeamSizeY           = NumberByKey(NI1_9IDCFindKeyStr("aperture:vsize=", OldNote), OldNote, "=", ";")
+			HorizontalTilt      = NumberByKey(NI1_usxFindKeyStr("pin_ccd_tilt_x=", OldNote), OldNote, "=", ";")
+			VerticalTilt        = NumberByKey(NI1_usxFindKeyStr("pin_ccd_tilt_y=", OldNote), OldNote, "=", ";")
+			BeamCenterX         = NumberByKey(NI1_usxFindKeyStr("pin_ccd_center_x_pixel=", OldNote), OldNote, "=", ";")
+			BeamCenterY         = NumberByKey(NI1_usxFindKeyStr("pin_ccd_center_y_pixel=", OldNote), OldNote, "=", ";")
+			SampleToCCDdistance = NumberByKey(NI1_usxFindKeyStr("distance=", OldNote), OldNote, "=", ";")
+			BeamSizeX           = NumberByKey(NI1_usxFindKeyStr("aperture:hsize=", OldNote), OldNote, "=", ";")
+			BeamSizeY           = NumberByKey(NI1_usxFindKeyStr("aperture:vsize=", OldNote), OldNote, "=", ";")
 		elseif(useWAXS)
-			PixelSizeX          = NumberByKey(NI1_9IDCFindKeyStr("x_pixel_size=", OldNote), OldNote, "=", ";")
-			PixelSizeY          = NumberByKey(NI1_9IDCFindKeyStr("y_pixel_size=", OldNote), OldNote, "=", ";")
-			HorizontalTilt      = NumberByKey(NI1_9IDCFindKeyStr("waxs_ccd_tilt_x=", OldNote), OldNote, "=", ";")
-			VerticalTilt        = NumberByKey(NI1_9IDCFindKeyStr("waxs_ccd_tilt_y=", OldNote), OldNote, "=", ";")
-			BeamCenterX         = NumberByKey(NI1_9IDCFindKeyStr("waxs_ccd_center_x_pixel=", OldNote), OldNote, "=", ";")
-			BeamCenterY         = NumberByKey(NI1_9IDCFindKeyStr("waxs_ccd_center_y_pixel=", OldNote), OldNote, "=", ";")
-			SampleToCCDdistance = NumberByKey(NI1_9IDCFindKeyStr("distance=", OldNote), OldNote, "=", ";")
-			BeamSizeX           = NumberByKey(NI1_9IDCFindKeyStr("aperture:hsize=", OldNote), OldNote, "=", ";")
-			BeamSizeY           = NumberByKey(NI1_9IDCFindKeyStr("aperture:vsize=", OldNote), OldNote, "=", ";")
+			PixelSizeX          = NumberByKey(NI1_usxFindKeyStr("x_pixel_size=", OldNote), OldNote, "=", ";")
+			PixelSizeY          = NumberByKey(NI1_usxFindKeyStr("y_pixel_size=", OldNote), OldNote, "=", ";")
+			HorizontalTilt      = NumberByKey(NI1_usxFindKeyStr("waxs_ccd_tilt_x=", OldNote), OldNote, "=", ";")
+			VerticalTilt        = NumberByKey(NI1_usxFindKeyStr("waxs_ccd_tilt_y=", OldNote), OldNote, "=", ";")
+			BeamCenterX         = NumberByKey(NI1_usxFindKeyStr("waxs_ccd_center_x_pixel=", OldNote), OldNote, "=", ";")
+			BeamCenterY         = NumberByKey(NI1_usxFindKeyStr("waxs_ccd_center_y_pixel=", OldNote), OldNote, "=", ";")
+			SampleToCCDdistance = NumberByKey(NI1_usxFindKeyStr("distance=", OldNote), OldNote, "=", ";")
+			BeamSizeX           = NumberByKey(NI1_usxFindKeyStr("aperture:hsize=", OldNote), OldNote, "=", ";")
+			BeamSizeY           = NumberByKey(NI1_usxFindKeyStr("aperture:vsize=", OldNote), OldNote, "=", ";")
 		endif
 		print "Set experimental settinsg and geometry from file :" + Current2DFileName
 		print "Wavelength = " + num2str(Wavelength)
@@ -1807,28 +1808,28 @@ Function NI1_9IDCWaveNoteValuesNx()
 		print "SampleToCCDdistance = " + num2str(SampleToCCDdistance)
 	elseif(stringMatch("9ID", StringByKey("instrument:source:facility_beamline", OldNOte, "=", ";")) && stringMatch("Pilatus", StringByKey("data:model", OldNOte, "=", ";")))
 		//9ID data from2015 onwards...
-		Wavelength = NumberByKey(NI1_9IDCFindKeyStr("monochromator:wavelength=", OldNote), OldNote, "=", ";")
+		Wavelength = NumberByKey(NI1_usxFindKeyStr("monochromator:wavelength=", OldNote), OldNote, "=", ";")
 		XRayEnergy = 12.3984 / Wavelength
 		if(useSAXS)
-			PixelSizeX          = NumberByKey(NI1_9IDCFindKeyStr("detector:x_pixel_size=", OldNote), OldNote, "=", ";")
-			PixelSizeY          = NumberByKey(NI1_9IDCFindKeyStr("detector:y_pixel_size=", OldNote), OldNote, "=", ";")
-			HorizontalTilt      = NumberByKey(NI1_9IDCFindKeyStr("pin_ccd_tilt_x=", OldNote), OldNote, "=", ";")
-			VerticalTilt        = NumberByKey(NI1_9IDCFindKeyStr("pin_ccd_tilt_y=", OldNote), OldNote, "=", ";")
-			BeamCenterX         = NumberByKey(NI1_9IDCFindKeyStr("pin_ccd_center_x_pixel=", OldNote), OldNote, "=", ";")
-			BeamCenterY         = NumberByKey(NI1_9IDCFindKeyStr("pin_ccd_center_y_pixel=", OldNote), OldNote, "=", ";")
-			SampleToCCDdistance = NumberByKey(NI1_9IDCFindKeyStr("detector:distance=", OldNote), OldNote, "=", ";")
-			BeamSizeX           = NumberByKey(NI1_9IDCFindKeyStr("shape:xsize=", OldNote), OldNote, "=", ";")
-			BeamSizeY           = NumberByKey(NI1_9IDCFindKeyStr("shape:ysize=", OldNote), OldNote, "=", ";")
+			PixelSizeX          = NumberByKey(NI1_usxFindKeyStr("detector:x_pixel_size=", OldNote), OldNote, "=", ";")
+			PixelSizeY          = NumberByKey(NI1_usxFindKeyStr("detector:y_pixel_size=", OldNote), OldNote, "=", ";")
+			HorizontalTilt      = NumberByKey(NI1_usxFindKeyStr("pin_ccd_tilt_x=", OldNote), OldNote, "=", ";")
+			VerticalTilt        = NumberByKey(NI1_usxFindKeyStr("pin_ccd_tilt_y=", OldNote), OldNote, "=", ";")
+			BeamCenterX         = NumberByKey(NI1_usxFindKeyStr("pin_ccd_center_x_pixel=", OldNote), OldNote, "=", ";")
+			BeamCenterY         = NumberByKey(NI1_usxFindKeyStr("pin_ccd_center_y_pixel=", OldNote), OldNote, "=", ";")
+			SampleToCCDdistance = NumberByKey(NI1_usxFindKeyStr("detector:distance=", OldNote), OldNote, "=", ";")
+			BeamSizeX           = NumberByKey(NI1_usxFindKeyStr("shape:xsize=", OldNote), OldNote, "=", ";")
+			BeamSizeY           = NumberByKey(NI1_usxFindKeyStr("shape:ysize=", OldNote), OldNote, "=", ";")
 		elseif(useWAXS)
-			PixelSizeX          = NumberByKey(NI1_9IDCFindKeyStr("waxs_detector:x_pixel_size=", OldNote), OldNote, "=", ";")
-			PixelSizeY          = NumberByKey(NI1_9IDCFindKeyStr("waxs_detector:y_pixel_size=", OldNote), OldNote, "=", ";")
-			HorizontalTilt      = NumberByKey(NI1_9IDCFindKeyStr("waxs_ccd_tilt_x=", OldNote), OldNote, "=", ";")
-			VerticalTilt        = NumberByKey(NI1_9IDCFindKeyStr("waxs_ccd_tilt_y=", OldNote), OldNote, "=", ";")
-			BeamCenterX         = NumberByKey(NI1_9IDCFindKeyStr("waxs_ccd_center_x_pixel=", OldNote), OldNote, "=", ";")
-			BeamCenterY         = NumberByKey(NI1_9IDCFindKeyStr("waxs_ccd_center_y_pixel=", OldNote), OldNote, "=", ";")
-			SampleToCCDdistance = NumberByKey(NI1_9IDCFindKeyStr("waxs_detector:distance=", OldNote), OldNote, "=", ";")
-			BeamSizeX           = NumberByKey(NI1_9IDCFindKeyStr("shape:xsize=", OldNote), OldNote, "=", ";")
-			BeamSizeY           = NumberByKey(NI1_9IDCFindKeyStr("shape:ysize=", OldNote), OldNote, "=", ";")
+			PixelSizeX          = NumberByKey(NI1_usxFindKeyStr("waxs_detector:x_pixel_size=", OldNote), OldNote, "=", ";")
+			PixelSizeY          = NumberByKey(NI1_usxFindKeyStr("waxs_detector:y_pixel_size=", OldNote), OldNote, "=", ";")
+			HorizontalTilt      = NumberByKey(NI1_usxFindKeyStr("waxs_ccd_tilt_x=", OldNote), OldNote, "=", ";")
+			VerticalTilt        = NumberByKey(NI1_usxFindKeyStr("waxs_ccd_tilt_y=", OldNote), OldNote, "=", ";")
+			BeamCenterX         = NumberByKey(NI1_usxFindKeyStr("waxs_ccd_center_x_pixel=", OldNote), OldNote, "=", ";")
+			BeamCenterY         = NumberByKey(NI1_usxFindKeyStr("waxs_ccd_center_y_pixel=", OldNote), OldNote, "=", ";")
+			SampleToCCDdistance = NumberByKey(NI1_usxFindKeyStr("waxs_detector:distance=", OldNote), OldNote, "=", ";")
+			BeamSizeX           = NumberByKey(NI1_usxFindKeyStr("shape:xsize=", OldNote), OldNote, "=", ";")
+			BeamSizeY           = NumberByKey(NI1_usxFindKeyStr("shape:ysize=", OldNote), OldNote, "=", ";")
 		endif
 		print "Set experimental settinsg and geometry from file :" + Current2DFileName
 		print "Wavelength = " + num2str(Wavelength)
@@ -1843,29 +1844,29 @@ Function NI1_9IDCWaveNoteValuesNx()
 
 	elseif(stringMatch("15ID", StringByKey("instrument:source:facility_beamline", OldNOte, "=", ";")) && stringMatch("CCD", StringByKey("data:model", OldNOte, "=", ";")))
 		//should be for useBigSAXS=1
-		beamline_support_version = NumberByKey(NI1_9IDCFindKeyStr("beamline_support_version=", OldNote), OldNote, "=", ";")
+		beamline_support_version = NumberByKey(NI1_usxFindKeyStr("beamline_support_version=", OldNote), OldNote, "=", ";")
 		if(numtype(beamline_support_version) != 0) //this applies for MarCCD support
 			beamline_support_version = 0
 		endif
 		if(beamline_support_version == 0)
-			Wavelength  = NumberByKey(NI1_9IDCFindKeyStr("monochromator:wavelength=", OldNote), OldNote, "=", ";")
+			Wavelength  = NumberByKey(NI1_usxFindKeyStr("monochromator:wavelength=", OldNote), OldNote, "=", ";")
 			XRayEnergy  = 12.3984 / Wavelength
-			PixelSizeX  = NumberByKey(NI1_9IDCFindKeyStr("detector:x_pixel_size=", OldNote), OldNote, "=", ";")
-			PixelSizeY  = NumberByKey(NI1_9IDCFindKeyStr("detector:y_pixel_size=", OldNote), OldNote, "=", ";")
-			BeamCenterX = NumberByKey(NI1_9IDCFindKeyStr("pin_ccd_center_x_pixel=", OldNote), OldNote, "=", ";")
-			BeamCenterY = NumberByKey(NI1_9IDCFindKeyStr("pin_ccd_center_y_pixel=", OldNote), OldNote, "=", ";")
+			PixelSizeX  = NumberByKey(NI1_usxFindKeyStr("detector:x_pixel_size=", OldNote), OldNote, "=", ";")
+			PixelSizeY  = NumberByKey(NI1_usxFindKeyStr("detector:y_pixel_size=", OldNote), OldNote, "=", ";")
+			BeamCenterX = NumberByKey(NI1_usxFindKeyStr("pin_ccd_center_x_pixel=", OldNote), OldNote, "=", ";")
+			BeamCenterY = NumberByKey(NI1_usxFindKeyStr("pin_ccd_center_y_pixel=", OldNote), OldNote, "=", ";")
 			if(PixelSizeX <= 0 || PixelSizeY <= 0 || BeamCenterX <= 0 || BeamCenterY <= 0)
 				DoALert 0, "Pixel sizes or beam center positions are 0, header information is bad. Please check and find correct values"
 			endif
-			SampleToCCDdistance = NumberByKey(NI1_9IDCFindKeyStr("detector:distance=", OldNote), OldNote, "=", ";")
+			SampleToCCDdistance = NumberByKey(NI1_usxFindKeyStr("detector:distance=", OldNote), OldNote, "=", ";")
 		elseif(beamline_support_version >= 1) //latest version for now. Written when beamline_support_version=1 May 2012
-			Wavelength          = NumberByKey(NI1_9IDCFindKeyStr("wavelength=", OldNote), OldNote, "=", ";")
+			Wavelength          = NumberByKey(NI1_usxFindKeyStr("wavelength=", OldNote), OldNote, "=", ";")
 			XRayEnergy          = 12.3984 / Wavelength
-			PixelSizeX          = NumberByKey(NI1_9IDCFindKeyStr("instrument:detector:x_pixel_size=", OldNote), OldNote, "=", ";")
-			PixelSizeY          = NumberByKey(NI1_9IDCFindKeyStr("instrument:detector:y_pixel_size=", OldNote), OldNote, "=", ";")
-			BeamCenterX         = NumberByKey(NI1_9IDCFindKeyStr("instrument:detector:beam_center_x=", OldNote), OldNote, "=", ";")
-			BeamCenterY         = NumberByKey(NI1_9IDCFindKeyStr("instrument:detector:beam_center_y=", OldNote), OldNote, "=", ";")
-			SampleToCCDdistance = NumberByKey(NI1_9IDCFindKeyStr("instrument:detector:distance=", OldNote), OldNote, "=", ";")
+			PixelSizeX          = NumberByKey(NI1_usxFindKeyStr("instrument:detector:x_pixel_size=", OldNote), OldNote, "=", ";")
+			PixelSizeY          = NumberByKey(NI1_usxFindKeyStr("instrument:detector:y_pixel_size=", OldNote), OldNote, "=", ";")
+			BeamCenterX         = NumberByKey(NI1_usxFindKeyStr("instrument:detector:beam_center_x=", OldNote), OldNote, "=", ";")
+			BeamCenterY         = NumberByKey(NI1_usxFindKeyStr("instrument:detector:beam_center_y=", OldNote), OldNote, "=", ";")
+			SampleToCCDdistance = NumberByKey(NI1_usxFindKeyStr("instrument:detector:distance=", OldNote), OldNote, "=", ";")
 		endif
 		print "Set experimental settinsg and geometry from file :" + Current2DFileName
 		print "Wavelength = " + num2str(Wavelength)
@@ -1885,7 +1886,7 @@ End
 //************************************************************************************************************
 //************************************************************************************************************
 
-Function/S NI1_9IDCFindKeyStr(StringName, OldNote)
+Function/S NI1_usxFindKeyStr(StringName, OldNote)
 	string StringName, OldNote
 
 	string NewKeyName = ""
@@ -1899,7 +1900,7 @@ End
 
 //************************************************************************************************************
 //************************************************************************************************************
-Function NI1_9IDCFIndSlitLength()
+Function NI1_usxFIndSlitLength()
 
 	string SlitLengthIsHere = IN2G_FindFolderWithWvTpsList("root:USAXS:", 10, "SMR_Int", 1) + IN2G_FindFolderWithWvTpsList("root:USAXS:", 10, "M_SMR_Int", 1)
 	string SlitLengthIsHereL
@@ -1937,7 +1938,7 @@ End
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
-Function NI1_9IDCSFIndTransmission(SampleName)
+Function NI1_usxSFIndTransmission(SampleName)
 	string sampleName
 
 	variable transmissionUser
@@ -1952,8 +1953,8 @@ Function NI1_9IDCSFIndTransmission(SampleName)
 
 	//ideally, this is the right transmission...
 	//but we need to check that the Empty and dark are correct...
-	string NoteEmptyName            = NI1_9IDCFindWaveNoteValue("Empty_Filename")
-	string NoteDarkName             = NI1_9IDCFindWaveNoteValue("Dark_Filename")
+	string NoteEmptyName            = NI1_usxFindWaveNoteValue("Empty_Filename")
+	string NoteDarkName             = NI1_usxFindWaveNoteValue("Dark_Filename")
 	SVAR   LoadedEmptyName          = root:Packages:Convert2Dto1D:CurrentEmptyName
 	SVAR   LoadedDarkName           = root:Packages:Convert2Dto1D:CurrentDarkFieldName
 	SVAR   EmptyDarknameMatchString = root:Packages:Convert2Dto1D:EmptyDarknameMatchStr
@@ -2059,7 +2060,7 @@ Function NI1_9IDCSFIndTransmission(SampleName)
 	endif
 
 	EmptyDarknameMatchString = tempStrlSavematch
-	variable ExistingTransmissionInFile = str2num(NI1_9IDCFindWaveNoteValue("transmission"))
+	variable ExistingTransmissionInFile = str2num(NI1_usxFindWaveNoteValue("transmission"))
 	variable IsTransValid               = 0
 	if((ExistingTransmissionInFile > 0) && (ExistingTransmissionInFile <= 1))
 		IsTransValid = 1
@@ -2077,42 +2078,42 @@ Function NI1_9IDCSFIndTransmission(SampleName)
 		variable EmptyPD
 		variable DarkI0
 		variable DarkPD
-		if(str2num(NI1_9IDCFindWaveNoteValue("transI0_Spl")) < 1)
-			SampleI0 = str2num(NI1_9IDCFindWaveNoteValue("transI0_Spl"))
-			SamplePD = str2num(NI1_9IDCFindWaveNoteValue("transNosePD_Value_Spl"))
-			EmptyI0  = str2num(NI1_9IDCFindEmptyNoteValue("transI0_Empty"))
-			EmptyPD  = str2num(NI1_9IDCFindEmptyNoteValue("transNosePD_Value_Empty"))
-			DarkI0   = str2num(NI1_9IDCFindDarkNoteValue("transI0_Dark"))
-			DarkPD   = str2num(NI1_9IDCFindDarkNoteValue("transNosePD_Value_Dark"))
+		if(str2num(NI1_usxFindWaveNoteValue("transI0_Spl")) < 1)
+			SampleI0 = str2num(NI1_usxFindWaveNoteValue("transI0_Spl"))
+			SamplePD = str2num(NI1_usxFindWaveNoteValue("transNosePD_Value_Spl"))
+			EmptyI0  = str2num(NI1_usxFindEmptyNoteValue("transI0_Empty"))
+			EmptyPD  = str2num(NI1_usxFindEmptyNoteValue("transNosePD_Value_Empty"))
+			DarkI0   = str2num(NI1_usxFindDarkNoteValue("transI0_Dark"))
+			DarkPD   = str2num(NI1_usxFindDarkNoteValue("transNosePD_Value_Dark"))
 		else
-			SampleI0 = str2num(NI1_9IDCFindWaveNoteValue("transI0_Sample"))
+			SampleI0 = str2num(NI1_usxFindWaveNoteValue("transI0_Sample"))
 			if(SampleI0 < 1000) //something wrong, old system???
-				SampleI0  = str2num(NI1_9IDCFindWaveNoteValue("transBPM_B_Sample"))
-				SampleI0 += str2num(NI1_9IDCFindWaveNoteValue("transBPM_L_Sample"))
-				SampleI0 += str2num(NI1_9IDCFindWaveNoteValue("transBPM_T_Sample"))
-				SampleI0 += str2num(NI1_9IDCFindWaveNoteValue("transBPM_R_Sample"))
+				SampleI0  = str2num(NI1_usxFindWaveNoteValue("transBPM_B_Sample"))
+				SampleI0 += str2num(NI1_usxFindWaveNoteValue("transBPM_L_Sample"))
+				SampleI0 += str2num(NI1_usxFindWaveNoteValue("transBPM_T_Sample"))
+				SampleI0 += str2num(NI1_usxFindWaveNoteValue("transBPM_R_Sample"))
 			endif
-			SamplePD = str2num(NI1_9IDCFindWaveNoteValue("transPD_Sample"))
+			SamplePD = str2num(NI1_usxFindWaveNoteValue("transPD_Sample"))
 			//
 
-			EmptyI0 = str2num(NI1_9IDCFindEmptyNoteValue("transI0_Empty"))
+			EmptyI0 = str2num(NI1_usxFindEmptyNoteValue("transI0_Empty"))
 			if(EmptyI0 < 1000) //something wrong, old system???
-				EmptyI0  = str2num(NI1_9IDCFindEmptyNoteValue("transBPM_B_Empty"))
-				EmptyI0 += str2num(NI1_9IDCFindEmptyNoteValue("transBPM_L_Empty"))
-				EmptyI0 += str2num(NI1_9IDCFindEmptyNoteValue("transBPM_T_Empty"))
-				EmptyI0 += str2num(NI1_9IDCFindEmptyNoteValue("transBPM_R_Empty"))
+				EmptyI0  = str2num(NI1_usxFindEmptyNoteValue("transBPM_B_Empty"))
+				EmptyI0 += str2num(NI1_usxFindEmptyNoteValue("transBPM_L_Empty"))
+				EmptyI0 += str2num(NI1_usxFindEmptyNoteValue("transBPM_T_Empty"))
+				EmptyI0 += str2num(NI1_usxFindEmptyNoteValue("transBPM_R_Empty"))
 			endif
-			EmptyPD = str2num(NI1_9IDCFindEmptyNoteValue("transPD_Empty"))
+			EmptyPD = str2num(NI1_usxFindEmptyNoteValue("transPD_Empty"))
 			DarkI0  = 0
 			DarkPD  = 0
-			//			 DarkI0=str2num(NI1_9IDCFindDarkNoteValue("transI0_Sample"))
+			//			 DarkI0=str2num(NI1_usxFindDarkNoteValue("transI0_Sample"))
 			//			 if(DarkI0<10)	//something wrong, old system???
-			//				 DarkI0=str2num(NI1_9IDCFindDarkNoteValue("transBPM_B_Sample"))
-			//				 DarkI0+=str2num(NI1_9IDCFindDarkNoteValue("transBPM_L_Sample"))
-			//				 DarkI0+=str2num(NI1_9IDCFindDarkNoteValue("transBPM_T_Sample"))
-			//				 DarkI0+=str2num(NI1_9IDCFindDarkNoteValue("transBPM_R_Sample"))
+			//				 DarkI0=str2num(NI1_usxFindDarkNoteValue("transBPM_B_Sample"))
+			//				 DarkI0+=str2num(NI1_usxFindDarkNoteValue("transBPM_L_Sample"))
+			//				 DarkI0+=str2num(NI1_usxFindDarkNoteValue("transBPM_T_Sample"))
+			//				 DarkI0+=str2num(NI1_usxFindDarkNoteValue("transBPM_R_Sample"))
 			//			endif
-			//			 DarkPD=str2num(NI1_9IDCFindDarkNoteValue("transPD_Sample"))
+			//			 DarkPD=str2num(NI1_usxFindDarkNoteValue("transPD_Sample"))
 		endif
 		transmissionUser = ((SamplePD - DarkPD) / (SampleI0 - DarkI0)) / ((EmptyPD - DarkPD) / (EmptyI0 - DarkI0))
 		print "The NX file lists transmission = " + num2str(ExistingTransmissionInFile)
@@ -2133,27 +2134,27 @@ End
 //************************************************************************************************************
 //************************************************************************************************************
 
-Function NI1_9IDCNXTransmission()
+Function NI1_usxNXTransmission()
 
 	WAVE/Z w2D = root:Packages:Convert2Dto1D:CCDImageToConvert
 	if(!WaveExists(w2D))
 		Abort "Data Image file not found "
 	endif
 	string   OldNOte          = note(w2D)
-	variable SampleI0         = NumberByKey(NI1_9IDCFindKeyStr("Pin_TrI0=", OldNote), OldNote, "=", ";")
-	variable SampleI0gain     = NumberByKey(NI1_9IDCFindKeyStr("Pin_TrI0gain=", OldNote), OldNote, "=", ";")
-	variable SamplePinPD      = NumberByKey(NI1_9IDCFindKeyStr("Pin_TrPD=", OldNote), OldNote, "=", ";")
-	variable SampleIPinPdGain = NumberByKey(NI1_9IDCFindKeyStr("Pin_TrPDgain=", OldNote), OldNote, "=", ";")
+	variable SampleI0         = NumberByKey(NI1_usxFindKeyStr("Pin_TrI0=", OldNote), OldNote, "=", ";")
+	variable SampleI0gain     = NumberByKey(NI1_usxFindKeyStr("Pin_TrI0gain=", OldNote), OldNote, "=", ";")
+	variable SamplePinPD      = NumberByKey(NI1_usxFindKeyStr("Pin_TrPD=", OldNote), OldNote, "=", ";")
+	variable SampleIPinPdGain = NumberByKey(NI1_usxFindKeyStr("Pin_TrPDgain=", OldNote), OldNote, "=", ";")
 
 	WAVE/Z w2D = root:Packages:Convert2Dto1D:EmptyData
 	if(!WaveExists(w2D))
 		Abort "Empty Image file not found "
 	endif
 	OldNOte = note(w2D)
-	variable EmptyI0        = NumberByKey(NI1_9IDCFindKeyStr("Pin_TrI0=", OldNote), OldNote, "=", ";")
-	variable EmptyI0gain    = NumberByKey(NI1_9IDCFindKeyStr("Pin_TrI0gain=", OldNote), OldNote, "=", ";")
-	variable EmptypinPD     = NumberByKey(NI1_9IDCFindKeyStr("Pin_TrPD=", OldNote), OldNote, "=", ";")
-	variable EmptyPinPDGain = NumberByKey(NI1_9IDCFindKeyStr("Pin_TrPDgain=", OldNote), OldNote, "=", ";")
+	variable EmptyI0        = NumberByKey(NI1_usxFindKeyStr("Pin_TrI0=", OldNote), OldNote, "=", ";")
+	variable EmptyI0gain    = NumberByKey(NI1_usxFindKeyStr("Pin_TrI0gain=", OldNote), OldNote, "=", ";")
+	variable EmptypinPD     = NumberByKey(NI1_usxFindKeyStr("Pin_TrPD=", OldNote), OldNote, "=", ";")
+	variable EmptyPinPDGain = NumberByKey(NI1_usxFindKeyStr("Pin_TrPDgain=", OldNote), OldNote, "=", ";")
 
 	variable Trans
 	print "SAXS SamplePinPD = " + num2str(SamplePinPD) + "    Gain = " + num2str(SampleIPinPdGain)
@@ -2169,7 +2170,7 @@ Function NI1_9IDCNXTransmission()
 End
 //************************************************************************************************************
 //************************************************************************************************************
-Function NI1_9IDCFindThickness(SampleName)
+Function NI1_usxFindThickness(SampleName)
 	string sampleName
 
 	WAVE/Z w2D = root:Packages:Convert2Dto1D:CCDImageToConvert
@@ -2177,8 +2178,8 @@ Function NI1_9IDCFindThickness(SampleName)
 		Abort "Image file not found "
 	endif
 	string   OldNOte            = note(w2D)
-	variable thickness1         = NumberByKey(NI1_9IDCFindKeyStr("sample:thickness=", OldNote), OldNote, "=", ";")
-	variable thickness2         = NumberByKey(NI1_9IDCFindKeyStr("sample_thickness=", OldNote), OldNote, "=", ";")
+	variable thickness1         = NumberByKey(NI1_usxFindKeyStr("sample:thickness=", OldNote), OldNote, "=", ";")
+	variable thickness2         = NumberByKey(NI1_usxFindKeyStr("sample_thickness=", OldNote), OldNote, "=", ";")
 	NVAR     UseBatchProcessing = root:Packages:Convert2Dto1D:UseBatchProcessing
 	if(numtype(thickness1) == 0)
 		if(!UseBatchProcessing)
@@ -2204,10 +2205,10 @@ End
 
 //************************************************************************************************************
 //************************************************************************************************************
-Function NI1_9IDCFindTransmission(SampleName)
+Function NI1_usxFindTransmission(SampleName)
 	string sampleName
 
-	string TransmissionIsHere = NI1_9IDCFindLikelyUSAXSName(SampleName)
+	string TransmissionIsHere = NI1_usxFindLikelyUSAXSName(SampleName)
 	string   TransmissionIsHereL
 	string/G root:Packages:Convert2Dto1D:USAXSSampleName
 	SVAR USAXSSampleName              = root:Packages:Convert2Dto1D:USAXSSampleName
@@ -2216,7 +2217,7 @@ Function NI1_9IDCFindTransmission(SampleName)
 
 	//try to calculate the transmission using the 2012-03 PD placed on the front of the snout...
 
-	variable CalcTrans = NI1_9IDCNXTransmission()
+	variable CalcTrans = NI1_usxNXTransmission()
 
 	if(USAXSForceUSAXSTransmission || CalcTrans == 0) //force old method and use of ONLY USAXS transmission or if CalcTrans is impossible to calculate
 		USAXSSampleName = ""
@@ -2261,7 +2262,7 @@ End
 //************************************************************************************************************
 //************************************************************************************************************
 
-Function/S NI1_9IDCFindLikelyUSAXSName(SampleName)
+Function/S NI1_usxFindLikelyUSAXSName(SampleName)
 	string sampleName
 	//12umCu_1min_1s_289.hdf5
 	string LikelyUSAXSName = RemoveEnding(SampleName, ".hdf5")
@@ -2304,11 +2305,11 @@ Function NI1_9IDWFindI0(SampleName)
 	endif
 	string OldNOte = note(w2D)
 	variable I000
-	I000 = NumberByKey(NI1_9IDCFindKeyStr("I0_cts_gated=", OldNote), OldNote, "=", ";") //try gated signal first...
+	I000 = NumberByKey(NI1_usxFindKeyStr("I0_cts_gated=", OldNote), OldNote, "=", ";") //try gated signal first...
 	if(numtype(I000) != 0)
-		I000 = NumberByKey(NI1_9IDCFindKeyStr("I0_cts=", OldNote), OldNote, "=", ";")
+		I000 = NumberByKey(NI1_usxFindKeyStr("I0_cts=", OldNote), OldNote, "=", ";")
 	endif
-	variable I0gain = NumberByKey(NI1_9IDCFindKeyStr("I0_gain=", OldNote), OldNote, "=", ";")
+	variable I0gain = NumberByKey(NI1_usxFindKeyStr("I0_gain=", OldNote), OldNote, "=", ";")
 	I000 = I000 / I0gain
 	if(numtype(I000) != 0)
 		Print "I0 value not found in the wave note of the sample file, setting to 1"
@@ -2355,11 +2356,11 @@ Function NI1_9IDWFindTRANS(SampleName)
 	string OldNOteSample = note(w2D)
 	string OldNOteEmpty  = note(w2DE)
 	variable I000S
-	I000S = NumberByKey(NI1_9IDCFindKeyStr("I0_cts_gated=", OldNOteSample), OldNOteSample, "=", ";") //try gated signal first...
+	I000S = NumberByKey(NI1_usxFindKeyStr("I0_cts_gated=", OldNOteSample), OldNOteSample, "=", ";") //try gated signal first...
 	if(numtype(I000S) != 0)
-		I000S = NumberByKey(NI1_9IDCFindKeyStr("I0_cts=", OldNOteSample), OldNOteSample, "=", ";")
+		I000S = NumberByKey(NI1_usxFindKeyStr("I0_cts=", OldNOteSample), OldNOteSample, "=", ";")
 	endif
-	variable I0gainS = NumberByKey(NI1_9IDCFindKeyStr("I0_gain=", OldNOteSample), OldNOteSample, "=", ";")
+	variable I0gainS = NumberByKey(NI1_usxFindKeyStr("I0_gain=", OldNOteSample), OldNOteSample, "=", ";")
 	print "WAXS SampleI0 = " + num2str(I000S) + "    Gain = " + num2str(I0gainS)
 	I000S = I000S / I0gainS
 	if(numtype(I000S) != 0)
@@ -2367,11 +2368,11 @@ Function NI1_9IDWFindTRANS(SampleName)
 		I000S = 1
 	endif
 	variable I000E
-	I000E = NumberByKey(NI1_9IDCFindKeyStr("I0_cts_gated=", OldNOteEmpty), OldNOteEmpty, "=", ";") //try gated signal first...
+	I000E = NumberByKey(NI1_usxFindKeyStr("I0_cts_gated=", OldNOteEmpty), OldNOteEmpty, "=", ";") //try gated signal first...
 	if(numtype(I000E) != 0)
-		I000E = NumberByKey(NI1_9IDCFindKeyStr("I0_cts=", OldNOteEmpty), OldNOteEmpty, "=", ";")
+		I000E = NumberByKey(NI1_usxFindKeyStr("I0_cts=", OldNOteEmpty), OldNOteEmpty, "=", ";")
 	endif
-	variable I0gainE = NumberByKey(NI1_9IDCFindKeyStr("I0_gain=", OldNOteEmpty), OldNOteEmpty, "=", ";")
+	variable I0gainE = NumberByKey(NI1_usxFindKeyStr("I0_gain=", OldNOteEmpty), OldNOteEmpty, "=", ";")
 	print "WAXS EmptyI0 = " + num2str(I000E) + "    Gain = " + num2str(I0gainE)
 	I000E = I000E / I0gainE
 	if(numtype(I000E) != 0)
@@ -2380,11 +2381,11 @@ Function NI1_9IDWFindTRANS(SampleName)
 	endif
 
 	variable TRDS
-	TRDS = NumberByKey(NI1_9IDCFindKeyStr("TR_cts_gated=", OldNOteSample), OldNOteSample, "=", ";") //try gated signal first...
+	TRDS = NumberByKey(NI1_usxFindKeyStr("TR_cts_gated=", OldNOteSample), OldNOteSample, "=", ";") //try gated signal first...
 	if(numtype(TRDS) != 0)
-		TRDS = NumberByKey(NI1_9IDCFindKeyStr("TR_cts=", OldNOteSample), OldNOteSample, "=", ";")
+		TRDS = NumberByKey(NI1_usxFindKeyStr("TR_cts=", OldNOteSample), OldNOteSample, "=", ";")
 	endif
-	variable TRDgainS = NumberByKey(NI1_9IDCFindKeyStr("TR_gain=", OldNOteSample), OldNOteSample, "=", ";")
+	variable TRDgainS = NumberByKey(NI1_usxFindKeyStr("TR_gain=", OldNOteSample), OldNOteSample, "=", ";")
 	print "WAXS SamplePinPD = " + num2str(TRDS) + "    Gain = " + num2str(TRDgainS)
 	TRDS = TRDS / TRDgainS
 	if(numtype(TRDS) != 0)
@@ -2392,11 +2393,11 @@ Function NI1_9IDWFindTRANS(SampleName)
 		TRDS = 1
 	endif
 	variable TRDE
-	TRDE = NumberByKey(NI1_9IDCFindKeyStr("TR_cts_gated=", OldNOteEmpty), OldNOteEmpty, "=", ";") //try gated signal first...
+	TRDE = NumberByKey(NI1_usxFindKeyStr("TR_cts_gated=", OldNOteEmpty), OldNOteEmpty, "=", ";") //try gated signal first...
 	if(numtype(TRDE) != 0)
-		TRDE = NumberByKey(NI1_9IDCFindKeyStr("TR_cts=", OldNOteEmpty), OldNOteEmpty, "=", ";")
+		TRDE = NumberByKey(NI1_usxFindKeyStr("TR_cts=", OldNOteEmpty), OldNOteEmpty, "=", ";")
 	endif
-	variable TRDgainE = NumberByKey(NI1_9IDCFindKeyStr("TR_gain=", OldNOteEmpty), OldNOteEmpty, "=", ";")
+	variable TRDgainE = NumberByKey(NI1_usxFindKeyStr("TR_gain=", OldNOteEmpty), OldNOteEmpty, "=", ";")
 	print "WAXS Empty = " + num2str(TRDE) + "    Gain = " + num2str(TRDgainE)
 	TRDE = TRDE / TRDgainE
 	if(numtype(TRDE) != 0)
@@ -2423,11 +2424,11 @@ Function NI1_9IDWFindEFI0(SampleName)
 	endif
 	string OldNOte = note(w2D)
 	variable I000
-	I000 = NumberByKey(NI1_9IDCFindKeyStr("I0_cts_gated=", OldNote), OldNote, "=", ";") //try gated signal first...
+	I000 = NumberByKey(NI1_usxFindKeyStr("I0_cts_gated=", OldNote), OldNote, "=", ";") //try gated signal first...
 	if(numtype(I000) != 0)
-		I000 = NumberByKey(NI1_9IDCFindKeyStr("I0_cts=", OldNote), OldNote, "=", ";")
+		I000 = NumberByKey(NI1_usxFindKeyStr("I0_cts=", OldNote), OldNote, "=", ";")
 	endif
-	variable I0gain = NumberByKey(NI1_9IDCFindKeyStr("I0_gain=", OldNote), OldNote, "=", ";")
+	variable I0gain = NumberByKey(NI1_usxFindKeyStr("I0_gain=", OldNote), OldNote, "=", ";")
 	I000 = I000 / I0gain
 	if(numtype(I000) != 0)
 		Print "I0 value not found in the wave note of the sample file, setting to 1"
@@ -2437,7 +2438,7 @@ Function NI1_9IDWFindEFI0(SampleName)
 End
 //************************************************************************************************************
 //************************************************************************************************************
-Function NI1_9IDCFindI0(SampleName)
+Function NI1_usxFindI0(SampleName)
 	string sampleName
 
 	WAVE/Z w2D = root:Packages:Convert2Dto1D:CCDImageToConvert
@@ -2445,8 +2446,8 @@ Function NI1_9IDCFindI0(SampleName)
 		Abort "Image file not found "
 	endif
 	string   OldNOte = note(w2D)
-	variable I000    = NumberByKey(NI1_9IDCFindKeyStr("I0_cts_gated=", OldNote), OldNote, "=", ";")
-	variable I0gain  = NumberByKey(NI1_9IDCFindKeyStr("I0_gain=", OldNote), OldNote, "=", ";")
+	variable I000    = NumberByKey(NI1_usxFindKeyStr("I0_cts_gated=", OldNote), OldNote, "=", ";")
+	variable I0gain  = NumberByKey(NI1_usxFindKeyStr("I0_gain=", OldNote), OldNote, "=", ";")
 	//print SampleName+"   normalized I0 = "+num2str(I000 / I0gain)
 	//print "I0 gain = "+num2str(I0gain)
 	//print "I0 counts uncorrected = "+num2str(I000)
@@ -2459,7 +2460,7 @@ Function NI1_9IDCFindI0(SampleName)
 End
 //************************************************************************************************************
 //************************************************************************************************************
-Function NI1_9IDCSFindI0(SampleName)
+Function NI1_usxSFindI0(SampleName)
 	string sampleName
 
 	WAVE/Z w2D = root:Packages:Convert2Dto1D:CCDImageToConvert
@@ -2467,12 +2468,12 @@ Function NI1_9IDCSFindI0(SampleName)
 		Abort "Image file not found "
 	endif
 	string   OldNOte = note(w2D)
-	variable I000    = NumberByKey(NI1_9IDCFindKeyStr("I0_Sample=", OldNote), OldNote, "=", ";")
+	variable I000    = NumberByKey(NI1_usxFindKeyStr("I0_Sample=", OldNote), OldNote, "=", ";")
 	if(numtype(I000) != 0 || I000 < 1)
-		I000  = NumberByKey(NI1_9IDCFindKeyStr("BPM_B_Sample=", OldNote), OldNote, "=", ";")
-		I000 += NumberByKey(NI1_9IDCFindKeyStr("BPM_T_Sample=", OldNote), OldNote, "=", ";")
-		I000 += NumberByKey(NI1_9IDCFindKeyStr("BPM_L_Sample=", OldNote), OldNote, "=", ";")
-		I000 += NumberByKey(NI1_9IDCFindKeyStr("BPM_R_Sample=", OldNote), OldNote, "=", ";")
+		I000  = NumberByKey(NI1_usxFindKeyStr("BPM_B_Sample=", OldNote), OldNote, "=", ";")
+		I000 += NumberByKey(NI1_usxFindKeyStr("BPM_T_Sample=", OldNote), OldNote, "=", ";")
+		I000 += NumberByKey(NI1_usxFindKeyStr("BPM_L_Sample=", OldNote), OldNote, "=", ";")
+		I000 += NumberByKey(NI1_usxFindKeyStr("BPM_R_Sample=", OldNote), OldNote, "=", ";")
 	endif
 	if(numtype(I000) != 0)
 		Print "I0 value not found in the wave note of the sample file, setting to 1"
@@ -2482,7 +2483,7 @@ Function NI1_9IDCSFindI0(SampleName)
 End
 //************************************************************************************************************
 //************************************************************************************************************
-Function NI1_9IDCSFindThickness(SampleName)
+Function NI1_usxSFindThickness(SampleName)
 	string sampleName
 
 	WAVE/Z w2D = root:Packages:Convert2Dto1D:CCDImageToConvert
@@ -2490,8 +2491,8 @@ Function NI1_9IDCSFindThickness(SampleName)
 		Abort "Image file not found "
 	endif
 	string   OldNOte            = note(w2D)
-	variable thickness1         = NumberByKey(NI1_9IDCFindKeyStr("sample:thickness=", OldNote), OldNote, "=", ";")
-	variable thickness2         = NumberByKey(NI1_9IDCFindKeyStr("sample_thickness=", OldNote), OldNote, "=", ";")
+	variable thickness1         = NumberByKey(NI1_usxFindKeyStr("sample:thickness=", OldNote), OldNote, "=", ";")
+	variable thickness2         = NumberByKey(NI1_usxFindKeyStr("sample_thickness=", OldNote), OldNote, "=", ";")
 	NVAR     UseBatchProcessing = root:Packages:Convert2Dto1D:UseBatchProcessing
 	if(numtype(thickness1) == 0)
 		if(!UseBatchProcessing)
@@ -2515,7 +2516,7 @@ Function NI1_9IDCSFindThickness(SampleName)
 End
 //************************************************************************************************************
 //************************************************************************************************************
-Function NI1_9IDCSFindEfI0(SampleName)
+Function NI1_usxSFindEfI0(SampleName)
 	string sampleName
 
 	WAVE/Z w2D = root:Packages:Convert2Dto1D:EmptyData
@@ -2523,12 +2524,12 @@ Function NI1_9IDCSFindEfI0(SampleName)
 		Abort "Image file not found "
 	endif
 	string   OldNOte = note(w2D)
-	variable I000    = NumberByKey(NI1_9IDCFindKeyStr("I0_Sample=", OldNote), OldNote, "=", ";")
+	variable I000    = NumberByKey(NI1_usxFindKeyStr("I0_Sample=", OldNote), OldNote, "=", ";")
 	if(numtype(I000) != 0 || I000 < 1)
-		I000  = NumberByKey(NI1_9IDCFindKeyStr("BPM_B_Sample=", OldNote), OldNote, "=", ";")
-		I000 += NumberByKey(NI1_9IDCFindKeyStr("BPM_T_Sample=", OldNote), OldNote, "=", ";")
-		I000 += NumberByKey(NI1_9IDCFindKeyStr("BPM_L_Sample=", OldNote), OldNote, "=", ";")
-		I000 += NumberByKey(NI1_9IDCFindKeyStr("BPM_R_Sample=", OldNote), OldNote, "=", ";")
+		I000  = NumberByKey(NI1_usxFindKeyStr("BPM_B_Sample=", OldNote), OldNote, "=", ";")
+		I000 += NumberByKey(NI1_usxFindKeyStr("BPM_T_Sample=", OldNote), OldNote, "=", ";")
+		I000 += NumberByKey(NI1_usxFindKeyStr("BPM_L_Sample=", OldNote), OldNote, "=", ";")
+		I000 += NumberByKey(NI1_usxFindKeyStr("BPM_R_Sample=", OldNote), OldNote, "=", ";")
 	endif
 	if(numtype(I000) != 0)
 		Print "I0 value not found in the wave note of the sample file, setting to 1"
@@ -2539,12 +2540,12 @@ End
 
 //************************************************************************************************************
 //************************************************************************************************************
-Function NI1_9IDCFindEfI0(SampleName)
+Function NI1_usxFindEfI0(SampleName)
 	string sampleName
 
 	//check the empty file name...
 	//this is 2D empty file name
-	string LikelyUSAXSName             = NI1_9IDCFindLikelyUSAXSName(SampleName)
+	string LikelyUSAXSName             = NI1_usxFindLikelyUSAXSName(SampleName)
 	SVAR   USAXSSampleName             = root:Packages:Convert2Dto1D:USAXSSampleName
 	NVAR   USAXSForceUSAXSTransmission = root:Packages:Convert2Dto1D:USAXSForceUSAXSTransmission
 	string SampleLocationL             = ""
@@ -2627,8 +2628,8 @@ Function NI1_9IDCFindEfI0(SampleName)
 		Abort "Load one Image file first so the tool can read the wave note information"
 	endif
 	string   OldNOte = note(w2D)
-	variable I000    = NumberByKey(NI1_9IDCFindKeyStr("I0_cts_gated=", OldNote), OldNote, "=", ";")
-	variable I0gain  = NumberByKey(NI1_9IDCFindKeyStr("I0_gain=", OldNote), OldNote, "=", ";")
+	variable I000    = NumberByKey(NI1_usxFindKeyStr("I0_cts_gated=", OldNote), OldNote, "=", ";")
+	variable I0gain  = NumberByKey(NI1_usxFindKeyStr("I0_gain=", OldNote), OldNote, "=", ";")
 	I000 = I000 / I0gain
 	//print SampleName+" EMPTY  normalized I0 = "+num2str(I000)
 	if(numtype(I000) != 0)
@@ -2641,11 +2642,11 @@ End
 //************************************************************************************************************
 //************************************************************************************************************
 
-Function NI1_9IDCCreateHelpNbk()
-	string nb = "Instructions_9IDC"
-	DoWIndow Instructions_9IDC
+Function NI1_usxCreateHelpNbk()
+	string nb = "Instructions_usx"
+	DoWIndow Instructions_usx
 	if(V_Flag)
-		DoWindow/F Instructions_9IDC
+		DoWindow/F Instructions_usx
 	else
 		NewNotebook/N=$nb/F=1/V=1/K=1/ENCG={2, 1}/W=(260, 162, 1291, 937)
 		Notebook $nb, defaultTab=36
@@ -2741,13 +2742,13 @@ Function NI1_9IDCCreateHelpNbk()
 		Notebook $nb, text="n this on the YouTube channel or USAXS web site.   "
 		Notebook $nb, selection={startOfFile, startOfFile}, findText={"I", 1}
 	endif
-	AutopositionWindow/M=1/R=NI1_9IDCConfigPanel Instructions_9IDC
+	AutopositionWindow/M=1/R=NI1_usxConfigPanel Instructions_usx
 End
 
 //************************************************************************************************************
 //************************************************************************************************************
 
-//Function NI1_9IDCCreateWvNtNbk(SampleName)
+//Function NI1_usxCreateWvNtNbk(SampleName)
 //	String SampleName
 //	Wave/Z w2D = root:Packages:Convert2Dto1D:CCDImageToConvert
 //	if(!WaveExists(w2D))		//hm, are we laoding the empty?
@@ -2756,11 +2757,11 @@ End
 //	if(WaveExists(w2d))
 //		string OldNOte=note(w2D)
 //
-//		string Instrument = StringByKey(NI1_9IDCFindKeyStr("instrument:name=", OldNote), OldNOte  , "=" , ";")		//USAXS
-//		string Facility = StringByKey(NI1_9IDCFindKeyStr("facility_beamline=", OldNote), OldNOte  , "=" , ";")
+//		string Instrument = StringByKey(NI1_usxFindKeyStr("instrument:name=", OldNote), OldNOte  , "=" , ";")		//USAXS
+//		string Facility = StringByKey(NI1_usxFindKeyStr("facility_beamline=", OldNote), OldNOte  , "=" , ";")
 //		variable i
 //		String nb
-//	//	if((stringMatch("15ID", )||stringMatch("9ID", StringByKey(NI1_9IDCFindKeyStr("facility_beamline=", OldNote), OldNOte  , "=" , ";"))) && stringMatch("Pilatus", StringByKey(NI1_9IDCFindKeyStr("model=", OldNote), OldNOte  , "=" , ";")))
+//	//	if((stringMatch("15ID", )||stringMatch("9ID", StringByKey(NI1_usxFindKeyStr("facility_beamline=", OldNote), OldNOte  , "=" , ";"))) && stringMatch("Pilatus", StringByKey(NI1_usxFindKeyStr("model=", OldNote), OldNOte  , "=" , ";")))
 //		if((stringMatch("15ID",Facility )||stringMatch("9ID",Facility )) && (stringMatch("USAXS", Instrument) || stringMatch("15ID SAXS", Instrument)))
 //				 nb = "Sample_Information"
 //				DoWindow Sample_Information
@@ -2804,7 +2805,7 @@ End
 //************************************************************************************************************
 //************************************************************************************************************
 
-Function NI1_9IDCCreateSMRSAXSdata(listOfOrientations)
+Function NI1_usxCreateSMRSAXSdata(listOfOrientations)
 	string listOfOrientations
 
 	//print listOfOrientations
@@ -2831,7 +2832,7 @@ Function NI1_9IDCCreateSMRSAXSdata(listOfOrientations)
 		return 0
 	endif
 	if(USAXSSlitLength < 0.001) //slit length not set, force user to find it...
-		NI1_9IDCFIndSlitLength()
+		NI1_usxFIndSlitLength()
 	endif
 
 	NVAR Use2DdataName             = root:Packages:Convert2Dto1D:Use2DdataName

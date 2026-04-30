@@ -13,7 +13,7 @@ Constant IR3TTwoPhaseVersionNumber 	= 1.00
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.03 added Optimized growth - gorws number of aggregates and searches for best matching one... 
+//1.03 added Optimized growth - grows number of aggregates and searches for best matching one... 
 //1.02 added MultiParticleAttraction parameter. 
 //1.01 3dAggregate added ability ot grow N aggregates and Compare Stored graph
 //1.00 first version, added code for 3DMassFractalAggregate from Alex McGlassson 
@@ -1954,7 +1954,7 @@ static Function IR3A_MakeAgg(DegreeOfAggregation,MassFractalAggregate,StickingPr
 			//if the particle StickingProbabilitys, add it to the aggregate
 			variable steps=trunc(DegreeOfAggregation/10)
 			steps = max(steps,100)
-			if(stuck==1 && IR3A_IsPXYZNOTinList3DWave(MassFractalAggregate,px,py,pz, aggct))	//added here to make sure we do not accidentally add existing particle. 
+			if(stuck==1 && WaveMin(Distances, 0, aggct-1) > 0.5)	//Distances already computed above; min>0 means position not yet occupied
 				//if(mod(aggct,steps)<1) ///round(DegreeOfAggregation/50))==aggct/round(DegreeOfAggregation/50))
 				//	Print time()+"  Added "+num2str(aggct)+" particles to the aggregate  "	//takes needless time.. 
 				//endif
@@ -1979,19 +1979,20 @@ End
 Function IR3A_AddToNeighborList(ListOfNeighbors,NumberOfNeighbors, Distances, MaxDistance, aggct)
 	wave ListOfNeighbors, NumberOfNeighbors, Distances
 	variable MaxDistance, aggct
-	
-	variable i
-	For(i=0;i<aggct;i+=1)
-		if(Distances[i]<MaxDistance)	//this is neighbor!	
-			//i is now old particle as neighbor
-			//aggct is new particle	
-			ListOfNeighbors[aggct][NumberOfNeighbors[aggct]]=i
-			NumberOfNeighbors[aggct]+=1
-			ListOfNeighbors[i][NumberOfNeighbors[i]]=aggct
-			NumberOfNeighbors[i]+=1
-		endif
-	endfor 
-	
+
+	// Extract indices of existing particles within MaxDistance in one vectorized C call,
+	// then loop only over the (typically 1-3) actual neighbors found.
+	Duplicate/FREE/R=[0,aggct-1] Distances, DistSlice
+	Extract/FREE/INDX DistSlice, NeighborIndices, DistSlice < MaxDistance
+	variable i, ni
+	For(i=0; i<numpnts(NeighborIndices); i+=1)
+		ni = NeighborIndices[i]
+		ListOfNeighbors[aggct][NumberOfNeighbors[aggct]] = ni
+		NumberOfNeighbors[aggct] += 1
+		ListOfNeighbors[ni][NumberOfNeighbors[ni]] = aggct
+		NumberOfNeighbors[ni] += 1
+	endfor
+
 end
 //******************************************************************************************************************************************************
 
@@ -3162,7 +3163,8 @@ static Function IR3A_CalculateAggValues()
 	NVAR TotalGrowthsPlanned = root:Packages:AggregateModeling:TotalGrowthsPlanned
 	NVAR MaxNumTests = root:Packages:AggregateModeling:MaxNumTests
 	NVAR StickProbNumSteps =root:Packages:AggregateModeling:StickProbNumSteps
-	TotalGrowthsPlanned = MaxNumTests * StickProbNumSteps
+	NVAR VaryStickingProbability = root:Packages:AggregateModeling:VaryStickingProbability
+	TotalGrowthsPlanned = MaxNumTests * (VaryStickingProbability ? StickProbNumSteps : 1)
 	NVAR dmin = root:Packages:AggregateModeling:BrFract_dmin
 	NVAR cval = root:Packages:AggregateModeling:BrFract_c
 	NVAR df = root:Packages:AggregateModeling:BrFract_df

@@ -1679,43 +1679,43 @@ Function NI1A_LineProf_CreateLP()
 
 
 		if(LineProfileUseRAW)
-			Wave/Z CCDImageToConvert=root:Packages:Convert2Dto1D:CCDImageToConvert_dis
-			if(!WaveExists(CCDImageToConvert))
+			Wave/Z SourceWave=root:Packages:Convert2Dto1D:CCDImageToConvert_dis
+			if(!WaveExists(SourceWave))
 				DoAlert 0, "Image data do not exist"
 				 return 0
 			endif
 		else
-			Wave/Z CCDImageToConvert=root:Packages:Convert2Dto1D:Calibrated2DDataSet
-			if(!WaveExists(CCDImageToConvert))
+			Wave/Z SourceWave=root:Packages:Convert2Dto1D:Calibrated2DDataSet
+			if(!WaveExists(SourceWave))
 				DoAlert 0, "Corrected data do not exist"
 				 return 0
 			endif
 		endif
 		//deal with wave note...
-		string OldNote=note(CCDImageToConvert)
+		string OldNote=note(SourceWave)
 		//first check if our mask is OK here...
 		if(UseMask)
 			wave M_ROIMask=root:Packages:Convert2Dto1D:M_ROIMask
-			MatrixOp/O MaskedQ2DWave = CCDImageToConvert *( M_ROIMask/M_ROIMask)
+			MatrixOp/O MaskedQ2DWave = SourceWave *( M_ROIMask/M_ROIMask)
 		else
-			MatrixOp/O MaskedQ2DWave = CCDImageToConvert
+			MatrixOp/O MaskedQ2DWave = SourceWave
 		endif
 		//first create xwave and ywave for the ImageLineProfile...
 		variable length
 		if(stringMatch(LineProf_CurveType,"Horizontal Line")||stringMatch(LineProf_CurveType,"GI_Horizontal Line"))
-			length=DimSize(CCDImageToConvert, 0 )
+			length=DimSize(SourceWave, 0 )
 			make/O/N=(length) xwave, ywave
 		elseif(stringMatch(LineProf_CurveType,"Vertical Line")||stringMatch(LineProf_CurveType,"GI_Vertical Line")||stringMatch(LineProf_CurveType,"GISAXS_FixQy"))
-			length=DimSize(CCDImageToConvert, 1 )
+			length=DimSize(SourceWave, 1 )
 			make/O/N=(length) xwave, ywave
 		elseif(stringMatch(LineProf_CurveType,"Angle Line"))
 			variable dim1
-			dim1=max(DimSize(CCDImageToConvert, 0 ),DimSize(CCDImageToConvert, 1 ))
+			dim1=max(DimSize(SourceWave, 0 ),DimSize(SourceWave, 1 ))
 			make/O/N=(dim1) xwave
 			make/O/N=(dim1) ywave
 		elseif(stringMatch(LineProf_CurveType,"Ellipse"))
 			make/O/N=(1440) xwave, ywave			//every 0.25 degrees should be enough...
-		endif	
+		endif
 		//here we create paths as needed... This should be the same as in the NI1A_DrawLinesIn2DGraph function
 		if(stringMatch(LineProf_CurveType,"Horizontal Line")||stringMatch(LineProf_CurveType,"GI_Horizontal Line"))
 			xwave=BeamCenterY-LineProf_DistanceFromCenter
@@ -1724,10 +1724,10 @@ Function NI1A_LineProf_CreateLP()
 			xwave=p
 			ywave=BeamCenterX+LineProf_DistanceFromCenter
 		elseif(stringMatch(LineProf_CurveType,"Angle Line"))
-			NI1A_GenerAngleLine(Dimsize(CCDImageToConvert, 0),Dimsize(CCDImageToConvert, 1),BeamCenterX,BeamCenterY,LineProf_LineAzAngle,LineProf_DistanceFromCenter,yWave,xWave)
+			NI1A_GenerAngleLine(Dimsize(SourceWave, 0),Dimsize(SourceWave, 1),BeamCenterX,BeamCenterY,LineProf_LineAzAngle,LineProf_DistanceFromCenter,yWave,xWave)
 		elseif(stringMatch(LineProf_CurveType,"Ellipse"))
 			NI1A_GenerEllipseLine(BeamCenterX,BeamCenterY,LineProf_EllipseAR,LineProf_DistanceFromCenter,yWave,xWave)
-		endif	
+		endif
 		ImageLineProfile/S xWave=ywave, yWave=xwave, srcwave=MaskedQ2DWave , width= LineProf_Width				//why is here xwave and ywave swapped? ANy reason (5-3-2022)
 		Wave W_LineProfileX = root:Packages:Convert2Dto1D:W_LineProfileX
 		Wave W_LineProfileY = root:Packages:Convert2Dto1D:W_LineProfileY
@@ -1904,7 +1904,7 @@ Function NI1A_LineProf_CreateLP()
 		//			abort
 		//		endif
 		
-		Duplicate/O LineProfileQvalues, LineProfiledQvalues, LineProfileTwoThetaWidth, LineProfileDistacneInmmWidth, LineProfileDspacingWidth
+		Duplicate/O LineProfileQvalues, LineProfiledQvalues, LineProfileTwoThetaWidth, LineProfileDistanceInmmWidth, LineProfileDspacingWidth
 		Duplicate/Free LineProfileQvalues, LineProfileTwoTheta, LineProfileDistacneInmm, LineProfileDspacing
 		LineProfiledQvalues[0,numpnts(LineProfileQvalues)-2] = LineProfileQvalues[p+1] - LineProfileQvalues[p]
 		LineProfiledQvalues[numpnts(LineProfileQvalues)-1]=LineProfiledQvalues[numpnts(LineProfileQvalues)-2]
@@ -1917,8 +1917,8 @@ Function NI1A_LineProf_CreateLP()
 		LineProfileDspacingWidth[numpnts(LineProfileDspacingWidth)-1]=LineProfileDspacingWidth[numpnts(LineProfileDspacingWidth)-2]
 	
 		LineProfileDistacneInmm =  SampleToCCDDistance*tan(LineProfileTwoTheta*pi/180)
-		LineProfileDistacneInmmWidth[0,numpnts(LineProfileDistacneInmmWidth)-2]  = LineProfileDistacneInmm[p+1] - LineProfileDistacneInmm[p]
-		LineProfileDistacneInmmWidth[numpnts(LineProfileDistacneInmmWidth)-1]=LineProfileDistacneInmmWidth[numpnts(LineProfileDistacneInmmWidth)-2]
+		LineProfileDistanceInmmWidth[0,numpnts(LineProfileDistanceInmmWidth)-2]  = LineProfileDistacneInmm[p+1] - LineProfileDistacneInmm[p]
+		LineProfileDistanceInmmWidth[numpnts(LineProfileDistanceInmmWidth)-1]=LineProfileDistanceInmmWidth[numpnts(LineProfileDistanceInmmWidth)-2]
 
 		//create proper Q smearing data accounting for all other parts of gemoetry - beam size and pixels size
 		//now this needs to be convoluted with other effects. 
@@ -1928,7 +1928,7 @@ Function NI1A_LineProf_CreateLP()
 		NVAR PixelSizeY = root:Packages:Convert2Dto1D:PixelSizeY
 		NVAR Wavelength= root:Packages:Convert2Dto1D:Wavelength
 		NVAR SampleToCCDdistance = root:Packages:Convert2Dto1D:SampleToCCDdistance
-		NI1A_CalculateQresolution(LineProfileQvalues,LineProfiledQvalues,LineProfileTwoThetaWidth, LineProfileDspacingWidth, LineProfileDistacneInmmWidth, PixelSizeX,PixelSizeY,BeamSizeX,BeamSizeY,Wavelength,SampleToCCDdistance)
+		NI1A_CalculateQresolution(LineProfileQvalues,LineProfiledQvalues,LineProfileTwoThetaWidth, LineProfileDspacingWidth, LineProfileDistanceInmmWidth, PixelSizeX,PixelSizeY,BeamSizeX,BeamSizeY,Wavelength,SampleToCCDdistance)
 		//that above creates the resolution due to pixel size, beam size and convolute them to existing binning q resolution. 
 
 	setDataFolder OldDf

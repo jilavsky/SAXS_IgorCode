@@ -530,8 +530,8 @@ Function NI1_RSoXSConfigureNika()
 
 	SampleCorrectFnct = "NI1_RSoXSFindCorrectionFactor"
 	SampleMonitorFnct = "NI1_RSoXSFindNormalFactor"
-	//				EmptyMonitorFnct = "NI1_9IDCSFindEfI0"
-	//				SampleThicknFnct = "NI1_9IDCSFindThickness"
+	//				EmptyMonitorFnct = "NI1_usxSFindEfI0"
+	//				SampleThicknFnct = "NI1_usxSFindThickness"
 
 End
 

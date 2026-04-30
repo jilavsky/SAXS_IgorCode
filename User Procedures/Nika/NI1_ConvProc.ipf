@@ -1,7 +1,8 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use modern global access method.
+#pragma IgorVersion=9.04
 
-#pragma version=2.78
+#pragma version=2.79
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -10,6 +11,7 @@
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//2.79 2026-04: Multiple bug fixes and improvements (A1-A10, B1-B10, C1-C6, D1-D10 per code review).
 //2.78 change some calculations to DP as 2024-09-26, some users are running with intensity out of SP precision.
 //2.77 fix for behavior with UseSampleTransmission controls.
 //2.76 Fix LUT type to 32bit unsigned integer. Wiht LUT wave as FP32 on 4kx4k images Nika was running out of p precision and data reduction broke.
@@ -156,7 +158,7 @@ Function NI1A_AverageDataPerUserReq(orientation)
 	WAVE DspacingWidthA = $("root:Packages:Convert2Dto1D:DspacingWidth_" + orientation)
 
 	WAVE/Z DistanceInmmA      = $("root:Packages:Convert2Dto1D:DistanceInmm_" + orientation)
-	WAVE   DistacneInmmWidthA = $("root:Packages:Convert2Dto1D:DistacneInmmWidth_" + orientation)
+	WAVE   DistanceInmmWidthA = $("root:Packages:Convert2Dto1D:DistanceInmmWidth_" + orientation)
 
 	NVAR DoGeometryCorrection     = root:Packages:Convert2Dto1D:DoGeometryCorrection
 	NVAR DoPolarizationCorrection = root:Packages:Convert2Dto1D:DoPolarizationCorrection
@@ -192,7 +194,7 @@ Function NI1A_AverageDataPerUserReq(orientation)
 	Duplicate/O TwoThetaA, TwoTheta
 	Duplicate/O TwoThetaWidthA, TwoThetaWidth
 	Duplicate/O DistanceInmmA, DistanceInmm
-	Duplicate/O DistacneInmmWidthA, DistacneInmmWidth
+	Duplicate/O DistanceInmmWidthA, DistanceInmmWidth
 	Duplicate/O DspacingA, Dspacing
 	Duplicate/O DspacingWidthA, DspacingWidth
 	Intensity = 0
@@ -248,8 +250,8 @@ Function NI1A_AverageDataPerUserReq(orientation)
 
 	//print StopMSTimer(timerRefNum)
 	MatrixOp/FREE TempSumXi = Intensity //OK, now we have sumXi saved
-	MatrixOp/O Intensity = Intensity / (HistogramWv + 1) //This is average intensity...., for +1 see above notes.
-	//MatrixOp/O  Intensity=Intensity/(HistogramWv)			//This is average intensity...., for +1 see above notes.
+	MatrixOp/O Intensity = Intensity / HistogramWv //This is average intensity.
+	//MatrixOp/O  Intensity=Intensity/(HistogramWv+1)			//old code had +1 which gave wrong result for 1-pixel bins
 	Intensity = (HistogramWv > 0) ? Intensity[p] : NaN
 	MatrixOp/O Intensity = replace(Intensity, inf, nan)
 
@@ -286,9 +288,9 @@ Function NI1A_AverageDataPerUserReq(orientation)
 	note Intensity, OldNote
 	note Error, OldNote
 	//remove first point - it contains all the masked points set to Q=0...
-	DeletePoints 0, 1, intensity, error, Qvector, Qsmearing, TwoTheta, TwoThetaWidth, Dspacing, DspacingWidth, DistanceInmm, DistacneInmmWidth
+	DeletePoints 0, 1, intensity, error, Qvector, Qsmearing, TwoTheta, TwoThetaWidth, Dspacing, DspacingWidth, DistanceInmm, DistanceInmmWidth
 	//remove any Nan points (set to Nan by error evaluation above).
-	IN2G_RemoveNaNsFrom10Waves(intensity, error, Qvector, Qsmearing, TwoTheta, TwoThetaWidth, Dspacing, DspacingWidth, DistanceInmm, DistacneInmmWidth)
+	IN2G_RemoveNaNsFrom10Waves(intensity, error, Qvector, Qsmearing, TwoTheta, TwoThetaWidth, Dspacing, DspacingWidth, DistanceInmm, DistanceInmmWidth)
 	//now fix oversubtraction of background, if selected.
 	NVAR FixBackgroundOversubtraction = root:Packages:Convert2Dto1D:FixBackgroundOversubtraction
 	if(FixBackgroundOversubtraction)
@@ -309,8 +311,8 @@ End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 
-Function NI1A_CalculateQresolution(Qvector, QvectorWidth, TwoThetaWidth, DistacneInmmWidth, DspacingWidth, PixX, PixY, BeamX, BeamY, Wavelength, SampleToCCDdistance)
-	WAVE Qvector, QvectorWidth, TwoThetaWidth, DistacneInmmWidth, DspacingWidth
+Function NI1A_CalculateQresolution(Qvector, QvectorWidth, TwoThetaWidth, DistanceInmmWidth, DspacingWidth, PixX, PixY, BeamX, BeamY, Wavelength, SampleToCCDdistance)
+	WAVE Qvector, QvectorWidth, TwoThetaWidth, DistanceInmmWidth, DspacingWidth
 	variable PixX, PixY, BeamX, BeamY, Wavelength, SampleToCCDdistance
 	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	//note the Qresolution already has accounted for bin width for integration.
@@ -371,17 +373,17 @@ Function NI1A_CalculateQresolution(Qvector, QvectorWidth, TwoThetaWidth, Distacn
 	//now, QvectorWidth is larger of QvectorWidth and TempPixQres
 	QvectorWidth      = QvectorWidth[p] > TempPixQres[p] ? QvectorWidth[p] : TempPixQres[p]
 	TwoThetaWidth     = TwoThetaWidth[p] > tempTTPix[p] ? TwoThetaWidth[p] : tempTTPix[p]
-	DistacneInmmWidth = DistacneInmmWidth[p] > tempDistPix[p] ? DistacneInmmWidth[p] : tempDistPix[p]
+	DistanceInmmWidth = DistanceInmmWidth[p] > tempDistPix[p] ? DistanceInmmWidth[p] : tempDistPix[p]
 	DspacingWidth     = DspacingWidth[p] > TempDPix[p] ? DspacingWidth[p] : TempDPix[p]
 	//now convolute this...
 	QvectorWidth      = sqrt(QvectorWidth[p]^2 + TempBeamQres[p]^2)
 	TwoThetaWidth     = sqrt(TwoThetaWidth[p]^2 + tempTTBeam[p]^2)
-	DistacneInmmWidth = sqrt(DistacneInmmWidth[p]^2 + tempDistBeam[p]^2)
+	DistanceInmmWidth = sqrt(DistanceInmmWidth[p]^2 + tempDistBeam[p]^2)
 	DspacingWidth     = sqrt(DspacingWidth[p]^2 + TempDBeam[p]^2)
 	//convert all of these into 1/2 of FWHM, above are FWHM
 	QvectorWidth      /= 2
 	TwoThetaWidth     /= 2
-	DistacneInmmWidth /= 2
+	DistanceInmmWidth /= 2
 	DspacingWidth     /= 2
 End
 //*******************************************************************************************************************************************
@@ -458,21 +460,25 @@ Function NI1A_CorrectDataPerUserReqN(orientation)
 	//little checking here...
 	if(UseMask)
 		if(!WaveExists(MaskWave) || DimSize(MaskWave, 0) != DimSize(DataWave, 0) || DimSize(MaskWave, 1) != DimSize(DataWave, 1))
+			setDataFolder OldDf
 			abort "Mask problem - either does not exist or has differnet dimensions that data "
 		endif
 	endif
 	if(UseDarkField && !UseCalib2DData)
 		if(!WaveExists(DarkCurrentWave) || DimSize(DarkCurrentWave, 0) != DimSize(DataWave, 0) || DimSize(DarkCurrentWave, 1) != DimSize(DataWave, 1))
+			setDataFolder OldDf
 			abort "Dark field problem - either does not exist or has differnet dimensions that data "
 		endif
 	endif
 	if(UseEmptyField && !UseCalib2DData)
 		if(!WaveExists(EmptyRunWave) || DimSize(EmptyRunWave, 0) != DimSize(DataWave, 0) || DimSize(EmptyRunWave, 1) != DimSize(DataWave, 1))
+			setDataFolder OldDf
 			abort "Empty data problem - either does not exist or has differnet dimensions that data "
 		endif
 	endif
 	if(UsePixelSensitivity && !UseCalib2DData)
 		if(!WaveExists(Pix2DSensitivity) || DimSize(Pix2DSensitivity, 0) != DimSize(DataWave, 0) || DimSize(Pix2DSensitivity, 1) != DimSize(DataWave, 1))
+			setDataFolder OldDf
 			abort "Pix2D Sensitivity problem - either does not exist or has differnet dimensions that data "
 		endif
 	endif
@@ -618,13 +624,21 @@ Function NI1A_CorrectDataPerUserReqN(orientation)
 
 		if(DoGeometryCorrection) //geometry correction (= cos(angle)^3) for solid angle projection, added 6/24/2006 to do in 2D data, not in 1D as done (incorrectly also) before using Dales routine.
 			NI1A_GenerateGeometryCorr2DWave()
-			WAVE GeometryCorrection
+			WAVE/Z GeometryCorrection = root:Packages:Convert2Dto1D:GeometryCorrection
+			if(!WaveExists(GeometryCorrection))
+				setDataFolder OldDf
+				Abort "Geometry correction wave not created - check geometry parameters"
+			endif
 			MatrixOp/O Calibrated2DDataSet = Calibrated2DDataSet / GeometryCorrection
 		endif
 
 		if(DoPolarizationCorrection) //added 8/31/09 to enable 2D corection for polarization
 			NI1A_Generate2DPolCorrWv()
-			WAVE polar2DWave
+			WAVE/Z polar2DWave = root:Packages:Convert2Dto1D:polar2DWave
+			if(!WaveExists(polar2DWave))
+				setDataFolder OldDf
+				Abort "Polarization correction wave not created - check polarization parameters"
+			endif
 			MatrixOp/O Calibrated2DDataSet = Calibrated2DDataSet / polar2DWave //changed to "/" on October 12 2009 since due to use MatrixOp in new formula the calculate values are less than 1 and this is now correct.
 		endif
 
@@ -759,12 +773,13 @@ Function NI1A_Generate2DPolCorrWv()
 
 	NVAR HorizontalTilt = root:Packages:Convert2Dto1D:HorizontalTilt //tilt in degrees
 	NVAR VerticalTilt   = root:Packages:Convert2Dto1D:VerticalTilt   //tilt in degrees
-	variable i
+	variable i, OldVal
 	string   TempStr
 	for(i = 0; i < itemsInList(ParamsToCheck); i += 1)
 		TempStr = StringFromList(i, ParamsToCheck)
 		NVAR TempVar = $("root:Packages:Convert2Dto1D:" + TempStr)
-		if(!stringMatch(num2str(TempVar), StringByKey(TempStr, OldNote, "=", ";")))
+		OldVal = str2num(StringByKey(TempStr, OldNote, "=", ";"))
+		if(numtype(OldVal) != 0 || abs(TempVar - OldVal) > 1e-6 * (abs(TempVar) + 1e-10))
 			NeedToUpdate = 1
 		endif
 	endfor
@@ -849,7 +864,7 @@ Function NI1A_GenerateGeometryCorr2DWave()
 		if(DimSize(GeometryCorrection, 0) == DimSize(DataWave, 0) && DimSize(GeometryCorrection, 1) == DimSize(DataWave, 1))
 			Match5 = 1
 		endif
-		if(Match1 && match2 && Match3 && Match4 && Match5)
+		if(Match1 && Match2 && Match3 && Match4 && Match5)
 			return 1
 		endif
 	endif
@@ -859,7 +874,7 @@ Function NI1A_GenerateGeometryCorr2DWave()
 	WAVE Q2DWave = root:Packages:Convert2Dto1D:Q2DWave
 	MatrixOp/O GeometryCorrection = 2 * asin(Q2DWave * Ltemp)
 	MatrixOp/O GeometryCorrection = powR(cos(GeometryCorrection), 3)
-	WAVE GeometryCorrection
+	WAVE GeometryCorrection = root:Packages:Convert2Dto1D:GeometryCorrection
 	Redimension/S GeometryCorrection
 
 	Note/K GeometryCorrection, O2N
@@ -1003,7 +1018,7 @@ Function NI1A_CheckGeometryWaves(orientation) //checks if current geometry waves
 
 	WAVE/Z KillQ2D = $("root:Packages:Convert2Dto1D:Qdistribution1D_" + orientation)
 	WAVE/Z KillR2D = $("root:Packages:Convert2Dto1D:Rdistribution1D_" + orientation)
-	KillWaves/Z KillQ2D, KillRQ2D
+	KillWaves/Z KillQ2D, KillR2D
 	setDataFolder OldDf
 	return YesNo
 End
@@ -1100,6 +1115,7 @@ Function NI1A_CreateHistogram(orientation)
 			endif
 		endif
 		if(MinQ > MaxQ)
+			setDataFolder OldDf
 			abort "Error in create Histogram, MinQ > MaxQ"
 		endif
 		MinQtemp           = MinQ + 0.2 * (MaxQ - MinQ) / QvectorNumberPoints
@@ -1129,6 +1145,7 @@ Function NI1A_CreateHistogram(orientation)
 			endif
 		endif //next line has problem with MinQ and single precision of Qdistribution1D... Need ot set to slightly higher value...
 		if(MinQ > MaxQ)
+			setDataFolder OldDf
 			abort "Error in create Histogram, MinQ > MaxQ"
 		endif
 		//		if(ThetaSameNumPoints)	//linear stepping in Theta
@@ -1165,13 +1182,13 @@ Function NI1A_CreateHistogram(orientation)
 	note HistogramWv, NoteStr
 	//create now 2theta wave and d spacing wave
 	Duplicate/O Qvector, $("root:Packages:Convert2Dto1D:TwoTheta_" + orientation), $("root:Packages:Convert2Dto1D:Dspacing_" + orientation), $("root:Packages:Convert2Dto1D:DistanceInmm_" + orientation)
-	Duplicate/O Qvector, $("root:Packages:Convert2Dto1D:TwoThetaWidth_" + orientation), $("root:Packages:Convert2Dto1D:DspacingWidth_" + orientation), $("root:Packages:Convert2Dto1D:DistacneInmmWidth_" + orientation)
+	Duplicate/O Qvector, $("root:Packages:Convert2Dto1D:TwoThetaWidth_" + orientation), $("root:Packages:Convert2Dto1D:DspacingWidth_" + orientation), $("root:Packages:Convert2Dto1D:DistanceInmmWidth_" + orientation)
 	WAVE TwoTheta          = $("root:Packages:Convert2Dto1D:TwoTheta_" + orientation)
 	WAVE Dspacing          = $("root:Packages:Convert2Dto1D:Dspacing_" + orientation)
 	WAVE DistanceInmm      = $("root:Packages:Convert2Dto1D:DistanceInmm_" + orientation)
 	WAVE TwoThetaWidth     = $("root:Packages:Convert2Dto1D:TwoThetaWidth_" + orientation)
 	WAVE DspacingWidth     = $("root:Packages:Convert2Dto1D:DspacingWidth_" + orientation)
-	WAVE DistacneInmmWidth = $("root:Packages:Convert2Dto1D:DistacneInmmWidth_" + orientation)
+	WAVE DistanceInmmWidth = $("root:Packages:Convert2Dto1D:DistanceInmmWidth_" + orientation)
 	// sin (theta) = Q * Lambda / 4 * pi
 	// Lamdba = 2 * d * sin (theta)
 	// d = 0.5 * Lambda / sin(theta) = 2 * pi / Q    Q = 2pi/d
@@ -1189,8 +1206,8 @@ Function NI1A_CreateHistogram(orientation)
 	DSpacingWidth[numpnts(DSpacingWidth) - 1]    = DSpacingWidth[numpnts(DSpacingWidth) - 2]
 
 	DistanceInmm                                         = SampleToCCDDistance * tan(TwoTheta * pi / 180)
-	DistacneInmmWidth[0, numpnts(DistacneInmmWidth) - 2] = DistanceInmm[p + 1] - DistanceInmm[p]
-	DistacneInmmWidth[numpnts(DistacneInmmWidth) - 1]    = DistacneInmmWidth[numpnts(DistacneInmmWidth) - 2]
+	DistanceInmmWidth[0, numpnts(DistanceInmmWidth) - 2] = DistanceInmm[p + 1] - DistanceInmm[p]
+	DistanceInmmWidth[numpnts(DistanceInmmWidth) - 1]    = DistanceInmmWidth[numpnts(DistanceInmmWidth) - 2]
 
 	//create proper Q smearing data accounting for all other parts of gemoetry - beam size and pixels size
 	//now this needs to be convoluted with other effects.
@@ -1200,7 +1217,7 @@ Function NI1A_CreateHistogram(orientation)
 	NVAR PixelSizeY          = root:Packages:Convert2Dto1D:PixelSizeY
 	NVAR Wavelength          = root:Packages:Convert2Dto1D:Wavelength
 	NVAR SampleToCCDdistance = root:Packages:Convert2Dto1D:SampleToCCDdistance
-	NI1A_CalculateQresolution(Qvector, QvectorWidth, TwoThetaWidth, DistacneInmmWidth, DspacingWidth, PixelSizeX, PixelSizeY, BeamSizeX, BeamSizeY, Wavelength, SampleToCCDdistance)
+	NI1A_CalculateQresolution(Qvector, QvectorWidth, TwoThetaWidth, DistanceInmmWidth, DspacingWidth, PixelSizeX, PixelSizeY, BeamSizeX, BeamSizeY, Wavelength, SampleToCCDdistance)
 	//that above creates the resolution due to pixel size, beam size and convolute them to existing binning q resolution.
 
 	setDataFOlder OldDF
@@ -1287,11 +1304,11 @@ Function NI1A_CreateLUT(orientation)
 		endAgleFixed    = centerAngleRad + WidthAngleRad
 
 		if(startAngleFixed < 0)
-			Multithread tempAnglesMask = ((AnglesWave[p][q] > (2 * pi + startAngleFixed) || AnglesWave[p][q] < endAgleFixed)) ? 1 : 0
+			Multithread tempAnglesMask = ((AnglesWave[p][q] >= (2 * pi + startAngleFixed) || AnglesWave[p][q] <= endAgleFixed)) ? 1 : 0
 		elseif(endAgleFixed > (2 * pi))
-			Multithread tempAnglesMask = (AnglesWave[p][q] > startAngleFixed || AnglesWave[p][q] < (endAgleFixed - 2 * pi)) ? 1 : 0
+			Multithread tempAnglesMask = (AnglesWave[p][q] >= startAngleFixed || AnglesWave[p][q] <= (endAgleFixed - 2 * pi)) ? 1 : 0
 		else
-			Multithread tempAnglesMask = (AnglesWave[p][q] > startAngleFixed && AnglesWave[p][q] < endAgleFixed) ? 1 : 0
+			Multithread tempAnglesMask = (AnglesWave[p][q] >= startAngleFixed && AnglesWave[p][q] <= endAgleFixed) ? 1 : 0
 		endif
 
 		MatrixOp/O MaskedQ2DWave = MaskedQ2DWave * tempAnglesMask
@@ -1499,35 +1516,43 @@ Function NI1A_Check2DConversionData()
 	NVAR UsePixelSensitivity    = root:Packages:Convert2Dto1D:UsePixelSensitivity
 	NVAR UseCalib2DData         = root:Packages:Convert2Dto1D:UseCalib2DData
 	if(!WaveExists(DataWave))
+		setDataFolder OldDf
 		Abort "Data wave does not exist"
 	endif
 	if(!UseCalib2DData && (UseEmptyField && (WaveExists(EmptyRunWave) != 1)))
+		setDataFolder OldDf
 		Abort "Empty wave does not exist"
 	endif
 	if(!UseCalib2DData && (UseDarkField && (WaveExists(DarkCurrentWave) != 1)))
+		setDataFolder OldDf
 		Abort "Dark field wave does not exist"
 	endif
 	if(!UseCalib2DData && (UsePixelSensitivity && (WaveExists(Pix2DSensitivity) != 1)))
+		setDataFolder OldDf
 		Abort "Pix2D sensitivity wave does not exist"
 	endif
 	//check the waves for dimensions, they must be the same....
 	if(!UseCalib2DData && UsePixelSensitivity)
 		if(DimSize(DataWave, 0) != dimsize(Pix2DSensitivity, 0) || DimSize(DataWave, 1) != DimSize(Pix2DSensitivity, 1))
+			setDataFolder OldDf
 			Abort "Error, the pix2D sensitivity wave does not have the same dimensions"
 		endif
 	endif
 	if(!UseCalib2DData && UseEmptyField)
 		if(DimSize(DataWave, 0) != dimsize(EmptyRunWave, 0) || DimSize(DataWave, 1) != DimSize(EmptyRunWave, 1))
+			setDataFolder OldDf
 			Abort "Error, the empty wave does not have the same dimensions"
 		endif
 	endif
 	if(!UseCalib2DData && UseDarkField)
 		if(DimSize(DataWave, 0) != dimsize(DarkCurrentWave, 0) || DimSize(DataWave, 1) != DimSize(DarkCurrentWave, 1))
+			setDataFolder OldDf
 			Abort "Error, the dark field wave does not have the same dimensions"
 		endif
 	endif
 	if(UseMask)
 		if(DimSize(DataWave, 0) != dimsize(MaskWave, 0) || DimSize(DataWave, 1) != DimSize(MaskWave, 1))
+			setDataFolder OldDf
 			Abort "Error, the mask field wave does not have the same dimensions"
 		endif
 	endif
@@ -2175,6 +2200,7 @@ End
 static Function NI1A_ImportThisJPGFile(SelectedFileToLoad)
 	string SelectedFileToLoad
 	//"Convert2Dto1DDataPath"
+	string OldDf = GetDataFolder(1)
 	NVAR/Z DisplayJPGFile = root:Packages:Convert2Dto1D:DisplayJPGFile
 	KillWindow/Z SampleImageDuringMeasurementImg
 	variable Sucess = 0
@@ -2202,6 +2228,7 @@ static Function NI1A_ImportThisJPGFile(SelectedFileToLoad)
 			endif
 		endif
 	endif
+	setDataFolder OldDf
 End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -2326,7 +2353,11 @@ Function NI1A_DisplayOneDataSet()
 		endif
 	endfor
 	OldNote += "NumberOfAveragedFiles=" + num2str(numLoadedImages) + ";"
-	WAVE tempWave = root:Packages:Convert2Dto1D:CCDImageToConvertTemp
+	WAVE/Z tempWave = root:Packages:Convert2Dto1D:CCDImageToConvertTemp
+	if(numLoadedImages == 0 || !WaveExists(tempWave))
+		setDataFolder OldDf
+		return 0
+	endif
 	redimension/D tempWave
 	MatrixOp/O CCDImageToConvert = tempWave / numLoadedImages
 	KillWaves/Z tempWave
@@ -2615,14 +2646,14 @@ Function NI1A_LoadManyDataSetsForConv()
 	variable u, j
 	for(i = 0; i < imax; i += 1)
 		if(ListOf2DSampleDataNumbers[i])
-			NVAR average              = $("root:Packages:NI1_BSLFiles:BSLaverage")
-			NVAR sumframes            = $("root:Packages:NI1_BSLFiles:BSLsumframes")
-			NVAR sumseq               = $("root:Packages:NI1_BSLFiles:BSLsumseq")
-			NVAR saxsframe            = $("root:Packages:NI1_BSLFiles:BSLframes")
-			NVAR currentframe         = $("root:Packages:NI1_BSLFiles:BSLcurrentframe")
-			NVAR BSLfromframe         = $("root:Packages:NI1_BSLFiles:BSLfromframe")
-			NVAR BSLtoframe           = $("root:Packages:NI1_BSLFiles:BSLtoframe")
-			WAVE BSLframelistsequence = $("root:Packages:NI1_BSLFiles:BSLframelistsequence")
+			NVAR/Z average              = $("root:Packages:NI1_BSLFiles:BSLaverage")
+			NVAR/Z sumframes            = $("root:Packages:NI1_BSLFiles:BSLsumframes")
+			NVAR/Z sumseq               = $("root:Packages:NI1_BSLFiles:BSLsumseq")
+			NVAR/Z saxsframe            = $("root:Packages:NI1_BSLFiles:BSLframes")
+			NVAR/Z currentframe         = $("root:Packages:NI1_BSLFiles:BSLcurrentframe")
+			NVAR/Z BSLfromframe         = $("root:Packages:NI1_BSLFiles:BSLfromframe")
+			NVAR/Z BSLtoframe           = $("root:Packages:NI1_BSLFiles:BSLtoframe")
+			WAVE/Z BSLframelistsequence = $("root:Packages:NI1_BSLFiles:BSLframelistsequence")
 			if(cmpstr(extension, "BSL/SAXS") == 0 && sumframes == 0 && average == 0 && sumseq == 0)
 				for(u = currentframe; u < saxsframe + 1; u += 1)
 					currentframe       = u
@@ -2931,25 +2962,29 @@ Function NI1A_AveLoadNDataSetsForConv()
 			i = i + j - 1
 			if(Loaded)
 				OldNote += "NumberOfAveragedFiles=" + num2str(numLoadedImages) + ";"
-				WAVE tempWave = root:Packages:Convert2Dto1D:CCDImageToConvertTemp
-				SampleThickness       = LocSampleThickness / numLoadedImages
-				SampleTransmission    = LocSampleTransmission / numLoadedImages
-				CorrectionFactor      = LocCorrectionFactor / numLoadedImages
-				SampleMeasurementTime = LocSampleMeasurementTime / numLoadedImages
-				SampleI0              = LocSampleI0 / numLoadedImages
-				OldNote              += NI1A_CalibrationNote()
+				WAVE/Z tempWave = root:Packages:Convert2Dto1D:CCDImageToConvertTemp
+				if(numLoadedImages == 0 || !WaveExists(tempWave))
+					print "NI1A_AveLoadNDataSetsForConv: all files skipped or no data accumulated"
+				else
+					SampleThickness       = LocSampleThickness / numLoadedImages
+					SampleTransmission    = LocSampleTransmission / numLoadedImages
+					CorrectionFactor      = LocCorrectionFactor / numLoadedImages
+					SampleMeasurementTime = LocSampleMeasurementTime / numLoadedImages
+					SampleI0              = LocSampleI0 / numLoadedImages
+					OldNote              += NI1A_CalibrationNote()
 
-				MatrixOp/O CCDImageToConvert = tempWave / numLoadedImages
-				KillWaves/Z tempWave
-				note/K CCDImageToConvert
-				note CCDImageToConvert, OldNote
-				NI1A_Convert2DTo1D()
-				NI1A_DisplayLoadedFile()
-				NI1A_DisplayTheRight2DWave()
-				NI1A_DoDrawingsInto2DGraph()
-				NI1A_CallImageHookFunction()
-				NEXUS_NikaSave2DData()
-				DoUpdate
+					MatrixOp/O CCDImageToConvert = tempWave / numLoadedImages
+					KillWaves/Z tempWave
+					note/K CCDImageToConvert
+					note CCDImageToConvert, OldNote
+					NI1A_Convert2DTo1D()
+					NI1A_DisplayLoadedFile()
+					NI1A_DisplayTheRight2DWave()
+					NI1A_DoDrawingsInto2DGraph()
+					NI1A_CallImageHookFunction()
+					NEXUS_NikaSave2DData()
+					DoUpdate
+				endif
 			endif
 		endif
 	endfor
@@ -3053,7 +3088,12 @@ Function NI1A_AveLoadManyDataSetsForConv()
 		endif
 	endfor
 	OldNote += "NumberOfAveragedFiles=" + num2str(numLoadedImages) + ";"
-	WAVE tempWave = root:Packages:Convert2Dto1D:CCDImageToConvertTemp
+	WAVE/Z tempWave = root:Packages:Convert2Dto1D:CCDImageToConvertTemp
+	if(numLoadedImages == 0 || !WaveExists(tempWave))
+		print "NI1A_AveLoadManyDataSetsForConv: all files skipped or no data accumulated"
+		setDataFolder OldDf
+		return 0
+	endif
 	SampleThickness       = LocSampleThickness / numLoadedImages
 	SampleTransmission    = LocSampleTransmission / numLoadedImages
 	CorrectionFactor      = LocCorrectionFactor / numLoadedImages
@@ -3100,7 +3140,7 @@ Function/S NI1A_CalibrationNote()
 	NVAR UseSampleTransmFnct   = root:Packages:Convert2Dto1D:UseSampleTransmFnct
 	SVAR SampleTransmFnct      = root:Packages:Convert2Dto1D:SampleTransmFnct
 	NVAR SampleTransmission    = root:Packages:Convert2Dto1D:SampleTransmission
-	if(UseSampleTransmission && UseSampleThicknFnct)
+	if(UseSampleTransmission && UseSampleTransmFnct)
 		newNote += "SampleTransmFnct=" + SampleTransmFnct + ";"
 	endif
 	newNote += "SampleTransmission=" + num2str(SampleTransmission) + ";"
@@ -3566,7 +3606,7 @@ Function NI1A_LoadMask()
 		setDataFolder OldDf
 		abort
 	endif
-	SVAR FileNameToLoad
+	SVAR FileNameToLoad = root:Packages:Convert2Dto1D:FileNameToLoad
 	FileNameToLoad = ListOf2DMaskData[selection]
 	if(stringmatch(FileNameToLoad[strlen(FileNameToLoad) - 4, Inf], ".tif"))
 		NI1A_UniversalLoader("Convert2Dto1DMaskPath", FileNameToLoad, "tiff", "M_ROIMask")
@@ -3576,7 +3616,11 @@ Function NI1A_LoadMask()
 	endif
 
 	CurrentMaskFileName = FileNameToLoad
-	WAVE M_ROIMask
+	WAVE/Z M_ROIMask = root:Packages:Convert2Dto1D:M_ROIMask
+	if(!WaveExists(M_ROIMask))
+		setDataFolder OldDf
+		Abort "Mask load failed - wave not created"
+	endif
 	Redimension/B/U M_ROIMask
 	M_ROIMask = M_ROIMask > 0.5 ? 1 : 0
 	setDataFolder oldDf
@@ -3655,24 +3699,20 @@ Function NI1A_UpdateDataListBox()
 				ListOf2DSampleDataNumbers[numpnts(ListOf2DSampleDataNumbers) - 1] = 1
 			elseif(FIlesSortOrder == 3)
 				//extract the order number and use that to sort out..
-				Make/O/N=(numpnts(ListOf2DSampleData)) tempSortWv
+				Make/FREE/N=(numpnts(ListOf2DSampleData)) tempSortWv
 				tempSortWv = IN2G_FindNumIndxForSort(ListOf2DSampleData[p])
-				//tempSortWv = NI1A_FindeOrderNumber(ListOf2DSampleData[p])
 				sort tempSortWv, tempSortWv, ListOf2DSampleData, ListOf2DSampleDataNumbers
-				KillWaves/Z tempSortWv
 				ListOf2DSampleDataNumbers[numpnts(ListOf2DSampleDataNumbers) - 1] = 1
 			elseif(FIlesSortOrder == 4)
 				//extract the order number and use that to sort out.. Inverted
-				Make/O/N=(numpnts(ListOf2DSampleData)) tempSortWv
-				//tempSortWv = NI1A_FindeOrderNumber(ListOf2DSampleData[p])
+				Make/FREE/N=(numpnts(ListOf2DSampleData)) tempSortWv
 				tempSortWv = IN2G_FindNumIndxForSort(ListOf2DSampleData[p])
 				sort/R tempSortWv, tempSortWv, ListOf2DSampleData, ListOf2DSampleDataNumbers
-				KillWaves/Z tempSortWv
 				ListOf2DSampleDataNumbers[0] = 1
 			elseif(FIlesSortOrder == 5)
 				sort/R ListOf2DSampleData, ListOf2DSampleData, ListOf2DSampleDataNumbers
 				ListOf2DSampleDataNumbers[numpnts(ListOf2DSampleDataNumbers) - 1] = 1
-			elseif(FIlesSortOrder == 5)
+			elseif(FIlesSortOrder == 6)
 				sort/R/A ListOf2DSampleData, ListOf2DSampleData, ListOf2DSampleDataNumbers
 				ListOf2DSampleDataNumbers[numpnts(ListOf2DSampleDataNumbers) - 1] = 1
 			else
@@ -4639,18 +4679,6 @@ Function NI1A_SetVarProcMainPanel(sva) : SetVariableControl
 			Abort "This function does not use ONE string input parameter"
 		endif
 	endif
-	if(cmpstr("EmptyTimeFnct", ctrlName) == 0)
-		testFunctInfo = FunctionInfo(varStr)
-		if(strlen(testFunctInfo) < 1)
-			Abort "This is not existing user function"
-		endif
-		if(NumberByKey("RETURNTYPE", testFunctInfo, ":", ";") != 4)
-			Abort "This function does not return single variable value"
-		endif
-		if(NumberByKey("N_PARAMS", testFunctInfo, ":", ";") != 1 || NumberByKey("PARAM_0_TYPE", testFunctInfo, ":", ";") != 8192)
-			Abort "This function does not use ONE string input parameter"
-		endif
-	endif
 	if(cmpstr("BackgTimeFnct", ctrlName) == 0)
 		testFunctInfo = FunctionInfo(varStr)
 		if(strlen(testFunctInfo) < 1)
@@ -5176,7 +5204,7 @@ End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 
-Window NI1A_PolCorPanel() : Panel
+Function NI1A_PolCorPanel()
 	PauseUpdate // building window...
 	NewPanel/K=1/W=(345, 282, 645, 482) as "Polarization Correction"
 	Dowindow/C NI1A_PolCorPanel
@@ -5201,7 +5229,7 @@ Window NI1A_PolCorPanel() : Panel
 	SetVariable TwoDPolarizFract, value=root:Packages:Convert2Dto1D:TwoDPolarizFract, limits={0, 1, 0.05}, help={"1 for fully polarized (usual, synchrotrons)"}
 	SetVariable a2DPolCorrStarAngle, pos={13, 110}, size={240, 16}, title="Sigma Polar. Plane [deg]"
 	SetVariable a2DPolCorrStarAngle, value=root:Packages:Convert2Dto1D:StartAngle2DPolCor, limits={0, 180, 90}, help={"0 for polarization horizontally on detector, 90 vertically"}
-EndMacro
+End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -5354,9 +5382,13 @@ End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 
-Function NI1A_CheckProc(ctrlName, checked) : CheckBoxControl
-	string   ctrlName
-	variable checked
+Function NI1A_CheckProc(cba) : CheckBoxControl
+	STRUCT WMCheckboxAction &cba
+	string   ctrlName = cba.ctrlName
+	variable checked  = cba.checked
+	if(!(cba.eventCode == 2))
+		return 0
+	endif
 	//IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf = GetDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D
@@ -5502,7 +5534,7 @@ Function NI1A_CheckProc(ctrlName, checked) : CheckBoxControl
 		if(checked)
 			TrimFrontOfName = 0
 		else
-			TrimFrontOfName = 0
+			TrimFrontOfName = 1
 		endif
 	endif
 	if(stringmatch("AppendToNexusFile", ctrlName))
@@ -5862,9 +5894,9 @@ Function NI1A_CheckProc(ctrlName, checked) : CheckBoxControl
 			ControlInfo/W=NI1A_Convert2Dto1DPanel Convert2Dto1DTab
 			SetVariable QbinPoints, win=NI1A_Convert2Dto1DPanel, disable=(checked || V_Value != 4)
 		endif
-		DoWindow NI1_9IDCConfigPanel
+		DoWindow NI1_usxConfigPanel
 		if(V_Flag)
-			SetVariable QbinPoints, win=NI1_9IDCConfigPanel, disable=(checked)
+			SetVariable QbinPoints, win=NI1_usxConfigPanel, disable=(checked)
 		endif
 		if(checked)
 			QbinningLogarithmic = 0
@@ -6150,8 +6182,8 @@ Function NI1A_AddColorScaleTo2DGraph()
 			tempStart = floor(V_min)
 			tempRange = 10 * ceil(tempRange)
 
-			Make/O/N=(tempRange) ColorScaleLogTicks
-			Make/O/T/N=(tempRange) ColorScaleLinTicksTW
+			Make/FREE/N=(tempRange) ColorScaleLogTicks
+			Make/FREE/T/N=(tempRange) ColorScaleLinTicksTW
 			variable i
 			for(i = 0; i < tempRange; i += 10)
 				ColorScaleLinTicksTW[i]     = num2str(10^(tempStart + i / 10))
@@ -6173,7 +6205,7 @@ Function NI1A_AddColorScaleTo2DGraph()
 				ColorScaleLogTicks[i + 6]   = (tempStart + i / 10) + log(7)
 				ColorScaleLogTicks[i + 7]   = (tempStart + i / 10) + log(8)
 				ColorScaleLogTicks[i + 8]   = (tempStart + i / 10) + log(9)
-				ColorScaleLogTicks[i + 9]   = (tempStart + i / 10) + log(9)
+				ColorScaleLogTicks[i + 9]   = (tempStart + i / 10) + 1.0
 			endfor
 			ColorScale/C/W=CCDImageToConvertFig/N=Colorscale2D/M/A=RB/X=2.00/Y=2.00 image=CCDImageToConvert_dis, widthPct=5, heightPct=50, tickLen=5.00, fsize=12, userTicks={ColorScaleLogTicks, ColorScaleLinTicksTW}, "Intensity"
 		endif
@@ -6202,7 +6234,7 @@ Function NI1A_DrawSectorsIn2DGraph()
 		NVAR NumberOfSectors    = root:Packages:Convert2Dto1D:NumberOfSectors
 		NVAR SectorsStartAngle  = root:Packages:Convert2Dto1D:SectorsStartAngle
 		NVAR SectorsHalfWidth   = root:Packages:Convert2Dto1D:SectorsHalfWidth
-		WAVE CCDImageToConvert  = root:Packages:Convert2Dto1D:CCDImageToConvert_dis
+		WAVE DisplayWave        = root:Packages:Convert2Dto1D:CCDImageToConvert_dis
 		NVAR SectorsStepInAngle = root:Packages:Convert2Dto1D:SectorsStepInAngle
 		variable i, tempEndX, tempEndY, sectorCenterAngle, tempLength
 		variable temp1, temp2, temp3, temp4
@@ -6212,17 +6244,20 @@ Function NI1A_DrawSectorsIn2DGraph()
 				//calculate coordinates for lines...
 				sectorCenterAngle = SectorsStartAngle + 90 + i * (SectorsStepInAngle)
 				if(sectorCenterAngle >= 90 && sectorCenterAngle < 180)
-					temp1 = DimSize(CCDImageToConvert, 0) - xcenter
+					temp1 = DimSize(DisplayWave, 0) - xcenter
 					temp2 = ycenter
 				elseif(sectorCenterAngle >= 180 && sectorCenterAngle < 270)
 					temp1 = xcenter
 					temp2 = ycenter
 				elseif(sectorCenterAngle >= 270 && sectorCenterAngle < 360)
 					temp1 = xcenter
-					temp2 = DimSize(CCDImageToConvert, 1) - ycenter
+					temp2 = DimSize(DisplayWave, 1) - ycenter
 				elseif(sectorCenterAngle >= 360 && sectorCenterAngle < 450)
-					temp1 = DimSize(CCDImageToConvert, 0) - xcenter
-					temp2 = DimSize(CCDImageToConvert, 1) - ycenter
+					temp1 = DimSize(DisplayWave, 0) - xcenter
+					temp2 = DimSize(DisplayWave, 1) - ycenter
+				elseif(sectorCenterAngle >= 450 && sectorCenterAngle < 540)
+					temp1 = DimSize(DisplayWave, 0) - xcenter
+					temp2 = ycenter
 				endif
 				tempLength = sqrt((temp1 * sin(pi / 180 * sectorCenterAngle))^2 + (temp2 * cos(pi / 180 * sectorCenterAngle))^2)
 				//center line
@@ -6282,8 +6317,8 @@ Function NI1A_DrawLinesIn2DGraph()
 		NVAR ycenter = root:Packages:Convert2Dto1D:BeamCenterY
 		NVAR xcenter = root:Packages:Convert2Dto1D:BeamCenterX
 
-		NVAR UseLineProfile    = root:Packages:Convert2Dto1D:UseLineProfile
-		WAVE CCDImageToConvert = root:Packages:Convert2Dto1D:CCDImageToConvert_dis
+		NVAR UseLineProfile  = root:Packages:Convert2Dto1D:UseLineProfile
+		WAVE DisplayWave     = root:Packages:Convert2Dto1D:CCDImageToConvert_dis
 
 		NVAR LineProf_UseBothHalfs       = root:Packages:Convert2Dto1D:LineProf_UseBothHalfs
 		NVAR LineProf_DistanceFromCenter = root:Packages:Convert2Dto1D:LineProf_DistanceFromCenter
@@ -6297,7 +6332,6 @@ Function NI1A_DrawLinesIn2DGraph()
 		variable CenterStartX, CenterStartY, CenterEndX, CenterEndY
 		variable LeftStartX, LeftEndX, LeftStartY, leftEndY
 		variable RightStartX, RightStartY, RightEndX, RightEndY
-		NVAR LineProf_UseBothHalfs = root:Packages:Convert2Dto1D:LineProf_UseBothHalfs
 
 		//NVAR LineProf_LineAzAngle=root:Packages:Convert2Dto1D:LineProf_LineAzAngle
 		NVAR LineProf_LineAzAngleG = root:Packages:Convert2Dto1D:LineProf_LineAzAngle
@@ -6315,11 +6349,11 @@ Function NI1A_DrawLinesIn2DGraph()
 
 			if(stringMatch(LineProf_CurveType, "Angle Line"))
 				isStraightLine = 0
-				make/O/N=(Dimsize(CCDImageToConvert, 0)) WaveX, WaveXL, WaveXR
-				make/O/N=(Dimsize(CCDImageToConvert, 1)) WaveY, WaveYL, WaveYR
-				NI1A_GenerAngleLine(Dimsize(CCDImageToConvert, 0), Dimsize(CCDImageToConvert, 1), xcenter, ycenter, LineProf_LineAzAngle, LineProf_DistanceFromCenter, WaveX, WaveY)
-				NI1A_GenerAngleLine(Dimsize(CCDImageToConvert, 0), Dimsize(CCDImageToConvert, 1), xcenter, ycenter, LineProf_LineAzAngle, LineProf_DistanceFromCenter + LineProf_Width, WaveXL, WaveYL)
-				NI1A_GenerAngleLine(Dimsize(CCDImageToConvert, 0), Dimsize(CCDImageToConvert, 1), xcenter, ycenter, LineProf_LineAzAngle, LineProf_DistanceFromCenter - LineProf_Width, WaveXR, WaveYR)
+				make/O/N=(Dimsize(DisplayWave, 0)) WaveX, WaveXL, WaveXR
+				make/O/N=(Dimsize(DisplayWave, 1)) WaveY, WaveYL, WaveYR
+				NI1A_GenerAngleLine(Dimsize(DisplayWave, 0), Dimsize(DisplayWave, 1), xcenter, ycenter, LineProf_LineAzAngle, LineProf_DistanceFromCenter, WaveX, WaveY)
+				NI1A_GenerAngleLine(Dimsize(DisplayWave, 0), Dimsize(DisplayWave, 1), xcenter, ycenter, LineProf_LineAzAngle, LineProf_DistanceFromCenter + LineProf_Width, WaveXL, WaveYL)
+				NI1A_GenerAngleLine(Dimsize(DisplayWave, 0), Dimsize(DisplayWave, 1), xcenter, ycenter, LineProf_LineAzAngle, LineProf_DistanceFromCenter - LineProf_Width, WaveXR, WaveYR)
 			endif
 			if(stringMatch(LineProf_CurveType, "Ellipse"))
 				isStraightLine = 0
@@ -6331,7 +6365,7 @@ Function NI1A_DrawLinesIn2DGraph()
 			endif
 			if(stringMatch(LineProf_CurveType, "GISAXS_FixQy"))
 				isStraightLine = 0
-				CenterStartY   = DimSize(CCDImageToConvert, 1)
+				CenterStartY   = DimSize(DisplayWave, 1)
 				make/O/N=(CenterStartY) WaveX, WaveXL, WaveXR
 				make/O/N=(CenterStartY) WaveY, WaveYL, WaveYR
 				waveY  = p
@@ -6347,9 +6381,9 @@ Function NI1A_DrawLinesIn2DGraph()
 
 			if(stringMatch(LineProf_CurveType, "Horizontal Line") || stringMatch(LineProf_CurveType, "GI_Horizontal Line"))
 				isStraightLine = 1
-				CenterStartX   = DimSize(CCDImageToConvert, 0)
-				leftStartX     = DimSize(CCDImageToConvert, 0)
-				RightStartX    = DimSize(CCDImageToConvert, 0)
+				CenterStartX   = DimSize(DisplayWave, 0)
+				leftStartX     = DimSize(DisplayWave, 0)
+				RightStartX    = DimSize(DisplayWave, 0)
 				CenterEndX     = 0
 				LeftEndX       = 0
 				RightEndY      = 0
@@ -6363,9 +6397,9 @@ Function NI1A_DrawLinesIn2DGraph()
 
 			if(stringMatch(LineProf_CurveType, "Vertical Line") || stringMatch(LineProf_CurveType, "GI_Vertical Line"))
 				isStraightLine = 1
-				CenterStartY   = DimSize(CCDImageToConvert, 1)
-				LeftStartY     = DimSize(CCDImageToConvert, 1)
-				RightStartY    = DimSize(CCDImageToConvert, 1)
+				CenterStartY   = DimSize(DisplayWave, 1)
+				LeftStartY     = DimSize(DisplayWave, 1)
+				RightStartY    = DimSize(DisplayWave, 1)
 				CenterEndY     = 0
 				LeftEndY       = 0
 				RightEndY      = 0
@@ -6410,9 +6444,9 @@ Function NI1A_DrawLinesIn2DGraph()
 			if(LineProf_UseBothHalfs && isStraightLine)
 				//calculate coordinates for lines...
 				if(stringMatch(LineProf_CurveType, "Horizontal Line") || stringMatch(LineProf_CurveType, "GI_Horirontal Line"))
-					CenterStartX = DimSize(CCDImageToConvert, 0)
-					leftStartX   = DimSize(CCDImageToConvert, 0)
-					RightStartX  = DimSize(CCDImageToConvert, 0)
+					CenterStartX = DimSize(DisplayWave, 0)
+					leftStartX   = DimSize(DisplayWave, 0)
+					RightStartX  = DimSize(DisplayWave, 0)
 					CenterEndX   = 0
 					LeftEndX     = 0
 					RightEndY    = 0
@@ -6425,9 +6459,9 @@ Function NI1A_DrawLinesIn2DGraph()
 				endif
 
 				if(stringMatch(LineProf_CurveType, "Vertical Line") || stringMatch(LineProf_CurveType, "GI_Vertical Line"))
-					CenterStartY = DimSize(CCDImageToConvert, 1)
-					LeftStartY   = DimSize(CCDImageToConvert, 1)
-					RightStartY  = DimSize(CCDImageToConvert, 1)
+					CenterStartY = DimSize(DisplayWave, 1)
+					LeftStartY   = DimSize(DisplayWave, 1)
+					RightStartY  = DimSize(DisplayWave, 1)
 					CenterEndY   = 0
 					LeftEndY     = 0
 					RightEndY    = 0
@@ -6475,8 +6509,8 @@ Function NI1A_GenerAngleLine(DetDimX, DetDimY, BCx, BCy, Angle, Offset, WaveX, W
 	string oldDf = GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	variable MaxDIm = max(DetDimX, DetDimY) //rtGlobals=3 fix.
-	make/O/N=(MaxDIm) tempWvX
-	make/O/N=(MaxDIm) tempWvY
+	make/FREE/N=(MaxDIm) tempWvX
+	make/FREE/N=(MaxDIm) tempWvY
 	if(abs(angle) < 45)
 		tempWvX = p
 		tempWvY = BCy - (tempWvX - BCx) * tan(Angle * pi / 180)
@@ -6497,7 +6531,6 @@ Function NI1A_GenerAngleLine(DetDimX, DetDimY, BCx, BCy, Angle, Offset, WaveX, W
 	endif
 	WaveX = tempWvX
 	WaveY = tempWvY
-	killWaves tempWvY, tempWvX
 
 	setDataFolder OldDf
 End
@@ -7558,7 +7591,7 @@ Function NI2T_ReadOrientationFromGlobals(d) // sets d to the reference orientati
 
 	// define Detector 0, located SDDmm directly behind the sample
 	d.used = 1
-	d.Nx = NumPixX; d.Ny = NumPixX // number of un-binned pixels in whole detector
+	d.Nx = NumPixX; d.Ny = NumPixY // number of un-binned pixels in whole detector
 	d.sizeX = NumPixX * PixSizeX * 1000; d.sizeY = NumPixY * PixSizeY * 1000 // outside size of detector (micron)
 
 	// NOTE THE change here:
@@ -7615,7 +7648,7 @@ Function NI2T_SaveOrientationToGlobals(d) // sets d to the reference orientation
 	//	BeamCntrY = NumPixY/2 - (d.P[1]/(PixSizeY*1000))						//d.P[1]=(NumPixY/2 - BeamCntrY)*PixSizeX*1000
 	BeamCntrX           = d.P[0] //	d.P[0]=beam center X
 	BeamCntrY           = d.P[1] //d.P[1]=beam center Y
-	SDD                 = d.P[2] //1000						//d.P[2]=SDD*1000	  			// offset to detector (micron)
+	SDD                 = d.P[2] * (0.5 * (PixSizeX + PixSizeY)) // inverse of d.P[2]=SDD/(0.5*(PixSizeX+PixSizeY))
 	d.timeMeasured      = "This is basic setup with detector perpendicularly to beam SDD away"
 	d.geoNote           = "Basic perpendicular orientation"
 	d.detectorID        = "User defined"

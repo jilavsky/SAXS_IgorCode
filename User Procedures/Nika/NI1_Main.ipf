@@ -1,6 +1,6 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use modern global access method.
-#pragma version=1.87
+#pragma version=1.88
 #pragma IgorVersion=9.04
 
 //DO NOT renumber Main files every time, these are main release numbers...
@@ -15,6 +15,7 @@ Constant NikaLengthOfPathForPanelDisplay = 100
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//1.88 change _9IDC to _usx for all USAXS code
 //1.87	Beta - cleanup and minor modifications
 //1.86	Nika modification for 12IDE USAXS/SAXS/WAXS instrument, Bug release
 //1.86	Beta release, Nika modification for 12IDE USAXS/SAXS/WAXS instrument.
@@ -306,7 +307,7 @@ End
 Function NI1_KillGraphsAndPanels()
 
 	string ListOfWindows
-	ListOfWindows  = "NI1A_Convert2Dto1DPanel;NI1_9IDCConfigPanel;CCDImageToConvertFig;EmptyOrDarkImage;NI1_CreateBmCntrFieldPanel;CCDImageForBmCntr;"
+	ListOfWindows  = "NI1A_Convert2Dto1DPanel;NI1_usxConfigPanel;CCDImageToConvertFig;EmptyOrDarkImage;NI1_CreateBmCntrFieldPanel;CCDImageForBmCntr;"
 	ListOfWindows += "NI1M_ImageROIPanel;NI1_CreateFloodFieldPanel;NI1_GeometriesManagerPanel;NI1_RSoXSMainPanel;APS12IDC_Instructions;DND_Instructions;"
 
 	variable i
@@ -759,12 +760,12 @@ Function NI1_GMCreateNewGeom()
 	elseif(V_Flag == 1)
 		NI1_GMSaveGeometries()
 	endif
-	variable WasNI1_9IDCConfigPanel
-	DoWIndow NI1_9IDCConfigPanel
+	variable WasNI1_usxConfigPanel
+	DoWIndow NI1_usxConfigPanel
 	if(V_Flag)
-		WasNI1_9IDCConfigPanel = 1
+		WasNI1_usxConfigPanel = 1
 	else
-		WasNI1_9IDCConfigPanel = 0
+		WasNI1_usxConfigPanel = 0
 	endif
 	NI1_GMCloseAllNikaW()
 	KillDataFolder root:Packages:Convert2Dto1D
@@ -773,7 +774,7 @@ Function NI1_GMCreateNewGeom()
 	CurrentGeomName  = "Not saved"
 	PopupMenu RestoreGeometries, win=NI1_GeometriesManagerPanel, value=#"root:Packages:NikaGeometries:ListOfGeomsSaved", mode=0
 	NI1A_Convert2Dto1DMainPanel()
-	if(WasNI1_9IDCConfigPanel)
+	if(WasNI1_usxConfigPanel)
 		NI1_APSConfigureNika()
 	endif
 	setDataFolder oldDf
@@ -847,7 +848,7 @@ End
 Function NI1_GMCloseAllNikaW() //close all open panels and windows
 	string ListOfNikaWindows = "NI1A_Convert2Dto1DPanel;CCDImageToConvertFig;LineuotDisplayPlot_Q;LineuotDisplayPlot_D;LineuotDisplayPlot_T;"
 	ListOfNikaWindows += "Sample_Information;SquareMapIntvsPixels;NI1_CreateBmCntrFieldPanel;CCDImageForBmCntr;NI1M_ImageROIPanel;CCDImageForMask;"
-	ListOfNikaWindows += "EmptyOrDarkImage;NI1_CreateFloodFieldPanel;NI1_MainConfigPanel;NI1_9IDCConfigPanel;Instructions_9IDC;APS12IDC_Instructions;"
+	ListOfNikaWindows += "EmptyOrDarkImage;NI1_CreateFloodFieldPanel;NI1_MainConfigPanel;NI1_usxConfigPanel;Instructions_usx;APS12IDC_Instructions;"
 	variable i
 	string   TempNm
 	for(i = 0; i < ItemsInList(ListOfNikaWindows); i += 1)
