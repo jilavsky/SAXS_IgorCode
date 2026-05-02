@@ -2,7 +2,7 @@
 #pragma rtGlobals=3 // Use modern global access method.
 #pragma IgorVersion=9.04
 
-#pragma version=2.79
+#pragma version=2.80
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -11,6 +11,7 @@
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//2.80 AI cleanup and debug
 //2.79 2026-04: Multiple bug fixes and improvements (A1-A10, B1-B10, C1-C6, D1-D10 per code review).
 //2.78 change some calculations to DP as 2024-09-26, some users are running with intensity out of SP precision.
 //2.77 fix for behavior with UseSampleTransmission controls.

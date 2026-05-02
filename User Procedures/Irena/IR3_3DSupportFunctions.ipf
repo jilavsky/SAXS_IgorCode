@@ -1,6 +1,6 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use modern global access method and strict wave access.
-#pragma version=1.
+#pragma version=1.01
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//1.01 AI cleanup and debug
 //version 1.0 support functions for 3D modeling tools. Original release. 2019-02-27
 
 //******************************************************************************************************************************************************

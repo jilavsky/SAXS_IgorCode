@@ -1,6 +1,6 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.03
+#pragma version=1.04
 
 Constant IR3AMassFrAggVersionNumber 	= 1.03
 Constant IR3TPOVPDBVersionNumber 		= 1.00
@@ -13,6 +13,7 @@ Constant IR3TTwoPhaseVersionNumber 	= 1.00
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.04 AI cleanup and debug
 //1.03 added Optimized growth - grows number of aggregates and searches for best matching one... 
 //1.02 added MultiParticleAttraction parameter. 
 //1.01 3dAggregate added ability ot grow N aggregates and Compare Stored graph

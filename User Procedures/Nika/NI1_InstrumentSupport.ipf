@@ -1,7 +1,7 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use modern global access method.
 
-#pragma version=1.23
+#pragma version=1.24
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//1.24 AI cleanup and debug
 //1.23 adds support for ALS tilted detector geometry. written by Devin Grabner, Washington State University, modifed by JIL.
 //1.22 added all options to mask reading of goldavergae command line, lots of options.
 //1.21 fixes to 12ID support, unexpected stuff in theor configuration file found.

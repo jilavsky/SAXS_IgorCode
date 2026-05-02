@@ -1,5 +1,5 @@
 #pragma rtGlobals=3 // Use modern global access method.
-#pragma version=1.57
+#pragma version=1.58
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//1.58 AI cleanup and debug
 //1.57 change _9IDC to _usx for all USAXS code
 //1.56 tweaks for Eiger WAXS detector
 //1.55 added 12IDE USAXS/SAXS/WAXS works also. started 11-2024

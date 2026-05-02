@@ -1,6 +1,6 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use modern global access method and strict wave access.
-#pragma version=1.03
+#pragma version=1.04
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//1.04 AI cleanup and debug
 //1.03 Bug fixes: slider range for large grids, Nyquist Q limit (factor-of-2 error), NaN mask used Q as point index, missing /Z wave guard in Display1D.
 //1.03 Optimization: replace per-point Optimize/Integrate1D in g(r) and TheorAutoCorrFnct with precomputed LUT + interp (~100x speedup for Step 3); precompute Q²·I(Q) for DACF step.
 //1.02 fix Intensity plotting scaling.
