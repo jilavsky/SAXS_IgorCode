@@ -1,7 +1,7 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use strict wave reference mode and runtime bounds checking
 //#pragma rtGlobals=1	// Use modern global access method.
-#pragma version=2.30
+#pragma version=2.31
 
 Constant AlwaysRecalculateFF = 0 //set to 1 to recalculate always the FF.
 #define UseXOPforFFCalcs
@@ -12,6 +12,7 @@ Constant AlwaysRecalculateFF = 0 //set to 1 to recalculate always the FF.
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//2.31 AI cleanup and debug
 //2.30 added Disk as form factor.
 //2.29 remove Unified fit form factors from form factor listings, code stays, but shoudl not be used anymore. Let's see if someone complains.
 //2.28 added controls for debugging (at the top) and added Cylinder and Spheroid as optional XOP form factor.
@@ -241,22 +242,22 @@ Function IR1T_GenerateGMatrix(Gmatrix, Q_vec, R_dist, VolumePower, ParticleModel
 	//
 	//Janus CoreShell Micelle 1	//particle size is total size of the particle (R0 in the figure in description)
 	//							Shell_Thickness=ParticlePar1			//shell thickness A
-	//							SolventRho=ParticlePar2		// rho for solvent material
-	//							CoreRho=ParticlePar3			// rho for core material
-	//							Shell1Rho=ParticlePar4			// rho for shell 1 material
-	//							Shell2Rho=particlePar5			// rho for shell 2 material
+	//							CoreRho=ParticlePar2			// rho for core material
+	//							Shell1Rho=ParticlePar3			// rho for shell 1 material
+	//							Shell2Rho=ParticlePar4			// rho for shell 2 material
+	//							SolventRho=ParticlePar5		// rho for solvent material
 	//Janus CoreShell Micelle 2	//particle size here is shell thickness!!!
 	//							Core_Size=ParticlePar1			// Core radius A
-	//							SolventRho=ParticlePar2		// rho for solvent material
-	//							CoreRho=ParticlePar3			// rho for core material
-	//							Shell1Rho=ParticlePar4			// rho for shell 1 material
-	//							Shell2Rho=particlePar5			// rho for shell 2 material
+	//							CoreRho=ParticlePar2			// rho for core material
+	//							Shell1Rho=ParticlePar3			// rho for shell 1 material
+	//							Shell2Rho=ParticlePar4			// rho for shell 2 material
+	//							SolventRho=ParticlePar5		// rho for solvent material
 	//Janus CoreShell Micelle 3	//particle size here is core radius!!!
 	//							Shell_Thickness=ParticlePar1	// Shell Thickness A
-	//							SolventRho=ParticlePar2		// rho for solvent material
-	//							CoreRho=ParticlePar3			// rho for core material
-	//							Shell1Rho=ParticlePar4			// rho for shell 1 material
-	//							Shell2Rho=particlePar5			// rho for shell 2 material
+	//							CoreRho=ParticlePar2			// rho for core material
+	//							Shell1Rho=ParticlePar3			// rho for shell 1 material
+	//							Shell2Rho=ParticlePar4			// rho for shell 2 material
+	//							SolventRho=ParticlePar5		// rho for solvent material
 	//RectParallelepiped			//needs side and two scaling paramaters
 	//							SideBScale =ParticlePar1		// B = A * P1
 	//							SideCScale=ParticlePar2			// C = A * P2
@@ -557,7 +558,7 @@ Function IR1T_GenerateGMatrix(Gmatrix, Q_vec, R_dist, VolumePower, ParticleModel
 			endfor
 		elseif(cmpstr(ParticleModel, "RectParallelepiped") == 0) // parralelepiped
 #if(Exists("ParallelepipedX") && defined(UseXOPforFFCalcs))
-			make/O/N=7/D RecParallParams
+			Make/FREE/D/N=7 RecParallParams
 			Make/FREE/N=3 RecParallSidePars
 			RecParallSidePars = {2, 2 * ParticlePar1, 2 * ParticlePar2}
 			Sort RecParallSidePars, RecParallSidePars
@@ -609,16 +610,16 @@ Function IR1T_GenerateGMatrix(Gmatrix, Q_vec, R_dist, VolumePower, ParticleModel
 			CoreShellCoreRho   = ParticlePar2 //rho of core
 			CoreShellShellRho  = ParticlePar3 //rho of shell
 			CoreShellSolvntRho = ParticlePar4 //rho of solvent
+			SVAR/Z CoreShellVolumeDefinition = root:Packages:FormFactorCalc:CoreShellVolumeDefinition
+			if(SVAR_Exists(CoreShellVolumeDefinition))
+				VolDefL = CoreShellVolumeDefinition
+			else
+				VolDefL = "Whole Particle"
+			endif
 			for(i = 0; i < N; i += 1) //calculate the G matrix in columns!!!
 				currentR = R_dist[i] //this is current radius
 				tempVal1 = IR1T_StartOfBinInDiameters(R_dist, i)
 				tempVal2 = IR1T_EndOfBinInDiameters(R_dist, i)
-				SVAR/Z CoreShellVolumeDefinition = root:Packages:FormFactorCalc:CoreShellVolumeDefinition
-				if(SVAR_Exists(CoreShellVolumeDefinition))
-					VolDefL = CoreShellVolumeDefinition
-				else
-					VolDefL = "Whole Particle"
-				endif
 				multithread TempWave = IR1T_CalculateCoreShellFFPoints(Q_vec[p], currentR, VolumePower, tempVal1, tempVal2, CoreShellThickness, CoreShellCoreRho, CoreShellShellRho, CoreShellSolvntRho, VolDefL) //and here we multiply by N(r)
 				//note, the above calculated form factor contains volume^1 in it... So we need to multiply by volume^(power-1) here. Also we use volume of the core for particle volume!!!
 				multithread TempWave *= (IR1T_CoreShellVolume(currentR, CoreShellThickness, VolDefL))^(VolumePower - 1) //Multiplication by volume to appropriate power. Here is now the question - what is the volue of this particle? Here the volue is core only...
@@ -647,21 +648,21 @@ Function IR1T_GenerateGMatrix(Gmatrix, Q_vec, R_dist, VolumePower, ParticleModel
 			endfor
 		elseif(cmpstr(ParticleModel, "CoreShellShell") == 0)
 			CoreShell_1_Thickness = ParticlePar1 //inner shell thickness A
-			CoreShell_2_Thickness = ParticlePar2 //outer shell thickneess A
+			CoreShell_2_Thickness = ParticlePar2 //outer shell thickness A
 			SolventRho            = ParticlePar3 // rho for solvent material
 			CoreRho               = ParticlePar4 // rho for core material
 			Shell1Rho             = ParticlePar5 // rho for shell 1 material
-			Shell2Rho             = particlePar6 // rho for shell 2 material
+			Shell2Rho             = ParticlePar6 // rho for shell 2 material
+			SVAR/Z CoreShellVolumeDefinition = root:Packages:FormFactorCalc:CoreShellVolumeDefinition
+			if(SVAR_Exists(CoreShellVolumeDefinition))
+				VolDefL = CoreShellVolumeDefinition
+			else
+				VolDefL = "Whole Particle"
+			endif
 			for(i = 0; i < N; i += 1) //calculate the G matrix in columns!!!
 				currentR = R_dist[i] //this is current radius
 				tempVal1 = IR1T_StartOfBinInDiameters(R_dist, i)
 				tempVal2 = IR1T_EndOfBinInDiameters(R_dist, i)
-				SVAR/Z CoreShellVolumeDefinition = root:Packages:FormFactorCalc:CoreShellVolumeDefinition
-				if(SVAR_Exists(CoreShellVolumeDefinition))
-					VolDefL = CoreShellVolumeDefinition
-				else
-					VolDefL = "Whole Particle"
-				endif
 				multithread TempWave = IR1T_CalcCoreShellShellFFPoints(Q_vec[p], currentR, VolumePower, tempVal1, tempVal2, CoreShell_1_Thickness, CoreShell_2_Thickness, SolventRho, CoreRho, Shell1Rho, Shell2Rho, VolDefL) //and here we multiply by N(r)
 				//note, the above calculated form factor contains volume^1 in it... So we need to multiply by volume^(power-1) here. Also we use volume of the core for particle volume!!!
 				multithread TempWave *= (IR1T_CoreShellVolume(currentR, CoreShell_1_Thickness + CoreShell_2_Thickness, VolDefL))^(VolumePower - 1) //Multiplication by volume to appropriate power. Here is now the question - what is the volue of this particle? Here the volue is core only...
@@ -686,7 +687,7 @@ Function IR1T_GenerateGMatrix(Gmatrix, Q_vec, R_dist, VolumePower, ParticleModel
 			SolventRho      = ParticlePar5 // rho for solvent material
 			CoreRho         = ParticlePar2 // rho for core material
 			Shell1Rho       = ParticlePar3 // rho for shell 1 material
-			Shell2Rho       = particlePar4 // rho for shell 2 material
+			Shell2Rho       = ParticlePar4 // rho for shell 2 material
 			for(i = 0; i < N; i += 1) //calculate the G matrix in columns!!!
 				currentR = R_dist[i]
 				multithread TempWave = IR1T_JanusFF(Q_vec[p], CurrentR, CoreRho, Shell1Rho, Shell2Rho, SolventRho, CurrentR - Shell_Thickness) //this is already ^2
@@ -717,7 +718,7 @@ Function IR1T_GenerateGMatrix(Gmatrix, Q_vec, R_dist, VolumePower, ParticleModel
 			SolventRho      = ParticlePar5 // rho for solvent material
 			CoreRho         = ParticlePar2 // rho for core material
 			Shell1Rho       = ParticlePar3 // rho for shell 1 material
-			Shell2Rho       = particlePar4 // rho for shell 2 material
+			Shell2Rho       = ParticlePar4 // rho for shell 2 material
 			variable NormVal
 			for(i = 0; i < N; i += 1) //calculate the G matrix in columns!!!
 				currentR = R_dist[i]
@@ -1250,7 +1251,7 @@ static Function IR1T_CalcIntgTubeFFPoints(Qvalue, radius, VolumePower, radiusMin
 		numbOfSteps = 60 //over the QR space.
 	endif
 	variable step  = (QRMax - QRMin) / (numbOfSteps - 1)             //step in QR
-	variable stepR = (radiusMax - radiusMin / 2) / (numbOfSteps - 1) //step in R associated with above, we need this to calculate volume
+	variable stepR = (radiusMax - radiusMin) / (numbOfSteps - 1) //step in R associated with above, we need this to calculate volume
 	variable i
 
 	Make/D/N=181/FREE IntgWave

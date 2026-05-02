@@ -1,5 +1,5 @@
 #pragma rtGlobals=3 // Use modern global access method.
-#pragma version=1.35
+#pragma version=1.36
 
 Constant IR2LversionNumber = 1.25
 
@@ -9,6 +9,8 @@ Constant IR2LversionNumber = 1.25
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+
+//1.36 AI cleanup and debug
 //1.35 add requested feature to add ccontrols to have graph axis linear-or-log and change color of model_set1
 //1.34 fix GenCurveFit call, which was failing due to Exists("gencurvefit") returning 4 instead of 3 which was in the code.
 //1.33 add Disk as form factor for size distribution.
@@ -390,7 +392,7 @@ Function IR2L_MainPanel()
 	SetVariable SZWidth, limits={0, Inf, 0}, variable=root:Packages:IR2L_NLSQF:SZWidth_pop1, proc=IR2L_PopSetVarProc
 	SetVariable SZWidth, pos={8, 395}, size={140, 15}, title="Width [A]= ", help={"Schulz-Zimm width size [A]"}
 	CheckBox SZWidthFit, pos={155, 395}, size={25, 16}, proc=IR2L_ModelTabCheckboxProc, title="Fit?"
-	CheckBox SZWidthFit, variable=root:Packages:IR2L_NLSQF:GWidthFit_pop1, help={"Fit the width for Schulz-Zimm distribution?"}
+	CheckBox SZWidthFit, variable=root:Packages:IR2L_NLSQF:SZWidthFit_pop1, help={"Fit the width for Schulz-Zimm distribution?"}
 	SetVariable SZWidthMin, limits={0, Inf, 0}, variable=root:Packages:IR2L_NLSQF:SZWidthMin_pop1, noproc
 	SetVariable SZWidthMin, pos={200, 395}, size={80, 15}, title="Min ", help={"Low limit for width for Schulz-Zimm distribution"}
 	SetVariable SZWidthMax, limits={0, Inf, 0}, variable=root:Packages:IR2L_NLSQF:SZWidthMax_pop1, noproc
@@ -405,7 +407,7 @@ Function IR2L_MainPanel()
 	SetVariable ArdLocationMax, limits={0, Inf, 0}, variable=root:Packages:IR2L_NLSQF:ArdLocationMax_pop1, noproc
 	SetVariable ArdLocationMax, pos={290, 375}, size={80, 15}, title="Max ", help={"High limit for mean size for Ardelldistribution"}
 
-	SetVariable ArdParameter, limits={0, Inf, 0}, variable=root:Packages:IR2L_NLSQF:ArdParameterh_pop1, proc=IR2L_PopSetVarProc
+	SetVariable ArdParameter, limits={0, Inf, 0}, variable=root:Packages:IR2L_NLSQF:ArdParameter_pop1, proc=IR2L_PopSetVarProc
 	SetVariable ArdParameter, pos={8, 395}, size={140, 15}, title="Width parameter  = ", help={"Ardell width parameter [A]"}
 	CheckBox ArdParameterFit, pos={155, 395}, size={25, 16}, proc=IR2L_ModelTabCheckboxProc, title="Fit?"
 	CheckBox ArdParameterFit, variable=root:Packages:IR2L_NLSQF:ArdParameterFit_pop1, help={"Fit the width for Ardell distribution?"}
@@ -1100,7 +1102,7 @@ Function IR2L_GraphsCheckboxProc(ctrlName, checked) : CheckBoxControl
 
 	setDataFolder root:Packages:IR2L_NLSQF
 
-	ControlInfo/W=LSQF2_MainPanel PopTabs
+	ControlInfo/W=LSQF2_MainPanel DistTabs
 	variable WhichPopSet = V_Value + 1
 
 	if(stringMatch(ctrlName, "DisplaySinglePopInt"))
@@ -2948,15 +2950,15 @@ Function IR2L_SaveResInWavesIndivDtSet(WdtSt, NewFolderName)
 				NVAR FFParam1 = $("root:Packages:IR2L_NLSQF:FormFactor_Param1_pop" + num2str(i))
 				ListOfParameters += "FormFactor_Param1_pop" + num2str(i) + "=" + num2str(FFParam1) + ";"
 				NVAR FFParam2 = $("root:Packages:IR2L_NLSQF:FormFactor_Param2_pop" + num2str(i))
-				ListOfParameters += "FormFactor_Param2_pop" + num2str(i) + "=" + num2str(FFParam1) + ";"
+				ListOfParameters += "FormFactor_Param2_pop" + num2str(i) + "=" + num2str(FFParam2) + ";"
 				NVAR FFParam3 = $("root:Packages:IR2L_NLSQF:FormFactor_Param3_pop" + num2str(i))
-				ListOfParameters += "FormFactor_Param3_pop" + num2str(i) + "=" + num2str(FFParam1) + ";"
+				ListOfParameters += "FormFactor_Param3_pop" + num2str(i) + "=" + num2str(FFParam3) + ";"
 				NVAR FFParam4 = $("root:Packages:IR2L_NLSQF:FormFactor_Param4_pop" + num2str(i))
-				ListOfParameters += "FormFactor_Param4_pop" + num2str(i) + "=" + num2str(FFParam1) + ";"
+				ListOfParameters += "FormFactor_Param4_pop" + num2str(i) + "=" + num2str(FFParam4) + ";"
 				NVAR FFParam5 = $("root:Packages:IR2L_NLSQF:FormFactor_Param5_pop" + num2str(i))
-				ListOfParameters += "FormFactor_Param5_pop" + num2str(i) + "=" + num2str(FFParam1) + ";"
+				ListOfParameters += "FormFactor_Param5_pop" + num2str(i) + "=" + num2str(FFParam5) + ";"
 				NVAR FFParam6 = $("root:Packages:IR2L_NLSQF:FormFactor_Param6_pop" + num2str(i))
-				ListOfParameters += "FormFactor_Param6_pop" + num2str(i) + "=" + num2str(FFParam1) + ";"
+				ListOfParameters += "FormFactor_Param6_pop" + num2str(i) + "=" + num2str(FFParam6) + ";"
 
 			elseif(stringmatch(model, "Unified level"))
 				NVAR Rg   = $("root:Packages:IR2L_NLSQF:UF_Rg_pop" + num2str(i))

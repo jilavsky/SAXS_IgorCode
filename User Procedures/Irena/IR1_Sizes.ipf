@@ -1,6 +1,7 @@
+#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
 //#pragma rtGlobals=2	// Use modern global access method.
-#pragma version = 2.31
+#pragma version = 2.32
 Constant IR1RSversionNumber=2.30
 
 
@@ -10,6 +11,7 @@ Constant IR1RSversionNumber=2.30
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.32 AI cleanup and debug
 //2.31 fixes for rtGlobals=3
 //2.30 added new parameters to storing the data, so they can be recovered. Forgot to do this last time. 
 //2.29 modify behavior of low-q power law slope and add "fit on Graph data" options... 
@@ -534,7 +536,6 @@ static    Function IR1R_DoInternalMaxent()
 	NVAR MaxsasNumIter=root:Packages:Sizes:MaxsasNumIter
 	NVAR MaxEntSkyBckg=root:Packages:Sizes:MaxEntSkyBckg
 	NVAR blank=root:Packages:Sizes:blank
-	NVAR MaxsasNumIter=root:Packages:Sizes:MaxsasNumIter
 	NVAR MaxEntStabilityParam=root:Packages:Sizes:MaxEntStabilityParam
 	NVAR Chisquare=root:Packages:Sizes:Chisquare
 	NVAR SizesPowerToUse=root:Packages:Sizes:SizesPowerToUse
@@ -1046,7 +1047,7 @@ Function IR1R_InitializeSizes()			//dialog for radius wave creation, simple line
 	if (MaxEntStabilityParam==0)
 		MaxEntStabilityParam=0.01
 	endif
-	NVAR FractalRadiusOfPriPart=root:Packages:Sizes:FractalDimension
+	NVAR FractalRadiusOfPriPart=root:Packages:Sizes:FractalRadiusOfPriPart
 	if (FractalRadiusOfPriPart==0)
 		FractalRadiusOfPriPart=10
 	endif
@@ -2126,6 +2127,7 @@ static Function IR1R_FindOptimumAvalue(Evalue)						//does the fitting itself, c
 		endif
 		i+=1
 		if (i>M)											//no solution found
+			SetDataFolder OldDf
 			return NaN
 		endif
 	while(abs(Chisquared-M)>tolerance)				//how much can I divide 200 points interval before it is useless?
@@ -2141,8 +2143,8 @@ static Function IR1R_FindOptimumAvalue(Evalue)						//does the fitting itself, c
 
 //	IR1L_AppendAnyText("Fitted with following parameters :\r"+SizesParameters)
 
-	return i
 	SetDataFolder OldDf
+	return i
 end
 
 //*****************************************************************************************************************

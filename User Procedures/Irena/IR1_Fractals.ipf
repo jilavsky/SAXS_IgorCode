@@ -1,6 +1,6 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use strict wave reference mode and runtime bounds checking
-#pragma version=2.13
+#pragma version=2.14
 Constant IRVversionNumber = 2.11
 
 //*************************************************************************\
@@ -9,6 +9,8 @@ Constant IRVversionNumber = 2.11
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+
+//2.14 AI cleanup and debug
 //2.13 fix fitting where we had errors due to use of 200points destination wave. This is bug, we do not need dest wave at all.
 //2.12 Fix case when user sets Qc in Surface fractal outside their data range, which caused artifacts.
 //2.11 add option to use Unified Spere form factor instead of Spheroid
@@ -326,8 +328,8 @@ Function IR1V_ControlPanelFnct()
 	SetVariable SurfFr2_DSMax, limits={0, Inf, 0}, value=root:Packages:FractalsModel:SurfFr2_DSMax, help={"DS high limit"}
 
 	SetVariable SurfFr2_Ksi, pos={14, 370}, size={160, 16}, proc=IR1V_PanelSetVarProc, title="Correlation length  ", help={"Correlation length of surface fractal, Ksi in the formula"}
-	NVAR SurfFr1_KsiStep = root:Packages:FractalsModel:SurfFr1_KsiStep
-	SetVariable SurfFr2_Ksi, limits={0, Inf, SurfFr1_KsiStep}, value=root:Packages:FractalsModel:SurfFr2_Ksi
+	NVAR SurfFr2_KsiStep = root:Packages:FractalsModel:SurfFr2_KsiStep
+	SetVariable SurfFr2_Ksi, limits={0, Inf, SurfFr2_KsiStep}, value=root:Packages:FractalsModel:SurfFr2_Ksi
 	CheckBox SurfFr2_FitKsi, pos={200, 371}, size={80, 16}, proc=IR1V_InputPanelCheckboxProc, title=" "
 	CheckBox SurfFr2_FitKsi, variable=root:Packages:FractalsModel:SurfFr2_FitKsi, help={"Fit the Correlation length, select good starting conditions and appropriate limits"}
 	SetVariable SurfFr2_KsiMin, pos={230, 370}, size={60, 16}, proc=IR1V_PanelSetVarProc, title=" "
@@ -343,7 +345,7 @@ Function IR1V_ControlPanelFnct()
 	NVAR SurfFr2_QcWidth = root:Packages:FractalsModel:SurfFr2_QcWidth
 	PopupMenu SurfFr2_QcW, proc=IR1V_PopMenuProc, value="5;10;15;20;25;", mode=1 + whichListItem(num2str(100 * SurfFr2_QcWidth), "5;10;15;20;25;")
 
-	SetVariable SurfFr2_Contrast, pos={14, 450}, size={220, 16}, proc=IR1A_PanelSetVarProc, title="Contrast [x 10^20]              "
+	SetVariable SurfFr2_Contrast, pos={14, 450}, size={220, 16}, proc=IR1V_PanelSetVarProc, title="Contrast [x 10^20]              "
 	SetVariable SurfFr2_Contrast, limits={0, Inf, 1}, value=root:Packages:FractalsModel:SurfFr2_Contrast, help={"Scattering contrast"}
 
 	//lets try to update the tabs...
@@ -2157,7 +2159,7 @@ Function IR1V_SetInitialValues()
 	ListOfVariables += "MassFr2_FitPhi;MassFr2_FitRadius;MassFr2_FitDv;MassFr2_FitKsi;"
 	ListOfVariables += "SurfFr1_FitSurface;SurfFr1_FitKsi;SurfFr1_FitDS;"
 	ListOfVariables += "SurfFr2_FitSurface;SurfFr2_FitKsi;SurfFr2_FitDS;"
-	ListOfVariables += "FitSASBackground;UpdateAutomatically;DisplayLocalFits;ActiveTab;DisplayLocalFits;UseIndra2Data;UseRQSdata;SubtractBackground;"
+	ListOfVariables += "FitSASBackground;UpdateAutomatically;DisplayLocalFits;ActiveTab;DisplayLocalFits;UseIndra2Data;UseQRSdata;SubtractBackground;"
 
 	for(i = 0; i < itemsInList(ListOfVariables); i += 1)
 		NVAR/Z testVar = $(StringFromList(i, ListOfVariables))

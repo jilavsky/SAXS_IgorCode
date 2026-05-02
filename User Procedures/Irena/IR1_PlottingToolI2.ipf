@@ -1,13 +1,14 @@
+#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3 // Use strict wave reference mode and runtime bounds checking
   
-#pragma version=2.24
-
+#pragma version=2.25
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//2.25 AI cleanup and debug
 //2.24 per request added sqrt(Y) as one of the Y options.
 //2.23 combined together with IR1_GraphStyling.ipf
 //2.22 optimize function IR1P_CreateGraph, doing stuff 2x - not needed.

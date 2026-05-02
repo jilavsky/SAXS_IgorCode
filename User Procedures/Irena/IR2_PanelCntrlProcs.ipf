@@ -1,6 +1,6 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use modern global access method.
-#pragma version=1.67
+#pragma version=1.68
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//1.68 AI cleanup and debug
 //1.67 found major bug in UI - if other tools place multiple QRS data sets int eh same folder, we cannot get to them using the new toolbox. 
 //			no real solution, fix looks very complex. At least added warning in history area. 
 //1.66 add to USAXS combination of Detector=Xdata, this is for Tiled imported tune scans. Also fixed IR3C_GenStringOfFolders2
@@ -2279,7 +2280,7 @@ Function IR2C_PanelPopupControl(Pa) : PopupMenuControl
 			WAVE/Z tempYwv = $(IntDf)
 			if(WaveExists(tempYwv))
 				Duplicate/O tempYWv, $("X_" + IntDf[0, 28])
-				WAVE tempXWv = $("X_" + IntDf)
+				WAVE tempXWv = $("X_" + IntDf[0, 28])
 				tempXWv = leftx(tempYWv) + p * deltax(tempYWv)
 				QDf     = "X_" + IntDf[0, 28]
 			endif
@@ -2442,8 +2443,8 @@ Function IR2C_PanelPopupControl(Pa) : PopupMenuControl
 				Execute("PopupMenu QvecDataName mode=1,value= #\"\\\"---;\\\"+root:Packages:IrenaControlProcs:" + TopPanelFixed + ":tempXList\", win=" + TopPanel)
 			endif
 			if(StringMatch(TempElist, "*" + OldEname + "*"))
-				EDf = OldQname
-				Execute("PopupMenu ErrorDataName mode=" + num2str(WhichListItem(QDf, tempEList, ";") + 1) + ",value= #\"root:Packages:IrenaControlProcs:" + TopPanelFixed + ":tempEList\", win=" + TopPanel)
+				EDf = OldEname
+				Execute("PopupMenu ErrorDataName mode=" + num2str(WhichListItem(EDf, tempEList, ";") + 1) + ",value= #\"root:Packages:IrenaControlProcs:" + TopPanelFixed + ":tempEList\", win=" + TopPanel)
 			else
 				EDf = "---"
 				Execute("PopupMenu ErrorDataName mode=1,value= #\"\\\"---;\\\"+root:Packages:IrenaControlProcs:" + TopPanelFixed + ":tempEList\", win=" + TopPanel)

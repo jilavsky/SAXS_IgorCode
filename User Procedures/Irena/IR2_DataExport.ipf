@@ -1,5 +1,6 @@
+#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3 // Use modern global access method.
-#pragma version=1.20
+#pragma version=1.21
 Constant IR2EversionNumber = 1.18
 
 //*************************************************************************\
@@ -8,6 +9,7 @@ Constant IR2EversionNumber = 1.18
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//1.21 AI cleanup and debug
 //1.20	lint - changed Pragma version from 1 to 3, why was this 1 ever??? 
 //1.19 fix ASCII export of USAXS data which was exporting incorrect Q data.
 //1.18 added export of all data from current experiment using IR2E_ExportAllAsNexus(), for now sets dQ=0 for DSM data, sets dQl=slit length and dQw to dQ for SMR data.
@@ -961,6 +963,7 @@ static Function IR2E_GetWavelength(OldNoteT1)
 				Prompt KeepwVlgth, "Store for future use? Must be same for all data!", popup, "No;Yes;"
 				DoPrompt "Provide wavelength is A", wvlgth, KeepwVlgth
 				if(V_Flag || numtype(wvlgth) != 0 || wvlgth < 0.01)
+					setDataFolder oldDf
 					return -1 // User canceled
 				endif
 				print "*** Using user input wavelentgh of " + num2str(wvlgth) + " A for current data set. *** "
@@ -985,7 +988,7 @@ Function IR2E_LoadDataInTool()
 
 	KillWIndow/Z TempExportGraph
 	KillWIndow/Z ExportNoteDisplay
-	KillWaves/Z TempX, TampY, TempE
+	KillWaves/Z TempX, TempY, TempE
 
 	DFREF oldDf = GetDataFolderDFR()
 

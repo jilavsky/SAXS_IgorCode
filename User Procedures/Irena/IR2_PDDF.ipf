@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.16
+#pragma version=1.17
 Constant IR2PrversionNumber=1.13
 
 //*************************************************************************\
@@ -9,6 +9,7 @@ Constant IR2PrversionNumber=1.13
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.17 AI cleanup and debug
 //1.16 changed to Pragma version 3
 //1.15 combined together with IR2Pr_Regularization.ipf
 //1.13 added better graph size controls for screen size using IN2G_GetGraphWidthHeight
@@ -651,6 +652,7 @@ Function IR2Pr_InputPanelButtonProc(ctrlName) : ButtonControl
 
 //			IR2D_RecoverOldParameters()
 		else
+			setDataFolder OldDf
 			Abort "Data not selected properly"
 		endif
 	endif
@@ -1200,10 +1202,6 @@ static Function IR2Pr_FitMooreAutocorrelation()
 //	MatrixOP/O RegPDFErrors = RegPDFErrors^t
 	KillWaves/Z  testWv, MontStatWave, CurrentResultMontCarlo
 	SetDataFolder OldDf
-
-	
-
-	setDataFOlder OldDf
 EndMacro
 
 
@@ -2573,6 +2571,7 @@ static Function IR2Pr_FindOptimumAvalue(Evalue)						//does the fitting itself, 
 		endif
 		i+=1
 		if (i>M || (Chisquared - PriorChisquared)==0)											//no solution found
+			SetDataFolder OldDf
 			return NaN
 		endif
 		NumberIterations+=1
@@ -2598,8 +2597,8 @@ static Function IR2Pr_FindOptimumAvalue(Evalue)						//does the fitting itself, 
 	FittingResults=FitNote
 	TextBox/W=IR2Pr_PDFInputGraph/C/N=MooreFitNote/A=MC fitnote 
 
-	return i
 	SetDataFolder OldDf
+	return i
 end
 //*****************************************************************************************************************
 //*****************************************************************************************************************

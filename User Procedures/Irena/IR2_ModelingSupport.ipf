@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.55
+#pragma version=1.56
 
 
 constant ChangeFromGaussToSlit=2
@@ -9,6 +9,8 @@ constant ChangeFromGaussToSlit=2
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+
+//1.56 AI cleanup and debug
 //1.55 minor fixes:
 	// line 5773 add possiblyQuoteName since users use also liberal names...  
 //1.54 change to pragma version=3
@@ -427,7 +429,7 @@ Function IR2L_PowerLawFitAllATOnce(parwave,ywave,xwave) : FitFunc
 	endif
 	
 	ywave = tempPowerLawInt[binarysearch(OriginalQvector,xwave[0])+p]
-	KillWaves/Z tempGunIntSM, tempGunInt
+	KillWaves/Z tempPowerLawIntSM, tempPowerLawInt
 End
 
 //****************************************************************************************************************
@@ -2318,7 +2320,7 @@ Function IR2L_Initialize()
 		if(SizeDist_DimensionIsDiameter)
 			SizeDist_DimensionType += "Diameters"
 		else
-			SizeDist_DimensionType += "Radia"
+			SizeDist_DimensionType += "Radii"
 		endif
 
 	String/g rgbIntensity_set1="(52224,0,0)"
@@ -3061,7 +3063,7 @@ Function IR2L_AddRemoveTagsToGraph(AddAlso)
 						NVAR MassFrKsi=$("root:Packages:IR2L_NLSQF:MassFrKsi_pop"+num2str(i))
 						NVAR MassFrBeta=$("root:Packages:IR2L_NLSQF:MassFrBeta_pop"+num2str(i))
 						NVAR MassFrEta=$("root:Packages:IR2L_NLSQF:MassFrEta_pop"+num2str(i))
-						NVAR MassFrIntgNumPnts=$("root:Packages:IR2L_NLSQF:MassFrDv_pop"+num2str(i))
+						NVAR MassFrIntgNumPnts=$("root:Packages:IR2L_NLSQF:MassFrIntgNumPnts_pop"+num2str(i))
 						TagName  = "ModelingIITag"+num2str(i)+"set"+num2str(k)
 						LocationPnt = BinarySearch(Qvec, 1.8/Rg )
 							TagText="\\Z"+IN2G_LkUpDfltVar("TagSize")+"Mass Fractal "+num2str(i)+"P\r"
@@ -3442,10 +3444,10 @@ Function IR2L_SvNbk_ModelInf()
 					string Par4name=""
 					if(stringmatch(PeakProfile,"Pseudo-Voigt"))
 						Par4name="Eta"
-					elseif(stringmatch(PeakProfile,"Pearson_VII") || stringmatch(PeakProfile,"Modifif_Gauss")||stringmatch(PeakProfile,"SkewedNormal"))
+					elseif(stringmatch(PeakProfile,"Pearson_VII") || stringmatch(PeakProfile,"Modif_Gauss")||stringmatch(PeakProfile,"SkewedNormal"))
 						Par4name="Tail Param"
 					endif
-					if(strlen(Par4name)<0)
+					if(strlen(Par4name)>0)
 						IR2L_AppendAnyText("Eta "+"\t=\t"+num2str(DiffPeakPar4),0)
 					endif
 				
@@ -5094,31 +5096,31 @@ Function IR2L_DataTabCheckboxProc(ctrlName,checked) : CheckBoxControl
 		NVAR NoFittingLimits = root:Packages:IR2L_NLSQF:NoFittingLimits
 		if(V_Flag)
 			SetWindow FormFactorControlScreen note="NoFittingLimits="+num2str(NoFittingLimits)+";"
-			COntrolInfo/W=FormFactorControlScreen FitP1Value
+			ControlInfo/W=FormFactorControlScreen FitP1Value
 			if(V_Flag==2 && V_disable==0 && V_Value)
 				IR1T_FFCntrlPnlCheckboxProc("FitP1Value",1)
 			endif
-			COntrolInfo/W=FormFactorControlScreen FitP2Value
+			ControlInfo/W=FormFactorControlScreen FitP2Value
 			if(V_Flag==2 && V_disable==0 && V_Value)
 				IR1T_FFCntrlPnlCheckboxProc("FitP2Value",1)
 			endif
-			COntrolInfo/W=FormFactorControlScreen FitP3value
+			ControlInfo/W=FormFactorControlScreen FitP3value
 			if(V_Flag==2 && V_disable==0 && V_Value)
 				IR1T_FFCntrlPnlCheckboxProc("FitP3Value",1)
 			endif
-			COntrolInfo/W=FormFactorControlScreen FitP4Value
+			ControlInfo/W=FormFactorControlScreen FitP4Value
 			if(V_Flag==2 && V_disable==0 && V_Value)
 				IR1T_FFCntrlPnlCheckboxProc("FitP4Value",1)
 			endif
-			COntrolInfo/W=FormFactorControlScreen FitP5Value
+			ControlInfo/W=FormFactorControlScreen FitP5Value
 			if(V_Flag==2 && V_disable==0 && V_Value)
 				IR1T_FFCntrlPnlCheckboxProc("FitP5Value",1)
 			endif
-			COntrolInfo/W=FormFactorControlScreen FitP6Value
+			ControlInfo/W=FormFactorControlScreen FitP6Value
 			if(V_Flag==2 && V_disable==0 && V_Value)
 				IR1T_FFCntrlPnlCheckboxProc("FitP6Value",1)
 			endif
-			COntrolInfo/W=FormFactorControlScreen FitP7Value
+			ControlInfo/W=FormFactorControlScreen FitP7Value
 			if(V_Flag==2 && V_disable==0 && V_Value)
 				IR1T_FFCntrlPnlCheckboxProc("FitP7Value",1)
 			endif
@@ -5126,31 +5128,31 @@ Function IR2L_DataTabCheckboxProc(ctrlName,checked) : CheckBoxControl
 		DoWIndow StructureFactorControlScreen
 		if(V_Flag)
 			SetWindow StructureFactorControlScreen note="NoFittingLimits="+num2str(NoFittingLimits)+";"
-			COntrolInfo/W=StructureFactorControlScreen FitP1Value
+			ControlInfo/W=StructureFactorControlScreen FitP1Value
 			if(V_Flag==2 && V_disable==0 && V_Value)
 				IR2S_SFCntrlPnlCheckboxProc("FitP1Value",1)
 			endif
-			COntrolInfo/W=StructureFactorControlScreen FitP2Value
+			ControlInfo/W=StructureFactorControlScreen FitP2Value
 			if(V_Flag==2 && V_disable==0 && V_Value)
 				IR2S_SFCntrlPnlCheckboxProc("FitP2Value",1)
 			endif
-			COntrolInfo/W=StructureFactorControlScreen FitP3value
+			ControlInfo/W=StructureFactorControlScreen FitP3value
 			if(V_Flag==2 && V_disable==0 && V_Value)
 				IR2S_SFCntrlPnlCheckboxProc("FitP3Value",1)
 			endif
-			COntrolInfo/W=StructureFactorControlScreen FitP4Value
+			ControlInfo/W=StructureFactorControlScreen FitP4Value
 			if(V_Flag==2 && V_disable==0 && V_Value)
 				IR2S_SFCntrlPnlCheckboxProc("FitP4Value",1)
 			endif
-			COntrolInfo/W=StructureFactorControlScreen FitP5Value
+			ControlInfo/W=StructureFactorControlScreen FitP5Value
 			if(V_Flag==2 && V_disable==0 && V_Value)
 				IR2S_SFCntrlPnlCheckboxProc("FitP5Value",1)
 			endif
-			COntrolInfo/W=StructureFactorControlScreen FitP6Value
+			ControlInfo/W=StructureFactorControlScreen FitP6Value
 			if(V_Flag==2 && V_disable==0 && V_Value)
 				IR2S_SFCntrlPnlCheckboxProc("FitP6Value",1)
 			endif
-			COntrolInfo/W=StructureFactorControlScreen FitP7Value
+			ControlInfo/W=StructureFactorControlScreen FitP7Value
 			if(V_Flag==2 && V_disable==0 && V_Value)
 				IR2S_SFCntrlPnlCheckboxProc("FitP7Value",1)
 			endif
@@ -5221,7 +5223,7 @@ Function IR2L_DataTabCheckboxProc(ctrlName,checked) : CheckBoxControl
 		if(SizeDist_DimensionIsDiameter)
 			SizeDist_DimensionType += "Diameters"
 		else
-			SizeDist_DimensionType += "Radia"
+			SizeDist_DimensionType += "Radii"
 		endif
 		IR2L_AppendWvsGraphSizeDist()
 	endif
@@ -5303,7 +5305,7 @@ Function IR2L_DataTabCheckboxProc(ctrlName,checked) : CheckBoxControl
 		if(SizeDist_DimensionIsDiameter)
 			SizeDist_DimensionType += "Diameters"
 		else
-			SizeDist_DimensionType += "Radia"
+			SizeDist_DimensionType += "Radii"
 		endif
 	endif
 

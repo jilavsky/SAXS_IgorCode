@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals = 3// Use strict wave reference mode and runtime bounds checking
-#pragma version=2.36
+#pragma version=2.37
 
 
 constant IR2UversionNumber=2.23 			//Evaluation panel version number. 
@@ -10,6 +10,7 @@ constant IR2UversionNumber=2.23 			//Evaluation panel version number.
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.37 AI cleanup and debug
 //2.36 remove k factor and set automatically per Greg's suggestion. 
 //2.35 removed IR1A_UnifiedFitCalcIntOne which had bug anyway when LinkB was selected. Not needed, using IR1A_UnifiedCalcIntOne instead also for fitting. 
 //2.34 fixed cursor calls to target graph "IR1_LogLogPlotU"
@@ -2046,7 +2047,7 @@ Function IR2U_DWSCheckboxProc(ctrlName,checked) : CheckBoxControl//**DWS
 		value=checked
 	endif
 	
-	if(stringmatch(ctrlName, "PrentExcel"))
+	if(stringmatch(ctrlName, "PrintExcel"))
 		NVAR value=root:packages:Irena_AnalUnifFit:printlogbook
 		value=checked
 	endif
@@ -2793,17 +2794,6 @@ Function IR2U_ClearVariables()
 	PartAnalRgFromVp=0
 	PartAnalParticleDensity=0
 
-	NVAR MinorityPhasePhi=root:Packages:Irena_AnalUnifFit:MinorityPhasePhi 
-	NVAR MajorityPhasePhi=root:Packages:Irena_AnalUnifFit:MajorityPhasePhi 
-	NVAR PiBoverQ=root:Packages:Irena_AnalUnifFit:PiBoverQ 
-	NVAR MinorityCordLength=root:Packages:Irena_AnalUnifFit:MinorityCordLength
-	NVAR MajorityCordLength=root:Packages:Irena_AnalUnifFit:MajorityCordLength 
-	NVAR SurfacePerVolume=root:Packages:Irena_AnalUnifFit:SurfacePerVolume  
-	NVAR PartANalRHard=root:Packages:Irena_AnalUnifFit:PartANalRHard 
-	NVAR BforTwoPhMat=root:Packages:Irena_AnalUnifFit:BforTwoPhMat
-	NVAR PartAnalVolumeOfParticle=root:Packages:Irena_AnalUnifFit:PartAnalVolumeOfParticle 
-	NVAR PartAnalRgFromVp=root:Packages:Irena_AnalUnifFit:PartAnalRgFromVp 
-	NVAR PartAnalParticleDensity=root:Packages:Irena_AnalUnifFit:PartAnalParticleDensity 
 	MinorityPhasePhi=0
 	MajorityPhasePhi=0
 	PiBoverQ=0
@@ -3988,7 +3978,7 @@ Function IR2U_TwoPhaseModelCalc()
 			while ((abs((DensityMinorityPhase-densold)/DensityMinorityPhase))>.00001)
 			MinorityPhasePhi= phi
 			MajorityPhasePhi=(1-phi)  
-			contrast = (DensityMinorityPhase * SLDDensityMinorityPhase-DensityMinorityPhase*SLDDensityMinorityPhase)^2	//DWS Corrected 11/25/2013
+			contrast = (DensityMinorityPhase * SLDDensityMinorityPhase-DensityMajorityPhase*SLDDensityMajorityPhase)^2	//DWS Corrected 11/25/2013
 		endif
 		SurfacePerVolume=(1e-4*Pi*Bloc/Qv)*MajorityPhasePhi*MinorityPhasePhi   //m^2/cm^3 calculate from densities and Qp 
 		SurfacePerMass = SurfacePerVolume/SamplebulkDensity

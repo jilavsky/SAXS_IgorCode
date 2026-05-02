@@ -1,5 +1,6 @@
+#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3 // Use modern global access method.
-#pragma version=1.19
+#pragma version=1.20
 
 Constant IR2MversionNumber = 1.13 //Data mining tool version number
 Constant IR3BversionNumber = 0.1  //MetadataBrowser tool version number.
@@ -10,6 +11,7 @@ Constant IR3BversionNumber = 0.1  //MetadataBrowser tool version number.
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//1.20 AI cleanup and debug
 //1.19 lint, changed to Prgama version 3 from 1. WHy was this ever 1? 
 //1.18 changed extracted number and time waves into double precision. Needed for time waves.
 //1.17 fix DateTime extracted wave bug, cannot name wave DATETIME, need to use DatTimeW
@@ -1274,7 +1276,7 @@ Function IR2M_FixPanelControls()
 		Button Others_Clear, win=DataMiningTool, disable=0
 	endif
 
-	if(MineVariables || MineStrings || MineWavenotes && SaveToWaves)
+	if((MineVariables || MineStrings || MineWavenotes) && SaveToWaves)
 		SetVariable Others_FolderForWaves, disable=0
 	else
 		SetVariable Others_FolderForWaves, disable=1
@@ -1893,7 +1895,7 @@ Function IR2M_CreateOutputTable()
 	string   curWvName
 	DFREF oldDf = GetDataFolderDFR()
 
-	setDataFolder $(" root:" + Others_FolderForWaves)
+	setDataFolder $("root:" + Others_FolderForWaves)
 
 	for(i = 0; i < ItemsInList(Variables_ListToFind); i += 1)
 		curWvName = StringFromList(i, Variables_ListToFind)

@@ -1,5 +1,6 @@
+#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3 // Use strict wave reference mode and runtime bounds checking
-#pragma version=2.28
+#pragma version=2.30
 
 Constant IR1AversionNumber = 2.29
 
@@ -9,6 +10,7 @@ Constant IR1AversionNumber = 2.29
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//2.30 AI cleanup and debug
 //2.29 fix minor GUI but with no limits in Unified fit fitting...
 //2.28 remove k factor and use (per Greg): if P is more than 3 then k=1 and if P is less than 3 k = 1.06
 //		change Link B to inot "Estimate B from" because it is wild guess.
@@ -2121,6 +2123,7 @@ Function IR1A_PanelSetVarProc(ctrlName, varNum, varStr, varName) : SetVariableCo
 
 	DoWIndow/F IR1A_ControlPanel
 
+	setDataFolder oldDf
 End
 //************************************************************************************************************
 //************************************************************************************************************

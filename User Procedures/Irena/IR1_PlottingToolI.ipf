@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
 //#pragma rtGlobals=1	// Use modern global access method.
-#pragma version=2.34
+#pragma version=2.35
 //#include  <TransformAxis1.2>
 Constant IR1PversionNumber=2.33
 
@@ -11,6 +11,7 @@ Constant IR1PversionNumber=2.33
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.35 AI cleanup and debug
 //2.34 per request added sqrt(Y) as one of the Y options. 
 //2.33 remove data type CanSAS as option, that is likely never used. Confuses everyone. 
 //2.32 modified IR1P_AttachLegend to limit max number of items in Legend
@@ -1430,7 +1431,6 @@ Function IR1P_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
 	SVAR IntDf=root:Packages:GeneralplottingTool:IntensityWaveName
 	SVAR QDf=root:Packages:GeneralplottingTool:QWaveName
 	SVAR EDf=root:Packages:GeneralplottingTool:ErrorWaveName
-	NVAR UseQRSData=root:Packages:GeneralplottingTool:UseQRSdata
 
 	if (cmpstr(ctrlName,"GraphType")==0)
 		//here goes what needs to be done, when we select this popup...

@@ -1,6 +1,6 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use modern global access method.
-#pragma version=2.28
+#pragma version=2.29
 
 Constant IR1K_CurrentPanelVersion = 2.27
 
@@ -10,6 +10,7 @@ Constant IR1K_CurrentPanelVersion = 2.27
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//2.29 AI cleanup and debug
 //2.28 Tweaked GUI controls position. Works well with default fonts on Mac.
 //2.27 added Compound name mask (regex) string to handle when lots of names is listed.
 //2.26  removed unused functions
@@ -483,14 +484,12 @@ Function IR1K_FixDisplayedVariables()
 	if(UseWeightPercent)
 		SetVariable MolWeight, disable=1, win=IR1K_ScatteringContCalc
 		SetVariable WghtOf1Mol, disable=1, win=IR1K_ScatteringContCalc
-		SetVariable WghtOf1Mol, disable=1, win=IR1K_ScatteringContCalc
 		SetVariable NumOfMolin1cm3, disable=1, win=IR1K_ScatteringContCalc
 		SetVariable NumOfElperMol, disable=1, win=IR1K_ScatteringContCalc
 		SetVariable NeutronsVolume1Mol, disable=1, win=IR1K_ScatteringContCalc
 		SetVariable NeutronTotalMolB, disable=1, win=IR1K_ScatteringContCalc
 	else
 		SetVariable MolWeight, disable=0, win=IR1K_ScatteringContCalc
-		SetVariable WghtOf1Mol, disable=0, win=IR1K_ScatteringContCalc
 		SetVariable WghtOf1Mol, disable=0, win=IR1K_ScatteringContCalc
 		SetVariable NumOfMolin1cm3, disable=0, win=IR1K_ScatteringContCalc
 		SetVariable NumOfElperMol, disable=0, win=IR1K_ScatteringContCalc
@@ -3404,7 +3403,7 @@ Function IR1K_SetLookupLists()
 	ListofNeutronAbsCross += "Zn_natural=1.1;Zn_Zn64=NaN;Zn_Zn66=NaN;Zn_Zn68=NaN;"
 	//Ga
 	ListOfIsotopes        += "Ga=natural;"
-	ListOfElNeutronBs     += "Ga_Natural=0.72;"
+	ListOfElNeutronBs     += "Ga_natural=0.72;"
 	ListOfElNeuIncohBs    += "Ga_natural=0.5;"
 	ListofNeutronAbsCross += "Ga_natural=2.8;"
 	//Ge
@@ -3549,9 +3548,9 @@ Function IR1K_SetLookupLists()
 	ListofNeutronAbsCross += "Pr_natural=11.6;"
 	//Nd
 	ListOfIsotopes        += "Nd=natural,Nd142,Nd144,Nd146;"
-	ListOfElNeutronBs     += "Nd_natural=0.78;Nd_Nd142=0.77;Nd_Nd144=0.28;Nd_Nd164=0.87;"
-	ListOfElNeuIncohBs    += "Nd_natural=11;Nd_Nd142=0;Nd_Nd144=0;Nd_Nd164=0;"
-	ListofNeutronAbsCross += "Nd_natural=46;Nd_Nd142=nan;Nd_Nd144=nan;Nd_Nd164=nan;"
+	ListOfElNeutronBs     += "Nd_natural=0.78;Nd_Nd142=0.77;Nd_Nd144=0.28;Nd_Nd146=0.87;"
+	ListOfElNeuIncohBs    += "Nd_natural=11;Nd_Nd142=0;Nd_Nd144=0;Nd_Nd146=0;"
+	ListofNeutronAbsCross += "Nd_natural=46;Nd_Nd142=nan;Nd_Nd144=nan;Nd_Nd146=nan;"
 	//Sm
 	ListOfIsotopes        += "Sm=Sm149,Sm152,Sm154;"
 	ListOfElNeutronBs     += "Sm_Sm149=-1.9;Sm_Sm152=-0.5;Sm_Sm154=0.96;"
@@ -3573,7 +3572,7 @@ Function IR1K_SetLookupLists()
 	ListOfElNeuIncohBs    += "Tb_natural=nan;"
 	ListofNeutronAbsCross += "Tb_natural=46;"
 	//Dy
-	ListOfIsotopes        += "Dy-natural,Dy160,Dy161,Dy162,Dy163,Dy164;"
+	ListOfIsotopes        += "Dy=natural,Dy160,Dy161,Dy162,Dy163,Dy164;"
 	ListOfElNeutronBs     += "Dy_natural=1.71;Dy_Dy160=0.67;Dy_Dy161=1.03;Dy_Dy162=-0.14;Dy_Dy163=0.50;Dy_Dy164=4.94;"
 	ListOfElNeuIncohBs    += "Dy_natural=nan;Dy_Dy160=0;Dy_Dy161=nan;Dy_Dy162=0;Dy_Dy163=nan;Dy_Dy164=0;"
 	ListofNeutronAbsCross += "Dy_natural=950;Dy_Dy160=55;Dy_Dy161=585;Dy_Dy162=200;Dy_Dy163=140;Dy_Dy164=2300;"
@@ -3665,7 +3664,7 @@ Function IR1K_SetLookupLists()
 	//Th
 	ListOfIsotopes        += "Th=Th232;"
 	ListOfElNeutronBs     += "Th_Th232=1.008;"
-	ListOfElNeuIncohBs    += "Th_TH232=0;"
+	ListOfElNeuIncohBs    += "Th_Th232=0;"
 	ListofNeutronAbsCross += "Th_Th232=7.56;"
 	//Pa
 	ListOfIsotopes        += "Pa=Pa231;"
@@ -3689,9 +3688,9 @@ Function IR1K_SetLookupLists()
 	ListofNeutronAbsCross += "Pu_Pu239=1026;Pu_Pu240=295;Pu_Pu242=nan;"
 	//Am
 	ListOfIsotopes        += "Am=Am243;"
-	ListOfElNeutronBs     += "Am_AM243=0.76;"
-	ListOfElNeuIncohBs    += "Am_AM243=nan;"
-	ListofNeutronAbsCross += "Am_AM243=nan;"
+	ListOfElNeutronBs     += "Am_Am243=0.76;"
+	ListOfElNeuIncohBs    += "Am_Am243=nan;"
+	ListofNeutronAbsCross += "Am_Am243=nan;"
 	//Cm
 	ListOfIsotopes        += "Cm=Cm244;"
 	ListOfElNeutronBs     += "Cm_Cm244=0.7;"

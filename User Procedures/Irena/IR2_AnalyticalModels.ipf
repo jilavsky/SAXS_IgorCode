@@ -1,5 +1,6 @@
+#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3	// Use modern global access method.
-#pragma version=4.18
+#pragma version=4.19
 Constant IR2HversionNumber = 4.13
 
 
@@ -9,6 +10,7 @@ Constant IR2HversionNumber = 4.13
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//4.19 AI cleanup and debug
 //4.18 change #pragma rtGlobals=1 to 3. 
 //4.17 fix GenCurveFit call, which was failing due to Exists("gencurvefit") returning 4 instead of 3 which was in the code. 
 //4.16 added check for errors = 0 
@@ -635,7 +637,7 @@ Function IR2H_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 		IR2H_AutoUpdateIfSelected()
 	endif
 	if (cmpstr(ctrlName,"UseTS")==0)
-		if(!UseDB)
+		if(!UseTS)
 			if(StringMatch(LowQLinkRGCOTo, "TSCorrLength" ))
 				LowQLinkRGCOTo="---"
 			endif
@@ -1549,7 +1551,7 @@ static Function IR2H_GraphMeasuredData()
 	endif
 	if(numtype(tempWavelength)!=0)
 		DBWavelength=1
-	elseif(originalWvlngth==0)
+	elseif(originalWvlngth!=0)
 		DBWavelength=originalWvlngth
 	endif
 	
@@ -2356,7 +2358,7 @@ static Function IR2H_ConstructTheFittingCommand()
 		CoefNames[numpnts(CoefNames)-1]="TSAvalue"
 		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(TSAvalueLowLimit)}
 		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(TSAvalueHighLimit)}		
-		Gen_Constraints[curLen][0] = TSC1ValueHighLimit
+		Gen_Constraints[curLen][0] = TSAvalueLowLimit
 		Gen_Constraints[curLen][1] = TSAvalueHighLimit
 	endif
 	if (FitTSC1Value && UseTS)	
@@ -2452,9 +2454,11 @@ static Function IR2H_ConstructTheFittingCommand()
 				Abort "Uncertainties (ERRORS) make NO sense. Points with uncertainty (error) <= 0 are not fitted and this causes troubles. Fix uncertainties and try again. See history area for more details."
 			endif
 			//***End of Catch error issues
-			//FuncFit /N/Q IR2H_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1 /E=E_wave/D /C=T_Constraints	
+			//FuncFit /N/Q IR2H_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1 /E=E_wave/D /C=T_Constraints
 #if Exists("gencurvefit")==4
-		  	gencurvefit  /I=1 /W=FitErrorWave /M=GenMaskWv /N /TOL=0.001 /K={50,20,0.7,0.5} /X=FitQvectorWave IR2H_FitFunction, FitIntensityWave  , W_Coef, HoldStr, Gen_Constraints  	
+			Duplicate/O FitIntensityWave, GenMaskWv
+			GenMaskWv=1
+		  	gencurvefit  /I=1 /W=FitErrorWave /M=GenMaskWv /N /TOL=0.001 /K={50,20,0.7,0.5} /X=FitQvectorWave IR2H_FitFunction, FitIntensityWave  , W_Coef, HoldStr, Gen_Constraints
 #else
 			Abort "Genetic Optimization xop NOT installed. Install xop support and then try again"
 #endif
