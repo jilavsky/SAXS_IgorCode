@@ -1,6 +1,6 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use modern global access method.
-#pragma version=1.12 //this is Irena package Guinier-Porod model based on Hammouda's paper
+#pragma version=1.13 //this is Irena package Guinier-Porod model based on Hammouda's paper
 Constant IR3GPversionNumber = 1.08
 
 //*************************************************************************\
@@ -17,6 +17,11 @@ Constant IR3GPversionNumber = 1.08
 // J. Appl. Cryst. (2010). 43, 716–719, Boualem Hammouda, A new Guinier–Porod model
 
 //version history
+//1.13 AI code review: convert 5 string-based DF save/restores to DFREF; add missing DF restore
+//     in IR3GP_SetDefaults (folder was set but never restored); add SetDataFolder before 6 Abort
+//     calls in IR3GP_FitData, IR3GP_FitLocalGuinier, IR3GP_FitLocalPorod; add WAVE/Z to ~20
+//     wave declarations throughout (LevelStructure ×2, OriginalQvector/Intensity/Error groups,
+//     FitIntensityWave/FitQvectorWave, FitWv ×2, StartValues/EndValues/ChiSquareValues, etc.).
 //1.12 Fixed fitting issue where fitting data in small Q range (at low-Q) failed. It was working for large Q range. FIxed by always calculating full data Q range and using subset for fitting.
 //1.11 Added ability to export Level fits (Int-Q) which was missing before.  Adds Level0 which is simply flat background wave.
 //1.10 2019-05 Testing, fixes for Correlation fitting parameters (were not fitted at all) and some fixes to Uncertainty evaluation, was misbehaving.
@@ -133,7 +138,7 @@ EndStructure
 Function IR3GP_MoveStrToGlobals(Par)
 	STRUCT GuinierPorodLevel &Par
 
-	string OldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Irena:GuinierPorod
 	NVAR Level_G
 	Level_G = Par.G
@@ -230,14 +235,14 @@ Function IR3GP_MoveStrToGlobals(Par)
 	Level_ETAError = Par.ETAError
 	NVAR Invariant
 	Invariant = Par.Invariant
-	setDataFolder oldDF
+	SetDataFolder saveDF
 End
 //******************************************************************************************
 //******************************************************************************************
 Function IR3GP_MoveGlobalsToStr(Par)
 	STRUCT GuinierPorodLevel &Par
 
-	string OldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Irena:GuinierPorod
 	NVAR Level_G
 	Par.G = Level_G
@@ -334,7 +339,7 @@ Function IR3GP_MoveGlobalsToStr(Par)
 	Par.PACKError = Level_PACKError
 	NVAR Invariant
 	Par.Invariant = Invariant
-	setDataFolder oldDF
+	SetDataFolder saveDF
 
 End
 //******************************************************************************************
@@ -344,7 +349,7 @@ Function IR3GP_MoveLevelToWave(level)
 
 	STRUCT GuinierPorodLevel Par
 	IR3GP_MoveGlobalsToStr(Par)
-	WAVE LevelStructure = $("root:Packages:Irena:GuinierPorod:Level" + num2str(level) + "Structure")
+	WAVE/Z LevelStructure = $("root:Packages:Irena:GuinierPorod:Level" + num2str(level) + "Structure")
 	StructPut Par, LevelStructure
 End
 //******************************************************************************************
@@ -353,7 +358,7 @@ Function IR3GP_LoadLevelFromWave(level)
 	variable level
 
 	STRUCT GuinierPorodLevel Par
-	WAVE LevelStructure = $("root:Packages:Irena:GuinierPorod:Level" + num2str(level) + "Structure")
+	WAVE/Z LevelStructure = $("root:Packages:Irena:GuinierPorod:Level" + num2str(level) + "Structure")
 	StructGet Par, LevelStructure
 	IR3GP_MoveStrToGlobals(Par)
 End
@@ -363,7 +368,7 @@ Function IR3GP_SaveStructureToWave(Par, level)
 	STRUCT GuinierPorodLevel &Par
 	variable                  level
 	if(level > 0)
-		WAVE LevelStructure = $("root:Packages:Irena:GuinierPorod:Level" + num2str(level) + "Structure")
+		WAVE/Z LevelStructure = $("root:Packages:Irena:GuinierPorod:Level" + num2str(level) + "Structure")
 		StructPut Par, LevelStructure
 	endif
 End
@@ -373,7 +378,7 @@ Function IR3GP_LoadStructureFromWave(Par, level)
 	STRUCT GuinierPorodLevel &Par
 	variable                  level
 	if(level > 0)
-		WAVE LevelStructure = $("root:Packages:Irena:GuinierPorod:Level" + num2str(level) + "Structure")
+		WAVE/Z LevelStructure = $("root:Packages:Irena:GuinierPorod:Level" + num2str(level) + "Structure")
 		StructGet Par, LevelStructure
 	endif
 End
@@ -443,7 +448,7 @@ Function IR2GP_CalculateGPValue(Qval, Pval, Rg1, Gval, S1, Rg2, S2, Background)
 	// for Q<Q2		: 	I(Q) = G2/Q2^s2 * exp(-Q^2 * Rg2^2 / (3-s2))
 	// for Q<Q1		: 	I(Q) = G1/Q^s1 * exp(-Q^2 * Rg1^2 / (3-s1))
 	// for Q>=Q1 	: 	I(Q) = D / Q^d
-	WAVE Qvec = root:Packages:Irena:GuinierPorod:OriginalQvector
+	WAVE/Z Qvec = root:Packages:Irena:GuinierPorod:OriginalQvector
 	Duplicate/FREE Qvec, TempInt
 	STRUCT GuinierPorodLevel Par
 	par.G               = Gval
@@ -1013,8 +1018,8 @@ Function IR3GP_AppendModelToGraph(DoNotRaise)
 		if(!WaveExists(ModelIntensity))
 			Abort
 		endif
-		WAVE OriginalQvector   = root:Packages:Irena:GuinierPorod:OriginalQvector
-		WAVE ModelCurrentLevel = root:Packages:Irena:GuinierPorod:ModelCurrentLevel
+		WAVE/Z OriginalQvector   = root:Packages:Irena:GuinierPorod:OriginalQvector
+		WAVE/Z ModelCurrentLevel = root:Packages:Irena:GuinierPorod:ModelCurrentLevel
 		NVAR DisplayLocalFits  = root:Packages:Irena:GuinierPorod:DisplayLocalFits
 		CheckDisplayed/W=GuinierPorod_LogLogPlot ModelIntensity
 		if(!V_Flag)
@@ -1131,7 +1136,7 @@ End
 Function IR3GP_CalculateModelIntensity()
 
 	setDataFolder root:Packages:Irena:GuinierPorod
-	WAVE OriginalIntensity = root:Packages:Irena:GuinierPorod:OriginalIntensity
+	WAVE/Z OriginalIntensity = root:Packages:Irena:GuinierPorod:OriginalIntensity
 
 	NVAR NumberOfLevels = root:Packages:Irena:GuinierPorod:NumberOfLevels
 	NVAR UseSMRData     = root:Packages:Irena:GuinierPorod:UseSMRData
@@ -1141,7 +1146,7 @@ Function IR3GP_CalculateModelIntensity()
 	KillWaves/Z ModelIntGPLevel_1, ModelIntGPLevel_2, ModelIntGPLevel_3, ModelIntGPLevel_4, ModelIntGPLevel_5
 	Duplicate/O OriginalIntensity, ModelIntensity, ModelCurrentLevel
 	Redimension/D ModelIntensity
-	WAVE OriginalQvector
+	WAVE/Z OriginalQvector
 	ModelIntensity = 0
 	Duplicate/FREE ModelIntensity, tempIntensity
 	ModelCurrentLevel = NaN
@@ -1195,8 +1200,8 @@ Function IR3GP_CalculateFitIntensity(Qvector, FitIntensity)
 	WAVE Qvector, FitIntensity
 
 	setDataFolder root:Packages:Irena:GuinierPorod
-	WAVE OriginalIntensity = root:Packages:Irena:GuinierPorod:OriginalIntensity
-	WAVE OriginalQvector   = root:Packages:Irena:GuinierPorod:OriginalQvector
+	WAVE/Z OriginalIntensity = root:Packages:Irena:GuinierPorod:OriginalIntensity
+	WAVE/Z OriginalQvector   = root:Packages:Irena:GuinierPorod:OriginalQvector
 	NVAR NumberOfLevels    = root:Packages:Irena:GuinierPorod:NumberOfLevels
 	NVAR UseSMRData        = root:Packages:Irena:GuinierPorod:UseSMRData
 	NVAR SlitLengthUnif    = root:Packages:Irena:GuinierPorod:SlitLengthUnif
@@ -1325,11 +1330,11 @@ Function IR3GP_LogLogPlotU()
 		DoWIndow/F GuinierPorod_LogLogPlot
 	else
 		PauseUpdate // building window...
-		string fldrSav = GetDataFolder(1)
+		DFREF saveDF = GetDataFolderDFR()
 		SetDataFolder root:Packages:Irena:GuinierPorod:
-		WAVE OriginalIntensity
-		WAVE OriginalQvector
-		WAVE OriginalError
+		WAVE/Z OriginalIntensity
+		WAVE/Z OriginalQvector
+		WAVE/Z OriginalError
 		SVAR DataFolderName
 		SVAR IntensityWaveName
 		Display/W=(282.75, 37.25, 759.75, 208.25)/K=1 OriginalIntensity vs OriginalQvector as "LogLogPlot"
@@ -1350,7 +1355,7 @@ Function IR3GP_LogLogPlotU()
 		//and now some controls
 		TextBox/C/N=DateTimeTag/F=0/A=RB/E=2/X=2.00/Y=1.00 "\\Z07" + date() + ", " + time()
 		TextBox/C/N=SampleNameTag/F=0/A=LB/E=2/X=2.00/Y=1.00 "\\Z07" + DataFolderName + IntensityWaveName
-		SetDataFolder fldrSav
+		SetDataFolder saveDF
 	endif
 End
 //*****************************************************************************************************************
@@ -1433,7 +1438,7 @@ End
 //******************************************************************************************
 Function IR3GP_SetDefaults(Level, enforceReset)
 	variable Level, enforceReset
-	string OldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Irena:GuinierPorod
 	NVAR Level_G
 	Level_G = 10 * Level
@@ -1531,6 +1536,7 @@ Function IR3GP_SetDefaults(Level, enforceReset)
 	NVAR Level_ETAError
 	//Level_ETAError = Par.ETAError
 
+	SetDataFolder saveDF
 End
 
 Function IR3GP_FitData(skipreset)
@@ -1624,14 +1630,15 @@ Function IR3GP_FitData(skipreset)
 	variable NumOfParam = numpnts(CoefNames)
 	if(NumOfParam == 0)
 		beep
+		SetDataFolder oldDf
 		Abort "Select parameters to fit and set their fitting limits"
 	endif
 	IR3GP_SetErrorsToZero()
 
 	DoWindow/F GuinierPorod_LogLogPlot
-	WAVE OriginalQvector
-	WAVE OriginalIntensity
-	WAVE OriginalError
+	WAVE/Z OriginalQvector
+	WAVE/Z OriginalIntensity
+	WAVE/Z OriginalError
 
 	NVAR UseSMRData     = root:Packages:Irena:GuinierPorod:UseSMRData
 	NVAR SlitLengthUnif = root:Packages:Irena:GuinierPorod:SlitLengthUnif
@@ -1676,6 +1683,7 @@ Function IR3GP_FitData(skipreset)
 		IR3GP_SetErrorsToZero()
 		if(skipreset == 0)
 			beep
+			SetDataFolder oldDf
 			Abort "Fitting error, check starting parameters and fitting limits"
 		endif
 	else //results OK, make sure the resulting values are set
@@ -1913,7 +1921,7 @@ Function IR3GP_InsertOneLevelTagInGrph(Lnmb)
 	NVAR SASBackground      = $("SASBackground")
 	string LogLogTag, IQ4Tag, tagname
 	tagname = "Level" + num2str(Lnmb) + "Tag"
-	WAVE OriginalQvector = root:Packages:Irena:GuinierPorod:OriginalQvector
+	WAVE/Z OriginalQvector = root:Packages:Irena:GuinierPorod:OriginalQvector
 
 	variable QtoAttach      = 2 / Par.Rg1
 	variable AttachPointNum = binarysearch(OriginalQvector, QtoAttach)
@@ -2033,8 +2041,8 @@ Function IR3GP_CopyDataBackToFolder(StandardOrUser, [Saveme])
 			abort
 		endif
 	endif
-	WAVE FitIntensityWave = root:Packages:Irena:GuinierPorod:ModelIntensity
-	WAVE FitQvectorWave   = root:Packages:Irena:GuinierPorod:OriginalQvector
+	WAVE/Z FitIntensityWave = root:Packages:Irena:GuinierPorod:ModelIntensity
+	WAVE/Z FitQvectorWave   = root:Packages:Irena:GuinierPorod:OriginalQvector
 
 	NVAR NumberOfLevels = root:Packages:Irena:GuinierPorod:NumberOfLevels
 	SVAR DataFolderName = root:Packages:Irena:GuinierPorod:DataFolderName
@@ -2326,9 +2334,9 @@ Function IR3GP_FitLocalGuinier(Level, WhichOne)
 	DisplayLocalFits = 1
 	Checkbox DisplayLocalFits, value=DisplayLocalFits
 
-	WAVE OriginalIntensity
-	WAVE OriginalQvector
-	WAVE OriginalError
+	WAVE/Z OriginalIntensity
+	WAVE/Z OriginalQvector
+	WAVE/Z OriginalError
 	Duplicate/O OriginalIntensity, $("FitLevel" + num2str(Level) + "Guinier")
 
 	WAVE   FitInt      = $("FitLevel" + num2str(Level) + "Guinier")
@@ -2383,6 +2391,7 @@ Function IR3GP_FitLocalGuinier(Level, WhichOne)
 	FuncFit/Q/N IR3GP_GuinierFitAllAtOnce, New_FitCoefficients, OriginalIntensity[pcsr(A), pcsr(B)]/X=OriginalQvector/W=OriginalError/I=1/E=LocalEwave
 	if(V_FitError != 0) //there was error in fitting
 		beep
+		SetDataFolder oldDf
 		Abort "Fitting error, check starting parameters and fitting limits"
 	endif
 
@@ -2449,8 +2458,8 @@ Function IR3GP_AppendGuinierFit(level, overwride, FitWaveName)
 	setDataFolder root:Packages:Irena:GuinierPorod
 
 	RemoveFromGraph/W=GuinierPorod_LogLogPlot/Z FitLevel1Guinier, FitLevel2Guinier, FitLevel3Guinier, FitLevel4Guinier, FitLevel5Guinier
-	WAVE FitWv = $("root:Packages:Irena:GuinierPorod:" + FitWaveName)
-	WAVE OriginalQvector
+	WAVE/Z FitWv = $("root:Packages:Irena:GuinierPorod:" + FitWaveName)
+	WAVE/Z OriginalQvector
 	NVAR DisplayLocalFits
 
 	if(DisplayLocalFits || overwride)
@@ -2473,8 +2482,8 @@ Function IR3GP_AppendPorodFit(level, overwride, FitWaveName)
 	setDataFolder root:Packages:Irena:GuinierPorod
 
 	RemoveFromGraph/W=GuinierPorod_LogLogPlot/Z FitLevel1Porod, FitLevel2Porod, FitLevel3Porod, FitLevel4Porod, FitLevel5Porod
-	WAVE FitWv = $("root:Packages:Irena:GuinierPorod:" + FitWaveName)
-	WAVE OriginalQvector
+	WAVE/Z FitWv = $("root:Packages:Irena:GuinierPorod:" + FitWaveName)
+	WAVE/Z OriginalQvector
 	NVAR DisplayLocalFits
 
 	if(DisplayLocalFits || overwride)
@@ -2506,9 +2515,9 @@ Function IR3GP_FitLocalPorod(Level, whichOne)
 
 	setDataFolder root:Packages:Irena:GuinierPorod
 
-	WAVE OriginalIntensity
-	WAVE OriginalQvector
-	WAVE OriginalError
+	WAVE/Z OriginalIntensity
+	WAVE/Z OriginalQvector
+	WAVE/Z OriginalError
 	Duplicate/O OriginalIntensity, $("FitLevel" + num2str(Level) + "Porod")
 
 	WAVE   FitInt     = $("FitLevel" + num2str(Level) + "Porod")
@@ -2551,6 +2560,7 @@ Function IR3GP_FitLocalPorod(Level, whichOne)
 	if(V_Flag)
 		DoWindow/F GuinierPorod_LogLogPlot
 	else
+		SetDataFolder oldDf
 		abort
 	endif
 	if(strlen(CsrWave(A)) < 1 || strlen(CsrWave(B)) < 1)
@@ -2566,6 +2576,7 @@ Function IR3GP_FitLocalPorod(Level, whichOne)
 		//			Abort "To do local fit for S1 you need to have reasonably good fit for Rg1, G, and P done WITH S1=0"
 		//		endif
 		if(Rg1 >= 1e6) //this is wrong, Rg1 cannot be 1e6 (that is used to remove the Guinier from model and leave only last Powerlaw slope.
+			SetDataFolder oldDf
 			Abort "wrong Rg1 value found, this level makes no sense at this moment"
 		endif
 		CalibrationQ     = 0.5 * pi / Rg1
@@ -2595,6 +2606,7 @@ Function IR3GP_FitLocalPorod(Level, whichOne)
 	if(V_FitError != 0) //there was error in fitting
 		beep
 		//IR1A_UpdatePorodFit(level,0)
+		SetDataFolder oldDf
 		Abort "Fitting error, check starting parameters and fitting limits"
 	endif
 
@@ -2663,7 +2675,7 @@ Function IR3GP_PowerLawFitAllATOnce(parwave, ywave, xwave) : FitFunc
 
 	NVAR UseSMRData      = root:Packages:Irena:GuinierPorod:UseSMRData
 	NVAR SlitLengthUnif  = root:Packages:Irena:GuinierPorod:SlitLengthUnif
-	WAVE OriginalQvector = root:Packages:Irena:GuinierPorod:OriginalQvector
+	WAVE/Z OriginalQvector = root:Packages:Irena:GuinierPorod:OriginalQvector
 	Duplicate/FREE OriginalQvector, tempPowerLawInt
 	tempPowerLawInt = Prefactor * OriginalQvector^(-slope)
 	if(UseSMRData)
@@ -2703,7 +2715,7 @@ Function IR3GP_GuinierFitAllAtOnce(parwave, ywave, xwave) : FitFunc
 
 	NVAR UseSMRData      = root:Packages:Irena:GuinierPorod:UseSMRData
 	NVAR SlitLengthUnif  = root:Packages:Irena:GuinierPorod:SlitLengthUnif
-	WAVE OriginalQvector = root:Packages:Irena:GuinierPorod:OriginalQvector
+	WAVE/Z OriginalQvector = root:Packages:Irena:GuinierPorod:OriginalQvector
 	Duplicate/FREE OriginalQvector, tempGunInt
 	//w[0]*exp(-q^2*w[1]^2/3)
 	tempGunInt = Prefactor * exp(-OriginalQvector^2 * Rg^2 / 3)
@@ -2840,7 +2852,7 @@ End
 //******************************************************************************************************************
 Function IR3GP_ConfEvalCalcChiSqTarget()
 
-	string oldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 
 	NVAR ConfEvAutoCalcTarget   = root:Packages:Irena:GuinierPorod:ConfEvAutoCalcTarget
 	NVAR ConfEvTargetChiSqRange = root:Packages:Irena:GuinierPorod:ConfEvTargetChiSqRange
@@ -2890,7 +2902,7 @@ Function IR3GP_ConfEvalCalcChiSqTarget()
 		ConfEvTargetChiSqRange = (round(10000 * ConfEvTargetChiSqRange)) / 10000
 
 	endif
-	setDataFolder oldDf
+	SetDataFolder saveDF
 	return ConfEvTargetChiSqRange
 End
 //******************************************************************************************************************
@@ -3512,9 +3524,9 @@ static Function IR3GP_ConEvAnalyzeEvalResults(ParamName, SortForAnalysis, Fitted
 
 	NVAR ConfEvTargetChiSqRange = root:Packages:Irena:GuinierPorod:ConfEvTargetChiSqRange
 	SVAR SampleFullName         = root:Packages:Irena:GuinierPorod:DataFolderName
-	WAVE StartValues            = $(ParamName + "StartValue")
-	WAVE EndValues              = $(ParamName + "EndValue")
-	WAVE ChiSquareValues        = $(ParamName + "ChiSquare")
+	WAVE/Z StartValues            = $(ParamName + "StartValue")
+	WAVE/Z EndValues              = $(ParamName + "EndValue")
+	WAVE/Z ChiSquareValues        = $(ParamName + "ChiSquare")
 	SVAR Method                 = root:Packages:Irena:GuinierPorod:ConEvMethod
 	if(SortForAnalysis)
 		Sort EndValues, EndValues, StartValues, ChiSquareValues

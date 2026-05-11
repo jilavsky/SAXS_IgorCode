@@ -1,6 +1,6 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use modern global access method.
-#pragma version=2.31
+#pragma version=2.32
 
 Constant NI1BCversionNumber = 2.25
 //*************************************************************************\
@@ -9,6 +9,10 @@ Constant NI1BCversionNumber = 2.25
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//2.32 AI code review: convert all 27 string-based DF save/restores to DFREF (saveDF); add
+//     SetDataFolder restore before 3 Abort calls (NI1BC_BmCntrBtnProc, NI1BC_Fitto2DGaussian1
+//     ×2); add WAVE/Z to W_FindLevels, fit_BmCntrCCDImg (×2), BmCntrCCDImg, CalibrantFitXpnts/
+//     calibrantFitYpnts (×2), CalibrantDspacings, BmCntrImage, BmCntrImageMsk, BMOptimize* (×4).
 //2.31	 Fix Beam Center and Geometry correction which failed fitting when using Geometry correction.
 //2.30 Remove for MatrixOP /NTHR=0 since it is applicable to 3D matrices only
 //2.29 Fixed to accept tiff as tif extension.
@@ -84,7 +88,7 @@ End
 
 Function NI1BC_CreateBmCntrField()
 
-	string oldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 
 	KillWIndow/Z NI1_CreateBmCntrFieldPanel
@@ -376,7 +380,7 @@ Function NI1BC_CreateBmCntrField()
 	PopupMenu BMImageColor, pos={200, 600}, size={200, 16}, value=#"\"Grays;Rainbow;YellowHot;BlueHot;BlueRedGreen;RedWhiteBlue;PlanetEarth;Terrain;\""
 	PopupMenu BMImageColor, proc=NI1BC_PopMenuProc, mode=(1 + WhichListItem(BMColorTableName, "Grays;Rainbow;YellowHot;BlueHot;BlueRedGreen;RedWhiteBlue;PlanetEarth;Terrain;"))
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -441,7 +445,7 @@ Function NI1BC_TabProc(ctrlName, tabNum)
 	variable tabNum
 
 	//	//tab 0 controls
-	string oldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 
 	NVAR BMDisplayHelpCircle = root:Packages:Convert2Dto1D:BMDisplayHelpCircle
@@ -536,7 +540,7 @@ Function NI1BC_TabProc(ctrlName, tabNum)
 		NI1BC_DisplayCalibrantCircles()
 	endif
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 
 //*******************************************************************************************************************************************
@@ -549,7 +553,7 @@ Function NI1BC_SetVarProc(ctrlName, varNum, varStr, varName) : SetVariableContro
 	string   varStr
 	string   varName
 
-	string oldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 
 	if(cmpstr(ctrlName, "BMBeamCenterXStep") == 0)
@@ -618,7 +622,7 @@ Function NI1BC_SetVarProc(ctrlName, varNum, varStr, varName) : SetVariableContro
 		BMRefStepInAngle = 360 / BMRefNumberOfSectors
 	endif
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -627,7 +631,7 @@ End
 
 Function NI1BC_DisplayHelpCircle()
 
-	string oldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 	NVAR BMDisplayHelpCircle = root:Packages:Convert2Dto1D:BMDisplayHelpCircle
 	NVAR BMHelpCircleRadius  = root:Packages:Convert2Dto1D:BMHelpCircleRadius
@@ -666,7 +670,7 @@ Function NI1BC_DisplayHelpCircle()
 		RemoveFromGraph/W=CCDImageForBmCntr/Z ywave
 	endif
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 
 End
 //*******************************************************************************************************************************************
@@ -676,7 +680,7 @@ End
 
 Function NI1BC_DisplayCalibrantCircles()
 
-	string oldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 	NVAR   ycenter                   = root:Packages:Convert2Dto1D:BeamCenterY
 	NVAR   xcenter                   = root:Packages:Convert2Dto1D:BeamCenterX
@@ -755,7 +759,7 @@ Function NI1BC_DisplayCalibrantCircles()
 			endfor
 		endif
 	endif
-	setDataFolder OldDf
+	SetDataFolder saveDF
 
 End
 //*******************************************************************************************************************************************
@@ -770,7 +774,7 @@ Function/C NI1BC_FindTiltedPxPyValues(dspacing, direction)
 	//find this d-spacing
 	//this is azimuthal direction in radians
 
-	string oldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 
 	//store structure of current geometry
@@ -804,7 +808,7 @@ Function/C NI1BC_FindTiltedPxPyValues(dspacing, direction)
 		variable/C result = NI2T_CalculatePxPyWithTilts(TargetTheta, direction)
 		return result
 	endif
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 
 //*******************************************************************************************************************************************
@@ -819,7 +823,7 @@ Function NI1BC_FindTiltedQvalues(wvx, wvy, dspacing, BmCntrCCDImg, WindowNameToA
 	WAVE     BmCntrCCDImg
 	string   WindowNameToAttach
 
-	string oldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 
 	//store structure of current geometry
@@ -861,7 +865,7 @@ Function NI1BC_FindTiltedQvalues(wvx, wvy, dspacing, BmCntrCCDImg, WindowNameToA
 			endif
 		endfor
 	endif
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 
 //*************************************************************************************************
@@ -938,7 +942,7 @@ Function NI1BC_GetPixelFromDSpacing(dspacing, direction)
 	string   direction 
 	//X (horizontal) or Y (vertical)
 
-	string oldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 
 	variable pixelDist //distance from center
@@ -961,7 +965,7 @@ Function NI1BC_GetPixelFromDSpacing(dspacing, direction)
 		pixelDist = 0
 	endif
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 
 	return pixelDist
 
@@ -977,7 +981,7 @@ Function NI1BC_PopMenuProc(ctrlName, popNum, popStr) : PopupMenuControl
 	variable popNum
 	string   popStr
 
-	string oldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 
 	if(cmpstr(ctrlName, "BMImageColor") == 0)
@@ -986,7 +990,7 @@ Function NI1BC_PopMenuProc(ctrlName, popNum, popStr) : PopupMenuControl
 		NI1BC_TopCCDImageUpdateColors(0)
 	endif
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 
 //*******************************************************************************************************************************************
@@ -1026,7 +1030,7 @@ End
 Function NI1BC_TopCCDImageUpdateColors(updateRanges)
 	variable updateRanges
 
-	string oldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 	NVAR     ImageRangeMin      = root:Packages:Convert2Dto1D:BMImageRangeMin
 	NVAR     ImageRangeMax      = root:Packages:Convert2Dto1D:BMImageRangeMax
@@ -1051,7 +1055,7 @@ Function NI1BC_TopCCDImageUpdateColors(updateRanges)
 	endif
 	ModifyImage $(s), ctab={ImageRangeMin, ImageRangeMax, $ColorTableName, 0}
 	PopupMenu BMImageColor, win=NI1_CreateBmCntrFieldPanel, popvalue=ColorTableName
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 
 //*******************************************************************************************************************************************
@@ -1063,7 +1067,7 @@ End
 Function NI1BC_BmCntrBtnProc(ctrlName) : ButtonControl
 	string ctrlName
 
-	string OldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 	if(cmpstr(ctrlName, "Fit2DGauss") == 0)
 		DoWindow CCDImageForBmCntr
@@ -1100,11 +1104,12 @@ Function NI1BC_BmCntrBtnProc(ctrlName) : ButtonControl
 			endif
 			NI1BC_DisplayHelpCircle()
 		else
+			SetDataFolder saveDF
 			Abort "Proper image for Beam center and Calibration to work with does not exist"
 		endif
 	endif
 
-	SetDataFolder OldDf
+	SetDataFolder saveDF
 End
 
 //*******************************************************************************************************************************************
@@ -1118,7 +1123,7 @@ Function NI1BC_Fitto2DGaussian1(left, right, bottom, top, wvToFItTo)
 	variable left, right, bottom, top
 	WAVE wvToFItTo
 
-	string OldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	SetDataFolder root:Packages:Convert2Dto1D
 	redimension/S wvToFItTo
 	variable tmp
@@ -1134,10 +1139,12 @@ Function NI1BC_Fitto2DGaussian1(left, right, bottom, top, wvToFItTo)
 	endif
 	ImageStats/G={left, right, bottom, top} wvToFItTo
 	if(V_Flag < 0)
+		SetDataFolder saveDF
 		Abort "Problem in Fit2DGaussian routine, bad range of data for image stats"
 	endif
 
 	if(abs(left - right) + abs(bottom - top) > 400)
+		SetDataFolder saveDF
 		Abort "Too large area for fitting 2D gauss function"
 	endif
 	variable PeakInt = V_max
@@ -1146,7 +1153,7 @@ Function NI1BC_Fitto2DGaussian1(left, right, bottom, top, wvToFItTo)
 	make/O/N=(abs(floor(right - left))) tempStDevWv
 	tempStDevWv = wvToFItTo[p + left][xcenter]
 	FindLEvels/P tempStDevWv, (V_max / 2)
-	WAVE W_FindLevels
+	WAVE/Z W_FindLevels
 	variable stddev = 2
 	if(numpnts(W_FindLevels) == 2)
 		stddev = abs(W_FindLevels[1] - W_FindLevels[0])
@@ -1154,7 +1161,7 @@ Function NI1BC_Fitto2DGaussian1(left, right, bottom, top, wvToFItTo)
 	if(stddev < 2)
 		stddev = 2
 	endif
-	WAVE fit_BmCntrCCDImg
+	WAVE/Z fit_BmCntrCCDImg
 
 	//	root:P:gPeakInt=PeakInt ;root:P:gxcenter=xcenter ;root:P:gycenter=ycenter ;root:P:gstddev=stddev
 	Make/O/N=4 gw2DGaussian
@@ -1167,7 +1174,7 @@ Function NI1BC_Fitto2DGaussian1(left, right, bottom, top, wvToFItTo)
 		RemoveContour fit_BmCntrCCDImg
 	endif
 	FuncFitMD NI1BC_gaussian2D, gw2DGaussian, wvToFItTo(left, right)(bottom, top)/D
-	WAVE fit_BmCntrCCDImg = root:Packages:Convert2Dto1D:fit_BmCntrCCDImg
+	WAVE/Z fit_BmCntrCCDImg = root:Packages:Convert2Dto1D:fit_BmCntrCCDImg
 	make/O/N=(DimSize(fit_BmCntrCCDImg, 0)) fit_BmCntrCCDImgX
 	fit_BmCntrCCDImgX = DimOffset(fit_BmCntrCCDImg, 0) + p * DimDelta(fit_BmCntrCCDImg, 0)
 	make/O/N=(DimSize(fit_BmCntrCCDImg, 1)) fit_BmCntrCCDImgY
@@ -1185,7 +1192,7 @@ Function NI1BC_Fitto2DGaussian1(left, right, bottom, top, wvToFItTo)
 	NVAR BeamCenterY = root:Packages:Convert2Dto1D:BeamCenterY
 	BeamCenterX = gw2DGaussian[1]
 	BeamCenterY = gw2DGaussian[2]
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 
 //*******************************************************************************************************************************************
@@ -1209,7 +1216,7 @@ End
 
 Function NI1BC_DisplayMask()
 
-	string oldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 
 	NVAR BMUseMask = root:Packages:Convert2Dto1D:BMUseMask
@@ -1240,7 +1247,7 @@ Function NI1BC_DisplayMask()
 			endif
 		endif
 	endif
-	setDataFolder OldDf
+	SetDataFolder saveDF
 
 End
 //*******************************************************************************************************************************************
@@ -1254,7 +1261,7 @@ Function NI1BC_BmCntrCheckProc(ctrlName, checked) : CheckBoxControl
 	string   ctrlName
 	variable checked
 
-	string oldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 
 	if(cmpstr(ctrlName, "DisplayLogImage") == 0)
@@ -1371,7 +1378,7 @@ Function NI1BC_BmCntrCheckProc(ctrlName, checked) : CheckBoxControl
 		NI1BC_DisplayCalibrantCircles()
 	endif
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -1384,7 +1391,7 @@ Function NI1BC_BmCntrPopMenuProc(ctrlName, popNum, popStr) : PopupMenuControl
 	variable popNum
 	string   popStr
 
-	string oldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 
 	if(cmpstr(ctrlName, "BMFunctionName") == 0)
@@ -1593,7 +1600,7 @@ Function NI1BC_BmCntrPopMenuProc(ctrlName, popNum, popStr) : PopupMenuControl
 		NI1BC_DisplayCalibrantCircles()
 	endif
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -1604,7 +1611,7 @@ End
 
 Function NI1BC_UpdateBmCntrListBox()
 
-	string oldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 
 	WAVE/T ListOfCCDDataInBmCntrPath = root:Packages:Convert2Dto1D:ListOfCCDDataInBmCntrPath
@@ -1672,7 +1679,7 @@ Function NI1BC_UpdateBmCntrListBox()
 		ListBox CCDDataSelection, win=NI1_CreateBmCntrFieldPanel, row=0, mode=1, selRow=0
 		DoUpdate
 	endif
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 
 //*******************************************************************************************************************************************
@@ -1684,7 +1691,7 @@ End
 Function NI1BC_BmCntrButtonProc(ctrlName) : ButtonControl
 	string ctrlName
 
-	string oldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 	variable i
 	if(CmpStr(ctrlName, "CreateROIWorkImage") == 0)
@@ -1736,7 +1743,7 @@ Function NI1BC_BmCntrButtonProc(ctrlName) : ButtonControl
 	if(CmpStr(ctrlName, "RecoverParameters") == 0)
 		NI1BC_RecoverParameters()
 	endif
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -1747,13 +1754,13 @@ End
 
 Function NI1BC_BmCntrCreateImage()
 
-	string OldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFOlder root:Packages:Convert2Dto1D
 	WAVE/T ListOfCCDDataInBmCntrPath = root:Packages:Convert2Dto1D:ListOfCCDDataInBmCntrPath
 	controlInfo/W=NI1_CreateBmCntrFieldPanel CCDDataSelection
 	variable selection = V_Value
 	if(selection < 0)
-		setDataFolder OldDf
+		SetDataFolder saveDF
 		abort
 	endif
 	KillWIndow/Z CCDImageForBmCntr
@@ -1769,7 +1776,7 @@ Function NI1BC_BmCntrCreateImage()
 		abort "Loading the image file failed"
 	endif
 	NVAR BmCntrDisplayLogImage = root:Packages:Convert2Dto1D:BmCntrDisplayLogImage
-	WAVE BmCntrCCDImg
+	WAVE/Z BmCntrCCDImg
 	//allow user function modification to the image through hook function...
 #if Exists("ModifyImportedImageHook") == 6
 	ModifyImportedImageHook(BmCntrCCDImg)
@@ -1833,7 +1840,7 @@ Function NI1BC_BmCntrCreateImage()
 	Slider ImageRangeMax, win=NI1_CreateBmCntrFieldPanel, limits={ImageRangeMinLimit, ImageRangeMaxLimit, 0}
 
 	ModifyImage/W=CCDImageForBmCntr BmCntrDisplayImage, ctab={ImageRangeMin, ImageRangeMax, $BMColorTableName, 0}
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -1844,7 +1851,7 @@ End
 
 Function NI1BC_InitCreateBmCntrFile()
 
-	string OldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	NewDataFolder/O root:Packages
 	NewDataFolder/O/S root:Packages:Convert2Dto1D
 
@@ -1944,7 +1951,7 @@ Function NI1BC_InitCreateBmCntrFile()
 		BMFitSDD        = 1
 		BMFitWavelength = 0
 	endif
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 
 //*******************************************************************************************************************************************
@@ -1954,7 +1961,7 @@ End
 //*******************************************************************************************************************************************
 Function NI1BC_RecoverParameters()
 
-	string oldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 
 	WAVE/Z/T ParametersNames
@@ -1966,7 +1973,7 @@ Function NI1BC_RecoverParameters()
 			temp = parametersWvBackup[i]
 		endfor
 	endif
-	setDataFolder OldDf
+	SetDataFolder saveDF
 	NI1BC_DisplayCalibrantCircles()
 End
 
@@ -1979,7 +1986,7 @@ End
 
 Function NI1BC_RunRefinement()
 
-	string oldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 	NVAR BMRefNumberOfSectors = root:Packages:Convert2Dto1D:BMRefNumberOfSectors
 	NVAR BMFitBeamCenter      = root:Packages:Convert2Dto1D:BMFitBeamCenter
@@ -2019,7 +2026,7 @@ Function NI1BC_RunRefinement()
 	NI1BC_DisplayCalibrantCircles()
 	RemoveFromGraph/W=CCDImageForBmCntr/Z ywave
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 
 //*******************************************************************************************************************************************
@@ -2031,7 +2038,7 @@ End
 
 Function NI1BC_FitParameters()
 
-	string oldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 	NVAR BeamCenterX         = root:Packages:Convert2Dto1D:BeamCenterX
 	NVAR BeamCenterY         = root:Packages:Convert2Dto1D:BeamCenterY
@@ -2192,7 +2199,7 @@ Function NI1BC_FitParameters()
 		abort "Fitting was unsuccesful, no changes made. Make different parameter selection and try again..."
 	endif
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 
 //*******************************************************************************************************************************************
@@ -2203,13 +2210,13 @@ End
 Function NI1BC_CalculateDSpacing(Xpos, Ypos)
 	variable Xpos, Ypos
 
-	string oldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 	NVAR     Wavelength = root:Packages:Convert2Dto1D:Wavelength
 	variable Theta      = NI2T_CalculateThetaWithTilts2(Xpos, Ypos)
 	variable dspacing   = 0.5 * Wavelength / sin(theta)
 	return dspacing
-	setDataFolder OldDf
+	SetDataFolder saveDF
 
 End
 
@@ -2245,7 +2252,7 @@ End
 Function NI1BC_RefinementFunction(pw, yw, xw) : FitFunc
 	WAVE pw, yw, xw
 
-	string oldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 	WAVE     parametersWv
 	WAVE/T   ParametersNames
@@ -2259,11 +2266,11 @@ Function NI1BC_RefinementFunction(pw, yw, xw) : FitFunc
 	NI2T_SaveStructure(d)
 	variable LocalNumPnts, OldLength = 0
 
-	WAVE CalibrantFitXpnts
-	WAVE calibrantFitYpnts
+	WAVE/Z CalibrantFitXpnts
+	WAVE/Z calibrantFitYpnts
 
 	yw = NI1BC_CalculateDSpacing(CalibrantFitXpnts[p], calibrantFitYpnts[p])
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -2273,7 +2280,7 @@ End
 Function NI1BC_OptimizeFunction(w, pw)
 	WAVE w, pw
 
-	string oldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 	WAVE     parametersWv
 	WAVE/T   ParametersNames
@@ -2287,9 +2294,9 @@ Function NI1BC_OptimizeFunction(w, pw)
 	NI2T_SaveStructure(d)
 	variable LocalNumPnts, OldLength = 0
 
-	WAVE CalibrantFitXpnts
-	WAVE calibrantFitYpnts
-	WAVE CalibrantDspacings
+	WAVE/Z CalibrantFitXpnts
+	WAVE/Z calibrantFitYpnts
+	WAVE/Z CalibrantDspacings
 
 	Duplicate/O CalibrantDspacings, tempWvOptimize
 	tempWvOptimize = NI1BC_CalculateDSpacing(CalibrantFitXpnts[p], calibrantFitYpnts[p])
@@ -2301,7 +2308,7 @@ Function NI1BC_OptimizeFunction(w, pw)
 	variable distance = sqrt(sum(tempWvOptimize))
 
 	return distance
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 
 //*******************************************************************************************************************************************
@@ -2314,7 +2321,7 @@ End
 Function NI1BC_GetEvaluationPaths(CalibrantLine, numberOfSectors)
 	variable CalibrantLine, numberOfSectors
 
-	string oldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 
 	NVAR BeamCenterX         = root:Packages:Convert2Dto1D:BeamCenterX
@@ -2331,13 +2338,13 @@ Function NI1BC_GetEvaluationPaths(CalibrantLine, numberOfSectors)
 	NVAR   BMUseGeometryCorr = root:Packages:Convert2Dto1D:BMUseGeometryCorr
 	WAVE/Z M_ROIMask         = root:Packages:Convert2Dto1D:M_ROIMask
 
-	WAVE BmCntrImage = root:Packages:Convert2Dto1D:BmCntrCCDImg
+	WAVE/Z BmCntrImage = root:Packages:Convert2Dto1D:BmCntrCCDImg
 	if(BMUseMask && WaveExists(M_ROIMask))
 		MatrixOp/O BmCntrImageMsk = BmCntrImage / M_ROIMask
 	else
 		MatrixOp/O BmCntrImageMsk = BmCntrImage
 	endif
-	WAVE BmCntrImageMsk = root:Packages:Convert2Dto1D:BmCntrImageMsk
+	WAVE/Z BmCntrImageMsk = root:Packages:Convert2Dto1D:BmCntrImageMsk
 	//we need to get path for each direction, pick 30 directions, each therefore 6 degrees appart
 	variable azimuthalAngle, i, MaxNumPixels
 	if(BeamCenterX > 0 && BeamCenterX < DimSize(BmCntrImage, 0) && BeamCenterY > 0 && BeamCenterY < DimSize(BmCntrImage, 1))
@@ -2359,10 +2366,10 @@ Function NI1BC_GetEvaluationPaths(CalibrantLine, numberOfSectors)
 	variable V_FitError   = 0
 	//the following are waves with numbers we will fit to
 	Make/O/N=0 $("BMOptimizeAngles" + num2str(CalibrantLine)), $("BMOptimizeXs" + num2str(CalibrantLine)), $("BMOptimizeYs" + num2str(CalibrantLine)), $("BMOptimizeErrors" + num2str(CalibrantLine))
-	WAVE BMOptimizeAngles = $("BMOptimizeAngles" + num2str(CalibrantLine))
-	WAVE BMOptimizeXs     = $("BMOptimizeXs" + num2str(CalibrantLine))     //measured X for the diffraction line in Angle direction
-	WAVE BMOptimizeYs     = $("BMOptimizeYs" + num2str(CalibrantLine))     //measured Y
-	WAVE BMOptimizeErrors = $("BMOptimizeErrors" + num2str(CalibrantLine)) //error fo the measurement
+	WAVE/Z BMOptimizeAngles = $("BMOptimizeAngles" + num2str(CalibrantLine))
+	WAVE/Z BMOptimizeXs     = $("BMOptimizeXs" + num2str(CalibrantLine))     //measured X for the diffraction line in Angle direction
+	WAVE/Z BMOptimizeYs     = $("BMOptimizeYs" + num2str(CalibrantLine))     //measured Y
+	WAVE/Z BMOptimizeErrors = $("BMOptimizeErrors" + num2str(CalibrantLine)) //error fo the measurement
 	SVAR BMFunctionName   = root:Packages:Convert2Dto1D:BMFunctionName
 	NVAR BMDisplayInImage = root:Packages:Convert2Dto1D:BMDisplayInImage
 
@@ -2484,7 +2491,7 @@ Function NI1BC_GetEvaluationPaths(CalibrantLine, numberOfSectors)
 	endfor
 
 	KillWaves/Z BmCntrImageMsk
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -2494,7 +2501,7 @@ Function NI1BC_SolidangleCorrection(radialDistWv, GeomCorrWv, pixelsize, SDD) //
 	WAVE radialDistWv, GeomCorrWv
 	variable pixelsize, SDD
 
-	string oldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 
 	duplicate/O radialDistWv, omega, SAP, HYP, theta
@@ -2510,7 +2517,7 @@ Function NI1BC_SolidangleCorrection(radialDistWv, GeomCorrWv, pixelsize, SDD) //
 	PF         = (1 + cos((theta))^2) / 2 // polarization factor
 	GeomCorrWv = 1 / (omega^2 * PF)       //Squared because it is solid angle and the above is done for lin angle
 	killwaves/Z SAP, HYP, omega, PF, theta
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -2545,7 +2552,7 @@ End
 //	pixelDistY = TheoreticalDistance *(-1)* sin(Angle * (pi/180))  / PixelSizeY		//this is in pixels
 //	variable  SampleToCCDDistanceX = SampleToCCDDistance/PixelSizeX		//this is now in pixles aslo
 //	variable  SampleToCCDDistanceY = SampleToCCDDistance/PixelSizeY
-//	setDataFolder OldDf
+//	SetDataFolder saveDF
 //	variable/C CmplxPxPy
 //	if(abs(HorizontalTilt)<1e-12&&abs(VerticalTilt)<1e-12)		//no tilts, old code...
 //		if(cmpstr(Type,"X")==0)

@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.31
+#pragma version=1.32
 
 Constant IR2SversionNumber=1.30
 //*************************************************************************\
@@ -7,6 +7,14 @@ Constant IR2SversionNumber=1.30
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+
+//1.32 AI code review: add WAVE/Z + WaveExists() guards for all bare Wave Qwave and Wave Ywv
+//     declarations in IR2S_FItWithSizes, IR2S_FitWithGuinierPorod, IR2S_FItWithUnifiedFit —
+//     both in the cursor-read blocks and cursor-restore blocks (16 locations total).
+
+// TODO (deferred from AI review 2026-05-04):
+// 1. Convert Window IR2S_ScriptingToolPnl() from Window/macro to Function : Panel to allow
+//    direct calling instead of Execute("IR2S_ScriptingToolPnl()") and enable DFREF usage.
 
 //1.31 changed to Pragma version 3
 //1.30 added ability to save separate ppopulation data in Modeling
@@ -1267,18 +1275,26 @@ Function IR2S_FItWithSizes(Uncert)
 //	endif
 	if(V_Flag)
 		if(strlen(CsrInfo(A , "IR1R_SizesInputGraph"))>0)
-			Wave Ywv = csrXWaveRef(A  , "IR1R_SizesInputGraph" )
-			StartQ = Ywv[pcsr(A  , "IR1R_SizesInputGraph" )]
+			Wave/Z Ywv = csrXWaveRef(A  , "IR1R_SizesInputGraph" )
+			if(WaveExists(Ywv))
+				StartQ = Ywv[pcsr(A  , "IR1R_SizesInputGraph" )]
+			endif
 		else
-			Wave Qwave = root:Packages:Sizes:Q_vecOriginal
-			StartQ=Qwave[0]
+			Wave/Z Qwave = root:Packages:Sizes:Q_vecOriginal
+			if(WaveExists(Qwave))
+				StartQ=Qwave[0]
+			endif
 		endif
 		if(strlen(CsrInfo(B , "IR1R_SizesInputGraph"))>0)
-			Wave Ywv = csrXWaveRef(B  , "IR1R_SizesInputGraph" )
-			EndQ = Ywv[pcsr(B  , "IR1R_SizesInputGraph" )]
+			Wave/Z Ywv = csrXWaveRef(B  , "IR1R_SizesInputGraph" )
+			if(WaveExists(Ywv))
+				EndQ = Ywv[pcsr(B  , "IR1R_SizesInputGraph" )]
+			endif
 		else
-			Wave Qwave = root:Packages:Sizes:Q_vecOriginal
-			EndQ=Qwave[numpnts(Qwave)-1]
+			Wave/Z Qwave = root:Packages:Sizes:Q_vecOriginal
+			if(WaveExists(Qwave))
+				EndQ=Qwave[numpnts(Qwave)-1]
+			endif
 		endif
 		//EndQ = Ywv[pcsr(B  , "IR1_LogLogPlotU" )]
 	endif
@@ -1325,15 +1341,15 @@ Function IR2S_FItWithSizes(Uncert)
 			PopupMenu SelectDataFolder win=IR1R_SizesInputPanel, popmatch=StringFromList(ItemsInList(DataFolderName,":")-1,DataFolderName,":")
 			//now we need to set back the cursors.
 			if(StartQ>0)
-				Wave Qwave = root:Packages:Sizes:Q_vecOriginal
-				if(binarysearch(Qwave,StartQ)>=0)
+				Wave/Z Qwave = root:Packages:Sizes:Q_vecOriginal
+				if(WaveExists(Qwave) && binarysearch(Qwave,StartQ)>=0)
 					Cursor  /P /W=IR1R_SizesInputGraph A,  IntensityOriginal, binarysearch(Qwave,StartQ)
-				endif	
+				endif
 			endif
 			if(EndQ>0)
-				Wave Qwave = root:Packages:Sizes:Q_vecOriginal
-				if(binarysearch(Qwave,EndQ)>=0)
-					Cursor  /P /W=IR1R_SizesInputGraph B,  IntensityOriginal, binarysearch(Qwave,EndQ)	
+				Wave/Z Qwave = root:Packages:Sizes:Q_vecOriginal
+				if(WaveExists(Qwave) && binarysearch(Qwave,EndQ)>=0)
+					Cursor  /P /W=IR1R_SizesInputGraph B,  IntensityOriginal, binarysearch(Qwave,EndQ)
 				endif
 			endif
 			//set back user choices ofr errros
@@ -1440,18 +1456,26 @@ Function IR2S_FitWithGuinierPorod()
 //	endif
 	if(V_Flag)
 		if(strlen(CsrInfo(A , "GuinierPorod_LogLogPlot"))>0)
-			Wave Ywv = csrXWaveRef(A  , "GuinierPorod_LogLogPlot" )
-			StartQ = Ywv[pcsr(A  , "GuinierPorod_LogLogPlot" )]
+			Wave/Z Ywv = csrXWaveRef(A  , "GuinierPorod_LogLogPlot" )
+			if(WaveExists(Ywv))
+				StartQ = Ywv[pcsr(A  , "GuinierPorod_LogLogPlot" )]
+			endif
 		else
-			Wave Qwave = root:Packages:Irena:GuinierPorod:OriginalQvector
-			StartQ=Qwave[0]
+			Wave/Z Qwave = root:Packages:Irena:GuinierPorod:OriginalQvector
+			if(WaveExists(Qwave))
+				StartQ=Qwave[0]
+			endif
 		endif
 		if(strlen(CsrInfo(B , "GuinierPorod_LogLogPlot"))>0)
-			Wave Ywv = csrXWaveRef(B  , "GuinierPorod_LogLogPlot" )
-			EndQ = Ywv[pcsr(B  , "GuinierPorod_LogLogPlot" )]
+			Wave/Z Ywv = csrXWaveRef(B  , "GuinierPorod_LogLogPlot" )
+			if(WaveExists(Ywv))
+				EndQ = Ywv[pcsr(B  , "GuinierPorod_LogLogPlot" )]
+			endif
 		else
-			Wave Qwave = root:Packages:Irena:GuinierPorod:OriginalQvector
-			EndQ=Qwave[numpnts(Qwave)-1]
+			Wave/Z Qwave = root:Packages:Irena:GuinierPorod:OriginalQvector
+			if(WaveExists(Qwave))
+				EndQ=Qwave[numpnts(Qwave)-1]
+			endif
 		endif
 		//EndQ = Ywv[pcsr(B  , "IR1_LogLogPlotU" )]
 	endif
@@ -1492,15 +1516,15 @@ Function IR2S_FitWithGuinierPorod()
 			IR3GP_PanelButtonProc("DrawGraphsSkipDialogs")
 			//now we need to set back the cursors.
 			if(StartQ>0)
-				Wave Qwave = root:Packages:Irena:GuinierPorod:OriginalQvector
-				if(binarysearch(Qwave,StartQ)>=0)
+				Wave/Z Qwave = root:Packages:Irena:GuinierPorod:OriginalQvector
+				if(WaveExists(Qwave) && binarysearch(Qwave,StartQ)>=0)
 					Cursor  /P /W=IR1_LogLogPlotU A,  OriginalIntensity, binarysearch(Qwave,StartQ)
-				endif	
+				endif
 			endif
 			if(EndQ>0)
-				Wave Qwave = root:Packages:Irena:GuinierPorod:OriginalQvector
-				if(binarysearch(Qwave,EndQ)>=0)
-					Cursor  /P /W=IR1_LogLogPlotU B , OriginalIntensity, binarysearch(Qwave,EndQ)	
+				Wave/Z Qwave = root:Packages:Irena:GuinierPorod:OriginalQvector
+				if(WaveExists(Qwave) && binarysearch(Qwave,EndQ)>=0)
+					Cursor  /P /W=IR1_LogLogPlotU B , OriginalIntensity, binarysearch(Qwave,EndQ)
 				endif
 			endif
 			
@@ -1600,18 +1624,26 @@ Function IR2S_FItWithUnifiedFit()
 	DoWIndow IR1_LogLogPlotU
 	if(V_Flag)
 		if(strlen(CsrInfo(A , "IR1_LogLogPlotU"))>0)
-			Wave Ywv = csrXWaveRef(A  , "IR1_LogLogPlotU" )
-			StartQ = Ywv[pcsr(A  , "IR1_LogLogPlotU" )]
+			Wave/Z Ywv = csrXWaveRef(A  , "IR1_LogLogPlotU" )
+			if(WaveExists(Ywv))
+				StartQ = Ywv[pcsr(A  , "IR1_LogLogPlotU" )]
+			endif
 		else
-			Wave Qwave = root:Packages:Irena_UnifFit:OriginalQvector
-			StartQ=Qwave[0]
+			Wave/Z Qwave = root:Packages:Irena_UnifFit:OriginalQvector
+			if(WaveExists(Qwave))
+				StartQ=Qwave[0]
+			endif
 		endif
 		if(strlen(CsrInfo(B , "IR1_LogLogPlotU"))>0)
-			Wave Ywv = csrXWaveRef(B  , "IR1_LogLogPlotU" )
-			EndQ = Ywv[pcsr(B  , "IR1_LogLogPlotU" )]
+			Wave/Z Ywv = csrXWaveRef(B  , "IR1_LogLogPlotU" )
+			if(WaveExists(Ywv))
+				EndQ = Ywv[pcsr(B  , "IR1_LogLogPlotU" )]
+			endif
 		else
-			Wave Qwave = root:Packages:Irena_UnifFit:OriginalQvector
-			EndQ=Qwave[numpnts(Qwave)-1]
+			Wave/Z Qwave = root:Packages:Irena_UnifFit:OriginalQvector
+			if(WaveExists(Qwave))
+				EndQ=Qwave[numpnts(Qwave)-1]
+			endif
 		endif
 		//EndQ = Ywv[pcsr(B  , "IR1_LogLogPlotU" )]
 	endif
@@ -1653,15 +1685,15 @@ Function IR2S_FItWithUnifiedFit()
 			IR1A_InputPanelButtonProc("DrawGraphsSkipDialogs")
 			//now we need to set back the cursors.
 			if(StartQ>0)
-				Wave Qwave = root:Packages:Irena_UnifFit:OriginalQvector
-				if(binarysearch(Qwave,StartQ)>=0)
+				Wave/Z Qwave = root:Packages:Irena_UnifFit:OriginalQvector
+				if(WaveExists(Qwave) && binarysearch(Qwave,StartQ)>=0)
 					Cursor  /P /W=IR1_LogLogPlotU A,  OriginalIntensity, binarysearch(Qwave,StartQ)
-				endif	
+				endif
 			endif
 			if(EndQ>0)
-				Wave Qwave = root:Packages:Irena_UnifFit:OriginalQvector
-				if(binarysearch(Qwave,EndQ)>=0)
-					Cursor  /P /W=IR1_LogLogPlotU B,  OriginalIntensity, binarysearch(Qwave,EndQ)	
+				Wave/Z Qwave = root:Packages:Irena_UnifFit:OriginalQvector
+				if(WaveExists(Qwave) && binarysearch(Qwave,EndQ)>=0)
+					Cursor  /P /W=IR1_LogLogPlotU B,  OriginalIntensity, binarysearch(Qwave,EndQ)
 				endif
 			endif
 			

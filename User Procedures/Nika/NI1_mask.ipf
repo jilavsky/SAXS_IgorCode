@@ -1,7 +1,7 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use modern global access method.
 
-#pragma version=1.31
+#pragma version=1.32
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
@@ -9,6 +9,9 @@
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//1.32 AI code review: convert 9 string-based DF save/restores to DFREF; add SetDataFolder
+//     restore before Abort at line ~294 (missing CCD image check); add WAVE/Z to MaskCCDImage
+//     (×2), M_ROIMask, ImageNameToWaveRef return, OriginalCCD (×2).
 //1.31 add ability to mask off high intensity points
 //1.30 Remove for MatrixOP /NTHR=0 since it is applicable to 3D matrices only
 //1.29 Fixed to accept tiff as tif extension.
@@ -50,7 +53,7 @@ End
 
 Function NI1M_CreateImageROIPanel()
 
-	string oldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 
 	KillWIndow/Z NI1M_ImageROIPanel
@@ -153,7 +156,7 @@ Function NI1M_CreateImageROIPanel()
 
 	ING2_AddScrollControl()
 	NI1_UpdatePanelVersionNumber("NI1M_ImageROIPanel", 1)
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -199,7 +202,7 @@ Function NI1M_MaskCheckProc(ctrlName, checked) : CheckBoxControl
 	string   ctrlName
 	variable checked
 
-	string oldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 
 	if(cmpstr(ctrlName, "MaskDisplayLogImage") == 0)
@@ -275,7 +278,7 @@ Function NI1M_MaskCheckProc(ctrlName, checked) : CheckBoxControl
 		endif
 	endif
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -287,15 +290,16 @@ End
 Function NI1M_saveRoiCopyProc(ctrlName) : ButtonControl
 	string ctrlName
 
-	string OldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 	WAVE/Z ww = root:Packages:Convert2Dto1D:OriginalCCD
 	if(WaveExists(ww) == 0)
+		SetDataFolder saveDF
 		Abort "Something is wrong here"
 	endif
 	NVAR MaskOffLowIntPoints = root:Packages:Convert2Dto1D:MaskOffLowIntPoints
 	NVAR LowIntToMaskOff     = root:Packages:Convert2Dto1D:LowIntToMaskOff
-	WAVE MaskCCDImage        = root:Packages:Convert2Dto1D:MaskCCDImage
+	WAVE/Z MaskCCDImage      = root:Packages:Convert2Dto1D:MaskCCDImage
 
 	string MaskLowIntInfo = "MaskOffLowIntPoints:" + num2str(MaskOffLowIntPoints) + ";LowIntToMaskOff:" + num2str(LowIntToMaskOff) + ">"
 
@@ -315,7 +319,7 @@ Function NI1M_saveRoiCopyProc(ctrlName) : ButtonControl
 		Redimension/B/U M_ROIMask
 		M_ROIMask = 1
 	endif
-	WAVE M_ROIMask
+	WAVE/Z M_ROIMask
 	note M_ROIMask, CommandStr
 	//SVAR FileNameToLoad
 	NVAR     MaskOffLowIntPoints = root:Packages:Convert2Dto1D:MaskOffLowIntPoints
@@ -362,7 +366,7 @@ Function NI1M_saveRoiCopyProc(ctrlName) : ButtonControl
 
 	NI1M_UpdateMaskListBox()
 	NI1A_UpdateMainMaskListBox()
-	SetDataFolder OldDf
+	SetDataFolder saveDF
 End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -371,7 +375,7 @@ Function NI1M_SaveHDFNikaMaskFile(fileNameString, PathNameString, ImageToSaveNam
 	string fileNameString, PathNameString
 	WAVE ImageToSaveName
 #if(exists("HDF5OpenFile") == 4)
-	string OldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFOlder root:Packages:Convert2Dto1D
 
 	variable fileID, groupID, NXentryID
@@ -395,7 +399,7 @@ End
 Function NI1M_RoiDrawButtonProc(ctrlName) : ButtonControl
 	string ctrlName
 
-	string oldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 
 	if(CmpStr(ctrlName, "CreateROIWorkImage") == 0)
@@ -474,7 +478,7 @@ Function NI1M_RoiDrawButtonProc(ctrlName) : ButtonControl
 		DoWindow/F NI1M_ImageROIPanel
 	endif
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -487,19 +491,19 @@ Function NI1M_LoadOldHdfImage()
 		Abort "First create image with some data to use, this button only adds _mask file there to be further edited"
 	endif
 
-	string OldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 	WAVE/T ListOfCCDDataInCCDPath = root:Packages:Convert2Dto1D:ListOfCCDDataInCCDPath
 	controlInfo/W=NI1M_ImageROIPanel CCDDataSelection
 	variable selection = V_Value
 	if(selection < 0)
-		setDataFolder OldDf
+		SetDataFolder saveDF
 		abort
 	endif
 	SVAR FileNameToLoad
 	FileNameToLoad = ListOfCCDDataInCCDPath[selection]
 	if(!stringmatch(FileNameToLoad, "*_mask.hdf"))
-		setDataFolder OldDf
+		SetDataFolder saveDF
 		abort "This is NOT _mask.hdf file, only file created by Nika package with _mask.hdf at the end can be used to load old mask data"
 	endif
 	//	ImageLoad/P=Convert2Dto1DMaskPath/T=tiff/O/N=OldMaskFile FileNameToLoad
@@ -536,7 +540,7 @@ Function NI1M_LoadOldHdfImage()
 		execute(StringFromList(i, RecMacro, "\r"))
 	endfor
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 #else
 	DoALert 0, "Hdf5 xop not installed, please, run installed version 1.10 and higher and install xops"
 #endif
@@ -557,7 +561,7 @@ Function/S NI1M_GetImageWave(grfName)
 		return "" // no image in top graph
 	endif
 	s = s[0, p1 - 1]
-	WAVE w = ImageNameToWaveRef(grfName, s)
+	WAVE/Z w = ImageNameToWaveRef(grfName, s)
 	return GetWavesDataFolder(w, 2) // full path to wave including name
 End
 //*******************************************************************************************************************************************
@@ -569,13 +573,13 @@ End
 
 Function NI1M_MaskCreateImage()
 
-	string OldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFOlder root:Packages:Convert2Dto1D
 	WAVE/T ListOfCCDDataInCCDPath = root:Packages:Convert2Dto1D:ListOfCCDDataInCCDPath
 	controlInfo/W=NI1M_ImageROIPanel CCDDataSelection
 	variable selection = V_Value
 	if(selection < 0)
-		setDataFolder OldDf
+		SetDataFolder saveDF
 		abort
 	endif
 	KillWIndow/Z CCDImageForMask
@@ -588,7 +592,7 @@ Function NI1M_MaskCreateImage()
 	//awful workaround end
 	NI1A_UniversalLoader("Convert2Dto1DMaskPath", FileNameToLoad, CCDFileExtension, "OriginalCCD")
 	NVAR MaskDisplayLogImage = root:Packages:Convert2Dto1D:MaskDisplayLogImage
-	WAVE OriginalCCD
+	WAVE/Z OriginalCCD
 	//allow user function modification to the image through hook function...
 #if Exists("ModifyImportedImageHook") == 6
 	ModifyImportedImageHook(OriginalCCD)
@@ -634,7 +638,7 @@ Function NI1M_MaskCreateImage()
 	Slider ImageRangeMin, limits={ImageRangeMinLimit, ImageRangeMaxLimit, 0}, win=NI1M_ImageROIPanel
 	Slider ImageRangeMax, limits={ImageRangeMinLimit, ImageRangeMaxLimit, 0}, win=NI1M_ImageROIPanel
 	NI1M_MaskUpdateColors()
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -645,7 +649,7 @@ End
 
 Function NI1M_UpdateMaskListBox()
 
-	string oldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 
 	WAVE/T ListOfCCDDataInCCDPath       = root:Packages:Convert2Dto1D:ListOfCCDDataInCCDPath
@@ -701,7 +705,7 @@ Function NI1M_UpdateMaskListBox()
 		ListBox CCDDataSelection, win=NI1M_ImageROIPanel, row=0, mode=1, selRow=0
 		DoUpdate
 	endif
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 
 //*******************************************************************************************************************************************
@@ -792,7 +796,7 @@ Function NI1M_MaskUpdateColors()
 		ModifyImage/W=CCDImageForMask MaskCCDImage, ctab={ImageRangeMin, ImageRangeMax, $ColorTableNameL, ReverseColorTable}
 
 		//now deal with the masking of low values...
-		WAVE MaskCCDImage        = root:Packages:Convert2Dto1D:MaskCCDImage
+		WAVE/Z MaskCCDImage      = root:Packages:Convert2Dto1D:MaskCCDImage
 		NVAR LowIntToMaskOff     = root:Packages:Convert2Dto1D:LowIntToMaskOff
 		NVAR HighIntToMaskOff     = root:Packages:Convert2Dto1D:HighIntToMaskOff
 		NVAR MaskDisplayLogImage = root:Packages:Convert2Dto1D:MaskDisplayLogImage
@@ -848,10 +852,10 @@ Function NI1M_Mask_SetVarProc(ctrlName, varNum, varStr, varName) : SetVariableCo
 	string   varStr
 	string   varName
 
-	string oldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 
-	WAVE OriginalCCD = root:Packages:Convert2Dto1D:OriginalCCD
+	WAVE/Z OriginalCCD = root:Packages:Convert2Dto1D:OriginalCCD
 	string iminfo
 	string xax
 	string yax
@@ -899,7 +903,7 @@ Function NI1M_Mask_SetVarProc(ctrlName, varNum, varStr, varName) : SetVariableCo
 	if(cmpstr("HighIntToMaskOff", ctrlName) == 0)
 		NI1M_MaskUpdateColors()
 	endif
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************

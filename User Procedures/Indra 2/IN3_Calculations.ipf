@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
   
-#pragma version=1.42
+#pragma version=1.43
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
@@ -9,6 +9,11 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.43 AI code review: convert 20 string-based DF save/restores to DFREF (oldDf/OldDf/fldrSav0
+//     variants); add SetDataFolder restore before Abort in IN3_InputPanelButtonProc (cursor check)
+//     and IN3_FitModGaussTop ("no peak found"); add WAVE/Z to ~25 wave declarations throughout
+//     (R_Int/R_Qvec/BL_R_Int/BL_R_Qvec, AR_encoder, PD_error/Intensity, W_coef/W_sigma,
+//     PeakFitWave, W_FindLevels, ListOf2DSampleDataNumbers, fit_PD_Intensity, R_Error/R_error).
 //1.42 added IN3_SmartBlankSelection(DataFolderName) to automatically select Blank measured before the current sample. 
 //1.41 added some fudge factor for Qmin search and MSAXS handling. And change the logic so one can understand, what is happening. 
 //1.40 added automatci location of the Qmin where data start due to Int Sa/Bl ratio. 
@@ -67,7 +72,7 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 	if(B_Struct.eventcode!=2)
 		return 1
 	endif
-	string oldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
 	NVAR ListProcDisplayDelay = root:Packages:Indra3:ListProcDisplayDelay
 
@@ -130,7 +135,7 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 			SVAR DataFolderName=	root:Packages:Indra3:DataFolderName
 			DataFolderName = stringFromList(i,LoadedDataList)
 			if(stringMatch(DataFolderName,"---"))
-				setDataFolder oldDf
+				SetDataFolder saveDF
 				abort
 			endif
 			IN3_LoadData()		//load data in the tool. 
@@ -174,7 +179,7 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 	if (cmpstr(ctrlName,"ProcessData")==0 || cmpstr(ctrlName,"SelectNextSampleAndProcess")==0)
 		SVAR DataFolderName=	root:Packages:Indra3:DataFolderName
 		if(stringMatch(DataFolderName,"---"))
-			setDataFolder oldDf
+			SetDataFolder saveDF
 			abort
 		endif
 		IN3_LoadData()		//load data in the tool. 
@@ -246,6 +251,7 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 
 	if (cmpstr(ctrlName,"RemovePoint")==0)
 		if (strlen(CsrWave(A))==0)
+			SetDataFolder saveDF
 			Abort "cursor A is not in the graph...nothing to do..."
 		endif
 		variable pointNumberToBeRemoved=xcsr(A)
@@ -261,7 +267,7 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 		DoWIndow/F USAXSDataReduction
 	endif
 	
-	setDataFolder OldDf
+	SetDataFolder saveDF
 end
 
 //***********************************************************************************************************************************
@@ -363,16 +369,16 @@ end
 static Function IN3_ReturnCursorBack(QminDefaultForProcessing)
 	variable QminDefaultForProcessing
 	
-	string oldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
 
-	Wave R_Int=root:Packages:Indra3:R_Int
-	Wave R_Qvec=root:Packages:Indra3:R_Qvec
+	Wave/Z R_Int=root:Packages:Indra3:R_Int
+	Wave/Z R_Qvec=root:Packages:Indra3:R_Qvec
 	Wave/Z BL_R_Int = root:Packages:Indra3:BL_R_Int
 	if(!WaveExists(BL_R_Int))		//reducing Blank, return and do nothing... 
 		return 0
 	endif
-	Wave BL_R_Qvec = root:Packages:Indra3:BL_R_Qvec
+	Wave/Z BL_R_Qvec = root:Packages:Indra3:BL_R_Qvec
 	NVAR PeakWidth = root:Packages:Indra3:PeakWidthArcSec
 	NVAR BlankWidth = root:Packages:Indra3:BlankWidth
 	NVAR Wavelength = root:Packages:Indra3:Wavelength
@@ -476,7 +482,7 @@ static Function IN3_ReturnCursorBack(QminDefaultForProcessing)
 		Cursor /P /W=RcurvePlotGraph  B , R_Int , (numpnts(R_Qvec)-1)
 	endif
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 
 end
 //***********************************************************************************************************************************
@@ -509,7 +515,7 @@ end
 static Function IN3_GetMeasParam()		//sets various spray parameters
 
 
-	string oldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
 
 	SVAR SpecCommand
@@ -558,7 +564,7 @@ static Function IN3_GetMeasParam()		//sets various spray parameters
 	IN2G_AppendNoteToAllWaves("NumberOfSteps",num2str(ScanSteps))
 	IN2G_AppendNoteToAllWaves("SDDistance",num2str(SDDistance))
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 
 
 end
@@ -569,7 +575,7 @@ end
 
 static Function IN3_SetPDParameters()	 			//setup PD parameters 
 	
-	string oldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
 	
 	SVAR UPD=UPDParameters						//define the global holding places
@@ -628,7 +634,7 @@ static Function IN3_SetPDParameters()	 			//setup PD parameters
 		PhotoDiodeSize = 5.5
 	endif
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 
 end
 //***********************************************************************************************************************************
@@ -637,7 +643,7 @@ end
 //***********************************************************************************************************************************
 static Function IN3_LoadData()
 
-	string oldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
 	
 	//First Kill waves which may cause conflict. 
@@ -744,7 +750,7 @@ static Function IN3_LoadData()
 		NVAR UserSavedData
 		UserSavedData=0
 		IN3_FixSaveData()
-	setDataFolder OldDf
+	SetDataFolder saveDF
 end
 
 //***********************************************************************************************************************************
@@ -754,7 +760,7 @@ end
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
 static Function IN3_LoadBlank()
-	string oldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
 	
 	NVAR IsBlank  = root:Packages:Indra3:IsBlank
@@ -766,9 +772,9 @@ static Function IN3_LoadBlank()
 		if(strlen(BlankName)<4)
 			abort "Error, select first the Blank name - if none available, create one first"
 		endif
-		Wave BL_R_IntL = $(BlankName+"Blank_R_Int")
+		Wave/Z BL_R_IntL = $(BlankName+"Blank_R_Int")
 		Wave BL_R_errorL = $(BlankName+"Blank_R_error")
-		Wave BL_R_QvecL = $(BlankName+"Blank_R_Qvec")
+		Wave/Z BL_R_QvecL = $(BlankName+"Blank_R_Qvec")
 		Duplicate/O BL_R_IntL, BL_R_Int
 		Duplicate/O BL_R_errorL, BL_R_error
 		Duplicate/O BL_R_QvecL, BL_R_Qvec
@@ -790,7 +796,7 @@ static Function IN3_LoadBlank()
 		BlankMaximumBckp = BlankMaximum
 	endif
 
-	setDataFolder OldDf	
+	SetDataFolder saveDF	
 end
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
@@ -809,7 +815,7 @@ end
 
 static Function IN3_GraphData()
 
-	string oldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
 	KillWIndow/Z RcurvePlotGraph
  	IN3_RcurvePlot()  	
@@ -818,7 +824,7 @@ static Function IN3_GraphData()
 
 	
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 
 end
 //***********************************************************************************************************************************
@@ -1012,10 +1018,10 @@ end
 
 static Function IN3_RcurvePlot() 
 	PauseUpdate    		// building window...
-	String fldrSav0= GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	SetDataFolder root:Packages:Indra3:
-	Wave R_Int
-	Wave R_Qvec
+	Wave/Z R_Int
+	Wave/Z R_Qvec
 	NVAR IsBlank = root:Packages:Indra3:IsBlank
 
 //	Wave fit_PD_Intensity
@@ -1107,7 +1113,7 @@ static Function IN3_RcurvePlot()
 	TextBox/C/N=SampleAndBLank/A=LC/F=0/B=1/X=0.00/Y=-25.00 LegendString
 	
 
-	SetDataFolder fldrSav0
+	SetDataFolder saveDF
 End
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
@@ -1141,17 +1147,17 @@ end
 
 static Function IN3_PeakCenter() 
 	PauseUpdate    		// building window...
-	String fldrSav0= GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	SetDataFolder root:Packages:Indra3:
-	Wave R_Int
-	Wave R_Qvec
-	Wave fit_PD_Intensity
+	Wave/Z R_Int
+	Wave/Z R_Qvec
+	Wave/Z fit_PD_Intensity
 //	Wave fitX_PD_Intensity
 //	Wave R_error
-	Wave AR_encoder
+	Wave/Z AR_encoder
 	Wave/Z PeakFitWave
-	Wave PD_Intensity
-	Wave PD_Error
+	Wave/Z PD_Intensity
+	Wave/Z PD_Error
 	NVAR PeakCenterFitStartPoint=root:Packages:Indra3:PeakCenterFitStartPoint
 	NVAR PeakCenterFitEndPoint=root:Packages:Indra3:PeakCenterFitEndPoint
 	
@@ -1180,7 +1186,7 @@ static Function IN3_PeakCenter()
 	RenameWindow #,PeakCenter
 	SetActiveSubwindow ##
 
-	SetDataFolder fldrSav0
+	SetDataFolder saveDF
 End
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
@@ -1194,25 +1200,25 @@ End
 
 static Function IN3_AlignSampleAndBlank() 
 	PauseUpdate    		// building window...
-	String fldrSav0= GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	SetDataFolder root:Packages:Indra3:
 	
 	NVAR IsBlank = root:Packages:Indra3:IsBlank
 	if(IsBlank)
 		return 0
 	endif
-	Wave R_Int
-	Wave R_Qvec
-	Wave R_Error
+	Wave/Z R_Int
+	Wave/Z R_Qvec
+	Wave/Z R_Error
 //	Wave fit_PD_Intensity
 //	Wave fitX_PD_Intensity
-	Wave R_error
-	Wave AR_encoder
-	Wave PeakFitWave
+	Wave/Z R_error
+	Wave/Z AR_encoder
+	Wave/Z PeakFitWave
 	NVAR PeakCenterFitStartPoint=root:Packages:Indra3:PeakCenterFitStartPoint
 	NVAR PeakCenterFitEndPoint=root:Packages:Indra3:PeakCenterFitEndPoint
-	Wave BL_R_Int
-	Wave BL_R_Qvec
+	Wave/Z BL_R_Int
+	Wave/Z BL_R_Qvec
 	
 	//create main plot with R curve data
 	//create the other graph
@@ -1238,7 +1244,7 @@ static Function IN3_AlignSampleAndBlank()
 	RenameWindow #,AlignSampleAndBlank
 	SetActiveSubwindow ##
 
-	SetDataFolder fldrSav0
+	SetDataFolder saveDF
 End
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
@@ -1247,13 +1253,13 @@ End
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
 static Function IN3_AppendBlankToRPlot()
-	string oldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
 	
 	NVAR IsBlank
 	if(!IsBlank)
-		Wave BL_R_Int
-		Wave BL_R_Qvec
+		Wave/Z BL_R_Int
+		Wave/Z BL_R_Qvec
 //		Wave BL_AR_encoder
 		
 		AppendToGraph/W=RcurvePlotGraph BL_R_Int vs BL_R_Qvec
@@ -1266,7 +1272,7 @@ static Function IN3_AppendBlankToRPlot()
 	endif
 
 
-	setDataFolder OldDf	
+	SetDataFolder saveDF	
 end
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
@@ -1287,7 +1293,7 @@ Function IN3_GraphButtonProc(ctrlName) : ButtonControl
 	
 	NVAR PeakCenterFitStartPoint=root:Packages:Indra3:PeakCenterFitStartPoint
 	NVAR PeakCenterFitEndPoint=root:Packages:Indra3:PeakCenterFitEndPoint
-	Wave AR_encoder=root:Packages:Indra3:AR_encoder
+	Wave/Z AR_encoder=root:Packages:Indra3:AR_encoder
 	String AcsrWaveName = StringByKey("TNAME", CsrInfo(A , "RcurvePlotGraph#PeakCenter")  , ":" , ";")
 	String BcsrWaveName = StringByKey("TNAME", CsrInfo(B , "RcurvePlotGraph#PeakCenter")  , ":" , ";")
 	variable curX
@@ -1359,15 +1365,15 @@ End
 Function IN3_FitGaussTop(ctrlname) : Buttoncontrol			// calls the Gaussien fit
 	string ctrlname
 	
-	string oldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
 
 	NVAR PeakCenterFitStartPoint
 	NVAR PeakCenterFitEndPoint
 
-	Wave PD_error
-	Wave Ar_encoder
-	Wave PD_Intensity
+	Wave/Z PD_error
+	Wave/Z Ar_encoder
+	Wave/Z PD_Intensity
 	Make/O/N=200 PeakFitWave
 	DoWIndow RcurvePlotGraph
 	String ExistingSubWindows
@@ -1405,8 +1411,8 @@ Function IN3_FitGaussTop(ctrlname) : Buttoncontrol			// calls the Gaussien fit
 	NVAR PeakWidth		
 	NVAR PeakWidthArcSec		
 	Variable BeamCenterError, MaximumIntensityError, PeakWidthError
-	Wave W_coef
-	Wave W_sigma
+	Wave/Z W_coef
+	Wave/Z W_sigma
 		//	Wave FitResiduals
 		//	FitResiduals= ((W_coef[0]+W_coef[1]*exp(-((Ar_encoder[p]-W_coef[2])/W_coef[3])^2)) - PD_Intensity[p])/PD_error[p]
 		//	FitResiduals[0,PeakCenterFitStartPoint-1]=NaN
@@ -1444,7 +1450,7 @@ Function IN3_FitGaussTop(ctrlname) : Buttoncontrol			// calls the Gaussien fit
 		IN2G_AppendNoteToListOfWaves(ListOfWaveNames,"MaximumIntensityError",num2str(MaximumIntensityError))
 		IN2G_AppendNoteToListOfWaves(ListOfWaveNames,"FWHM_Error",num2str(PeakWidthError*3600))
 	endif
-	setDataFolder OldDf
+	SetDataFolder saveDF
 
 End
 ///**********************************************************************************************************
@@ -1479,15 +1485,15 @@ Function IN3_FitModGaussTop(ctrlname, DoNOtChangeLimits) : Buttoncontrol			// ca
 	variable DoNOtChangeLimits			
 	//added 6-2017 to prevent some crashes in fitting...   
 	
-	string oldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
 
 	NVAR PeakCenterFitStartPoint
 	NVAR PeakCenterFitEndPoint
 
-	Wave PD_error
-	Wave Ar_encoder
-	Wave PD_Intensity
+	Wave/Z PD_error
+	Wave/Z Ar_encoder
+	Wave/Z PD_Intensity
 	Make/O/N=200 PeakFitWave
 	DoWIndow RcurvePlotGraph
 	String ExistingSubWindows
@@ -1510,6 +1516,7 @@ Function IN3_FitModGaussTop(ctrlname, DoNOtChangeLimits) : Buttoncontrol			// ca
 	wavestats/Q PD_Intensity
 	//fix issue when scan ddid not pass through main peak
 	if(V_maxloc<2)
+		SetDataFolder saveDF
 		Abort "Bad data, no peak found"
 	endif
 	//workaround problems 2012/01, one large point appears ...
@@ -1520,7 +1527,7 @@ Function IN3_FitModGaussTop(ctrlname, DoNOtChangeLimits) : Buttoncontrol			// ca
 	W_Coef[0]=V_max
 	W_coef[1]=Ar_encoder[V_maxloc]
 	FindLevels /N=25/P/Q  tempPDInt, V_max/2
-	wave W_FindLevels
+	wave/Z W_FindLevels
 	variable startPointL, endPointL
 	if(DoNOtChangeLimits)
 		startPointL=PeakCenterFitStartPoint
@@ -1561,8 +1568,8 @@ Function IN3_FitModGaussTop(ctrlname, DoNOtChangeLimits) : Buttoncontrol			// ca
 	NVAR PeakWidth		
 	NVAR PeakWidthArcSec		
 	Variable BeamCenterError, MaximumIntensityError, PeakWidthError
-	Wave W_coef
-	Wave W_sigma
+	Wave/Z W_coef
+	Wave/Z W_sigma
 	PeakFitWave= W_coef[0]*exp(-0.5*(abs(x-W_coef[1])/W_coef[2])^W_coef[3])
 	BeamCenter=W_coef[1]
 	BeamCenterError=W_sigma[1]
@@ -1597,7 +1604,7 @@ Function IN3_FitModGaussTop(ctrlname, DoNOtChangeLimits) : Buttoncontrol			// ca
 		IN2G_AppendNoteToListOfWaves(ListOfWaveNames,"FWHM_Error",num2str(PeakWidthError*3600))
 	endif
 	doupdate
-	setDataFolder OldDf
+	SetDataFolder saveDF
 
 End
 
@@ -1659,14 +1666,14 @@ End
 Function IN3_FitLorenzianTop(ctrlname) : Buttoncontrol			// calls the Lorenzian fit
 	string ctrlname
  
-	string oldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
 
 	NVAR PeakCenterFitStartPoint
 	NVAR PeakCenterFitEndPoint
- 	Wave PD_Intensity
- 	Wave Ar_encoder
- 	Wave PD_error
+ 	Wave/Z PD_Intensity
+ 	Wave/Z Ar_encoder
+ 	Wave/Z PD_error
 	Make/O/N=200 PeakFitWave
 	DoWIndow RcurvePlotGraph
 	String ExistingSubWindows
@@ -1695,9 +1702,9 @@ Function IN3_FitLorenzianTop(ctrlname) : Buttoncontrol			// calls the Lorenzian 
 	NVAR PeakWidth	
 	NVAR PeakWidthArcSec	
 	Variable BeamCenterError, MaximumIntensityError, PeakWidthError
-	Wave W_coef
-	Wave W_sigma
-	Wave PeakFitWave
+	Wave/Z W_coef
+	Wave/Z W_sigma
+	Wave/Z PeakFitWave
 //	Wave FitResiduals
 //	FitResiduals= ((W_coef[0]+W_coef[1]/((Ar_encoder[p]-W_coef[2])^2+W_coef[3]))-PD_Intensity[p])/PD_error[p]
 //	FitResiduals[0,xcsr(A)-1]=NaN
@@ -1750,7 +1757,7 @@ Function IN3_ParametersChanged(ctrlName,varNum,varStr,varName) : SetVariableCont
 	String varStr
 	String varName
 
-	string oldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
 	DoWIndow RcurvePlotGraph				//only of the graph exists, or we get error... 
 	if(V_Flag)
@@ -1802,7 +1809,7 @@ Function IN3_ParametersChanged(ctrlName,varNum,varStr,varName) : SetVariableCont
 			IN3_DesmearData()
 		endif
 	endif
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 ///*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -1815,7 +1822,7 @@ Function IN3_UPDParametersChanged(ctrlName,varNum,varStr,varName) : SetVariableC
 	String varStr
 	String varName
 
-	string oldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
 	SVAR UPDList=UPDParameters
 	
@@ -1868,7 +1875,7 @@ Function IN3_UPDParametersChanged(ctrlName,varNum,varStr,varName) : SetVariableC
 
 	IN3_RecalculateData(1)			//and here we recalcualte the R wave
 	IN3_DesmearData()
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -1880,7 +1887,7 @@ Function IN3_TabPanelControl(name,tab)
 	String name
 	Variable tab
 
-	string oldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
 	NVAR IsBlank=root:Packages:Indra3:IsBlank
 
@@ -1996,7 +2003,7 @@ Function IN3_TabPanelControl(name,tab)
 		IN3_ColorMainGraph(0)
 	endif
 	IN3_DisplayDesExtAndError()
-	setDataFolder OldDf
+	SetDataFolder saveDF
 end
 
 //*****************************************************************************************************************
@@ -2032,7 +2039,7 @@ end
 
 Function IN3_OnLineDataProcessing()	
 	//create global variables 
- 	String OldDf=GetDataFolder(1)
+ 	DFREF saveDF = GetDataFolderDFR()
 	SetDataFOlder root:Packages:Indra3
 	NewDataFolder/O/S BckgMonitorParams
 	String ListOfVariables, ListOfStrings
@@ -2057,7 +2064,7 @@ Function IN3_OnLineDataProcessing()
 		BckgConvertData=0
 	endif
 	SVAR BckgStatus
-	setDataFolder OldDf
+	SetDataFolder saveDF
 	DoWindow IN3_LiveDataProcessing
 	if(V_Flag==0)
 		NewPanel /FLT/K=1/W=(573,44,1000,210) as "USAXS Background processing"
@@ -2229,7 +2236,7 @@ Function IN3_MonitorFldrBackground(s) // This is the function that will be calle
 	
  	//this should monitor result of Refresh on the folder and grab the new data set and process it.
 	Wave/T ListOf2DSampleData=root:Packages:USAXS_FlyScanImport:WaveOfFiles
-	Wave ListOf2DSampleDataNumbers=root:Packages:USAXS_FlyScanImport:WaveOfSelections
+	Wave/Z ListOf2DSampleDataNumbers=root:Packages:USAXS_FlyScanImport:WaveOfSelections
 	NVAR BckgConvertData=root:Packages:Indra3:BckgMonitorParams:BckgConvertData
 	NVAR BckgDisplayOnly=root:Packages:Indra3:BckgMonitorParams:BckgDisplayOnly
 	//problem, USAXS writes part of the file before end of scan, sop we actually need to display file before last.
@@ -2359,7 +2366,7 @@ end
 
 Function IN3_DesmearData()
 	
-	String fldrSav0= GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	SetDataFolder root:Packages:Indra3:
 	NVAR DesmearData = root:Packages:Indra3:DesmearData
 	NVAR IsBlank = root:Packages:Indra3:IsBlank						//cannot desmear Blank
@@ -2372,7 +2379,7 @@ Function IN3_DesmearData()
 		NVAR DesmearNumberOfInterations=root:Packages:Indra3:DesmearNumberOfInterations
 		WAVE/Z SMR_Int = root:Packages:Indra3:SMR_Int
 		if(!WaveExists(SMR_Int))		//wave does n to exist, stop here... 	
-			setDataFolder fldrSav0
+			SetDataFolder saveDF
 			return 0
 		endif
 		WAVE SMR_Error = root:Packages:Indra3:SMR_Error
@@ -2394,7 +2401,7 @@ Function IN3_DesmearData()
 		Do
 			ExtensionFailed = IN3_OneDesmearIteration(tmpWork_Int,tmpWork_Qvec,tmpWork_Error, SMR_Int, SMR_Error, DesmNormalizedError)
 			if(ExtensionFailed)
-				setDataFolder fldrSav0
+				SetDataFolder saveDF
 				return 0
 			endif
 			absNormalizedError=abs(DesmNormalizedError) 
@@ -2455,7 +2462,7 @@ Function IN3_DesmearData()
 		KillWaves/Z DSM_Int, DSM_Qvec, DSM_Error, DSM_dQ, fit_ExtrapIntwave, DesmNormalizedError
 		
 	endif
-	setDataFolder fldrSav0
+	SetDataFolder saveDF
 	
 end
 
@@ -2466,7 +2473,7 @@ end
 Function IN3_OneDesmearIteration(DesmearIntWave,DesmearQWave,DesmearEWave, origSmearedInt, origSmearedErr, NormalizedError)
 	Wave DesmearIntWave, DesmearQWave, DesmearEWave, origSmearedInt, origSmearedErr, NormalizedError
 		
-	string OldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3:
 
 	SVAR BackgroundFunction    = root:Packages:Indra3:DsmBackgroundFunction
@@ -2520,7 +2527,7 @@ Function IN3_OneDesmearIteration(DesmearIntWave,DesmearQWave,DesmearEWave, origS
 	//Duplicate/O DesmearIntWave, DesmearEWave
 	DesmearEWave=0
 	IN3_GetErrors(origSmearedErr, origSmearedInt, DesmearIntWave, DesmearEWave, DesmearQWave)			//this routine gets the errors
-	setDataFolder OldDf
+	SetDataFolder saveDF
 	return 0
 End
 
@@ -2541,7 +2548,7 @@ Function IN3_ExtendData(Int_wave, Q_vct, Err_wave, slitLength, Qstart, SelectedF
 		DoALert 0, "Weird value for Slit length, please check"
 	endif
 	
-	string oldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
 
 	WAVE/Z W_coef=W_coef
@@ -2726,7 +2733,7 @@ Function IN3_ExtendData(Int_wave, Q_vct, Err_wave, slitLength, Qstart, SelectedF
 		fit_ExtrapIntwave=AveInt		
 		ExtensionFailed=0
 	endif
-	setDataFolder OldDf
+	SetDataFolder saveDF
 	return ExtensionFailed
 end 
 
@@ -2737,7 +2744,7 @@ Function IN3_SmearData(Int_to_smear, Q_vec_sm, slitLength, Smeared_int)
 	wave Int_to_smear, Q_vec_sm, Smeared_int
 	variable slitLength
 	
-	string OldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
 	variable oldNumPnts=numpnts(Q_vec_sm)
 	//modified 2/28/2017 - with Fly scans and merged data having lot more points, this is getting to be slow. Keep max number of new points to 300
@@ -2769,7 +2776,7 @@ Function IN3_SmearData(Int_to_smear, Q_vec_sm, slitLength, Smeared_int)
 
 	Smeared_int*= 1 / slitLength															//normalize
 	
-	setDataFolder OldDf
+	SetDataFolder saveDF
 end
 //***********************************************************************************************************************************//***********************************************************************************************************************************
 //***********************************************************************************************************************************

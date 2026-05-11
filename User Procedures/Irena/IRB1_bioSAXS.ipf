@@ -1,7 +1,7 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.02
-#pragma IgorVersion = 8.03
+#pragma version=1.04
+#pragma IgorVersion = 9.04
 
 
 //*************************************************************************\
@@ -16,6 +16,10 @@ constant IRB1_PDDFInterfaceVersion = 0.2					//IRB1_PDDFInterfaceFunction versio
 //functions for bioSAXS community
 //
 //version summary 
+//1.04 AI code review: add SetDataFolder restore before 9 Abort calls — IRB1_DataManAppendOneDataSet
+//     (data selection), IRB1_PDDFFitRgAndG (×2: fit errors), IRB1_PDDFRunGNOM (×5: unknown
+//     executable, missing executable, missing QRS data, Windows script error, Mac script error),
+//     IRB1_PDDFAppendOneDataSet (data selection).
 //1.03 Fixed Guinier misspelling in PDDF tool. Requires restart, forced by bump in GUI version nmumber.  
 //1.02 fix bug in saving _sub data when names are not liberal names. 
 //1.01 add handling of USAXS M_... waves 
@@ -986,6 +990,7 @@ Function IRB1_DataManAppendOneDataSet(FolderNameStr)
 		Wave/Z SourcedQWv=$(DataFolderName+possiblyQUoteName("M_"+dQWavename))
 	endif
 	if(!WaveExists(SourceIntWv)||	!WaveExists(SourceQWv)||!WaveExists(SourceErrorWv))
+		SetDataFolder OldDf
 		Abort "Data selection failed for Data"
 	endif
 	if(Subtracting)		//subtracting buffer from ave data or scaling data, in each case, must remove the existing files. 
@@ -2352,7 +2357,8 @@ Function IRB1_PDDFFitRgAndG()
 	FuncFit/Q IRB1_PDDFIntensityFit W_coef OriginalIntensity[AcsrPnt,BcsrPnt]  /X=OriginalQvector /C=T_Constraints /W=OriginalError /I=1//E=LocalEwave 
 	if (V_FitError!=0)	//there was error in fitting
 		beep
-		Abort "Fitting error, Cannot fit Rg or otehr parameters" 
+		SetDataFolder oldDf
+		Abort "Fitting error, Cannot fit Rg or otehr parameters"
 	endif
 	//Store Unified fit results. 
 	G = w_coef[0]
@@ -2400,7 +2406,8 @@ Function IRB1_PDDFFitRgAndG()
 	FuncFit/Q IRB1_PDDFIntensityFitBckg W_coef OriginalIntensity[AcsrPnt, ]  /X=OriginalQvector /C=T_Constraints /W=OriginalError /I=1//E=LocalEwave 
 	if (V_FitError!=0)	//there was error in fitting
 		beep
-		Abort "Fitting error in Rambo-Tainer method, Cannot fit Rg or other parameters" 
+		SetDataFolder oldDf
+		Abort "Fitting error in Rambo-Tainer method, Cannot fit Rg or other parameters"
 	endif
 	//Store Unified fit results. 
 	variable RTB, RTG, RTRg, RTP, RTBackground
@@ -2586,6 +2593,7 @@ Function IRB1_PDDFRunGNOM()
 	elseif(PDDFUseAutoGNOM)
 		datgnomName="datgnom"
 	else
+		SetDataFolder OldDf
 		Abort "Unknown gnom executable selected"
 	endif
 	//On WIndows, to test for gnom, need gnom.exe, but to run, no extension. Make life difficutl...  
@@ -2604,14 +2612,16 @@ Function IRB1_PDDFRunGNOM()
 	//At this moment we should have DATGNOMLocation be string with Igor path to datpddf and datpddfeName be name of executable. 
 	GetFileFolderInfo /Q/Z/P=DATGNOMPath datgnomNameTemp
 	if(V_Flag!=0)
-		Abort "Cannot find properly datgnom executable, something is worng here. Report as bug to author, please"  
-	endif	
+		SetDataFolder OldDf
+		Abort "Cannot find properly datgnom executable, something is worng here. Report as bug to author, please"
+	endif
 	//now export the data file.
 	Wave/Z SourceIntWv=$(DataFolderName+possiblyQuoteName(IntensityWaveName))
 	Wave/Z SourceQWv=$(DataFolderName+possiblyQuoteName(QWavename))
 	Wave/Z SourceErrorWv=$(DataFolderName+possiblyQuoteName(ErrorWaveName))
 	if(!WaveExists(SourceIntWv)||!WaveExists(SourceQWv)||!WaveExists(SourceErrorWv))
-		Abort "Cannot find QRS data to export" 
+		SetDataFolder OldDf
+		Abort "Cannot find QRS data to export"
 	endif
 	//trim data to user selected range
 	Duplicate/Free/R=[DataQstartPoint,DataQEndPoint] SourceQWv, ExportQ
@@ -2673,9 +2683,10 @@ Function IRB1_PDDFRunGNOM()
 		endif
 		ExecuteScriptText/Z  wincmd
 		if(V_Flag!=0)	//error happened
-			Abort "There was error scripting and running GNOM/DATGNOM" 
+			SetDataFolder OldDf
+			Abort "There was error scripting and running GNOM/DATGNOM"
 		endif
-		//Print S_value		// actually datgnom adn gnom do report anything contrary to datgnom4... 
+		//Print S_value		// actually datgnom adn gnom do report anything contrary to datgnom4...
 		//FittingResults = S_value
 	else										//Mac, need to convert to Posix path
 		ATSASPath = "'"+ParseFilePath(9, ATSASPath, "*", 0, 0)+"'"
@@ -2694,7 +2705,8 @@ Function IRB1_PDDFRunGNOM()
 		//Print igorCmd		// For debugging only
 		ExecuteScriptText/UNQ/Z igorCmd
 		if(V_Flag!=0)	//error happened
-			Abort "There was error scripting and running GNOM/DATGNOM" 
+			SetDataFolder OldDf
+			Abort "There was error scripting and running GNOM/DATGNOM"
 		endif
 		//Print S_value		// actually datgnom adn gnom do report anything contrary to datgnom4... 
 		//FittingResults = S_value
@@ -2997,6 +3009,7 @@ Function IRB1_PDDFAppendOneDataSet(FolderNameStr)
 		Wave/Z SourcedQWv=$(DataFolderName+possiblyQUoteName("M_"+dQWavename))
 	endif
 	if(!WaveExists(SourceIntWv)||	!WaveExists(SourceQWv)||!WaveExists(SourceErrorWv))
+		SetDataFolder OldDf
 		Abort "Data selection failed for Data"
 	endif
 	//copy to working folder, so we can work with the data when needed..

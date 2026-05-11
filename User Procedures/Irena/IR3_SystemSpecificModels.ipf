@@ -1,7 +1,7 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version=1.02
+#pragma version=1.03
 
 
 //*************************************************************************\
@@ -12,6 +12,15 @@
 
 
 //version notes:
+//	1.03 AI code review: fix missing parentheses on GetDataFolderDFR (was GetDataFolderDFR,
+//	     not GetDataFolderDFR()) in IR3S_EstimateLowQslope; add SetDataFolder restore before
+//	     Abort/abort calls in IR3S_CopyAndAppendData, main fitting function (×2), and
+//	     IR3S_EstimateLowQslope (×2 including silent abort).
+//
+//	TODO (deferred from AI review 2026-05-04):
+//	~50 bare Wave declarations without /Z throughout — all reference package waves via
+//	absolute paths (root:Packages:Irena:SysSpecModels:...). Low risk when tool is properly
+//	initialized but should be hardened with /Z in a future pass.
 //	1.02 add Hermans, HybridHermans, and Unified Born Green models. https://doi.org/10.1016/j.polymer.2021.124281
 //	1.01 add handling of USAXS M_... waves 
 //	1.0 Original release, 1/2/2021
@@ -1047,6 +1056,7 @@ Function IR3S_CopyAndAppendData(FolderNameStr)
 			Wave/Z SourcedQWv=$(DataFolderName+possiblyQUoteName("M_"+dQWavename))
 		endif
 		if(!WaveExists(SourceIntWv)||	!WaveExists(SourceQWv))//||!WaveExists(SourceErrorWv))
+			SetDataFolder oldDf
 			Abort "Data selection failed for System Specific Models routine IR3S_CopyAndAppendData"
 		endif
 		Duplicate/O SourceIntWv, OriginalDataIntWave
@@ -1759,12 +1769,14 @@ static Function IR3S_FitSysSpecificModels()
 	endif
 	
 	if(numpnts(W_Coef)<1)
-		Abort "Nothing to fit" 
+		SetDataFolder oldDf
+		Abort "Nothing to fit"
 	endif
-	
+
 	DoWindow /F IR3S_LogLogDataDisplay
 	wave/Z OriginalDataIntWave=root:Packages:Irena:SysSpecModels:OriginalDataIntWave
 	if(!WaveExists(OriginalDataIntWave))//wave does not exist, user probably did not create data yet.
+		SetDataFolder oldDf
 		abort
 	endif
 	Wave OriginalDataQWave=root:Packages:Irena:SysSpecModels:OriginalDataQWave
@@ -1965,17 +1977,19 @@ end
 
 static Function IR3S_EstimateLowQslope()
 
-	dfref oldDf=GetDataFolderDFR
+	DFREF oldDf = GetDataFolderDFR()
 	setDataFolder root:Packages:Irena:SysSpecModels
-	
+
 	wave/Z OriginalIntensity=root:Packages:Irena:SysSpecModels:OriginalDataIntWave
 	if(!WaveExists(OriginalIntensity))//wave does not exist, user probably did nto ccreate data yet.
+		SetDataFolder oldDf
 		abort
 	endif
 	Wave OriginalQvector=root:Packages:Irena:SysSpecModels:OriginalDataQWave
 	Wave OriginalError=root:Packages:Irena:SysSpecModels:OriginalDataErrorWave
 	variable cursA, cursB
 	if(strlen(CsrWave(A, "IR3S_LogLogDataDisplay"))<=0 || strlen(CsrWave(B, "IR3S_LogLogDataDisplay"))<=0)
+		SetDataFolder oldDf
 		Abort "Cursors not set correctly in the IR3S_LogLogDataDisplay graph. Set cursors in IR3S_LogLogDataDisplay."
 	endif
 	cursA= pcsr(A  , "IR3S_LogLogDataDisplay")

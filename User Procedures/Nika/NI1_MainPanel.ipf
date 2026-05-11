@@ -1,6 +1,6 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use modern global access method.
-#pragma version=2.76
+#pragma version=2.77
 Constant NI1AversionNumber = 2.76
 
 //*************************************************************************\
@@ -9,6 +9,12 @@ Constant NI1AversionNumber = 2.76
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//2.77 AI code review: add missing SetDataFolder restore in NI1A_CreateConversionLUT (folder was
+//     permanently changed on every call); add SetDataFolder restore before 8 Abort calls
+//     (NI1A_SaveDataPerUserReq ×4, NI1A_MovieCreateUpdateImageFnct ×2, NI1A_MovieUpdateMain2DImage,
+//     NI1A_MovieCallUserHookFunction); convert 10 string-based DF save/restores to DFREF;
+//     add WAVE/Z to CCDImageToConvert absolute-path declaration; also removed unreachable
+//     KillWIndow after Abort in NI1A_MovieCreateUpdateImageFnct.
 //2.76 change _9IDC to _usx for all USAXS code
 //2.75 add to Mask ability to mask off higher than something pixels. Needed for EIgers. 
 //2.74 fix the fix from 2.73 where the CFFactor calculation had a bug. ugh... (line 2438)
@@ -224,7 +230,7 @@ End
 
 Function NI1A_Initialize2Dto1DConversion()
 
- 	string OldDf = GetDataFolder(1)
+ 	DFREF saveDF = GetDataFolderDFR()
 	variable FirstRun
 	if(!DataFolderExists("root:Packages:Convert2Dto1D"))
 		FirstRun = 1
@@ -716,7 +722,7 @@ Function NI1A_Initialize2Dto1DConversion()
 	setdimlabel 1, 3, $("Elapsed Time"), BSLframelistsequence
 	setdimlabel 1, 4, $("Utility"), BSLframelistsequence
 
-	setDataFOlder oldDf
+	SetDataFolder saveDF
 	NEXUS_Initialize(0)
 End
 
@@ -729,7 +735,7 @@ End
 
 Function NI1A_Convert2DTo1D()
 
- 	string OldDf = GetDataFolder(1)
+ 	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 
 	NVAR UseSectors     = root:Packages:Convert2Dto1D:UseSectors     //this is for Sector analysis. Only if set ot 1, sector analysis is reuired by user...
@@ -836,7 +842,7 @@ Function NI1A_Convert2DTo1D()
 	//here we will create special waves in case we are using 9IDC SAXS...
 	NI1_usxCreateSMRSAXSdata(tempListOfProcessedSectors)
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 
 //*******************************************************************************************************************************************
@@ -845,7 +851,7 @@ End
 Function NI1A_FixNumPntsIfNeeded(CurOrient)
 	string CurOrient
  	//here we fix the num pnts to max number if requested by user
-	string OldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 
 	NVAR QvectorNumberPoints = root:Packages:Convert2Dto1D:QvectorNumberPoints
@@ -995,7 +1001,7 @@ Function NI1A_FixNumPntsIfNeeded(CurOrient)
 
 		return 2
 	endif
-	setDataFolder OldDf
+	SetDataFolder saveDF
 
 End
 
@@ -1005,7 +1011,7 @@ End
 
 Function NI1A_Create2DPixRadiusWave(DataWave)
 	WAVE DataWave
- 	string OldDf = GetDataFolder(1)
+ 	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 
 	NVAR SampleToCCDDistance = root:Packages:Convert2Dto1D:SampleToCCDDistance //in millimeters
@@ -1051,7 +1057,7 @@ Function NI1A_Create2DPixRadiusWave(DataWave)
 	NoteStr += "HorizontalTilt=" + num2str(HorizontalTilt) + ";"
 	NoteStr += "VerticalTilt=" + num2str(VerticalTilt) + ";"
 	note PixRadius2DWave, NoteStr
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 
 //*******************************************************************************************************************************************
@@ -1130,7 +1136,7 @@ End
 //	SetScale/I x 0,(2*pi),"", wvX, wvY
 //	wvX = ((x>=pi/2)&&(x<3*pi/2))? (xcenter+pixelDistXright*cos(x)) : (xcenter+pixelDistXleft*cos(x))
 //	wvY = ((x>=0)&&(x<pi))? (ycenter+pixelDistYtop*sin(x)) : (ycenter+pixelDistYbot*sin(x))
-//  	setDataFolder OldDf
+//  	SetDataFolder saveDF
 //end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -1185,7 +1191,7 @@ End
 Function NI1A_SaveDataPerUserReq(CurOrient)
 	string CurOrient
 
- 	string OldDf = getDataFOlder(1)
+ 	DFREF saveDF = GetDataFolderDFR()
 	if(stringmatch(CurOrient, "*Lp*"))
 		WAVE/Z LineProfileIntensity         = root:Packages:Convert2Dto1D:LineProfileIntensity
 		WAVE/Z LineProfileError             = root:Packages:Convert2Dto1D:LineProfileIntSdev
@@ -1216,7 +1222,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 		WAVE/Z Error             = root:Packages:Convert2Dto1D:Error
 		WAVE/Z Qsmearing         = root:Packages:Convert2Dto1D:Qsmearing
 	endif
-	WAVE CCDImageToConvert          = root:Packages:Convert2Dto1D:CCDImageToConvert
+	WAVE/Z CCDImageToConvert        = root:Packages:Convert2Dto1D:CCDImageToConvert
 	SVAR LoadedFile                 = root:Packages:Convert2Dto1D:FileNameToLoad
 	SVAR UserSampleName             = root:Packages:Convert2Dto1D:UserSampleName
 	SVAR UserFileName               = root:Packages:Convert2Dto1D:OutputDataName
@@ -1269,6 +1275,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 				FUNCREF NI1A_UserNameStrProto UserStrNameFnct = $(functionName)
 				tempStrName = UserStrNameFnct(CCDImageToConvert, UserSampleName)
 				if(strlen(tempStrName) < 1) // nothing came back?
+					SetDataFolder saveDF
 					Abort "Name function returned nothing"
 				endif
 				UserFileName     = tempStrName
@@ -1276,6 +1283,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 				UseName          = NI1A_TrimCleanDataName(UserFileName, CurOrient) + "_" + CurOrient
 				//setDataFolder OldDF1
 			else
+				SetDataFolder saveDF
 				Abort "No valid function returning string for data name was specified. Check the Function name"
 			endif
 		else
@@ -1337,6 +1345,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 			if(DataFolderExists(LongUseName) && !OverwriteDataIfExists)
 				DoALert 1, "This data folder exists, overwrite?"
 				if(V_Flag == 2)
+					SetDataFolder saveDF
 					Abort
 				endif
 			endif
@@ -1482,6 +1491,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 			if(DataFolderExists(LongUseName) && !OverwriteDataIfExists)
 				DoALert 1, "This data folder exists, overwrite?"
 				if(V_Flag == 2)
+					SetDataFolder saveDF
 					Abort
 				endif
 			endif
@@ -1681,7 +1691,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 	Movie_Last1DdataSet = LongUseName //this is last 1D data set loaded...
 	NI1A_MovieRecordFrameIfReq(1)
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 
 //*******************************************************************************************************************************************
@@ -1879,7 +1889,7 @@ Function NI1A_CreateConversionLUT(updateLUT, QVectorWave, CCDImageToConvert, M_R
 	variable updateLUT
 	WAVE QVectorWave, CCDImageToConvert, M_ROIMask
 
- 	string OldDf = GetDataFOlder(1)
+ 	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 
 	if(updateLUT)
@@ -1909,6 +1919,7 @@ Function NI1A_CreateConversionLUT(updateLUT, QVectorWave, CCDImageToConvert, M_R
 	NewIntWave     /= HistWave
 	NewIntErrorWave = sqrt(NewIntErrorWave - HistWave * NewIntWave * NewIntWave) / (HistWave - 1)
 	killwaves/Z tempIntw, TempIntSqt, temp2D, tempQ, NewQwave
+	SetDataFolder saveDF
 End
 
 //*******************************************************************************************************************************************
@@ -2141,7 +2152,7 @@ End
 //***********************************************************
 Function NI1A_MovieCreateUpdate1DGraphF()
 
- 	string OldDf = getDataFolder(1)
+ 	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D:
 
 	NVAR Movie_Use1DData      = root:Packages:Convert2Dto1D:Movie_Use1DData
@@ -2212,7 +2223,7 @@ Function NI1A_MovieCreateUpdate1DGraphF()
 		Legend/K/N=MovieLegend/W=NI1A_MovieCreate1DGraph
 	endif
 	DoUpdate
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 
 //***********************************************************
@@ -2222,7 +2233,7 @@ End
 //***********************************************************
 Function NI1A_MovieCreateUpdateImageFnct()
 
-	string OldDf = getDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D:
 	NVAR Movie_Use2DRAWdata       = root:Packages:Convert2Dto1D:Movie_Use2DRAWdata
 	NVAR Movie_Use2DProcesseddata = root:Packages:Convert2Dto1D:Movie_Use2DProcesseddata
@@ -2235,13 +2246,14 @@ Function NI1A_MovieCreateUpdateImageFnct()
 	if(Movie_Use2DRAWdata)
 		WAVE/Z RAWImageToDisplay = root:Packages:Convert2Dto1D:CCDImageToConvert //this contains RAW data ONLY
 		if(!WaveExists(RAWImageToDisplay))
+			SetDataFolder saveDF
 			Abort "The 2D image does not exist, please load test image in Nika first"
-			KillWIndow/Z NI1A_MovieCreateImage
 		endif
 		Duplicate/O RAWImageToDisplay, Movie2DImage
 	else //use Calibrated data
 		WAVE/Z CalibratedImageToDisplay = root:Packages:Convert2Dto1D:Calibrated2DDataSet //this contains calibrated data
 		if(!WaveExists(CalibratedImageToDisplay))
+			SetDataFolder saveDF
 			Abort "The Calibrated 2D image does not exist, please load & convert test image in Nika first"
 		endif
 		Duplicate/O CalibratedImageToDisplay, Movie2DImage
@@ -2277,7 +2289,7 @@ Function NI1A_MovieCreateUpdateImageFnct()
 		Legend/K/N=MovieLegend/W=NI1A_MovieCreateImage
 	endif
 	DoUpdate
-	setDataFolder OldDf
+	SetDataFolder saveDF
 
 End
 
@@ -2288,7 +2300,7 @@ End
 //***********************************************************
 Function NI1A_MovieUpdateMain2DImage()
 
- 	string OldDf = getDataFolder(1)
+ 	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D:
 	NVAR Movie_UseMain2DImage = root:Packages:Convert2Dto1D:Movie_UseMain2DImage
 
@@ -2302,11 +2314,12 @@ Function NI1A_MovieUpdateMain2DImage()
 			DoWIndow/F CCDImageToConvertFig
 			AutoPositionWindow/M=1/R=NI1A_CreateMoviesPanel CCDImageToConvertFig
 		else
+			SetDataFolder saveDF
 			Abort "Main 2D windows does not exist"
 		endif
 	endif
 	DoUpdate
-	setDataFolder OldDf
+	SetDataFolder saveDF
 
 End
 
@@ -2317,7 +2330,7 @@ End
 //***********************************************************
 Function NI1A_MovieCallUserHookFunction()
 
- 	string OldDf = getDataFolder(1)
+ 	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D:
 	NVAR Movie_UseUserHookFnct = root:Packages:Convert2Dto1D:Movie_UseUserHookFnct
 
@@ -2329,10 +2342,11 @@ Function NI1A_MovieCallUserHookFunction()
 	Movie_UserHookFunction()
 #else
 	Movie_UseUserHookFnct = 0
+	SetDataFolder saveDF
 	Abort "User hook function does not exist, create Movie_UserHookFunction() which creates image you want to add to movie first"
 #endif
 	DoUpdate
-	setDataFolder OldDf
+	SetDataFolder saveDF
 
 End
 

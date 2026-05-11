@@ -2,9 +2,12 @@
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
 
-#pragma version=1.01
+#pragma version=1.02
 
-// 1.01  added energy and wavelength to wave note. 
+// 1.02 AI code review: add WAVE/Z to 23 bare wave declarations (SelectionsofCCDDataInCCDPath,
+//      energyWv/wavelengthWv ×2, Wv path-built ×4, TempWave, M_RGB2Gray, ArAngles,
+//      SlitLengthWave, SMR_Int/Qvec/Error, DSM_Int/Qvec/Error, and others).
+// 1.01  added energy and wavelength to wave note.
 // here belongs any code which imports and exports data and does other stuff, except data reduction
 
 //**********************************************************************************************************
@@ -583,7 +586,7 @@ Function IN4_initProcessSWAXSdata(fileName, isSAXS)
 	endif	
 	
 
-	WAVE   SelectionsofCCDDataInCCDPath = root:Packages:Convert2Dto1D:ListOf2DSampleDataNumbers
+	WAVE/Z   SelectionsofCCDDataInCCDPath = root:Packages:Convert2Dto1D:ListOf2DSampleDataNumbers
 	WAVE/T ListOfCCDDataInCCDPath       = root:Packages:Convert2Dto1D:ListOf2DSampleData
 	SelectionsofCCDDataInCCDPath = 0
 	//this selects in Main panel Listbox the file we want to import
@@ -994,8 +997,8 @@ Function/S ReadMyNXcanSASSWAXS(DataPathStr, SAXSorWAXS, filenameInput)
     if (V_Flag==0)
     	HDF5LoadData /Q /N=energyWv /O groupID, "energy" 
     	HDF5LoadData /Q /N=wavelengthWv /O groupID, "wavelength" 
-    	Wave energyWv
-    	Wave wavelengthWv
+    	Wave/Z energyWv
+    	Wave/Z wavelengthWv
     	Variable energy=energyWv[0]
     	Variable wavelength=wavelengthWv[0]
     	killWaves energyWv, wavelengthWv
@@ -1041,22 +1044,22 @@ Function/S ReadMyNXcanSASSWAXS(DataPathStr, SAXSorWAXS, filenameInput)
     	IN4_LoadWaveAndAppendAttribs(groupID, "s_"+DataNameStr, "Idev")
     	IN4_LoadWaveAndAppendAttribs(groupID, "w_"+DataNameStr, "Qdev")
 	    HDF5CloseGroup groupID
-   		WAVE Wv=$("r_"+DataNameStr)
+   		WAVE/Z Wv=$("r_"+DataNameStr)
     	string oldnote = note(Wv)
     	oldNote+="energy="+num2str(energy)+";"   
     	oldNote+="wavelength="+num2str(wavelength)+";"   
     	note/K/NOCR Wv, oldNote
-   		WAVE Wv=$("q_"+DataNameStr)
+   		WAVE/Z Wv=$("q_"+DataNameStr)
     	oldnote = note(Wv)
     	oldNote+="energy="+num2str(energy)+";"   
     	oldNote+="wavelength="+num2str(wavelength)+";"   
     	note/K/NOCR Wv, oldNote
-   		WAVE Wv=$("s_"+DataNameStr)
+   		WAVE/Z Wv=$("s_"+DataNameStr)
     	oldnote = note(Wv)
     	oldNote+="energy="+num2str(energy)+";"   
     	oldNote+="wavelength="+num2str(wavelength)+";"   
     	note/K/NOCR Wv, oldNote
-   		WAVE Wv=$("w_"+DataNameStr)
+   		WAVE/Z Wv=$("w_"+DataNameStr)
     	oldnote = note(Wv)
     	oldNote+="energy="+num2str(energy)+";"   
     	oldNote+="wavelength="+num2str(wavelength)+";"   
@@ -1125,10 +1128,10 @@ static Function/S IN4_ImportImage(filenameInput)
 	string ImportedDataFolder=GetDataFolder(1)
 	ImageLoad/Q/Z/P=Indra4DataPath/T=jpeg/O/N=TempWave ImageName
 	if(V_flag==1)
-		wave TempWave
+		wave/Z TempWave
 		KillWaves/Z M_RGB2Gray
 		ImageTransform rgb2gray, TempWave
-		Wave M_RGB2Gray	
+		Wave/Z M_RGB2Gray	
 		Duplicate/O M_RGB2Gray, $(newFolderName)
 		KillWaves/Z M_RGB2Gray, TempWave
 	else
@@ -1164,7 +1167,7 @@ static Function IN4_ImportRawUSAXS(filenameInput)	//this reads RAW USAXS data,
 		//now we need to import the data from Flyscan. These are values named same as in Python
 		IN4_LoadWaveAndAppendAttribs(fileID, "ARangles", "/entry/flyScan/AR_PulsePositions")
 		//ARangles is too long, 8k points instead of 7999 as the other arrays. Delete first point
-		Wave ArAngles
+		Wave/Z ArAngles
 		DeletePoints 0, 1, ArAngles
 		IN4_LoadWaveAndAppendAttribs(fileID, "TimePerPoint", "/entry/flyScan/mca1")
 		IN4_LoadWaveAndAppendAttribs(fileID, "Monitor", "/entry/flyScan/mca2")
@@ -1263,8 +1266,8 @@ static Function ReadMyNXcanSASUSAXS(filenameInput)
     if (V_Flag==0)
     	HDF5LoadData /Q /N=energyWv /O groupID, "energy" 
     	HDF5LoadData /Q /N=wavelengthWv /O groupID, "wavelength" 
-    	Wave energyWv
-    	Wave wavelengthWv
+    	Wave/Z energyWv
+    	Wave/Z wavelengthWv
     	Variable energy=energyWv[0]
     	Variable wavelength=wavelengthWv[0]
     	killWaves energyWv, wavelengthWv
@@ -1305,23 +1308,23 @@ static Function ReadMyNXcanSASUSAXS(filenameInput)
     	HDF5LoadData /Q /N=SlitLengthWave /O groupID, "dQl" 
 	    HDF5CloseGroup groupID
 
-    	wave SlitLengthWave
+    	wave/Z SlitLengthWave
     	variable/g Slitlength = SLitLengthWave[0]
     	killWaves SlitLengthWave
     	//Add slit length to SMR_Int
-    	WAVE SMR_Int
+    	WAVE/Z SMR_Int
     	string oldnote = note(SMR_Int)
     	oldNote+="SlitLength="+num2str(Slitlength)+";"   
     	oldNote+="energy="+num2str(energy)+";"   
     	oldNote+="wavelength="+num2str(wavelength)+";"   
     	note/K/NOCR SMR_Int, oldNote
-    	WAVE SMR_Qvec
+    	WAVE/Z SMR_Qvec
     	oldnote = note(SMR_Qvec)
     	oldNote+="SlitLength="+num2str(Slitlength)+";"   
     	oldNote+="energy="+num2str(energy)+";"   
     	oldNote+="wavelength="+num2str(wavelength)+";"   
     	note/K/NOCR SMR_Qvec, oldNote
-    	WAVE SMR_Error
+    	WAVE/Z SMR_Error
     	oldnote = note(SMR_Error)
     	oldNote+="SlitLength="+num2str(Slitlength)+";"   
     	oldNote+="energy="+num2str(energy)+";"   
@@ -1338,17 +1341,17 @@ static Function ReadMyNXcanSASUSAXS(filenameInput)
     	IN4_LoadWaveAndAppendAttribs(groupID, "DSM_Error", "Idev")
     	IN4_LoadWaveAndAppendAttribs(groupID, "DSM_dQ", "Qdev")
 	    HDF5CloseGroup groupID
-    	WAVE DSM_Int
+    	WAVE/Z DSM_Int
     	string oldnoted = note(DSM_Int)
     	oldnoted+="energy="+num2str(energy)+";"   
     	oldnoted+="wavelength="+num2str(wavelength)+";"   
     	note/K/NOCR DSM_Int, oldnoted
-    	WAVE DSM_Qvec
+    	WAVE/Z DSM_Qvec
     	oldnoted = note(DSM_Qvec)
     	oldnoted+="energy="+num2str(energy)+";"   
     	oldnoted+="wavelength="+num2str(wavelength)+";"   
     	note/K/NOCR DSM_Qvec, oldnoted
-    	WAVE DSM_Error
+    	WAVE/Z DSM_Error
     	oldnoted = note(DSM_Error)
     	oldnoted+="energy="+num2str(energy)+";"   
     	oldnoted+="wavelength="+num2str(wavelength)+";"   
@@ -1535,7 +1538,7 @@ end
 //**********************************************************************************************************
 static Function IN4_NXwriteDataSetWAttribs(locID,DataInWave,NXDataName, AttrList)
 	variable locID
-	wave DataInWave
+	wave/Z DataInWave
 	string NXDataName, AttrList
 	//save the data
 	HDF5SaveData /O  DataInWave, locID, NXDataName
@@ -1635,7 +1638,7 @@ static Function/S IN4_ReadAttributesInDict(locID,ItemNamePath, isGroup)
 		
 			HDF5LoadData /Q /O /A=tempAttrName /TYPE=(type) /N=tempAttributeWave /Z locID, ItemNamePath	
 				if (V_Flag == 0)
-					Wave testWave = tempAttributeWave
+					Wave/Z testWave = tempAttributeWave
 					if (WaveType(testWave) == 0)
 						Wave/T testWavestr = tempAttributeWave
 						AttributesDict+=tempAttrName+"="+testWavestr[0]+";"		// Attribute is string, not numeric
@@ -1677,7 +1680,7 @@ static Function/S IN4_ReadGroupItemsToDict(locID,PathToGroup,ListOfItemsToKeep)
 		if (grepString(ListOfItemsToKeep,itemName)||ItemsInList(ListOfItemsToKeep)<1)
 			HDF5LoadData /Q /O /N=tempWv /Z groupID, itemPathName	
 			if (V_Flag == 0)
-				Wave testWave = tempWv
+				Wave/Z testWave = tempWv
 				if (WaveType(testWave) == 0)
 					Wave/T testWavestr = tempWv
 					resultDict+=itemName+"="+testWavestr[0]+";"		// Attribute is string, not numeric
@@ -1704,7 +1707,7 @@ static Function IN4_ReadVariable(locID,PathToItem)
 	variable result
 	HDF5LoadData /Q /O /N=tempWv /Z locID, PathToItem	
 	if (V_Flag == 0)
-		Wave testWave = tempWv
+		Wave/Z testWave = tempWv
 		if (WaveType(testWave) == 0)
 			Wave/T testWavestr = tempWv
 			result=NaN		// Attribute is string, not numeric

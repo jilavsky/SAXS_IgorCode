@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
 #pragma IgorVersion=9.05   //requires Igor version 9.05 or higher
-#pragma version = 2.05
+#pragma version = 2.06
 
 constant CurrentIndraVersionNumber = 2.05
 //*************************************************************************\
@@ -10,6 +10,8 @@ constant CurrentIndraVersionNumber = 2.05
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.06 AI code review: add WAVE/Z to 9 bare wave declarations in RemovePointsWithMarquee
+//     (SMR/DSM/R IntWv+QWv pairs and USAXS_PD/PD_Intensity/ARencoder in PeakCenter branch).
 //2.05 	Beta: add new USAXS data reduction tools. 
 //2.03 	Remove old crud. 
 //2.02 	Fixes for new 12IDE USAXS instrument operations, tested with IP10Beta
@@ -435,18 +437,18 @@ Function RemovePointsWithMarquee()
 		CheckDisplayed /W=RcurvePlotGraph root:Packages:Indra3:SMR_Int
 		if(V_Flag>0)
 			isBlank = 0
-			Wave IntWv=root:Packages:Indra3:SMR_Int
-			Wave QWv  =root:Packages:Indra3:SMR_Qvec
+			Wave/Z IntWv=root:Packages:Indra3:SMR_Int
+			Wave/Z QWv  =root:Packages:Indra3:SMR_Qvec
 		endif
 		CheckDisplayed /W=RcurvePlotGraph root:Packages:Indra3:DSM_Int
 		if(V_Flag>0)
 			isBlank = 0
-			Wave IntWv=root:Packages:Indra3:DSM_Int
-			Wave QWv  =root:Packages:Indra3:DSM_Qvec
+			Wave/Z IntWv=root:Packages:Indra3:DSM_Int
+			Wave/Z QWv  =root:Packages:Indra3:DSM_Qvec
 		endif
 		if(isBlank)
-			Wave IntWv=root:Packages:Indra3:R_Int
-			Wave QWv  =root:Packages:Indra3:R_Qvec
+			Wave/Z IntWv=root:Packages:Indra3:R_Int
+			Wave/Z QWv  =root:Packages:Indra3:R_Qvec
 		endif 
 		if(isBlank) 
 			getmarquee/W=RcurvePlotGraph left, bottom
@@ -473,9 +475,9 @@ Function RemovePointsWithMarquee()
 	elseif(stringmatch(S_MarqueeWin,"RcurvePlotGraph#PeakCenter"))
 		CheckDisplayed /W=RcurvePlotGraph#PeakCenter root:Packages:Indra3:PD_Intensity
 		if(V_Flag)
-			Wave USAXS_PD = root:Packages:Indra3:USAXS_PD
-			Wave PD_Intensity = root:Packages:Indra3:PD_Intensity
-			Wave ARencoder = root:Packages:Indra3:AR_encoder
+			Wave/Z USAXS_PD = root:Packages:Indra3:USAXS_PD
+			Wave/Z PD_Intensity = root:Packages:Indra3:PD_Intensity
+			Wave/Z ARencoder = root:Packages:Indra3:AR_encoder
 			getmarquee/W=RcurvePlotGraph#PeakCenter left, bottom
 			FindLevel/Q ARencoder, V_left 
 			StartPntX = floor(V_levelX)

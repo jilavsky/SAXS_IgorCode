@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=2.62
+#pragma version=2.63
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
@@ -8,6 +8,11 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.63 AI code review: convert 6 string-based DF save/restores to DFREF (saveDF); add
+//     SetDataFolder restore before 10 Abort calls — NI1A_UniversalLoader (×8: path error,
+//     bare abort, General Binary, Cbf binary, Unknown Pilatus, Rigaku, CSV mpa, unknown CCD)
+//     and NI1_MaskHDFLoader (×2: path error, bare abort); add wave/Z to loadedwv (×3),
+//     NewWv (×2), Found2DWave, Nika2DWave, ListOf2DSampleDataNumbers.
 //2.62 Add check for Nexus (line 997) if the image contains very high points, they will be set to -2. New Eiger2 records the non existent/bad pixels as high value, not -2 as earlier. 
 		//this works with older Nika logic and does not need other code revisions.  
 //2.61 3/24/2024 Added to Dectris detectors Eiger2_500k - 16M. Tested only on 16M, do not have other images for testing. 
@@ -87,15 +92,17 @@
 Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 	string PathName,FileName,FileType,NewWaveName
 	
-	string OldDf=GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFOlder root:Packages:Convert2Dto1D
 	
 	PathInfo $(PathName)
 	if(!V_Flag)
-		Abort "Path to data set incorrectly" 
+		SetDataFolder saveDF
+		Abort "Path to data set incorrectly"
 	endif
 	if(stringmatch(FileName,"*--none--*")||stringmatch(Filetype,"---"))
-		Abort 
+		SetDataFolder saveDF
+		Abort
 	endif
 	string FileNameToLoad
 	string NewNote=""
@@ -587,6 +594,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 			LDataType=8+64
 		endif
 		if(LDataType==0)
+			SetDataFolder saveDF
 			Abort "Wrong configuration of General Binary loader. BUG!"
 		endif
 		variable LByteOrder
@@ -699,6 +707,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 				PilskipBytes=strsearch(testLine, "\012\026\004\213" , 0)	//this is per http://www.bernstein-plus-sons.com/software/CBF/doc/CBFlib.html#3.2.2 what should be there. Go figure... 
 			endif
 			if(PilskipBytes<5)
+				SetDataFolder saveDF
 				Abort "Failed to find start of binary section in the Cbf file"
 			endif
 			testLine = testLine[0, PilskipBytes]
@@ -856,6 +865,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
  	        elseif(stringmatch(PilatusType,"Eiger2_2MW"))
  	            Redimension/N=(4148,512) Loadedwave0   		//3-24-2024 based on Dectris www about Eiger det. 
  	        else
+ 	        	SetDataFolder saveDF
  	        	Abort "Unknown Pilatus Type"
  	        endif
  	        //New Eigers use high value to maker unused and bad pixels, htis breaks old Pilatus handling... 
@@ -932,6 +942,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 			//fix the negative values...
 			NI1A_RigakuFixNegValues(w,OutPutRatioHighLow)
 		else
+			SetDataFolder saveDF
 			Abort "Problem loading the Rigaku file format. Header and values do not agree... Please contact author (ilavsky@aps.anl.gov) and send the offending file with as much info as possible for evaluation"
 		endif
 		//now let's print the few parameters user shoudl need...
@@ -1075,7 +1086,8 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 			//print sqrt(MPAACDNumPoints)
 			Redimension/N=(sqrt(MPAACDNumPoints),sqrt(MPAACDNumPoints)) Loadedwave0
 		elseif(stringmatch(mpatype,"csv"))
-			Abort "CSV mpa file format is not finished, did not have functional test case example. Provide me the example and I'll finish this. " 
+			SetDataFolder saveDF
+			Abort "CSV mpa file format is not finished, did not have functional test case example. Provide me the example and I'll finish this."
 		endif
 		duplicate/O Loadedwave0, $(NewWaveName)
 		killwaves Loadedwave0
@@ -1382,9 +1394,10 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
          NewNote+="DataFileType="+"ADSC"+";"
 	 	 
 	else
+		SetDataFolder saveDF
 		Abort "Uknown CCD image to load..."
 	endif
-	wave loadedwv=$(NewWaveName)
+	wave/Z loadedwv=$(NewWaveName)
 	//7-25-2022 2.59 added ability to flip/rotate images if needed
 	// No;Transpose;FlipHor;FlipVert, Tran/FlipH
 	SVAR/Z RotateFLipImageOnLoad=root:Packages:Convert2Dto1D:RotateFLipImageOnLoad
@@ -1416,7 +1429,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
    if(exists("ImportedImageHookFunction")==6)
        Execute("ImportedImageHookFunction("+NewWaveName+")")
    endif
-	wave loadedwv=$(NewWaveName)
+	wave/Z loadedwv=$(NewWaveName)
 	NewNote+= "DataFilePath="+S_path+";"
 	string TempTimeStr
 	sprintf TempTimeStr, "%d", datetime
@@ -1438,7 +1451,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		print "Loaded file   " +FileNameToLoad
 	endif
 	//add wave to the image. 
-	wave NewWv=$(NewWaveName)
+	wave/Z NewWv=$(NewWaveName)
 	note/K NewWv
 	note NewWv, newnote
 
@@ -1453,7 +1466,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 	//this has restored proper Dark exposure time data for RSoXS ALS support. 
 
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 	
 	return LoadedOK
 end
@@ -1477,15 +1490,17 @@ End
 Function NI1_MaskHDFLoader(PathName,FileName,FileType,NewWaveName)
 	string PathName,FileName,FileType,NewWaveName
 #if(exists("HDF5OpenFile")==4)	
-	string OldDf=GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFOlder root:Packages:Convert2Dto1D
 	
 	PathInfo $(PathName)
 	if(!V_Flag)
-		Abort "Path to data set incorrectly" 
+		SetDataFolder saveDF
+		Abort "Path to data set incorrectly"
 	endif
 	if(stringmatch(FileName,"*--none--*")||stringmatch(Filetype,"---"))
-		Abort 
+		SetDataFolder saveDF
+		Abort
 	endif
 	string FileNameToLoad
 	string NewNote=""
@@ -1512,10 +1527,10 @@ Function NI1_MaskHDFLoader(PathName,FileName,FileType,NewWaveName)
 		Duplicate/O LoadedWvHere, $(NewWaveName)
 	endif
 	pathInfo $(PathName) 
-	wave loadedwv=$(NewWaveName)
+	wave/Z loadedwv=$(NewWaveName)
 	NewNote+=";"+"DataFilePath="+S_path+";"+note(loadedwv)+";"
 	print "Loaded file   " +FileNameToLoad
-	wave NewWv=$(NewWaveName)
+	wave/Z NewWv=$(NewWaveName)
 	note/K NewWv
 	note NewWv, newnote
 #else
@@ -1797,7 +1812,7 @@ Function NI1_ReadBrukerCCD_SMARTFile(FileToOpen, NewWaveName)	//returns wave wit
 	endif
 	String DescriptionFromInput=""
 
-	string OldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:BrukerImport 
@@ -1839,7 +1854,7 @@ Function NI1_ReadBrukerCCD_SMARTFile(FileToOpen, NewWaveName)	//returns wave wit
 //make sure file exists, it ought to...
 	If(!V_Flag)
 		print "File: " + S_Path + S_fileName + " doesn't exist."
-			setDataFolder OldDf
+			SetDataFolder saveDF
 			abort
 	EndIf
 //make sure that this really is a Siemens file.  Seems like first 18 bytes of file should read FORMAT:  86.
@@ -1852,7 +1867,7 @@ Function NI1_ReadBrukerCCD_SMARTFile(FileToOpen, NewWaveName)	//returns wave wit
 		msgStr = "The first character in the file does not seem correct for a Siemens 2D data file. ... 'Yes' to continue or 'No' to quit."
 		DoAlert 1, msgStr
 		If (V_Flag == 2) 	//DoAlert sets V_flag, = 2 quit; = 1 continue
-			setDataFolder OldDf
+			SetDataFolder saveDF
 			abort
 		EndIf
 	EndIf
@@ -1960,7 +1975,7 @@ Function NI1_ReadBrukerCCD_SMARTFile(FileToOpen, NewWaveName)	//returns wave wit
 		NewWaveNote=ReplaceStringByKey(NI1_RemoveLeadTermSpaces(SiemensHeader[0][i]), NewWaveNote, NI1_RemoveLeadTermSpaces(SiemensHeader[1][i]), ":", ";")
 	endfor
 	note ImageData, NewWaveNote
-	setDataFolder OldDf
+	SetDataFolder saveDF
 	Duplicate/O 	ImageData, $(NewWaveName)
 	KillWaves /Z OverflowTable, oftCheck, ImageData, SiemensHeader
 	KillDataFolder root:Packages:BrukerImport
@@ -2582,7 +2597,7 @@ End
 Function/S NI2_LoadGeneralHDFFile(CalledFrom, fileName, PathName, NewWaveName)
 	string CalledFrom,  fileName, PathName, NewWaveName
 	
-	string oldDf=GetDataFolder (1)
+	DFREF saveDF = GetDataFolderDFR()
 	//2022-11-06 fix loading, make simple - load everything in temp folder, find first 2D data set, assume it is data copy where needed and dump the temp folder data. 
 	string Status=""
 
@@ -2602,7 +2617,7 @@ Function/S NI2_LoadGeneralHDFFile(CalledFrom, fileName, PathName, NewWaveName)
 	//let's find first 2D data set here...
 	SetDataFolder $("root:Packages:TempHDFLoad:"+base_name)					//this is where the hdf5 data now are in Igor
 	string ListOf2DData = IN2G_Find2DDataInFolderTree(GetDataFolder(1))	//this finds all 2-3D waves in this location. 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 	//now we have list of 2D waves - or 3D waves as HDF5 waves are written as 1xNxM...
 	//Let's pick the first one, no idea if it is right but how to figure this out? 
 	//Need to check if we even found anything first...
@@ -2610,7 +2625,7 @@ Function/S NI2_LoadGeneralHDFFile(CalledFrom, fileName, PathName, NewWaveName)
 		Print ">>>>  No 2D data set found in "+S_path+Filename+" data file. \rNOTE: Igor 8 seems unable to load data written as 64 bit integers. "
 		abort
 	endif
-	Wave Found2DWave = $(StringFromList(0,ListOf2DData))
+	Wave/Z Found2DWave = $(StringFromList(0,ListOf2DData))
 	//now we need to fix this from 3D (1xNxM) to 2D (NxM) waves
 	//Duplicate/O Found2DWave, $(NewWaveName)
 	//3-5-2026 modification for 20ID HESAXS
@@ -2656,7 +2671,7 @@ Function/S NI2_LoadGeneralHDFFile(CalledFrom, fileName, PathName, NewWaveName)
 		endif
 		killwaves/Z sumwave3d, sumWave1, sumWave
 	//end of fix
-	wave Nika2DWave=$(NewWaveName)
+	wave/Z Nika2DWave=$(NewWaveName)
 
 	//this below does not work, but the above should have taken care of this anyway. 
 //	if(WaveDims(Nika2DWave)>2)
@@ -2908,7 +2923,7 @@ Function NI1_MainListBoxProc(lba) : ListBoxControl
 
 	Variable i
 	string items=""
-	wave ListOf2DSampleDataNumbers=root:Packages:Convert2Dto1D:ListOf2DSampleDataNumbers
+	wave/Z ListOf2DSampleDataNumbers=root:Packages:Convert2Dto1D:ListOf2DSampleDataNumbers
 	wave/t ListOf2DSampleData=root:Packages:Convert2Dto1D:ListOf2DSampleData
 	//NVAR DoubleClickConverts=root:Packages:Convert2Dto1D:DoubleClickConverts
 	NVAR FIlesSortOrder=root:Packages:Convert2Dto1D:FIlesSortOrder
@@ -3113,7 +3128,7 @@ End
 static function NI1_BSLloadbslinfo(SelectedWv)
 		string SelectedWv
 		
-		string OldDf=GetDataFolder(1)
+		DFREF saveDF = GetDataFolderDFR()
 		setdatafolder root:Packages:Convert2Dto1D:
 		string filebeg
 		string fileext
@@ -3195,7 +3210,7 @@ static function NI1_BSLloadbslinfo(SelectedWv)
 //				break
 //			endif		
 //		endfor
-		setDataFolder OldDf
+		SetDataFolder saveDF
 end
 
 
@@ -3210,8 +3225,7 @@ end
 Function NI1_LoadBSLFiles(SelectedFileToLoad)
 	string SelectedFileToLoad
 
-	string OldDf
-	OldDf=getdatafolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setdatafolder root:Packages:
 	SetDataFolder root:Packages:NI1_BSLFiles
 
@@ -3283,7 +3297,7 @@ Function NI1_LoadBSLFiles(SelectedFileToLoad)
 		tempNote+=headnote[i]+";"
 	endfor
 	note temp2DWave, tempNote
-	setDataFolder OldDf
+	SetDataFolder saveDF
 	return BSLcurrentframe
 end
 
@@ -4329,7 +4343,7 @@ Function NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)
 				//TempStr = ReplaceString("/",(TempStr[1,strlen(TempStr)-1]),",")			//sasentry/sasdata
 				TempStr = (TempStr[1,strlen(TempStr)-1])											//sasentry/sasdata
 				TempStr = StringFromList(0,TempStr,"/")											//sasdata group name
-				string OldDf=GetDataFolder(1)
+				DFREF saveDF = GetDataFolderDFR()
 				string IPPathToMetadata = NewFileDataLocation+TempStr+":"
 				//setDataFolder IPPathToMetadata
 				string StringWithInstrumentData 	= NEXUS_Read_Instrument(IPPathToMetadata)	

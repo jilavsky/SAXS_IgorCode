@@ -1,7 +1,7 @@
 #pragma rtFunctionErrors = 1
 #pragma TextEncoding     = "UTF-8"
 #pragma rtGlobals        = 3 // Use modern global access method.
-#pragma version          = 2.02
+#pragma version          = 2.03
 #pragma IgorVersion      = 8.04
 
 //DO NOT renumber Main files every time, these are main release numbers...
@@ -12,6 +12,9 @@
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//2.03 AI code review: convert 4 string-based DF save/restores to DFREF; add SetDataFolder
+//     restore before 2 Aborts in IN3_USAXSScanLoadHdf5File2 (HDF5 import failure, unknown
+//     scan type) — note the GetDataFolder(1) inside the Abort message string is intentional.
 //2.02 	June 2025 release,  Fixes for new 12IDE USAXS instrument operations, tested with IP10Beta
 //2.01		Beta release, Changes for 12IDE USAXS/SAXS/WAXS. WIP//2.00		July2023 release
 //2.01 remove default removeDropouts and removeOscillations, should not be needed anymore.
@@ -66,7 +69,7 @@ Constant CalMaxRatioUseSamFWHM           = 1.12
 
 //Function IN3_Main()
 //
-//	string OldDf = GetDataFolder(1)
+//	DFREF saveDF = GetDataFolderDFR()
 //
 //	IN3_Initialize()
 //	KillWIndow/Z RcurvePlotGraph
@@ -74,7 +77,7 @@ Constant CalMaxRatioUseSamFWHM           = 1.12
 //	IN3_MainPanel()
 //	ING2_AddScrollControl()
 //	IN3_UpdatePanelVersionNumber("USAXSDataReduction", IN3_ReduceDataMainVersionNumber)
-//	setDataFolder OldDf
+//	SetDataFolder saveDF
 //End
 
 //************************************************************************************************************
@@ -82,7 +85,7 @@ Constant CalMaxRatioUseSamFWHM           = 1.12
 
 Function IN3_NewMain()
 
-	string OldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	IN2G_CheckScreenSize("height", 790)
 	IN3_Initialize()
 	IN3_FlyScanInitializeImport()
@@ -91,7 +94,7 @@ Function IN3_NewMain()
 	IN3_MainPanelNew()
 	ING2_AddScrollControl()
 	IN3_UpdatePanelVersionNumber("USAXSDataReduction", IN3_NewReduceDataMainVersionNum)
-	setDataFolder OldDf
+	SetDataFolder saveDF
 
 End
 
@@ -112,7 +115,7 @@ End
 
 Function IN3_MainPanelNew()
 
-	string oldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
 
 	PauseUpdate // building window...
@@ -424,7 +427,7 @@ Function IN3_MainPanelNew()
 	PopupMenu BackgroundFnct, pos={20, 420}, size={258, 21}, proc=IN3_InputPopMenuProc, title="background function :   "
 	PopupMenu BackgroundFnct, mode=1, value="PowerLaw w flat;flat;power law;Porod;", popvalue=BackgroundFunction
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 	IN3_TabPanelControl("", 0)
 
 	NVAR disableMe = root:Packages:Indra3:RemoveDropouts
@@ -487,7 +490,7 @@ Function/S IN3_USAXSScanLoadHdf5File2(variable LoadManyDataSets)
 
 	string ListOfLoadedDataSets = ""
 
-	string OldDf = getDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:
 	NewDataFolder/O root:raw
 	SetDataFolder root:raw
@@ -564,6 +567,7 @@ Function/S IN3_USAXSScanLoadHdf5File2(variable LoadManyDataSets)
 			//microSeconds = StopMSTimer(timerRefNum)
 			//print microSeconds
 			if(strlen(S_dataFolderPaths) < 5)
+				SetDataFolder saveDF
 				Abort "HDF5 import failed in " + GetDataFolder(1)
 			endif
 			HDF5RawFolderWithData = stringFromList(0, S_dataFolderPaths, ";")
@@ -607,6 +611,7 @@ Function/S IN3_USAXSScanLoadHdf5File2(variable LoadManyDataSets)
 			elseif(isStepScan)
 				tempStrProcessedName = IN3_StepScanConvertToUSAXS(HDF5RawFolderWithData, FileNameNoExtension)
 			else
+				SetDataFolder saveDF
 				Abort "Unknown scan type. Bug! Report me"
 			endif
 			ListOfLoadedDataSets += tempStrProcessedName + ";"
@@ -614,7 +619,7 @@ Function/S IN3_USAXSScanLoadHdf5File2(variable LoadManyDataSets)
 			KillDataFOlder/Z HDF5RawFolderWithData
 		endif
 	endfor
-	setDataFolder OldDf
+	SetDataFolder saveDF
 
 	return ListOfLoadedDataSets
 End
@@ -680,7 +685,7 @@ End
 //		SVAR curString = $(StrName)
 //	endif
 //	result = 	"'"+curString+"'"
-//	setDataFolder OldDf
+//	SetDataFolder saveDF
 //	return result
 //end
 ////***********************************************************
@@ -707,7 +712,7 @@ End
 //	else
 //		result = "0"+num2str(curVariable)
 //	endif
-//	setDataFolder OldDf
+//	SetDataFolder saveDF
 //	return result
 //end
 //***********************************************************
@@ -766,7 +771,7 @@ End
 //
 //	SVAR ListOfKnownFontTypes=ListOfKnownFontTypes
 //	ListOfKnownFontTypes=IN3_CreateUsefulFontList()
-//	setDataFolder OldDf
+//	SetDataFolder saveDF
 //end
 ////***********************************************************
 ////***********************************************************
@@ -954,7 +959,7 @@ End
 
 Function IN3_Initialize()
 
-	string OldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setdatafolder root:
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O USAXS
@@ -1090,7 +1095,7 @@ Function IN3_Initialize()
 	if(DesmearBckgStart < 0.01)
 		DesmearBckgStart = 0.1
 	endif
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -1100,7 +1105,7 @@ End
 //
 //Function IN3_MainPanel()
 //
-//	string oldDf = GetDataFolder(1)
+//	DFREF saveDF = GetDataFolderDFR()
 //	setDataFolder root:Packages:Indra3
 //
 //	PauseUpdate // building window...
@@ -1347,7 +1352,7 @@ End
 //	SetVariable MSAXSStartPoint, limits={0, Inf, 0}, variable=root:Packages:Indra3:MSAXSStartPoint
 //	SetVariable MSAXSEndPoint, pos={8, 290}, size={300, 22}, title="MSAXS end point =", frame=0, disable=2
 //	SetVariable MSAXSEndPoint, limits={0, Inf, 0}, variable=root:Packages:Indra3:MSAXSEndPoint
-//	setDataFolder OldDf
+//	SetDataFolder saveDF
 //	NI3_TabPanelControl("", 0)
 //
 //	NVAR tmpVal = root:Packages:Indra3:RemoveDropouts

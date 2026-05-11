@@ -1,5 +1,5 @@
 #pragma rtGlobals=3 // Use modern global access method and strict wave access.
-#pragma version=1.22
+#pragma version=1.24
 Constant IR3DversionNumber = 1.23 //Data merging panel version number
 
 //*************************************************************************\
@@ -8,6 +8,11 @@ Constant IR3DversionNumber = 1.23 //Data merging panel version number
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//1.24 AI code review: convert 7 string-based DF save/restores to DFREF (IR3D_PresetOutputStrings,
+//     IR3D_ProcessDataAsAppropriate, IR3D_AutoScale, IR3D_MergeData, IR3D_FitExtendData,
+//     IR3D_MergeDataOverlap, IR3D_SaveData); add SetDataFolder restore before 7 Abort calls
+//     (IR3D_CopyAndAppendData ×2, IR3D_FitExtendData ×3, IR3D_MergeDataOverlap ×2);
+//     add WAVE/Z to OriginalData1QWave and OriginalData1ErrorWave in IR3D_AddCursorsForExtensions.
 //1.23 added checkbox "Fix neg Ints?" (Fixnegatives) which switches off negative Intensity fix. Checked it adds background to make all ints positive, unchecked (default) removes negative points.
 //1.22 Fixed emberrassing errror when if both data sets were QRS, output waves were completely wrong named.
 //1.21 Fixed IR3D_PresetOutputStrings to use long names setting in IP8 and higher, was limited to 26 characters + _mrg.
@@ -1051,6 +1056,7 @@ Function IR3D_CopyAndAppendData(Data1or2, FolderNameStr)
 		WAVE/Z SourceErrorWv = $(DataFolderName1 + possiblyquoteName(ErrorWaveName1))
 		WAVE/Z SourcedQWv    = $(DataFolderName1 + possiblyquoteName(dQWavename1))
 		if(!WaveExists(SourceIntWv) || !WaveExists(SourceQWv) || !WaveExists(SourceErrorWv))
+			SetDataFolder oldDf
 			Abort "Data selection failed for Data 1"
 		endif
 		Duplicate/O SourceIntWv, OriginalData1IntWave
@@ -1145,6 +1151,7 @@ Function IR3D_CopyAndAppendData(Data1or2, FolderNameStr)
 		WAVE/Z SourceErrorWv = $(DataFolderName2 + possiblyquoteName(ErrorWaveName2))
 		WAVE/Z SourcedQWv    = $(DataFolderName2 + possiblyquoteName(dQWavename2))
 		if(!WaveExists(SourceIntWv) || !WaveExists(SourceQWv) || !WaveExists(SourceErrorWv))
+			SetDataFolder oldDf
 			Abort "Data selection failed for Data 2"
 		endif
 		Duplicate/O SourceIntWv, OriginalData2IntWave
@@ -1586,8 +1593,7 @@ End
 //**********************************************************************************************************
 Function IR3D_PresetOutputStrings()
 
-	string OldDf
-	OldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Irena:SASDataMerging:
 	SVAR DataFolderName1    = root:Packages:Irena:SASDataMerging:DataFolderName1
 	SVAR IntensityWaveName1 = root:Packages:Irena:SASDataMerging:IntensityWaveName1
@@ -1677,7 +1683,7 @@ Function IR3D_PresetOutputStrings()
 		endif
 	endif
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 
 //**********************************************************************************************************
@@ -1879,8 +1885,7 @@ End
 //**********************************************************************************************************
 Function IR3D_ProcessDataAsAppropriate()
 
-	string OldDf
-	OldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Irena:SASDataMerging
 	NVAR ProcessTest         = root:Packages:Irena:SASDataMerging:ProcessTest
 	NVAR ProcessManually     = root:Packages:Irena:SASDataMerging:ProcessManually
@@ -1896,7 +1901,7 @@ Function IR3D_ProcessDataAsAppropriate()
 		print "*** DONE: sequence of seletcted data sets was processed. DONE! ***"
 	endif
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -1905,8 +1910,7 @@ End
 Function IR3D_AutoScale(autoscale)
 	variable autoscale
 
-	string OldDf
-	OldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Irena:SASDataMerging
 
 	WAVE/Z Intensity1  = root:Packages:Irena:SASDataMerging:MergeData1IntWave
@@ -2035,15 +2039,14 @@ Function IR3D_AutoScale(autoscale)
 		print "After merging found negative intensity values, shifted data higher by adding more background of " + num2str(abs(V_min))
 	endif
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
 Function IR3D_MergeData() //call this and from here go to different routines
 
-	string OldDf
-	OldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Irena:SASDataMerging
 
 	NVAR     Optim_Data1Background    = root:Packages:Irena:SASDataMerging:Optim_Data1Background
@@ -2110,7 +2113,7 @@ Function IR3D_MergeData() //call this and from here go to different routines
 	if(result)
 		IR3D_AppendDataToGraph("Merged")
 	endif
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 
 //**********************************************************************************************************
@@ -2124,8 +2127,8 @@ Function IR3D_AddCursorsForExtensions()
 	if(!WaveExists(OriginalData1IntWave))
 		return 0 //avoid bombing when starting and data do not exist.
 	endif
-	WAVE OriginalData1QWave     = root:Packages:Irena:SASDataMerging:OriginalData1QWave
-	WAVE OriginalData1ErrorWave = root:Packages:Irena:SASDataMerging:OriginalData1ErrorWave
+	WAVE/Z OriginalData1QWave     = root:Packages:Irena:SASDataMerging:OriginalData1QWave
+	WAVE/Z OriginalData1ErrorWave = root:Packages:Irena:SASDataMerging:OriginalData1ErrorWave
 	NVAR Data1QEnd              = root:Packages:Irena:SASDataMerging:Data1QEnd
 	NVAR Data2QStart            = root:Packages:Irena:SASDataMerging:Data2QStart
 	NVAR ExtrapData1Start       = root:Packages:Irena:SASDataMerging:ExtrapData1Start
@@ -2158,8 +2161,7 @@ End
 
 Function IR3D_FitExtendData()
 
-	string OldDf
-	OldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Irena:SASDataMerging
 
 	WAVE/Z Intensity1  = root:Packages:Irena:SASDataMerging:MergeData1IntWave
@@ -2221,6 +2223,7 @@ Function IR3D_FitExtendData()
 				FuncFit/N/Q IR1B_Porod, W_coef, Intensity1[startQp, endQp]/I=1/C=CTextWave/W=Error1/X=Qvector1 //Porod function here
 				if(V_FitError != 0)
 					//we had error during fitting
+					SetDataFolder saveDF
 					Abort "Porod fit function did not converge properly,\r change function or Q range"
 				else //the fit converged properly
 					for(i = startQp; i <= ExtendEndTo; i += 1)
@@ -2239,6 +2242,7 @@ Function IR3D_FitExtendData()
 				Curvefit/N/G/Q power, Intensity1[startQp, endQp]/I=1/C=CTextWave/X=Qvector1/W=Error1
 				if(V_FitError != 0)
 					//we had error during fitting
+					SetDataFolder saveDF
 					Abort "Power Law with flat fit function did not converge properly,\r change function or Q range"
 				else //the fit converged properly
 					for(i = startQp; i <= ExtendEndTo; i += 1)
@@ -2252,6 +2256,7 @@ Function IR3D_FitExtendData()
 				CurveFit/N/Q/H="100" Power, Intensity1[startQp, endQp]/X=Qvector1/W=Error1/I=1
 				if(V_FitError != 0)
 					//we had error during fitting
+					SetDataFolder saveDF
 					Abort "Power Law with flat fit function did not converge properly,\r change function or Q range"
 				else //the fit converged properly
 					for(i = startQp; i <= ExtendEndTo; i += 1)
@@ -2264,7 +2269,7 @@ Function IR3D_FitExtendData()
 		abort "no graph available..."
 	endif
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 
 End
 
@@ -2273,8 +2278,7 @@ End
 //**********************************************************************************************************
 Function IR3D_MergeDataOverlap()
 
-	string OldDf
-	OldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Irena:SASDataMerging
 
 	variable VaryQ1shift              = 0
@@ -2339,10 +2343,12 @@ Function IR3D_MergeDataOverlap()
 	Duplicate/R=[Data1StartPoint, numpnts(Intensity1) - 1]/FREE Intensity1, tmpIntensity1
 	Duplicate/R=[0, Data2StartPoint]/FREE Intensity2, tmpIntensity2
 	if(numpnts(tmpIntensity1) < 4 || numpnts(tmpIntensity2) < 4)
+		SetDataFolder saveDF
 		Abort "These data do not overlap enough"
 	endif
 
 	if(!WaveExists(Intensity1) || !WaveExists(Intensity2) || !WaveExists(Qvector1) || !WaveExists(Qvector2))
+		SetDataFolder saveDF
 		Abort "Bad call to IR3D_MergeData routine"
 	endif
 	if(WaveExists(Error1))
@@ -2572,7 +2578,7 @@ Function IR3D_MergeDataOverlap()
 		endif
 	endif
 	//EvaluatePar()
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -2809,8 +2815,7 @@ End
 //**********************************************************************************************************
 Function IR3D_SaveData()
 
-	string OldDf
-	OldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	SVAR NewDataFolderName    = root:Packages:Irena:SASDataMerging:NewDataFolderName
 	SVAR NewIntensityWaveName = root:Packages:Irena:SASDataMerging:NewIntensityWaveName
 	SVAR NewQWavename         = root:Packages:Irena:SASDataMerging:NewQWavename
@@ -2941,7 +2946,7 @@ Function IR3D_SaveData()
 		IR3D_SetSavedNotSavedMessage(1)
 		print "Saved data to folder : " + GetDataFolder(1)
 	endif
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //**************************************************************************************
 //**************************************************************************************

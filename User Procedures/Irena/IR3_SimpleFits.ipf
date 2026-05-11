@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.17
+#pragma version=1.18
 constant IR3JversionNumber = 1.16			//Simple Fit panel version number
 
 //*************************************************************************\
@@ -11,6 +11,17 @@ constant IR3JversionNumber = 1.16			//Simple Fit panel version number
 constant SimpleFitsLinPlotMaxScale = 1.07
 constant SimpleFitsLinPlotMinScale = 0.8
 
+//1.18 AI code review: add SetDataFolder restore before 9 Abort calls — IR3J_CopyAndAppendData,
+//     IR3J_FitGuinier (×2: cursor+fitting), IR3J_FitPorod, IR3J_FitPowerLaw,
+//     IR3J_FitSizeDistribution, IR3J_FitSphere (×2: cursor+fitting), IR3J_FitSpheroid (×2);
+//     convert 5 String fldrSav0/SetDataFolder fldrSav0 patterns to DFREF in Table functions.
+//
+// TODO (deferred from AI review 2026-05-04):
+// Several bare Wave (lowercase) declarations without /Z throughout — CursorAXWave from
+// CsrXWaveRef, OriginalDataIntWave/QWave/ErrorWave at absolute paths. Low risk (cursor
+// existence is guarded above, data waves exist if data was loaded), but should be hardened
+// with /Z in a future pass. Affected functions: IR3J_CreateLinearizedData, IR3J_FitGuinier,
+// IR3J_FitPorod, IR3J_FitPowerLaw, IR3J_FitSphere, IR3J_FitSpheroid and others.
 //1.17		Fix (Rick Beyer) Correlations functions. Fixes for model 1 and 3, model 2 still questionable.  
 //1.16 	add Power Law fit. 
 //1.15 	add 1D Correlation function
@@ -653,6 +664,7 @@ Function IR3J_CopyAndAppendData(FolderNameStr)
 			Wave/Z SourcedQWv=$(DataFolderName+possiblyQUoteName("M_"+dQWavename))
 		endif
 		if(!WaveExists(SourceIntWv)||	!WaveExists(SourceQWv))//||!WaveExists(SourceErrorWv))
+			SetDataFolder oldDf
 			Abort "Data selection failed for Data in Simple/basic fits routine IR3J_CopyAndAppendData"
 		endif
 		Duplicate/O SourceIntWv, OriginalDataIntWave
@@ -1283,6 +1295,7 @@ static Function IR3J_FitGuinier(which)
 	Wave/Z CursorAWave = CsrWaveRef(A, "IR3J_LogLogDataDisplay")
 	Wave/Z CursorBWave = CsrWaveRef(B, "IR3J_LogLogDataDisplay")
 	if(!WaveExists(CursorAWave)||!WaveExists(CursorBWave))
+		SetDataFolder oldDf
 		Abort "Daat do not exist or cursors are not properly set on same wave"
 	endif
 	Wave CursorAXWave= CsrXWaveRef(A, "IR3J_LogLogDataDisplay")
@@ -1330,7 +1343,8 @@ static Function IR3J_FitGuinier(which)
 	if (V_FitError!=0)	//there was error in fitting
 		RemoveFromGraph/W=IR3J_LogLogDataDisplay /Z $("fit_"+NameOfWave(CursorAWave))
 		beep
-		Abort "Fitting error, check starting parameters and fitting limits" 
+		SetDataFolder oldDf
+		Abort "Fitting error, check starting parameters and fitting limits"
 	endif
 	Wave W_sigma
 	W_coef =  abs(W_coef)
@@ -1592,6 +1606,7 @@ static Function IR3J_FitPorod()
 	Redimension/N=1 T_Constraints
 	T_Constraints[0] = {"K1 > 0"}
 	if(!WaveExists(CursorAWave)||!WaveExists(CursorBWave))
+		SetDataFolder oldDf
 		Abort "Cursors are not properly set on same wave"
 	endif
 	//make a good starting guesses:
@@ -1669,6 +1684,7 @@ static Function IR3J_FitPowerLaw()
 		PowerLawExp = 3
 	endif
 	if(!WaveExists(CursorAWave)||!WaveExists(CursorBWave))
+		SetDataFolder oldDf
 		Abort "Cursors are not properly set on same wave"
 	endif
 	//make a good starting guesses:
@@ -1753,6 +1769,7 @@ Function IR3J_FitSizeDistribution(Which)
 	SVAR QWavename 					=root:Packages:Irena:SimpleFits:QWavename
 
 	if(!WaveExists(CursorAWave)||!WaveExists(CursorBWave))
+		SetDataFolder oldDf
 		Abort "Cursors are not properly set on same wave"
 	endif
 	Duplicate/Free/R=[DataQstartPoint, DataQEndPoint] CursorAXWave, TempXWave
@@ -1835,6 +1852,7 @@ static Function IR3J_FitSphere()
 	Wave CursorAXWave= CsrXWaveRef(A, "IR3J_LogLogDataDisplay")
 	Wave OriginalDataErrorWave=root:Packages:Irena:SimpleFits:OriginalDataErrorWave
 	if(!WaveExists(CursorAWave)||!WaveExists(CursorBWave))
+		SetDataFolder oldDf
 		Abort "Cursors are not properly set on same wave"
 	endif
 	//make a good starting guesses:
@@ -1855,7 +1873,8 @@ static Function IR3J_FitSphere()
 	if (V_FitError!=0)	//there was error in fitting
 		RemoveFromGraph/Z $("fit_"+NameOfWave(CursorAWave))
 		beep
-		Abort "Fitting error, check starting parameters and fitting limits" 
+		SetDataFolder oldDf
+		Abort "Fitting error, check starting parameters and fitting limits"
 	endif
 	Wave W_sigma
 	string TagText
@@ -1937,6 +1956,7 @@ static Function IR3J_FitSpheroid()
 	Wave CursorAXWave= CsrXWaveRef(A, "IR3J_LogLogDataDisplay")
 	Wave OriginalDataErrorWave=root:Packages:Irena:SimpleFits:OriginalDataErrorWave
 	if(!WaveExists(CursorAWave)||!WaveExists(CursorBWave))
+		SetDataFolder oldDf
 		Abort "Cursors are not properly set on same wave"
 	endif
 	//make a good starting guesses:
@@ -1960,7 +1980,8 @@ static Function IR3J_FitSpheroid()
 	if (V_FitError!=0)	//there was error in fitting
 		RemoveFromGraph/Z $("fit_"+NameOfWave(CursorAWave))
 		beep
-		Abort "Fitting error, check starting parameters and fitting limits" 
+		SetDataFolder oldDf
+		Abort "Fitting error, check starting parameters and fitting limits"
 	endif
 	Wave W_sigma
 	AchievedChiSquare = V_chisq/(DataQEndPoint-DataQstartPoint)
@@ -3065,7 +3086,7 @@ Function IR3J_PorodFitResultsTableFnct() : Table
 		DoWIndow/F IR3J_PorodFitResultsTable 
 	else
 		PauseUpdate    		// building window...
-		String fldrSav0= GetDataFolder(1)
+		DFREF saveDF = GetDataFolderDFR()
 		if(!DataFolderExists("root:PorodFitResults:"))
 			Abort "No Porod Fit data exist."
 		endif
@@ -3083,7 +3104,7 @@ Function IR3J_PorodFitResultsTableFnct() : Table
 		ModifyTable alignment(PorodQmin)=1,sigDigits(PorodQmin)=4,width(PorodQmin)=94,title(PorodQmin)="Qmin [1/A]"
 		ModifyTable alignment(PorodSpecificSurfaceWave)=1,sigDigits(PorodSpecificSurfaceWave)=7,width(PorodSpecificSurfaceWave)=94,title(PorodQmin)="Spec Surface [cm2/cm3]"
 		ModifyTable alignment(ScatteringContrastWave)=1,sigDigits(ScatteringContrastWave)=4,width(ScatteringContrastWave)=94,title(ScatteringContrastWave)="Contrast [10^20 cm^-4]"
-		SetDataFolder fldrSav0
+		SetDataFolder saveDF
 	endif
 EndMacro
 //*****************************************************************************************************************
@@ -3093,7 +3114,7 @@ Function IR3J_PwrLawFitResultsTableFnct() : Table
 		DoWIndow/F IR3J_PwrLawFitResultsTable 
 	else
 		PauseUpdate    		// building window...
-		String fldrSav0= GetDataFolder(1)
+		DFREF saveDF = GetDataFolderDFR()
 		if(!DataFolderExists("root:PowerLawFitResults:"))
 			Abort "No Power Law Fit data exist."
 		endif
@@ -3111,7 +3132,7 @@ Function IR3J_PwrLawFitResultsTableFnct() : Table
 		ModifyTable sigDigits(PwrLawChiSquare)=4,width(PwrLawChiSquare)=106,title(PwrLawChiSquare)="Chi^2"
 		ModifyTable alignment(PwrLawQmax)=1,sigDigits(PwrLawQmax)=4,title(PwrLawQmax)="Qmax [1/A]"
 		ModifyTable alignment(PwrLawQmin)=1,sigDigits(PwrLawQmin)=4,width(PwrLawQmin)=94,title(PwrLawQmin)="Qmin [1/A]"
-		SetDataFolder fldrSav0
+		SetDataFolder saveDF
 	endif
 EndMacro
 
@@ -3123,7 +3144,7 @@ Function IR3J_SphFFFitResTblFnct() : Table
 		DoWIndow/F IR3J_SphereFFFitResultsTable 
 	else
 		PauseUpdate    		// building window...
-		String fldrSav0= GetDataFolder(1)
+		DFREF saveDF = GetDataFolderDFR()
 		if(!DataFolderExists("root:SphereFitResults:"))
 			Abort "No Sphere FF Fit data exist."
 		endif
@@ -3140,7 +3161,7 @@ Function IR3J_SphFFFitResTblFnct() : Table
 		ModifyTable sigDigits(SphereChiSquare)=4,title(SphereChiSquare)="Chi^2",alignment(SphereQmax)=1
 		ModifyTable sigDigits(SphereQmax)=4,title(SphereQmax)="Qmax [1/A]",alignment(SphereQmin)=1
 		ModifyTable sigDigits(SphereQmin)=4,width(SphereQmin)=88,title(SphereQmin)="Qmin [1/A]"
-		SetDataFolder fldrSav0
+		SetDataFolder saveDF
 	endif
 EndMacro
 //*****************************************************************************************************************
@@ -3151,7 +3172,7 @@ Function IR3J_SpheroidFFFitResTblFnct() : Table
 		DoWIndow/F IR3J_SpheroidFFFitResultsTable 
 	else
 		PauseUpdate    		// building window...
-		String fldrSav0= GetDataFolder(1)
+		DFREF saveDF = GetDataFolderDFR()
 		if(!DataFolderExists("root:SpheroidFitResults:"))
 			Abort "No Spheroid FF Fit data exist."
 		endif
@@ -3169,7 +3190,7 @@ Function IR3J_SpheroidFFFitResTblFnct() : Table
 		ModifyTable sigDigits(SpheroidBackground)=4,title(SpheroidBackground)="Background"
 		ModifyTable alignment(SpheroidQmax)=1,sigDigits(SpheroidQmax)=4,title(SpheroidQmax)="Qmax [1/A]"
 		ModifyTable alignment(SpheroidQmin)=1,sigDigits(SpheroidQmin)=4,title(SpheroidQmin)="Qmin [1/A]"
-		SetDataFolder fldrSav0
+		SetDataFolder saveDF
 	endif
 EndMacro
 //*****************************************************************************************************************
@@ -3180,7 +3201,7 @@ EndMacro
 //		DoWIndow/F IR3J_SpheroidFFFitResultsTable 
 //	else
 //		PauseUpdate    		// building window...
-//		String fldrSav0= GetDataFolder(1)
+//		DFREF saveDF = GetDataFolderDFR()
 //		if(!DataFolderExists("root:VolSizeDistResults:"))
 //			Abort "No Volume Size Distribution analysis data exist."
 //		endif
@@ -3195,7 +3216,7 @@ EndMacro
 //		ModifyTable sigDigits(MeanDiaVolDist)=4,title(MeanDiaVolDist)="Mean Dia [A]",alignment(ModeDiaVolDist)=1
 //		ModifyTable sigDigits(ModeDiaVolDist)=4,title(ModeDiaVolDist)="Mode dia [A]",alignment(MeadianDiaVolDist)=1
 //		ModifyTable sigDigits(MeadianDiaVolDist)=4,width(MeadianDiaVolDist)=100,title(MeadianDiaVolDist)="Meadian Dia [A]"
-//		SetDataFolder fldrSav0
+//		SetDataFolder saveDF
 //	endif
 //EndMacro
 //*****************************************************************************************************************
@@ -3206,7 +3227,7 @@ Function IR3J_InvResultsTableFnct() : Table
 		DoWIndow/F IR3J_InvResultsTable 
 	else
 		PauseUpdate    		// building window...
-		String fldrSav0= GetDataFolder(1)
+		DFREF saveDF = GetDataFolderDFR()
 		if(!DataFolderExists("root:InvariantFitResults:"))
 			Abort "No Invariant data exist."
 		endif
@@ -3222,7 +3243,7 @@ Function IR3J_InvResultsTableFnct() : Table
 	//	ModifyTable sigDigits(MeanDiaVolDist)=4,title(MeanDiaVolDist)="Mean Dia [A]",alignment(ModeDiaVolDist)=1
 	//	ModifyTable sigDigits(ModeDiaVolDist)=4,title(ModeDiaVolDist)="Mode dia [A]",alignment(MeadianDiaVolDist)=1
 	//	ModifyTable sigDigits(MeadianDiaVolDist)=4,width(MeadianDiaVolDist)=100,title(MeadianDiaVolDist)="Meadian Dia [A]"
-		SetDataFolder fldrSav0
+		SetDataFolder saveDF
 	endif
 EndMacro
 

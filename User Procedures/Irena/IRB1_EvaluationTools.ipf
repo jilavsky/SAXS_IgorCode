@@ -1,7 +1,7 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.0
-#pragma IgorVersion = 8.03
+#pragma version=1.1
+#pragma IgorVersion = 9.04
 
 
 //*************************************************************************\
@@ -12,6 +12,10 @@
 //functions for bioSAXS community
 //
 //version summary 
+//1.1 AI code review: add WAVE/Z + WaveExists early-return guard on cursor wave refs in
+//    IRB1_ConcSerCursorsSync (csrWaveref/csrXWaveref can return null); add WAVE/Z to
+//    ExtrapolatedQ/E, TempQ1, Int1/Q1/E1, IntMaxC, MaxInt/Q/E, NewQ/Int/Err, W_sigma
+//    (all string-built or package-path wave refs without /Z, 13 locations total).
 //1.0	September2020 release
 //0.5 Jully 2020 version, first working version.  
 //0.1  early version, June 2020
@@ -629,8 +633,8 @@ Function IR1B_ConcSerSaveOutputData()
 		print "No data to save found" 
 		abort
 	endif
-	Wave ExtQ = root:Packages:Irena:ConcSerExtrap:ExtrapolatedQ
-	Wave ExtErr = root:Packages:Irena:ConcSerExtrap:ExtrapolatedE
+	Wave/Z ExtQ = root:Packages:Irena:ConcSerExtrap:ExtrapolatedQ
+	Wave/Z ExtErr = root:Packages:Irena:ConcSerExtrap:ExtrapolatedE
 
 
 	SVAR CalculatedOutputFldrName = root:Packages:Irena:ConcSerExtrap:CalculatedOutputFldrName
@@ -656,13 +660,13 @@ Function IR1B_ConcSerSaveOutputData()
 	string tempName
 	tempName = "q_"+CalculatedOutputFldrName
 	Duplicate/O ExtQ, $(tempName)
-	wave NewQ=$(tempName)
+	wave/Z NewQ=$(tempName)
 	tempName = "r_"+CalculatedOutputFldrName
 	Duplicate/O ExtInt, $(tempName)
-	wave NewInt=$(tempName)
+	wave/Z NewInt=$(tempName)
 	tempName = "s_"+CalculatedOutputFldrName
 	Duplicate/O ExtErr, $(tempName)
-	wave NewErr=$(tempName)
+	wave/Z NewErr=$(tempName)
 	//TODO: add to wavenote what was done... 
 	string oldNote, NewNote
 	oldNote =note(NewInt)
@@ -877,10 +881,13 @@ Function IRB1_ConcSerCursorsSync(traceName,CursorName,PointNumber)
 
  	NVAR DataQEnd = root:Packages:Irena:ConcSerExtrap:DataQEnd
 	NVAR DataQstart = root:Packages:Irena:ConcSerExtrap:DataQstart
-	Wave IntWaveA=csrWaveref(A,"IRB1_ConcSeriesPanel#LogLogDataDisplay") 
-	Wave IntWaveB=csrWaveref(B,"IRB1_ConcSeriesPanel#LogLogDataDisplay") 
-	Wave QWaveA=csrXWaveref(A,"IRB1_ConcSeriesPanel#LogLogDataDisplay") 
-	Wave QWaveB=csrXWaveref(B,"IRB1_ConcSeriesPanel#LogLogDataDisplay") 
+	Wave/Z IntWaveA=csrWaveref(A,"IRB1_ConcSeriesPanel#LogLogDataDisplay")
+	Wave/Z IntWaveB=csrWaveref(B,"IRB1_ConcSeriesPanel#LogLogDataDisplay")
+	Wave/Z QWaveA=csrXWaveref(A,"IRB1_ConcSeriesPanel#LogLogDataDisplay")
+	Wave/Z QWaveB=csrXWaveref(B,"IRB1_ConcSeriesPanel#LogLogDataDisplay")
+	if(!WaveExists(QWaveA) || !WaveExists(QWaveB))
+		return
+	endif
 	DataQstart = QWaveA[pcsr(A , "IRB1_ConcSeriesPanel#LogLogDataDisplay")]
 	DataQEnd = QWaveB[pcsr(B , "IRB1_ConcSeriesPanel#LogLogDataDisplay")]
 	if(DataQEnd<DataQstart)
@@ -974,7 +981,7 @@ Function IRB1_ConcSerRecalculateData(resetConcentrations,fittingData, FullRange)
 	NVAR Val5=root:Packages:Irena:ConcSerExtrap:InputSample5Conc
 	variable MaxConc=max(Val1, Val2, Val3, Val4, Val5 )
 	variable i, startPoint, endPoint
-	Wave TempQ1=$("root:Packages:Irena:ConcSerExtrap:OrigSamQ"+num2str(1))
+	Wave/Z TempQ1=$("root:Packages:Irena:ConcSerExtrap:OrigSamQ"+num2str(1))
 	if(FullRange)		//this calculates extended data to full Q range of the data.
 		startPoint = 0
 		endPoint = numpnts(TempQ1)-1
@@ -1029,9 +1036,9 @@ Function IRB1_ConcSerExtrapolate()
 	NVAR NConc = root:Packages:Irena:ConcSerExtrap:NumberOfConcentrations
 	IRB1_ConcSerRecalculateData(0,0,1)
 	
-	Wave Int1=$("root:Packages:Irena:ConcSerExtrap:CorrectedIntensity"+num2str(1))
-	Wave Q1=$("root:Packages:Irena:ConcSerExtrap:CorrectedQ"+num2str(1))
-	Wave E1=$("root:Packages:Irena:ConcSerExtrap:CorrectedErr"+num2str(1))
+	Wave/Z Int1=$("root:Packages:Irena:ConcSerExtrap:CorrectedIntensity"+num2str(1))
+	Wave/Z Q1=$("root:Packages:Irena:ConcSerExtrap:CorrectedQ"+num2str(1))
+	Wave/Z E1=$("root:Packages:Irena:ConcSerExtrap:CorrectedErr"+num2str(1))
 
 	Duplicate/O Int1, ExtrapolatedIntensity, FittingRangeMarker, ExtensionRangeColor
 	Duplicate/O Q1, ExtrapolatedQ
@@ -1055,12 +1062,14 @@ Function IRB1_ConcSerExtrapolate()
 		endfor
 		CurveFit/Q line TempIntFit /X=TempConcFit /W=tempEFit /I=1 /D 
 		Wave  W_coef
-		Wave  W_sigma
+		Wave/Z W_sigma
 		ExtrapolatedIntensity[j] = W_coef[0]
-		ExtrapolatedE[j] = W_sigma[0]
+		if(WaveExists(W_sigma))
+			ExtrapolatedE[j] = W_sigma[0]
+		endif
 	endfor
 	//splice together low-q from this calculation and high-q from max concentration... 
-	Wave IntMaxC=$("root:Packages:Irena:ConcSerExtrap:CorrectedIntensity"+num2str(MaxConcIndx))
+	Wave/Z IntMaxC=$("root:Packages:Irena:ConcSerExtrap:CorrectedIntensity"+num2str(MaxConcIndx))
 	ExtrapolatedIntensity[RollOverPoint, ] = IntMaxC[p]
 	//need to create marker for fitting range
 	//these are for markers to show where we did fit the data. 
@@ -1239,9 +1248,9 @@ Function IRB1_ConcSerCalcMatchQuality()
 
 	variable MaxIntIndex=IR1B_ConcSerFindMaxConc()
 
-	Wave MaxInt=$("root:Packages:Irena:ConcSerExtrap:CorrectedIntensity"+num2str(MaxIntIndex))
-	Wave MaxQ=$("root:Packages:Irena:ConcSerExtrap:CorrectedQ"+num2str(MaxIntIndex))
-	Wave MaxE=$("root:Packages:Irena:ConcSerExtrap:CorrectedErr"+num2str(MaxIntIndex))
+	Wave/Z MaxInt=$("root:Packages:Irena:ConcSerExtrap:CorrectedIntensity"+num2str(MaxIntIndex))
+	Wave/Z MaxQ=$("root:Packages:Irena:ConcSerExtrap:CorrectedQ"+num2str(MaxIntIndex))
+	Wave/Z MaxE=$("root:Packages:Irena:ConcSerExtrap:CorrectedErr"+num2str(MaxIntIndex))
 	Duplicate/Free MaxInt, ChiSqWave//, ErrorWv
 	ChiSqWave = 0
 	//next calculate differences... 

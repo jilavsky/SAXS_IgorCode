@@ -2,11 +2,16 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use modern global access method and strict wave access
 #pragma DefaultTab={3, 20, 4} // Set default tab width in Igor Pro 9 and later
-#pragma version=1.04
+#pragma version=1.05
 
 Constant IR3DMversionNumber = 1.02 //Data Manipulation III panel version number
 
 //Version notes:
+//1.05 AI code review: add SetDataFolder restore before all four Abort calls (IR3DM_DeleteData,
+//     IR3DM_CopyAndAppendDataToSubtract, IR3DM_CopyAndAppendData ×2); add WAVE/Z + WaveExists
+//     early-return guards for Original_* waves in IR3DM_ProcessAndSaveData and IR3DM_AverageSaveData;
+//     WAVE/Z on Modified_*, IntToSUb/QtoSUb/ErrToSub, AveragedData*, Average*, NewAve*, and
+//     Original_Q/Intensity in IR3DM_SyncCursorsTogether (12 locations total).
 //1.04 fixed bug when initialization did not set something right and data were saved in Packages folder instead data area. Fixed USAXS data names used for saving
 //		fixed subtraction, which did not work yet. Tested for USAXS data for now.
 //		enabled SMR data
@@ -421,6 +426,7 @@ Function IR3DM_DeleteData(string FolderNameStr)
 	endif
 	CheckDisplayed/A SourceIntWv, SourceQWv, SourceErrorWv, SourcedQWv
 	if(V_Flag > 0)
+		SetDataFolder oldDf
 		Abort "Data from " + DataFolderName + " are in use in graph or table. Close all tables and graphs using it and try again."
 	endif
 
@@ -548,6 +554,7 @@ Function IR3DM_CopyAndAppendDataToSubtract(string FolderNameStr)
 		WAVE/Z SourcedQWv    = $(DataFolderName + possiblyQUoteName("M_" + dQWavename))
 	endif
 	if(!WaveExists(SourceIntWv) || !WaveExists(SourceQWv)) //||!WaveExists(SourceErrorWv))
+		SetDataFolder oldDf
 		Abort "Data selection failed for Data in routine IR3DM_CopyAndAppendDataToSubtract"
 	endif
 	Duplicate/O SourceIntWv, OrigIntToSubtractWave
@@ -636,6 +643,7 @@ Function IR3DM_CopyAndAppendData(string FolderNameStr)
 			WAVE/Z SourcedQWv    = $(DataFolderName + possiblyQUoteName("M_" + dQWavename))
 		endif
 		if(!WaveExists(SourceIntWv) || !WaveExists(SourceQWv)) //||!WaveExists(SourceErrorWv))
+			SetDataFolder oldDf
 			Abort "Data selection failed for Data in routine IR3DM_CopyAndAppendData"
 		endif
 		string OutputWaveNameMain
@@ -701,6 +709,7 @@ Function IR3DM_CopyAndAppendData(string FolderNameStr)
 			WAVE/Z SourcedQWv    = $(DataFolderName + possiblyQUoteName("M_" + dQWavename))
 		endif
 		if(!WaveExists(SourceIntWv) || !WaveExists(SourceQWv)) //||!WaveExists(SourceErrorWv))
+			SetDataFolder oldDf
 			Abort "Data selection failed for Data in routine IR3DM_CopyAndAppendData"
 		endif
 		IR3DM_AppendAveDataToGraphLogLog()
@@ -736,10 +745,14 @@ Function IR3DM_ProcessDataFunction(variable HowMany)
 	NVAR TrimSelected = root:Packages:Irena:DataManIII:ProcessTrim
 	NVAR Subtract     = root:Packages:Irena:DataManIII:ProcessSubtractData
 
-	WAVE Original_Intensity
-	WAVE Original_Q
-	WAVE Original_Errors
-	WAVE Original_dQ
+	WAVE/Z Original_Intensity
+	WAVE/Z Original_Q
+	WAVE/Z Original_Errors
+	WAVE/Z Original_dQ
+	if(!WaveExists(Original_Intensity) || !WaveExists(Original_Q))
+		SetDataFolder OldDf
+		return 0
+	endif
 
 	NewNote = "Processed Data;" + date() + ";" + time() + ";"
 	string RealNote = note(Original_Intensity)
@@ -762,16 +775,16 @@ Function IR3DM_ProcessDataFunction(variable HowMany)
 		Duplicate/O Original_Errors, Modified_Errors
 		Duplicate/O Original_dQ, Modified_dQ
 	endif
-	WAVE Modified_Intensity = root:Packages:Irena:DataManIII:Modified_Intensity
-	WAVE Modified_Q         = root:Packages:Irena:DataManIII:Modified_Q
-	WAVE Modified_Errors    = root:Packages:Irena:DataManIII:Modified_Errors
+	WAVE/Z Modified_Intensity = root:Packages:Irena:DataManIII:Modified_Intensity
+	WAVE/Z Modified_Q         = root:Packages:Irena:DataManIII:Modified_Q
+	WAVE/Z Modified_Errors    = root:Packages:Irena:DataManIII:Modified_Errors
 
 	if(Subtract)
 		SVAR SelectedFolderToSubtract = root:Packages:Irena:DataManIII:SelectedFolderToSubtract
 		NewNote += "Data modified by subtracting wave=" + SelectedFolderToSubtract + ";"
-		WAVE IntToSUb = root:Packages:Irena:DataManIII:OrigIntToSubtractWave
-		WAVE QtoSUb   = root:Packages:Irena:DataManIII:OrigQToSubtractWave
-		WAVE ErrToSub = root:Packages:Irena:DataManIII:OrigErrorToSubtractWave
+		WAVE/Z IntToSUb = root:Packages:Irena:DataManIII:OrigIntToSubtractWave
+		WAVE/Z QtoSUb   = root:Packages:Irena:DataManIII:OrigQToSubtractWave
+		WAVE/Z ErrToSub = root:Packages:Irena:DataManIII:OrigErrorToSubtractWave
 		Duplicate/FREE IntToSUb, WaveToSubtractLog
 		WaveToSubtractLog = log(IntToSUb)
 		//Duplicate/Free 	Modified_Q, TempSubtractedXWv0123
@@ -838,10 +851,14 @@ Function IR3DM_SaveProcessDataFnct()
 		SaveDataToFolderFull = FinalDataFoldrname
 	endif
 
-	WAVE Original_Intensity
-	WAVE Original_Q
-	WAVE Original_Errors
-	WAVE Original_dQ
+	WAVE/Z Original_Intensity
+	WAVE/Z Original_Q
+	WAVE/Z Original_Errors
+	WAVE/Z Original_dQ
+	if(!WaveExists(Original_Intensity) || !WaveExists(Original_Q))
+		setDataFolder OldDf
+		return 0
+	endif
 	WAVE/Z Modified_Intensity = root:Packages:Irena:DataManIII:Modified_Intensity
 	WAVE/Z Modified_Q         = root:Packages:Irena:DataManIII:Modified_Q
 	WAVE/Z Modified_Errors    = root:Packages:Irena:DataManIII:Modified_Errors
@@ -937,17 +954,17 @@ Function IR3DM_AverageDataFunction()
 	PropagateErrors = 0
 	UseMinMax       = 0
 	IR3M_AverageMultipleWaves(FldrNamesTWv, SelFldrs, Xtmplt, Ytmplt, Etmplt, UseStdDev, UseSEM, UseMinMax, PropagateErrors)
-	WAVE AveragedDataXwave = root:Packages:DataManipulationII:AveragedDataXwave
-	WAVE AveragedDataYwave = root:Packages:DataManipulationII:AveragedDataYwave
-	WAVE AveragedDataEwave = root:Packages:DataManipulationII:AveragedDataEwave
+	WAVE/Z AveragedDataXwave = root:Packages:DataManipulationII:AveragedDataXwave
+	WAVE/Z AveragedDataYwave = root:Packages:DataManipulationII:AveragedDataYwave
+	WAVE/Z AveragedDataEwave = root:Packages:DataManipulationII:AveragedDataEwave
 	//NVAR Overwrite=root:Packages:Irena:BioSAXSDataMan:OverwriteExistingData
 	NewDataFOlder/O Averaged_Data
 	Duplicate/O AveragedDataYwave, root:Packages:Irena:DataManIII:Averaged_Data:AverageIntensity
 	Duplicate/O AveragedDataXwave, root:Packages:Irena:DataManIII:Averaged_Data:AverageQvector
 	Duplicate/O AveragedDataEwave, root:Packages:Irena:DataManIII:Averaged_Data:AverageErrors
-	WAVE AverageIntensity = root:Packages:Irena:DataManIII:Averaged_Data:AverageIntensity
-	WAVE AverageQvector   = root:Packages:Irena:DataManIII:Averaged_Data:AverageQvector
-	WAVE AverageErrors    = root:Packages:Irena:DataManIII:Averaged_Data:AverageErrors
+	WAVE/Z AverageIntensity = root:Packages:Irena:DataManIII:Averaged_Data:AverageIntensity
+	WAVE/Z AverageQvector   = root:Packages:Irena:DataManIII:Averaged_Data:AverageQvector
+	WAVE/Z AverageErrors    = root:Packages:Irena:DataManIII:Averaged_Data:AverageErrors
 	Note/K/NOCR AverageIntensity, NewNote
 	Note/K/NOCR AverageQvector, NewNote
 	Note/K/NOCR AverageErrors, NewNote
@@ -1022,9 +1039,9 @@ Function IR3DM_AverageSaveData()
 	Duplicate/O AverageQvector, $(OutXWvNm)
 	Duplicate/O AverageIntensity, $(OutYWvNm)
 	Duplicate/O AverageErrors, $(OutEWvNm)
-	WAVE NewAveXWave = $(OutXWvNm)
-	WAVE NewAveYWave = $(OutYWvNm)
-	WAVE NewAveEWave = $(OutEWvNm)
+	WAVE/Z NewAveXWave = $(OutXWvNm)
+	WAVE/Z NewAveYWave = $(OutYWvNm)
+	WAVE/Z NewAveEWave = $(OutEWvNm)
 	Print "Saved averaged data set into folder :" + OutFldrNm
 
 	setDataFOlder oldDf
@@ -1187,8 +1204,8 @@ static Function IR3DM_SyncCursorsTogether(string traceName, string CursorName, v
 	NVAR DataQstart         = root:Packages:Irena:DataManIII:DataQstart
 	NVAR DataQEndPoint      = root:Packages:Irena:DataManIII:DataQEndPoint
 	NVAR DataQstartPoint    = root:Packages:Irena:DataManIII:DataQstartPoint
-	WAVE Original_Q         = root:Packages:Irena:DataManIII:Original_Q
-	WAVE Original_Intensity = root:Packages:Irena:DataManIII:Original_Intensity
+	WAVE/Z Original_Q         = root:Packages:Irena:DataManIII:Original_Q
+	WAVE/Z Original_Intensity = root:Packages:Irena:DataManIII:Original_Intensity
 	variable tempMaxQ, tempMaxQY, tempMinQY, maxY, minY
 	//check if user removed cursor from graph, in which case do nothing for now...
 	if(numtype(PointNumber) == 0)

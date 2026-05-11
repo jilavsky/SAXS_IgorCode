@@ -1,5 +1,5 @@
 #pragma rtGlobals=3 // Use modern global access method.
-#pragma version=1.21
+#pragma version=1.22
 Constant IR2DversionNumber = 1.15
 
 //*************************************************************************\
@@ -7,6 +7,17 @@ Constant IR2DversionNumber = 1.15
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
+
+//1.22 AI code review: fix unreachable setDataFolder after return in IR2D_CalcOnePeakInt (data folder
+//     was never restored); uncomment PauseUpdate and convert string DF to DFREF in
+//     IR2D_CheckFittingParamsFnct; add /Z + WaveExists guards for Gen_Constraints/W_coef/CoefNames
+//     and for Residuals/ModelQvector/NormalizedResiduals in IR2D_AppendRemoveResiduals.
+
+// TODO (deferred from AI review 2026-05-04):
+// 1. Convert Proc IR2D_LogLogPlotSAD() from Proc/macro to Function; update its string-based
+//    DF save/restore to DFREF and replace Execute("IR2D_LogLogPlotSAD()") with a direct call.
+// 2. Replace Execute("IR2D_ControlPanel()") (line ~64) with direct call once IR2D_ControlPanel
+//    is converted from Window to Function : Panel.
 
 //1.21 change to prgagma version 3
 //1.20 fix GenCurveFit call, which was failing due to Exists("gencurvefit") returning 4 instead of 3 which was in the code.
@@ -1478,9 +1489,13 @@ Function IR2D_AppendRemoveResiduals()
 	setDataFolder root:Packages:Irena_SAD
 	NVAR AppendResiduals
 	NVAR AppendNormalizedResiduals
-	WAVE Residuals
-	WAVE ModelQvector
-	WAVE NormalizedResiduals
+	WAVE/Z Residuals
+	WAVE/Z ModelQvector
+	WAVE/Z NormalizedResiduals
+	if(!WaveExists(Residuals) || !WaveExists(ModelQvector) || !WaveExists(NormalizedResiduals))
+		setDataFolder OldDf
+		return 0
+	endif
 
 	CheckDisplayed/W=IR2D_LogLogPlotSAD Residuals
 	if(V_Flag && AppendResiduals)
@@ -1926,8 +1941,8 @@ Function IR2D_CalcOnePeakInt(i, tempInt, qwv)
 
 	endif
 
-	return 1
 	setDataFolder oldDf
+	return 1
 End
 //*****************************************************************************************************************
 
@@ -2426,7 +2441,7 @@ End
 //*****************************************************************************************************************
 
 Function IR2D_CheckFittingParamsFnct()
-	//PauseUpdate    		// building window...
+	PauseUpdate
 	NewPanel/K=1/W=(400, 140, 870, 600) as "Check fitting parameters"
 	Dowindow/C IR2D_CheckFittingParams
 	SetDrawLayer UserBack
@@ -2450,10 +2465,14 @@ Function IR2D_CheckFittingParamsFnct()
 	endif
 	Button CancelBtn, pos={27, 420}, size={150, 20}, proc=IR2D_CheckFitPrmsButtonProc, title="Cancel fitting"
 	Button ContinueBtn, pos={187, 420}, size={150, 20}, proc=IR2D_CheckFitPrmsButtonProc, title="Continue fitting"
-	string fldrSav0 = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena_SAD:
-	WAVE Gen_Constraints, W_coef
-	WAVE/T CoefNames
+	WAVE/Z Gen_Constraints, W_coef
+	WAVE/Z/T CoefNames
+	if(!WaveExists(Gen_Constraints) || !WaveExists(W_coef) || !WaveExists(CoefNames))
+		SetDataFolder saveDF
+		Abort "SAD fitting waves not found — run the tool first to initialize"
+	endif
 	SetDimLabel 1, 0, Min, Gen_Constraints
 	SetDimLabel 1, 1, Max, Gen_Constraints
 	variable i
@@ -2479,7 +2498,7 @@ Function IR2D_CheckFittingParamsFnct()
 		ModifyTable format(Point)=1, width(Point)=0, width(CoefNames)=144, title(CoefNames)="Fitted Coef Name"
 		//		ModifyTable statsArea=85
 	endif
-	SetDataFolder fldrSav0
+	SetDataFolder saveDF
 	RenameWindow #, T0
 	SetActiveSubwindow ##
 End

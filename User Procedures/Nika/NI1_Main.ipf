@@ -1,6 +1,6 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use modern global access method.
-#pragma version=1.88
+#pragma version=1.89
 #pragma IgorVersion=9.04
 
 //DO NOT renumber Main files every time, these are main release numbers...
@@ -15,6 +15,8 @@ Constant NikaLengthOfPathForPanelDisplay = 100
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//1.89 AI code review: convert 8 string-based DF save/restores to DFREF (OldDf, OldDF variants
+//     including one with SetDataFOlder typo in the command name).
 //1.88 change _9IDC to _usx for all USAXS code
 //1.87	Beta - cleanup and minor modifications
 //1.86	Nika modification for 12IDE USAXS/SAXS/WAXS instrument, Bug release
@@ -372,7 +374,7 @@ End
 //*****************************************************************************************************************
 Function NI1_RemoveSavedImages()
 
-	string OldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:
 	NewDataFOlder/S/O SavedImages
 	string AllWaves = IN2G_CreateListOfItemsInFolder("root:SavedImages", 2)
@@ -384,7 +386,7 @@ Function NI1_RemoveSavedImages()
 	if(strlen(IN2G_CreateListOfItemsInFolder("root:SavedImages", 2)) < 2)
 		KillDataFolder root:SavedImages
 	endif
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -393,7 +395,7 @@ End
 //*****************************************************************************************************************
 Function NI1_Cleanup2Dto1DFolder()
 
-	string OldDf = getDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	if(!DataFolderExists("root:Packages:Convert2Dto1D"))
 		abort
 	endif
@@ -419,7 +421,7 @@ Function NI1_Cleanup2Dto1DFolder()
 	KillWaves/Z FloodFieldImg, MaxNumPntsLookupWv, MaxNumPntsLookupWvLBL, PixRadius2DWave, fit_BmCntrCCDImg, fit_BmCntrCCDImgX, fit_BmCntrCCDImgY
 	KillWaves/Z BmCntrCCDImg, BmCntrDisplayImage, BmCntrDisplayImage, BmCntrCCDImg, xwave, xwaveT, ywave, ywaveT
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -553,7 +555,7 @@ static Function NI1_CheckVersions()
 		Execute("CheckForNikaUpdatePanel()")
 	endif
 	//Nika code
-	string OldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	//create location for the results waves...
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:UseProcedureFiles
@@ -564,7 +566,7 @@ static Function NI1_CheckVersions()
 	if(numtype(WebNikaVersion) != 0)
 		Print "Check for latest Nika version failed. Check your Internet connection. Try later again..."
 	endif
-	SetDataFOlder OldDf
+	SetDataFolder saveDF
 End
 
 //Motofit paper [J. Appl. Cryst. 39, 273-276]
@@ -645,7 +647,7 @@ EndMacro
 //**************************************************************************
 Function NI1_GeometriesManager()
 	//initialize first...
-	string OldDF = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:NikaGeometries
@@ -665,7 +667,7 @@ Function NI1_GeometriesManager()
 	else
 		Execute("NI1_GeometriesManagerPanel()")
 	endif
-	setDataFolder oldDf
+	SetDataFolder saveDF
 End
 
 //**************************************************************************
@@ -677,7 +679,7 @@ Function NI1_GMLoadGeometries(LoadThisGeom)
 	if(stringMatch(LoadThisGeom, "---") || stringmatch(LoadThisGeom, "None Saved") || stringmatch(LoadThisGeom, "_none_"))
 		return 0
 	endif
-	string OldDF = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	SetDataFolder root:Packages:NikaGeometries
 	SVAR CurrentGeomName  = root:Packages:NikaGeometries:CurrentGeomName
 	SVAR ListOfGeomsSaved = root:Packages:NikaGeometries:ListOfGeomsSaved
@@ -710,7 +712,7 @@ Function NI1_GMLoadGeometries(LoadThisGeom)
 	ListOfGeomsSaved = IN2G_ConvertDataDirToList(DataFolderDir(1))
 	CurrentGeomName  = LoadThisGeom
 	PopupMenu RestoreGeometries, win=NI1_GeometriesManagerPanel, value=#"root:Packages:NikaGeometries:ListOfGeomsSaved", mode=0
-	setDataFolder oldDf
+	SetDataFolder saveDF
 	NI1A_Convert2Dto1DMainPanel()
 End
 
@@ -718,7 +720,7 @@ End
 //**************************************************************************
 //**************************************************************************
 Function NI1_GMDeleteGeom()
-	string OldDF = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	SetDataFolder root:Packages:NikaGeometries
 	SVAR CurrentGeomName  = root:Packages:NikaGeometries:CurrentGeomName
 	SVAR ListOfGeomsSaved = root:Packages:NikaGeometries:ListOfGeomsSaved
@@ -739,7 +741,7 @@ Function NI1_GMDeleteGeom()
 		KillDataFolder $(DeleteThisGeom)
 	endif
 	ListOfGeomsSaved = IN2G_ConvertDataDirToList(DataFolderDir(1))
-	setDataFolder oldDf
+	SetDataFolder saveDF
 End
 
 //**************************************************************************
@@ -747,7 +749,7 @@ End
 //**************************************************************************
 Function NI1_GMCreateNewGeom()
 	string LoadThisGeom
-	string OldDF = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	SetDataFolder root:Packages:NikaGeometries
 	SVAR CurrentGeomName  = root:Packages:NikaGeometries:CurrentGeomName
 	SVAR ListOfGeomsSaved = root:Packages:NikaGeometries:ListOfGeomsSaved
@@ -777,14 +779,14 @@ Function NI1_GMCreateNewGeom()
 	if(WasNI1_usxConfigPanel)
 		NI1_APSConfigureNika()
 	endif
-	setDataFolder oldDf
+	SetDataFolder saveDF
 End
 
 //**************************************************************************
 //**************************************************************************
 //**************************************************************************
 Function NI1_GMSaveGeometries()
-	string OldDF = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	SetDataFolder root:Packages:NikaGeometries
 	SVAR CurrentGeomName = root:Packages:NikaGeometries:CurrentGeomName
 	string NewSaveName
@@ -839,7 +841,7 @@ Function NI1_GMSaveGeometries()
 
 	PopupMenu RestoreGeometries, win=NI1_GeometriesManagerPanel, value=#"root:Packages:NikaGeometries:ListOfGeomsSaved", mode=0
 
-	setDataFolder oldDf
+	SetDataFolder saveDF
 End
 //**************************************************************************
 //**************************************************************************

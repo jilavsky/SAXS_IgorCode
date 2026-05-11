@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
   
-#pragma version=2.09
+#pragma version=2.10
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
@@ -9,6 +9,10 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.10 AI code review: remove unreachable break before case 3 in switch(popNum) — Igor 10 compile
+//     error; convert 12 string-based DF save/restores to DFREF (5 variable names: dfSav, OldDf,
+//     oldDF, oldDf, cdf; reassignment at line ~539 converted to innerSaveDF); add Wave/Z to
+//     ~20 function-return and path-built wave declarations throughout.
 //2.09 Fix bug with typo in dspacingWv wave name. 
 //2.08 Remove for MatrixOP /NTHR=0 since it is applicable to 3D matrices only 
 //2.07 Added Batch processing
@@ -51,8 +55,8 @@ Function NI1_CreateImageLineProfileGraph()
 		return 0
 	endif
 	
-	Wave w= $NI1_GetImageWave(imageName)	// get the wave associated with the top image.	
-	String dfSav= GetDataFolder(1)
+	Wave/Z w= $NI1_GetImageWave(imageName)	// get the wave associated with the top image.	
+	DFREF saveDF = GetDataFolderDFR()
 
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:NI1_ImProcess
@@ -81,7 +85,7 @@ Function NI1_CreateImageLineProfileGraph()
 			Wave profileB
 		endif
 	
-	SetDataFolder dfSav
+	SetDataFolder saveDF
 	NVAR horiz= root:Packages:NI1_ImProcess:LineProfile:profileMode
 	
 	// specify size in pixels to match user controls
@@ -252,7 +256,7 @@ end
 
 Function NI1_CalculateQdTTHwaves()
 	
-	string OldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:NI1_ImProcess:LineProfile:
 	
 		wave profile=root:Packages:NI1_ImProcess:LineProfile:profile
@@ -267,7 +271,7 @@ Function NI1_CalculateQdTTHwaves()
 		// d = 0.5 * Lambda / sin(theta) = 2 * pi / Q    Q = 2pi/d
 		Dspacing = 0.5 * Wavelength /sin(TwoTheta * pi/360)
 		qvector = 2 *pi / Dspacing
-	setDataFolder OldDf
+	SetDataFolder saveDF
 
 end
 //*******************************************************************************************************
@@ -402,7 +406,7 @@ Function NI1_ImageLineProfileNew(newImageGraphName)
 
 	Variable newColor=NI1_isColorWave(w)							// check to see if the change requires new waves.
 	if(newColor!=isColor)										// changing to a new image
-		String oldDF=GetDataFolder(1)
+		DFREF saveDF = GetDataFolderDFR()
 		SetDataFolder root:Packages:NI1_ImProcess:LineProfile
 		if(newColor==0)
 			Make/O profile
@@ -420,7 +424,7 @@ Function NI1_ImageLineProfileNew(newImageGraphName)
 		
 		isColor=newColor
 		NI1_ImLineProfileModeProc("",1,"") 
-		SetDataFolder oldDF
+		SetDataFolder saveDF
 		newTarget=1
 	else
 		newTarget=0
@@ -433,7 +437,7 @@ Function NI1_ImageLineProfileNew(newImageGraphName)
 	
 	imageGraphName= newImageGraphName // NI1_ImLineProfileModeProc makes it ""
 	
-	String dfSav= GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	NewDataFolder/O/S root:WinGlobals
 	if(DataFolderExists(newImageGraphName )==0)	// if we need to build a new data folder
 		NewDataFolder/O/S $newImageGraphName
@@ -536,11 +540,11 @@ Function NI1_ImageLineProfileNew(newImageGraphName)
 	endif
 
 	S_TraceOffsetInfo=""	// make sure the following does nothing yet
-	dfSav= GetDataFolder(1)
+	DFREF innerSaveDF = GetDataFolderDFR()
 	SetDataFolder root:Packages:NI1_ImProcess:LineProfile
 	Variable/G lineProfileDummy
 	SetFormula lineProfileDummy,"NI1_LineProfileDependency(root:WinGlobals:"+newImageGraphName+":S_TraceOffsetInfo)"
-	SetDataFolder dfSav
+	SetDataFolder innerSaveDF
 
 	ModifyGraph/W=$newImageGraphName offset(lineProfileY)={0,0}			// This will fire the S_TraceOffsetInfo dependency
 End
@@ -549,7 +553,7 @@ End
 Function NI1_ImageLineProfileUpdate(newImageGraphName)		
 	String newImageGraphName
 
-	Wave w= $NI1_GetImageWave(newImageGraphName)		// the target matrix
+	Wave/Z w= $NI1_GetImageWave(newImageGraphName)		// the target matrix
 
 	NVAR profileMode= root:Packages:NI1_ImProcess:LineProfile:profileMode
 	NVAR width= root:Packages:NI1_ImProcess:LineProfile:width
@@ -571,8 +575,8 @@ Function NI1_ImageLineProfileUpdate(newImageGraphName)
 	position= NI1_LP_pos
 	
 	NI1_UpdatePositionAndWidth(1)				// 4
-	Wave LineProfileY= $("root:WinGlobals:"+imageGraphName+":LineProfileY")
-	Wave LineProfileX= $("root:WinGlobals:"+imageGraphName+":LineProfileX")
+	Wave/Z LineProfileY= $("root:WinGlobals:"+imageGraphName+":LineProfileY")
+	Wave/Z LineProfileX= $("root:WinGlobals:"+imageGraphName+":LineProfileX")
 	
 	Variable xoff,yoff
 	Variable w2=width/2
@@ -591,11 +595,11 @@ Function NI1_ImageLineProfileUpdate(newImageGraphName)
 	endif
 	
 	S_TraceOffsetInfo=""	// make sure the following does nothing yet
-	String dfSav= GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	SetDataFolder root:Packages:NI1_ImProcess:LineProfile
 	Variable/G lineProfileDummy
 	SetFormula lineProfileDummy,"NI1_LineProfileDependency(root:WinGlobals:"+newImageGraphName+":S_TraceOffsetInfo)"
-	SetDataFolder dfSav
+	SetDataFolder saveDF
 
 	CheckDisplayed/W=$newImageGraphName lineProfileY
 	if(V_Flag==1)
@@ -715,12 +719,12 @@ Function NI1_DoLineProfile(wsrc,pos,width,profileMode)
 	Make/O/N=2 xWave,yWave
 
 	SVAR imageGraphName= root:Packages:NI1_ImProcess:LineProfile:imageGraphName
-	Wave LineProfileY= $("root:WinGlobals:"+imageGraphName+":LineProfileY")
-	Wave LineProfileX= $("root:WinGlobals:"+imageGraphName+":LineProfileX")
+	Wave/Z LineProfileY= $("root:WinGlobals:"+imageGraphName+":LineProfileY")
+	Wave/Z LineProfileX= $("root:WinGlobals:"+imageGraphName+":LineProfileX")
 	
 	// the ImageLineProfile operation works in pixels.  We therefore need to translate
 	// between the values in the waves and true pixel numbers.
-	Wave w= $NI1_GetImageWave(imageGraphName)
+	Wave/Z w= $NI1_GetImageWave(imageGraphName)
 
 	Variable pmFlag=1							// 22OCT02
 	Variable allowSliderControl=0				// 08JAN04
@@ -766,9 +770,9 @@ Function NI1_DoLineProfile(wsrc,pos,width,profileMode)
 		default:	   // all the freehand modes
 			pmFlag=0							// 22OCT02
 			SVAR imageGraphName= root:Packages:NI1_ImProcess:LineProfile:imageGraphName
-			Wave FHLineProfileY= $("root:WinGlobals:"+imageGraphName+":FHLineProfileY")
+			Wave/Z FHLineProfileY= $("root:WinGlobals:"+imageGraphName+":FHLineProfileY")
 			// 24AUG01 FHLineProfileY=(FHLineProfileY-DimOffset(w,1))/DimDelta(w,1)
-			Wave FHLineProfileX= $("root:WinGlobals:"+imageGraphName+":FHLineProfileX")
+			Wave/Z FHLineProfileX= $("root:WinGlobals:"+imageGraphName+":FHLineProfileX")
 			// 24AUG01 FHLineProfileX=(FHLineProfileX-DimOffset(w,0))/DimDelta(w,0)
 			// 23OCT02 added /SC
 			if(allowSliderControl==0)
@@ -1026,7 +1030,7 @@ Function NI1_ImageLineProfileCheckpoint()
 	String profName= NameOfWave(w)+"_Prof"+num2str(NI1_LP_checkpoint)
 	String cpGrfName= imageGraphName+"_Prof"
 	
-	String dfSav= GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	SetDataFolder $GetWavesDataFolder(w,1)
 	if(!isColor)
 		Duplicate/O profile,$profName						// this might be just the red part in case of color.
@@ -1055,7 +1059,7 @@ Function NI1_ImageLineProfileCheckpoint()
 		
 	Wave/Z pw= $profName							// 21FEB03
 	
-	SetDataFolder dfSav
+	SetDataFolder saveDF
 	
 	String wnote
 	sprintf wnote,"HORIZ:%d;WIDTH:%d;POSITION:%d;",profileMode,width,position
@@ -1182,7 +1186,7 @@ Function NI1_ImLineProfileModeProc(ctrlName,popNum,popStr) : PopupMenuControl
 	endif
 	
 	// now make sure the graph displays what we want
-	String cdf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	SetDataFolder root:Packages:NI1_ImProcess:LineProfile
 	
 	Wave/Z profile=root:Packages:NI1_ImProcess:LineProfile:profile
@@ -1205,9 +1209,8 @@ Function NI1_ImLineProfileModeProc(ctrlName,popNum,popStr) : PopupMenuControl
 				ModifyGraph/W=NI1_ImageLineProfileGraph  rgb(profileG)=(0,65535,0),rgb(profileB)=(0,0,65535)
 			endif
 			break
-		break
-		
-		case 3:	
+
+		case 3:
 			Wave/Z W_LineProfileX
 			if(WaveExists(W_LineProfileX)==0)
 				Make/O/N=(DimSize($NI1_GetImageWave(imageGraphName) ,0)) W_LineProfileX=x
@@ -1245,13 +1248,13 @@ Function NI1_ImLineProfileModeProc(ctrlName,popNum,popStr) : PopupMenuControl
 			if(WaveExists(W_LineProfileY)==0)
 				Make/O/N=(numpnts(profile)) W_LineProfileY=x
 			else
-				Wave W_LineProfileY=W_LineProfileY
+				Wave/Z W_LineProfileY=W_LineProfileY
 				Redimension/N=(numpnts(profile)) W_LineProfileY
 			endif
 			if(WaveExists(W_LineProfileX)==0)
 				Make/O/N=(numpnts(profile)) W_LineProfileX=x
 			else
-				Wave W_LineProfileX=W_LineProfileX
+				Wave/Z W_LineProfileX=W_LineProfileX
 				Redimension/N=(numpnts(profile)) W_LineProfileX
 			endif
 			Execute "CreateSurfer;"+"ModifySurfer srcwave=(W_LineProfileX,W_LineProfileY,profile), srctype=4,update=1"
@@ -1267,7 +1270,7 @@ Function NI1_ImLineProfileModeProc(ctrlName,popNum,popStr) : PopupMenuControl
 		NI1_updateStartEndButtons(1)
 	endif
 	
-	SetDataFolder cdf
+	SetDataFolder saveDF
 End
 //*******************************************************************************************************
 Function NI1_ImLineProfWidthSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
@@ -1341,9 +1344,9 @@ End
 Function NI1_PrepareFHPathProfilePanel()	
 
 	SVAR imageGraphName= root:Packages:NI1_ImProcess:LineProfile:imageGraphName
-	Wave FHLineProfileY= $("root:WinGlobals:"+imageGraphName+":FHLineProfileY")
-	Wave FHLineProfileX= $("root:WinGlobals:"+imageGraphName+":FHLineProfileX")
-	Wave w= $NI1_GetImageWave(imageGraphName)	
+	Wave/Z FHLineProfileY= $("root:WinGlobals:"+imageGraphName+":FHLineProfileY")
+	Wave/Z FHLineProfileX= $("root:WinGlobals:"+imageGraphName+":FHLineProfileX")
+	Wave/Z w= $NI1_GetImageWave(imageGraphName)	
 	DoWindow/F $imageGraphName
 	
 	// before we try to append the waves to the image, check if they are not already there:
@@ -1358,12 +1361,12 @@ End
 //*******************************************************************************************************
 Function NI1_SetFHDependency()
 	SVAR imageGraphName= root:Packages:NI1_ImProcess:LineProfile:imageGraphName
-	String cdf= GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	SetDataFolder root:Packages:NI1_ImProcess:LineProfile
 	Variable/G lineProfileDummy
 	String s="NI1_FHLineProfileDependency(root:WinGlobals:"+imageGraphName+":FHLineProfileY"+",root:WinGlobals:"+imageGraphName+":FHLineProfileX)"
 	SetFormula lineProfileDummy,s
-	SetDataFolder cdf
+	SetDataFolder saveDF
 End
 //*******************************************************************************************************
 Function NI1_FinishFHPathProfile(ctrlName) : ButtonControl
@@ -1390,7 +1393,7 @@ Function NI1_StartEditingPathProfile(ctrlName) : ButtonControl
 	DoWindow/F 	$imageGraphName
 
 	// now check to see if this is a new image, in which case we need to append the wave
-	Wave FHLineProfileY= $("root:WinGlobals:"+imageGraphName+":FHLineProfileY")
+	Wave/Z FHLineProfileY= $("root:WinGlobals:"+imageGraphName+":FHLineProfileY")
 	CheckDisplayed/W=$imageGraphName FHLineProfileY
 	
 	if(V_Flag==0)
@@ -1407,12 +1410,12 @@ Function NI1_FHLineProfileDependency(ywave,xwave)
 	NVAR profileMode= root:Packages:NI1_ImProcess:LineProfile:profileMode
 	NVAR width= root:Packages:NI1_ImProcess:LineProfile:width
 	SVAR imageGraphName= root:Packages:NI1_ImProcess:LineProfile:imageGraphName
-	Wave FHLineProfileY= $("root:WinGlobals:"+imageGraphName+":FHLineProfileY")
-	Wave FHLineProfileX= $("root:WinGlobals:"+imageGraphName+":FHLineProfileX")
+	Wave/Z FHLineProfileY= $("root:WinGlobals:"+imageGraphName+":FHLineProfileY")
+	Wave/Z FHLineProfileX= $("root:WinGlobals:"+imageGraphName+":FHLineProfileX")
 	WAVE/Z profile= root:Packages:NI1_ImProcess:LineProfile:profile
 	NewDataFolder/O/S NI1_tmp
 	
-	Wave src=$NI1_GetImageWave(imageGraphName)
+	Wave/Z src=$NI1_GetImageWave(imageGraphName)
 
 	// 08JAN04
 	Variable allowSliderControl=0
@@ -1444,20 +1447,20 @@ Function NI1_FHLineProfileDependency(ywave,xwave)
 	endif
 	
 	// 23AUG01 KillWaves/Z tx,ty
-	Wave W_LineProfileX=W_LineProfileX			// 22OCT02
-	Wave W_LineProfileY=W_LineProfileY			// 22OCT02
-	Wave tLineProfileX=W_LineProfileX			// 22OCT02
-	Wave tLineProfileY=W_LineProfileY			// 22OCT02
+	Wave/Z W_LineProfileX=W_LineProfileX			// 22OCT02
+	Wave/Z W_LineProfileY=W_LineProfileY			// 22OCT02
+	Wave/Z tLineProfileX=W_LineProfileX			// 22OCT02
+	Wave/Z tLineProfileY=W_LineProfileY			// 22OCT02
 	Duplicate/O W_LineProfileX,root:Packages:NI1_ImProcess:LineProfile:W_LineProfileX
 	Duplicate/O W_LineProfileY,root:Packages:NI1_ImProcess:LineProfile:W_LineProfileY
-	Wave wout= W_ImageLineProfile
+	Wave/Z wout= W_ImageLineProfile
 	
 	NVAR isColor=root:Packages:NI1_ImProcess:LineProfile:isColor
 	if(!isColor)
 		Duplicate/O wout,root:Packages:NI1_ImProcess:LineProfile:profile
 	else
 		Wave mw=M_ImageLineProfile
-		String oldDF=GetDataFolder(1)
+		DFREF saveDF = GetDataFolderDFR()
 		SetDataFolder root:Packages:NI1_ImProcess:LineProfile 
 		Variable len=DimSize(mw,0)
 		Make/O/N=(len) profileR,profileG,profileB
@@ -1481,7 +1484,7 @@ Function NI1_FHLineProfileDependency(ywave,xwave)
 			NI1__MakeSurferPathColorWave(M_PathColorWave,wSize)
 			Execute "ModifySurfer pathRGBWave=M_PathColorWave"
 		endif
-		SetDataFolder oldDF
+		SetDataFolder saveDF
 	endif
 	
 	if(profileMode==5)
@@ -1561,7 +1564,7 @@ End
 Function NI1__GetDisplayed3DPlane(graphName)
 	String graphName
 	
-	Wave w=$NI1_GetImageWave(graphName)
+	Wave/Z w=$NI1_GetImageWave(graphName)
 	String info=ImageInfo(graphName,NameOfWave(w),0)
 	String sub=info[strSearch(info,"plane",0),strlen(info)]
 	
@@ -1599,7 +1602,7 @@ Function/S NI1_GetImageWave(grfName)
 		return ""			// no image in top graph
 	endif
 	s= s[0,p1-1]
-	Wave w= ImageNameToWaveRef(grfName, s)
+	Wave/Z w= ImageNameToWaveRef(grfName, s)
 	return GetWavesDataFolder(w,2)		// full path to wave including name
 end
 // the following function returns 1 if the wave is valid and contains 3 planes.
@@ -1626,7 +1629,7 @@ End
 
 Function NI1A_LineProf_CreateLP()
 
-	string oldDf=GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 
 		NVAR LineProf_GIIncAngle=root:Packages:Convert2Dto1D:LineProf_GIIncAngle
@@ -1931,7 +1934,7 @@ Function NI1A_LineProf_CreateLP()
 		NI1A_CalculateQresolution(LineProfileQvalues,LineProfiledQvalues,LineProfileTwoThetaWidth, LineProfileDspacingWidth, LineProfileDistanceInmmWidth, PixelSizeX,PixelSizeY,BeamSizeX,BeamSizeY,Wavelength,SampleToCCDdistance)
 		//that above creates the resolution due to pixel size, beam size and convolute them to existing binning q resolution. 
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 	return 1
 end
 //*******************************************************************************************************************************************
@@ -1997,7 +2000,7 @@ end
 //*******************************************************************************************************************************************
 
 Function NI1A_LineProf_DisplayLP()
-	string oldDf=GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 
 		Wave LineProfileQy = root:Packages:Convert2Dto1D:LineProfileQy
@@ -2079,7 +2082,7 @@ Function NI1A_LineProf_DisplayLP()
 	endif
 	Label left "Intensity"
 	ErrorBars LineProfileIntensity Y,wave=(LineProfileIntSdev,LineProfileIntSdev)
-	setDataFolder OldDf
+	SetDataFolder saveDF
 
 end
 //*******************************************************************************************************************************************

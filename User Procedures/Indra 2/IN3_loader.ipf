@@ -13,11 +13,10 @@
 
 //latest update 12/1/2003
 
-#include "IN3_Main", version>=1
-#include "IN3_SupportFnct", version>=1
-#include "IN3_Calculations", version>=1
-#include "IN3_Rwave", version>=1
-#include "IN2_GeneralProcedures", version>=1.46
-
-#include "IR2_PanelCntrlProcs", version>=1.02
+#include "IN3_Main", version>=2.03
+#include "IN3_SupportFnct", version>=1.15
+#include "IN3_Calculations", version>=1.43
+#include "IN3_Rwave", version>=1.17
+#include "IN2_GeneralProcedures", version>=2.33
+#include "IR2_PanelCntrlProcs", version>=1.68
 

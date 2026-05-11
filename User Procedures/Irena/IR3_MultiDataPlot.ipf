@@ -1,5 +1,5 @@
 #pragma rtGlobals=3 // Use modern global access method and strict wave access.
-#pragma version=1.06
+#pragma version=1.07
 Constant IR3LversionNumber = 1.06 //MultiDataplotting tool version number.
 
 //*************************************************************************\
@@ -8,6 +8,9 @@ Constant IR3LversionNumber = 1.06 //MultiDataplotting tool version number.
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//1.07 AI code review: add SetDataFolder restore before two Abort calls in IR3L_AppendData
+//     (DimLess Kratky case — Guinier results missing/not found); add WAVE/Z to FirstXwave
+//     (XWaveRefFromTrace result) and to MultiDataPlot3DWvData/Raw (string-built paths).
 //1.06 	add "Image" type to Countour and Waterfall for representation of sequence of data.
 //1.05 	add handling of USAXS M_... waves
 //1.04 	fix bug for same name waves (USAXS, results) which run into wave/trace name issues as appending error bars.
@@ -812,11 +815,13 @@ static Function IR3L_AppendData(FolderNameStr)
 			WAVE/Z   GuinierI0  = root:GuinierFitResults:GuinierI0
 			WAVE/Z   GuinierRg  = root:GuinierFitResults:GuinierRg
 			if(!WaveExists(SampleName) || !WaveExists(GuinierI0) || !WaveExists(GuinierRg))
+				SetDataFolder OldDf
 				Abort "Guinier results not found. In order to use this data type, you need to save results from Guinier fit using Simple Fits tool for all data you want to plot"
 			endif
 			variable I0 = IR3L_LookUpValueForWaveName(DataFolderName, SampleName, GuinierI0)
 			variable Rg = IR3L_LookUpValueForWaveName(DataFolderName, SampleName, GuinierRg)
 			if(numtype(I0) || numtype(Rg))
+				SetDataFolder OldDf
 				Abort "Could not find Guinier results for " + DataFolderName + " in the Guinier fit results from Simple fit."
 			endif
 			Duplicate/O SourceIntWv, $(DataFolderName + possiblyQUoteName("DLKratky_" + IntensityWaveName))
@@ -1628,7 +1633,7 @@ Function IR3L_ConvertXYto3DPlot(string WindowName, string WhichGraph)
 	//now we need to create here the data.
 	//first we need to know how many intervals in x we need. But to make this simple, let's skip this
 	//we need to create main x axis here, let's pick x axis for data set 1 and use its visible range
-	WAVE FirstXwave = XWaveRefFromTrace(WindowName, StringFromList(0, TraceNameListStr))
+	WAVE/Z FirstXwave = XWaveRefFromTrace(WindowName, StringFromList(0, TraceNameListStr))
 	variable startx, starty
 	startx = BinarySearch(FirstXwave, xmin)
 	starty = BinarySearch(FirstXwave, xmax)
@@ -2112,7 +2117,7 @@ static Function IR3L_FormatContourPlot(string WinNameStr)
 	NVAR ContMaxValue          = $(Foldername + ":MaxCountourVal")
 	SVAR ContourColorScale     = $(Foldername + ":ContourColorScale")
 	NVAR Graph3DColorsReverse  = $(Foldername + ":Graph3DColorsReverse")
-	WAVE MultiDataPlot3DWvData = $(Foldername + ":MultiDataPlot3DWvData")
+	WAVE/Z MultiDataPlot3DWvData = $(Foldername + ":MultiDataPlot3DWvData")
 
 	if(ContLogContours)
 		//cannot have 0 as Minvalue or everything is red...
@@ -2163,8 +2168,8 @@ static Function IR3L_FormatImagePlot(string WinNameStr)
 	NVAR Graph3DClrMax            = $(Foldername + ":Graph3DClrMax")
 	NVAR Graph3DClrMin            = $(Foldername + ":Graph3DClrMin")
 	NVAR Graph3DLogColors         = $(Foldername + ":Graph3DLogColors")
-	WAVE MultiDataPlot3DWvData    = $(Foldername + ":MultiDataPlot3DWvData")
-	WAVE MultiDataPlot3DWvDataRaw = $(Foldername + ":MultiDataPlot3DWvDataRaw")
+	WAVE/Z MultiDataPlot3DWvData    = $(Foldername + ":MultiDataPlot3DWvData")
+	WAVE/Z MultiDataPlot3DWvDataRaw = $(Foldername + ":MultiDataPlot3DWvDataRaw")
 
 	//need to create new data and reset limits.
 	if(Graph3DLogColors)

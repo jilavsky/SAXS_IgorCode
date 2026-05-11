@@ -2,6 +2,21 @@
 #pragma TextEncoding     = "UTF-8"
 #pragma rtGlobals        = 3          // Use modern global access method and strict wave access
 #pragma DefaultTab       = {3, 20, 4} // Set default tab width in Igor Pro 9 and later
+#pragma version          = 1.1
+
+//*************************************************************************\
+//* Copyright (c) 2005 - 2026, Argonne National Laboratory
+//* This file is distributed subject to a Software License Agreement found
+//* in the file LICENSE that is included with this distribution.
+//*************************************************************************/
+
+//1.1 AI code review: add missing #pragma version; add SetDataFolder restore before Abort in
+//    IN4_calculateR_Qvec ("failure in peak center fitting") and IN4_RecalcSubtractSaAndBlank
+//    ("step scan not done yet"); convert 3 string-based DF save/restores to DFREF; add WAVE/Z
+//    to ~16 bare wave declarations (AmpGain/AmpReqGain/Channel/ARangles/Monitor/TimePerPoint/
+//    UPD_array, W_FindLevels, W_coef/W_sigma/fit_R_Int, Blank_R_Qvec/Error, R_Int/R_Error,
+//    BL_R_Qvec/Int/R_Int/R_Qvec, SMR_Error).
+//1.0 Original release.
 
 // here belongs all the code for new data reduction, basically, what is Matilda doing for reduction.
 // it should not depend on any other Indra old reduction code, but may depend on Nika.
@@ -16,16 +31,16 @@ Function IN4_CalculateRWaveIntensity(string FolderName) //Recalculate the R wave
 	//contains stuff from: IN3_FSConvertToUSAXS
 	//assume we are using DDPCA300 for now.
 	//these waves exist:
-	WAVE AmpGain     //		WAVE DDPCA300_ampGain    = :entry:flyScan:changes_DDPCA300_ampGain
-	WAVE AmpReqGain  //		WAVE DDPCA300_ampReqGain = :entry:flyScan:changes_DDPCA300_ampReqGain
-	WAVE Channel     //		WAVE DDPCA300_mcsChan    = :entry:flyScan:changes_DDPCA300_mcsChan
+	WAVE/Z AmpGain     //		WAVE DDPCA300_ampGain    = :entry:flyScan:changes_DDPCA300_ampGain
+	WAVE/Z AmpReqGain  //		WAVE DDPCA300_ampReqGain = :entry:flyScan:changes_DDPCA300_ampReqGain
+	WAVE/Z Channel     //		WAVE DDPCA300_mcsChan    = :entry:flyScan:changes_DDPCA300_mcsChan
 	NVAR vTof        //		mcaFrequency        = :entry:flyScan:mca_clock_frequency, 1 point.
 	NVAR FS_scanTime //		total scan timne, 1 point
 
-	WAVE ARangles     // Ar in degrees, used to be caled AR_encoder
-	WAVE Monitor      // I0 counts per point.
-	WAVE TimePerPoint // this is in frequency, divide by 1e6 to get seconds
-	WAVE UPD_array    // for sanity, create also version called what we used always.
+	WAVE/Z ARangles     // Ar in degrees, used to be caled AR_encoder
+	WAVE/Z Monitor      // I0 counts per point.
+	WAVE/Z TimePerPoint // this is in frequency, divide by 1e6 to get seconds
+	WAVE/Z UPD_array    // for sanity, create also version called what we used always.
 	Duplicate/O UPD_array, USAXS_PD
 
 	Duplicate/O TimePerPoint, MeasTime
@@ -134,7 +149,7 @@ Function IN4_CalculateRWaveIntensity(string FolderName) //Recalculate the R wave
 	//
 	//	R_Int = PD_Intensity * SampleTransmissionPeakToPeak
 	//	R_error = PD_error * SampleTransmissionPeakToPeak
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 ///*********************************************************************************
 ///*********************************************************************************
@@ -163,6 +178,7 @@ Function IN4_calculateR_Qvec(string FolderName) //this creates Q vector for R da
 	// now make some decision when to use beamCenter instead of tabulated values.
 	// returns NaN if fit fails, may be we need to stop here
 	if(numtype(beamCenter) != 0)
+		SetDataFolder saveDF
 		Abort "Failure in peak center fitting in IN4_calculateR_Qvec for :" + FolderName
 	endif
 	//check that we are sufficnetly close and nothing else failed too much. Assume we need to be within 0.01 deg from estimate?
@@ -178,7 +194,7 @@ Function IN4_calculateR_Qvec(string FolderName) //this creates Q vector for R da
 	endif
 	IN2G_AppendorReplaceWaveNote("R_Qvec", "Wname", "R_Qvec")
 	IN2G_AppendorReplaceWaveNote("R_Qvec", "Units", "A-1")
-	setDataFolder OldDf
+	SetDataFolder saveDF
 
 End
 ///**********************************************************************************************************
@@ -215,9 +231,9 @@ Function IN4_FitModGaussTop(string Foldername) // uses Modfied Gaussian
 	setDataFolder $(FolderName)
 
 	variable ARcenter
-	WAVE     R_Int
-	WAVE     R_Error
-	WAVE     ARangles
+	WAVE/Z     R_Int
+	WAVE/Z     R_Error
+	WAVE/Z     ARangles
 	SVAR     metadata
 	variable ARcenterEst = NumberByKey("AR_center", metadata, "=", ";")
 
@@ -225,7 +241,7 @@ Function IN4_FitModGaussTop(string Foldername) // uses Modfied Gaussian
 	//find range of 50% in below and above peak.
 	wavestats/Q R_Int
 	FindLevels/N=25/P/Q R_Int, V_max / 2
-	WAVE W_FindLevels
+	WAVE/Z W_FindLevels
 	variable startPointL, endPointL
 	if(Numpnts(W_FindLevels) == 2)
 		startPointL = W_FindLevels[0]
@@ -257,9 +273,9 @@ Function IN4_FitModGaussTop(string Foldername) // uses Modfied Gaussian
 		return NaN
 		//abort "Peak profile fitting function error. Please select wider range of data or change fitting function (Gauss is good choice)"
 	endif
-	WAVE W_coef
-	WAVE W_sigma
-	WAVE fit_R_Int
+	WAVE/Z W_coef
+	WAVE/Z W_sigma
+	WAVE/Z fit_R_Int
 	Duplicate/O fit_R_Int, PeakFitWave
 	//variables to work with
 	variable MaximumIntensity
@@ -301,7 +317,7 @@ Function IN4_FitModGaussTop(string Foldername) // uses Modfied Gaussian
 	endif
 	KillWaves/Z T_Constraints, W_sigma, W_FindLevels, W_coef, fit_R_Int, fitX_R_Int
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 	return ARcenter
 End
 //******************** Modified Gauss **************************************
@@ -338,8 +354,8 @@ Function IN4_CopyBlankAndCorrectTransm(string SamplefolderName, string BlankFold
 	if(!WaveExists(Blank_R_Int))
 		ABort "Blank Data do not exist"
 	endif
-	WAVE Blank_R_Qvec  = $(BlankFolderName + ":R_Qvec")
-	WAVE Blank_R_Error = $(BlankFolderName + ":R_Error")
+	WAVE/Z Blank_R_Qvec  = $(BlankFolderName + ":R_Qvec")
+	WAVE/Z Blank_R_Error = $(BlankFolderName + ":R_Error")
 	Duplicate/O Blank_R_Int, BL_R_Int
 	Duplicate/O Blank_R_Qvec, BL_R_Qvec
 	Duplicate/O Blank_R_Error, BL_R_Error
@@ -359,8 +375,8 @@ Function IN4_CopyBlankAndCorrectTransm(string SamplefolderName, string BlankFold
 	variable SampleTRI0      = NumberByKey("trans_I0_counts", SampleMetadata, "=", ";")
 	variable SampleTRI0Gain  = NumberByKey("trans_I0_gain", SampleMetadata, "=", ";")
 	variable Tranmsission    = ((SampleTRUPD / SampleTRUPDGain) / (SampleTRI0 / SampleTRI0Gain)) / ((BlankTRUPD / BlankTRUPDGain) / (BlankTRI0 / BlankTRI0Gain))
-	WAVE R_Int
-	WAVE R_Error
+	WAVE/Z R_Int
+	WAVE/Z R_Error
 	R_Int   = R_Int / Tranmsission
 	R_Error = R_Error / Tranmsission
 	IN2G_AppendorReplaceWaveNote("R_Int", "Transmission", num2str(Tranmsission))
@@ -371,7 +387,7 @@ Function IN4_CopyBlankAndCorrectTransm(string SamplefolderName, string BlankFold
 	samplemetadata = ReplaceStringByKey("BlankWidth", samplemetadata, num2str(BlankWidth, "%.10g"), "=", ";")
 	samplemetadata = ReplaceStringByKey("BlankMaximumIntensity", samplemetadata, num2str(BLMaximumIntensity, "%.10g"), "=", ";")
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 
 //
@@ -387,10 +403,10 @@ Function IN4_SubtractSampleAndBlank(string Foldername)
 	if(!WaveExists(R_Int) || !WaveExists(BL_R_Int))
 		abort "Subtract Sample and Blank is missing some data"
 	endif
-	WAVE     R_Qvec
-	WAVE     R_Error
-	WAVE     BL_R_Qvec
-	WAVE     BL_R_Error
+	WAVE/Z     R_Qvec
+	WAVE/Z     R_Error
+	WAVE/Z     BL_R_Qvec
+	WAVE/Z     BL_R_Error
 	SVAR     metadata
 	variable MSAXSCorrection
 	variable USAXSPinTvalue = NumberByKey("Transmission", metadata, "=", ";") //this is TR diode calculated value.
@@ -461,10 +477,11 @@ Function IN4_SubtractSampleAndBlank(string Foldername)
 		IN2G_AppendorReplaceWaveNote("SMR_Int", "units", "1/cm")
 		IN2G_AppendorReplaceWaveNote("SMR_Qvec", "units", "1/A")
 	else
+		SetDataFolder saveDF
 		Abort "step scan not done yet"
 	endif
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 
 ///*********************************************************************************
@@ -475,10 +492,10 @@ Function IN4_FindQminForUSAXS(string Foldername)
 	DFREF oldDf = GetDataFolderDFR()
 	setDataFolder $(FolderName)
 
-	WAVE BL_R_Qvec
-	WAVE BL_R_Int
-	WAVE R_Int
-	WAVE R_Qvec
+	WAVE/Z BL_R_Qvec
+	WAVE/Z BL_R_Int
+	WAVE/Z R_Int
+	WAVE/Z R_Qvec
 	SVAR metadata
 
 	variable PeakWidth    = NumberByKey("FWHM", metadata, "=", ";")
@@ -565,7 +582,7 @@ Function IN4_FindQminForUSAXS(string Foldername)
 	//		endif
 	//	endif
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 	return Qmin
 End
 
@@ -589,12 +606,12 @@ Function IN4_DesmearData(string Foldername)
 	//	NVAR DesmearNumberOfInterations=root:Packages:Indra3:DesmearNumberOfInterations
 	WAVE/Z SMR_Int = SMR_Int
 	if(!WaveExists(SMR_Int)) //wave does n to exist, stop here...
-		setDataFolder oldDf
+		SetDataFolder saveDF
 		return 0
 	endif
-	WAVE SMR_Error
-	WAVE SMR_Qvec
-	WAVE SMR_dQ
+	WAVE/Z SMR_Error
+	WAVE/Z SMR_Qvec
+	WAVE/Z SMR_dQ
 	IN2G_RemoveNaNsFrom4Waves(SMR_Int, SMR_Qvec, SMR_Error, SMR_dQ) //desmearing chokes on NaNs
 	Killwaves/Z DSM_Int, DSM_Qvec, DSM_Error, DSM_dQ
 	Duplicate/FREE SMR_Int, tmpWork_Int
@@ -614,7 +631,7 @@ Function IN4_DesmearData(string Foldername)
 	do
 		ExtensionFailed = IN4_OneDesmearIteration(Foldername, tmpWork_Int, tmpWork_Qvec, tmpWork_Error, SMR_Int, SMR_Error, DesmNormalizedError)
 		if(ExtensionFailed)
-			setDataFolder oldDf
+			SetDataFolder saveDF
 			return 0
 		endif
 		absNormalizedError = abs(DesmNormalizedError)
@@ -632,7 +649,7 @@ Function IN4_DesmearData(string Foldername)
 	Duplicate/O tmpWork_dQ, DSM_dQ
 	DSM_Error = abs(DSM_Error) //remove negative values this gets in extreme cases.
 
-	setDataFolder oldDf
+	SetDataFolder saveDF
 
 End
 //***********************************************************************************************************************************
@@ -640,7 +657,7 @@ End
 
 Function IN4_OneDesmearIteration(string Foldername, WAVE DesmearIntWave, WAVE DesmearQWave, WAVE DesmearEWave, WAVE origSmearedInt, WAVE origSmearedErr, WAVE NormalizedError)
 
-	string OldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder $(Foldername)
 
 	SVAR metadata
@@ -705,7 +722,7 @@ Function IN4_OneDesmearIteration(string Foldername, WAVE DesmearIntWave, WAVE De
 	//Duplicate/O DesmearIntWave, DesmearEWave
 	DesmearEWave = 0
 	IN4_GetErrors(origSmearedErr, origSmearedInt, DesmearIntWave, DesmearEWave, DesmearQWave) //this routine gets the errors
-	setDataFolder OldDf
+	SetDataFolder saveDF
 	return 0
 End
 
@@ -714,7 +731,7 @@ End
 //***********************************************************************************************************************************
 //*************************************Extends the data using user specified parameters***************
 Function IN4_ExtendData(Int_wave, Q_vct, Err_wave, slitLength, Qstart, SelectedFunction)
-	WAVE Int_wave, Q_vct, Err_wave
+	WAVE/Z Int_wave, Q_vct, Err_wave
 	variable slitLength, Qstart 
 	//RecordFitParam=1 when we should record fit parameters in logbook
 	string SelectedFunction
@@ -726,7 +743,7 @@ Function IN4_ExtendData(Int_wave, Q_vct, Err_wave, slitLength, Qstart, SelectedF
 		DoALert 0, "Weird value for Slit length, please check"
 	endif
 
-	string oldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra4
 
 	WAVE/Z W_coef = W_coef
@@ -909,7 +926,7 @@ Function IN4_ExtendData(Int_wave, Q_vct, Err_wave, slitLength, Qstart, SelectedF
 		fit_ExtrapIntwave = AveInt
 		ExtensionFailed   = 0
 	endif
-	setDataFolder OldDf
+	SetDataFolder saveDF
 	return ExtensionFailed
 End
 
@@ -965,7 +982,7 @@ End
 //*****************************This function smears data***********************
 Function IN4_SmearData(WAVE Int_to_smear, WAVE Q_vec_sm, variable slitLength, WAVE Smeared_int)
 
-	string OldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra4
 	variable oldNumPnts = numpnts(Q_vec_sm)
 	//modified 2/28/2017 - with Fly scans and merged data having lot more points, this is getting to be slow. Keep max number of new points to 300
@@ -997,7 +1014,7 @@ Function IN4_SmearData(WAVE Int_to_smear, WAVE Q_vec_sm, variable slitLength, WA
 
 	Smeared_int *= 1 / slitLength //normalize
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 
 //***********************************************************************************************************************************//***********************************************************************************************************************************
@@ -1069,16 +1086,16 @@ Function IN4_RebinDataIfNeeded(string Foldername)
 		if(!WaveExists(SMR_Int))
 			abort "Bad data in IN4_RebinDataIfNeeded"
 		endif
-		WAVE SMR_Qvec
-		WAVE SMR_Error
-		WAVE SMR_dQ
+		WAVE/Z SMR_Qvec
+		WAVE/Z SMR_Error
+		WAVE/Z SMR_dQ
 		variable tempMinStep = SMR_Qvec[1] - SMR_Qvec[0]
 		IN2G_RebinLogData(SMR_Qvec, SMR_Int, FlyScanRebinToPoints, tempMinStep, Wsdev = SMR_Error, Wxwidth = SMR_dQ)
 		SMR_dQ = sqrt((SMR_dQ[p])^2 + (InstrumentQresolution / 2)^2) //convolute with SI220 InstrumentQresolution
 
 	endif
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 
 ///*********************************************************************************
@@ -1098,21 +1115,21 @@ Function/S IN4_CopyUSAXSToFolder(string Foldername, string addStr)
 	NewDataFolder/O root:USAXS
 	string FullnewFolderName = "root:USAXS:" + newFolderName
 	//first we need the existing stuff here.
-	WAVE BL_R_Int_old    = BL_R_Int
-	WAVE BL_R_Qvec_old   = BL_R_Qvec
-	WAVE BL_R_Error_old  = BL_R_Error
-	WAVE R_Int_old       = R_Int
-	WAVE R_Qvec_old      = R_Qvec
-	WAVE R_error_old     = R_error
-	WAVE PeakFitWave_old = PeakFitWave
-	WAVE SMR_Int_old     = SMR_Int
-	WAVE SMR_Qvec_old    = SMR_Qvec
-	WAVE SMR_error_old   = SMR_error
-	WAVE SMR_dQ_old      = SMR_dQ
-	WAVE DSM_Int_old     = DSM_Int
-	WAVE DSM_Qvec_old    = DSM_Qvec
-	WAVE DSM_Error_old   = DSM_Error
-	WAVE DSM_dQ_old      = DSM_dQ
+	WAVE/Z BL_R_Int_old    = BL_R_Int
+	WAVE/Z BL_R_Qvec_old   = BL_R_Qvec
+	WAVE/Z BL_R_Error_old  = BL_R_Error
+	WAVE/Z R_Int_old       = R_Int
+	WAVE/Z R_Qvec_old      = R_Qvec
+	WAVE/Z R_error_old     = R_error
+	WAVE/Z PeakFitWave_old = PeakFitWave
+	WAVE/Z SMR_Int_old     = SMR_Int
+	WAVE/Z SMR_Qvec_old    = SMR_Qvec
+	WAVE/Z SMR_error_old   = SMR_error
+	WAVE/Z SMR_dQ_old      = SMR_dQ
+	WAVE/Z DSM_Int_old     = DSM_Int
+	WAVE/Z DSM_Qvec_old    = DSM_Qvec
+	WAVE/Z DSM_Error_old   = DSM_Error
+	WAVE/Z DSM_dQ_old      = DSM_dQ
 	SVAR metadata_old    = metadata
 	SVAR sample_old      = sample
 	SVAR instrument_old  = instrument
@@ -1148,7 +1165,7 @@ Function/S IN4_CopyUSAXSToFolder(string Foldername, string addStr)
 	variable/G thickness   = thickness_old
 	variable/G OmegaFactor = OmegaFactor_old
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 	return FullnewFolderName
 End
 
@@ -1180,7 +1197,7 @@ End
 ////	endfor
 ////
 //	KillWaves/Z  W_FindLevels
-//	setDataFolder OldDf
+//	SetDataFolder saveDF
 //end
 //
 //***********************************************************************************************************************************
@@ -1190,11 +1207,11 @@ Function IN4_SmoothRData(string folderName)
 	DFREF oldDf = GetDataFolderDFR()
 	setDataFolder $(FolderName)
 
-	WAVE Intensity = R_Int
-	WAVE Qvector   = R_Qvec
-	WAVE PD_range  = PD_range
-	WAVE R_Error   = R_Error
-	WAVE MeasTime  = MeasTime
+	WAVE/Z Intensity = R_Int
+	WAVE/Z Qvector   = R_Qvec
+	WAVE/Z PD_range  = PD_range
+	WAVE/Z R_Error   = R_Error
+	WAVE/Z MeasTime  = MeasTime
 	//NVAR SmoothRCurveData = root:Packages:Indra3:SmoothRCurveData
 	variable SmoothRCurveData = 1
 	if(SmoothRCurveData)
@@ -1244,7 +1261,7 @@ Function IN4_SmoothRData(string folderName)
 					WaveStats/Q tempR
 					if(V_npnts > (V_numNans + 5))
 						CurveFit/Q line, tempR/X=tempQ
-						WAVE W_coef
+						WAVE/Z W_coef
 						SmoothIntensity[i] = W_coef[0] + W_coef[1] * Qvector[i]
 						R_Error[i]         = R_Error[i] / 3
 					else
@@ -1266,7 +1283,7 @@ Function IN4_SmoothRData(string folderName)
 	endif
 	KillWaves/Z T_Constraints, W_sigma, W_FindLevels, W_coef, W_FindLevels, fit_R_Int, fitX_R_Int
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 
 //***********************************************************************************************************************************

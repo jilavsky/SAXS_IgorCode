@@ -1,7 +1,7 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use modern global access method.
 
-#pragma version=1.07
+#pragma version=1.08
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
@@ -9,6 +9,10 @@
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//1.08 AI code review: convert 7 string-based DF save/restores to DFREF; add SetDataFolder
+//     restore before 2 Abort calls in NI1_CalculateFloodField (missing flood image, missing
+//     mask); add missing SetDataFolder restore at end of NI1A_InitializeCreate2DSensFile
+//     (folder was permanently changed on every call).
 //1.07 Fixed to accept tiff as tif extension.
 //1.06 Modified Screen Size check to match the needs
 //1.05 added getHelp button calling to www manual
@@ -35,7 +39,7 @@ End
 
 Function NI1_CreateFloodField()
 
-	string oldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 
 	KillWIndow/Z NI1_CreateFloodFieldPanel
@@ -96,7 +100,7 @@ Function NI1_CreateFloodField()
 	Button DisplayFloodField, help={"Displays current ROI "}
 	Button SaveFloodField, pos={200, 460}, size={180, 20}, proc=NI1M_saveFloodCopyProc, title="Save 2D pix sens file (flood)"
 	Button SaveFloodField, help={"Saves current ROI as file outside Igor and also sets it as current Flood field"}
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -147,7 +151,7 @@ End
 Function NI1M_CalculateFloodField(AndSave)
 	variable AndSave
 
-	string OldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFOlder root:Packages:Convert2Dto1D
 	NVAR   AddFlat           = root:Packages:Convert2Dto1D:AddFlat
 	NVAR   FlatValToAdd      = root:Packages:Convert2Dto1D:FlatValToAdd
@@ -157,11 +161,13 @@ Function NI1M_CalculateFloodField(AndSave)
 	NVAR   Flood_UseMask     = root:Packages:Convert2Dto1D:Flood_UseMask
 
 	if(WaveExists(FloodFieldImg) == 0)
+		SetDataFolder saveDF
 		Abort "Something is wrong here"
 	endif
 	if(Flood_UseMask)
 		WAVE/Z Mask = root:Packages:Convert2Dto1D:M_ROIMask
 		if(!WaveExists(Mask))
+			SetDataFolder saveDF
 			Abort "Mask not found"
 		endif
 	endif
@@ -236,7 +242,7 @@ Function NI1M_CalculateFloodField(AndSave)
 		NI1A_TopCCDImageUpdateColors(1)
 		KillWaves/Z a2DPixSensTemp
 	endif
-	SetDataFolder OldDf
+	SetDataFolder saveDF
 
 End
 
@@ -251,7 +257,7 @@ Function NI1M_FloodCheckProc(ctrlName, checked) : CheckBoxControl
 	string   ctrlName
 	variable checked
 
-	string oldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 
 	if(cmpstr(ctrlName, "AddFlat") == 0)
@@ -264,7 +270,7 @@ Function NI1M_FloodCheckProc(ctrlName, checked) : CheckBoxControl
 		NI1M_UpdateCalculations()
 	endif
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -298,7 +304,7 @@ End
 
 Function NI1_UpdateFloodListBox()
 
-	string oldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 
 	WAVE/T ListOfCCDDataInFloodPath        = root:Packages:Convert2Dto1D:ListOfCCDDataInFloodPath
@@ -335,7 +341,7 @@ Function NI1_UpdateFloodListBox()
 	ListBox CCDDataSelection, win=NI1_CreateFloodFieldPanel, listWave=root:Packages:Convert2Dto1D:ListOfCCDDataInFloodPath
 	ListBox CCDDataSelection, win=NI1_CreateFloodFieldPanel, row=0, mode=1, selRow=0
 	DoUpdate
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 
 //*******************************************************************************************************************************************
@@ -347,7 +353,7 @@ End
 Function NI1_FloodButtonProc(ctrlName) : ButtonControl
 	string ctrlName
 
-	string oldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 
 	if(cmpstr(ctrlName, "GetHelp") == 0)
@@ -378,7 +384,7 @@ Function NI1_FloodButtonProc(ctrlName) : ButtonControl
 		NI1_UpdateFloodListBox()
 	endif
 	//following function happen only when graph exists...
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -390,13 +396,13 @@ End
 Function NI1_FloodCreateAppendImage(AppendImg)
 	variable AppendImg
 
-	string OldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFOlder root:Packages:Convert2Dto1D
 	WAVE/T ListOfCCDDataInFloodPath = root:Packages:Convert2Dto1D:ListOfCCDDataInFloodPath
 	controlInfo/W=NI1_CreateFloodFieldPanel CCDDataSelection
 	variable selection = V_Value
 	if(selection < 0)
-		setDataFolder OldDf
+		SetDataFolder saveDF
 		abort
 	endif
 	KillWIndow/Z CCDImageForFlood
@@ -486,7 +492,7 @@ Function NI1_FloodCreateAppendImage(AppendImg)
 	SVAR ExportFloodFileName = root:Packages:Convert2Dto1D:ExportFloodFileName
 	ExportFloodFileName = FileNameToLoad
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -542,7 +548,7 @@ End
 
 Function NI1A_InitializeCreate2DSensFile()
 
-	string OldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	NewDataFolder/O root:Packages
 	NewDataFolder/O/S root:Packages:Convert2Dto1D
 
@@ -579,6 +585,7 @@ Function NI1A_InitializeCreate2DSensFile()
 		FloodFileType = ".tif"
 	endif
 
+	SetDataFolder saveDF
 End
 
 //*******************************************************************************************************************************************

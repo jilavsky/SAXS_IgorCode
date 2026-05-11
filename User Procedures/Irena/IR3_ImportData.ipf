@@ -8,6 +8,9 @@
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+// 1.02 AI checked
+// 1.01  Combined with IR1_ImportData and remove that package from dependencies. 
+// 1.00  Initial combined import panel.
 // IR3_ImportData.ipf
 // Combined SAXS / WAXS / Nexus CanSAS data import tool.
 // This package merges the functionality of the three separate import panels
@@ -18,9 +21,6 @@
 //
 // Entry point:  IR3I_ImportDataMain()
 //
-// Version history:
-// 1.00  Initial combined import panel.
-// 1.01  Combined with IR1_ImportData and remove that package from dependencies. 
 
 Constant IR3IversionNumber 		= 1.00
 Constant IR3TrimNameLength     = 28

@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.23
+#pragma version=1.24
 Constant IR2RversionNumber=1.19
 
 //*************************************************************************\
@@ -7,6 +7,17 @@ Constant IR2RversionNumber=1.19
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+
+//1.24 AI code review: uncomment PauseUpdate in IR2R_CheckFittingParamsFnct; convert its string-based
+//     DF save/restore to DFREF; add /Z + WaveExists guard for Gen_Constraints/W_coef/CoefNames;
+//     replace Execute("IR2R_InsRemoveLayers()") with direct call (it is a Function, not Window/Proc).
+
+// TODO (deferred from AI review 2026-05-04):
+// 1. Convert Proc IR2R_LogLogPlotRefl(), Proc IR2R_IQN_Q_PlotV(), Proc IR2R_SLDProfile() from
+//    Proc/macro to Function. Once converted, replace their string-based DF save/restore with DFREF
+//    and replace the Execute() calls that invoke them with direct calls.
+// 2. Window IR2R_ReflSimpleToolMainPanel() — consider converting to Function : Panel to allow
+//    direct calls and DFREF usage (currently requires Execute() because it is a Window declaration).
 
 //1.23 change to Pragma globals 3
 //1.22 fix GenCurveFit call, which was failing due to Exists("gencurvefit") returning 4 instead of 3 which was in the code. 
@@ -2709,8 +2720,8 @@ EndMacro
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
-static Function IR2R_CheckFittingParamsFnct() 
-	//PauseUpdate    		// building window...
+static Function IR2R_CheckFittingParamsFnct()
+	PauseUpdate
 	NewPanel /K=1/W=(400,140,870,600) as "Check fitting parameters"
 	Dowindow/C IR2R_CheckFittingParams
 	SetDrawLayer UserBack
@@ -2726,10 +2737,14 @@ static Function IR2R_CheckFittingParamsFnct()
 		DrawText 10,110,"       Then continue....."
 	Button CancelBtn,pos={27,420},size={150,20},proc=IR2R_CheckFitPrmsButtonProc,title="Cancel fitting"
 	Button ContinueBtn,pos={187,420},size={150,20},proc=IR2R_CheckFitPrmsButtonProc,title="Continue fitting"
-	String fldrSav0= GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	SetDataFolder root:Packages:Refl_SimpleTool:
-	Wave Gen_Constraints,W_coef
-	Wave/T CoefNames
+	WAVE/Z Gen_Constraints, W_coef
+	WAVE/Z/T CoefNames
+	if(!WaveExists(Gen_Constraints) || !WaveExists(W_coef) || !WaveExists(CoefNames))
+		SetDataFolder saveDF
+		Abort "Reflectivity fitting waves not found — run the tool first to initialize"
+	endif
 	SetDimLabel 1,0,Min,Gen_Constraints
 	SetDimLabel 1,1,Max,Gen_Constraints
 	variable i
@@ -2749,7 +2764,7 @@ static Function IR2R_CheckFittingParamsFnct()
 		ModifyTable title(Gen_Constraints.d)="Limits"
 //		ModifyTable statsArea=85
 //		ModifyTable statsArea=20
-	SetDataFolder fldrSav0
+	SetDataFolder saveDF
 	RenameWindow #,T0
 	SetActiveSubwindow ##
 End
@@ -3163,7 +3178,7 @@ static Function IR2R_AddRemoveLayersFnct()
 	if(V_Flag)
 		DoWindow/F IR2R_InsertRemoveLayers
 	else
-		Execute("IR2R_InsRemoveLayers()")
+		IR2R_InsRemoveLayers()
 	endif
 
 	setDataFolder OldDf

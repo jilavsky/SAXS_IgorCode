@@ -2,7 +2,7 @@
 #pragma TextEncoding     = "UTF-8"
 #pragma rtGlobals        = 3          // Use modern global access method and strict wave access
 #pragma DefaultTab       = {3, 20, 4} // Set default tab width in Igor Pro 9 and later
-#pragma version          = 1.08
+#pragma version          = 1.09
 
 //this is available ONLY, if JSONXOP is installed and json_functions.ipf is in User Procedures.
 #if(exists("JSONXOP_GetValue") == 4)
@@ -23,6 +23,11 @@ Menu "USAXS"
 	"Bluesky Plots", IR3BS_BlueSkyPlot()
 End
 
+//1.09 AI code review: add DFREF save + SetDataFolder restore to IR3BS_InitCatalog and
+//     IR3BS_GetJSONScanData (both were permanently changing user's data folder on every call);
+//     convert two-line string DF pattern to DFREF in IN3BS_ImportDataAndPlot; add WAVE/Z to
+//     listWave/selWave, DetFree/XdatFree (JSON_GetWave with ignoreErr=1 can return null),
+//     and SelectionOfAvailableData.
 //1.08 fixes for Tiled 2.2. This will be nightmare. 
 //1.07 fixes for Tiled 2.2 installed on USAXS January 2026. WIll need more fixes as we collect data. 
 //1.06 add ability to get data file and path to data from tiled. Change display of table to make it more useful.
@@ -368,8 +373,8 @@ End
 //************************************************************************************************************
 Function IR3BS_ImportSelected(variable PlotAll)
 
-	WAVE listWave = root:Packages:Irena:BlueSkySamplePlot:PrunedListOfAvailableData
-	WAVE selWave  = root:Packages:Irena:BlueSkySamplePlot:SelectionOfAvailableData
+	WAVE/Z listWave = root:Packages:Irena:BlueSkySamplePlot:PrunedListOfAvailableData
+	WAVE/Z selWave  = root:Packages:Irena:BlueSkySamplePlot:SelectionOfAvailableData
 	variable i
 	for(i = 0; i < dimsize(listWave, 0); i += 1)
 		if(selWave[i] > 0)
@@ -387,8 +392,7 @@ End
 //************************************************************************************************************
 Function IN3BS_ImportDataAndPlot(variable selRow, variable saveTheData, variable PlotAll)
 
-	string oldDf
-	oldDf = getDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	//Wave/T IDwave = root:Packages:Irena:BlueSkySamplePlot:IDwave
 	WAVE/T PrunedListOfAvailableData = root:Packages:Irena:BlueSkySamplePlot:PrunedListOfAvailableData
 	SVAR   CatalogUsed               = root:Packages:Irena:BlueSkySamplePlot:CatalogUsed // this is name of catalog
@@ -460,8 +464,8 @@ Function IN3BS_ImportDataAndPlot(variable selRow, variable saveTheData, variable
 	//data can these addressed like before with names ("id" or via numbers "0=time, 1=PD_USAXS, 3=a_stage_r
 	//store all data here and do something with them.
 	//these are for standard scans we know names for
-	WAVE DetFree  = JSON_GetWave(jsonID, DetectorStr, ignoreErr = 1)
-	WAVE XdatFree = JSON_GetWave(jsonID, XaxisStr, ignoreErr = 1)
+	WAVE/Z DetFree  = JSON_GetWave(jsonID, DetectorStr, ignoreErr = 1)
+	WAVE/Z XdatFree = JSON_GetWave(jsonID, XaxisStr, ignoreErr = 1)
 	//now, for all scans, just load all waves in data:
 	variable i
 	string   wvName
@@ -559,7 +563,7 @@ Function IN3BS_ImportDataAndPlot(variable selRow, variable saveTheData, variable
 			Label left, DetectorStr
 			AutoPositionWindow/R=IR3BS_BlueSkyPlotPanel BlueSkyGraph
 		endif
-		setDataFolder oldDf
+		SetDataFolder saveDF
 	else //just display them without saving
 		Duplicate/O DetFree, Detector
 		Duplicate/O XdatFree, Xdata
@@ -574,7 +578,7 @@ Function IN3BS_ImportDataAndPlot(variable selRow, variable saveTheData, variable
 	endif
 	ResumeUpdate
 
-	setDataFolder oldDf
+	SetDataFolder saveDF
 End
 //************************************************************************************************************
 //************************************************************************************************************
@@ -687,6 +691,7 @@ End
 //************************************************************************************************************
 Function IR3BS_InitCatalog()
 
+	DFREF saveDF = GetDataFolderDFR()
 	//here we do following:
 	//1. Aks for Catalog selected using querry similar to https://tiled-demo.blueskyproject.io/api/v1/metadata/bmm
 	//2  Pick FULL URL from returned Json and call that
@@ -773,6 +778,7 @@ Function IR3BS_InitCatalog()
 	//print PrefixLoc
 	Prefix = PrefixLoc
 
+	SetDataFolder saveDF
 End
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -790,6 +796,7 @@ End
 //************************************************************************************************************
 Function IR3BS_GetJSONScanData()
 
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Irena:BlueSkySamplePlot
 	//procedure, https://docs.byte-physics.de/json-xop/getting_started.html
 	//read json file in string
@@ -1262,6 +1269,7 @@ Function IR3BS_GetJSONScanData()
 	IR3BS_UdateListBoxScans()
 	//microseconds = StopMSTimer(timerRefNum)
 	//print microseconds
+	SetDataFolder saveDF
 End
 
 //************************************************************************************************************
@@ -1274,7 +1282,7 @@ Function IR3BS_UdateListBoxScans()
 	WAVE/T ListOfAvailableData       = root:Packages:Irena:BlueSkySamplePlot:ListOfAvailableData
 	WAVE/T PrunedListOfAvailableData = root:Packages:Irena:BlueSkySamplePlot:PrunedListOfAvailableData
 	redimension/N=(0, 6) PrunedListOfAvailableData
-	WAVE SelectionOfAvailableData = root:Packages:Irena:BlueSkySamplePlot:SelectionOfAvailableData
+	WAVE/Z SelectionOfAvailableData = root:Packages:Irena:BlueSkySamplePlot:SelectionOfAvailableData
 	//create list of scans available on server
 	SVAR ListOfScanTypes = root:Packages:Irena:BlueSkySamplePlot:ListOfScanTypes
 	SVAR ScanTypeToUse   = root:Packages:Irena:BlueSkySamplePlot:ScanTypeToUse

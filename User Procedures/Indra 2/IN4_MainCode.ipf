@@ -2,7 +2,7 @@
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
 #pragma IgorVersion=9.04		//requires Igor version 9.04 or higher, uses IP9 and IP10 code. 
-#pragma version=0.8				//placeholder for file versions, eventually
+#pragma version=0.9				//placeholder for file versions, eventually
 
 Constant IN4_mainPanelVersion = 0.7
 
@@ -10,6 +10,9 @@ Constant IN4_mainPanelVersion = 0.7
 
 
 // notes, comments:
+//0.9 AI code review: add WAVE/Z to 16 bare wave declarations — WaveOfSelections (×3, absolute
+//     and path-built), R_Qvec/R_error/BL_R_Qvec/BL_R_error, SMR_Qvec/SMR_Error,
+//     DSM_Qvec/DSM_Error, Q_wave/S_wave (×2 each for SAXS/WAXS path-built variants).
 //0.8 	2026-01-10 remove _NX from the code. Loosk verified, let;s not confuse users anymore. 
 //0.7 	2025-03 beta use at the beamline
 //0.61	Added some parameters to pass to Igor code data reduction, sped up the graphing of data. 
@@ -285,7 +288,7 @@ Function IR4_ListBoxProc(lba) : ListBoxControl
 			break
 		case 1: // mouse down
 			WAVE/T WaveOfFiles               = $(CntrlLocation + ":WaveOfFiles")
-			WAVE   WaveOfSelections          = $(CntrlLocation + ":WaveOfSelections")
+			WAVE/Z WaveOfSelections          = $(CntrlLocation + ":WaveOfSelections")
 			SVAR   DataSelSortString         = $(CntrlLocation + ":DataSelSortString")
 			SVAR   DataSelListBoxMatchString = $(CntrlLocation + ":DataSelListBoxMatchString")
 			variable oldSets
@@ -419,7 +422,7 @@ Function IN4_DoubleClickFunction()
  	DfRef OldDf=GetDataFolderDFR()
 	
 	Wave/T WaveOfFiles    = root:Packages:Indra4:WaveOfFiles
-	Wave WaveOfSelections = root:Packages:Indra4:WaveOfSelections
+	Wave/Z WaveOfSelections = root:Packages:Indra4:WaveOfSelections
 
 	if(sum(WaveOfSelections)<1)
 		WaveOfSelections[0]=1
@@ -493,7 +496,7 @@ Function IN4_ProcessSelectedDataFnct()
 	DfRef OldDf=GetDataFolderDFR()
 	
 	Wave/T WaveOfFiles    = root:Packages:Indra4:WaveOfFiles
-	Wave WaveOfSelections = root:Packages:Indra4:WaveOfSelections
+	Wave/Z WaveOfSelections = root:Packages:Indra4:WaveOfSelections
 
 	if(sum(WaveOfSelections)<1)
 		setDataFolder OldDf
@@ -557,10 +560,10 @@ Function IN4_PlotDataFolders(ImportedFolders)
 			Wave/Z DSM_Int
 			Wave/Z SMR_Int
 			if(WaveExists(R_int) && WaveExists(BL_R_int))
-				Wave R_Qvec
-				Wave R_error
-				Wave BL_R_Qvec
-				Wave BL_R_error
+				Wave/Z R_Qvec
+				Wave/Z R_error
+				Wave/Z BL_R_Qvec
+				Wave/Z BL_R_error
 				
 				DoWIndow USAXS_R_data
 				if(V_Flag==0)
@@ -584,8 +587,8 @@ Function IN4_PlotDataFolders(ImportedFolders)
 				//listOfGraphs+="USAXS_R_data"+","
 			endif
 			if(WaveExists(SMR_Int))
-				Wave SMR_Qvec
-				Wave SMR_Error
+				Wave/Z SMR_Qvec
+				Wave/Z SMR_Error
 				DoWIndow USAXS_SMR_data
 				if(V_Flag==0)
 					Display/K=1/N=USAXS_SMR_data  SMR_Int vs SMR_Qvec as "USAXS Calibrated SMR data"
@@ -604,8 +607,8 @@ Function IN4_PlotDataFolders(ImportedFolders)
 				//listOfGraphs+=SampleName+"_SMR_data"+","
 			endif
 			if(WaveExists(DSM_Int))
-				Wave DSM_Qvec
-				Wave DSM_Error
+				Wave/Z DSM_Qvec
+				Wave/Z DSM_Error
 				DoWIndow USAXS_DSM_data
 				if(V_Flag==0)
 					Display/K=1/N= USAXS_DSM_data DSM_Int vs DSM_Qvec as "USAXS Calibrated desmeared data"
@@ -651,8 +654,8 @@ Function IN4_PlotDataFolders(ImportedFolders)
 //			endif
 
 			if(WaveExists(R_wave))
-				Wave Q_wave = $("q_"+SampleName)
-				Wave S_wave = $("s_"+SampleName)
+				Wave/Z Q_wave = $("q_"+SampleName)
+				Wave/Z S_wave = $("s_"+SampleName)
 				DoWIndow SAXS_Data
 				if(V_Flag==0)
 					Display/K=1/N=SAXS_Data R_wave vs Q_wave as "SAXS Calibrated data"
@@ -696,8 +699,8 @@ Function IN4_PlotDataFolders(ImportedFolders)
 ///			endif
 
 			if(WaveExists(R_wave))
-				Wave Q_wave = $("Q_"+SampleName)
-				Wave S_wave = $("S_"+SampleName)
+				Wave/Z Q_wave = $("Q_"+SampleName)
+				Wave/Z S_wave = $("S_"+SampleName)
 				DoWIndow WAXS_Data
 				if(V_Flag==0)
 					Display/K=1/N=WAXS_data R_wave vs Q_wave as "WAXS Calibrated for "+SampleName

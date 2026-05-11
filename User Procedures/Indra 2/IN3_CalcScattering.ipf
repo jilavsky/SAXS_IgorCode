@@ -2,7 +2,7 @@
 #pragma TextEncoding     = "UTF-8"
 #pragma rtGlobals        = 3 // Use modern global access method.
 
-#pragma version = 1.1
+#pragma version = 1.2
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
@@ -12,6 +12,9 @@
 
 //calculate scattering profile from model
 
+//1.2 AI code review: convert 6 string-based DF save/restores to DFREF; add SetDataFolder restore
+//    before Abort in IN3M_SelectRightBlank ("energy/geometry not exist") and IN3M_LoadDataInTheTool
+//    ("data not selected properly"); add WAVE/Z to OriginalModelQ, BlankQ, OriginalModelIntensity.
 //1.1 10/2025 updated for APS-U USAXS, 21keV, 28keV,24keV_440. Other energies and 2DUSAXS are removed. 
 //1.01 updated 18keV values.
 //date: 7/9/09 JIL version 1
@@ -217,7 +220,7 @@ End
 
 Function IN3M_CalculateScattering()
 
-	string oldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:IN3_CalcDataFromModel
 
 	//here we calculate the expected intensity for USAXS instrument...
@@ -254,7 +257,7 @@ Function IN3M_CalculateScattering()
 	if(!WaveExists(OriginalModelIntensity))
 		abort
 	endif
-	WAVE OriginalModelQ = root:Packages:IN3_CalcDataFromModel:OriginalModelQ
+	WAVE/Z OriginalModelQ = root:Packages:IN3_CalcDataFromModel:OriginalModelQ
 	Duplicate/O OriginalModelIntensity, tempInt, tempInt1
 	Duplicate/O OriginalModelQ, tempQ
 	//need to remove negative intensities if present, seems to be in some user data...
@@ -263,7 +266,7 @@ Function IN3M_CalculateScattering()
 	Duplicate/Free tempInt, tempModelInterpolated
 	Duplicate/O BlankR, CalculatedScatteredIntensity
 	Duplicate/Free BlankR, tempWv
-	WAVE BlankQ = root:Packages:IN3_CalcDataFromModel:BlankQ
+	WAVE/Z BlankQ = root:Packages:IN3_CalcDataFromModel:BlankQ
 	Duplicate/O BlankQ, CalculatedScatteredQ
 	//		Duplicate/O EWV, OriginalError
 	//	tempModelInterpolated = log(tempInt)
@@ -293,7 +296,7 @@ Function IN3M_CalculateScattering()
 	CalculatedScatteredIntensity = (tempWv * KfactorLocal) / Transmission + BlankR + FlatInstrBckg / Transmission
 
 	//	KillWaves tempModelInterpolated, tempWv, tempWv1, tempInt,tempQ, tempInt1
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 
 //***********************************************************************************************************************************
@@ -303,7 +306,7 @@ End
 //*****************************This function smears data***********************
 Function IN3M_SmearData(WAVE Int_to_smear, WAVE Q_vec_sm, variable slitLength, WAVE Smeared_int)
 
-	string OldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:
 	NewDataFolder/O/S Irena_desmearing
 	//	setDataFolder root:Packages:Irena_desmearing:
@@ -326,7 +329,7 @@ Function IN3M_SmearData(WAVE Int_to_smear, WAVE Q_vec_sm, variable slitLength, W
 	Smeared_int *= 1 / slitLength //normalize
 
 	KillWaves/Z Smear_Int, Smear_Q //cleanup temp waves
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
@@ -345,7 +348,7 @@ Function IN3M_PopMenuProc(STRUCT WMPopupAction &pa) : PopupMenuControl
 			variable popNum = pa.popNum
 			string   popStr = pa.popStr
 
-			string oldDf = GetDataFolder(1)
+			DFREF saveDF = GetDataFolderDFR()
 			setDataFolder root:Packages:IN3_CalcDataFromModel			
 			SVAR SelectedEnergy
 			SelectedEnergy = popStr
@@ -355,7 +358,7 @@ Function IN3M_PopMenuProc(STRUCT WMPopupAction &pa) : PopupMenuControl
 			//here goes my code...
 			IN3M_SelectRightBlank(popStr)
 			IN3M_CalculateScattering()
-			setDataFolder OldDf
+			SetDataFolder saveDF
 			break
 		default:
 			// FIXME(BugproneMissingSwitchDefaultCase)
@@ -386,7 +389,7 @@ end
 
 Function IN3M_SelectRightBlank(string EnergyString)
 
-	string oldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:IN3_CalcDataFromModel
 
 	SVAR ListOfPeakWidths
@@ -420,12 +423,13 @@ Function IN3M_SelectRightBlank(string EnergyString)
 		Duplicate/O BL_Q, BlankQ
 		Duplicate/O BL_Err, BlankE
 	else
+		SetDataFolder saveDF
 		Abort "This combination of energy and geometry does not yet exist"
 	endif
 
 	IN3M_CreateAndUpdatePlot()
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 
 End
 ////*************************************************************************
@@ -463,7 +467,7 @@ End
 
 Function IN3M_LoadDataInTheTool()
 
-	string oldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:IN3_CalcDataFromModel
 
 	SVAR DataFolderName    = root:Packages:IN3_CalcDataFromModel:DataFolderName
@@ -476,10 +480,11 @@ Function IN3M_LoadDataInTheTool()
 	WAVE/Z EWV   = $(DataFolderName + ErrorWaveName)
 
 	if(!WaveExists(IntWv) || !WaveExists(QWv))
+		SetDataFolder saveDF
 		Abort "Data not selected properly"
 	endif
 	Duplicate/O IntWv, OriginalModelIntensity
-	WAVE OriginalModelIntensity
+	WAVE/Z OriginalModelIntensity
 	Duplicate/O QWv, OriginalModelQ
 	if(WaveExists(EWV))
 		Duplicate/O EWV, OriginalError
@@ -500,7 +505,7 @@ Function IN3M_LoadDataInTheTool()
 
 	IN3M_CreateAndUpdatePlot()
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 ////*************************************************************************
 ////*************************************************************************
@@ -586,7 +591,7 @@ End
 
 Function IN3M_InitCalcDataFromModel()
 
-	string oldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:IN3_CalcDataFromModel
 
@@ -939,7 +944,7 @@ Function IN3M_InitCalcDataFromModel()
 		RE_DSM_18keV[144] = {7.79181e-20, 7.78303e-20, 7.87979e-20, 7.85418e-20, 7.79793e-20, 7.75587e-20}
 	endif
 
-	setDataFolder oldDf
+	SetDataFolder saveDF
 End
 
 ////*************************************************************************

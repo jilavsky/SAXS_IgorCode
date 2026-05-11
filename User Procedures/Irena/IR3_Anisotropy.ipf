@@ -1,6 +1,6 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use modern global access method and strict wave access.
-#pragma version=1.00
+#pragma version=1.01
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
@@ -9,6 +9,8 @@
 //*************************************************************************/
 Constant IR3NAnisSystemVersionNumber = 1
 
+//1.01 AI code review: add SetDataFolder restore before Abort in button handler; convert string-based
+//     DF save/restore to DFREF in IR3N_GraphInputData; add WAVE/Z to three wave declarations there.
 //1.00 first version, added code for Hermans Orientation Parameter
 
 //******************************************************************************************************************************************************
@@ -175,6 +177,7 @@ Function IR3N_AniSysButtonProc(ba) : ButtonControl
 					MoveWindow/W=AnisotropicSystemsPlot 0, 0, (IN2G_GetGraphWidthHeight("width")), (0.6 * IN2G_GetGraphWidthHeight("height"))
 					AutoPositionWIndow/M=0/R=AnisotropicSystemsPanel AnisotropicSystemsPlot
 				else
+					setDataFolder oldDF
 					Abort "Data not selected properly"
 				endif
 			endif
@@ -561,15 +564,15 @@ End
 static Function IR3N_GraphInputData()
 
 	PauseUpdate // building window...
-	string fldrSav = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	SetDataFolder root:Packages:AnisotropicSystems:
 	SVAR DataFolderName    = root:Packages:AnisotropicSystems:DataFolderName
 	SVAR IntensityWaveName = root:Packages:AnisotropicSystems:IntensityWaveName
 	SVAR AZWavename        = root:Packages:AnisotropicSystems:QWavename
 	SVAR ErrorWaveName     = root:Packages:AnisotropicSystems:ErrorWaveName
-	WAVE OriginalIntensity = root:Packages:AnisotropicSystems:OriginalIntensity
-	WAVE OriginalAZvector  = root:Packages:AnisotropicSystems:OriginalAZvector
-	WAVE OriginalError     = root:Packages:AnisotropicSystems:OriginalError
+	WAVE/Z OriginalIntensity = root:Packages:AnisotropicSystems:OriginalIntensity
+	WAVE/Z OriginalAZvector  = root:Packages:AnisotropicSystems:OriginalAZvector
+	WAVE/Z OriginalError     = root:Packages:AnisotropicSystems:OriginalError
 	DoWIndow AnisotropicSystemsPlot
 	if(V_Flag)
 		DoWIndow/F AnisotropicSystemsPlot
@@ -595,7 +598,7 @@ static Function IR3N_GraphInputData()
 		TextBox/C/N=DateTimeTag/F=0/A=RB/E=2/X=2.00/Y=1.00 "\\Z07" + date() + ", " + time()
 		TextBox/C/N=SampleNameTag/F=0/A=LB/E=2/X=2.00/Y=1.00 "\\Z07" + DataFolderName + IntensityWaveName
 	endif
-	SetDataFolder fldrSav
+	SetDataFolder saveDF
 End
 
 //******************************************************************************************************************************************************

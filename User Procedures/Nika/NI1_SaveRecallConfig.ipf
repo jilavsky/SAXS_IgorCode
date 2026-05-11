@@ -1,7 +1,7 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use modern global access method.
 
-#pragma version=1.03
+#pragma version=1.04
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
@@ -9,13 +9,14 @@
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//1.04 AI code review: convert 5 string-based DF save/restores to DFREF (saveDF).
 //1.03 fixed minor bug found by Igor 7
 //1.02 fixed minor bug in restore code which caused the Image type popup stiop working right.
 //1.01 added license for ANL
 
 Function NI1A_StoreLoadCurSettingPnl()
 
-	string OldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	SetDataFolder root:Packages:Convert2Dto1D
 	//mini initialization for this panel
 	DoWindow NI1A_SaveLoadPanel
@@ -29,7 +30,7 @@ Function NI1A_StoreLoadCurSettingPnl()
 		DoWindow/F NI1A_SaveLoadPanel
 	endif
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 
 Proc NI1A_SaveLoadPanel()
@@ -96,7 +97,7 @@ End
 Function NI1A_LoadSavedConfigContent(row)
 	variable row
 
-	string OldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	//initialize definitions of variables in case user has old experiment nad new config file..
 	NI1A_Initialize2Dto1DConversion()
 	SetDataFolder root:Packages:Convert2Dto1D
@@ -110,7 +111,7 @@ Function NI1A_LoadSavedConfigContent(row)
 	string NewConfiguration   = ConfigFileContent0[0]
 	KillWaves ConfigFileContent0
 	NI1A_RecoverStoredToolSetting(NewConfiguration)
-	setDataFolder OldDf
+	SetDataFolder saveDF
 
 End
 
@@ -179,7 +180,7 @@ End
 
 Function NI1A_ShowUserConfigContent()
 
-	string OldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	SetDataFolder root:Packages:Convert2Dto1D
 
 	WAVE/T SaveLoadDataAvailable = root:Packages:Convert2Dto1D:SaveLoadDataAvailable
@@ -213,7 +214,7 @@ Function NI1A_ShowUserConfigContent()
 		ConfigFileContent = ""
 	endif
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 
 End
 
@@ -237,7 +238,7 @@ End
 Function/S NI1A_RecordCurrentToolSetting()
 	//returns string with the current tool setting.
 
-	string OldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	SetDataFolder root:Packages:Convert2Dto1D
 
 	string SettingStr = ""
@@ -305,14 +306,14 @@ Function/S NI1A_RecordCurrentToolSetting()
 	endfor
 	settingStr = "UserComment>Comment=" + ConfFileUserComment + "<Variables>" + settingStrVars + "<Strings>" + settingStrStrings + "<"
 	return SettingStr
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 
 Function NI1A_RecoverStoredToolSetting(StoredSettings)
 	string StoredSettings
 	//recovers setting of the tool from stored in string.
 
-	string OldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	SetDataFolder root:Packages:Convert2Dto1D
 
 	variable i
@@ -362,6 +363,6 @@ Function NI1A_RecoverStoredToolSetting(StoredSettings)
 		ControlInfo/W=NI1_CreateBmCntrFieldPanel BmCntrTab
 		NI1BC_TabProc("", V_Value)
 	endif
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 

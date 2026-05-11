@@ -1,7 +1,7 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use modern global access method and strict wave access
 #pragma DefaultTab={3, 20, 4} // Set default tab width in Igor Pro 9 and later
-#pragma version=0.2
+#pragma version=0.3
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
@@ -16,6 +16,10 @@ Constant IR3EversionNumber = 0.1 //AnalyzeResults panel version number
 // add IR3E_MainCheckVersion to Irena after compile hook finction correctly
 
 // Version notes:
+//0.3 AI code review: add SetDataFolder restore before Abort in IR3E_CopyAndAppendData; add WAVE/Z
+//     + WaveExists guards throughout — SetVariable handler (OriginalXDataWave), IR3E_AppendDataToGraph
+//     (three waves), IR3E_SyncCursorsTogether (two waves), four DistributionWV/DimensionWV pairs in
+//     analysis/reporting functions, and 13 result waves in IR3E_ResAnalSizeDistResultsTableFnct.
 //0.2 add handling of USAXS M_... waves
 //0.1	Working version.
 
@@ -282,28 +286,32 @@ Function IR3E_SetVarProc(sva) : SetVariableControl
 			NVAR DataQstartPoint = root:Packages:Irena:AnalyzeResults:DataQstartPoint
 
 			if(stringmatch(sva.ctrlName, "DataQEnd"))
-				WAVE OriginalXDataWave = root:Packages:Irena:AnalyzeResults:OriginalXDataWave
-				tempP = BinarySearch(OriginalXDataWave, DataQEnd)
-				if(tempP < 1)
-					print "Wrong Q value set, Data Q max must be at most 1 point before the end of Data"
-					tempP    = numpnts(OriginalXDataWave) - 2
-					DataQEnd = OriginalXDataWave[tempP]
+				WAVE/Z OriginalXDataWave = root:Packages:Irena:AnalyzeResults:OriginalXDataWave
+				if(WaveExists(OriginalXDataWave))
+					tempP = BinarySearch(OriginalXDataWave, DataQEnd)
+					if(tempP < 1)
+						print "Wrong Q value set, Data Q max must be at most 1 point before the end of Data"
+						tempP    = numpnts(OriginalXDataWave) - 2
+						DataQEnd = OriginalXDataWave[tempP]
+					endif
+					DataQEndPoint = tempP
+					IR3E_SyncCursorsTogether("OriginalYDataWave", "B", tempP)
+					IR3E_SyncCursorsTogether("LinModelDataIntWave", "B", tempP)
 				endif
-				DataQEndPoint = tempP
-				IR3E_SyncCursorsTogether("OriginalYDataWave", "B", tempP)
-				IR3E_SyncCursorsTogether("LinModelDataIntWave", "B", tempP)
 			endif
 			if(stringmatch(sva.ctrlName, "DataQstart"))
-				WAVE OriginalXDataWave = root:Packages:Irena:AnalyzeResults:OriginalXDataWave
-				tempP = BinarySearch(OriginalXDataWave, DataQstart)
-				if(tempP < 1)
-					print "Wrong Q value set, Data Q min must be at least 1 point from the start of Data"
-					tempP      = 1
-					DataQstart = OriginalXDataWave[tempP]
+				WAVE/Z OriginalXDataWave = root:Packages:Irena:AnalyzeResults:OriginalXDataWave
+				if(WaveExists(OriginalXDataWave))
+					tempP = BinarySearch(OriginalXDataWave, DataQstart)
+					if(tempP < 1)
+						print "Wrong Q value set, Data Q min must be at least 1 point from the start of Data"
+						tempP      = 1
+						DataQstart = OriginalXDataWave[tempP]
+					endif
+					DataQstartPoint = tempP
+					IR3E_SyncCursorsTogether("OriginalYDataWave", "A", tempP)
+					IR3E_SyncCursorsTogether("LinModelDataIntWave", "A", tempP)
 				endif
-				DataQstartPoint = tempP
-				IR3E_SyncCursorsTogether("OriginalYDataWave", "A", tempP)
-				IR3E_SyncCursorsTogether("LinModelDataIntWave", "A", tempP)
 			endif
 			break
 
@@ -422,6 +430,7 @@ Function IR3E_CopyAndAppendData(FolderNameStr)
 		WAVE/Z SourcedQWv    = $(DataFolderName + possiblyQUoteName("M_" + dXDataWaveName))
 	endif
 	if(!WaveExists(SourceIntWv) || !WaveExists(SourceQWv)) //||!WaveExists(SourceErrorWv))
+		SetDataFolder oldDf
 		Abort "Data selection failed for Data in Simple/basic fits routine IR3E_CopyAndAppendData"
 	endif
 	Duplicate/O SourceIntWv, OriginalYDataWave
@@ -480,9 +489,12 @@ Function IR3E_AppendDataToGraph()
  	IR3E_CreateAnalyzeResultsGraphs()
 	variable WhichLegend = 0
 	string Shortname1
-	WAVE OriginalYDataWave     = root:Packages:Irena:AnalyzeResults:OriginalYDataWave
-	WAVE OriginalXDataWave     = root:Packages:Irena:AnalyzeResults:OriginalXDataWave
-	WAVE OriginalDataErrorWave = root:Packages:Irena:AnalyzeResults:OriginalDataErrorWave
+	WAVE/Z OriginalYDataWave     = root:Packages:Irena:AnalyzeResults:OriginalYDataWave
+	WAVE/Z OriginalXDataWave     = root:Packages:Irena:AnalyzeResults:OriginalXDataWave
+	WAVE/Z OriginalDataErrorWave = root:Packages:Irena:AnalyzeResults:OriginalDataErrorWave
+	if(!WaveExists(OriginalYDataWave) || !WaveExists(OriginalXDataWave))
+		return 0
+	endif
 	CheckDisplayed/W=IR3E_MainDataDisplay OriginalYDataWave
 	if(!V_flag)
 		AppendToGraph/W=IR3E_MainDataDisplay OriginalYDataWave vs OriginalXDataWave
@@ -562,8 +574,8 @@ static Function IR3E_SyncCursorsTogether(traceName, CursorName, PointNumber)
 	NVAR DataQstart        = root:Packages:Irena:AnalyzeResults:DataQstart
 	NVAR DataQEndPoint     = root:Packages:Irena:AnalyzeResults:DataQEndPoint
 	NVAR DataQstartPoint   = root:Packages:Irena:AnalyzeResults:DataQstartPoint
-	WAVE OriginalXDataWave = root:Packages:Irena:AnalyzeResults:OriginalXDataWave
-	WAVE OriginalYDataWave = root:Packages:Irena:AnalyzeResults:OriginalYDataWave
+	WAVE/Z OriginalXDataWave = root:Packages:Irena:AnalyzeResults:OriginalXDataWave
+	WAVE/Z OriginalYDataWave = root:Packages:Irena:AnalyzeResults:OriginalYDataWave
 	variable tempMaxQ, tempMaxQY, tempMinQY, maxY, minY
 	//check if user removed cursor from graph, in which case do nothing for now...
 	if(numtype(PointNumber) == 0)
@@ -754,8 +766,8 @@ Function IR3E_SaveResultsToNotebook()
 	NVAR SDFWHM            = root:Packages:Irena:AnalyzeResults:SDFWHM
 	NVAR Rg                = root:Packages:Irena:AnalyzeResults:SDRg
 
-	WAVE DistributionWV = root:Packages:Irena:AnalyzeResults:OriginalYDataWave
-	WAVE DimensionWV    = root:Packages:Irena:AnalyzeResults:OriginalXDataWave
+	WAVE/Z DistributionWV = root:Packages:Irena:AnalyzeResults:OriginalYDataWave
+	WAVE/Z DimensionWV    = root:Packages:Irena:AnalyzeResults:OriginalXDataWave
 
 	IR1_AppendAnyText("\r Results of " + AnalysisMethodSelected + " Analysis of results\r", 1)
 	IR1_AppendAnyText("Date & time: \t" + Date() + "   " + time(), 0)
@@ -817,8 +829,8 @@ Function IR3E_SaveResultsToFolder()
 	NVAR SDMedian               = root:Packages:Irena:AnalyzeResults:SDMedian
 	NVAR SDFWHM                 = root:Packages:Irena:AnalyzeResults:SDFWHM
 	NVAR Rg                     = root:Packages:Irena:AnalyzeResults:SDRg
-	WAVE DistributionWV         = root:Packages:Irena:AnalyzeResults:OriginalYDataWave
-	WAVE DimensionWV            = root:Packages:Irena:AnalyzeResults:OriginalXDataWave
+	WAVE/Z DistributionWV       = root:Packages:Irena:AnalyzeResults:OriginalYDataWave
+	WAVE/Z DimensionWV          = root:Packages:Irena:AnalyzeResults:OriginalXDataWave
 	SVAR AnalysisMethodSelected = root:Packages:Irena:AnalyzeResults:AnalysisMethodSelected
 
 	WAVE/Z CumulativeSizeDist      = root:Packages:Irena:AnalyzeResults:CumulativeSizeDist
@@ -907,8 +919,8 @@ Function IR3E_SaveResultsToWaves()
 	NVAR SDMedian          = root:Packages:Irena:AnalyzeResults:SDMedian
 	NVAR SDFWHM            = root:Packages:Irena:AnalyzeResults:SDFWHM
 	NVAR RgVal             = root:Packages:Irena:AnalyzeResults:SDRg
-	WAVE DistributionWV    = root:Packages:Irena:AnalyzeResults:OriginalYDataWave
-	WAVE DimensionWV       = root:Packages:Irena:AnalyzeResults:OriginalXDataWave
+	WAVE/Z DistributionWV  = root:Packages:Irena:AnalyzeResults:OriginalYDataWave
+	WAVE/Z DimensionWV     = root:Packages:Irena:AnalyzeResults:OriginalXDataWave
 
 	SVAR AnalysisMethodSelected = root:Packages:Irena:AnalyzeResults:AnalysisMethodSelected
 
@@ -982,8 +994,12 @@ Function IR3E_ResAnalSizeDistResultsTableFnct() : Table
 			Abort "No Analysis of results - Size Distribution data exist."
 		endif
 		SetDataFolder root:ResultsAnalysisSizeDist:
-		WAVE/T SampleName
-		WAVE VolumeFraction, NumberDensity, SpecificSurfaceArea, ModeWv, MeanWv, MeadianWV, MinSize, MaxSize, FWHM, Rg, OrderWave, PercentWave, TemperatureWave, TimeWave
+		WAVE/Z/T SampleName
+		WAVE/Z VolumeFraction, NumberDensity, SpecificSurfaceArea, ModeWv, MeanWv, MeadianWV, MinSize, MaxSize, FWHM, Rg, OrderWave, PercentWave, TemperatureWave, TimeWave
+		if(!WaveExists(SampleName) || !WaveExists(VolumeFraction))
+			SetDataFolder oldDf
+			Abort "Results waves not found in root:ResultsAnalysisSizeDist — save results first"
+		endif
 		Edit/K=1/W=(329, 500, 1721, 957)/N=IR3E_ResAnalSizeDistResultsTable SampleName, VolumeFraction, NumberDensity, SpecificSurfaceArea as "Analysis of Size Distribution results"
 		AppendToTable ModeWv, MeanWv, MeadianWV, MinSize, MaxSize, FWHM, Rg, OrderWave, PercentWave
 		AppendToTable TemperatureWave, TimeWave
@@ -1008,9 +1024,9 @@ End
 Function IR3E_SDCalculateStatistics()
 
 	//for size distribution, calculate statistics...
-	WAVE DistributionWV = root:Packages:Irena:AnalyzeResults:OriginalYDataWave
-	WAVE DimensionWV    = root:Packages:Irena:AnalyzeResults:OriginalXDataWave
-	NVAR EndSize        = root:Packages:Irena:AnalyzeResults:DataQEnd
+	WAVE/Z DistributionWV = root:Packages:Irena:AnalyzeResults:OriginalYDataWave
+	WAVE/Z DimensionWV    = root:Packages:Irena:AnalyzeResults:OriginalXDataWave
+	NVAR EndSize          = root:Packages:Irena:AnalyzeResults:DataQEnd
 	NVAR StartSize      = root:Packages:Irena:AnalyzeResults:DataQStart
 	NVAR EndPnt         = root:Packages:Irena:AnalyzeResults:DataQEndPoint
 	NVAR StartPnt       = root:Packages:Irena:AnalyzeResults:DataQstartPoint

@@ -1,12 +1,21 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use modern global access method.
-#pragma version=1.09
+#pragma version=1.10
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
+
+//1.10 AI code review: add PauseUpdate to IR2S_MakeSFParamPanel; restore data folder before Abort
+//     calls in IR2S_CalcStructureFactor; add WAVE/Z + WaveExists guard for gMSAWave in
+//     IR2_HayterPenfoldMSA (with /Z only in sqcoef/sqfun/sqhcal callee chain); convert
+//     string SaveDF to DFREF saveDF in IR2_InitHayterPenfoldMSA.
+
+// TODO (deferred from AI review 2026-05-04):
+// 1. IR2S_MakeSFParamPanel also has abort paths (lines ~293, 300) inside the function that
+//    skip setDataFolder restore — add restore before those Aborts in a follow-up pass.
 
 //1.09 lint, changed from prgama version 2 to 3, may cause issues as noted in 1.05. Needs fixing now. 
 //1.08 added DisorderedCrystal of second type https://en.wikipedia.org/wiki/Structure_factor#Finite_crystals_with_disorder_of_the_second_kind
@@ -158,9 +167,11 @@ Function IR2S_CalcStructureFactor(SFname, Qvalue, Param1, Param2, Param3, Param4
 	elseif(cmpstr(SFname, "User") == 0)
 		string infostr = FunctionInfo(UserStrFacFormula)
 		if(strlen(infostr) == 0)
+			setDataFolder OldDf
 			Abort "Structure factor user function does not exist"
 		endif
 		if(NumberByKey("N_PARAMS", infostr) != 2 || NumberByKey("RETURNTYPE", infostr) != 4)
+			setDataFolder OldDf
 			Abort "Structure factor function does not have the right number of parameters or does not return variable"
 		endif
 		string     cmd1
@@ -274,6 +285,7 @@ Function IR2S_MakeSFParamPanel(TitleStr, SFStr, P1Str, FitP1Str, LowP1Str, HighP
 	//string WinHookFnctStr
 	//to use this panel, provide strings with paths to controled variables - or "" if the variable does not exist
 
+	PauseUpdate
 	variable NoFittingLimitsL = 0
 	if(!ParamIsDefault(NoFittingLimits))
 		NoFittingLimitsL = NoFittingLimits
@@ -1112,7 +1124,10 @@ Function IR2_HayterPenfoldMSA(w, x) : FitFunc
 	dialec  = w[5]     // unitless
 
 	//use wave instead
-	WAVE gMSAWave = $"root:HayPenMSA:gMSAWave"
+	WAVE/Z gMSAWave = $"root:HayPenMSA:gMSAWave"
+	if(!WaveExists(gMSAWave))
+		return 1
+	endif
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////// convert to USEFUL inputs in SI units                                                //
@@ -1245,7 +1260,7 @@ Function IR2_HayterPenfoldMSA(w, x) : FitFunc
 End
 
 Function IR2_InitHayterPenfoldMSA()
-	string SaveDF = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	if(DataFolderExists("root:HayPenMSA"))
 		SetDataFolder root:HayPenMSA
 	else
@@ -1253,7 +1268,7 @@ Function IR2_InitHayterPenfoldMSA()
 	endif
 	//variable/G a,b,c,f,eta,gek,ak,u,v,gamk,seta,sgek,sak,scal,g1, fval, evar
 	Make/O/D/N=17 gMSAWave
-	SetDataFolder SaveDF
+	SetDataFolder saveDF
 	//
 	//	make/o/d/n=(num) xwave_hpmsa, ywave_hpmsa, xdiamwave_hpmsa
 	//	xwave_hpmsa = alog(log(qmin) + x*((log(qmax)-log(qmin))/num))
@@ -1298,7 +1313,7 @@ static Function sqcoef(ir)
 	variable ir
 
 	variable itm = 40.0, acc = 5.0E-6, ix, ig, ii, del, e1, e2, f1, f2
-	WAVE gMSAWave = $"root:HayPenMSA:gMSAWave"
+	WAVE/Z gMSAWave = $"root:HayPenMSA:gMSAWave"
 
 	ig = 1
 	if(gMSAWave[6] >= (1.0 + 8.0 * gMSAWave[4]))
@@ -1397,7 +1412,7 @@ static Function sqfun(ix, ir)
 	variable a1, a2, a3, b1, b2, b3, v1, v2, v3, p1, p2, p3, pp, pp1, pp2, p1p2, t1, t2, t3, um1, um2, um3, um4, um5, um6
 	variable w0, w1, w2, w3, w4, w12, w13, w14, w15, w16, w24, w25, w26, w32, w34, w3425, w35, w3526, w36, w46, w56
 	variable fa, fap, ca, e24g, pwk, qpw, pg, ii, del, fun, fund, g24
-	WAVE gMSAWave = $"root:HayPenMSA:gMSAWave"
+	WAVE/Z gMSAWave = $"root:HayPenMSA:gMSAWave"
 
 	//	NVAR a=root:HayPenMSA:a
 	//	NVAR b=root:HayPenMSA:b
@@ -1715,7 +1730,7 @@ static Function sqhcal(qq)
 	variable qq
 
 	variable SofQ, etaz, akz, gekz, e24, x1, x2, ck, sk, ak2, qk, q2k, qk2, qk3, qqk, sink, cosk, asink, qcosk, aqk, inter
-	WAVE gMSAWave = $"root:HayPenMSA:gMSAWave"
+	WAVE/Z gMSAWave = $"root:HayPenMSA:gMSAWave"
 
 	//NVAR a=root:HayPenMSA:a
 	//NVAR b=root:HayPenMSA:b

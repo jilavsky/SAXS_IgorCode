@@ -1,8 +1,10 @@
 #pragma rtGlobals=3 // Use modern global access method and strict wave access.
-#pragma version=2.18
+#pragma version=2.19
 //#include <FITS Loader>
 #include <Autosize Images>
 
+//2.19 AI code review: convert 2 string-based DF save/restores to DFREF; add SetDataFolder
+//     restore before abort in NI1_ReadFITSFIleFormat3 (data-not-found path); add WAVE/Z to DataWv.
 //2.18 fixed bug when data in Extension 2 when corrected for offset and scaling run out of range of 16bin signed integers. How did this ever worked?
 //2.17 fixed bug when data in Extension 2 of some FITS files with long and complicated bintable (Extension 1) were not read.
 // version 2.16 JIL - modified for Nika needs
@@ -47,7 +49,7 @@ Function/S NI1_ReadFITSFIleFormat3(PathName, FileName)
 	//using modified and fixe Wavemetrics load
 	//extended by community to be able to read primary data and multiple HUD,
 	//some of the instrument store data in HUD 'IMAGE' so we need to find the right data...
-	string OldDf = getDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	KillDataFolder/Z root:Packages:Nika_FITS_Import
 	NewDataFolder/O/S root:Packages:Nika_FITS_Import
 	variable i, RefNum
@@ -92,11 +94,12 @@ Function/S NI1_ReadFITSFIleFormat3(PathName, FileName)
 	endfor
 	if(!DataFound)
 		DoAlert/T="Data not located" 0, "2D data were not located on this FITS file, please send example to ilavsky@aps.anl.gov so I can fit the loader"
+		SetDataFolder saveDF
 		abort
 	endif
-	WAVE DataWv = $(DataFoundPath)
+	WAVE/Z DataWv = $(DataFoundPath)
 	Note/NOCR DataWv, AllHeaderInfoAsString
-	setDataFolder OldDf
+	SetDataFolder saveDF
 	return DataFoundPath
 End
 
@@ -245,7 +248,7 @@ static Function NI1_LoadOneFITS(refnum, dfName, doHeader, doHistory, doComment, 
 	//		Notebook $nb ruler=Normal
 	//	endif
 
-	string dfSav = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	dfName = CleanupName(dfName, 1)
 	string/G LatestImportedData = dfName
 	NewDataFolder/O/S $dfName
@@ -445,7 +448,7 @@ static Function NI1_LoadOneFITS(refnum, dfName, doHeader, doHistory, doComment, 
 		DoAlert 0, errstr
 	endif
 
-	SetDataFolder dfSav
+	SetDataFolder saveDF
 	return err
 End
 
@@ -1127,7 +1130,7 @@ End
 //		Variable/G askifSize= 1e6			// ask if ok to load if data size is bigger than this
 //
 //		String/G thePath= "_current_"
-//		SetDataFolder dfSav
+//		SetDataFolder saveDF
 //	endif
 //
 //	NewPanel/K=1 /W=(71,89,371,289)

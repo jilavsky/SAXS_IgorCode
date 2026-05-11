@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
   
-#pragma version 1.16
+#pragma version 1.17
 
 
 //*************************************************************************\
@@ -10,6 +10,9 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.17 AI code review: convert 6 string-based DF save/restores to DFREF; add WAVE/Z to
+//     Intensity/Qvector/PD_range/R_Error/MeasTime (absolute paths), PD_Intensity (×2),
+//     USAXS_PD/Monitor/MeasTime/Ar_encoder, and PD_Error (all current-folder waves).
 //1.16 another attempt to fix problem with negative intensities on some ranges (range 4 and 5) which caused issues with smoothing of blanks... 
 //1.15 fixed problem when PD_range used to create MyColorWave was getting out of sync with data as points were being removed. Flyscan only, added PD_RangeModified to fix this... 
 //1.14 fixed rare case when fix backgroundoversubtraction from 1.13 caused problems. In some cases early data may be negative. Now looking for negative value only in last 1/2 of the data points.  
@@ -35,7 +38,7 @@ Function IN3_RecalculateData(StepFrom)   //recalculate R wave from user specifie
 		// 2 - changed Q parameters, recalcualte just the Q vales... 
 	
 	
-	string oldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
 	NVAR IsBlank = root:Packages:Indra3:IsBlank
 
@@ -82,7 +85,7 @@ Function IN3_RecalculateData(StepFrom)   //recalculate R wave from user specifie
 		endif
 	endif
 	UserSavedData = 0
-	setDataFolder OldDf	
+	SetDataFolder saveDF	
 end
 
 //***********************************************************************************************************************************
@@ -90,13 +93,13 @@ end
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
 Function IN3_SmoothRData()
-	string oldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
-	Wave Intensity= root:Packages:Indra3:R_Int
-	Wave Qvector= root:Packages:Indra3:Qvec
-	Wave PD_range = root:Packages:Indra3:PD_range
-	Wave R_Error = root:Packages:Indra3:R_Error
-	Wave MeasTime = root:Packages:Indra3:MeasTime
+	Wave/Z Intensity= root:Packages:Indra3:R_Int
+	Wave/Z Qvector= root:Packages:Indra3:Qvec
+	Wave/Z PD_range = root:Packages:Indra3:PD_range
+	Wave/Z R_Error = root:Packages:Indra3:R_Error
+	Wave/Z MeasTime = root:Packages:Indra3:MeasTime
 	NVAR SmoothRCurveData = root:Packages:Indra3:SmoothRCurveData
 	if(SmoothRCurveData)
 		//firs remove NaNs as this is really difficult to deal with...
@@ -165,7 +168,7 @@ Function IN3_SmoothRData()
 		endfor
 		Intensity = 10^SmoothIntensity
 	endif
-	setDataFolder OldDf	
+	SetDataFolder saveDF	
 end
 
 //***********************************************************************************************************************************
@@ -173,13 +176,13 @@ end
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
 Function IN3_FitPeakCenterEstimate()
-	string oldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
 	
 	
 	NVAR PeakCenterFitStartPoint
 	NVAR PeakCenterFitEndPoint
-	Wave PD_Intensity
+	Wave/Z PD_Intensity
 	variable NumP
 	WaveStats/Q PD_Intensity
 
@@ -232,7 +235,7 @@ Function IN3_FitPeakCenterEstimate()
 		SampleTransmission = MaximumIntensity / BlankMaxInt
 	endif
 
-	setDataFolder OldDf	
+	SetDataFolder saveDF	
 end
 //******************** name **************************************
 //STATIC Function IN3_FindlevelsWithNaNs(waveIn, LevelSearched, MaxLocation, LeftRight)
@@ -268,7 +271,7 @@ end
 
 Function IN3_calculateRwaveQvec()	//this creates log log plot for check of dark currents
 	
-	string oldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
 
 	Wave/Z ar_encoder	
@@ -292,7 +295,7 @@ Function IN3_calculateRwaveQvec()	//this creates log log plot for check of dark 
 		Qvec*=-1
 	endif
 	R_Qvec = Qvec
-	setDataFolder OldDf
+	SetDataFolder saveDF
 
 End
 //***********************************************************************************************************************************
@@ -303,17 +306,17 @@ End
 Function IN3_CalculateRWaveIntensity(CleanUpRangeCHange)				//Recalculate the R wave in folder df
 	variable CleanUpRangeCHange
 	
-	string oldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
 
 	Wave/Z PD_Range							//these waves should be here
 	if(!WaveExists(PD_Range))
 		abort 
 	endif
-	Wave USAXS_PD
-	Wave Monitor
-	Wave MeasTime
-	Wave Ar_encoder
+	Wave/Z USAXS_PD
+	Wave/Z Monitor
+	Wave/Z MeasTime
+	Wave/Z Ar_encoder
 	
 //	if (!WaveExists(PD_Intensity) || !WaveExists(PD_Error))	
 	Duplicate/O PD_range, PD_Intensity, PD_Error
@@ -321,8 +324,8 @@ Function IN3_CalculateRWaveIntensity(CleanUpRangeCHange)				//Recalculate the R 
 	IN2G_AppendorReplaceWaveNote("PD_Intensity","Wname","PD_Intensity") 
 	IN2G_AppendorReplaceWaveNote("PD_Error","Wname","PD_Error") 
 //	endif
-	Wave PD_Intensity						//these waves may be new
-	Wave PD_Error
+	Wave/Z PD_Intensity						//these waves may be new
+	Wave/Z PD_Error
 	Redimension/D PD_Intensity				//intensity should be double precision
 	
 	SVAR UPDparameters					//now we need to get the dark currents and gains here
@@ -409,7 +412,7 @@ Function IN3_CalculateRWaveIntensity(CleanUpRangeCHange)				//Recalculate the R 
 	R_Int = PD_Intensity * SampleTransmissionPeakToPeak
 	R_error = PD_error * SampleTransmissionPeakToPeak
 	//now remove dropouts if needed...
-	setDataFolder OldDf	
+	SetDataFolder saveDF	
 end
 ///*********************************************************************************
 ///*********************************************************************************
@@ -443,7 +446,7 @@ end
 Function IN3_RemoveDropouts(Ar_encoder,MeasTime,Monitor,PD_range,USAXS_PD, R_Int,R_error)
 	WAVE Ar_encoder,MeasTime,Monitor,PD_range, USAXS_PD, R_Int,R_error
 	
-	string oldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
 
 	NVAR RemoveDropouts =root:Packages:Indra3:RemoveDropouts
@@ -492,7 +495,7 @@ Function IN3_RemoveDropouts(Ar_encoder,MeasTime,Monitor,PD_range,USAXS_PD, R_Int
 	endif
 	//IN2G_RemoveNaNsFrom7Waves(Ar_encoder,MeasTime,Monitor,PD_range, USAXS_PD, R_Int,R_error)			//is this correct???
 	
-	setDataFolder OldDf		
+	SetDataFolder saveDF		
 end
 
 //***********************************************************************************************************************************

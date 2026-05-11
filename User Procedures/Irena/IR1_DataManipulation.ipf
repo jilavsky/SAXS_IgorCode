@@ -1,5 +1,5 @@
 #pragma rtGlobals=3 // Use strict wave reference mode and runtime bounds checking
-#pragma version=2.70
+#pragma version=2.72
 Constant IR3MversionNumber = 2.62 //Data manipulation II panel version number
 Constant IR1DversionNumber = 2.61 //Data manipulation I panel version number
 
@@ -9,6 +9,7 @@ Constant IR1DversionNumber = 2.61 //Data manipulation I panel version number
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//2.72 AI cleanup and debug
 //2.71 fixed DataMan1 handling of results with no errors. Errors are now faked and removed after processing.
 //2.70 added option to propagate measurement errors through averaging, it is now default option, unless user picks another method. No need to chaneg GUI.
 //2.69 fixed leftover RT global issues which threw errors on users due to incorrect search for high-q end of usabel data. Fixed positions on DMII after creation.
@@ -67,6 +68,17 @@ Constant IR1DversionNumber = 2.61 //Data manipulation I panel version number
 
 //version 2.1 modified to use new control procedures using subpanels... Hope this will work as advertised.
 
+// TODO (deferred from AI review 2026-05-04):
+// 1. Convert Proc IR1D_DataManipulationPanel() and Proc IR1D_DataManipulationGraph() from Proc/macro
+//    to Function. This allows calling them directly instead of via Execute("...").
+//    Once converted, remove Execute("IR1D_DataManipulationPanel()") (line ~91) and
+//    Execute("IR1D_DataManipulationGraph()") (line ~1962) and replace with direct calls.
+//    Note: do carefully — Proc vs Function has subtle behavior differences for panel builders.
+// 2. Replace ~20 Execute("PopupMenu ...") calls in IR1D_UpdateGraph() (lines ~6038-6235)
+//    with direct PopupMenu commands:
+//      PopupMenu ctrlName, win=panelName, mode=1, value=valueStr
+//    These Execute calls predate direct PopupMenu support and use fragile string escaping.
+
 ///******************************************************************************************
 ///******************************************************************************************
 ///******************************************************************************************
@@ -101,7 +113,7 @@ Function IR1D_MainCheckVersion()
 	DoWindow IR1D_DataManipulationPanel
 	if(V_Flag)
 		if(!IR1_CheckPanelVersionNumber("IR1D_DataManipulationPanel", IR1DversionNumber))
-			DoAlert/T="The Data manipualtion panel was created by incorrect version of Irena " 1, "Data manipualtion may need to be restarted to work properly. Restart now?"
+			DoAlert/T="The Data manipulation panel was created by incorrect version of Irena " 1, "Data manipulation may need to be restarted to work properly. Restart now?"
 			if(V_flag == 1)
 				IR1D_DataManipulation()
 			else //at least reinitialize the variables so we avoid major crashes...
@@ -545,8 +557,7 @@ End
 Function IR1D_MergeData(VaryQshift)
 	variable VaryQshift
 
-	string OldDf
-	OldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:SASDataModification
 
 	if((strlen(CsrWave(A, "IR1D_DataManipulationGraph")) == 0) || (strlen(CsrWave(B, "IR1D_DataManipulationGraph")) == 0))
@@ -624,8 +635,11 @@ Function IR1D_MergeData(VaryQshift)
 	else //keep Qshift=0
 		Optimize/Q/X={scalingFactor, highQDifference}/R={scalingFactor, highQDifference}/Y=(ValueEst) IR1D_FindMergeValues1, TempIntCombined
 	endif
-	WAVE W_Extremum
+	WAVE/Z W_Extremum
 	KillWaves TempIntCombined
+	if(!WaveExists(W_Extremum))
+		Abort "Optimize failed — could not determine merge parameters"
+	endif
 	Data1_IntMultiplier = 1
 	Data2_IntMultiplier = W_Extremum[0]
 	Data1_Background    = W_Extremum[1]
@@ -640,7 +654,7 @@ Function IR1D_MergeData(VaryQshift)
 	IR1D_RecalculateData()
 	//print "Merged data with following parameters: ScalingFct = "+num2str(Data2_IntMultiplier)+" , and bckg = "+num2str(Data1_Background)
 	//EvaluatePar()
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -848,8 +862,7 @@ End
 //**********************************************************************************************************
 static Function IR1D_SaveData()
 
-	string OldDf
-	OldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	SVAR NewDataFolderName    = root:Packages:SASDataModification:NewDataFolderName
 	SVAR NewIntensityWaveName = root:Packages:SASDataModification:NewIntensityWaveName
 	SVAR NewQWavename         = root:Packages:SASDataModification:NewQWavename
@@ -965,7 +978,7 @@ static Function IR1D_SaveData()
 
 		endif
 	endif
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -1010,8 +1023,7 @@ End
 
 static Function IR1D_ConvertData()
 
-	string OldDf
-	OldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:packages:SASDataModification
 
 	DoWindow IR1D_DataManipulationGraph
@@ -1497,7 +1509,7 @@ static Function IR1D_ConvertData()
 	KillWaves/Z TempIntLog1, TempIntInterp1
 	KillWaves/Z TempELog2, TempEInterp2, ResultsEtemp
 	KillWaves/Z TempELog1, TempEInterp1, ResultsEtemp
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -1579,8 +1591,7 @@ End
 //**********************************************************************************************************
 static Function IR1D_SmoothData()
 
-	string OldDf
-	OldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:packages:SASDataModification
 
 	NVAR SmoothInLogScale   = root:packages:SASDataModification:SmoothInLogScale
@@ -1719,7 +1730,7 @@ static Function IR1D_SmoothData()
 		KillWaves/Z ResultsE
 	endif
 	KillWaves/Z ResultsIntBckp, ResultsEBckp
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 
 //**********************************************************************************************************
@@ -1728,8 +1739,7 @@ End
 
 static Function IR1D_AutoScale()
 
-	string OldDf
-	OldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:SASDataModification
 
 	if((strlen(CsrWave(A, "IR1D_DataManipulationGraph")) == 0) || (strlen(CsrWave(B, "IR1D_DataManipulationGraph")) == 0))
@@ -1769,7 +1779,7 @@ static Function IR1D_AutoScale()
 	Data1_IntMultiplier = 1
 	Data2_IntMultiplier = integral1 / integral2
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -1862,13 +1872,12 @@ static Function IR1D_ResetModifyData()
 	endfor
 
 	KillWIndow/Z IR1D_DataManipulationGraph
-	string OldDf
-	OldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:SASDataModification:
 	KillWaves/Z Intensity1, OriginalIntensity1, Qvector1, OriginalQvector1, OriginalError1, Error1
 	KillWaves/Z Intensity2, OriginalIntensity2, Qvector2, OriginalQvector2, OriginalError2, Error2
 	KillWaves/Z ResultsInt, ResultsQ, ResultsE
-	setDataFolder OldDf
+	SetDataFolder saveDF
 
 End
 //**********************************************************************************************************
@@ -2045,8 +2054,7 @@ EndMacro
 //**********************************************************************************************************
 static Function IR1D_PresetOutputStrings()
 
-	string OldDf
-	OldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:SASDataModification:
 	SVAR DataFolderName1    = root:Packages:SASDataModificationTop:DataFolderName
 	SVAR IntensityWaveName1 = root:Packages:SASDataModificationTop:IntensityWaveName
@@ -2116,7 +2124,7 @@ static Function IR1D_PresetOutputStrings()
 		endif
 	endif
 
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -2124,8 +2132,7 @@ End
 
 static Function IR1D_CopyDataLocally()
 
-	string OldDf
-	OldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:SASDataModification:
 
 	SVAR DataFolderName1    = root:Packages:SASDataModificationTop:DataFolderName
@@ -2243,7 +2250,7 @@ static Function IR1D_CopyDataLocally()
 	endif
 	OutputDataUnits = DataUnits
 	PopupMenu DataUnits, popmatch=OutputDataUnits, win=IR1D_DataManipulationPanel
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -2835,12 +2842,12 @@ Function IR3M_ReplaceCheckProc(cba) : CheckBoxControl
 			variable checked = cba.checked
 			if(Checked)
 				IR2C_InputPanelCheckBoxProc(cba)
-				SVAR tempStr = root:Packages:DataManipulationII:Waves_Xtemplate
-				tempStr = "(?i)q_"
-				SVAR tempStr = root:Packages:DataManipulationII:Waves_Ytemplate
-				tempStr = "(?i)r_"
-				SVAR tempStr = root:Packages:DataManipulationII:Waves_Etemplate
-				tempStr = "(?i)s_"
+				SVAR qTemplate = root:Packages:DataManipulationII:Waves_Xtemplate
+				qTemplate = "(?i)q_"
+				SVAR rTemplate = root:Packages:DataManipulationII:Waves_Ytemplate
+				rTemplate = "(?i)r_"
+				SVAR sTemplate = root:Packages:DataManipulationII:Waves_Etemplate
+				sTemplate = "(?i)s_"
 				//something else here
 			endif
 			break
@@ -3057,7 +3064,7 @@ Function IR3M_DataManipulationIIPanel()
 	Button ProcessData, pos={10, 615}, size={180, 20}, proc=IR3M_DataManIIPanelButtonProc, title="Process data", help={"Run the processing as per choices above"}
 	Button SaveDataBtn, pos={200, 615}, size={180, 20}, proc=IR3M_DataManIIPanelButtonProc, title="Save data", help={"Save the processed data as per choices above"}, disable=(AverageNWaves || SubtractDataFromAll)
 	IR3M_DataManIIFixTabControl()
-	setDataFolder oldDF
+	SetDataFolder oldDf
 End
 
 ///******************************************************************************************
@@ -3304,7 +3311,7 @@ Function IR3M_DataMinerCheckProc(CB_Struct) : CheckBoxControl
 		endif
 		//		DoAlert 0, "Need to create Panel with Listbox and enable manual data selection"
 	endif
-	setDataFolder oldDF
+	SetDataFolder oldDf
 
 End
 
@@ -3650,11 +3657,9 @@ Function/S IR3M_ListFoldersWithSubfolders(startDF, levels)
 	// startDF requires trailing colon.
 	//set 1 for long type and 0 for short type return
 	//
-	string dfSave
+	DFREF saveDF = GetDataFolderDFR()
 	string list = "", templist, tempWvName, tempWaveType
 	variable i, skipRest, j
-
-	dfSave = GetDataFolder(1)
 
 	if(!DataFolderExists(startDF))
 		return ""
@@ -3669,6 +3674,7 @@ Function/S IR3M_ListFoldersWithSubfolders(startDF, levels)
 	endif
 	levels -= 1
 	if(levels <= 0)
+		SetDataFolder saveDF
 		return list
 	endif
 
@@ -3687,7 +3693,7 @@ Function/S IR3M_ListFoldersWithSubfolders(startDF, levels)
 		index += 1
 	while(1)
 
-	SetDataFolder(dfSave)
+	SetDataFolder saveDF
 	return list
 End
 //**********************************************************************************************
@@ -3722,7 +3728,7 @@ Function IR3M_PanelPopupControl(ctrlName, popNum, popStr) : PopupMenuControl
 		OutputDataUnits = popStr
 	endif
 
-	setDataFolder oldDF
+	SetDataFolder oldDf
 End
 ///******************************************************************************************
 ///******************************************************************************************
@@ -3800,7 +3806,7 @@ Function IR3M_DataManIIPanelButtonProc(ctrlName) : ButtonControl
 	if(cmpstr(ctrlName, "SaveDataBtn") == 0)
 		IR3M_SaveProcessedData()
 	endif
-	setDataFolder oldDF
+	SetDataFolder oldDf
 End
 ///******************************************************************************************
 ///******************************************************************************************
@@ -3874,7 +3880,7 @@ Function IR3M_ReadWavesFromListBox(which)
 		Waves_Etemplate = ItemsInFolder[V_Value]
 	endif
 
-	setDataFolder oldDF
+	SetDataFolder oldDf
 End
 
 ///******************************************************************************************
@@ -3902,7 +3908,7 @@ Function IR3M_PreviewListOfSelFolders()
 	else
 		SelectedFoldersWv = 0
 	endif
-	setDataFolder oldDF
+	SetDataFolder oldDf
 
 End
 ///******************************************************************************************
@@ -4292,7 +4298,7 @@ Function IR3M_ProcessTheDataFunction()
 
 	KillWaves/Z AveragedDataXwave, AveragedDataYwave, AveragedDataEwave, AveragedDataYwaveMin, AveragedDataYwaveMax
 
-	setDataFolder oldDF
+	SetDataFolder oldDf
 	return 0
 
 End
@@ -4431,15 +4437,15 @@ Function IR3M_NormalizeData(FldrNamesTWv, SelFldrs, Xtmplt, Ytmplt, Etmplt)
 					Print "Could not save data in the folder : " + OutFldrNm
 					Print "The data in this folder already exist and this tool cannot overwrite the data"
 				else
-					string tempFldrNm = GetDataFolder(1)
+					DFREF innerSaveDF = GetDataFolderDFR()
 					IN2G_CreateAndSetArbFolder(OutFldrNm)
 					Duplicate TempSubtractedXWv0123, $((OutXWvNm))
 					Duplicate TempSubtractedYWv0123, $((OutYWvNm))
-					WAVE/Z TempSubtractedEWv0123 = $(tempFldrNm + "TempSubtractedEWv0123")
+					WAVE/Z TempSubtractedEWv0123 = innerSaveDF:TempSubtractedEWv0123
 					if(WaveExists(TempSubtractedEWv0123))
 						Duplicate TempSubtractedEWv0123, $((OutEWvNm))
 					endif
-					setDataFolder tempFldrNm
+					SetDataFolder innerSaveDF
 					print "Created new data in " + OutFldrNm + " by normalzing data from data in " + FldrNamesTWv[i]
 					if(CreateErrors)
 						if(CreateSQRTErrors)
@@ -4614,7 +4620,7 @@ Function IR3M_ProcessListOfFoldersONLY(FldrNamesTWv, SelFldrs, Xtmplt, Ytmplt, E
 					Print "Could not save data in the folder : " + OutFldrNm
 					Print "The data in this folder already exist and this tool cannot overwrite the data"
 				else
-					string tempFldrNm = GetDataFolder(1)
+					DFREF innerSaveDF = GetDataFolderDFR()
 					IN2G_CreateAndSetArbFolder(OutFldrNm)
 					Duplicate TempSubtractedXWv0123, $((OutXWvNm))
 					Duplicate TempSubtractedYWv0123, $((OutYWvNm))
@@ -4630,11 +4636,11 @@ Function IR3M_ProcessListOfFoldersONLY(FldrNamesTWv, SelFldrs, Xtmplt, Ytmplt, E
 					OldNOte = ReplaceStringByKey("Units", OldNOte, "A-1", "=", ";")
 					note/K TmpQnote, OldNOte
 					//end of set units...
-					WAVE/Z TempSubtractedEWv0123 = $(tempFldrNm + "TempSubtractedEWv0123")
+					WAVE/Z TempSubtractedEWv0123 = innerSaveDF:TempSubtractedEWv0123
 					if(WaveExists(TempSubtractedEWv0123))
 						Duplicate TempSubtractedEWv0123, $((OutEWvNm))
 					endif
-					setDataFolder tempFldrNm
+					SetDataFolder innerSaveDF
 					print "Created new data in " + OutFldrNm + " by processing data in " + FldrNamesTWv[i]
 					if(CreateErrors)
 						if(CreateSQRTErrors)
@@ -4806,7 +4812,7 @@ Function IR3M_SubtractWave(FldrNamesTWv, SelFldrs, SubtrWvX, SubtrWvY, SubtrWvE,
 					Print "Could not save data in the folder : " + OutFldrNm
 					Print "The data in this folder already exist and this tool cannot overwrite the data"
 				else
-					string tempFldrNm = GetDataFolder(1)
+					DFREF innerSaveDF = GetDataFolderDFR()
 					IN2G_CreateAndSetArbFolder(OutFldrNm)
 					string IntNote = ReplaceStringByKey("Units", RealNote, OutputDataUnits, "=", ";")
 					string QNote   = ReplaceStringByKey("Units", RealNote, "A-1", "=", ";")
@@ -4815,11 +4821,11 @@ Function IR3M_SubtractWave(FldrNamesTWv, SelFldrs, SubtrWvX, SubtrWvY, SubtrWvE,
 					Note/K TempSubtractedXWv0123, QNote
 					Duplicate TempSubtractedXWv0123, $((OutXWvNm))
 					Duplicate TempSubtractedYWv0123, $((OutYWvNm))
-					WAVE/Z TempSubtractedEWv0123 = $(tempFldrNm + "TempSubtractedEWv0123")
+					WAVE/Z TempSubtractedEWv0123 = innerSaveDF:TempSubtractedEWv0123
 					if(WaveExists(TempSubtractedEWv0123))
 						Duplicate/O TempSubtractedEWv0123, $((OutEWvNm))
 					endif
-					setDataFolder tempFldrNm
+					SetDataFolder innerSaveDF
 					print "Created new data in " + OutFldrNm + " by subtracting requested data from data in " + FldrNamesTWv[i]
 					if(CreateErrors)
 						if(CreateSQRTErrors)
@@ -4988,7 +4994,7 @@ Function IR3M_RebinToQWave(FldrNamesTWv, SelFldrs, RebinWvX, Xtmplt, Ytmplt, Etm
 					Print "Could not save data in the folder : " + OutFldrNm
 					Print "The data in this folder already exist and this tool cannot overwrite the data"
 				else
-					string tempFldrNm = GetDataFolder(1)
+					DFREF innerSaveDF = GetDataFolderDFR()
 					IN2G_CreateAndSetArbFolder(OutFldrNm)
 					SVAR   OutputDataUnits = root:packages:DataManipulationII:OutputDataUnits
 					string IntNote         = ReplaceStringByKey("Units", RealNote, OutputDataUnits, "=", ";")
@@ -4998,11 +5004,11 @@ Function IR3M_RebinToQWave(FldrNamesTWv, SelFldrs, RebinWvX, Xtmplt, Ytmplt, Etm
 					Note/K ResultsQ, QNote
 					Duplicate ResultsQ, $((OutXWvNm))
 					Duplicate ResultsInt, $((OutYWvNm))
-					WAVE/Z ResultsE = $(tempFldrNm + "ResultsE")
+					WAVE/Z ResultsE = innerSaveDF:ResultsE
 					if(WaveExists(ResultsE))
 						Duplicate/O ResultsE, $((OutEWvNm))
 					endif
-					setDataFolder tempFldrNm
+					SetDataFolder innerSaveDF
 					print "Created new data in " + OutFldrNm + " by rebinning requested data from data in " + FldrNamesTWv[i]
 					if(CreateErrors)
 						if(CreateSQRTErrors)
@@ -5179,7 +5185,7 @@ Function IR3M_DivideWave(FldrNamesTWv, SelFldrs, SubtrWvX, SubtrWvY, SubtrWvE, X
 					Print "Could not save data in the folder : " + OutFldrNm
 					Print "The data in this folder already exist and this tool cannot overwrite the data"
 				else
-					string tempFldrNm = GetDataFolder(1)
+					DFREF innerSaveDF = GetDataFolderDFR()
 					IN2G_CreateAndSetArbFolder(OutFldrNm)
 					SVAR   OutputDataUnits = root:packages:DataManipulationII:OutputDataUnits
 					string IntNote         = ReplaceStringByKey("Units", RealNote, OutputDataUnits, "=", ";")
@@ -5189,11 +5195,11 @@ Function IR3M_DivideWave(FldrNamesTWv, SelFldrs, SubtrWvX, SubtrWvY, SubtrWvE, X
 					Note/K TempSubtractedXWv0123, QNote
 					Duplicate TempSubtractedXWv0123, $((OutXWvNm))
 					Duplicate TempSubtractedYWv0123, $((OutYWvNm))
-					WAVE/Z TempSubtractedEWv0123 = $(tempFldrNm + "TempSubtractedEWv0123")
+					WAVE/Z TempSubtractedEWv0123 = innerSaveDF:TempSubtractedEWv0123
 					if(WaveExists(TempSubtractedEWv0123))
 						Duplicate/O TempSubtractedEWv0123, $((OutEWvNm))
 					endif
-					setDataFolder tempFldrNm
+					SetDataFolder innerSaveDF
 					print "Created new data in " + OutFldrNm + " by dividing by selected data set the in data in " + FldrNamesTWv[i]
 					if(CreateErrors)
 						if(CreateSQRTErrors)
@@ -5469,7 +5475,7 @@ Function IR3M_MakePanelWithListBox()
 	Button DeselectAll, pos={155, 610}, size={120, 14}, proc=IR3M_DataManIIPanelButtonProc, title="Deselect All", disable=!ManualFolderSelection
 
 	Execute/P ("AutoPositionWindow/M=0 /R=DataManipulationII ItemsInFolderPanel_DMII")
-	setDataFolder oldDF
+	SetDataFolder oldDf
 End
 ///******************************************************************************************
 ///******************************************************************************************
@@ -5534,7 +5540,7 @@ Function IR3M_UpdateValueListBox()
 	endif
 	ControlUpdate/W=ItemsInFolderPanel_DMII WaveNoteList
 
-	setDataFolder oldDF
+	SetDataFolder oldDf
 
 End
 ///******************************************************************************************
@@ -5642,7 +5648,7 @@ Function IR3M_InitDataManipulationII()
 	if(strlen(NameModifier) < 1)
 		NameModifier = "_manII"
 	endif
-	setDataFolder OldDf
+	SetDataFolder oldDf
 End
 
 ///******************************************************************************************
@@ -5861,7 +5867,7 @@ Function IR3M_AppendDataToGraph([OutFldrNmL, OutXWvNmL, OutYWvNmL, OutEWvNmL])
 		endfor
 	endif
 
-	setDataFolder OldDf
+	SetDataFolder oldDf
 End
 ///******************************************************************************************
 ///******************************************************************************************
@@ -5887,7 +5893,7 @@ Function IR3M_SaveProcessedData()
 	if(!DataFolderExists(OutFldrNm))
 		//does not exist, create it. At the same time, check and make this acceptable folder path...
 		newFldrNm = ""
-		string OldDf1 = GetDataFolder(1)
+		DFREF innerSaveDF = GetDataFolderDFR()
 		setDataFolder root:
 		for(i = 0; i < itemsInList(OutFldrNm, ":"); i += 1)
 			tempStrNm = StringFromList(i, OutFldrNm, ":")
@@ -5903,7 +5909,7 @@ Function IR3M_SaveProcessedData()
 		endfor
 		//now we should have new folder exisitng, be there and also have new possibly quote name pointing there.
 		OutFldrNm = newFldrNm
-		setDataFolder OldDf1
+		SetDataFolder innerSaveDF
 	endif
 	//Next we can check if there are waves of these names already and warn user if he/she wants to overwrite...
 	WAVE/Z ExistsXWv = $(OutFldrNm + OutXWvNm)
@@ -5933,7 +5939,7 @@ Function IR3M_SaveProcessedData()
 	OldNOte = ReplaceStringByKey("Units", OldNOte, "A-1", "=", ";")
 	note/K TmpQnote, OldNOte
 
-	setDataFolder OldDf
+	SetDataFolder oldDf
 
 End
 ///******************************************************************************************

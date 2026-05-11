@@ -1,7 +1,7 @@
 #pragma rtFunctionErrors = 1
 #pragma TextEncoding     = "UTF-8"
 #pragma rtGlobals        = 3 // Use modern global access method and strict wave access.
-#pragma version          = 1.10
+#pragma version          = 1.11
 
 #include <Peak AutoFind>
 
@@ -15,6 +15,11 @@ Constant IN3_TrimDoNOTremoveVibrations = 0 //this controls if vibrations are fou
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
+//1.11 AI code review: add missing SetDataFolder restore in IN3_FlyScanInitializeImport (folder was
+//     permanently changed); add SetDataFolder before 2 Aborts in IN3_FSConvertToUSAXS (data read
+//     failure, unknown data collection method); convert 3 string-based DF patterns to DFREF;
+//     add WAVE/Z to AYWv/DYWv (inside if block), MRWv/SYWv, and all 15 updG*/updBkg*/updBkgErr*
+//     relative-path waves — these live in HDF5 subfolders and may be absent in some files.
 //1.10 tweak to allow FLyscan to deliver 1 less point and not consider it be vibrations. Seems routine starting issue.
 //1.09 fix step scanning gain correction bug which resulted in problems when reducing data which had I0 variations.
 //1.08 fixed loading 20ID horizontally scanning step scan data.
@@ -464,7 +469,7 @@ End
 //
 //		endif
 //	endfor
-//	setDataFolder OldDf
+//	SetDataFolder saveDF
 //end
 //
 ////************************************************************************************************************
@@ -474,7 +479,7 @@ End
 
 Function/S IN3_FSConvertToUSAXS(string RawFolderWithData, string origFileName)
 
-	string OldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder RawFolderWithData
 	//here we need to deal with hdf5 data
 	//spec file name
@@ -629,6 +634,7 @@ Function/S IN3_FSConvertToUSAXS(string RawFolderWithData, string origFileName)
 	string/G UserSampleName = UserSampleNameWv[0] //stringFromList(0,origFileName,".")
 	//reading Time failed?
 	if(WaveType(TimeWv, 1) != 1)
+		SetDataFolder saveDF
 		Abort "Struk data read failure found in the file for sample :" + UserSampleName + ", these data are unusable, aborting"
 	endif
 	Duplicate/O TimeWv, MeasTime
@@ -674,6 +680,7 @@ Function/S IN3_FSConvertToUSAXS(string RawFolderWithData, string origFileName)
 				OscillationsFound = 1
 			endif
 		else
+			SetDataFolder saveDF
 			Abort "Unknown data collection method"
 		endif
 	endif
@@ -823,7 +830,7 @@ Function/S IN3_FSConvertToUSAXS(string RawFolderWithData, string origFileName)
 		endif
 	endif
 	string DataFolderName = GetDataFOlder(1)
-	setDataFolder OldDf
+	SetDataFolder saveDF
 	return DataFolderName
 End
 //************************************************************************************************************
@@ -833,7 +840,7 @@ Function/S IN3_StepScanConvertToUSAXS(string RawFolderWithData, string origFileN
 
 	//print "Function IN3_StepScanConvertToUSAXS is not finished yet!"
 
-	string OldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder RawFolderWithData
 	//here we need to deal with hdf5 data
 	//spec file name
@@ -861,11 +868,11 @@ Function/S IN3_StepScanConvertToUSAXS(string RawFolderWithData, string origFileN
 	WAVE/Z AYWv      = :entry:data:a_stage_x
 	WAVE/Z DYWv      = :entry:data:d_stage_x
 	if(!WaveExists(AYWv)) //this is old 9ID and before vertical scan
-		WAVE AYWv = :entry:data:a_stage_y
-		WAVE DYWv = :entry:data:d_stage_y
+		WAVE/Z AYWv = :entry:data:a_stage_y
+		WAVE/Z DYWv = :entry:data:d_stage_y
 	endif
-	WAVE MRWv = :entry:data:m_stage_r
-	WAVE SYWv = :entry:data:s_stage_y
+	WAVE/Z MRWv = :entry:data:m_stage_r
+	WAVE/Z SYWv = :entry:data:s_stage_y
 	//TimeWv in BS is in frequency counts. 1e7 counts/second
 	TimeWv /= 1e7
 	//this should fix it to seconds.
@@ -884,21 +891,21 @@ Function/S IN3_StepScanConvertToUSAXS(string RawFolderWithData, string origFileN
 		SampleThicknessW[0] = 1
 	endif
 	//diode stufff
-	WAVE updG1      = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain0_gain:value
-	WAVE updG2      = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain1_gain:value
-	WAVE updG3      = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain2_gain:value
-	WAVE updG4      = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain3_gain:value
-	WAVE updG5      = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain4_gain:value
-	WAVE updBkg1    = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain0_background:value
-	WAVE updBkg2    = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain1_background:value
-	WAVE updBkg3    = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain2_background:value
-	WAVE updBkg4    = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain3_background:value
-	WAVE updBkg5    = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain4_background:value
-	WAVE updBkgErr1 = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain0_background_error:value
-	WAVE updBkgErr2 = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain1_background_error:value
-	WAVE updBkgErr3 = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain2_background_error:value
-	WAVE updBkgErr4 = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain3_background_error:value
-	WAVE updBkgErr5 = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain4_background_error:value
+	WAVE/Z updG1      = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain0_gain:value
+	WAVE/Z updG2      = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain1_gain:value
+	WAVE/Z updG3      = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain2_gain:value
+	WAVE/Z updG4      = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain3_gain:value
+	WAVE/Z updG5      = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain4_gain:value
+	WAVE/Z updBkg1    = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain0_background:value
+	WAVE/Z updBkg2    = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain1_background:value
+	WAVE/Z updBkg3    = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain2_background:value
+	WAVE/Z updBkg4    = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain3_background:value
+	WAVE/Z updBkg5    = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain4_background:value
+	WAVE/Z updBkgErr1 = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain0_background_error:value
+	WAVE/Z updBkgErr2 = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain1_background_error:value
+	WAVE/Z updBkgErr3 = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain2_background_error:value
+	WAVE/Z updBkgErr4 = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain3_background_error:value
+	WAVE/Z updBkgErr5 = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain4_background_error:value
 
 	WAVE/T TimeW = :entry:start_time
 	//these transmission values
@@ -1057,7 +1064,7 @@ Function/S IN3_StepScanConvertToUSAXS(string RawFolderWithData, string origFileN
 		endif
 	endif
 	string DataFolderName = GetDataFOlder(1)
-	setDataFolder OldDf
+	SetDataFolder saveDF
 	return DataFolderName
 End
 
@@ -1803,7 +1810,7 @@ End
 
 Function IN3_FlyScanInitializeImport()
 
-	string OldDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:USAXS_FlyScanImport
@@ -1841,6 +1848,7 @@ Function IN3_FlyScanInitializeImport()
 	Make/O/T/N=0 WaveOfFiles
 	Make/O/N=0 WaveOfSelections
 
+	SetDataFolder saveDF
 End
 
 //************************************************************************************************************

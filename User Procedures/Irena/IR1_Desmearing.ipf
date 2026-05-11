@@ -1,6 +1,6 @@
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
 //#pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.13
+#pragma version = 2.14
 
 
 //*************************************************************************\
@@ -9,7 +9,9 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.13 modified size of the graphs nowusing general function to make graphs suitabel for window area. 
+//2.14 AI code review: remove unused ctrlName from IR1B_OneDesmearIteration, replace FitIntensity dependency
+//     with DesmearedIntWave in iteration loops, direct-call IR1B_CursorMoved instead of Execute(), fix typo.
+//2.13 modified size of the graphs nowusing general function to make graphs suitabel for window area.
 //2.12  removed unused functions
 //2.11 Modified Screen Size check to match the needs
 //2.10 added getHelp button calling to www manual
@@ -25,6 +27,12 @@
 
 //	This procedure does desmearing using Lake method
 
+// TODO (deferred from AI review 2026-05-04):
+// 1. Replace ~3 Execute("PopupMenu ...") calls in IR1B_PanelPopupControl() (lines ~2235, 2250, 2265)
+//    with direct PopupMenu commands: PopupMenu ctrlName, win=panelName, mode=1, value=valueStr
+// 2. FitIntensity wave (created at init line ~765, listed in kill-wave list) is now unused in the
+//    iteration loop (replaced by DesmearedIntWave). Consider removing it from the init Duplicate
+//    and the kill-wave list when doing a broader cleanup pass.
 
 //**********************************
 //**********************************This routine desmears data using Lake method****************************
@@ -491,8 +499,7 @@ end
 //***********************************************************************************************************************************
 
 Function IR1B_OneDesmearIteration()
-	String ctrlName
-	
+
 	DFref oldDf= GetDataFolderDFR()
 
 	setDataFolder root:Packages:Irena_desmearing:
@@ -549,33 +556,32 @@ Function IR1B_OneDesmearIteration()
 	Redimension/N=(numOfPoints) SmFitIntensity, DesmearedIntWave, DesmearedQWave, NormalizedError		//cut the data back to original length (Qmax, numOfPoints)
 	
 	NormalizedError=(OrgIntwave-SmFitIntensity)/SmErrors			//NormalizedError (input-my Smeared data)/input errors
-	Wave FitIntensity
-	duplicate/O FitIntensity, FastFitIntensity, SlowFitIntensity
+	duplicate/O DesmearedIntWave, FastFitIntensity, SlowFitIntensity
 	//fast convergence
-	FastFitIntensity=DesmearedIntWave*(OrgIntwave/SmFitIntensity)								//Here we apply the correction on input data, FitIntensity is our best estimate for desmeared data
+	FastFitIntensity=DesmearedIntWave*(OrgIntwave/SmFitIntensity)
 	//slow convergence
-	SlowFitIntensity=DesmearedIntWave+ (OrgIntwave-SmFitIntensity)								//Here we apply the correction on input data, FitIntensity is our best estimate for desmeared data
-		
+	SlowFitIntensity=DesmearedIntWave+ (OrgIntwave-SmFitIntensity)
+
 	variable i
 	if(DesmearFastOnly)
 		DesmearedIntWave = FastFitIntensity
 	elseif(DesmearSlowOnly)
 		DesmearedIntWave = SlowFitIntensity
 	elseif(DesmearDampen)
-		For(i=0;i<(numpnts(FitIntensity));i+=1)
+		For(i=0;i<numpnts(DesmearedIntWave);i+=1)
 			if (abs(NormalizedError[i])>0.5)
 				DesmearedIntWave[i]=FastFitIntensity[i]
 			else
 				DesmearedIntWave[i]=DesmearedIntWave[i]
-			endif	
+			endif
 		endfor
 	else
-		For(i=0;i<(numpnts(FitIntensity));i+=1)
+		For(i=0;i<numpnts(DesmearedIntWave);i+=1)
 			if (abs(NormalizedError[i])>DesmearSwitchOverVal)
 				DesmearedIntWave[i]=FastFitIntensity[i]
 			else
 				DesmearedIntWave[i]=SlowFitIntensity[i]
-			endif	
+			endif
 		endfor
 	endif	
 	NumberOfIterations+=1
@@ -926,7 +932,7 @@ Function IR1B_CheckBckgExtHook(s)
 //			SVAR CsrMoveInfo=root:Packages:Irena_desmearing:CsrMoveInfo
 //			CsrMoveInfo=info
 			if(cmpstr(s.cursorName,"A")==0)
-				Execute("IR1B_CursorMoved()")
+				IR1B_CursorMoved()
 			endif
 			break
 	endswitch
@@ -1413,7 +1419,7 @@ Function IR1B_CopyDataLocally()
 	
 	if (!WaveExists(Intensity) || !WaveExists(Qvector) || !WaveExists(Error))
 		setDataFolder OldDf
-		Abort "Waves not correctly selected. Note this code NEEDS the erros in order to work at all"
+		Abort "Waves not correctly selected. Note this code NEEDS the errors in order to work at all"
 	endif
 	Duplicate/O Intensity, OrgIntwave
 	Duplicate/O Qvector, OrgQwave

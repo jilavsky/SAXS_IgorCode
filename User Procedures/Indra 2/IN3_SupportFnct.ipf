@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
   
-#pragma version =1.14
+#pragma version =1.15
 
 
 //*************************************************************************\
@@ -10,6 +10,10 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.15 AI code review: convert 9 string-based DF save/restores to DFREF; add SetDataFolder restore
+//     before Abort in IN3_RecalcSubtractSaAndBlank ("bad scan type"); add WAVE/Z to all 14 bare
+//     wave declarations (PD_Intensity/Error/Qvec, R_Int/R_error/R_Qvec, PD_Range, BL_R_* ×3,
+//     absolute-path R_Qvec/R_Error, and R_Qvec/R_Error(×2)/R_error/AR_encoder/PeakFitWave).
 //1.14 changed resolution function dQ to use FWHM/2, not FWHM. Later code downstream expects FHWM/2. 
 //1.13 minor fix for MSAXS correction graphing. 
 //1.12 fixed problem when PD_range used to create MyCOlorWave was getting out of sync with data as points were being removed. Flyscan only, added PD_RangeModified to fix this... 
@@ -32,10 +36,10 @@
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
 //Function IN3_Template()
-//	string oldDf=GetDataFolder(1)
+//	DFREF saveDF = GetDataFolderDFR()
 //	setDataFolder root:Packages:Indra3
 //
-//	setDataFolder OldDf	
+//	SetDataFolder saveDF
 //end
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
@@ -74,11 +78,11 @@ end
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
 //Function IN3_CorrectQandTransmission()
-//	string oldDf=GetDataFolder(1)
+//	DFREF saveDF = GetDataFolderDFR()
 //	setDataFolder root:Packages:Indra3
 //
-//	Wave R_Int
-//	Wave R_Qvec
+//	Wave/Z R_Int
+//	Wave/Z R_Qvec
 //	NVAR IsBlank=root:Packages:Indra3:IsBlank
 //
 //	Duplicate/O R_Int, R_Int_corr
@@ -92,7 +96,7 @@ end
 ////  	R_Int_corr =R_Int/SampleTransmissionPeakToPeak
 //  	R_Qvec_shifted=R_Qvec//-SampleQOffset
 //
-//	setDataFolder OldDf	
+//	SetDataFolder saveDF
 //end
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
@@ -104,7 +108,7 @@ end
 Function IN3_CalculateTransmission(SkipEstimate)
 	variable SkipEstimate
 	
-	string oldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
 	NVAR IsBlank = root:Packages:Indra3:IsBlank
 
@@ -133,7 +137,7 @@ Function IN3_CalculateTransmission(SkipEstimate)
 	setDataFolder FolderName
 	variable/g Transmission 
 	Transmission = SampleTransmission
-	setDataFolder OldDf	
+	SetDataFolder saveDF
 end
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
@@ -143,7 +147,7 @@ end
 //***********************************************************************************************************************************
 //
 //Function IN3_ReCalculateTransmission()
-//	string oldDf=GetDataFolder(1)
+//	DFREF saveDF = GetDataFolderDFR()
 //	setDataFolder root:Packages:Indra3
 //
 //	NVAR SampleTransmissionPeakToPeak = root:Packages:Indra3:SampleTransmissionPeakToPeak
@@ -158,7 +162,7 @@ end
 //		SampleTransmission*=MSAXSCorrection
 //	endif
 //	
-//	setDataFolder OldDf	
+//	SetDataFolder saveDF
 //end
 //
 //
@@ -169,13 +173,13 @@ end
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
 Function IN3_CalculateRdata()
-	string oldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
 
 	NVAR SampleTransmissionPeakToPeak = root:Packages:Indra3:SampleTransmissionPeakToPeak
-	Wave PD_Intensity
-	Wave PD_Error
-	Wave Qvec
+	Wave/Z PD_Intensity
+	Wave/Z PD_Error
+	Wave/Z Qvec
 
 	Duplicate/O PD_Intensity, R_Int
 	Duplicate/O PD_Error, R_Error
@@ -189,7 +193,7 @@ Function IN3_CalculateRdata()
 
 	IN3_SmoothRData()
 
-	setDataFolder OldDf	
+	SetDataFolder saveDF
 end
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
@@ -200,7 +204,7 @@ end
 
 Function IN3_CalculateCalibration()
 
-	string oldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
 
 	SVAR ASBParameters=ListOfASBParameters
@@ -277,7 +281,7 @@ Function IN3_CalculateCalibration()
 	endif	
 	ASBParameters=ReplaceNumberByKey("Kfactor",ASBParameters,Kfactor,"=")
 	ASBParameters=ReplaceNumberByKey("OmegaFactor",ASBParameters,OmegaFactor,"=")
-	setDataFolder OldDf	
+	SetDataFolder saveDF
 
 end
 
@@ -288,7 +292,7 @@ end
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
 Function IN3_RecalcSubtractSaAndBlank()
-	string oldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
 
 	NVAR SampleTransmission = root:Packages:Indra3:SampleTransmission
@@ -296,13 +300,13 @@ Function IN3_RecalcSubtractSaAndBlank()
 	NVAR BlankWidth = root:Packages:Indra3:BlankWidth			//blank width in arc seconds
 	NVAR Wavelength = root:Packages:Indra3:Wavelength
 	variable InstrumentQresolution = 2*pi*sin(BlankWidth/3600*pi/180)/Wavelength
-	Wave R_Int
-	Wave R_error
-	Wave R_Qvec
-	Wave PD_Range
-	Wave BL_R_Int
-	Wave BL_R_error
-	Wave BL_R_Qvec
+	Wave/Z R_Int
+	Wave/Z R_error
+	Wave/Z R_Qvec
+	Wave/Z PD_Range
+	Wave/Z BL_R_Int
+	Wave/Z BL_R_error
+	Wave/Z BL_R_Qvec
 	variable Kfactor=NumberByKey("Kfactor", ASBparameters,"=",";")
 	variable StartPointCut = BinarySearch(R_Qvec, 7e-5 )
 	variable EndPointCut = numpnts(R_Qvec)
@@ -513,10 +517,11 @@ Function IN3_RecalcSubtractSaAndBlank()
 			endif
 		endif
 	else
+		SetDataFolder saveDF
 		Abort "Bad type of scan selected in IN3_RecalcSubtractSaAndBlank()"
 	endif
 
-	setDataFolder OldDf	
+	SetDataFolder saveDF
 end
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
@@ -534,7 +539,7 @@ end
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
 Function IN3_SaveData()
-	string oldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
 	
 	//here we save data as appropriate
@@ -548,8 +553,8 @@ Function IN3_SaveData()
 	if(!WaveExists(R_Int))
 		abort
 	endif
-	Wave R_Qvec = root:Packages:Indra3:R_Qvec
-	Wave R_Error = root:Packages:Indra3:R_Error
+	Wave/Z R_Qvec = root:Packages:Indra3:R_Qvec
+	Wave/Z R_Error = root:Packages:Indra3:R_Error
 	NVAR BeamCenterL = root:Packages:Indra3:BeamCenter
 	NVAR MaximumIntensityL = root:Packages:Indra3:MaximumIntensity
 	NVAR PeakWidthL = root:Packages:Indra3:PeakWidth
@@ -873,7 +878,7 @@ Function IN3_SaveData()
 	
 	IN3_PlotProcessedData()
 	
-	setDataFolder OldDf	
+	SetDataFolder saveDF
 end
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
@@ -970,7 +975,7 @@ End
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
 Function IN3_CalculateMSAXSCorrection()
-	string oldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
 	
 	NVAR UseMSAXSCorrection =root:Packages:Indra3:UseMSAXSCorrection
@@ -988,8 +993,8 @@ Function IN3_CalculateMSAXSCorrection()
 		if(!WaveExists(R_Int) || !WaveExists(BL_R_Int))
 			abort
 		endif
-		Wave R_Qvec=root:Packages:Indra3:R_Qvec
-		Wave BL_R_Qvec = root:Packages:Indra3:BL_R_Qvec
+		Wave/Z R_Qvec=root:Packages:Indra3:R_Qvec
+		Wave/Z BL_R_Qvec = root:Packages:Indra3:BL_R_Qvec
 	
 
 	if(UseMSAXSCorrection)
@@ -1044,7 +1049,7 @@ Function IN3_CalculateMSAXSCorrection()
 		
 		IN3_FormatMSAXSGraph()
 	
-	setDataFolder oldDf
+	SetDataFolder saveDF
 end
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
@@ -1071,17 +1076,17 @@ Function IN3_ShowMSAXSGraph()
 end
 
 Function IN3_DisplayMSAXSGraph()
-	string oldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
 	Wave/Z R_Int
 	if(!WaveExists(R_Int))
 		abort
 	endif	
-	Wave R_Qvec
-	Wave R_Error
-	Wave R_error
-	Wave AR_encoder
-	Wave PeakFitWave
+	Wave/Z R_Qvec
+	Wave/Z R_Error
+	Wave/Z R_error
+	Wave/Z AR_encoder
+	Wave/Z PeakFitWave
 	Wave/Z BL_R_Int
 	Wave/Z BL_R_Qvec
 	NVAR IsBlank=root:Packages:Indra3:IsBlank
@@ -1105,7 +1110,7 @@ Function IN3_DisplayMSAXSGraph()
 	SetActiveSubwindow ##
 
 	IN3_FormatMSAXSGraph()
-	setDataFolder oldDf
+	SetDataFolder saveDF
 end
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
@@ -1115,7 +1120,7 @@ end
 //***********************************************************************************************************************************
 
 Function IN3_FormatMSAXSGraph()
-	string oldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
 
 	String ExistingSubWindows=ChildWindowList("USAXSDataReduction") 
@@ -1125,14 +1130,14 @@ Function IN3_FormatMSAXSGraph()
 	//		endif
 		SetWindow USAXSDataReduction, hook(named)=$""
 	 
-		Wave R_Int
-		Wave R_Qvec
+		Wave/Z R_Int
+		Wave/Z R_Qvec
 		Wave R_Error
-		Wave R_error
-		Wave AR_encoder
-		Wave PeakFitWave
-		Wave BL_R_Int
-		Wave BL_R_Qvec
+		Wave/Z R_error
+		Wave/Z AR_encoder
+		Wave/Z PeakFitWave
+		Wave/Z BL_R_Int
+		Wave/Z BL_R_Qvec
 		NVAR Qmin = root:Packages:Indra3:MSAXSStartPoint
 		NVAR Qmax=root:Packages:Indra3:MSAXSEndPoint
 		
@@ -1162,7 +1167,7 @@ Function IN3_FormatMSAXSGraph()
 
 	endif
 
-	setDataFolder oldDf
+	SetDataFolder saveDF
 
 end
 //***********************************************************************************************************************************
@@ -1177,11 +1182,11 @@ Function IN3_MSAXSHookFunction(H_Struct)
     
     if (h_struct.eventCode==7 && stringMatch(h_struct.winName,"USAXSDataReduction#MSAXSGraph"))
 	//    print h_struct.eventCode, h_struct.winName
-		string oldDf=GetDataFolder(1)
+		DFREF saveDF = GetDataFolderDFR()
 		setDataFolder root:Packages:Indra3
 		NVAR Qmin = root:Packages:Indra3:MSAXSStartPoint
 		NVAR Qmax=root:Packages:Indra3:MSAXSEndPoint
-		Wave R_Qvec=root:Packages:Indra3:R_Qvec
+		Wave/Z R_Qvec=root:Packages:Indra3:R_Qvec
 		variable start = BinarySearch(R_Qvec, Qmin )
 		variable end1 = BinarySearch(R_Qvec, Qmax )
 		String ExistingSubWindows=ChildWindowList("USAXSDataReduction") 
@@ -1203,7 +1208,7 @@ Function IN3_MSAXSHookFunction(H_Struct)
 			//recalculate what needs to be done...
 		IN3_RecalculateData(2)
 		IN3_DesmearData()
-		setDataFolder oldDf
+		SetDataFolder saveDF
 	endif
     return 0        // 0 if nothing done, else 1
 end

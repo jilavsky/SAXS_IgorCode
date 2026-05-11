@@ -1,7 +1,7 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use modern global access method.
 
-#pragma version=1.05
+#pragma version=1.06
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
@@ -9,6 +9,11 @@
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//1.06 AI code review: fix long-standing typo "OdlDf" (should be "OldDf") in 3 functions — because
+//     the misspelled variable was never used as a restore, NI1_MakeSectorGraph, NI1_MakeSqMatrixOfLineouts,
+//     and NI1_MakeSqMtxOfLinswtilts each permanently changed the user's data folder on every call;
+//     added SetDataFolder restore before End in all three; convert 5 string-based DF patterns to
+//     DFREF; add WAVE/Z to SquareMap and SquareMap_dis absolute-path declarations.
 //1.05 fixes for ImageLineProfile which seems to produce sometimes points at non expected location. This is actually documented feature.
 //1.04 fixed /NTHR=1 to
 //1.03 fixed masking which was failing due to bug.
@@ -18,7 +23,7 @@
 Function NI1_MakeSectorGraph(withTilts)
 	variable withTilts
 
-	string OdlDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	SetDataFolder root:Packages:Convert2Dto1D
 	NVAR SectorsNumSect          = root:Packages:Convert2Dto1D:SectorsNumSect
 	NVAR SectorsSectWidth        = root:Packages:Convert2Dto1D:SectorsSectWidth
@@ -37,7 +42,7 @@ Function NI1_MakeSectorGraph(withTilts)
 	else
 		NI1_MakeSqMatrixOfLineouts(SectorsNumSect, SectorsSectWidth, SectorsGraphStartAngle, SectorsGraphEndAngle) //convert to lineout
 	endif
-	WAVE SquareMap = root:Packages:Convert2Dto1D:SquareMap
+	WAVE/Z SquareMap = root:Packages:Convert2Dto1D:SquareMap
 	//duplicate/O SquareMap, SquareMap_dis
 	NVAR A2DImageRangeMinLimit = root:Packages:Convert2Dto1D:A2DImageRangeMinLimit
 	NVAR A2DImageRangeMaxLimit = root:Packages:Convert2Dto1D:A2DImageRangeMaxLimit
@@ -67,6 +72,7 @@ Function NI1_MakeSectorGraph(withTilts)
 	//	NVAR SectorsGraphEndAngle=root:Packages:Convert2Dto1D:SectorsGraphEndAngle
 	//	SetAxis/W=SquareMapIntvsPixels left SectorsGraphStartAngle,SectorsGraphEndAngle
 
+	SetDataFolder saveDF
 End
 //********************************************************************
 //********************************************************************
@@ -78,7 +84,7 @@ Function NI1_MakeSqMatrixOfLineouts(SectorsNumSect, AngleWidth, SectorsGraphStar
 	variable SectorsNumSect, AngleWidth, SectorsGraphStartAngle, SectorsGraphEndAngle
 	//Create matrix of lineouts using the ImageLineProfile function
 	//will have to be finished, for now it is simple method...
-	string OdlDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	SetDataFolder root:Packages:Convert2Dto1D
 	variable AngleStep = (SectorsGraphEndAngle - SectorsGraphStartAngle) / SectorsNumSect
 
@@ -202,6 +208,7 @@ Function NI1_MakeSqMatrixOfLineouts(SectorsNumSect, AngleWidth, SectorsGraphStar
 	//function of geometry...
 	// also we need to propage somehow errors through. This can be done here, but it is unclear to me how to easily propaget it further.
 
+	SetDataFolder saveDF
 End
 
 //********************************************************************
@@ -218,7 +225,7 @@ Function NI1_MakeSqMtxOfLinswtilts(SectorsNumSect, AngleWidth, SectorsGraphStart
 	variable SectorsNumSect, AngleWidth, SectorsGraphStartAngle, SectorsGraphEndAngle
 	//Create matrix of lineouts using the ImageLineProfile function
 	//will have to be finished, for now it is simple method...
-	string OdlDf = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	SetDataFolder root:Packages:Convert2Dto1D
 	variable AngleStep          = (SectorsGraphEndAngle - SectorsGraphStartAngle) / SectorsNumSect
 	WAVE     Q2Dwave            = root:Packages:Convert2Dto1D:Q2Dwave
@@ -367,6 +374,7 @@ Function NI1_MakeSqMtxOfLinswtilts(SectorsNumSect, AngleWidth, SectorsGraphStart
 	//function of geometry...
 	// also we need to propage somehow errors through. This can be done here, but it is unclear to me how to easily propaget it further.
 
+	SetDataFolder saveDF
 End
 //end josh add
 
@@ -376,7 +384,7 @@ End
 
 Function NI1_SquareGraph() : Graph
 
-	WAVE SquareMap_dis         = root:Packages:Convert2Dto1D:SquareMap_dis
+	WAVE/Z SquareMap_dis       = root:Packages:Convert2Dto1D:SquareMap_dis
 	NVAR A2DImageRangeMinLimit = root:Packages:Convert2Dto1D:A2DImageRangeMinLimit
 	NVAR A2DImageRangeMaxLimit = root:Packages:Convert2Dto1D:A2DImageRangeMaxLimit
 	PauseUpdate // building window...
@@ -454,7 +462,7 @@ Function NI1_SquareButtonProc(ctrlName) : ButtonControl
 	if(cmpstr(ctrlName, "SaveCurrentLineout") == 0)
 		WAVE profile = root:Packages:NI1_ImProcess:LineProfile:profile
 
-		string OldDf = GetDataFolder(1)
+		DFREF saveDF = GetDataFolderDFR()
 		string NewFldrName
 		//DoAlert 0, "Need to finish NI1_SquareButtonProc procedure in NI1_SquareMatrix.ipf"
 		//need to convert data into Int vs Q and then save data somewhere...
@@ -508,7 +516,7 @@ Function NI1_SquareButtonProc(ctrlName) : ButtonControl
 			WAVE TwoThetaN = $("t_" + NewFldrName)
 			IN2G_RemoveNaNsFrom3Waves(Intensity, Error, TwoThetaN)
 		endif
-		setDataFolder OldDf
+		SetDataFolder saveDF
 
 	endif
 End
@@ -516,7 +524,7 @@ End
 Function NI1A_SQCCDImageUpdateColors(updateRanges)
 	variable updateRanges
 
-	string oldDf = GetDataFOlder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Convert2Dto1D
 	NVAR ImageRangeMin      = root:Packages:Convert2Dto1D:A2DImageRangeMin
 	NVAR ImageRangeMax      = root:Packages:Convert2Dto1D:A2DImageRangeMax
@@ -540,5 +548,5 @@ Function NI1A_SQCCDImageUpdateColors(updateRanges)
 		Slider ImageRangeMaxSquare, limits={ImageRangeMinLimit, ImageRangeMaxLimit, 0}, win=SquareMapIntvsPixels
 	endif
 	ModifyImage/W=SquareMapIntvsPixels SquareMap_dis, ctab={ImageRangeMin, ImageRangeMax, $ColorTableName, 0}
-	setDataFolder OldDf
+	SetDataFolder saveDF
 End

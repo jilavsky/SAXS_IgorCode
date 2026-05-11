@@ -1,7 +1,7 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version = 1.11
+#pragma version = 1.12
 #pragma IgorVersion=9.03
 
 
@@ -13,6 +13,11 @@
 
 //this is tool to setup Sample Plates for USAXS, survey sample positions, and generate Command files. 
 
+//1.12 AI code review: add SetDataFolder restore to IN3S_MainPanel and IN3S_BeamlineSurveyPanel
+//     (both were permanently changing user's data folder on every call); convert 2 string-based
+//     DF patterns to DFREF; add WAVE/Z to LBSelectionWv (×5), LBSelectionWvG (×3+1),
+//     SelListOfSavedSetsWv, plate-center waves (Acrylic9x9/NMR/OldStyleAl/NMRTubes), M_ImageThresh
+//     (×2), imageWave, M_RGB2Gray, and ImageIn (×1).
 //1.11 allow numberst starting the filenames.  
 //1.10 Add option for slow speed for moving around. Tweak for 12ID and new Aerotech motors. 
 //1.09 Change PVs for 20IDB upgraded instrument. 
@@ -136,7 +141,7 @@ end
 
 Function IN3S_MainPanel()
 
-	string oldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:SamplePlateSetup
 	DoWindow SamplePlateSetup
 	if(V_Flag)
@@ -265,6 +270,7 @@ Function IN3S_MainPanel()
 
 	endif
 	IN3S_FixTabControl()
+	SetDataFolder saveDF
 
 end
 //*****************************************************************************************************************
@@ -799,7 +805,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 						TableIsSaved = 0
 						break
 					case 16:	// "Set Line as Distance Standard"
-						Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
+						Wave/Z LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
 						For(j=0;j<ItemsInList(ListOfSelRows);j+=1)
 							tempRow = str2num(StringFromList(j, ListOfSelRows))
 							listWave[tempRow][0]="AgBehenateLaB6"
@@ -834,7 +840,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 				NVAR SelectedRow=root:Packages:SamplePlateSetup:SelectedRow
 				SVAR SelectedSampleName=root:Packages:SamplePlateSetup:SelectedSampleName
 				Wave/T ListWV = root:Packages:SamplePlateSetup:LBCommandWv
-				Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
+				Wave/Z LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
 				NVAR SampleThickness=root:Packages:SamplePlateSetup:SampleThickness
 				NVAR SampleXTAR=root:Packages:SamplePlateSetup:SampleXTAR
 				NVAR SampleYTAR=root:Packages:SamplePlateSetup:SampleYTAR
@@ -977,7 +983,7 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 					SVAR NewPlateName = root:Packages:SamplePlateSetup:UserNameForSampleSet
 					NewPlateName = "NewSampleSet"+num2str(abs(round(gnoise(100))))
 					//ListBox CommandsList win=SamplePlateSetup, selRow=0					
-					Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
+					Wave/Z LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
 					LBSelectionWv[][0]=2
 					LBSelectionWv[0][0]=3
 					IN3S_AddTagToImage(0)		
@@ -1034,7 +1040,7 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 					USAXSAll= 1
 					SAXSAll = 1
 					WAXSAll = 1
-					Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
+					Wave/Z LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
 					strswitch (SelectedPlateName) 
 						case "9x9 Acrylic/magnetic plate":	 
 							Wave Centers = root:Packages:SamplePlatesAvailable:Acrylic9x9PlateCenters
@@ -1163,7 +1169,7 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 						case "AgBehenateLaB6":	 
 							IN3S_CreateTablesForPlates(1, 1)
 							Wave/T LBCommandWv = root:Packages:SamplePlateSetup:LBCommandWv
-							Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
+							Wave/Z LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
 							LBCommandWv[][0]="AgBehenateLaB6"
 							LBCommandWv[][1]="20"
 							LBCommandWv[][2]="20"
@@ -1339,7 +1345,7 @@ Function IN3S_CheckProc(cba) : CheckBoxControl
 	switch( cba.eventCode )
 		case 2: // mouse up
 			Variable checked = cba.checked
-			Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
+			Wave/Z LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
 			Wave/T LBCommandWv = root:Packages:SamplePlateSetup:LBCommandWv
 			NVAR WAXSAll = root:Packages:SamplePlateSetup:WAXSAll
 			NVAR USAXSAll = root:Packages:SamplePlateSetup:USAXSAll
@@ -1428,7 +1434,7 @@ static Function IN3S_FixUSWAXSForAll()
 	NVAR SAXSAll = root:Packages:SamplePlateSetup:SAXSAll
 	NVAR WAXSAll = root:Packages:SamplePlateSetup:WAXSAll
 	NVAR DiasplyCheckb = root:Packages:SamplePlateSetup:DisplayUSWAXScntrls
-	Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
+	Wave/Z LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
 	Wave/T LBTtitleWv = root:Packages:SamplePlateSetup:LBTtitleWv
 	variable USAXSWidth, SAXSWidth, WAXSWidth, MDwidth
 	//LBTtitleWv = {"Sample Name", "X [mm]", "Y [mm]", "Thick [mm]", "USAXS", "SAXS", "WAXS", "Metadata"}
@@ -1483,7 +1489,7 @@ static Function IN3S_LoadSavedSampleSet([folderToLoad])
 			NVAR WAXSAll
 			//these are global ones... 
 			Wave/T listWaveG=root:Packages:SamplePlateSetup:LBCommandWv
-			Wave LBSelectionWvG= root:Packages:SamplePlateSetup:LBSelectionWv
+			Wave/Z LBSelectionWvG= root:Packages:SamplePlateSetup:LBSelectionWv
 			Wave/T LBTtitleWvG  = root:Packages:SamplePlateSetup:LBTtitleWv
 			NVAR USAXSAllG = root:Packages:SamplePlateSetup:USAXSAll
 			NVAR SAXSAllG = root:Packages:SamplePlateSetup:SAXSAll
@@ -1511,7 +1517,7 @@ static Function IN3S_SaveCurrentSampleSet(Overwrite, AddToList)
 
 	DFrEF OldDf=GetDataFolderDFR()
 		Wave/T listWaveG   =  root:Packages:SamplePlateSetup:LBCommandWv
-		Wave LBSelectionWvG= root:Packages:SamplePlateSetup:LBSelectionWv
+		Wave/Z LBSelectionWvG= root:Packages:SamplePlateSetup:LBSelectionWv
 		Wave/T LBTtitleWvG  = root:Packages:SamplePlateSetup:LBTtitleWv
 		NVAR USAXSAllG = root:Packages:SamplePlateSetup:USAXSAll
 		NVAR SAXSAllG = root:Packages:SamplePlateSetup:SAXSAll
@@ -1567,7 +1573,7 @@ static Function IN3S_UpdateListOfSavedSets()
 
 	DFrEF OldDf=GetDataFolderDFR()
 	Wave/T ListOfSavedSetsWv=root:Packages:SamplePlateSetup:ListOfSavedSetsWv
-	Wave SelListOfSavedSetsWv=root:Packages:SamplePlateSetup:SelListOfSavedSetsWv
+	Wave/Z SelListOfSavedSetsWv=root:Packages:SamplePlateSetup:SelListOfSavedSetsWv
 	string ListOfSavedSetsStr
 	variable i
 	if(DataFolderExists("root:SavedSampleSets"))
@@ -1597,7 +1603,7 @@ static Function IN3S_CheckForSensibility()
 
 	DFrEF OldDf=GetDataFolderDFR()
 	Wave/T listWaveG   =  root:Packages:SamplePlateSetup:LBCommandWv
-	Wave LBSelectionWvG= root:Packages:SamplePlateSetup:LBSelectionWv
+	Wave/Z LBSelectionWvG= root:Packages:SamplePlateSetup:LBSelectionWv
 	Wave/T LBTtitleWvG  = root:Packages:SamplePlateSetup:LBTtitleWv
 	NVAR USAXSAllG = root:Packages:SamplePlateSetup:USAXSAll
 	NVAR SAXSAllG = root:Packages:SamplePlateSetup:SAXSAll
@@ -1723,7 +1729,7 @@ static FUnction IN3S_WriteCommandFileInternal(show, AppendHeaders, KillIfFound)
 
 	DFrEF OldDf=GetDataFolderDFR()
 	Wave/T listWaveG   =  root:Packages:SamplePlateSetup:LBCommandWv
-	Wave LBSelectionWvG= root:Packages:SamplePlateSetup:LBSelectionWv
+	Wave/Z LBSelectionWvG= root:Packages:SamplePlateSetup:LBSelectionWv
 	Wave/T LBTtitleWvG  = root:Packages:SamplePlateSetup:LBTtitleWv
 	NVAR USAXSAllG = root:Packages:SamplePlateSetup:USAXSAll
 	NVAR SAXSAllG = root:Packages:SamplePlateSetup:SAXSAll
@@ -1813,7 +1819,7 @@ end
 
 Function IN3S_WriteListOfCommands(listWaveG, LBSelectionWvG, sxOffset, syOffset, TitleModifier)
 	wave/T listWaveG
-	wave LBSelectionWvG
+	wave/Z LBSelectionWvG
 	variable sxOffset, syOffset
 	string  TitleModifier
 	
@@ -2218,7 +2224,7 @@ static Function IN3S_EstimateRunTime()
 	NVAR WAXSAllG = root:Packages:SamplePlateSetup:WAXSAll
 
 	Wave/T listWaveG   =  root:Packages:SamplePlateSetup:LBCommandWv
-	Wave LBSelectionWvG= root:Packages:SamplePlateSetup:LBSelectionWv
+	Wave/Z LBSelectionWvG= root:Packages:SamplePlateSetup:LBSelectionWv
 	
 	NVAR/Z NumberOfSamples   =  root:Packages:SamplePlateSetup:NumberOfSamples
 	if(!NVAR_Exists(NumberOfSamples))
@@ -2361,11 +2367,11 @@ Function IN3S_CreateDefaultPlates()
 	Acrylic9x9PlateScale = 0.25		//pixels per mm
 	NVAR AcrylicNMRPlateScale
 	AcrylicNMRPlateScale = 0.25		//pixels per mm
-	Wave Acrylic9x9PlateCenters
+	Wave/Z Acrylic9x9PlateCenters
 	Acrylic9x9PlateCenters[][0] = 20*ceil(0.01+p/9)  
 	Acrylic9x9PlateCenters[][1] = 20+20*(p - 9*trunc(p/9)) 
 	//NMT Acrylic plate
-	Wave AcrylicNMRPlateCenters
+	Wave/Z AcrylicNMRPlateCenters
 	AcrylicNMRPlateCenters[][0] = 10+10*(p - 20*trunc(p/20))				///10*ceil(0.01+p/19)		
 	AcrylicNMRPlateCenters[][1] = 24.181 + 40*(ceil(0.01+p/20)-1)			///24.181+40*(p - 20*trunc(p/20)) 		
 	
@@ -2374,7 +2380,7 @@ Function IN3S_CreateDefaultPlates()
 	OldStyleAlPlateRadius=4
 	NVAR OldStyleAlPlateScale
 	OldStyleAlPlateScale = 0.25
-	Wave OldStyleAlPlateCenters
+	Wave/Z OldStyleAlPlateCenters
 	For(i=0;i<4;i+=1)
 		For(j=0;j<8;j+=1)
 			OldStyleAlPlateCenters[i*15+j][0] = 12.5+i*25 
@@ -2396,7 +2402,7 @@ Function IN3S_CreateDefaultPlates()
 	NVAR NMRTubesHolderScale
 	NMRTubesHolderRadius=20
 	NMRTubesHolderScale=0.25
-	Wave NMRTubesHolderCenters
+	Wave/Z NMRTubesHolderCenters
 	NMRTubesHolderCenters[][0] = 15+p*10
 	NMRTubesHolderCenters[][1] = 43
 	SetDataFolder OldDf
@@ -2418,7 +2424,7 @@ static Function IN3S_CreateTablesForPlates(HowManySamples, forceReset)
 		Make/N=(0,8)/O LBSelectionWv
 	endif
 	Wave/T LBCommandWv = root:Packages:SamplePlateSetup:LBCommandWv
-	Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
+	Wave/Z LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
 	Wave/T LBTtitleWv = root:Packages:SamplePlateSetup:LBTtitleWv
 	if(DimSize(LBSelectionWv,0)<1 && HowManySamples<1)
 		HowManySamples = 20
@@ -2441,7 +2447,7 @@ end
 //*****************************************************************************************************************
 static Function IN3S_SetAllOptions()
 
-	Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
+	Wave/Z LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
 	NVAR USAXSAll = root:Packages:SamplePlateSetup:USAXSAll
 		if(USAXSAll)
 			LBSelectionWv[][4]=48
@@ -2472,7 +2478,7 @@ static Function IN3S_InsertDeleteLines(InsertDelete, row, newLines)
 	//newLines used only with InsertDelete=4 and is number of new lines. 
 	
 	Wave/T LBCommandWv = root:Packages:SamplePlateSetup:LBCommandWv
-	Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
+	Wave/Z LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
 	variable i
 	if(InsertDelete==1)				//insert. 
 		InsertPoints row, 1, LBSelectionWv, LBCommandWv
@@ -2845,7 +2851,7 @@ static Function IN3S_WritePositionInTable(mouseVert, mouseHor)
 	variable mouseHor, mouseVert
 	
 	Wave/T LBCommandWv = root:Packages:SamplePlateSetup:LBCommandWv
-	Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
+	Wave/Z LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
 	SVAR SelectedPlateName = root:Packages:SamplePlateSetup:SelectedPlateName
 	//need to identify where we are and what size the image is
 	string Margins =  IN2G_FindInRecreation(winrecreation("SamplePlateImageDrawing",0), "margin")
@@ -2887,7 +2893,7 @@ end
 //*****************************************************************************************************************
 static Function IN3S_FindFirstSelectedRow()
 
-	Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
+	Wave/Z LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
 	string ListOfSelRows=IN3S_CreateListOfRows(LBSelectionWv)
 	variable firstSelectedRow = str2num(StringFromList(ItemsInList(ListOfSelRows)-1, ListOfSelRows))
 	firstSelectedRow = numtype(firstSelectedRow)==0 ? firstSelectedRow : 0 
@@ -2986,7 +2992,7 @@ Function IN3S_PlateImageHook(s)
 			case 3: // mouse down
 				if (s.eventMod & 0x10)	// rightclick
 					string items
-					Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
+					Wave/Z LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
 					items = "Write position;Add Line with positions;Igor right click cmds;"
 						PopupContextualMenu items
 						// V_flag is index of user selected item    
@@ -3031,7 +3037,7 @@ Function IN3S_PlateImageHook(s)
 								variable SelRow2
 								Wave/T listWave=root:Packages:SamplePlateSetup:LBCommandWv
 								SelRow2 = dimSize(listWave,0)-1
-								Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
+								Wave/Z LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
 								LBSelectionWv[][0]=2
 								LBSelectionWv[SelRow2][0]=3
 								ListBox CommandsList, win=SamplePlateSetup, selRow= SelRow2
@@ -3168,7 +3174,7 @@ static Function IN3S_CreateCircles(PlateImage, Centers, Radius,Scaling)
 	MatrixOp/FREE Wave2DOutIFFT=ifft(MultipliedFFT,1)
 	//this depends on what is used for convolution. If sharp sphere, this is what you need... thresholds are  much smaller for gauss... 
 	imageThreshold/T=(0.5)  Wave2DOutIFFT
-	wave M_ImageThresh
+	wave/Z M_ImageThresh
 	//now we need to shrink it back to size and remove first PadSphere rows and columns
 	Duplicate/Free/R=[PadSphere, ][PadSphere, ] M_ImageThresh, ShrunkImageThresh
 	//and return back to the code. 
@@ -3216,7 +3222,7 @@ static Function IN3S_CreateNMRTubes(PlateImage, Centers, Scaling)
 	MatrixOp/FREE Wave2DOutIFFT=ifft(MultipliedFFT,1)
 	//this depends on what is used for convolution. If sharp sphere, this is what you need... thresholds are  much smaller for gauss... 
 	imageThreshold/T=(0.5)  Wave2DOutIFFT
-	wave M_ImageThresh
+	wave/Z M_ImageThresh
 	//now we need to shrink it back to size and remove first PadSphere rows and columns
 	Duplicate/Free/R=[PadSphereP, ][PadSphereP, ] M_ImageThresh, ShrunkImageThresh
 	//and return back to the code. 
@@ -3231,7 +3237,7 @@ Function  IN3S_ImportFile()			//thsi imports ASCII file, need to add otehr types
 	setdatafolder root:Packages:SamplePlateSetup:
 
 	Wave/T LBCommandWv = root:Packages:SamplePlateSetup:LBCommandWv
-	Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
+	Wave/Z LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
 	//Wave/T LBTtitleWv = root:Packages:SamplePlateSetup:LBTtitleWv
 	redimension/N=(400,8) LBCommandWv, LBSelectionWv
 	//initialize...
@@ -3334,9 +3340,9 @@ Function IN3S_ImportImageOfPlate()
 		abort
 	endif
 	string/g LoadedImageName=S_fileName
-	wave imageWave = $(LoadedImageName)
+	wave/Z imageWave = $(LoadedImageName)
 	ImageTransform rgb2gray  imageWave
-	Wave M_RGB2Gray
+	Wave/Z M_RGB2Gray
 	Duplicate/O M_RGB2Gray, PlateImageTemp
 	killwaves/Z imageWave, M_RGB2Gray
 	//set values for the variables, for now 0,0 is in top left corner... 
@@ -3406,7 +3412,7 @@ Function IN3S_TrimAndStraightenImage()
 	
 	DFrEF OldDf=GetDataFolderDFR()
 	setdatafolder root:Packages:SamplePlatesAvailable
-	wave ImageIn = root:Packages:SamplePlatesAvailable:PlateImageTemp
+	wave/Z ImageIn = root:Packages:SamplePlatesAvailable:PlateImageTemp
 	
 	NVAR xRT=root:Packages:SamplePlatesAvailable:xRT
 	NVAR xRB=root:Packages:SamplePlatesAvailable:xRB
@@ -3587,7 +3593,7 @@ Function IN3S_BeamlineSurvey()
 	NVAR SampleYTable = root:Packages:SamplePlateSetup:SampleYTable
 	NVAR SampleXRBV=root:Packages:SamplePlateSetup:SampleXRBV
 	NVAR SampleYRBV=root:Packages:SamplePlateSetup:SampleYRBV
-	Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
+	Wave/Z LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
 	SelectedSampleName = ListWV[SelectedRow][0]
 	//ListBox CommandsList, win=SamplePlateSetup, selrow=SelectedRow
 	LBSelectionWv[][0]=2
@@ -3901,7 +3907,7 @@ end
 
 Function IN3S_BeamlineSurveyPanel()
 
-	string oldDf=GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:SamplePlateSetup
 	/// abort if instrument in use. 
 	IN3S_BeramlineSurveyAbortIfNeeded("Cannot use survey tool")
@@ -4007,6 +4013,7 @@ Function IN3S_BeamlineSurveyPanel()
 
 	endif
 
+	SetDataFolder saveDF
 end
 
 
@@ -4042,7 +4049,7 @@ Function IN3S_SurveySetVarProc(sva) : SetVariableControl
 				SelectedRow=SelectedRow+1
 				SelectedSampleName = ListWV[SelectedRow][0]
 				//ListBox CommandsList, win=SamplePlateSetup, selrow=SelectedRow
-				Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
+				Wave/Z LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
 				LBSelectionWv[][0]=2
 				LBSelectionWv[SelectedRow][0]=3
 				SampleXTable = str2num(ListWV[SelectedRow][1])
@@ -4100,7 +4107,7 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 			NVAR SampleYTAR = root:Packages:SamplePlateSetup:SampleYTAR
 			NVAR SampleXRBV = root:Packages:SamplePlateSetup:SampleXRBV
 			NVAR SampleYRBV = root:Packages:SamplePlateSetup:SampleYRBV
-			Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
+			Wave/Z LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
 			if(StringMatch(ba.ctrlName, "MoveSXLow"))		
 				SampleXTAR = SampleXTAR-SXStep
 				IN3S_MoveMotorInEpics("SX",SampleXTAR)			

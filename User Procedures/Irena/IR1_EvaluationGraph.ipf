@@ -1,6 +1,6 @@
 #pragma rtGlobals=3 // Use strict wave reference mode and runtime bounds checking
 //#pragma rtGlobals=21	// Use modern global access method.
-#pragma version=2.11
+#pragma version=2.12
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
@@ -8,6 +8,10 @@
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//2.12 AI code review: fix Median SetVariable bound to GR1_Mode instead of GR1_Median (copy-paste bug);
+//     guard WAVE OrigData references from wave-note string paths with /Z + WaveExists checks;
+//     remove dead string fldrSav0 variable and uncomment PauseUpdate in IR1G_MIPDataGraph;
+//     fix MIPVOlume casing to MIPVolume.
 //2.11 fixed some bugs in find FWHM IR1G_FindFWHM(IntProbWave,DiaWave, StartP, EndP)
 //2.10 fixed operations for case when user uses Modeling (now MOdeling) cdata and used not first, but later pop for Size distribution. Needed to build in skipping of non-size distribution cases...
 //2.09  removed unused functions
@@ -23,6 +27,14 @@
 //part of Irena macros.
 //evaluation graph for ONE sample only... Complex way to get to do some statistics...
 //all variables and strings start with GR1_ ...
+
+// TODO (deferred from AI review 2026-05-04):
+// 1. Convert Proc IR1G_OneSampleEvaluationGraph() (line ~1372) from Proc/macro to Function.
+//    This allows calling it directly instead of via Execute("IR1G_OneSampleEvaluationGraph()").
+//    Note: Proc uses string fldrSav/GetDataFolder(1) pattern — update to DFREF when converting.
+// 2. WAVE declarations without /Z at lines ~246-248 (inside CalcCumulativeSizeDist branch):
+//    CumulativeSizeDist, CumulativeSfcArea, CumulativeDistDiameters are assumed to exist after
+//    IR1G_CreateCumulativeCurves() — add /Z + WaveExists guards for robustness.
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -300,11 +312,10 @@ Function IR1G_MIPDataGraph()
 	DFREF oldDf = GetDataFolderDFR()
 
 	SetDataFolder root:Packages:SASDataEvaluation
-	WAVE MIPVOlume
+	WAVE MIPVolume
 	WAVE MIPPressure
 
-	//	PauseUpdate    		// building window...
-	string fldrSav0  = GetDataFolder(1)
+	PauseUpdate
 	string WavesFrom = GetWavesDataFolder(CsrWaveRef(A), 0)
 	Display/K=1/W=(35, 84, 380, 291)/N=MIPDataGraph MIPVolume vs MIPPressure as "MIP curve for " + WavesFrom
 	ModifyGraph log(bottom)=1
@@ -1048,27 +1059,30 @@ Function IR1G_SaveCumulativeSizeDist()
 		AlertUserNotSaved += 1
 	else
 		IntrCrvNote = note(CumulativeSizeDist)
-		WAVE OrigData = $(stringByKey("Cumulative Source Data", IntrCrvNote, "=", ";"))
-		DataFldr = GetWavesDataFolder(ORIGDATA, 1)
-		LocOfUnd = strsearch(stringByKey("Cumulative Source Data", IntrCrvNote, "=", ";"), "_", strlen(stringByKey("Cumulative Source Data", IntrCrvNote, "=", ";")), 3) + 1
-		//print stringByKey("CumulativeSizeDist Curve Source Data",IntrCrvNote,"=",";")[LocOfUnd,inf]
-		IndxOfData = str2num(stringByKey("Cumulative Source Data", IntrCrvNote, "=", ";")[LocOfUnd, Inf])
-
-		SetDataFolder DataFldr
-		NewIntrCrvName = "CumulativeSizeDist_" + num2str(IndxOfData)
-		NewSfcCrvName  = "CumulativeSfcArea_" + num2str(IndxOfData)
-		NewDiaWvName   = "CumulativeDistDiameters_" + num2str(IndxOfData)
-		if(checkName("CumulativeSizeDist_" + num2str(IndxOfData), 1) != 0)
-			NewIntrCrvName = UniqueName("CumulativeSizeDist_" + num2str(IndxOfData), 1, 0)
-			NewSfcCrvName  = "CumulativeSfcArea_" + NewIntrCrvName[14, Inf]
-			NewDiaWvName   = "CumulativeDistDiameters" + NewIntrCrvName[14, Inf]
-			DoALert 0, "Note that existing index of the result was already used, the data stored with increased index. See message in history area"
+		DataFldr = stringByKey("Cumulative Source Data", IntrCrvNote, "=", ";")
+		WAVE/Z OrigData = $DataFldr
+		if(!WaveExists(OrigData))
+			SavedWhat          = "\rCumulative source data wave not found in wave note, not saved\r"
+			AlertUserNotSaved += 1
+		else
+			LocOfUnd   = strsearch(DataFldr, "_", strlen(DataFldr), 3) + 1
+			IndxOfData = str2num(DataFldr[LocOfUnd, Inf])
+			DataFldr   = GetWavesDataFolder(OrigData, 1)
+			SetDataFolder DataFldr
+			NewIntrCrvName = "CumulativeSizeDist_" + num2str(IndxOfData)
+			NewSfcCrvName  = "CumulativeSfcArea_" + num2str(IndxOfData)
+			NewDiaWvName   = "CumulativeDistDiameters_" + num2str(IndxOfData)
+			if(checkName("CumulativeSizeDist_" + num2str(IndxOfData), 1) != 0)
+				NewIntrCrvName = UniqueName("CumulativeSizeDist_" + num2str(IndxOfData), 1, 0)
+				NewSfcCrvName  = "CumulativeSfcArea_" + NewIntrCrvName[14, Inf]
+				NewDiaWvName   = "CumulativeDistDiameters" + NewIntrCrvName[14, Inf]
+				DoALert 0, "Note that existing index of the result was already used, the data stored with increased index. See message in history area"
+			endif
+			Duplicate/O CumulativeSizeDist, $(NewIntrCrvName)
+			Duplicate/O CumulativeSfcArea, $(NewSfcCrvName)
+			Duplicate/O CumulativeDistDiameters, $(NewDiaWvName)
+			SavedWhat = "\rSaved Cumulative data to     " + NewIntrCrvName + "     /     " + NewSfcCrvName + "     /     " + NewDiaWvName + "    in folder    " + DataFldr + "\r"
 		endif
-
-		Duplicate/O CumulativeSizeDist, $(NewIntrCrvName)
-		Duplicate/O CumulativeSfcArea, $(NewSfcCrvName)
-		Duplicate/O CumulativeDistDiameters, $(NewDiaWvName)
-		SavedWhat = "\rSaved Cumulative data to     " + NewIntrCrvName + "     /     " + NewSfcCrvName + "     /     " + NewDiaWvName + "    in folder    " + DataFldr + "\r"
 	endif
 	//now the MIP data, if they exist...
 	if(!WaveExists(MIPPressure) || !WaveExists(MIPVolume))
@@ -1076,11 +1090,15 @@ Function IR1G_SaveCumulativeSizeDist()
 		AlertUserNotSaved += 1
 	else
 		IntrCrvNote = note(MIPVolume)
-		WAVE OrigData = $(stringByKey("MIP Source Data", IntrCrvNote, "=", ";"))
-		DataFldr = GetWavesDataFolder(ORIGDATA, 1)
-		LocOfUnd = strsearch(stringByKey("MIP Source Data", IntrCrvNote, "=", ";"), "_", strlen(stringByKey("MIP Source Data", IntrCrvNote, "=", ";")), 3) + 1
-		//print stringByKey("CumulativeSizeDist Curve Source Data",IntrCrvNote,"=",";")[LocOfUnd,inf]
-		IndxOfData = str2num(stringByKey("MIP Source Data", IntrCrvNote, "=", ";")[LocOfUnd, Inf])
+		DataFldr = stringByKey("MIP Source Data", IntrCrvNote, "=", ";")
+		WAVE/Z OrigData = $DataFldr
+		if(!WaveExists(OrigData))
+			SavedWhat         += "\rMIP source data wave not found in wave note, not saved\r"
+			AlertUserNotSaved += 1
+		else
+		LocOfUnd   = strsearch(DataFldr, "_", strlen(DataFldr), 3) + 1
+		IndxOfData = str2num(DataFldr[LocOfUnd, Inf])
+		DataFldr   = GetWavesDataFolder(OrigData, 1)
 
 		SetDataFolder DataFldr
 		NewIntrCrvName = "MIPVolume_" + num2str(IndxOfData)
@@ -1094,7 +1112,8 @@ Function IR1G_SaveCumulativeSizeDist()
 		Duplicate/O MIPVolume, $(NewIntrCrvName)
 		Duplicate/O MIPPressure, $(NewDiaWvName)
 		SavedWhat += "Saved MIP data to     " + NewIntrCrvName + "     /     " + NewDiaWvName + "    in folder    " + DataFldr
-	endif
+		endif  // WaveExists(OrigData)
+	endif  // WaveExists(MIPPressure/MIPVolume)
 	if(AlertUserNotSaved > 1.5)
 		DoAlert 0, "Nothing available for saving..."
 	endif
