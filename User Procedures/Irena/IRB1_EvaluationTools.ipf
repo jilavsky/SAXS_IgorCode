@@ -886,7 +886,7 @@ Function IRB1_ConcSerCursorsSync(traceName,CursorName,PointNumber)
 	Wave/Z QWaveA=csrXWaveref(A,"IRB1_ConcSeriesPanel#LogLogDataDisplay")
 	Wave/Z QWaveB=csrXWaveref(B,"IRB1_ConcSeriesPanel#LogLogDataDisplay")
 	if(!WaveExists(QWaveA) || !WaveExists(QWaveB))
-		return
+		return 0
 	endif
 	DataQstart = QWaveA[pcsr(A , "IRB1_ConcSeriesPanel#LogLogDataDisplay")]
 	DataQEnd = QWaveB[pcsr(B , "IRB1_ConcSeriesPanel#LogLogDataDisplay")]

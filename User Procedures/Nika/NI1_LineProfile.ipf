@@ -525,7 +525,7 @@ Function NI1_ImageLineProfileNew(newImageGraphName)
 
 	Make/O/N=5 LineProfileY,LineProfileX		// make the waves needed for the operation.
 	Make/O FHLineProfileY,FHLineProfileX		// Freehand waves
-	SetDataFolder $dfSav
+	SetDataFolder saveDF
 	
 	NI1_UpdatePositionAndWidth(1)				// 3
 
