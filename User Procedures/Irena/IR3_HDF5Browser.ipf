@@ -151,7 +151,7 @@ Function IR3HB_PanelFnct()
 	PauseUpdate
 	variable yPos = 0
 	variable panelW = 640
-	variable panelH = 770
+	variable panelH = 790
 	NewPanel /K=1 /W=(150, 80, 150 + panelW, 80 + panelH) as "HDF5 Browser"
 	DoWindow /C $IR3HB_PanelName
 
@@ -2944,7 +2944,7 @@ Function IR3HB_ButtonProc(ba) : ButtonControl
 End
 
 static Function IR3HB_OpenHelpPage()
-	BrowseURL "https://saxs-igorcodedocs.readthedocs.io/"
+	BrowseURL "https://saxs-igorcodedocs.readthedocs.io/en/latest/Irena/HDF5Browser.html"
 End
 
 Function IR3HB_ListBoxProc(lba) : ListBoxControl

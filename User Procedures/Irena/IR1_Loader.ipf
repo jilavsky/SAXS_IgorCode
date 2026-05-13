@@ -9,6 +9,7 @@
 //*************************************************************************/
 
 //2.76  Updated all #include version requirements to current versions after AI code review.
+//			Added HDF5Browser
 //2.75  remove IR1I_Import data, repalce with IR3I_IMportData
 //2.74  Sync with main version number
 //2.27  Added Ellipsoid Cylinder tool
@@ -93,6 +94,7 @@
 #include "IR3_WAXSDiffraction", version >= 1.17
 //new tools 2026-02
 #include "IR3_ImportData", version >= 1.01
+#include "IR3_HDF5Browser", version>=1.04
 
 
 //bio tools

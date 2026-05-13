@@ -179,6 +179,8 @@ Menu "SAS"
 		"Data mining [extract information]", IR2M_GetDataMiner()
 		help={"Data miner to find various data and plot various waves"}
 	end
+	"HDF5 Browser", IR3HB_HDF5Browser()
+	help={"Browse HDF5 file content, copy, delete data to and from Igor experiment or two HDF5 files"}
 	"Metadata Browser", IR3B_MetadataBrowser()
 	help={"Tool to extarct quickly metadata stored in wave notes"}
 	"---"
