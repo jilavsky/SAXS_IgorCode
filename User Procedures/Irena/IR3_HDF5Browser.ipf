@@ -247,34 +247,37 @@ Function IR3HB_OpenFile(side)
 	if (fileID >= 0 || strlen(sourceType) > 0)
 		IR3HB_CloseFile(side)
 	endif
-	// Open file via dialog. Try read-write first (so copy-into can work);
-	// if that fails (locked / read-only volume / permissions), retry read-only.
+	// Use Open /D so we control the extension filter (HDF5OpenFile /I only shows
+	// .h5/.hdf5/.h5xp/.h5xt; this adds .hdf which is used at some beamlines).
+	// Open /D never opens a file — it just returns the path in S_fileName ("" on
+	// cancel), so there is no debugger break when the user dismisses the dialog.
+	variable locFileRef
+	Open /D/F="HDF5 Files:.h5,.hdf5,.hdf,.h5xp,.h5xt;All Files:.*;"/R locFileRef
+	if (strlen(S_fileName) == 0)
+		SetDataFolder saveDF
+		return 0   // user cancelled
+	endif
+	string selectedFullPath = S_fileName
+	// Now open the chosen file as HDF5. Try read-write first (allows copy-into);
+	// fall back to read-only if the file is locked or on a read-only volume.
 	variable locFileID
-	HDF5OpenFile /I locFileID as ""
+	HDF5OpenFile /Z locFileID as selectedFullPath
 	variable rwErr = V_Flag
-	string rwPath = S_path
-	string rwName = S_fileName
 	if (rwErr != 0)
-		// User may have cancelled, or write access denied. If they cancelled,
-		// S_fileName will be empty and we should bail. Otherwise retry /R.
-		if (strlen(S_fileName) == 0)
-			SetDataFolder saveDF
-			return 0
-		endif
-		HDF5OpenFile /R locFileID as rwPath + rwName
+		HDF5OpenFile /R/Z locFileID as selectedFullPath
 		if (V_Flag != 0)
-			Printf "HDF5 Browser: could not open '%s' (V_Flag=%d on RW, %d on RO)\r", rwName, rwErr, V_Flag
+			Printf "HDF5 Browser: could not open '%s' (err RW=%d, RO=%d)\r", selectedFullPath, rwErr, V_Flag
 			SetDataFolder saveDF
 			return 0
 		endif
 		isReadOnly = 1
-		Printf "HDF5 Browser: '%s' opened READ-ONLY (write/copy into this pane will be blocked)\r", S_fileName
+		Printf "HDF5 Browser: '%s' opened READ-ONLY (write/copy into this pane will be blocked)\r", selectedFullPath
 	else
 		isReadOnly = 0
 	endif
 	fileID = locFileID
-	filePath = S_path
-	fileName = S_fileName
+	filePath = S_path      // set by HDF5OpenFile on success
+	fileName = S_fileName  // set by HDF5OpenFile on success
 	sourceType = "HDF5"
 	// Build the tree
 	IR3HB_BuildFullTree(side, locFileID)
