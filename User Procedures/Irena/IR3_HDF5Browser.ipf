@@ -157,7 +157,7 @@ Function IR3HB_PanelFnct()
 
 	// Title
 	TitleBox MainTitle, title="\Zr200HDF5 Browser", pos={140, 5}, frame=0, fstyle=3, fixedSize=1, font="Times New Roman", size={360, 30}, fColor=(0, 0, 52224)
-	TitleBox FakeLine1, title=" ", labelBack=(0, 0, 52224), pos={5, 38}, size={panelW - 10, 3}, frame=0
+	TitleBox FakeLine1, title=" ", fixedSize=1,labelBack=(0, 0, 52224), pos={5, 38}, size={panelW - 10,3}, frame=0
 	Button GetHelp, pos={panelW - 85, 8}, size={80, 15}, fColor=(65535, 32768, 32768), proc=IR3HB_ButtonProc, title="Get Help", help={"Open www manual page for this tool"}
 	yPos = 45
 
