@@ -23,7 +23,7 @@
 //In panel put in "Name of FormFactor function this string:    IR1T_EllipsoidalCoreShell
 //In Panel put in Name of volume FF function this string:     IR1T_EllipsoidalVolume
 //
-// Par1 is the aspect ratio which for ellipsoids are defiend as rotational objects with dimensions R x R x AR*R, note, AR=1 may fail. 
+// Par1 is the aspect ratio which for ellipsoids are defiend as rotational objects with dimensions R x R x AR*R.
 // par2 is shell thickness in A, and it is the same thickness everywhere on the ellipsoid. 
 // par3, 4 and 5 are contrasts as this is core shell system and contrasts are part of the form factor. 
 // par3, 4 and 5 are implicitely multiplied by 10^10cm^-2, so insert only a number. These are rhos not, delta-rho-square
@@ -33,7 +33,6 @@
  
 ////////////////////////////////////////////////
 //****   IR1T_OblateCoreShell ***** is simply the form factor, which normalizes to 1 at Q=0
-//Threadsafe
 
 Function IR1T_EllipsoidalCoreShell(Qval,radius, par1,par2,par3,par4,par5)
 	variable Qval, radius, par1,par2,par3,par4,par5												
@@ -45,7 +44,13 @@ Function IR1T_EllipsoidalCoreShell(Qval,radius, par1,par2,par3,par4,par5)
 	//make/o/t parameters_oef = {"scale","major core (A)","minor core (A)","major shell (A)","minor shell (A)","SLD core (A-2)","SLD shell (A-2)","SLD solvent (A^-2)","bkg (cm-1)"}
 	//set scale to 1, background to 0, 
 	//
-	if(par1 <= 1 )			//oblate shape
+	Variable nearSphereTol = 1e-6
+	Variable isNearSphere = abs(par1-1) <= nearSphereTol
+	if(radius <= 0 || par1 <= 0 || (radius+par2) <= 0 || (radius*par1+par2) <= 0)
+		return NaN
+	endif
+	// Route near-spherical particles to the prolate branch for numerical stability.
+	if(par1 < 1 && !isNearSphere)			//oblate shape
 		coef_oef[0] =1									//scale, set to 1, Irena uses its own scale
 		coef_oef[1] = radius							//this is the main dimension of the shape
 		coef_oef[2] = radius*par1					//minor, smaller, diemnsion = secondary (AR*R) dimension of the particle
@@ -68,7 +73,7 @@ Function IR1T_EllipsoidalCoreShell(Qval,radius, par1,par2,par3,par4,par5)
 	endif
 	//
 	
-	if(par1 <= 1 )			//oblate shape
+	if(par1 < 1 && !isNearSphere)			//oblate shape
 #if exists("OblateFormX")
    //  this returns F^2, we need F, so square root that
    //		after scaling by volume which needs to be converted to cm. 
@@ -94,8 +99,11 @@ Function IR1T_EllipsoidalCoreShell(Qval,radius, par1,par2,par3,par4,par5)
 	endif
 end
 
-Threadsafe Function IR1T_EllipsoidalVolume(radius, AspectRatio, par2,par3,par4,par5)
+Function IR1T_EllipsoidalVolume(radius, AspectRatio, par2,par3,par4,par5)
 	variable radius, AspectRatio, par2,par3,par4,par5
+	if(radius <= 0 || AspectRatio <= 0)
+		return NaN
+	endif
 	return 4*Pi/3*radius*radius*radius*AspectRatio
 end
 
@@ -229,12 +237,12 @@ static Function IR1T_gfn4(xx,crmaj,crmin,trmaj,trmin,delpc,delps,qq)
  	ut= sqrt(ut2)*qq
 	vc = PI43*aa*aa*bb
    	vt = PI43*trmaj*trmaj*trmin
-   	if(uq == 0)
+   	if(abs(uq) < 1e-12)
    		siq = 1/3
    	else
    		siq = (sin(uq)/uq/uq - cos(uq)/uq)/uq
    	endif
-   	if(ut == 0)
+   	if(abs(ut) < 1e-12)
    		sit = 1/3
    	else
    		sit = (sin(ut)/ut/ut - cos(ut)/ut)/ut
@@ -393,12 +401,12 @@ static Function IR1T_gfn2(xx,crmaj,crmin,trmaj,trmin,delpc,delps,qq)
 	vc = PI43*aa*bb*bb
 	vt = PI43*trmaj*trmin*trmin
 	
-	if(uq == 0.0)
+	if(abs(uq) < 1e-12)
    		siq = 1.0/3.0
    else
    		siq = (sin(uq)/uq/uq - cos(uq)/uq)/uq
    	endif
-   	if(ut == 0.0)
+   	if(abs(ut) < 1e-12)
    		sit = 1.0/3.0
    	else
    		sit = (sin(ut)/ut/ut - cos(ut)/ut)/ut
@@ -411,5 +419,4 @@ static Function IR1T_gfn2(xx,crmaj,crmin,trmaj,trmin,delpc,delps,qq)
 	
 	return gfn2
 End		//function gfn2 for prolate ellipsoids
-
 
