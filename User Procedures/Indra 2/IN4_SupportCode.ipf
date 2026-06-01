@@ -1079,10 +1079,11 @@ static Function IN4_LoadWaveAndAppendAttribs(locID, IgorWaveName, H5DataName)
 		//this will load wave and append its attributes to wavenote
      	HDF5LoadData /Q/Z /N=$(IgorWaveName) /O locID, H5DataName 
      	if(V_Flag!=0)
-     		DoAlert/T="HDF5 wave load failed" 1, "Loading "+H5DataName+" to "+IgorWaveName+" failed, Abort?"
-     		if(V_Flag)
-     			Abort
-     		endif
+     		print "Loading "+H5DataName+" to "+IgorWaveName+" failed"
+     		//DoAlert/T="HDF5 wave load failed" 1, "Loading "+H5DataName+" to "+IgorWaveName+" failed, Abort?"
+     		//if(V_Flag)
+     		//	Abort
+     		//endif
      		return 0
      	endif
 		Wave/Z wv = $(IgorWavename)
@@ -1261,6 +1262,7 @@ static Function ReadMyNXcanSASUSAXS(filenameInput)
 	//Indra_version=4.0.0
 	//this let's us make future changes and also deal with Igor saved data differently, if needed. 
 	//need to also get instrument data, so let's read instrument/monochromator group
+	variable success=1
     location = "entry/instrument/monochromator/"
     HDF5OpenGroup /Z fileID, location, groupID
     if (V_Flag==0)
@@ -1277,21 +1279,27 @@ static Function ReadMyNXcanSASUSAXS(filenameInput)
     location = "entry/QRS_data/"
     HDF5OpenGroup /Z fileID, location, groupID
     if (V_Flag==0)
-    	IN4_LoadWaveAndAppendAttribs(groupID, "R_Int", "Intensity")
-    	IN4_LoadWaveAndAppendAttribs(groupID, "R_Qvec", "Q")
-    	IN4_LoadWaveAndAppendAttribs(groupID, "R_Error", "Error")
+    	success*=IN4_LoadWaveAndAppendAttribs(groupID, "R_Int", "Intensity")
+    	success*=IN4_LoadWaveAndAppendAttribs(groupID, "R_Qvec", "Q")
+    	success*=IN4_LoadWaveAndAppendAttribs(groupID, "R_Error", "Error")
 	    HDF5CloseGroup groupID
+	    if(success<1)
+	    	return 0
+	    endif
     endif
 
     // Check for 'entry/Blank_data/'
     location = "entry/Blank_data/"
     HDF5OpenGroup /Z fileID, location, groupID
     if (V_Flag==0)
-    	IN4_LoadWaveAndAppendAttribs(groupID, "BL_R_Int", "Intensity")
-    	IN4_LoadWaveAndAppendAttribs(groupID, "BL_R_Qvec", "Q")
-    	IN4_LoadWaveAndAppendAttribs(groupID, "BL_R_Error", "Error")
+    	success*=IN4_LoadWaveAndAppendAttribs(groupID, "BL_R_Int", "Intensity")
+    	success*=IN4_LoadWaveAndAppendAttribs(groupID, "BL_R_Qvec", "Q")
+    	success*=IN4_LoadWaveAndAppendAttribs(groupID, "BL_R_Error", "Error")
 	    HDF5CloseGroup groupID
-    endif
+	    if(success<1)
+	    	return 0
+	    endif    
+	endif
 
 	string AllsasDatagroups
 	string AttributesList="canSAS_class=SASentry;NX_class=NXsubentry;"
@@ -1300,14 +1308,17 @@ static Function ReadMyNXcanSASUSAXS(filenameInput)
     location = removeending(GrepList(AllsasDatagroups,  "_SMR"),";")+"/sasdata/"
     HDF5OpenGroup /Z fileID, location, groupID
     if (V_Flag==0)
-    	IN4_LoadWaveAndAppendAttribs(groupID, "SMR_Int", "I")
-    	IN4_LoadWaveAndAppendAttribs(groupID, "SMR_Qvec", "Q")
-    	IN4_LoadWaveAndAppendAttribs(groupID, "SMR_Error", "Idev")
-    	IN4_LoadWaveAndAppendAttribs(groupID, "SMR_dQ", "dQw")
+    	success*=IN4_LoadWaveAndAppendAttribs(groupID, "SMR_Int", "I")
+    	success*=IN4_LoadWaveAndAppendAttribs(groupID, "SMR_Qvec", "Q")
+    	success*=IN4_LoadWaveAndAppendAttribs(groupID, "SMR_Error", "Idev")
+    	success*=IN4_LoadWaveAndAppendAttribs(groupID, "SMR_dQ", "dQw")
     	//separately deal with slit length
     	HDF5LoadData /Q /N=SlitLengthWave /O groupID, "dQl" 
 	    HDF5CloseGroup groupID
-
+	    if(success<1)
+	    	return 0
+	    endif
+	    
     	wave/Z SlitLengthWave
     	variable/g Slitlength = SLitLengthWave[0]
     	killWaves SlitLengthWave
@@ -1336,11 +1347,15 @@ static Function ReadMyNXcanSASUSAXS(filenameInput)
     location = ReplaceString("_SMR", location,"") 
     HDF5OpenGroup /Z fileID, location, groupID
     if (V_Flag==0)
-    	IN4_LoadWaveAndAppendAttribs(groupID, "DSM_Int", "I")
-    	IN4_LoadWaveAndAppendAttribs(groupID, "DSM_Qvec", "Q")
-    	IN4_LoadWaveAndAppendAttribs(groupID, "DSM_Error", "Idev")
-    	IN4_LoadWaveAndAppendAttribs(groupID, "DSM_dQ", "Qdev")
+    	success*=IN4_LoadWaveAndAppendAttribs(groupID, "DSM_Int", "I")
+    	success*=IN4_LoadWaveAndAppendAttribs(groupID, "DSM_Qvec", "Q")
+    	success*=IN4_LoadWaveAndAppendAttribs(groupID, "DSM_Error", "Idev")
+    	success*=IN4_LoadWaveAndAppendAttribs(groupID, "DSM_dQ", "Qdev")
 	    HDF5CloseGroup groupID
+	    if(success<1)
+	    	return 0
+	    endif
+	    
     	WAVE/Z DSM_Int
     	string oldnoted = note(DSM_Int)
     	oldnoted+="energy="+num2str(energy)+";"   

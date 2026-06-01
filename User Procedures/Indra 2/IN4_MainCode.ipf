@@ -566,19 +566,24 @@ Function IN4_PlotDataFolders(ImportedFolders)
 				Wave/Z BL_R_error
 				
 				DoWIndow USAXS_R_data
-				if(V_Flag==0)
+				if(V_Flag==0 && WaveExists(R_int) && WaveExists(R_Qvec) )
 					Display/K=1/N= USAXS_R_data R_int vs R_Qvec as "USAXS RAW data"
-					AppendToGraph BL_R_int vs BL_R_Qvec
-					PauseUpdate
+					if(WaveExists(BL_R_int) && WaveExists(BL_R_Qvec))
+						AppendToGraph BL_R_int vs BL_R_Qvec
+						ModifyGraph rgb(BL_R_int)=(0,0,0)
+					endif
 					Label left "Intensity [normalized, uncalibrated]"
 					Label bottom "Q [1/A]"
-					ModifyGraph rgb(BL_R_int)=(0,0,0)
 					SetAxis bottom 1e-05,0.3	
 					ModifyGraph log=1
 				else
 					//DoWIndow/F USAXS_R_data
-					AppendToGraph/W=USAXS_R_data R_int vs R_Qvec 
-					AppendToGraph/W=USAXS_R_data BL_R_int vs BL_R_Qvec
+					if(WaveExists(R_int) && WaveExists(R_Qvec))
+						AppendToGraph/W=USAXS_R_data R_int vs R_Qvec 
+					endif
+					if(WaveExists(BL_R_int) && WaveExists(BL_R_Qvec))
+						AppendToGraph/W=USAXS_R_data BL_R_int vs BL_R_Qvec
+					endif
 				endif
 				IN2G_ColorTopGrphRainbow(topGraphStr="USAXS_R_data")
 				IN2G_LegendTopGrphFldr(12, 10, 1, 1, topGraphStr="USAXS_R_data" )
