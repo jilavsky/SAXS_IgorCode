@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.33
+#pragma version = 2.34
 #pragma IgorVersion = 9.04
 
 //control constants
@@ -34,6 +34,7 @@ strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
+//2.34 added IN2G_CorMapScore(measuredW, modelW, uncertaintyW) — returns C/log₂(N) similarity score (Franke & Jeffries 2010)
 //2.33	upgrade to IP9, remvoe some older code not needed
 //2.32 fix IP8.x bug
 //2.31 fix IN2G_AddWaveStatistics to write statistics data in Y wave data folder. 
@@ -7933,6 +7934,73 @@ Function IN2G_SplineSmooth(n1,n2,xWv,yWv,dyWv,S,AWv,CWv)
 		KillWaves/Z bWv, dWv, rWv, r1Wv, r2Wv, tWv, t1Wv, uWv, vWv
 		setDataFolder OldDf
 end
+//*******************************************************************
+//*******************************************************************
+//*******************************************************************
+//*******************************************************************
+//=======================================================================================
+// SECTION: CorMap Similarity Score (Franke & Jeffries 2010)
+//   IN2G_CorMapScore computes C/log₂(N) where C is the longest run of same-sign
+//   normalized residuals and N is the number of finite data points.
+//
+//   Interpretation:
+//     ≈ 1.0  — residuals indistinguishable from random noise (excellent fit)
+//     > 1.0  — systematic model-data mismatch; larger = worse
+//
+//   Public entry point:
+//     IN2G_CorMapScore(measuredW, modelW, uncertaintyW)
+//       measuredW    — measured intensities
+//       modelW       — model intensities (same Q grid as measuredW)
+//       uncertaintyW — uncertainties (sigma) on measured data only
+//       returns C/log₂(N), or NaN if fewer than 2 finite points
+//=======================================================================================
+Function IN2G_CorMapScore(measuredW, modelW, uncertaintyW)
+	Wave measuredW, modelW, uncertaintyW
+
+	Variable nPts = numpnts(measuredW)
+	Variable nFinite, i, idx, rv, maxRun, curRun
+	Make/FREE/N=(nPts)/D residuals
+	residuals = (measuredW - modelW) / uncertaintyW
+
+	// Count finite residuals
+	nFinite = 0
+	for (i = 0; i < nPts; i += 1)
+		if (numtype(residuals[i]) == 0)
+			nFinite += 1
+		endif
+	endfor
+
+	if (nFinite < 2)
+		return NaN
+	endif
+
+	// Extract signs of finite residuals (-1, 0, or +1)
+	Make/FREE/N=(nFinite)/I signs
+	idx = 0
+	for (i = 0; i < nPts; i += 1)
+		if (numtype(residuals[i]) == 0)
+			rv = residuals[i]
+			signs[idx] = (rv > 0) ? 1 : ((rv < 0) ? -1 : 0)
+			idx += 1
+		endif
+	endfor
+
+	// Longest run of consecutive same-sign values
+	maxRun = 1
+	curRun = 1
+	for (i = 1; i < nFinite; i += 1)
+		if (signs[i] == signs[i-1])
+			curRun += 1
+		else
+			curRun = 1
+		endif
+		maxRun = max(maxRun, curRun)
+	endfor
+
+	// C/log₂(N): ~1.0 for random noise, >1.0 for systematic mismatch
+	// log₂(N) = log(N)/log(2) where log() is base-10 in Igor
+	return maxRun * log(2) / log(nFinite)
+End
 //*******************************************************************
 //*******************************************************************
 //*******************************************************************

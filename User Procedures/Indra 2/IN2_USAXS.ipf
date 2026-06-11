@@ -69,17 +69,17 @@ Menu "USAXS"
 	help={"Indra 4, import and process USAXS-SAXS-WAXS data"}
 	"USAXS data reduction (original)",IN3_NewMain()
 	help={"GUI to import and process USAXS data"}
-	//Submenu "Other input methods"
+	Submenu "Other input methods"
 		//"Import USAXS Step scan Data [SPEC]", In2_ImportData()
 		//help={"Import USAXS data from APS USAXS instrument - from Spec file"}
-		//"Import Desktop data [Osmic-Rigaku]",  IN2U_LoadDesktopData()
-		//help={"Import USAXS data set from desktop instrument - Osmic/Rigaku"}
+		"Import Desktop data [Osmic-Rigaku]",  IN2U_LoadDesktopData()
+		help={"Import USAXS data set from desktop instrument - Osmic/Rigaku"}
 		//"Import USAXS FlyScan data [hdf5]", IN3_FlyScanMain()
 		//help={"Import USAXS data from USAXS using FlyScan - HDF5 data"}
 		//"---"
 		//"Reduce USAXS data (old, spec)",IN3_Main()
 		//help={"This willl reduce USAXS data stored in this experiment"}
-	//end
+	end
 	"Setup Sample Plates",IN3S_SampleSetupMain()
 	help={"Tool to help users setup sample plates, survey and generate command files"}
 

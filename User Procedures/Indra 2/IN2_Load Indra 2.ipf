@@ -68,7 +68,7 @@
 #include "IonChamber3.3", version >= 3.3
 
 //#include "IN2_SpecInput", version >= 1.21
-//#include "IN2_DesktopUSAXS", version >= 0.3
+#include "IN2_DesktopUSAXS", version >= 0.3
 //#include "IN2_PlottingTools", version >= 1.15
 //#include "IN2_NotebookLogging", version >= 1.10
 //

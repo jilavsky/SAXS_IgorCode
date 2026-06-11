@@ -1014,8 +1014,9 @@ Function IN2U_Initialize()
 	if(NewNumPnts<=0)
 		NewNumPnts=200
 	endif
-	//need to set Guass as fitting function:   
+	//need to set Gauss as fitting function:   
 	//Added for David Londono 2020-02-10
+	newDataFolder/O root:Packages:Indra3
 	variable/g root:Packages:Indra3:UseGauss
 	variable/g root:Packages:Indra3:UseModifiedGauss
 	variable/g root:Packages:Indra3:UseLorenz

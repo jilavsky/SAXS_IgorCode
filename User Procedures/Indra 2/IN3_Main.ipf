@@ -54,11 +54,13 @@ Constant SmoothBlankForUSAXS             = 1
 Constant SmoothSampleForUSAXS            = 1
 Constant Indra_PDIntBackFixScaleVmin     = 1.1
 Constant Indra_PDIntBackFixScaleVmax     = 0.3e-10
-Constant RwaveSmooth1time                = 0.0
-Constant RwaveSmooth2time                = 0.0
-Constant RwaveSmooth3time                = 0.01
-Constant RwaveSmooth4time                = 0.03
-Constant RwaveSmooth5time                = 0.06
+//these are smoothing times but these are estimated for 90 sec exposures. Need correction for different times. 
+//see IN3_SmoothRData() where it is done. 
+Constant RwaveSmooth1time                = 0.02 		//used in Matilda, was 0
+Constant RwaveSmooth2time                = 0.02		//used in Matilda, was 0	
+Constant RwaveSmooth3time                = 0.03		//used in Matilda, was 0.01
+Constant RwaveSmooth4time                = 0.10		//used in Matilda, was 0.03
+Constant RwaveSmooth5time                = 0.40		//used in Matilda, was 0.12
 Constant CalMaxRatioUseSamFWHM           = 1.12
 
 //************************************************************************************************************

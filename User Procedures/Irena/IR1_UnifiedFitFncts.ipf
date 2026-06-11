@@ -6536,6 +6536,9 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	Variable V_chisq
 	Duplicate/O W_Coef, E_wave, CoefficientInput
 	E_wave=W_coef/100
+	variable DataStartPoint,  DataEndPoints
+	DataStartPoint=0
+	DataEndPoints=numpnts(OriginalIntensity)-1
 
 	IR1A_RecordResults("before")
 
@@ -6550,6 +6553,8 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 		Duplicate/O/R=[pcsr(A,"IR1_LogLogPlotU"),pcsr(B,"IR1_LogLogPlotU")] OriginalIntensity, FitIntensityWave		
 		Duplicate/O/R=[pcsr(A,"IR1_LogLogPlotU"),pcsr(B,"IR1_LogLogPlotU")] OriginalQvector, FitQvectorWave
 		Duplicate/O/R=[pcsr(A,"IR1_LogLogPlotU"),pcsr(B,"IR1_LogLogPlotU")] OriginalError, FitErrorWave
+		DataStartPoint = pcsr(A,"IR1_LogLogPlotU")
+		DataEndPoints = pcsr(B,"IR1_LogLogPlotU")
 		//***Catch error issues
 		wavestats/Q FitErrorWave
 		if(V_Min<1e-20)
@@ -6631,9 +6636,21 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	IR1A_UpdateMassFractCalc()
 	
 	variable/g AchievedChisq=V_chisq
+
+
 	IR1A_RecordErrorsAfterFit()
 	IR1A_GraphModelData()
+
+	WAVE   IntensityModel       = root:Packages:Irena_UnifFit:UnifiedFitIntensity
+	Duplicate/Free/R=[DataStartPoint,  DataEndPoints] OriginalIntensity, OriginalIntensitytmp
+	Duplicate/Free/R=[DataStartPoint,  DataEndPoints] IntensityModel, IntensityModeltmp
+	Duplicate/Free/R=[DataStartPoint,  DataEndPoints] OriginalError, OriginalErrortmp
+	Variable/G SimilarityScore = IN2G_CorMapScore(OriginalIntensitytmp, IntensityModeltmp, OriginalErrortmp)
+	// score ≈ 1.0 → good fit; score >> 1 → systematic mismatch
+	print "Similarity score = "+num2str(SimilarityScore)+" ; score ≈ 1.0 → good fit; score >> 1 → systematic mismatch)"
+	
 	IR1A_RecordResults("after")
+	
 	
 	DoWIndow/F IR1A_ControlPanel
 	IR1A_FixTabsInPanel()

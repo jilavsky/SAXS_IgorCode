@@ -897,7 +897,7 @@ static Function IR3L_AppendData(FolderNameStr)
 			//ErrorBars /W=$(GraphWindowName)  $(NameOfWave(SourceIntWv)) Y,wave=(SourceErrorWv,SourceErrorWv)
 			ErrorBars/W=$(GraphWindowName) $(NewTraceName), Y, wave=(SourceErrorWv, SourceErrorWv)
 		endif
-		print "Appended : " + DataFolderName + IntensityWaveName + " top the graph : " + GraphWindowName
+		//print "Appended : " + DataFolderName + IntensityWaveName + " top the graph : " + GraphWindowName
 	else
 		print "Could not append " + DataFolderName + IntensityWaveName + " to the graph : " + GraphWindowName + " this wave is already displayed in the graph"
 	endif

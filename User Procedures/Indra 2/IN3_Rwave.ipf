@@ -101,6 +101,7 @@ Function IN3_SmoothRData()
 	Wave/Z R_Error = root:Packages:Indra3:R_Error
 	Wave/Z MeasTime = root:Packages:Indra3:MeasTime
 	NVAR SmoothRCurveData = root:Packages:Indra3:SmoothRCurveData
+	variable measTimeTotal=sum(MeasTime)
 	if(SmoothRCurveData)
 		//firs remove NaNs as this is really difficult to deal with...
 		Duplicate/Free PD_range, tmpPD_range
@@ -125,6 +126,9 @@ Function IN3_SmoothRData()
 			else
 				tmpTime = RwaveSmooth5time
 			endif	
+			//correct tmpTime for total data colelction time, these are estimated for 90 seconds  
+			tmpTime*= measTimeTotal/90
+			
 			if(tmpMeasTime[i]>tmpTime)		//no need to smooth
 				SmoothIntensity[i] = TempIntLog[i]
 			else //need to smooth
