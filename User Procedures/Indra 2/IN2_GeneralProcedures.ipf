@@ -17,7 +17,7 @@ Constant TypicalPanelHorizontalSize = 350
    //For releases uncomment the next line and set to correct version number:
 //Strconstant ManualVersionString = "en/1.4/"					//1.4 is December2018 release
 //Strconstant ManualVersionString = "en/1.5.1/"				//this was for September2020 release. 
-Strconstant ManualVersionString = "en/1.6.0/"				//January2026 beta release. 
+Strconstant ManualVersionString = "en/1.7.0/"				   //Cleaned up manuals for 2026 release.  
 //*** For development version uncomment next line, it points to latest (development) version of manuals:
 //Strconstant ManualVersionString = "en/latest/"		//this is for beta version, so it sees current version of manual. 
 strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan-ilavsky/IrenaNikaRecords/VersionCheck.php?"

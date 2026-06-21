@@ -13,6 +13,7 @@ Constant IR3DversionNumber = 1.23 //Data merging panel version number
 //     IR3D_MergeDataOverlap, IR3D_SaveData); add SetDataFolder restore before 7 Abort calls
 //     (IR3D_CopyAndAppendData ×2, IR3D_FitExtendData ×3, IR3D_MergeDataOverlap ×2);
 //     add WAVE/Z to OriginalData1QWave and OriginalData1ErrorWave in IR3D_AddCursorsForExtensions.
+//		 remove _270 from SAXS Folder Match for DSM USAXS data, not used for Matilda data
 //1.23 added checkbox "Fix neg Ints?" (Fixnegatives) which switches off negative Intensity fix. Checked it adds background to make all ints positive, unchecked (default) removes negative points.
 //1.22 Fixed emberrassing errror when if both data sets were QRS, output waves were completely wrong named.
 //1.21 Fixed IR3D_PresetOutputStrings to use long names setting in IP8 and higher, was limited to 26 characters + _mrg.
@@ -598,7 +599,7 @@ Function IR3D_DataMergeCheckProc(cba) : CheckBoxControl
 					if(Indra2Data1SlitSmeared)
 						Data2MatchString = "_u"
 					else
-						Data2MatchString = "_270"
+						Data2MatchString = ""
 					endif
 				endif
 				IR3D_SetGUIControls()
@@ -622,7 +623,7 @@ Function IR3D_DataMergeCheckProc(cba) : CheckBoxControl
 			endif
 			if(stringmatch(cba.ctrlName, "Indra2Data1DSM"))
 				Indra2Data1SlitSmeared = !Indra2Data1DSM
-				Data2MatchString       = "_270"
+				Data2MatchString       = ""
 				IR3D_UpdateListOfAvailFiles(1)
 				IR3D_UpdateListOfAvailFiles(2)
 				IR3D_RebuildListboxTables()
