@@ -109,7 +109,7 @@
 #include "cansasXML_GUI", version >= 1.04
 #include "cansasXML", version >= 1.12
 
-#include "IN2_GeneralProcedures", version >= 2.33
+#include "IN2_GeneralProcedures", version >= 2.34
 
 #include "IRNI_NexusSupport", version >= 1.20
 

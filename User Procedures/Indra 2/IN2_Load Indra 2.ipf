@@ -52,17 +52,17 @@
 
 //this is in Indra2 folder
 #include "IN2_ConversionProcedure", version >= 1.10
-#include "IN2_GeneralProcedures", version >= 2.31
-#include "IN2_USAXS", version >= 2.00
+#include "IN2_GeneralProcedures", version >= 2.34
+#include "IN2_USAXS", version >= 2.06
 #include "IN2_XtalCalculations", version >= 1.1
-#include "IN3_CalcScattering", version >= 1.01
-#include "IN3_Calculations", version >= 1.42
-#include "IN3_FlyScan", version >= 1.10
-#include "IN3_Main", version >= 2.02
-#include "IN3_Rwave", version >= 1
-#include "IN3_SupportFnct", version >= 1.14
-#include "IN3_SamplePlate", version >= 1.09
-#include "IN3_BlueSkyReader", version >= 1.06
+#include "IN3_CalcScattering", version >= 1.2
+#include "IN3_Calculations", version >= 1.43
+#include "IN3_FlyScan", version >= 1.11
+#include "IN3_Main", version >= 2.03
+#include "IN3_Rwave", version >= 1.17
+#include "IN3_SupportFnct", version >= 1.15
+#include "IN3_SamplePlate", version >= 1.12
+#include "IN3_BlueSkyReader", version >= 1.09
 
 #include "spec", version >= 2.21
 #include "IonChamber3.3", version >= 3.3
@@ -71,12 +71,11 @@
 #include "IN2_DesktopUSAXS", version >= 0.3
 //#include "IN2_PlottingTools", version >= 1.15
 //#include "IN2_NotebookLogging", version >= 1.10
-//
 
 #include "IN4_MainCode"
 #include "IN4_SupportCode"
 #include "IN4_Calculations"
 
-#include "IR2_PanelCntrlProcs", version >= 1.66
-#include "IRNI_NexusSupport", version >= 1.17
+#include "IR2_PanelCntrlProcs", version >= 1.68
+#include "IRNI_NexusSupport", version >= 1.20
 

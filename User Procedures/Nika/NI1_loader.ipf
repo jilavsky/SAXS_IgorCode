@@ -53,7 +53,7 @@
 #include "NI1_USAXSSupport", version >= 1.58
 #include "NI1_WinView", version >= 1.87
 
-#include "IN2_GeneralProcedures", version >= 2.33
+#include "IN2_GeneralProcedures", version >= 2.34
 
 #include "IRNI_NexusSupport", version >= 1.20
 
