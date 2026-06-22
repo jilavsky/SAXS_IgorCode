@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
   
-#pragma version 1.17
+#pragma version=1.17
 
 
 //*************************************************************************\
