@@ -23,7 +23,7 @@
 
 	<InstallerConfig>
 		<release name="June2026">
-			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/refs/tags/June2026.zip</SourceFileAddress>
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/refs/tags/June2026a.zip</SourceFileAddress>
 			<Package>
 				<name>Irena</name>
 				<version>2.75</version>
