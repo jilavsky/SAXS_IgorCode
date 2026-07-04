@@ -73,7 +73,7 @@
 #include "IR2_DataMiner", version >= 1.20
 #include "IR2_ModelingMain", version >= 1.36
 #include "IR2_ModelingSupport", version >= 1.56
-#include "IR2_PanelCntrlProcs", version >= 1.68
+#include "IR2_PanelCntrlProcs", version >= 1.69
 #include "IR2_PlotingToolII", version >= 1.11
 #include "IR2_Reflectivity", version >= 1.24
 #include "IR2_ScriptingTool", version >= 1.32

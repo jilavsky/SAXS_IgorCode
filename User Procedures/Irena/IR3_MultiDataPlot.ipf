@@ -34,7 +34,6 @@ Function IR3L_MultiSamplePlot()
 	else
 		IR3L_InitMultiSamplePlot()
 		IR3L_MultiSamplePlotPanelFnct()
-		//		setWIndow IR3L_MultiSamplePlotPanel, hook(CursorMoved)=IR3D_PanelHookFunction
 		IR1_UpdatePanelVersionNumber("IR3L_MultiSamplePlotPanel", IR3LversionNumber, 1)
 		//link it to top graph, if exists
 		IR3L_SetStartConditions()

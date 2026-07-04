@@ -1,11 +1,11 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
-#pragma version=2.75
+#pragma version=2.76
 #pragma IgorVersion=9.04
 
 //DO NOT renumber Main files every time, these are main release numbers...
 //define manual date and release verison 
-constant CurrentIrenaVersionNumber = 2.75		//change version of Boot Irena1 modeling.ipf to get proper check version. 
+constant CurrentIrenaVersionNumber = 2.76		//change version of Boot Irena1 modeling.ipf to get proper check version. 
 
 //*************************************************************************
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
@@ -13,6 +13,8 @@ constant CurrentIrenaVersionNumber = 2.75		//change version of Boot Irena1 model
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************
 
+//2.76   Changes:
+//					Added pytIrena exorted data to Multi Data plotting tool. 
 //2.75 	Cleanup as noted for beta, AI merged three Import tools into one. Cleanup continues. 
 //2.75	Beta - cleanup of the code and some serious under the hood changes. 
 //2.74 	Minor release to capture minor changes related to new USAXS 12IDE instrument, bug release. 

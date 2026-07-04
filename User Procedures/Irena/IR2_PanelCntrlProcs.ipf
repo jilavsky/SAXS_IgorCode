@@ -1,6 +1,6 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use modern global access method.
-#pragma version=1.68
+#pragma version=1.69
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//1.69 add pyIrena exported data as needed, pyIrena is using old Modeling I naming system... Just added that back to Multi Data Ploting tool.  
 //1.68 AI cleanup and debug
 //1.67 found major bug in UI - if other tools place multiple QRS data sets int eh same folder, we cannot get to them using the new toolbox. 
 //			no real solution, fix looks very complex. At least added warning in history area. 
@@ -240,7 +241,8 @@ Function IR2C_InitControls(PckgDataFolder, PanelWindowName, AllowedIrenaTypes, A
 	AllCurrentlyAllowedTypes += "IntensityModelLSQF2pop5;NumberDistModelLSQF2pop5;VolumeDistModelLSQF2pop5;"
 	AllCurrentlyAllowedTypes += "IntensityModelLSQF2pop6;NumberDistModelLSQF2pop6;VolumeDistModelLSQF2pop6;"
 	AllCurrentlyAllowedTypes += "ReflModel;SLDProfile;"
-	AllCurrentlyAllowedTypes += "ModelingNumberDistribution;ModelingVolumeDistribution;ModelingIntensity;FractFitIntensity;DebyeBuecheModelInt;AnalyticalModelInt;SysSpecModelInt;"
+	//AllCurrentlyAllowedTypes += "ModelingNumberDistribution;ModelingVolumeDistribution;ModelingIntensity;FractFitIntensity;DebyeBuecheModelInt;AnalyticalModelInt;SysSpecModelInt;"
+	AllCurrentlyAllowedTypes += "ModelingIntensity;FractFitIntensity;DebyeBuecheModelInt;AnalyticalModelInt;SysSpecModelInt;"
 	AllCurrentlyAllowedTypes += "ModelingNumDist_Pop1;ModelingVolDist_Pop1;Mass1FractFitInt;Surf1FractFitInt;UniLocalLevel1Unified;UniLocalLevel1Pwrlaw;UniLocalLevel1Guinier;"
 	AllCurrentlyAllowedTypes += "ModelingNumDist_Pop2;ModelingVolDist_Pop2;Mass2FractFitInt;Surf2FractFitInt;UniLocalLevel2Unified;UniLocalLevel2Pwrlaw;UniLocalLevel2Guinier;"
 	AllCurrentlyAllowedTypes += "ModelingNumDist_Pop3;ModelingVolDist_Pop3;Mass3FractFitInt;Surf3FractFitInt;UniLocalLevel3Unified;UniLocalLevel3Pwrlaw;UniLocalLevel3Guinier;"
@@ -261,7 +263,7 @@ Function IR2C_InitControls(PckgDataFolder, PanelWindowName, AllowedIrenaTypes, A
 	AllCurrentlyAllowedTypes += "SimFitPwrLawI;"
 
 	string/G AllKnownToolsResults
-	AllKnownToolsResults = "Unified Fit;Size Distribution;Modeling;Small-angle diffraction;Analytical models;Fractals;PDDF;Reflectivity;Guinier-Porod;Simple Fits;Evaluate Size Dist;System Specific Models;"
+	AllKnownToolsResults = "Unified Fit;Size Distribution;Modeling;Modeling (pyIrena);Small-angle diffraction;Analytical models;Fractals;PDDF;Reflectivity;Guinier-Porod;Simple Fits;Evaluate Size Dist;System Specific Models;"
 
 	if(cmpstr(AllowedResultsTypes, "AllCurrentlyAllowedTypes") == 0)
 		AllowedResultsTypes = AllCurrentlyAllowedTypes
@@ -2563,7 +2565,7 @@ Function/S IR2C_ReturnKnownToolResults(ToolName, TopPanel)
 		ListOfLookups = GrepList(ResultsDataTypesLookup, "^Sizes", 0, ";")
 	elseif(stringmatch(ToolName, "Unified Fit"))
 		ListOfLookups = GrepList(ResultsDataTypesLookup, "^Uni", 0, ";")
-	elseif(stringmatch(ToolName, "Modeling I"))
+	elseif(stringmatch(ToolName, "Modeling (pyIrena)"))
 		ListOfLookups = GrepList(ResultsDataTypesLookup, "^Modeling", 0, ";")
 	elseif(stringmatch(ToolName, "Fractals"))
 		ListOfLookups = GrepList(ResultsDataTypesLookup, "Fract", 0, ";")
@@ -2577,6 +2579,7 @@ Function/S IR2C_ReturnKnownToolResults(ToolName, TopPanel)
 		ListOfLookups = GrepList(ResultsDataTypesLookup, "^(Refl|SLD)", 0, ";")
 	elseif(stringmatch(ToolName, "Modeling"))
 		ListOfLookups = GrepList(ResultsDataTypesLookup, "ModelLSQF", 0, ";")
+		//ListOfLookups += GrepList(ResultsDataTypesLookup, "^Modeling", 0, ";")
 	elseif(stringmatch(ToolName, "System Specific Models"))
 		ListOfLookups = GrepList(ResultsDataTypesLookup, "^SysSpecModel", 0, ";")
 	elseif(stringmatch(ToolName, "Guinier-Porod"))
