@@ -249,7 +249,8 @@ Function IR2C_InitControls(PckgDataFolder, PanelWindowName, AllowedIrenaTypes, A
 	AllCurrentlyAllowedTypes += "ModelingNumDist_Pop4;ModelingVolDist_Pop4;Mass4FractFitInt;Surf4FractFitInt;UniLocalLevel4Unified;UniLocalLevel4Pwrlaw;UniLocalLevel4Guinier;"
 	AllCurrentlyAllowedTypes += "ModelingNumDist_Pop5;ModelingVolDist_Pop5;Mass5FractFitInt;Surf5FractFitInt;UniLocalLevel5Unified;UniLocalLevel5Pwrlaw;UniLocalLevel5Guinier;"
 	AllCurrentlyAllowedTypes += "CumulativeSizeDist;CumulativeSfcArea;MIPVolume;SADModelIntensity;SADModelIntPeak1;SADModelIntPeak2;SADModelIntPeak3;"
-	AllCurrentlyAllowedTypes += "SADModelIntPeak4;SADModelIntPeak5;SADModelIntPeak6;"
+	AllCurrentlyAllowedTypes += "SADModelIntPeak4;SADModelIntPeak5;SADModelIntPeak6;SADModelIntPeak7;SADModelIntPeak8;SADModelIntPeak9;SADModelIntPeak10;SADModelIntPeak11;SADModelIntPeak12;"
+	AllCurrentlyAllowedTypes += "SADModelIntPeak13;SADModelIntPeak14;SADModelIntPeak15;SADModelIntPeak16;SADModelIntPeak17;SADModelIntPeak18;SADModelIntPeak19;SADModelIntPeak20;SADModelIntPeak21;"
 	AllCurrentlyAllowedTypes += "PDDFIntensity;PDDFDistFunction;PDDFChiSquared;SADUnifiedIntensity;PDDFGammaFunction;"
 	AllCurrentlyAllowedTypes += "UnifSizeDistVolumeDist;UnifSizeDistNumberDist;"
 	AllCurrentlyAllowedTypes += "UniLocalLevel0Unified;UniLocalLevel1Unified;UniLocalLevel1Pwrlaw;UniLocalLevel1Guinier;"
@@ -263,7 +264,7 @@ Function IR2C_InitControls(PckgDataFolder, PanelWindowName, AllowedIrenaTypes, A
 	AllCurrentlyAllowedTypes += "SimFitPwrLawI;"
 
 	string/G AllKnownToolsResults
-	AllKnownToolsResults = "Unified Fit;Size Distribution;Modeling;Modeling (pyIrena);Small-angle diffraction;Analytical models;Fractals;PDDF;Reflectivity;Guinier-Porod;Simple Fits;Evaluate Size Dist;System Specific Models;"
+	AllKnownToolsResults = "Unified Fit;Size Distribution;Modeling;Modeling (pyIrena);Small-angle diffraction;WAXS (pyIrena);Analytical models;Fractals;PDDF;Reflectivity;Guinier-Porod;Simple Fits;Evaluate Size Dist;System Specific Models;"
 
 	if(cmpstr(AllowedResultsTypes, "AllCurrentlyAllowedTypes") == 0)
 		AllowedResultsTypes = AllCurrentlyAllowedTypes
@@ -443,6 +444,21 @@ Function IR2C_InitControls(PckgDataFolder, PanelWindowName, AllowedIrenaTypes, A
 	ResultsDataTypesLookup += "SADModelIntPeak4:SADModelQPeak4;"
 	ResultsDataTypesLookup += "SADModelIntPeak5:SADModelQPeak5;"
 	ResultsDataTypesLookup += "SADModelIntPeak6:SADModelQPeak6;"
+	ResultsDataTypesLookup += "SADModelIntPeak7:SADModelQPeak7;"
+	ResultsDataTypesLookup += "SADModelIntPeak8:SADModelQPeak8;"
+	ResultsDataTypesLookup += "SADModelIntPeak9:SADModelQPeak9"
+	ResultsDataTypesLookup += "SADModelIntPeak10:SADModelQPeak10;"
+	ResultsDataTypesLookup += "SADModelIntPeak11:SADModelQPeak11;"
+	ResultsDataTypesLookup += "SADModelIntPeak12:SADModelQPeak12;"
+	ResultsDataTypesLookup += "SADModelIntPeak13:SADModelQPeak13;"
+	ResultsDataTypesLookup += "SADModelIntPeak14:SADModelQPeak14;"
+	ResultsDataTypesLookup += "SADModelIntPeak15:SADModelQPeak15;"
+	ResultsDataTypesLookup += "SADModelIntPeak16:SADModelQPeak16;"
+	ResultsDataTypesLookup += "SADModelIntPeak17:SADModelQPeak17;"
+	ResultsDataTypesLookup += "SADModelIntPeak18:SADModelQPeak18;"
+	ResultsDataTypesLookup += "SADModelIntPeak19:SADModelQPeak19;"
+	ResultsDataTypesLookup += "SADModelIntPeak20:SADModelQPeak20;"
+	ResultsDataTypesLookup += "SADModelIntPeak21:SADModelQPeak21;"
 	ResultsDataTypesLookup += "SADUnifiedIntensity:SADUnifiedQvector;"
 	//Gels
 	ResultsDataTypesLookup += "DebyeBuecheModelInt:DebyeBuecheModelQvec;" //old, now next line...
@@ -2570,6 +2586,10 @@ Function/S IR2C_ReturnKnownToolResults(ToolName, TopPanel)
 	elseif(stringmatch(ToolName, "Fractals"))
 		ListOfLookups = GrepList(ResultsDataTypesLookup, "Fract", 0, ";")
 	elseif(stringmatch(ToolName, "Small-angle diffraction"))
+		ListOfLookups = GrepList(ResultsDataTypesLookup, "^SAD", 0, ";")	
+		//ListOfLookups = GrepList(ListOfLookups, "^SADModelIntPeak(7|8|9)", 1, ";")
+		ListOfLookups = GrepList(ListOfLookups, "^SADModelIntPeak(7|8|9|1[0-9]|2[01])", 1, ";")
+	elseif(stringmatch(ToolName, "WAXS (pyIrena)"))
 		ListOfLookups = GrepList(ResultsDataTypesLookup, "^SAD", 0, ";")
 	elseif(stringmatch(ToolName, "Analytical models"))
 		ListOfLookups = GrepList(ResultsDataTypesLookup, "^Analytical", 0, ";")
@@ -2603,7 +2623,7 @@ Function/S IR2C_ReturnKnownToolResults(ToolName, TopPanel)
 	if(strlen(LocallyAllowedResultsData) > 0) //need to limit to only predefined smaller number of stuff...
 		for(i = 0; i < ItemsInList(LocallyAllowedResultsData, ";"); i += 1) //we have found some stuff
 			TmpName  = stringFromList(i, LocallyAllowedResultsData, ";")
-			TmpList += GrepList(KnownToolResults, TmpName, 0, ";")
+			TmpList += GrepList(KnownToolResults, "^"+TmpName+"$", 0, ";")
 		endfor
 		KnownToolResults = TmpList
 	endif
