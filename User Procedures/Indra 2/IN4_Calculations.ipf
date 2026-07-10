@@ -149,7 +149,7 @@ Function IN4_CalculateRWaveIntensity(string FolderName) //Recalculate the R wave
 	//
 	//	R_Int = PD_Intensity * SampleTransmissionPeakToPeak
 	//	R_error = PD_error * SampleTransmissionPeakToPeak
-	SetDataFolder saveDF
+	SetDataFolder oldDf
 End
 ///*********************************************************************************
 ///*********************************************************************************
@@ -178,7 +178,7 @@ Function IN4_calculateR_Qvec(string FolderName) //this creates Q vector for R da
 	// now make some decision when to use beamCenter instead of tabulated values.
 	// returns NaN if fit fails, may be we need to stop here
 	if(numtype(beamCenter) != 0)
-		SetDataFolder saveDF
+		SetDataFolder oldDf
 		Abort "Failure in peak center fitting in IN4_calculateR_Qvec for :" + FolderName
 	endif
 	//check that we are sufficnetly close and nothing else failed too much. Assume we need to be within 0.01 deg from estimate?
@@ -194,7 +194,7 @@ Function IN4_calculateR_Qvec(string FolderName) //this creates Q vector for R da
 	endif
 	IN2G_AppendorReplaceWaveNote("R_Qvec", "Wname", "R_Qvec")
 	IN2G_AppendorReplaceWaveNote("R_Qvec", "Units", "A-1")
-	SetDataFolder saveDF
+	SetDataFolder oldDf
 
 End
 ///**********************************************************************************************************
@@ -317,7 +317,7 @@ Function IN4_FitModGaussTop(string Foldername) // uses Modfied Gaussian
 	endif
 	KillWaves/Z T_Constraints, W_sigma, W_FindLevels, W_coef, fit_R_Int, fitX_R_Int
 
-	SetDataFolder saveDF
+	SetDataFolder oldDf
 	return ARcenter
 End
 //******************** Modified Gauss **************************************
@@ -387,7 +387,7 @@ Function IN4_CopyBlankAndCorrectTransm(string SamplefolderName, string BlankFold
 	samplemetadata = ReplaceStringByKey("BlankWidth", samplemetadata, num2str(BlankWidth, "%.10g"), "=", ";")
 	samplemetadata = ReplaceStringByKey("BlankMaximumIntensity", samplemetadata, num2str(BLMaximumIntensity, "%.10g"), "=", ";")
 
-	SetDataFolder saveDF
+	SetDataFolder oldDf
 End
 
 //
@@ -477,11 +477,11 @@ Function IN4_SubtractSampleAndBlank(string Foldername)
 		IN2G_AppendorReplaceWaveNote("SMR_Int", "units", "1/cm")
 		IN2G_AppendorReplaceWaveNote("SMR_Qvec", "units", "1/A")
 	else
-		SetDataFolder saveDF
+		SetDataFolder oldDf
 		Abort "step scan not done yet"
 	endif
 
-	SetDataFolder saveDF
+	SetDataFolder oldDf
 End
 
 ///*********************************************************************************
@@ -582,7 +582,7 @@ Function IN4_FindQminForUSAXS(string Foldername)
 	//		endif
 	//	endif
 
-	SetDataFolder saveDF
+	SetDataFolder oldDf
 	return Qmin
 End
 
@@ -606,7 +606,7 @@ Function IN4_DesmearData(string Foldername)
 	//	NVAR DesmearNumberOfInterations=root:Packages:Indra3:DesmearNumberOfInterations
 	WAVE/Z SMR_Int = SMR_Int
 	if(!WaveExists(SMR_Int)) //wave does n to exist, stop here...
-		SetDataFolder saveDF
+		SetDataFolder oldDf
 		return 0
 	endif
 	WAVE/Z SMR_Error
@@ -631,7 +631,7 @@ Function IN4_DesmearData(string Foldername)
 	do
 		ExtensionFailed = IN4_OneDesmearIteration(Foldername, tmpWork_Int, tmpWork_Qvec, tmpWork_Error, SMR_Int, SMR_Error, DesmNormalizedError)
 		if(ExtensionFailed)
-			SetDataFolder saveDF
+			SetDataFolder oldDf
 			return 0
 		endif
 		absNormalizedError = abs(DesmNormalizedError)
@@ -649,7 +649,7 @@ Function IN4_DesmearData(string Foldername)
 	Duplicate/O tmpWork_dQ, DSM_dQ
 	DSM_Error = abs(DSM_Error) //remove negative values this gets in extreme cases.
 
-	SetDataFolder saveDF
+	SetDataFolder oldDf
 
 End
 //***********************************************************************************************************************************
@@ -1095,7 +1095,7 @@ Function IN4_RebinDataIfNeeded(string Foldername)
 
 	endif
 
-	SetDataFolder saveDF
+	SetDataFolder oldDf
 End
 
 ///*********************************************************************************
@@ -1165,7 +1165,7 @@ Function/S IN4_CopyUSAXSToFolder(string Foldername, string addStr)
 	variable/G thickness   = thickness_old
 	variable/G OmegaFactor = OmegaFactor_old
 
-	SetDataFolder saveDF
+	SetDataFolder oldDf
 	return FullnewFolderName
 End
 
@@ -1283,7 +1283,7 @@ Function IN4_SmoothRData(string folderName)
 	endif
 	KillWaves/Z T_Constraints, W_sigma, W_FindLevels, W_coef, W_FindLevels, fit_R_Int, fitX_R_Int
 
-	SetDataFolder saveDF
+	SetDataFolder oldDf
 End
 
 //***********************************************************************************************************************************

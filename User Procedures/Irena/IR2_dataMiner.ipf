@@ -604,7 +604,6 @@ static Function/S IR3B_FindSpecificMetadata(FolderNameStr, KeyString)
 	endif
 	if(!WaveExists(SourceIntWv))
 		DoAlert/T="Incorrectly defined data type" 0, "Please, check definition of data type, it seems incorrectly defined yet"
-		SetDataFolder oldDf
 		abort
 	endif
 	string CurrentNote = note(SourceIntWv)

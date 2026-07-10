@@ -2429,9 +2429,13 @@ Function IR3D_MergeDataOverlap()
 		Make/O/N=(3, 2) XLimitWave
 		XLimitWave = {{ScalFacMin, HighQBckgMin, -QshiftLimit}, {ScaleFacmax, HighQBckgMax, QshiftLimit}}
 		Optimize/Q/X={scalingFactor, highQDifference, Data2Qshift + 0.0001}/XSA=XLimitWave/TSA={0, 0.2}/M={3, 0}/Y=(ValueEst)/R={scalingFactor, highQDifference, (TempQ1Part[0] / 1)} IR3D_FindMergeValuesQ2ScaleBckg, TempIntCombined
-		WAVE W_Extremum
+		WAVE/Z W_Extremum
+		if(!WaveExists(W_Extremum))
+			SetDataFolder saveDF
+			Abort "Merging optimization failed to produce results. Check cursor positions, overlap region, and merge settings."
+		endif
 		BestMinAchieved = V_min
-		KillWaves TempIntCombined
+		KillWaves/Z TempIntCombined
 		Data2IntMultiplier = W_Extremum[0]
 		Data1Background    = W_Extremum[1]
 		Data2Qshift        = W_Extremum[2]
@@ -2440,9 +2444,13 @@ Function IR3D_MergeDataOverlap()
 		Make/O/N=(3, 2) XLimitWave
 		XLimitWave = {{ScalFacMin, HighQBckgMin, -QshiftLimit}, {ScaleFacmax, HighQBckgMax, QshiftLimit}}
 		Optimize/Q/X={scalingFactor, highQDifference, Data1Qshift + 0.0001}/XSA=XLimitWave/TSA={0, 0.2}/M={3, 0}/Y=(ValueEst)/R={scalingFactor, highQDifference, (QshiftLimit)} IR3D_FindMergeValuesQ1ScaleBckg, TempIntCombined
-		WAVE W_Extremum
+		WAVE/Z W_Extremum
+		if(!WaveExists(W_Extremum))
+			SetDataFolder saveDF
+			Abort "Merging optimization failed to produce results. Check cursor positions, overlap region, and merge settings."
+		endif
 		BestMinAchieved = V_min
-		KillWaves TempIntCombined
+		KillWaves/Z TempIntCombined
 		Data2IntMultiplier = W_Extremum[0]
 		Data1Background    = W_Extremum[1]
 		Data1Qshift        = W_Extremum[2]
@@ -2451,9 +2459,13 @@ Function IR3D_MergeDataOverlap()
 		Make/O/N=(2, 2) XLimitWave
 		XLimitWave = {{ScalFacMin, -QshiftLimit}, {ScaleFacmax, QshiftLimit}}
 		Optimize/Q/X={scalingFactor, Data2Qshift + 0.0001}/XSA=XLimitWave/TSA={0, 0.2}/M={3, 0}/Y=(ValueEst)/R={scalingFactor, (QshiftLimit)} IR3D_FindMergeValuesQ2Scale, TempIntCombined
-		WAVE W_Extremum
+		WAVE/Z W_Extremum
+		if(!WaveExists(W_Extremum))
+			SetDataFolder saveDF
+			Abort "Merging optimization failed to produce results. Check cursor positions, overlap region, and merge settings."
+		endif
 		BestMinAchieved = V_min
-		KillWaves TempIntCombined
+		KillWaves/Z TempIntCombined
 		Data2IntMultiplier = W_Extremum[0]
 		Data2Qshift        = W_Extremum[1]
 	elseif(!VaryQ1shift && VaryQ2shift && Optim_Data1Background && !Optim_Data2IntMultiplier) //vary background
@@ -2461,9 +2473,13 @@ Function IR3D_MergeDataOverlap()
 		Make/O/N=(2, 2) XLimitWave
 		XLimitWave = {{HighQBckgMin, -QshiftLimit}, {HighQBckgMax, QshiftLimit}}
 		Optimize/Q/X={highQDifference, Data2Qshift + 0.0001}/XSA=XLimitWave/TSA={0, 0.2}/M={3, 0}/Y=(ValueEst)/R={highQDifference, QshiftLimit} IR3D_FindMergeValuesQ2Backg, TempIntCombined
-		WAVE W_Extremum
+		WAVE/Z W_Extremum
+		if(!WaveExists(W_Extremum))
+			SetDataFolder saveDF
+			Abort "Merging optimization failed to produce results. Check cursor positions, overlap region, and merge settings."
+		endif
 		BestMinAchieved = V_min
-		KillWaves TempIntCombined
+		KillWaves/Z TempIntCombined
 		Data1Background = W_Extremum[0]
 		Data2Qshift     = W_Extremum[1]
 	elseif(VaryQ1shift && !VaryQ2shift && Optim_Data2IntMultiplier && !Optim_Data1Background) //vary Scale and Qshift, not background
@@ -2471,19 +2487,27 @@ Function IR3D_MergeDataOverlap()
 		Make/O/N=(2, 2) XLimitWave
 		XLimitWave = {{ScalFacMin, -QshiftLimit}, {ScaleFacmax, QshiftLimit}}
 		Optimize/Q/X={scalingFactor, Data1Qshift + 0.0001}/XSA=XLimitWave/TSA={0, 0.2}/M={3, 0}/Y=(ValueEst)/R={scalingFactor, QshiftLimit} IR3D_FindMergeValuesQ1Scale, TempIntCombined
-		WAVE W_Extremum
+		WAVE/Z W_Extremum
+		if(!WaveExists(W_Extremum))
+			SetDataFolder saveDF
+			Abort "Merging optimization failed to produce results. Check cursor positions, overlap region, and merge settings."
+		endif
 		BestMinAchieved = V_min
-		KillWaves TempIntCombined
+		KillWaves/Z TempIntCombined
 		Data2IntMultiplier = W_Extremum[0]
 		Data1Qshift        = W_Extremum[1]
 	elseif(VaryQ1shift && !VaryQ2shift && Optim_Data1Background && !Optim_Data2IntMultiplier) //vary background
 		// D1Q, Background
 		Make/O/N=(2, 2) XLimitWave
 		XLimitWave = {{HighQBckgMin, -QshiftLimit}, {HighQBckgMax, QshiftLimit}}
-		Optimize/Q/X={highQDifference, Data2Qshift + 0.0001}/XSA=XLimitWave/TSA={0, 0.2}/M={3, 0}/Y=(ValueEst)/R={highQDifference, QshiftLimit} IR3D_FindMergeValuesQ1Backg, TempIntCombined
-		WAVE W_Extremum
+		Optimize/Q/X={highQDifference, Data1Qshift + 0.0001}/XSA=XLimitWave/TSA={0, 0.2}/M={3, 0}/Y=(ValueEst)/R={highQDifference, QshiftLimit} IR3D_FindMergeValuesQ1Backg, TempIntCombined
+		WAVE/Z W_Extremum
+		if(!WaveExists(W_Extremum))
+			SetDataFolder saveDF
+			Abort "Merging optimization failed to produce results. Check cursor positions, overlap region, and merge settings."
+		endif
 		BestMinAchieved = V_min
-		KillWaves TempIntCombined
+		KillWaves/Z TempIntCombined
 		Data1Background = W_Extremum[0]
 		Data1Qshift     = W_Extremum[1]
 	elseif(!VaryQ1shift && !VaryQ2shift && Optim_Data1Background && Optim_Data2IntMultiplier)
@@ -2491,9 +2515,13 @@ Function IR3D_MergeDataOverlap()
 		Make/O/N=(2, 2) XLimitWave
 		XLimitWave = {{ScalFacMin, HighQBckgMin}, {ScaleFacmax, HighQBckgMax}}
 		Optimize/Q/X={scalingFactor, highQDifference}/R={scalingFactor, highQDifference}/TSA={0, 0.2}/M={3, 0}/XSA=XLimitWave/Y=(ValueEst) IR3D_FindMergeValuesScaleBckg, TempIntCombined
-		WAVE W_Extremum
+		WAVE/Z W_Extremum
+		if(!WaveExists(W_Extremum))
+			SetDataFolder saveDF
+			Abort "Merging optimization failed to produce results. Check cursor positions, overlap region, and merge settings."
+		endif
 		BestMinAchieved = V_min
-		KillWaves TempIntCombined
+		KillWaves/Z TempIntCombined
 		Data2IntMultiplier = abs(W_Extremum[0])
 		Data1Background    = W_Extremum[1]
 	elseif(!VaryQ1shift && VaryQ2shift && !Optim_Data1Background && !Optim_Data2IntMultiplier) //vary only Qshift
@@ -2501,32 +2529,46 @@ Function IR3D_MergeDataOverlap()
 		Make/O/N=(1, 1) XLimitWave
 		XLimitWave = {{-QshiftLimit}, {QshiftLimit}}
 		Optimize/Q/X={Data2Qshift + 0.0001}/XSA=XLimitWave/TSA={0, 0.2}/M={3, 0}/Y=(ValueEst)/R={QshiftLimit} IR3D_FindMergeValuesQ2, TempIntCombined
-		WAVE W_Extremum
+		WAVE/Z W_Extremum
+		if(!WaveExists(W_Extremum))
+			SetDataFolder saveDF
+			Abort "Merging optimization failed to produce results. Check cursor positions, overlap region, and merge settings."
+		endif
 		BestMinAchieved = V_min
-		KillWaves TempIntCombined
+		KillWaves/Z TempIntCombined
 		Data2Qshift = W_Extremum[0]
 	elseif(VaryQ1shift && !VaryQ2shift && !Optim_Data1Background && !Optim_Data2IntMultiplier) //vary only Qshift
 		// D1Q
 		Make/O/N=(1, 1) XLimitWave
 		XLimitWave = {{-QshiftLimit}, {QshiftLimit}}
 		Optimize/Q/X={Data1Qshift + 0.0001}/XSA=XLimitWave/TSA={0, 0.2}/M={3, 0}/Y=(ValueEst)/R={QshiftLimit} IR3D_FindMergeValuesQ1, TempIntCombined
-		WAVE W_Extremum
+		WAVE/Z W_Extremum
+		if(!WaveExists(W_Extremum))
+			SetDataFolder saveDF
+			Abort "Merging optimization failed to produce results. Check cursor positions, overlap region, and merge settings."
+		endif
 		BestMinAchieved = V_min
-		KillWaves TempIntCombined
+		KillWaves/Z TempIntCombined
 		Data1Qshift = W_Extremum[0]
 	elseif(!VaryQ1shift && !VaryQ2shift && Optim_Data2IntMultiplier && !Optim_Data1Background) //scaling only, works...
 		// Scale
 		Optimize/Q/X={scalingFactor}/R={scalingFactor}/Y=(ValueEst) IR3D_FindMergeValuesScale, TempIntCombined
-		WAVE W_Extremum
+		//note: this call may run as univariate optimization which reports result in V_minloc and may not create W_Extremum
 		BestMinAchieved = V_min
-		KillWaves TempIntCombined
+		KillWaves/Z TempIntCombined
 		Data2IntMultiplier = V_minloc //for one parameter optimize we need to read this value and not the W_Extremum
 	elseif(!VaryQ1shift && !VaryQ2shift && !Optim_Data2IntMultiplier && Optim_Data1Background) //background only
 		// Background
-		Optimize/Q/M={3, 0}/X={HighQBckgMin}/TSA={0, 0.2}/M={3, 0} IR3D_FindMergeValuesBackg, TempIntCombined
-		WAVE W_Extremum
+		Make/O/N=(1, 1) XLimitWave
+		XLimitWave = {{HighQBckgMin}, {HighQBckgMax}}
+		Optimize/Q/X={highQDifference}/XSA=XLimitWave/TSA={0, 0.2}/M={3, 0}/Y=(ValueEst)/R={highQDifference} IR3D_FindMergeValuesBackg, TempIntCombined
+		WAVE/Z W_Extremum
+		if(!WaveExists(W_Extremum))
+			SetDataFolder saveDF
+			Abort "Merging optimization failed to produce results. Check cursor positions, overlap region, and merge settings."
+		endif
 		BestMinAchieved = V_min
-		KillWaves TempIntCombined
+		KillWaves/Z TempIntCombined
 		Data1Background = W_Extremum[0]
 	endif
 
