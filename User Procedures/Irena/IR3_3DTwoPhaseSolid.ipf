@@ -1,6 +1,6 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use modern global access method and strict wave access.
-#pragma version=1.03
+#pragma version=1.04
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//1.04 AI found bug fix for incorrect method. see comments under BUGFIX
 //1.03 Bug fixes: slider range for large grids, Nyquist Q limit (factor-of-2 error), NaN mask used Q as point index, missing /Z wave guard in Display1D.
 //1.03 Optimization: replace per-point Optimize/Integrate1D in g(r) and TheorAutoCorrFnct with precomputed LUT + interp (~100x speedup for Step 3); precompute Q²·I(Q) for DACF step.
 //1.02 fix Intensity plotting scaling.
@@ -431,7 +432,7 @@ Function IR3T_Calc1DSASData()
 	//wave PDFQWv
 	IR3T_CalcAutoCorelIntensity(My3DWv, 0.001, 0.5, 200)
 	//these are autocorrelation calculated intensities...
-	WAVE AutoCorIntensity
+	WAVE AutoCorIntensityWv
 	WAVE AutoCorQWv
 
 	NVAR     BoxSideSize   = root:Packages:TwoPhaseSolidModel:BoxSideSize   //Box size in Angstroms
@@ -447,19 +448,19 @@ Function IR3T_Calc1DSASData()
 	//TheoreticalIntensityDACF
 	variable MaxMeaningfulPnt = BinarySearch(AutoCorQWv, MaxMeaningfulQmax)
 	if(MaxMeaningfulPnt > 0)
-		AutoCorIntensity[MaxMeaningfulPnt, numpnts(AutoCorIntensity) - 1] = NaN
+		AutoCorIntensityWv[MaxMeaningfulPnt, numpnts(AutoCorIntensityWv) - 1] = NaN
 	endif
 	variable MinMeaningfulPnt = BinarySearch(AutoCorQWv, MinMeaningfulQmin)
 	if(MinMeaningfulPnt > 0)
-		AutoCorIntensity[0, MinMeaningfulPnt] = NaN
+		AutoCorIntensityWv[0, MinMeaningfulPnt] = NaN
 	endif
-	IN2G_RemoveNaNsFrom2Waves(AutoCorIntensity, AutoCorQWv)
+	IN2G_RemoveNaNsFrom2Waves(AutoCorIntensityWv, AutoCorQWv)
 
 	WAVE     OriginalIntensity = root:Packages:TwoPhaseSolidModel:OriginalIntensity
 	WAVE     OriginalQvector   = root:Packages:TwoPhaseSolidModel:OriginalQvector
 	variable IntgInt           = areaXY(OriginalQvector, OriginalIntensity, MinMeaningfulQmin, MaxMeaningfulQmax)
-	variable ModelIntgInt      = areaXY(AutoCorQWv, AutoCorIntensity)
-	AutoCorIntensity *= IntgInt / ModelIntgInt
+	variable ModelIntgInt      = areaXY(AutoCorQWv, AutoCorIntensityWv)
+	AutoCorIntensityWv *= IntgInt / ModelIntgInt
 
 	DOWIndow TwoPhaseSystemData
 	if(V_Flag)
@@ -468,14 +469,14 @@ Function IR3T_Calc1DSASData()
 		//if(V_flag==0)
 		//	AppendToGraph/W=TwoPhaseSystemData/R  PDFIntensityWv vs PDFQWv
 		//endif
-		CheckDisplayed/W=TwoPhaseSystemData AutoCorIntensity
+		CheckDisplayed/W=TwoPhaseSystemData AutoCorIntensityWv
 		if(V_flag == 0)
-			AppendToGraph/W=TwoPhaseSystemData AutoCorIntensity vs AutoCorQWv
+			AppendToGraph/W=TwoPhaseSystemData AutoCorIntensityWv vs AutoCorQWv
 		endif
 		//ModifyGraph lstyle(PDFIntensityWv)=9,lsize(PDFIntensityWv)=3,rgb(PDFIntensityWv)=(1,16019,65535)
 		//ModifyGraph mode(PDFIntensityWv)=4,marker(PDFIntensityWv)=19
 		//ModifyGraph msize(PDFIntensityWv)=3
-		ModifyGraph lsize(AutoCorIntensity)=3, rgb(AutoCorIntensity)=(3, 52428, 1)
+		ModifyGraph lsize(AutoCorIntensityWv)=3, rgb(AutoCorIntensityWv)=(3, 52428, 1)
 	endif
 
 End
@@ -1444,6 +1445,12 @@ Function IR3T_MakeGRF(CutOffLevel)
 	IFFT/DEST=TwoPhaseSolidMatrix GaussNoise3DFFT //this finishes formula 6 and shoudl provide fi(x) which we just need to threshold and image in Gizmo
 	//now cut off level based on above code is scaled to variation +/- sqrt(2)
 	//but we are nowhere around +/-1, so lets scale to the max range of data this cutoff level.
+	//useless: ImageFilter/N=5 avg3d, TwoPhaseSolidMatrix
+	//smooth the results to remove single point voxels, this seems the way to go...
+	Smooth/B/DIM=0 4, TwoPhaseSolidMatrix
+	Smooth/B/DIM=1 4, TwoPhaseSolidMatrix
+	Smooth/B/DIM=2 4, TwoPhaseSolidMatrix
+	//now evaluate 
 	wavestats/Q TwoPhaseSolidMatrix
 	//Converting Alfa into what we need here needs scaling by standard deviation or by rms.
 	//took some time to figure out empirically, but somehow makes sense...
@@ -1452,6 +1459,7 @@ Function IR3T_MakeGRF(CutOffLevel)
 	//variable CutOfflevelL=IR3T_FindCorrectLevel(TwoPhaseSolidMatrix,VOlLevel)		//looks for correct level to get the right volume of scatterers, this is 10%
 	//print "Input cut off level = "+num2str(CutOfflevel)
 	//print "Needed cut off level = "+num2str(CutOfflevelL)
+
 	MatrixOP/FREE/NTHR=0 GRF3DTresh = greater(TwoPhaseSolidMatrix, CutOffLevelL) //creates thresholded 3D wave, this is GRF as needed.
 	Duplicate/O GRF3DTresh, root:Packages:TwoPhaseSolidModel:TwoPhaseSolidMatrix
 	WAVE TwoPhaseSolidMatrix
@@ -1459,8 +1467,9 @@ Function IR3T_MakeGRF(CutOffLevel)
 	SetScale/P y, 0, VoxelRes, "", TwoPhaseSolidMatrix
 	SetScale/P z, 0, VoxelRes, "", TwoPhaseSolidMatrix
 	//smooth out the resulting matrix:
-	ImageFilter/N=5 gauss3d, TwoPhaseSolidMatrix
-//	matrixOP/O gauss3d = TwoPhaseSolidMatrix
+	//this does not work, this is integer matrix, we have 0 and 1. 
+	//ImageFilter/N=5 gauss3d, TwoPhaseSolidMatrix
+	//	matrixOP/O gauss3d = TwoPhaseSolidMatrix
 	KillWaves/Z M_MatrixFilter //created for some reason, needs to bedisposed off.
 	//wavestats/Q TwoPhaseSolidMatrix
 	//print "achieved volume fraction = "+num2str(V_avg)
