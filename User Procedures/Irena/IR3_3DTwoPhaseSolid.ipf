@@ -1248,6 +1248,13 @@ Function IR3T_GenerateTwoPhaseSolid()
 	//let us create it for sanity...
 	Duplicate/O PhaseAutocorFnct, XiFunctionQuint
 	//XiFunctionQuint = PhaseAutocorFnct - GammAlfa0^2		//not needed, this is proper Xi function QUintanilla assumes
+	// BUGFIX (see docs/saxs_morph_method_comparison.md, Finding 1 - input scaling):
+	// The Berk clipping integral T(g,alfa) spans only [~small negative, phi*(1-phi)], so the
+	// value handed to the inverse LUT must be the PHYSICAL indicator covariance
+	//     chi_phys(r) = chi_norm(r) * phi*(1-phi),   with chi_norm(0) = 1.
+	// The raw (unnormalized) DACF saturates the LUT clamp near r=0 and distorts g(r).
+	// MaxValue = chi(0) was already computed above; normalize by it, then scale by phi*(1-phi).
+	XiFunctionQuint = (PhaseAutocorFnct[p] / MaxValue) * (porosity * (1 - porosity))
 	variable alfaValueQ = -1 * alfaValue
 	// Build lookup table F(g) = Integrate1D(IR3T_JanCalcOfRInt, 0, g) / (2pi).
 	// alfa is squared in the integrand so sign does not matter; one LUT serves both inverse and forward lookups.
@@ -1282,7 +1289,11 @@ Function IR3T_GenerateTwoPhaseSolid()
 	//Compute FFT of AutoCorfnctGr to later get non-negative version of it...
 	print "Calculating Spectral function, that is fft of the G(r) (Covariance) function"
 	duplicate/O Kvalues, SpectralFk
-	multithread SpectralFk = IR3T_Formula4_SpectralFnct(Kvalues[p], PhaseAutocorFnct, Radii)
+	// BUGFIX (Finding 1): the spectral density must be the FT of the FIELD correlation
+	// G(r) = AutoCorfnctGr (the Berk-inverted covariance), NOT the phase correlation
+	// chi = PhaseAutocorFnct. Using chi here left the g(r) inversion above as dead code.
+	multithread SpectralFk = IR3T_Formula4_SpectralFnct(Kvalues[p], AutoCorfnctGr, Radii)
+	//multithread SpectralFk = IR3T_Formula4_SpectralFnct(Kvalues[p], PhaseAutocorFnct, Radii)	//old: used chi, not G(r)
 	// spectral function is ridiculously noisy, lets smooth it.
 	//display/K=1 SpectralFk vs Kvalues as "SpectralFk"
 	print "Spectral function calculation time was " + num2str((ticks - startTicks) / 60) + " sec"
@@ -1420,7 +1431,12 @@ Function IR3T_MakeGRF(CutOffLevel)
 	//this is using Fk
 	//IMPORTANT:
 	// we need to multiply the scaling here by 2pi to get sensible sizes, conversion from Q to inverse dimension.
-	multithread Gamma3D = cmplx(SpectralFkLoc[BinarySearchInterp(KvaluesLoc, 2 * pi * sqrt(x^2 + y^2 + z^2))], 0)
+	// BUGFIX (Finding 2): filter the white-noise FFT by the SQUARE ROOT of the spectral
+	// density (cf. Roberts gencoeffs: a,b = sqrt(sigma)*dev; pyIrena: noise_k * sqrt(F)).
+	// Multiplying by SpectralFk itself makes the field power spectrum SpectralFk^2, i.e.
+	// covariance = autocorrelation of the input - wrong. See docs/saxs_morph_method_comparison.md.
+	multithread Gamma3D = cmplx(sqrt(SpectralFkLoc[BinarySearchInterp(KvaluesLoc, 2 * pi * sqrt(x^2 + y^2 + z^2))]), 0)
+	//multithread Gamma3D = cmplx(SpectralFkLoc[BinarySearchInterp(KvaluesLoc, 2 * pi * sqrt(x^2 + y^2 + z^2))], 0)	//old: missing sqrt
 
 	MatrixOP/FREE/NTHR=0 GaussNoise3DFFT = GaussNoise3DFFT * Gamma3D //this shoudl be faster.
 	//multithread GaussNoise3DFFT=GaussNoise3DFFT*Gamma3D			//this surely works
