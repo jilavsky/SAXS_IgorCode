@@ -3638,7 +3638,7 @@ Function IN2G_XMLparse(xmlStr, dfr)
 	WAVE XMLc0 = dfr:XMLc0
 	WAVE XMLc1 = dfr:XMLc1
 
-	Make/FREE/D/N=(maxDepth) stack						// open elements, outermost first
+	Make/FREE/D/N=(maxDepth) stackWv						// open elements, outermost first
 	Make/FREE/T/N=(maxDepth) childCounts				// "name=count;" of children seen at each depth
 	Make/FREE/D/N=(maxDepth) lastChild					// last child added at each depth, -1 if none
 	Variable sp = 0										// number of currently open elements
@@ -3678,7 +3678,7 @@ Function IN2G_XMLparse(xmlStr, dfr)
 		if(CmpStr(tagStr[0],"/")==0)					// ---- closing tag ----
 			tagName = IN2G_XMLlocalName(IN2G_TrimFrontBackWhiteSpace(tagStr[1,Inf]))
 			for(k=sp-1; k>=0; k-=1)						// innermost matching open element
-				if(CmpStr(XMLname[stack[k]], tagName)==0)
+				if(CmpStr(XMLname[stackWv[k]], tagName)==0)
 					break
 				endif
 			endfor
@@ -3686,8 +3686,8 @@ Function IN2G_XMLparse(xmlStr, dfr)
 				continue								// stray closing tag, ignore it
 			endif
 			for(m=sp-1; m>=k; m-=1)						// anything still open inside closes too
-				XMLc1[stack[m]] = i0-1
-				XMLlastDesc[stack[m]] = n-1
+				XMLc1[stackWv[m]] = i0-1
+				XMLlastDesc[stackWv[m]] = n-1
 			endfor
 			sp = k
 			continue
@@ -3714,7 +3714,7 @@ Function IN2G_XMLparse(xmlStr, dfr)
 			Redimension/N=(capacity) XMLname, XMLattr, XMLparent, XMLfirstChild
 			Redimension/N=(capacity) XMLnextSib, XMLlastDesc, XMLsibIdx, XMLc0, XMLc1
 		endif
-		parent = sp>0 ? stack[sp-1] : -1
+		parent = sp>0 ? stackWv[sp-1] : -1
 		XMLname[n] = tagName
 		XMLattr[n] = IN2G_XMLparseAttributes(tagStr[nameEnd, Inf])
 		XMLparent[n] = parent
@@ -3737,9 +3737,9 @@ Function IN2G_XMLparse(xmlStr, dfr)
 		if(!selfClose)
 			if(sp+1>=maxDepth)
 				maxDepth *= 2
-				Redimension/N=(maxDepth) stack, childCounts, lastChild
+				Redimension/N=(maxDepth) stackWv, childCounts, lastChild
 			endif
-			stack[sp] = n-1
+			stackWv[sp] = n-1
 			sp += 1
 			childCounts[sp] = ""
 			lastChild[sp] = -1
@@ -3747,8 +3747,8 @@ Function IN2G_XMLparse(xmlStr, dfr)
 	while(pos<nChar)
 
 	for(m=sp-1; m>=0; m-=1)								// close whatever the document left open
-		XMLc1[stack[m]] = nChar-1
-		XMLlastDesc[stack[m]] = n-1
+		XMLc1[stackWv[m]] = nChar-1
+		XMLlastDesc[stackWv[m]] = n-1
 	endfor
 
 	// trimmed to the exact node count, so numpnts(XMLname) is the size of the document

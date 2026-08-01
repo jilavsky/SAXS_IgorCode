@@ -212,7 +212,7 @@ Function IR3W_WAXSPanelFunction()
 	Checkbox PDF4_DisplayHKLTags, pos={340,405},size={76,14},title="Display HKL tags", proc=IR3W_WAXSCheckProc, variable=root:Packages:Irena:WAXS:PDF4_DisplayHKLTags
 	Button PDF4UpdateList, pos={300,425}, size={200,20}, title="Update list of cards", proc=IR3W_WAXSButtonProc, help={"After using LaueGo package from Jon Tischler update list"}
 	Button PDF4ExportImport, pos={300,447}, size={200,20}, title="Export/Import/Delete PDF cards", proc=IR3W_WAXSButtonProc, help={"Add Diffraction lines from hard drive folder on this computer"}
-	Button PDF4ImportPDF4xml, pos={300,469}, size={200,20}, title="Import PDF-4+ xml card", proc=IR3W_WAXSButtonProc, help={"Add Diffraction lines from JCPDS xml cards"}
+	Button PDF4ImportPDF4xml, pos={300,469}, size={200,20}, title="Import PDF-4/5+ xml card", proc=IR3W_WAXSButtonProc, help={"Add Diffraction lines from JCPDS xml cards"}
 	Button AMSOpenWebSite, pos={275,491}, size={90,20}, title="AMS www", proc=IR3W_WAXSButtonProc, help={"Open http://rruff.geo.arizona.edu/AMS/amcsd.php"}
 	Button AMSImportAMStxt, pos={375,491}, size={160,20}, title="Import AMS txt card", proc=IR3W_WAXSButtonProc, help={"Add Diffraction lines from http://rruff.geo.arizona.edu/AMS/amcsd.php"}
 	Button PDF4AddManually, pos={300,513}, size={200,20}, title="Add manually or Edit PDF card", proc=IR3W_WAXSButtonProc, help={"Add/Edit manually card, e.g. type from JCPDS PDF2 or 4 cards"}
