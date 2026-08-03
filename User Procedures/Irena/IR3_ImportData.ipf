@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access
-#pragma version=1.01
+#pragma version=1.03
 #pragma IgorVersion = 9.04
 
 //*************************************************************************\
@@ -8,6 +8,8 @@
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+// 1.03 Fix line 712 which seemed to have deleted freshly imported data. I think the data are nto stored where expected. 
+		//KillDataFolder/Z root:ImportedData
 // 1.02 AI checked
 // 1.01  Combined with IR1_ImportData and remove that package from dependencies. 
 // 1.00  Initial combined import panel.
@@ -709,7 +711,7 @@ Function IR3I_ImportSelectedData()
 		// Clean up the temporary import folder used by the Nexus reader.
 		KillDataFolder/Z root:Packages:NexusImportTMP
 	endif
-	KillDataFolder/Z root:ImportedData
+	//KillDataFolder/Z root:ImportedData
 	print "Imported " + num2str(icount) + " file(s) using format: " + DataFormatType
 	setDataFolder OldDf
 
@@ -1295,16 +1297,22 @@ Function IR3I_SaveTempWaves(newQName, newIntName, newEName, newQEName)
 			print "The data of this name : " + newIntName + " , " + newQName + " , " + newEName + " , or " + newQEName + "  existed. Due to user selection, old data were deleted and replaced with newly imported ones."
 		endif
 	endif
-
-	Duplicate/O testQ,   $newQName
-	Duplicate/O testI, $newIntName
-	if(WaveExists(testE))
-		Duplicate/O testE, $newEName
+	
+	//declare the new waves
+	Wave TempIntensity
+	Wave TempQvector
+	Wave/Z TempError
+	Wave/Z TempdQ
+	
+	Duplicate/O TempQvector,   $newQName
+	Duplicate/O TempIntensity, $newIntName
+	if(WaveExists(TempError))
+		Duplicate/O TempError, $newEName
 	endif
-	if(WaveExists(testQE))
-		Duplicate/O testQE, $newQEName
+	if(WaveExists(TempdQ))
+		Duplicate/O TempdQ, $newQEName
 	endif
-	KillWaves/Z testI, testQ, testE, testQE
+	KillWaves/Z TempIntensity, TempQvector, TempError, TempdQ
 	IR3I_KillAutoWaves()
 	return 0
 End
