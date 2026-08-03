@@ -13,11 +13,9 @@
 	<FolderFileLocation os="Macintosh">Igor Extensions OSX</FolderFileLocation>
 	<File os="all">Igor Extensions/Abeles Help.ihf</File>
 	<File os="all">Igor Extensions/GenCurveFit Help.ihf</File>
-	<File os="all">Igor Extensions/XMLutils Help.ihf</File>
 	<File os="Windows">Igor Extensions/pthreadVC2.dll</File>
 	<File os="all">Igor Extensions/Abeles.xop</File>
 	<File os="all">Igor Extensions/GenCurvefit.xop</File>
 	<File os="all">Igor Extensions/SANSAnalysis.xop</File>
-	<File os="all">Igor Extensions/XMLutils.xop</File>
 	<File os="all">Igor Extensions/IrenaNikaXop32Ver.ipf</File>
 </PackageContent>

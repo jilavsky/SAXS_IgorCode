@@ -3433,7 +3433,821 @@ ThreadSafe Function/T IN2G_XMLremoveComments(str)	// remove all xml comments fro
 	while(1)
 	return str
 End
+
+//*****************************************************************************************************************
+//=======================================================================================
+// SECTION: XML Utilities (Native Igor Pro Implementation - No XOP Required)
+//   Functions for reading and parsing XML files using only native Igor Pro string operations.
+//   These replace the XMLutils XOP functionality for macOS compatibility.
+//*****************************************************************************************************************
+
+// Read entire XML file into a string
+Function/T IN2G_XMLreadFile(filename)
+	String filename
+	
+	variable fRef
+	Open/R/Z fRef as filename
+	if(V_Flag!=0)
+		return ""
+	endif
+
+	FStatus fRef
+	variable numBytes = V_logEOF
+	if(numBytes<=0)
+		Close fRef
+		return ""
+	endif
+	string content = PadString("", numBytes, 0x20)		// preallocate, FBinRead fills it in one go
+	FBinRead fRef, content
+	Close fRef
+
+	return content
+End
+
+//=======================================================================================
+// Native XML document model and XPath subset evaluator (no XMLutils XOP required)
 //
+// IN2G_XMLparse() turns an xml string into a light weight node table. The table is cached
+// in root:Packages:IN2G_XMLcache keyed on a hash of the source string, so a reader can
+// issue hundreds of XPath queries against one file and only pay for parsing once.
+//
+// Node table waves, all indexed by node number in document order:
+//		XMLname			local element name, any namespace prefix removed
+//		XMLattr			attributes as a "key=value;" list, prefixes removed from the keys
+//		XMLparent		parent node number, -1 for a top level element
+//		XMLfirstChild	first child node number, -1 if there are none
+//		XMLnextSib		next sibling node number, -1 if there are none
+//		XMLlastDesc		highest node number inside this node's subtree (>= the node itself)
+//		XMLsibIdx		1 based position among the siblings that carry the same name
+//		XMLc0, XMLc1	character range of the element content within the source string.
+//							XMLc1 < XMLc0 marks an empty or self closing element.
+//
+// Supported XPath subset. Namespace prefixes on element names are ignored, matching is
+// done on local names only, which is what every reader in this codebase actually needs:
+//		/a/b/c			absolute child path
+//		//b				descendant search, from the document or below the preceding step
+//		a[n]			1 based index among same named siblings
+//		*				any element name
+//		..				parent
+//		.				self
+//		/@name			trailing attribute selector
+//=======================================================================================
+
+static StrConstant IN2G_XMLcacheDF = "root:Packages:IN2G_XMLcache"
+static StrConstant IN2G_XMLdescTok = "%%DESCENDANT%%"
+
+// Local name of an element or attribute, i.e. everything after the last namespace colon.
+Function/T IN2G_XMLlocalName(str)
+	String str
+	Variable i0 = strsearch(str, ":", Inf, 3)			// 3 = reverse, case insensitive
+	if(i0>=0)
+		return str[i0+1, Inf]
+	endif
+	return str
+End
+
+// Replace the five predefined xml entities and numeric character references.
+Function/T IN2G_XMLdecodeEntities(str)
+	String str
+	if(strsearch(str, "&", 0)<0)						// nothing to do, the common case
+		return str
+	endif
+	str = ReplaceString("&lt;", str, "<")
+	str = ReplaceString("&gt;", str, ">")
+	str = ReplaceString("&quot;", str, "\"")
+	str = ReplaceString("&apos;", str, "'")
+	String pre, num
+	Variable i0, i1, code
+	do													// numeric references, &#65; and &#x41;
+		i0 = strsearch(str, "&#", 0)
+		if(i0<0)
+			break
+		endif
+		i1 = strsearch(str, ";", i0)
+		if(i1<0 || i1-i0>10)
+			break
+		endif
+		num = str[i0+2, i1-1]
+		if(CmpStr(num[0],"x")==0 || CmpStr(num[0],"X")==0)
+			code = str2num("0x"+num[1,Inf])
+		else
+			code = str2num(num)
+		endif
+		if(numtype(code) || code<1 || code>255)
+			break										// leave anything we cannot represent alone
+		endif
+		str = str[0,i0-1] + num2char(code) + str[i1+1, Inf]
+	while(1)
+	str = ReplaceString("&amp;", str, "&")				// must be last
+	return str
+End
+
+// Text content of an xml fragment: markup is dropped, CDATA sections are taken verbatim
+// and entities are decoded in the ordinary text.
+Function/T IN2G_XMLfragmentText(str)
+	String str
+	String out = ""
+	Variable i0=0, i1, i2, n=strlen(str)
+	do
+		i1 = strsearch(str, "<", i0)
+		if(i1<0)
+			out += IN2G_XMLdecodeEntities(str[i0, n-1])
+			break
+		endif
+		out += IN2G_XMLdecodeEntities(str[i0, i1-1])
+		if(CmpStr(str[i1,i1+8], "<![CDATA[")==0)
+			i2 = strsearch(str, "]]>", i1)
+			if(i2<0)
+				break
+			endif
+			out += str[i1+9, i2-1]						// verbatim, entities are not decoded
+			i0 = i2+3
+		else
+			i0 = strsearch(str, ">", i1)
+			if(i0<0)
+				break
+			endif
+			i0 += 1
+		endif
+	while(i0<n)
+	return out
+End
+
+// Parse the attribute part of an opening tag into a "key=value;" list. Namespace prefixes
+// are stripped from the attribute names, so xsi:schemaLocation is keyed as schemaLocation.
+Function/T IN2G_XMLparseAttributes(str)
+	String str
+	String keyVals="", key, value, quote
+	Variable i0=0, i1, i2, n=strlen(str)
+	do
+		do												// skip white space before the name
+			if(i0>=n || char2num(str[i0])>32)
+				break
+			endif
+			i0 += 1
+		while(1)
+		if(i0>=n)
+			break
+		endif
+		i1 = strsearch(str, "=", i0)
+		if(i1<0)
+			break
+		endif
+		key = IN2G_XMLlocalName(IN2G_TrimFrontBackWhiteSpace(str[i0, i1-1]))
+		i1 += 1
+		do												// skip white space before the value
+			if(i1>=n || char2num(str[i1])>32)
+				break
+			endif
+			i1 += 1
+		while(1)
+		quote = str[i1]
+		if(CmpStr(quote,"\"")!=0 && CmpStr(quote,"'")!=0)
+			break										// unquoted attribute value, give up here
+		endif
+		i2 = strsearch(str, quote, i1+1)
+		if(i2<0)
+			break
+		endif
+		value = IN2G_XMLdecodeEntities(str[i1+1, i2-1])
+		if(strlen(key)>0)
+			keyVals = ReplaceStringByKey(key, keyVals, value, "=", ";")
+		endif
+		i0 = i2+1
+	while(i0<n)
+	return keyVals
+End
+
+// Build the node table for xmlStr in data folder dfr.
+Function IN2G_XMLparse(xmlStr, dfr)
+	String xmlStr
+	DFREF dfr
+
+	Variable nChar = strlen(xmlStr)
+	Variable capacity = 4096, maxDepth = 256, n = 0
+	Make/O/T/N=(capacity) dfr:XMLname, dfr:XMLattr
+	Make/O/D/N=(capacity) dfr:XMLparent, dfr:XMLfirstChild, dfr:XMLnextSib
+	Make/O/D/N=(capacity) dfr:XMLlastDesc, dfr:XMLsibIdx, dfr:XMLc0, dfr:XMLc1
+	WAVE/T XMLname = dfr:XMLname
+	WAVE/T XMLattr = dfr:XMLattr
+	WAVE XMLparent = dfr:XMLparent
+	WAVE XMLfirstChild = dfr:XMLfirstChild
+	WAVE XMLnextSib = dfr:XMLnextSib
+	WAVE XMLlastDesc = dfr:XMLlastDesc
+	WAVE XMLsibIdx = dfr:XMLsibIdx
+	WAVE XMLc0 = dfr:XMLc0
+	WAVE XMLc1 = dfr:XMLc1
+
+	Make/FREE/D/N=(maxDepth) stackWv						// open elements, outermost first
+	Make/FREE/T/N=(maxDepth) childCounts				// "name=count;" of children seen at each depth
+	Make/FREE/D/N=(maxDepth) lastChild					// last child added at each depth, -1 if none
+	Variable sp = 0										// number of currently open elements
+	childCounts[0] = ""
+	lastChild[0] = -1
+
+	Variable pos=0, i0, i1, selfClose, nameEnd, parent, cnt, k, m
+	String tagStr, tagName
+	do
+		i0 = strsearch(xmlStr, "<", pos)
+		if(i0<0)
+			break
+		endif
+		if(CmpStr(xmlStr[i0,i0+3], "<!--")==0)			// comment
+			pos = strsearch(xmlStr, "-->", i0)
+			pos = pos<0 ? nChar : pos+3
+			continue
+		endif
+		if(CmpStr(xmlStr[i0,i0+8], "<![CDATA[")==0)		// character data, not markup
+			pos = strsearch(xmlStr, "]]>", i0)
+			pos = pos<0 ? nChar : pos+3
+			continue
+		endif
+		i1 = strsearch(xmlStr, ">", i0)
+		if(i1<0)
+			break
+		endif
+		pos = i1+1
+		tagStr = xmlStr[i0+1, i1-1]
+		if(strlen(tagStr)==0)
+			continue
+		endif
+		if(CmpStr(tagStr[0],"?")==0 || CmpStr(tagStr[0],"!")==0)		// declaration, doctype
+			continue
+		endif
+
+		if(CmpStr(tagStr[0],"/")==0)					// ---- closing tag ----
+			tagName = IN2G_XMLlocalName(IN2G_TrimFrontBackWhiteSpace(tagStr[1,Inf]))
+			for(k=sp-1; k>=0; k-=1)						// innermost matching open element
+				if(CmpStr(XMLname[stackWv[k]], tagName)==0)
+					break
+				endif
+			endfor
+			if(k<0)
+				continue								// stray closing tag, ignore it
+			endif
+			for(m=sp-1; m>=k; m-=1)						// anything still open inside closes too
+				XMLc1[stackWv[m]] = i0-1
+				XMLlastDesc[stackWv[m]] = n-1
+			endfor
+			sp = k
+			continue
+		endif
+
+		// ---- opening tag ----
+		selfClose = CmpStr(tagStr[strlen(tagStr)-1],"/")==0
+		if(selfClose)
+			tagStr = tagStr[0, strlen(tagStr)-2]
+		endif
+		nameEnd = 0
+		do
+			if(nameEnd>=strlen(tagStr) || char2num(tagStr[nameEnd])<=32)
+				break
+			endif
+			nameEnd += 1
+		while(1)
+		tagName = IN2G_XMLlocalName(tagStr[0, nameEnd-1])
+		if(strlen(tagName)==0)
+			continue
+		endif
+		if(n>=capacity)
+			capacity *= 2
+			Redimension/N=(capacity) XMLname, XMLattr, XMLparent, XMLfirstChild
+			Redimension/N=(capacity) XMLnextSib, XMLlastDesc, XMLsibIdx, XMLc0, XMLc1
+		endif
+		parent = sp>0 ? stackWv[sp-1] : -1
+		XMLname[n] = tagName
+		XMLattr[n] = IN2G_XMLparseAttributes(tagStr[nameEnd, Inf])
+		XMLparent[n] = parent
+		XMLfirstChild[n] = -1
+		XMLnextSib[n] = -1
+		XMLlastDesc[n] = n
+		XMLc0[n] = i1+1
+		XMLc1[n] = i0									// empty until the closing tag is seen
+		cnt = NumberByKey(tagName, childCounts[sp], "=", ";")
+		cnt = numtype(cnt) ? 0 : cnt
+		XMLsibIdx[n] = cnt+1
+		childCounts[sp] = ReplaceStringByKey(tagName, childCounts[sp], num2istr(cnt+1), "=", ";")
+		if(lastChild[sp]>=0)
+			XMLnextSib[lastChild[sp]] = n
+		elseif(parent>=0)
+			XMLfirstChild[parent] = n
+		endif
+		lastChild[sp] = n
+		n += 1
+		if(!selfClose)
+			if(sp+1>=maxDepth)
+				maxDepth *= 2
+				Redimension/N=(maxDepth) stackWv, childCounts, lastChild
+			endif
+			stackWv[sp] = n-1
+			sp += 1
+			childCounts[sp] = ""
+			lastChild[sp] = -1
+		endif
+	while(pos<nChar)
+
+	for(m=sp-1; m>=0; m-=1)								// close whatever the document left open
+		XMLc1[stackWv[m]] = nChar-1
+		XMLlastDesc[stackWv[m]] = n-1
+	endfor
+
+	// trimmed to the exact node count, so numpnts(XMLname) is the size of the document
+	Redimension/N=(n) XMLname, XMLattr, XMLparent, XMLfirstChild
+	Redimension/N=(n) XMLnextSib, XMLlastDesc, XMLsibIdx, XMLc0, XMLc1
+End
+
+// DFREF of the parsed node table for xmlStr, parsing it first if it is not already cached.
+Function/DF IN2G_XMLgetDoc(xmlStr)
+	String xmlStr
+
+	String key = Hash(xmlStr, 1)
+	if(DataFolderExists(IN2G_XMLcacheDF))
+		DFREF old = $IN2G_XMLcacheDF
+		SVAR/Z/SDFR=old cachedKey
+		if(SVAR_Exists(cachedKey))
+			if(CmpStr(cachedKey, key)==0)
+				return old
+			endif
+		endif
+		KillDataFolder/Z $IN2G_XMLcacheDF
+	endif
+	DFREF saveDFR = GetDataFolderDFR()
+	NewDataFolder/O root:Packages
+	NewDataFolder/O/S $IN2G_XMLcacheDF
+	String/G cachedKey = key
+	DFREF dfr = GetDataFolderDFR()
+	SetDataFolder saveDFR
+	IN2G_XMLparse(xmlStr, dfr)
+	return dfr
+End
+
+// Remove "prefix:" from every element name in an xpath. Attribute steps keep their "@".
+Function/T IN2G_XMLstripNSprefixes(xpath)
+	String xpath
+	if(strsearch(xpath, ":", 0)<0)						// nothing to do, the common case
+		return xpath
+	endif
+	String out="", tok
+	Variable i0=0, i1, n=strlen(xpath)
+	do
+		i1 = strsearch(xpath, "/", i0)
+		if(i1<0)
+			i1 = n
+		endif
+		tok = xpath[i0, i1-1]
+		if(CmpStr(tok[0],"@")==0)
+			out += "@" + IN2G_XMLlocalName(tok[1,Inf])
+		else
+			out += IN2G_XMLlocalName(tok)
+		endif
+		if(i1<n)
+			out += "/"
+		endif
+		i0 = i1+1
+	while(i0<=n)
+	return out
+End
+
+// Split an xpath into its steps, dropping empty ones. "//" must already be expanded.
+static Function/WAVE IN2G_XMLpathTokens(xpath)
+	String xpath
+	Make/FREE/T/N=0 tok
+	Variable i0=0, i1, n=strlen(xpath), cnt=0
+	do
+		i1 = strsearch(xpath, "/", i0)
+		if(i1<0)
+			i1 = n
+		endif
+		if(i1>i0)
+			cnt += 1
+			Redimension/N=(cnt) tok
+			tok[cnt-1] = xpath[i0, i1-1]
+		endif
+		i0 = i1+1
+	while(i0<=n)
+	return tok
+End
+
+// Evaluate an xpath against a parsed document. Returns a free numeric wave holding the
+// matching node numbers in document order. Any trailing "/@attr" must be removed first.
+Function/WAVE IN2G_XMLselect(dfr, xpath)
+	DFREF dfr
+	String xpath
+
+	WAVE/T XMLname = dfr:XMLname
+	WAVE XMLparent = dfr:XMLparent
+	WAVE XMLfirstChild = dfr:XMLfirstChild
+	WAVE XMLnextSib = dfr:XMLnextSib
+	WAVE XMLlastDesc = dfr:XMLlastDesc
+	WAVE XMLsibIdx = dfr:XMLsibIdx
+	Variable nNodes = numpnts(XMLname)
+
+	Make/FREE/D/N=0 empty
+	if(nNodes<1)
+		return empty
+	endif
+
+	String p = IN2G_XMLstripNSprefixes(xpath)
+	p = ReplaceString("//", p, "/"+IN2G_XMLdescTok+"/")
+	WAVE/T tok = IN2G_XMLpathTokens(p)
+
+	Make/FREE/D/N=1 cur
+	cur[0] = -1											// -1 stands for the document node
+	Make/FREE/D/N=(nNodes) mark
+
+	Variable t, c, j, node, first, last, wantIdx, br, descend=0, anyName
+	String stepStr, nm
+	for(t=0; t<numpnts(tok); t+=1)
+		stepStr = tok[t]
+		if(CmpStr(stepStr, IN2G_XMLdescTok)==0)
+			descend = 1
+			continue
+		endif
+		if(CmpStr(stepStr,".")==0)
+			continue
+		endif
+		if(CmpStr(stepStr,"..")==0)						// parent axis
+			mark = 0
+			for(c=0; c<numpnts(cur); c+=1)
+				node = cur[c]
+				if(node>=0 && XMLparent[node]>=0)
+					mark[XMLparent[node]] = 1
+				endif
+			endfor
+			Extract/FREE/INDX mark, cur, mark==1
+			descend = 0
+			continue
+		endif
+
+		wantIdx = 0										// optional [n] predicate
+		br = strsearch(stepStr, "[", 0)
+		if(br>=0)
+			wantIdx = str2num(stepStr[br+1, Inf])
+			wantIdx = numtype(wantIdx) ? 0 : wantIdx
+			nm = stepStr[0, br-1]
+		else
+			nm = stepStr
+		endif
+		anyName = CmpStr(nm,"*")==0
+
+		mark = 0
+		for(c=0; c<numpnts(cur); c+=1)
+			node = cur[c]
+			if(descend)									// every node inside the subtree
+				if(node<0)
+					first = 0
+					last = nNodes-1
+				else
+					first = node+1
+					last = XMLlastDesc[node]
+				endif
+				for(j=first; j<=last; j+=1)
+					if(anyName || CmpStr(XMLname[j], nm)==0)
+						if(wantIdx==0 || XMLsibIdx[j]==wantIdx)
+							mark[j] = 1
+						endif
+					endif
+				endfor
+			else										// direct children only
+				if(node<0)
+					j = 0								// top level elements are chained from node 0
+				else
+					j = XMLfirstChild[node]
+				endif
+				do
+					if(j<0)
+						break
+					endif
+					if(anyName || CmpStr(XMLname[j], nm)==0)
+						if(wantIdx==0 || XMLsibIdx[j]==wantIdx)
+							mark[j] = 1
+						endif
+					endif
+					j = XMLnextSib[j]
+				while(1)
+			endif
+		endfor
+		Extract/FREE/INDX mark, cur, mark==1
+		descend = 0
+		if(numpnts(cur)<1)
+			return empty
+		endif
+	endfor
+
+	if(numpnts(cur)==1)
+		if(cur[0]<0)									// the path selected nothing but the document
+			return empty
+		endif
+	endif
+	return cur
+End
+
+// Full path of a node, with 1 based sibling indices, e.g. "/SASroot[1]/SASentry[2]/Title[1]"
+Function/T IN2G_XMLnodePath(dfr, node)
+	DFREF dfr
+	Variable node
+	WAVE/T XMLname = dfr:XMLname
+	WAVE XMLparent = dfr:XMLparent
+	WAVE XMLsibIdx = dfr:XMLsibIdx
+	String path = ""
+	do
+		if(node<0)
+			break
+		endif
+		path = "/" + XMLname[node] + "[" + num2istr(XMLsibIdx[node]) + "]" + path
+		node = XMLparent[node]
+	while(1)
+	return path
+End
+
+// Text content of a node: all text nodes in its subtree, entities decoded and trimmed.
+Function/T IN2G_XMLnodeText(dfr, xmlStr, node)
+	DFREF dfr
+	String xmlStr
+	Variable node
+	WAVE XMLc0 = dfr:XMLc0
+	WAVE XMLc1 = dfr:XMLc1
+	WAVE XMLfirstChild = dfr:XMLfirstChild
+	if(node<0)
+		return ""
+	endif
+	if(XMLc1[node] < XMLc0[node])						// empty or self closing
+		return ""
+	endif
+	String s = xmlStr[XMLc0[node], XMLc1[node]]
+	if(strsearch(s, "<", 0)>=0)
+		s = IN2G_XMLfragmentText(s)					// child elements and/or CDATA present
+	else
+		s = IN2G_XMLdecodeEntities(s)
+	endif
+	return IN2G_TrimFrontBackWhiteSpace(s)
+End
+
+// If xpath ends in an attribute selector, "/@name", return the element path and put the
+// attribute name in attrName. Otherwise return xpath unchanged and set attrName to "".
+static Function/T IN2G_XMLsplitAttr(xpath, attrName)
+	String xpath
+	String &attrName
+	attrName = ""
+	Variable i0 = strsearch(xpath, "/@", Inf, 3)		// 3 = reverse, case insensitive
+	if(i0>=0)
+		attrName = IN2G_XMLlocalName(xpath[i0+2, Inf])
+		return xpath[0, i0-1]
+	endif
+	return xpath
+End
+
+//=======================================================================================
+// Public API. These keep the signatures of the XMLutils XOP calls they replace, so the
+// readers migrated off the XOP need only the name change.
+//=======================================================================================
+
+// Namespace URI of the document: the root element's default xmlns, or failing that the
+// URI half of its schemaLocation attribute. Returns "" when neither is present.
+Function/T IN2G_XMLgetNamespace(xmlStr)
+	String xmlStr
+
+	DFREF dfr = IN2G_XMLgetDoc(xmlStr)
+	WAVE/T XMLattr = dfr:XMLattr
+	if(numpnts(XMLattr)<1)
+		return ""
+	endif
+	String attrs = XMLattr[0]
+	String ns = StringByKey("xmlns", attrs, "=", ";", 0)
+	if(strlen(ns)>0)
+		return ns
+	endif
+	String schemaLoc = StringByKey("schemaLocation", attrs, "=", ";", 0)
+	if(strlen(schemaLoc)>0)
+		schemaLoc = IN2G_TrimFrontBackWhiteSpace(schemaLoc)
+		Variable spacePos = strsearch(schemaLoc, " ", 0)
+		if(spacePos>=0)
+			return IN2G_TrimFrontBackWhiteSpace(schemaLoc[spacePos+1, Inf])
+		endif
+		return schemaLoc
+	endif
+	return ""
+End
+
+// Kept for source compatibility. Namespace prefixes are ignored by the XPath evaluator,
+// so no substitution is needed and the xpath is returned unchanged.
+Function/T IN2G_XMLreplaceNamespacePrefix(xpath, namespace)
+	String xpath, namespace
+	return xpath
+End
+
+// Every element in the document as a ";" separated list of indexed paths.
+// Mirrors XMLelemlist(fileID) from the XMLutils XOP.
+Function/T IN2G_XMLcreateElementList(xmlStr)
+	String xmlStr
+
+	DFREF dfr = IN2G_XMLgetDoc(xmlStr)
+	WAVE/T XMLname = dfr:XMLname
+	String elements=""
+	Variable i
+	for(i=0; i<numpnts(XMLname); i+=1)
+		elements += IN2G_XMLnodePath(dfr, i) + ";"
+	endfor
+	return elements
+End
+
+// String value at an xpath, or default when the path matches nothing.
+// A trailing "/@name" selects an attribute instead of the element text.
+Function/T IN2G_XMLstrFmXpath(xmlStr, xpath, namespace, default)
+	String xmlStr, xpath, namespace, default
+
+	String attrName
+	String elemPath = IN2G_XMLsplitAttr(xpath, attrName)
+	DFREF dfr = IN2G_XMLgetDoc(xmlStr)
+	WAVE nodes = IN2G_XMLselect(dfr, elemPath)
+	if(numpnts(nodes)<1)
+		return default
+	endif
+	if(strlen(attrName)>0)
+		WAVE/T XMLattr = dfr:XMLattr
+		String v = StringByKey(attrName, XMLattr[nodes[0]], "=", ";", 0)
+		if(strlen(v)<1)
+			return default
+		endif
+		return v
+	endif
+	return IN2G_XMLnodeText(dfr, xmlStr, nodes[0])
+End
+
+// All values matching an xpath, joined with delimiter. Returns "" if nothing matches.
+// Note that delimiter is a literal separator here, not a set of separator characters,
+// so callers should split the result with the same string.
+Function/T IN2G_XMLwaveFmXpath(xmlStr, xpath, namespace, delimiter)
+	String xmlStr, xpath, namespace, delimiter
+
+	String attrName
+	String elemPath = IN2G_XMLsplitAttr(xpath, attrName)
+	DFREF dfr = IN2G_XMLgetDoc(xmlStr)
+	WAVE nodes = IN2G_XMLselect(dfr, elemPath)
+	if(numpnts(nodes)<1)
+		return ""
+	endif
+	WAVE/T XMLattr = dfr:XMLattr
+	String values="", one
+	Variable i
+	for(i=0; i<numpnts(nodes); i+=1)
+		if(strlen(attrName)>0)
+			one = StringByKey(attrName, XMLattr[nodes[i]], "=", ";", 0)
+		else
+			one = IN2G_XMLnodeText(dfr, xmlStr, nodes[i])
+		endif
+		if(i>0)
+			values += delimiter
+		endif
+		values += one
+	endfor
+	return values
+End
+
+// Indexed paths of every node matching an xpath, as a ";" separated list.
+Function/T IN2G_XMLlistXpath(xmlStr, xpath, namespace)
+	String xmlStr, xpath, namespace
+
+	String attrName
+	String elemPath = IN2G_XMLsplitAttr(xpath, attrName)
+	DFREF dfr = IN2G_XMLgetDoc(xmlStr)
+	WAVE nodes = IN2G_XMLselect(dfr, elemPath)
+	String result=""
+	Variable i
+	for(i=0; i<numpnts(nodes); i+=1)
+		result += IN2G_XMLnodePath(dfr, nodes[i]) + ";"
+	endfor
+	return result
+End
+
+// Attributes of the first node matching an xpath, as a "key=value;" list. Pass keySep to
+// get a different key separator, for instance ":" to match the old XOP element list.
+Function/T IN2G_XMLlistAttr(xmlStr, xpath, namespace, [keySep])
+	String xmlStr, xpath, namespace
+	String keySep
+
+	DFREF dfr = IN2G_XMLgetDoc(xmlStr)
+	WAVE nodes = IN2G_XMLselect(dfr, xpath)
+	if(numpnts(nodes)<1)
+		return ""
+	endif
+	WAVE/T XMLattr = dfr:XMLattr
+	String attrs = XMLattr[nodes[0]]
+	if(ParamIsDefault(keySep))
+		return attrs
+	endif
+	if(CmpStr(keySep,"=")==0)
+		return attrs
+	endif
+	String out="", item							// rebuild with the requested key separator
+	Variable i, eq
+	for(i=0; i<ItemsInList(attrs, ";"); i+=1)
+		item = StringFromList(i, attrs, ";")
+		eq = strsearch(item, "=", 0)
+		if(eq>0)
+			out += item[0,eq-1] + keySep + item[eq+1, Inf] + ";"
+		endif
+	endfor
+	return out
+End
+//  ======================================================================================  //
+// Returns the contents of the next <xmltag>...</xmltag> element found at or after start.
+// Unlike IN2G_XMLtagContents, this counts nesting depth, so it works correctly when an
+// element of the same name is nested inside itself. PDF-4+/PDF-5+ cards do exactly that:
+//		<intensity><theta>..</theta><da>..</da><intensity>100</intensity>..</intensity>
+// start is updated to the character index just past the closing tag, so repeated calls
+// walk through all sibling elements. When nothing further is found, start is set to -1
+// and "" is returned. Self closing tags (<tag/>) return "" but advance start normally.
+Function/T IN2G_XMLnextElement(xmltag, buf, start)
+	String xmltag, buf
+	Variable &start												// in/out, byte offset into buf
+
+	Variable pos = (numtype(start) || start<0) ? 0 : start
+	Variable bufLen = strlen(buf)
+	Variable i0, i1, depth, contentStart, nextOpen, nextClose
+	String closeStr = "</"+xmltag+">"
+
+	i0 = IN2G_XMLfindOpenTag(xmltag, buf, pos)			// find the opening tag
+	if(i0<0)
+		start = -1
+		return ""
+	endif
+	i1 = strsearch(buf, ">", i0)								// end of the opening tag
+	if(i1<0)
+		start = -1
+		return ""
+	endif
+	if(cmpstr(buf[i1-1],"/")==0)								// <tag/> is empty, nothing to descend into
+		start = i1+1
+		return ""
+	endif
+
+	contentStart = i1+1
+	depth = 1
+	pos = contentStart
+	do
+		nextClose = strsearch(buf, closeStr, pos, 0)
+		if(nextClose<0)											// unbalanced xml
+			start = -1
+			return ""
+		endif
+		nextOpen = pos												// count same name openers before this closer
+		do
+			nextOpen = IN2G_XMLfindOpenTag(xmltag, buf, nextOpen)
+			if(nextOpen<0 || nextOpen>nextClose)
+				break
+			endif
+			i1 = strsearch(buf, ">", nextOpen)
+			if(i1<0)
+				break
+			endif
+			if(cmpstr(buf[i1-1],"/")!=0)						// ignore self closing tags
+				depth += 1
+			endif
+			nextOpen = i1+1
+		while(1)
+		depth -= 1
+		pos = nextClose + strlen(closeStr)
+		if(depth<=0)
+			start = pos
+			return buf[contentStart, nextClose-1]
+		endif
+	while(pos<bufLen)
+
+	start = -1
+	return ""
+End
+//  ======================================================================================  //
+// Helper for IN2G_XMLnextElement. Index of the next "<xmltag" in buf at or after start
+// which is a real tag start (next character is >, /, or white space) and not merely a
+// prefix of a longer tag name (so "h" does not match "<hkl>"). Returns -1 if not found.
+Function IN2G_XMLfindOpenTag(xmltag, buf, start)
+	String xmltag, buf
+	Variable start
+
+	Variable tagLen = strlen(xmltag), i0
+	Variable pos = (numtype(start) || start<0) ? 0 : start
+	String ch
+	do
+		i0 = strsearch(buf, "<"+xmltag, pos, 0)
+		if(i0<0)
+			return -1
+		endif
+		ch = buf[i0+tagLen+1]
+		if(cmpstr(ch,">")==0 || cmpstr(ch,"/")==0 || char2num(ch)<=32)
+			return i0
+		endif
+		pos = i0 + tagLen + 1									// prefix of a longer name, keep looking
+	while(1)
+	return -1
+End
+//  ======================================================================================  //
+
+// Release the cached document model. Mirrors XmlCloseFile(fileID, save) from the XOP.
+// Calling this is optional, the cache holds one document and is replaced on the next parse.
+Function IN2G_XMLcloseFile()
+	KillDataFolder/Z $IN2G_XMLcacheDF
+End
 
 //*****************************************************************************************************************
 //=======================================================================================

@@ -310,48 +310,57 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 			NewNote+=headerStr
 		endif
 	elseif(cmpstr(FileType,"TPA/XML")==0)
-#if(Exists("XMLopenfile"))
 		FileNameToLoad= FileName
 		if(cmpstr(FileName[strlen(FileName)-4,inf],".xml")!=0)
 			FileNameToLoad= FileName+ ".xml"
 		endif
 		string tempPthStr
 		PathInfo $(PathName)
-		RefNum=XMLopenfile (S_Path+FileNameToLoad)
-		XMLelemlist(refnum)
-		Wave/T W_ElementList
-		string FrameInfo=W_ElementList[2][2]
-		string ExpInfo=W_ElementList[1][2]
-//		print FrameInfo
-//		print ExpInfo
+		
+		// Read XML file using native Igor Pro functions (no XOP required)
+		string xmlStr = IN2G_XMLreadFile(S_Path+FileNameToLoad)
+		if(strlen(xmlStr)==0)
+			DoAlert 0, "Failed to read XML file: "+FileNameToLoad
+			return 0
+		endif
+		
+		// The experiment and frame descriptions are the attributes of <Acquisition> and of
+		// its <Frame> child. NumberByKey and NI2_DictconvertKeySep below expect "key:value;"
+		// so the attributes are returned with ":" as the key separator.
+		string ExpInfo   = IN2G_XMLlistAttr(xmlStr, "//Acquisition", "", keySep=":")
+		string FrameInfo = IN2G_XMLlistAttr(xmlStr, "//Acquisition/Frame", "", keySep=":")
+
 		variable NumpntsXxml, NumpntsYxml
 		NumpntsXxml = NumberByKey("x", FrameInfo , ":"  , ";")
 		NumpntsYxml = NumberByKey("y", FrameInfo , ":"  , ";")
-//		//xmldocdump(refnum)
-//		//data = XMLstrFmXpath(refnum,"//Acquisition/Frame/Data","","")
-		XMLwaveFmXpath(refnum,"//Acquisition/Frame/Data","",";")
-		XMLclosefile(refnum, 0)
-		wave/T M_xmlcontent
-		make/O/N=(numpnts(M_xmlcontent)) $(NewWaveName)
+		if(numtype(NumpntsXxml) || numtype(NumpntsYxml) || NumpntsXxml<1 || NumpntsYxml<1)
+			DoAlert 0, "Could not find the frame size (x and y) in: "+FileNameToLoad
+			return 0
+		endif
+
+		// Get 2D image data from XML. The values inside <Data> are ";" separated.
+		string dataStr = IN2G_XMLwaveFmXpath(xmlStr, "//Acquisition/Frame/Data", "", ";")
+		WAVE/T tpaValues = ListToTextWave(dataStr, ";")
+		variable nPoints = numpnts(tpaValues)
+		if(nPoints < NumpntsXxml*NumpntsYxml)
+			DoAlert 0, "Expected "+num2istr(NumpntsXxml*NumpntsYxml)+" values but found "+num2istr(nPoints)+" in: "+FileNameToLoad
+			return 0
+		endif
+		make/O/N=(NumpntsXxml*NumpntsYxml) $(NewWaveName)
 		Wave Data2D= $(NewWaveName)
-		MultiThread Data2D = str2num(M_xmlcontent[p])
-		KillWaves/Z M_xmlcontent
+		MultiThread Data2D = str2num(tpaValues[p])
+
 		redimension/N=(NumpntsXxml,NumpntsYxml) Data2D
+
 		//note Data2D, ExpInfo+FrameInfo
-		//print ExpInfo
 		NewNote+="DataFileName="+FileNameToLoad+";"
 		NewNote+="DataFileType="+"TPA/XML"+";"
-		//FrameInfo = ReplaceString(";", FrameInfo, "_")
-		//ExpInfo = ReplaceString(";", ExpInfo, "_")
 		NewNote += NI2_DictconvertKeySep(ExpInfo, ":", "=", ";")+";"
 		NewNote += NI2_DictconvertKeySep(FrameInfo, ":", "=", ";")+";"
 		NewNote = ReplaceString("\r", NewNote, "")
 		NewNote = ReplaceString("\n", NewNote, "")
 		NewNote = ReplaceString("2%", NewNote, " ")
 		NI2_CreateWvNoteNbk(NewNote)
-#else
-	DoAlert 0, "XML xop is not installed, this feature is not available. Please install xops using latest Installer version or install manually."
-#endif
 	elseif(cmpstr(FileType,".hdf")==0)
 #if(exists("HDF5OpenFile")==4)
 		FileNameToLoad= FileName

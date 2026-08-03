@@ -212,7 +212,7 @@ Function IR3W_WAXSPanelFunction()
 	Checkbox PDF4_DisplayHKLTags, pos={340,405},size={76,14},title="Display HKL tags", proc=IR3W_WAXSCheckProc, variable=root:Packages:Irena:WAXS:PDF4_DisplayHKLTags
 	Button PDF4UpdateList, pos={300,425}, size={200,20}, title="Update list of cards", proc=IR3W_WAXSButtonProc, help={"After using LaueGo package from Jon Tischler update list"}
 	Button PDF4ExportImport, pos={300,447}, size={200,20}, title="Export/Import/Delete PDF cards", proc=IR3W_WAXSButtonProc, help={"Add Diffraction lines from hard drive folder on this computer"}
-	Button PDF4ImportPDF4xml, pos={300,469}, size={200,20}, title="Import PDF-4+ xml card", proc=IR3W_WAXSButtonProc, help={"Add Diffraction lines from JCPDS xml cards"}
+	Button PDF4ImportPDF4xml, pos={300,469}, size={200,20}, title="Import PDF-4/5+ xml card", proc=IR3W_WAXSButtonProc, help={"Add Diffraction lines from JCPDS xml cards"}
 	Button AMSOpenWebSite, pos={275,491}, size={90,20}, title="AMS www", proc=IR3W_WAXSButtonProc, help={"Open http://rruff.geo.arizona.edu/AMS/amcsd.php"}
 	Button AMSImportAMStxt, pos={375,491}, size={160,20}, title="Import AMS txt card", proc=IR3W_WAXSButtonProc, help={"Add Diffraction lines from http://rruff.geo.arizona.edu/AMS/amcsd.php"}
 	Button PDF4AddManually, pos={300,513}, size={200,20}, title="Add manually or Edit PDF card", proc=IR3W_WAXSButtonProc, help={"Add/Edit manually card, e.g. type from JCPDS PDF2 or 4 cards"}
@@ -3044,8 +3044,12 @@ Function IR3W_ImportPDF4xmlFile()
  	NewDataFolder/O/S root:WAXS_PDF
 	//Get the file to read:
 	variable fileID
-	Open/D/A/T=".xml"/M="Find xml file exported from PDF-4+ database" fileID
+	Open/D/A/T=".xml"/M="Find xml file exported from PDF-4+ or PDF-5+ database" fileID
 	String PathToFile = S_fileName
+	if(strlen(PathToFile)<1)			//user cancelled
+		setDataFolder OldDf
+		return 0
+	endif
 	string pdfNumber
 	pdfNumber = IR3W_ReadXMLJCPDSCard(PathToFile)
 	SVAR chemical_formula = root:Packages:Irena_JCPDSImport:chemical_formula
@@ -3126,116 +3130,99 @@ static Function/T IR3W_ReadXMLJCPDSCard(PathToDataFull)
 	string PathToDataFull
 
 	DFREF saveDFR = GetDataFolderDFR()		// Save
-	variable fileID, tempV1
 	string pdfNumber
-	string ContentTemp, CurNSnode, tempStr
-	Open/R/T=".xml"/Z fileID as PathToDataFull
-	if(V_Flag!=0)
-		Abort "Path or the file was not found"
+
+	// Read XML file using native Igor string functions (no XMLutils XOP required)
+	string xmlStr = IN2G_XMLreadFile(PathToDataFull)
+	if(strlen(xmlStr)==0)
+		Abort "Path or the file was not found, or the file is empty."
 	endif
-	close fileID
-	//OK, now the file should exist... 
-	//check for xop presence and throw error if not present. 
-#if Exists("xmlopenfile")==3
-	//create 
-	NewDataFolder/O/S root:Packages
-	KillDataFolder/Z root:Packages:Irena_JCPDSImport
-	NewDataFolder/O/S root:Packages:Irena_JCPDSImport	
-	fileID = xmlopenfile(PathToDataFull)
-	//XMLdocDump(fileID)
-	XMLelemlist(fileID)
-	Wave/T W_ElementList
-	//XMLlistAttr(fileID,"/pdfcard/graphs/stick_series","")
-	//string COntent = XMLstrfmXPath(fileID,"/pdfcard/graphs/stick_series","","")
-	//XMLlistXpath(fileID,"/pdfcard/graphs/stick_series","")
-	//XMLwaveFmXpath(fileID,"/pdfcard/graphs/stick_series",""," \n\r\t")
-	//first need to check that this is xml file we can read, let's assume the /pdfcard/pdf_data must exist
-	//and "Applicationname" should be matching PDF-4+
-	CUrNSnode = "/pdfcard/pdf_data"
-	if(IR3W_ReadXMLJCPDSFindNode(W_ElementList,CUrNSnode) >=0)
-		//the path eexists, so we need to get theattributes wave...
-		XMLlistAttr(fileID,CUrNSnode,"")
-		Wave/T M_listAttr
-		tempV1=IR3W_ReadXMLJCPDSFindNode(M_listAttr,"/pdfcard/pdf_data")
-		if(tempV1>=0)		//those node found
-			tempStr = M_listAttr[tempV1][2]
-			if(!stringmatch(tempStr,"*PDF-4+*"))
-				Abort "Unknown pdf data card format, send example to Jan for update to code to be able to read it."
-			endif
-		endif	
-	else
+
+	// first check that this is an xml file we can read: /pdfcard/pdf_data must exist and
+	// its ApplicationName attribute must say PDF-4+ or PDF-5+
+	if(IN2G_startOfxmltag("pdfcard",xmlStr,0)<0 || IN2G_startOfxmltag("pdf_data",xmlStr,0)<0)
 		Abort "Unknown pdf data card format, send example to Jan for update to code to be able to read it."
 	endif
-	//now that looks like ths is correct PDF-4+ card we had example of, let's read it. 
-		make/O/N=(100,8) NewCard
-		make/O/T/N=(100) NewCard_hklStr
-		Wave NewCard
-		SetDimLabel 1,0,d_A,NewCard
-		SetDimLabel 1,1,h,NewCard
-		SetDimLabel 1,2,k,NewCard
-		SetDimLabel 1,3,l,NewCard
-		SetDimLabel 1,4,theta,NewCard
-		SetDimLabel 1,5,F2,NewCard
-		SetDimLabel 1,6,Intensity,NewCard
-		SetDimLabel 1,7,mult,NewCard
-	//this is now target where ot store various numbers from JCPDS card.
-	variable i, continueLoop
-	i=0
-	continueLoop = 1
-	pdfNumber = XMLstrFmXpath(fileID,"/pdfcard/pdf_data/pdf_number","","")
-	//and read materials names etc.
+	string pdfDataAttribs = IN2G_XMLattibutes2KeyList("pdf_data",xmlStr)
+	string appName = StringByKey("ApplicationName", pdfDataAttribs, "=", ";", 0)		// 0 = case insensitive
+	if(!stringmatch(appName,"*PDF-4+*") && !stringmatch(appName,"*PDF-5+*"))
+		Abort "Unknown pdf data card format ("+appName+"), send example to Jan for update to code to be able to read it."
+	endif
+
+	// scratch folder where IR3W_ImportPDF4xmlFile expects to find the results
+	NewDataFolder/O root:Packages
+	KillDataFolder/Z root:Packages:Irena_JCPDSImport
+	NewDataFolder/O/S root:Packages:Irena_JCPDSImport
+
+	// header information. Restrict searches to the pdf_data block, PDF-5+ cards embed an
+	// xsl stylesheet after </graphs> which contains tags with the same names.
+	string pdfDataStr = IN2G_XMLtagContents("pdf_data",xmlStr)
+	pdfNumber = IN2G_TrimFrontBackWhiteSpace(IN2G_XMLtagContents("pdf_number",pdfDataStr))
 	string/g chemical_formula, empirical_formula, chemical_name
-	chemical_formula = XMLstrFmXpath(fileID,"/pdfcard/pdf_data/chemical_formula","","")
-	empirical_formula = XMLstrFmXpath(fileID,"/pdfcard/pdf_data/empirical_formula","","")
-	chemical_name = XMLstrFmXpath(fileID,"/pdfcard/pdf_data/chemical_name","","") 
-	DO
+	chemical_formula = IN2G_TrimFrontBackWhiteSpace(IN2G_XMLtagContents("chemical_formula",pdfDataStr))
+	empirical_formula = IN2G_TrimFrontBackWhiteSpace(IN2G_XMLtagContents("empirical_formula",pdfDataStr))
+	chemical_name = IN2G_TrimFrontBackWhiteSpace(IN2G_XMLtagContents("chemical_name",pdfDataStr))
+
+	// the peak list lives in /pdfcard/graphs/stick_series
+	string graphsStr = IN2G_XMLtagContents("graphs",xmlStr)
+	string stickStr = IN2G_XMLtagContents("stick_series",graphsStr)
+	if(strlen(stickStr)==0)
+		SetDataFolder saveDFR
+		Abort "No <stick_series> peak list found in this pdf card, send example to Jan for update to code to be able to read it."
+	endif
+
+	//this is now target where to store various numbers from JCPDS card.
+	make/O/N=(100,8) NewCard
+	make/O/T/N=(100) NewCard_hklStr
+	Wave NewCard
+	SetDimLabel 1,0,d_A,NewCard
+	SetDimLabel 1,1,h,NewCard
+	SetDimLabel 1,2,k,NewCard
+	SetDimLabel 1,3,l,NewCard
+	SetDimLabel 1,4,theta,NewCard
+	SetDimLabel 1,5,F2,NewCard
+	SetDimLabel 1,6,Intensity,NewCard
+	SetDimLabel 1,7,mult,NewCard
+
+	// each peak is one <intensity> element which itself contains an <intensity> child,
+	// so IN2G_XMLnextElement (depth aware) is needed here, not IN2G_XMLtagContents.
+	variable i=0, pos=0
+	string recStr
+	do
+		recStr = IN2G_XMLnextElement("intensity", stickStr, pos)
+		if(pos<0)
+			break
+		endif
+		if(strlen(recStr)==0)
+			continue
+		endif
+		if(i>=DimSize(NewCard,0))
+			Redimension/N=(i+100,-1) NewCard
+			Redimension/N=(i+100) NewCard_hklStr
+		endif
+		NewCard[i][%d_A] = str2num(IN2G_XMLtagContents("da",recStr))
+		NewCard[i][%Intensity] = str2num(IN2G_XMLtagContents("intensity",recStr))
+		NewCard[i][%h] = str2num(IN2G_XMLtagContents("h",recStr))
+		NewCard[i][%k] = str2num(IN2G_XMLtagContents("k",recStr))
+		NewCard[i][%l] = str2num(IN2G_XMLtagContents("l",recStr))
+		NewCard[i][%F2] = (str2num(IN2G_XMLtagContents("F",recStr)))^2		// <F/> is empty -> NaN
+		NewCard[i][%theta] = str2num(IN2G_XMLtagContents("theta",recStr))
+		NewCard[i][%mult] = NaN
 		i+=1
-		tempStr = "/pdfcard/graphs/stick_series/intensity["+num2str(i)+"]"
-		if(IR3W_ReadXMLJCPDSFindNode(W_ElementList,tempStr)>0)
-			ContentTemp = XMLstrFmXpath(fileID,tempStr+"/da","","")
-			NewCard[i-1][0] = str2num(ContentTemp)
-			ContentTemp = XMLstrFmXpath(fileID,tempStr+"/intensity","","")
-			NewCard[i-1][6] = str2num(ContentTemp)
-			ContentTemp = XMLstrFmXpath(fileID,tempStr+"/h","","")
-			NewCard[i-1][1] = str2num(ContentTemp)
-			ContentTemp = XMLstrFmXpath(fileID,tempStr+"/k","","")
-			NewCard[i-1][2] = str2num(ContentTemp)
-			ContentTemp = XMLstrFmXpath(fileID,tempStr+"/l","","")
-			NewCard[i-1][3] = str2num(ContentTemp)
-			ContentTemp = XMLstrFmXpath(fileID,tempStr+"/F","","")
-			NewCard[i-1][5] = (str2num(ContentTemp))^2
-			ContentTemp = XMLstrFmXpath(fileID,tempStr+"/theta","","")
-			NewCard[i-1][4] = str2num(ContentTemp)
-			//ContentTemp = XMLstrFmXpath(fileID,tempStr+"/t","","")
-			NewCard[i-1][7] = NaN
-		else
-			continueLoop=0
-		endif	
-	
-	while(i<100 && continueLoop)
-	xmlclosefile(fileID,0)	
-	Redimension/N=(i-1,-1) NewCard, NewCard_hklStr
-	NewCard_hklStr = "("+num2str(NewCard[p][1])+num2str(NewCard[p][2])+num2str(NewCard[p][3])+")"
-#else
-	DoAlert 0, "Needed XMLUtils.xop or XMLutils-64.xop is not present"
-#endif
+	while(1)
+
+	IN2G_XMLcloseFile()
+
+	if(i<1)
+		SetDataFolder saveDFR
+		Abort "No peaks could be read from this pdf card, send example to Jan for update to code to be able to read it."
+	endif
+	Redimension/N=(i,-1) NewCard
+	Redimension/N=(i) NewCard_hklStr
+	NewCard_hklStr = "("+num2str(NewCard[p][%h])+num2str(NewCard[p][%k])+num2str(NewCard[p][%l])+")"
+
 	SetDataFolder saveDFR		// and restore
 	return pdfNumber
-end
-//**************************************************************************************
-//**************************************************************************************
-
-static Function IR3W_ReadXMLJCPDSFindNode(ElemListWave,NodeStr)
-	wave/T ElemListWave
-	string NodeStr
-	variable ReturnMe = -1
-	variable i
-	For(i=0;i<dimsize(ElemListWave,0);i+=1)
-		if(stringmatch(ElemListWave[i][0], NodeStr))
-			return i
-		endif
-	endfor	
-	return ReturnMe
 end
 //**************************************************************************************
 //**************************************************************************************

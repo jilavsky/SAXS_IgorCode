@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access
-#pragma version=1.01
+#pragma version=1.04
 #pragma IgorVersion = 9.04
 
 //*************************************************************************\
@@ -8,6 +8,23 @@
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+// 1.04 Data saving fixes and destination folder rework :
+//		- removed KillDataFolder/Z root:ImportedData at the end of IR3I_ImportSelectedData,
+//		  which deleted the data that had just been imported.
+//		- IR3I_SaveTempWaves : added the missing WAVE declarations (the function creates
+//		  none of the Temp waves itself, so Igor had no implicit references) and replaced
+//		  the non-existent TempdQ with TempQError. Q-resolution data was silently dropped
+//		  and a stray TempQError was left behind in every destination folder.
+//		- IR3I_ProcessImpWaves : the "kill TempQError" test was inside the column loop, so
+//		  any column after the Q-error column deleted the Q-error data. Moved outside.
+//		- IR3I_ProcessImpWaves : rebinning no longer fabricates error / dQ waves by
+//		  duplicating the intensity into them; it uses free scratch waves and Wxsdev.
+//		- IR3I_RecordResults : logs the real destination folder and honours
+//		  IncludeExtensionInName, so the logbook matches the waves actually created.
+//		- Destination folder is now driven by the SAXS / WAXS radio buttons :
+//		  root:ImportedData:SAXS: or root:ImportedData:WAXS:. The Indra2 preset is USAXS
+//		  only and keeps root:USAXS:ImportedData:.
+// 1.03 Fix line 712 which seemed to have deleted freshly imported data. I think the data are nto stored where expected.
 // 1.02 AI checked
 // 1.01  Combined with IR1_ImportData and remove that package from dependencies. 
 // 1.00  Initial combined import panel.
@@ -124,11 +141,11 @@ Function IR3I_ImportDataPanel()
 
 	CheckBox SAXSData, pos={250, 160}, size={16, 14}, proc=IR3I_CheckProc, title="SAXS data?", mode=1
 	CheckBox SAXSData, variable=root:Packages:ImportData:SAXSData
-	CheckBox SAXSData, help={"Select for SAXS data (Q-space). Default folder: root:SAS"}
+	CheckBox SAXSData, help={"Select for SAXS data (Q-space). Default folder: root:ImportedData:SAXS"}
 
 	CheckBox WAXSData, pos={250, 178}, size={16, 14}, proc=IR3I_CheckProc, title="WAXS data?", mode=1
 	CheckBox WAXSData, variable=root:Packages:ImportData:WAXSData
-	CheckBox WAXSData, help={"Select for WAXS data (real space / 2-theta). Default folder: root:WAXS"}
+	CheckBox WAXSData, help={"Select for WAXS data (real space / 2-theta). Default folder: root:ImportedData:WAXS"}
 
 	// WAXS data sub-type – only relevant for ASCII WAXS format
 	PopupMenu ImportDataType, pos={230, 198}, size={185, 21}, proc=IR3I_PopMenuProc, title="X-axis:"
@@ -709,7 +726,8 @@ Function IR3I_ImportSelectedData()
 		// Clean up the temporary import folder used by the Nexus reader.
 		KillDataFolder/Z root:Packages:NexusImportTMP
 	endif
-	KillDataFolder/Z root:ImportedData
+	// NOTE: do not delete root:ImportedData here - that is the destination folder
+	// for the data we have just imported, not a scratch folder.
 	print "Imported " + num2str(icount) + " file(s) using format: " + DataFormatType
 	setDataFolder OldDf
 
@@ -723,11 +741,70 @@ End
 //************************************************************************************************************
 
 Function IR3I_CheckForProperNewFolder()
- 
+
 	SVAR NewDataFolderName = root:packages:ImportData:NewDataFolderName
 	if(strlen(NewDataFolderName) > 0 && cmpstr(":", NewDataFolderName[strlen(NewDataFolderName) - 1]) != 0)
 		NewDataFolderName = NewDataFolderName + ":"
 	endif
+End
+
+//************************************************************************************************************
+//************************************************************************************************************
+// IR3I_GetImportBaseFolder
+// Returns the base destination folder for imported data, driven by the SAXS / WAXS
+// radio buttons :  root:ImportedData:SAXS:  or  root:ImportedData:WAXS:
+// USAXS (Indra2 naming) data are handled separately and keep root:USAXS:ImportedData:
+//************************************************************************************************************
+//************************************************************************************************************
+Function/S IR3I_GetImportBaseFolder()
+
+	NVAR/Z WAXSData = root:Packages:ImportData:WAXSData
+	if(NVAR_Exists(WAXSData) && WAXSData)
+		return "root:ImportedData:WAXS:"
+	endif
+	return "root:ImportedData:SAXS:"
+End
+
+//************************************************************************************************************
+//************************************************************************************************************
+// IR3I_SetImportBaseFolder
+// Rewrites NewDataFolderName so that it starts with the SAXS / WAXS base folder.
+// Any sub-folders the user typed and the <fileName> placeholder are preserved; only the
+// leading base is replaced. Historical bases (root:SAS:ImportedData:, root:SAS:, root:WAXS:,
+// bare root:) are recognised so switching the radio buttons never stacks paths.
+// Does nothing when the Indra2 preset is active - that data is USAXS and keeps its own tree.
+//************************************************************************************************************
+//************************************************************************************************************
+Function IR3I_SetImportBaseFolder()
+
+	SVAR NewDataFolderName   = root:Packages:ImportData:NewDataFolderName
+	NVAR UseIndra2Names      = root:Packages:ImportData:UseIndra2Names
+	NVAR UseFileNameAsFolder = root:Packages:ImportData:UseFileNameAsFolder
+
+	if(UseIndra2Names)
+		return 0		// USAXS / Indra2 data keep root:USAXS:ImportedData:
+	endif
+
+	// Most specific first, bare "root:" last.
+	string knownBases  = "root:ImportedData:SAXS:;root:ImportedData:WAXS:;root:SAS:ImportedData:;"
+	knownBases        += "root:USAXS:ImportedData:;root:ImportedData:;root:SAS:;root:WAXS:;root:;"
+
+	string remainder = NewDataFolderName
+	variable i
+	for(i = 0; i < ItemsInList(knownBases); i += 1)
+		string oneBase = StringFromList(i, knownBases)
+		if(strlen(remainder) >= strlen(oneBase) && cmpstr(remainder[0, strlen(oneBase) - 1], oneBase, 0) == 0)
+			remainder = remainder[strlen(oneBase), Inf]
+			break
+		endif
+	endfor
+
+	NewDataFolderName = IR3I_GetImportBaseFolder() + remainder
+	if(UseFileNameAsFolder && !stringmatch(NewDataFolderName, "*<fileName>*"))
+		NewDataFolderName += "<fileName>:"
+	endif
+	IR3I_CheckForProperNewFolder()
+	return 0
 End
 //************************************************************************************************************
 //************************************************************************************************************
@@ -749,13 +826,17 @@ Function IR3I_RecordResults(selectedFile)
 	SVAR RemoveStringFromName = root:Packages:ImportData:RemoveStringFromName
 	NVAR TrunkateStart        = root:Packages:ImportData:TrunkateStart
 	NVAR TrunkateEnd          = root:Packages:ImportData:TrunkateEnd
+	NVAR IncludeExtensionInName = root:packages:ImportData:IncludeExtensionInName
 
-	// inclExt=0: log always uses base name without extension.
-	string NewFldrNm  = IR3I_ResolveWaveName(NewDataFolderName,    selectedFile, 0, TrunkateStart, TrunkateEnd, RemoveStringFromName)
-	string NewIntName = IR3I_ResolveWaveName(NewIntensityWaveName, selectedFile, 0, TrunkateStart, TrunkateEnd, RemoveStringFromName)
-	string NewQName   = IR3I_ResolveWaveName(NewQWaveName,         selectedFile, 0, TrunkateStart, TrunkateEnd, RemoveStringFromName)
-	string NewEName   = IR3I_ResolveWaveName(NewErrorWaveName,     selectedFile, 0, TrunkateStart, TrunkateEnd, RemoveStringFromName)
-	string NewQEName  = IR3I_ResolveWaveName(NewQErrorWaveName,    selectedFile, 0, TrunkateStart, TrunkateEnd, RemoveStringFromName)
+	// Must use the same inclExt flag as the code that actually created the waves,
+	// otherwise the logbook records names that do not exist in the experiment.
+	string NewIntName = IR3I_ResolveWaveName(NewIntensityWaveName, selectedFile, IncludeExtensionInName, TrunkateStart, TrunkateEnd, RemoveStringFromName)
+	string NewQName   = IR3I_ResolveWaveName(NewQWaveName,         selectedFile, IncludeExtensionInName, TrunkateStart, TrunkateEnd, RemoveStringFromName)
+	string NewEName   = IR3I_ResolveWaveName(NewErrorWaveName,     selectedFile, IncludeExtensionInName, TrunkateStart, TrunkateEnd, RemoveStringFromName)
+	string NewQEName  = IR3I_ResolveWaveName(NewQErrorWaveName,    selectedFile, IncludeExtensionInName, TrunkateStart, TrunkateEnd, RemoveStringFromName)
+	// The folder is the real one we just imported into, taken from the data folder
+	// that IR3I_CreateImportDataFolder left us in - not a re-derived guess.
+	string NewFldrNm  = GetDataFolder(1, oldDf)
 
 	NVAR DataContainErrors   = root:Packages:ImportData:DataContainErrors
 	NVAR CreateSQRTErrors    = root:Packages:ImportData:CreateSQRTErrors
@@ -815,7 +896,7 @@ Function IR3I_RecordResults(selectedFile)
 
 	//and print in history, so user has some feedback...
 	print "Imported data from :" + DataPathName + selectedFile + "\r"
-	print "\tData stored in :\t\t\t" + IR3I_RemoveBadCharacters(NewFldrNm)
+	print "\tData stored in :\t\t\t" + NewFldrNm
 	if(DataContainErrors || CreateSQRTErrors || CreatePercentErrors)
 		print "\tNew Wave names are :\t" + IR3I_RemoveBadCharacters(NewIntName) + "\t" + IR3I_RemoveBadCharacters(NewQName) + "\t" + IR3I_RemoveBadCharacters(NewEName) + "\r"
 	else //no errors...
@@ -907,9 +988,6 @@ Function IR3I_ProcessImpWaves(selectedFile)
 			note TempQError, "Data imported from folder=" + DataPathName + ";Data file name=" + selectedFile + ";Data header (1st line)=" + HeaderFromData + ";"
 			numOfQErrs += 1
 		endif
-		if(!testQErrStr && WaveExists(TempQError))
-			killwaves/Z TempQError
-		endif
 		if(!WaveExists(CurrentWave))
 			GenError = 0
 			string Messg = "Error, the column of data selected did not exist in the data file. The missing column is : "
@@ -931,6 +1009,12 @@ Function IR3I_ProcessImpWaves(selectedFile)
 			endif
 		endif
 	endfor
+	// Discard a stale Q-error wave only when NO column was assigned to Q error.
+	// This test must stay outside the loop - inside it, any column after the
+	// Q-error column would delete the Q-error data that was just read.
+	if(numOfQErrs == 0)
+		killwaves/Z TempQError
+	endif
 	if(numOfInts != 1 || numOfQs != 1 || numOfErrs > 1 || numOfQErrs > 1)
 		Abort "Import waves problem, check values in checkboxes which indicate which column contains Intensity, Q and error"
 	endif
@@ -1064,18 +1148,33 @@ Function IR3I_ProcessImpWaves(selectedFile)
 	NVAR ReduceNumPnts        = root:packages:ImportData:ReduceNumPnts
 	NVAR TargetNumberOfPoints = root:packages:ImportData:TargetNumberOfPoints
 	if(ReduceNumPnts)
+		if(numpnts(TempQvector) < 2)
+			abort "Fewer than two data points were imported, rebinning is not possible. Import aborted."
+		endif
 		variable tempMinStep = TempQvector[1] - TempQvector[0]
-		if(WaveExists(TempError) && WaveExists(TempQError)) //have 4 waves
-			IN2G_RebinLogData(TempQvector, TempIntensity, TargetNumberOfPoints, tempMinStep, Wsdev = TempError, Wxsdev = TempQError)
-		elseif(WaveExists(TempError) && !WaveExists(TempQError)) //have 3 waves
-			Duplicate/O TempError, TempQError
-			IN2G_RebinLogData(TempQvector, TempIntensity, TargetNumberOfPoints, tempMinStep, Wsdev = TempError, Wxwidth = TempQError)
-		elseif(!WaveExists(TempError) && WaveExists(TempQError)) //have 3 waves
-			Duplicate/O TempQError, TempError
-			IN2G_RebinLogData(TempQvector, TempIntensity, TargetNumberOfPoints, tempMinStep, Wsdev = TempError, Wxwidth = TempQError)
-		else //only 2 waves
-			Duplicate/O TempIntensity, TempError, TempQError
-			IN2G_RebinLogData(TempQvector, TempIntensity, TargetNumberOfPoints, tempMinStep, Wsdev = TempError, Wxwidth = TempQError)
+		// Rebin through free scratch waves. The old code duplicated the intensity
+		// (or the error) into whichever of TempError / TempQError was missing, which
+		// left a fabricated uncertainty or resolution wave behind and got saved as if
+		// it were real data. Waves that did not exist before rebinning must not exist
+		// after it either.
+		Duplicate/FREE TempIntensity, RebinSdevW
+		Duplicate/FREE TempQvector,   RebinXSdevW
+		RebinSdevW  = 1
+		RebinXSdevW = 0
+		if(WaveExists(TempError))
+			RebinSdevW = TempError[p]
+		endif
+		if(WaveExists(TempQError))
+			RebinXSdevW = TempQError[p]
+		endif
+		IN2G_RebinLogData(TempQvector, TempIntensity, TargetNumberOfPoints, tempMinStep, Wsdev = RebinSdevW, Wxsdev = RebinXSdevW)
+		if(WaveExists(TempError))
+			Redimension/N=(numpnts(RebinSdevW))/D TempError
+			TempError = RebinSdevW[p]
+		endif
+		if(WaveExists(TempQError))
+			Redimension/N=(numpnts(RebinXSdevW))/D TempQError
+			TempQError = RebinXSdevW[p]
 		endif
 	endif
 	//check on TempError if it contains meaningful number and stop user if not...
@@ -1279,7 +1378,20 @@ Function IR3I_SaveTempWaves(newQName, newIntName, newEName, newQEName)
 	string newQName, newIntName, newEName, newQEName
 
 	NVAR   AutomaticallyOverwrite = root:Packages:ImportData:AutomaticallyOverwrite
-	WAVE/Z TempError, TempQError
+
+	// Source waves. These live in the current data folder, which the caller has
+	// already set to the destination folder via IR3I_CreateImportDataFolder.
+	// They must be declared explicitly - this function never creates them itself,
+	// so Igor has no implicit wave reference for them.
+	WAVE/Z TempIntensity
+	WAVE/Z TempQvector
+	WAVE/Z TempError
+	WAVE/Z TempQError
+
+	if(!WaveExists(TempIntensity) || !WaveExists(TempQvector))
+		abort "Internal error : the intensity or Q wave is missing before saving. Nothing was imported for this file."
+	endif
+
 	WAVE/Z testI = $newIntName
 	WAVE/Z testQ = $newQName
 	WAVE/Z testE = $newEName
@@ -1296,15 +1408,15 @@ Function IR3I_SaveTempWaves(newQName, newIntName, newEName, newQEName)
 		endif
 	endif
 
-	Duplicate/O testQ,   $newQName
-	Duplicate/O testI, $newIntName
-	if(WaveExists(testE))
-		Duplicate/O testE, $newEName
+	Duplicate/O TempQvector,   $newQName
+	Duplicate/O TempIntensity, $newIntName
+	if(WaveExists(TempError) && strlen(newEName) > 0)
+		Duplicate/O TempError, $newEName
 	endif
-	if(WaveExists(testQE))
-		Duplicate/O testQE, $newQEName
+	if(WaveExists(TempQError) && strlen(newQEName) > 0)
+		Duplicate/O TempQError, $newQEName
 	endif
-	KillWaves/Z testI, testQ, testE, testQE
+	KillWaves/Z TempIntensity, TempQvector, TempError, TempQError
 	IR3I_KillAutoWaves()
 	return 0
 End
@@ -1757,16 +1869,19 @@ Function IR3I_CheckProc(ctrlName, checked) : CheckBoxControl
 	NVAR SAXSData = root:Packages:ImportData:SAXSData
 	NVAR WAXSData = root:Packages:ImportData:WAXSData
 
-	// SAXS / WAXS radio selection
+	// SAXS / WAXS radio selection. This also decides the destination folder :
+	// root:ImportedData:SAXS: or root:ImportedData:WAXS:
 	if(cmpstr(ctrlName, "SAXSData") == 0)
 		SAXSData = checked
 		WAXSData = !checked
+		IR3I_SetImportBaseFolder()
 		IR3I_UpdateFormatUI()
 		return 0
 	endif
 	if(cmpstr(ctrlName, "WAXSData") == 0)
 		WAXSData = checked
 		SAXSData = !checked
+		IR3I_SetImportBaseFolder()
 		IR3I_UpdateFormatUI()
 		return 0
 	endif
@@ -1869,10 +1984,11 @@ Function IR3I_CheckProc(ctrlName, checked) : CheckBoxControl
 			if(stringmatch(NewDataFolderName, "*<fileName>*"))
 				NewDataFolderName = RemoveFromList("<fileName>", NewDataFolderName, ":")
 			endif
+			IR3I_SetImportBaseFolder()
 		else
 			if(!stringmatch(NewDataFolderName, "*<fileName>*"))
 				if(strlen(NewDataFolderName) == 0)
-					NewDataFolderName = "root:"
+					NewDataFolderName = IR3I_GetImportBaseFolder()
 				endif
 				NewDataFolderName += "<fileName>:"
 			endif
@@ -1938,7 +2054,7 @@ Function IR3I_CheckProc(ctrlName, checked) : CheckBoxControl
 			//UseFileNameAsFolder = 1
 			UseQISNames       = 0
 			UseIndra2Names    = 0
-			NewDataFolderName = "root:SAS:ImportedData:"
+			NewDataFolderName = IR3I_GetImportBaseFolder()
 			if(UseFileNameAsFolder)
 				NewDataFolderName += "<fileName>:"
 			endif
@@ -1958,7 +2074,7 @@ Function IR3I_CheckProc(ctrlName, checked) : CheckBoxControl
 			//UseFileNameAsFolder = 1
 			UseQRSNames       = 0
 			UseIndra2Names    = 0
-			NewDataFolderName = "root:"
+			NewDataFolderName = IR3I_GetImportBaseFolder()
 			//if (UseFileNameAsFolder)
 			NewDataFolderName += "<fileName>:"
 			//endif
@@ -2266,11 +2382,18 @@ Function IR3I_ImportOtherSetNames()
 	SVAR NewErrorWaveName     = root:packages:ImportData:NewErrorWaveName
 	SVAR NewQErrorWaveName    = root:packages:ImportData:NewQErrorWaveName
 	NVAR UseFileNameAsFolder  = root:Packages:ImportData:UseFileNameAsFolder
+	NVAR UseIndra2Names       = root:Packages:ImportData:UseIndra2Names
 	SVAR DataTypeToImport     = root:Packages:ImportData:DataTypeToImport
 
-	if(!stringmatch(NewDataFolderName[0, 3], "root"))
-		NewDataFolderName = "root:ImportedData:"
+	if(UseIndra2Names)
+		return 0		// the Indra2 / USAXS preset owns both its folder and its wave names
 	endif
+
+	// Destination is driven by the SAXS / WAXS radio buttons.
+	if(!stringmatch(NewDataFolderName[0, 3], "root"))
+		NewDataFolderName = IR3I_GetImportBaseFolder()
+	endif
+	IR3I_SetImportBaseFolder()
 	if(UseFileNameAsFolder && (!GrepString(NewDataFolderName, "<fileName>")))
 		NewDataFolderName += "<fileName>:"
 	endif
@@ -2388,6 +2511,10 @@ Function IR3I_ProcessImpWaves2(selectedFile)
 			endif
 		endif
 	endfor
+	// Discard a stale Q-error wave only when NO column was assigned to Q error.
+	if(numOfQErrs == 0)
+		killwaves/Z TempQError
+	endif
 	if(numOfInts != 1 || numOfQs != 1 || numOfErrs > 1 || numOfQErrs > 1)
 		Abort "Import waves problem, check values in checkboxes which indicate which column contains Intensity, Q and error"
 	endif
