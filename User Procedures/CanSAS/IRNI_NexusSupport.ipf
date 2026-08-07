@@ -2137,7 +2137,7 @@ static Function NEXUS_WriteNikaNexus2DRawFile(FileName)
 	//NEXUS_HdfSaveData("title","Nika NXsas example","/entry/", fileID
 	//	eznx.write_dataset(nxdetector, 'frame_files', '\n'.join(names))
 	//NEXUS_HdfSaveData("title","Nika NXsas example","/entry/", fileID
-	//	eznx.write_dataset(nxinstrument, 'name', 'APS 9-ID-C USAXS pinSAXS')
+	//	eznx.write_dataset(nxinstrument, 'name', 'APS 12-ID-C USAXS SAXS')
 	NEXUS_HdfSaveData("name","Nika software package","/entry/instrument/", fileID)
 	//	eznx.write_dataset(nxsource, 'type', 'Synchrotron X-ray Source')
 	//NEXUS_HdfSaveData("title","Nika NXsas example","/entry/", fileID

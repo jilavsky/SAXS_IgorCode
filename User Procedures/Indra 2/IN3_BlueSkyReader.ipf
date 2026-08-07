@@ -936,7 +936,7 @@ Function IR3BS_GetJSONScanData()
 		//               "start": {
 		//                  "EPICS_CA_MAX_ARRAY_BYTES": "1280000",
 		//                  "EPICS_HOST_ARCH": "linux-x86_64",
-		//                  "beamline_id": "APS 9-ID-C USAXS",
+		//                  "beamline_id": "APS 12-ID-C USAXS",
 		//                  "datetime": "2023-03-09 00:04:36.101637",
 		//                  "detectors": [
 		//                     "PD_USAXS"
