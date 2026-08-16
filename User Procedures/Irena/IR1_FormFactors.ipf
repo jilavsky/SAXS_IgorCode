@@ -2469,7 +2469,7 @@ Function IR1T_MakeFFParamPanel(TitleStr, FFStr, P1Str, FitP1Str, LowP1Str, HighP
 			//						CoreRho=ParticlePar2		// rho for core material
 			//						ShellRho=ParticlePar3			// rho for shell material
 			//						SolventRho=ParticlePar4			// rho for solvent material
-			SetVariable P1Value, title="CoreShellThickness [A]= ", help={"Thickness of the core shell layer in Angstroems"}
+			SetVariable P1Value, title="Shell Thickness [A]= ", help={"Thickness of the core shell layer in Angstroems"}
 			SetVariable P2Value, title="Core Rho = ", help={"Scattering length density of core"}
 			SetVariable P3Value, title="Shell Rho = ", help={"Scattering length density of shell "}
 			SetVariable P4Value, title="Solvent Rho = ", help={"Solvent Scattering length density"}
