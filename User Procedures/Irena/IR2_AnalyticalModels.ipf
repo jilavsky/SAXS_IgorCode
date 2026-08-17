@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3	// Use modern global access method.
-#pragma version=4.19
+#pragma version=4.20
 Constant IR2HversionNumber = 4.13
 
 
@@ -2468,13 +2468,19 @@ static Function IR2H_ConstructTheFittingCommand()
 //			Abort "Fitting error, check starting parameters and fitting limits" 
 //		endif
 		//this now records the errors for fitted parameters into the appropriate variables
-		Wave W_sigma=root:Packages:Gels_Modeling:W_sigma
+		Wave/Z W_sigma=root:Packages:Gels_Modeling:W_sigma		//genetic optimization does not create W_sigma
 	
-		For(i=0;i<(numpnts(CoefNames));i+=1)
-			OneErrorName="root:Packages:Gels_Modeling:"+CoefNames[i]+"Error"
-			NVAR Error=$(OneErrorName)
-			Error=W_sigma[i]
-		endfor
+		if(WaveExists(W_sigma))
+			For(i=0;i<(numpnts(CoefNames));i+=1)
+				if(i<numpnts(W_sigma))
+					OneErrorName="root:Packages:Gels_Modeling:"+CoefNames[i]+"Error"
+					NVAR/Z Error=$(OneErrorName)
+					if(NVAR_Exists(Error))
+						Error=W_sigma[i]
+					endif
+				endif
+			endfor
+		endif
 	else		//least squares...
 		Variable V_FitError=0			//This should prevent errors from being generated
 		//and now the fit...
@@ -2502,13 +2508,19 @@ static Function IR2H_ConstructTheFittingCommand()
 			Abort "Fitting error, check starting parameters and fitting limits" 
 		endif
 		//this now records the errors for fitted parameters into the appropriate variables
-		Wave W_sigma=root:Packages:Gels_Modeling:W_sigma
+		Wave/Z W_sigma=root:Packages:Gels_Modeling:W_sigma		//genetic optimization does not create W_sigma
 	
-		For(i=0;i<(numpnts(CoefNames));i+=1)
-			OneErrorName="root:Packages:Gels_Modeling:"+CoefNames[i]+"Error"
-			NVAR Error=$(OneErrorName)
-			Error=W_sigma[i]
-		endfor
+		if(WaveExists(W_sigma))
+			For(i=0;i<(numpnts(CoefNames));i+=1)
+				if(i<numpnts(W_sigma))
+					OneErrorName="root:Packages:Gels_Modeling:"+CoefNames[i]+"Error"
+					NVAR/Z Error=$(OneErrorName)
+					if(NVAR_Exists(Error))
+						Error=W_sigma[i]
+					endif
+				endif
+			endfor
+		endif
 	endif
 	
 //	variable/g AchievedChisq=V_chisq
@@ -2527,6 +2539,19 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 static Function IR2H_ResetErrors()
+	//Every error global must be reset, otherwise a value from an earlier fit is still displayed
+	//next to a parameter which the current fit did not fit at all.
+	//TSCorrLengthError and TSRepDistError are for derived quantities which are never fitted,
+	//so they stay 0 - they would need error propagation from TSAvalue/TSC1Value/TSC2Value.
+	string ListOfErrors = "SASBackgroundError;LowQRgError;LowQRgPrefactorError;"
+	ListOfErrors += "TSPrefactorError;TSAvalueError;TSC1ValueError;TSC2ValueError;TSCorrLengthError;TSRepDistError;"
+	variable ii
+	for(ii=0;ii<itemsInList(ListOfErrors);ii+=1)
+		NVAR/Z OneError = $("root:Packages:Gels_Modeling:"+StringFromList(ii,ListOfErrors))
+		if(NVAR_Exists(OneError))
+			OneError = 0
+		endif
+	endfor
 	NVAR DBEtaError=root:Packages:Gels_Modeling:DBEtaError
 	NVAR DBcorrLError=root:Packages:Gels_Modeling:DBcorrLError
 	NVAR LowQslopeError=root:Packages:Gels_Modeling:LowQslopeError

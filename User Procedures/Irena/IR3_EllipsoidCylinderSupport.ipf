@@ -1,7 +1,7 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use modern global access method and strict wave access
 #pragma DefaultTab={3, 20, 4} // Set default tab width in Igor Pro 9 and later
-#pragma version=0.3
+#pragma version=0.4
 
 //Constant recalculateGM=0 					//this method does not seem to work properly.
 Constant UseNewCSProfileCalculation = 1 //using new method =1 is about 2.2x faster than using 0.
@@ -654,7 +654,7 @@ Function IR3F_SaveResultsToNotebook()
 			SLDErr          = CylPar[3][4]
 			FittingResults  = "Radius \t\t= \t" + num2str(Radius) + " +/- " + num2str(RadiusErr) + "\r"
 			FittingResults += "SLD = \t" + num2str(SLD) + " A" + " +/- " + num2str(SLDErr) + "\r"
-			FittingResults += "Length = \t" + num2str(SLD) + " A" + "\r"
+			FittingResults += "Length = \t" + num2str(Length) + " A" + " +/- " + num2str(LengthErr) + "\r"
 			break
 		case "Core Shell Cylinder": // execute if case matches expression
 			//Core Shell Cylinder Model
@@ -673,7 +673,7 @@ Function IR3F_SaveResultsToNotebook()
 			FittingResults  = "Radius \t\t= \t" + num2str(Radius) + " +/- " + num2str(RadiusErr) + "\r"
 			FittingResults += "Shell Thick = " + num2str(ShellTh) + "A" + " +/- " + num2str(ShellThErr) + "\r"
 			FittingResults += "SLD = \t" + num2str(SLD) + " A" + " +/- " + num2str(SLDErr) + "\r"
-			FittingResults += "Length = \t" + num2str(SLD) + " A" + "\r"
+			FittingResults += "Length = \t" + num2str(Length) + " A" + " +/- " + num2str(LengthErr) + "\r"
 			break
 		case "Ellip. Cylinder": // execute if case matches expression
 			//Ellip. Cylinder Model
@@ -693,7 +693,7 @@ Function IR3F_SaveResultsToNotebook()
 			//FittingResults += "Shell Thick = "+num2str(ShellTh)+"A"+" +/- "+num2str(ShellThErr)+"\r"
 			FittingResults += "AspectRatio = " + num2str(ShellTh) + " +/- " + num2str(AspectRatioErr) + "\r"
 			FittingResults += "SLD = \t" + num2str(SLD) + " A" + " +/- " + num2str(SLDErr)
-			FittingResults += "Length = \t" + num2str(SLD) + " A"
+			FittingResults += "Length = \t" + num2str(Length) + " A" + " +/- " + num2str(LengthErr)
 			break
 		case "Core Shell Ellip. Cylinder": // execute if case matches expression
 			//Core Shell Ellip. Cylinder Model
@@ -715,7 +715,7 @@ Function IR3F_SaveResultsToNotebook()
 			FittingResults += "Shell Thick = " + num2str(ShellTh) + "A" + " +/- " + num2str(ShellThErr) + "\r"
 			FittingResults += "AspectRatio = " + num2str(ShellTh) + " +/- " + num2str(AspectRatioErr) + "\r"
 			FittingResults += "SLD = \t" + num2str(SLD) + " A" + " +/- " + num2str(SLDErr) + "\r"
-			FittingResults += "Length = \t" + num2str(SLD) + " A" + "\r"
+			FittingResults += "Length = \t" + num2str(Length) + " A" + " +/- " + num2str(LengthErr) + "\r"
 			break
 		case "Profile CS Ellip. Cylinder": // execute if case matches expression
 			//Profile CS Ellip. Cylinder Model
@@ -743,7 +743,7 @@ Function IR3F_SaveResultsToNotebook()
 			FittingResults += "Shell 1 and 3 SLD = " + num2str(Shell1SLD) + " +/- " + num2str(Shell1SLDErr) + "\r"
 			FittingResults += "Shell 2 Thickness = " + num2str(Shell2Th) + "A" + " +/- " + num2str(Shell2ThErr) + "\r"
 			FittingResults += "Shell 2 SLD = " + num2str(Shell2SLD) + " +/- " + num2str(Shell2SLDErr) + "\r"
-			FittingResults += "Length = \t" + num2str(SLD) + " A" + "\r"
+			FittingResults += "Length = \t" + num2str(Length) + " A" + " +/- " + num2str(LengthErr) + "\r"
 			break
 
 	endswitch

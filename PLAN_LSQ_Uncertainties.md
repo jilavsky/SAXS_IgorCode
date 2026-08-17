@@ -4,11 +4,47 @@ Branch: `add-least-square-errors`
 
 Status:
 
-- **Step 1 (global switch) — IMPLEMENTED** in `IN2_GeneralProcedures.ipf`
-- **Step 2-5 (Modeling) — IMPLEMENTED** in `IR2_ModelingMain.ipf` / `IR2_ModelingSupport.ipf`, panel version 1.25 -> 1.26, file version 1.36 -> 1.37. Not yet tested in Igor.
-- **Section 6 (other tools) — NOT STARTED**
+- **Step 1 (global switch) — DONE, TESTED.** `IN2_GeneralProcedures.ipf` v2.35. Config checkboxes save
+  on click via `IN2G_ConfigCheckProc` — `IN2G_ConfigMain` force-reads the preference file on every open,
+  so a `noproc` checkbox silently reverted unless the user closed with OK. Also applied to
+  `Igor8UseLongNames` and `UseUserNameString`; `DoNotRestorePanelSizes` deliberately left alone.
+- **Step 2-5 (Modeling) — DONE, TESTED.** `IR2_ModelingMain.ipf` v1.37 / panel 1.26,
+  `IR2_ModelingSupport.ipf` v1.57. Also fixed a long-standing tag-placement bug: the tag point number was
+  looked up in `Q_setN`, but tags attach to `IntensityModel_setN`, which is plotted against the trimmed
+  `Qmodel_setN` — so every tag was displaced toward low q by the number of points cut off below Qmin.
+- **Section 6 (other tools) — DONE, NOT YET TESTED.**
 
-Decisions taken as implemented (see §8): `<Base>Error_popN` naming; raw `W_sigma`
+### Correction to the survey table above
+
+The table in §1 was wrong about three tools. **Unified fit, Fractals and Guinier-Porod already display
+uncertainties in their graph tags** (Fractals `IR1_Fractals.ipf` 913/918/923/972/977/982/987/996;
+Unified fit `IR1_UnifiedFitPanel.ipf` 3719-3770, both guarded by `if(<X>Error > 0)`). Per "if it exists,
+we leave it", their behaviour is untouched — they are NOT gated by `IN2G_UseLSQFitErrors()`.
+
+What the rollout pass actually changed:
+
+| Tool | File (new version) | Change |
+|---|---|---|
+| **Simple fits** | `IR3_SimpleFits.ipf` v1.19, panel 1.17 | **Feature added.** `W_sigma` was referenced but never read — dead code. Added 11 `<Name>Error` globals, `IR3J_SetErrorsToZero()`, `IR3J_FmtValErr()`, population from `W_sigma` in all 5 fit routines (Guinier/Rod/Sheet, Porod, Power law, Sphere, Spheroid), and gated `+/-` in graph tags and results notebook. Guinier Sheet thickness carries `sqrt(12)*RgError`. |
+| **System specific** | `IR3_SystemSpecificModels.ipf` v1.04 | `SASBackgroundError` was never zeroed — a stale value survived a fit that no longer fitted the background. `W_sigma` recording loop guarded with `WaveExists`. |
+| **Ellipsoid/Cylinder** | `IR3_EllipsoidCylinderMain.ipf` v0.4 | Same two fixes. The guard matters here because this tool can fit with `gencurvefit`, which does not produce `W_sigma`. |
+| **Ellipsoid/Cylinder** | `IR3_EllipsoidCylinderSupport.ipf` v0.4 | Notebook printed `Length = num2str(SLD)` in all 5 model branches — the wrong quantity — while `LengthErr` was computed and discarded. Now prints `Length +/- LengthErr`. |
+| **Reflectivity** | `IR2_Reflectivity.ipf` v1.25 | `ScalingFactorError` was missing from `IR2R_SetErrorsToZero()`. `SolventPenetrationLayer*Error<n>` globals do not exist, so the reset loop assigned to null NVARs 8x per call — now `NVAR_Exists`-guarded. |
+| **Analytical models** | `IR2_AnalyticalModels.ipf` v4.20 | `IR2H_ResetErrors()` zeroed only 7 of 16 error globals; the 9 missing ones (including `LowQRgError`/`LowQRgPrefactorError`, which ARE displayed) kept stale values across fits. Both `W_sigma` blocks guarded — the genetic-optimization branch read it with its `V_FitError` check commented out. |
+
+### Still open
+
+- **Simple fits result waves and result tables** (`IR3J_SaveResultsToWaves`, the 8 `*ResultsTableFnct`
+  functions) have no Error columns. That needs new columns in each make/redimension list plus matching
+  table columns — deliberately left out of this pass.
+- `TSCorrLengthError`/`TSRepDistError` (Analytical models) and `TSPar[4..5][4]` (System specific) are
+  uncertainties of *derived* quantities that are never fitted. They are now reliably 0 rather than
+  stale, but a real number needs error propagation.
+- Unified fit notebook prints `+/- 0` for fixed parameters (no `>0` guard) — left as-is.
+- Reflectivity still surfaces uncertainties only via a history `print`; it has no graph tag and no
+  notebook writer at all.
+
+Decisions takenDecisions taken as implemented (see §8): `<Base>Error_popN` naming; raw `W_sigma`
 with reduced Chi-squared reported alongside; uncertainties always stored, display gated;
 output-wave Error columns always written; graph tags get the full set.
 

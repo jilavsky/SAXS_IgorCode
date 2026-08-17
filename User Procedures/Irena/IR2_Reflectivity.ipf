@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.24
+#pragma version=1.25
 Constant IR2RversionNumber=1.19
 
 //*************************************************************************\
@@ -732,20 +732,26 @@ static Function IR2R_SetErrorsToZero()
 
 	setDataFolder root:Packages:Refl_SimpleTool
 
-	string ListOfVariables="Roughness_BotError;BackgroundError;"
+	string ListOfVariables="Roughness_BotError;BackgroundError;ScalingFactorError;"		//ScalingFactorError was missing, it kept a stale value
 	variable i,j
 	
 	For(i=0;i<itemsInList(ListOfVariables);i+=1)
 		NVAR/Z testVar=$(StringFromList(i,ListOfVariables))
-		testVar=0
+		if(NVAR_Exists(testVar))
+			testVar=0
+		endif
 	endfor
 
+	//SolventPenetrationLayer globals are not created by IR2R_InitializeSimpleTool, the NVAR_Exists
+	//guard below keeps this safe whether or not they are ever added.
 	ListOfVariables="SLD_Real_Layer;SLD_Imag_Layer;ThicknessLayer;RoughnessLayer;SolventPenetrationLayer;"
 
 	For(j=1;j<9;j+=1)
 		For(i=0;i<itemsInList(ListOfVariables);i+=1)
 			NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"Error"+num2str(j))
-			testVar=0
+			if(NVAR_Exists(testVar))
+				testVar=0
+			endif
 		endfor
 	endfor
 
