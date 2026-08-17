@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.56
+#pragma version=1.57
 
 
 constant ChangeFromGaussToSlit=2
@@ -10,6 +10,11 @@ constant ChangeFromGaussToSlit=2
 //*************************************************************************/
 
 
+//1.57 optional reporting of least square fit uncertainties (W_sigma) in tags and results notebook.
+//     Fixed graph tag attachment point - the point number was looked up in Q_setN but the tags are
+//     attached to IntensityModel_setN which is plotted against the trimmed Qmodel_setN, so every tag
+//     was displaced towards low q by the number of points cut off below Qmin.
+//     Surface and Mass fractal tags used an Rg left over from another population, now use their correlation length.
 //1.56 AI cleanup and debug
 //1.55 minor fixes:
 	// line 5773 add possiblyQuoteName since users use also liberal names...  
@@ -2165,6 +2170,7 @@ Function IR2L_Initialize()
 	
 	ListOfPopulationsStrings=""	
 	ListOfDataStrings=""	
+	ListOfPopulationVariablesFR=""		//this was never reset, so the list kept growing on every call
 
 	//here define the lists of variables and strings needed, separate names by ;...
 	
@@ -2220,11 +2226,18 @@ Function IR2L_Initialize()
 	ListOfPopulationVariablesSD+="StructureParam1;StructureParam1Fit;StructureParam1Min;StructureParam1Max;StructureParam2;StructureParam2Fit;StructureParam2Min;StructureParam2Max;"
 	ListOfPopulationVariablesSD+="StructureParam3;StructureParam3Fit;StructureParam3Min;StructureParam3Max;StructureParam4;StructureParam4Fit;StructureParam4Min;StructureParam4Max;"
 	ListOfPopulationVariablesSD+="StructureParam5;StructureParam5Fit;StructureParam5Min;StructureParam5Max;StructureParam6;StructureParam6Fit;StructureParam6Min;StructureParam6Max;"
+		//Least square fit uncertainties, one for each parameter which can be fitted. Zeroed before each fit, filled from W_sigma after.
+	ListOfPopulationVariablesSD+="VolumeError;LNMinSizeError;LNMeanSizeError;LNSdeviationError;GMeanSizeError;GWidthError;LSWLocationError;"
+	ListOfPopulationVariablesSD+="SZMeanSizeError;SZWidthError;ArdLocationError;ArdParameterError;"
+	ListOfPopulationVariablesSD+="FormFactor_Param1Error;FormFactor_Param2Error;FormFactor_Param3Error;FormFactor_Param4Error;FormFactor_Param5Error;"
+	ListOfPopulationVariablesSD+="FormFactor_Param6Error;FormFactor_Param7Error;FormFactor_Param8Error;FormFactor_Param9Error;"
+	ListOfPopulationVariablesSD+="StructureParam1Error;StructureParam2Error;StructureParam3Error;StructureParam4Error;StructureParam5Error;StructureParam6Error;"
 	
 		
 		//Unified level parameters
 	ListOfPopulationVariablesUF="UF_G;UF_GFit;UF_GMin;UF_GMax;UF_Rg;UF_RgFit;UF_RgMin;UF_RgMax;UF_B;UF_BFit;UF_BMin;UF_BMax;UF_P;UF_PFit;UF_PMin;UF_PMax;UF_K;UF_LinkRGCO;UF_LinkRGCOLevel;"//SZWidthMin;SZWidthMax;"	
 	ListOfPopulationVariablesUF+="UF_RGCO;UF_RGCOFit;UF_RGCOMin;UF_RGCOMax;UF_LinkB;"
+	ListOfPopulationVariablesUF+="UF_GError;UF_RgError;UF_BError;UF_PError;UF_RGCOError;"
 		
 		//Diffraction peak parameters
 	ListOfPopulationsStrings+="DiffPeakProfile;"	
@@ -2234,6 +2247,7 @@ Function IR2L_Initialize()
 	ListOfPopulationVariablesDP+="DiffPeakPar3;DiffPeakPar3Fit;DiffPeakPar3Min;DiffPeakPar3Max;"	
 	ListOfPopulationVariablesDP+="DiffPeakPar4;DiffPeakPar4Fit;DiffPeakPar4Min;DiffPeakPar4Max;"	
 	ListOfPopulationVariablesDP+="DiffPeakPar5;DiffPeakPar5Fit;DiffPeakPar5Min;DiffPeakPar5Max;"	
+	ListOfPopulationVariablesDP+="DiffPeakPar1Error;DiffPeakPar2Error;DiffPeakPar3Error;DiffPeakPar4Error;DiffPeakPar5Error;"
 	
 		//Fractals parameters - Mass
 	ListOfPopulationVariablesFR+="MassFrPhi;MassFrRadius;MassFrDv;MassFrKsi;MassFrBeta;MassFrEta;MassFrIntgNumPnts;"
@@ -2248,6 +2262,8 @@ Function IR2L_Initialize()
 	ListOfPopulationVariablesFR+="SurfFrSurfMin;SurfFrKsiMin;SurfFrDSMin;"
 	ListOfPopulationVariablesFR+="SurfFrSurfMax;SurfFrKsiMax;SurfFrDSMax;"
 	ListOfPopulationVariablesFR+="SurfFrQc;SurfFrQcWidth;"
+	ListOfPopulationVariablesFR+="MassFrPhiError;MassFrRadiusError;MassFrDvError;MassFrKsiError;"
+	ListOfPopulationVariablesFR+="SurfFrSurfError;SurfFrKsiError;SurfFrDSError;"
 	
 	
 	
@@ -2364,6 +2380,150 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//Formats a fitted value, optionally with its least square fit uncertainty.
+//Returns plain "value" unless the user asked for uncertainties AND a valid, non zero uncertainty exists.
+//This way fixed (not fitted) parameters never get a meaningless "+/- 0" appended.
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//Returns the point number at which a tag should be attached for a given Q value.
+//IMPORTANT: the tags are attached to the trace IntensityModel_setN, which is plotted against
+//Qmodel_setN. Qmodel_setN is Q_setN trimmed to [Qmin,Qmax] (and extended when smearing is used),
+//so a point number looked up in Q_setN is shifted by the number of points cut off below Qmin and
+//puts the tag at a completely wrong place. The lookup must be done in the model Q wave.
+Function IR2L_TagLocationPnt(ModelQ, Qvalue)
+	WAVE/Z   ModelQ
+	variable Qvalue
+
+	if(!WaveExists(ModelQ) || (numpnts(ModelQ)<2))
+		return 0
+	endif
+	if((numtype(Qvalue)!=0) || (Qvalue<=0))		//Mode/Rg/correlation length was 0 or not calculated yet
+		return floor(numpnts(ModelQ)/2)
+	endif
+	variable pnt = BinarySearch(ModelQ, Qvalue)
+	if(pnt==-1)								//below the modelled Q range
+		return 0
+	elseif(pnt==-2)							//above the modelled Q range
+		return numpnts(ModelQ)-1
+	elseif(pnt<0)							//NaN or wave too short
+		return floor(numpnts(ModelQ)/2)
+	endif
+	return pnt
+End
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+Function/S IR2L_FmtValErr(val, err, useErr)
+	variable val, err, useErr
+
+	if(useErr && (numtype(err)==0) && (err>0))
+		return num2str(val)+" +/- "+num2str(err)
+	endif
+	return num2str(val)
+End
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//Zeroes all least square fit uncertainties. Called before each fit and when a fit is reversed,
+//so stale uncertainties can never be shown next to a different set of parameter values.
+//Names are derived from the lists created in IR2L_Initialize, so this stays correct when
+//a new parameter (and its matching *Error entry) is added there.
+Function IR2L_SetErrorsToZero()
+
+	DFREF oldDf = GetDataFolderDFR()
+
+	setDataFolder root:Packages:IR2L_NLSQF
+
+	SVAR/Z ListOfPopulationVariablesSD = root:Packages:IR2L_NLSQF:ListOfPopulationVariablesSD
+	SVAR/Z ListOfPopulationVariablesDP = root:Packages:IR2L_NLSQF:ListOfPopulationVariablesDP
+	SVAR/Z ListOfPopulationVariablesUF = root:Packages:IR2L_NLSQF:ListOfPopulationVariablesUF
+	SVAR/Z ListOfPopulationVariablesFR = root:Packages:IR2L_NLSQF:ListOfPopulationVariablesFR
+	if(!SVAR_Exists(ListOfPopulationVariablesSD) || !SVAR_Exists(ListOfPopulationVariablesDP) || !SVAR_Exists(ListOfPopulationVariablesUF) || !SVAR_Exists(ListOfPopulationVariablesFR))
+		setDataFolder oldDf
+		return 0
+	endif
+
+	string AllLists = ListOfPopulationVariablesSD + ListOfPopulationVariablesDP + ListOfPopulationVariablesUF + ListOfPopulationVariablesFR
+	variable i, j
+	string CurName
+	for(j=1;j<=10;j+=1)
+		for(i=0;i<ItemsInList(AllLists);i+=1)
+			CurName = StringFromList(i,AllLists)
+			if(stringmatch(CurName,"*Error"))
+				NVAR/Z CurErr = $(CurName+"_pop"+num2str(j))
+				if(NVAR_Exists(CurErr))
+					CurErr = 0
+				endif
+			endif
+		endfor
+		NVAR/Z BackgErr = $("BackgErr_set"+num2str(j))
+		if(NVAR_Exists(BackgErr))
+			BackgErr = 0
+		endif
+	endfor
+
+	setDataFolder oldDf
+End
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//Returns extra tag lines for fitted parameters which the graph tag does not display otherwise
+//(size distribution shape parameters, diffraction peak parameters). Only parameters which were
+//actually fitted and have a non zero uncertainty are listed, so this returns "" most of the time.
+Function/S IR2L_LSQErrTagText(pop)
+	variable pop
+
+	DFREF oldDf = GetDataFolderDFR()
+
+	setDataFolder root:Packages:IR2L_NLSQF
+
+	string result = ""
+	string ListOfParams = ""
+	SVAR/Z Model = $("root:Packages:IR2L_NLSQF:Model_pop"+num2str(pop))
+	if(!SVAR_Exists(Model))
+		setDataFolder oldDf
+		return result
+	endif
+	if(stringmatch(Model,"Size dist."))
+		SVAR PopSizeDistShape = $("root:Packages:IR2L_NLSQF:PopSizeDistShape_pop"+num2str(pop))
+		ListOfParams = "Volume;"
+		if(stringmatch(PopSizeDistShape,"Gauss"))
+			ListOfParams += "GMeanSize;GWidth;"
+		elseif(stringmatch(PopSizeDistShape,"LSW"))
+			ListOfParams += "LSWLocation;"
+		elseif(stringmatch(PopSizeDistShape,"Schulz-Zimm"))
+			ListOfParams += "SZMeanSize;SZWidth;"
+		elseif(stringmatch(PopSizeDistShape,"Ardell"))
+			ListOfParams += "ArdLocation;ArdParameter;"
+		else
+			ListOfParams += "LNMinSize;LNMeanSize;LNSdeviation;"
+		endif
+	elseif(stringmatch(Model,"Diffraction Peak"))
+		ListOfParams = "DiffPeakPar1;DiffPeakPar2;DiffPeakPar3;DiffPeakPar4;"
+	endif
+
+	variable i
+	string CurName
+	for(i=0;i<ItemsInList(ListOfParams);i+=1)
+		CurName = StringFromList(i,ListOfParams)
+		NVAR/Z CurVal = $(CurName+"_pop"+num2str(pop))
+		NVAR/Z CurErr = $(CurName+"Error_pop"+num2str(pop))
+		NVAR/Z CurFit = $(CurName+"Fit_pop"+num2str(pop))
+		if(NVAR_Exists(CurVal) && NVAR_Exists(CurErr) && NVAR_Exists(CurFit))
+			if(CurFit && (numtype(CurErr)==0) && (CurErr>0))
+				result += CurName+" = "+num2str(CurVal)+" +/- "+num2str(CurErr)+" \r"
+			endif
+		endif
+	endfor
+
+	setDataFolder oldDf
+	return result
+End
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
 Function IR2L_SetInitialValues(enforce)
 	variable enforce
 	//and here set default values...
@@ -2864,6 +3024,7 @@ Function IR2L_AddRemoveTagsToGraph(AddAlso)
 
 	setDataFolder root:Packages:IR2L_NLSQF
 	variable k, i
+	variable useErr = IN2G_UseLSQFitErrors()		//report least square fit uncertainties?
 	string ListOfPopulationVariables
 	string TagName
 	variable LocationPnt
@@ -2885,6 +3046,7 @@ Function IR2L_AddRemoveTagsToGraph(AddAlso)
 		NVAR UseTheSet=$("root:Packages:IR2L_NLSQF:UseTheData_set"+num2str(k))
 		if(UseTheSet||(LastDataSet==1))
 			Wave/Z Qvec=$("root:Packages:IR2L_NLSQF:Q_set"+num2str(k)) 
+			Wave/Z ModelQvec=$("root:Packages:IR2L_NLSQF:Qmodel_set"+num2str(k))		//tags are attached to IntensityModel_setN, which is plotted vs this wave
 			Wave/Z Intensity=$("root:Packages:IR2L_NLSQF:Intensity_set"+num2str(k)) 
 			
 			//And now the populations
@@ -2923,52 +3085,66 @@ Function IR2L_AddRemoveTagsToGraph(AddAlso)
 						NVAR FFParam3= $("root:Packages:IR2L_NLSQF:FormFactor_Param3_pop"+num2str(i))
 						NVAR FFParam4= $("root:Packages:IR2L_NLSQF:FormFactor_Param4_pop"+num2str(i))
 						NVAR FFParam5= $("root:Packages:IR2L_NLSQF:FormFactor_Param5_pop"+num2str(i))
+						NVAR FFParam1Err= $("root:Packages:IR2L_NLSQF:FormFactor_Param1Error_pop"+num2str(i))
+						NVAR FFParam2Err= $("root:Packages:IR2L_NLSQF:FormFactor_Param2Error_pop"+num2str(i))
+						NVAR FFParam3Err= $("root:Packages:IR2L_NLSQF:FormFactor_Param3Error_pop"+num2str(i))
+						NVAR FFParam4Err= $("root:Packages:IR2L_NLSQF:FormFactor_Param4Error_pop"+num2str(i))
+						NVAR FFParam5Err= $("root:Packages:IR2L_NLSQF:FormFactor_Param5Error_pop"+num2str(i))
+						NVAR SFParam1Err= $("root:Packages:IR2L_NLSQF:StructureParam1Error_pop"+num2str(i))
+						NVAR SFParam2Err= $("root:Packages:IR2L_NLSQF:StructureParam2Error_pop"+num2str(i))
+						NVAR SFParam3Err= $("root:Packages:IR2L_NLSQF:StructureParam3Error_pop"+num2str(i))
+						NVAR SFParam4Err= $("root:Packages:IR2L_NLSQF:StructureParam4Error_pop"+num2str(i))
+						NVAR SFParam5Err= $("root:Packages:IR2L_NLSQF:StructureParam5Error_pop"+num2str(i))
+						NVAR SFParam6Err= $("root:Packages:IR2L_NLSQF:StructureParam6Error_pop"+num2str(i))
 						
 						TagName  = "ModelingIITag"+num2str(i)+"set"+num2str(k)
-						LocationPnt = BinarySearch(Qvec, 1.7/ModeVal )
+						LocationPnt = IR2L_TagLocationPnt(ModelQvec, 1.7/ModeVal )
 						TagText="\\Z"+IN2G_LkUpDfltVar("TagSize")+"Size distribution "+num2str(i)+"P\r"
 						TagText+="Distribution : "+PopSizeDistShape+"  \r"
 						TagText+="Rg : "+num2str(Rg)+" [A]  \r"
 						TagText+="Mean / Mode / Median / FWHM  \r"
 						TagText+=num2str(MeanVal)+" / "+num2str(ModeVal)+" / "+num2str(MedianVal)+" / "+num2str(FWHMVal)+"  \r"
 
+						if(useErr)		//fitted distribution parameters are not in the tag otherwise
+							TagText+=IR2L_LSQErrTagText(i)
+						endif
 						TagText+="Form Factor : "+FormFac+"  \r"
 						if(stringmatch(FormFac, "*User*"))
 							TagText+="FFUserFFformula = "+U1FormFac+"  \r"						
 							TagText+="FFUserVolumeformula = "+U2FormFac+"  \r"		
 						endif				
 						if(strlen(IR1T_IdentifyFFParamName(FormFac,1))>0)
-							TagText+=IR1T_IdentifyFFParamName(FormFac,1)+" = "+num2str(FFParam1)+"  \r"
+							TagText+=IR1T_IdentifyFFParamName(FormFac,1)+" = "+IR2L_FmtValErr(FFParam1,FFParam1Err,useErr)+"  \r"
 						endif
 						if(strlen(IR1T_IdentifyFFParamName(FormFac,2))>0)
-							TagText+=IR1T_IdentifyFFParamName(FormFac,2)+" = "+num2str(FFParam2)+"  \r"
+							TagText+=IR1T_IdentifyFFParamName(FormFac,2)+" = "+IR2L_FmtValErr(FFParam2,FFParam2Err,useErr)+"  \r"
 						endif
 						if(strlen(IR1T_IdentifyFFParamName(FormFac,3))>0)
-							TagText+=IR1T_IdentifyFFParamName(FormFac,3)+" = "+num2str(FFParam3)+"  \r"
+							TagText+=IR1T_IdentifyFFParamName(FormFac,3)+" = "+IR2L_FmtValErr(FFParam3,FFParam3Err,useErr)+"  \r"
 						endif
 						if(strlen(IR1T_IdentifyFFParamName(FormFac,4))>0)
-							TagText+=IR1T_IdentifyFFParamName(FormFac,4)+" = "+num2str(FFParam4)+"  \r"
+							TagText+=IR1T_IdentifyFFParamName(FormFac,4)+" = "+IR2L_FmtValErr(FFParam4,FFParam4Err,useErr)+"  \r"
 						endif
 						if(strlen(IR1T_IdentifyFFParamName(FormFac,5))>0)
-							TagText+=IR1T_IdentifyFFParamName(FormFac,5)+" = "+num2str(FFParam5)+"  \r"
+							TagText+=IR1T_IdentifyFFParamName(FormFac,5)+" = "+IR2L_FmtValErr(FFParam5,FFParam5Err,useErr)+"  \r"
 						endif							
 						if(!stringmatch(StrFac, "*Dilute system*"))
 							TagText+="Structure Factor : "+StrFac+" \r"
-							TagText+=IR1T_IdentifySFParamName(StrFac,1)+" = "+num2str(SFParam1)+" \r"
+							TagText+=IR1T_IdentifySFParamName(StrFac,1)+" = "+IR2L_FmtValErr(SFParam1,SFParam1Err,useErr)+" \r"
 							if(strlen(IR1T_IdentifySFParamName(StrFac,2))>0)
-								TagText+=IR1T_IdentifySFParamName(StrFac,2)+" = "+num2str(SFParam2)+" \r"
+								TagText+=IR1T_IdentifySFParamName(StrFac,2)+" = "+IR2L_FmtValErr(SFParam2,SFParam2Err,useErr)+" \r"
 							endif
 							if(strlen(IR1T_IdentifySFParamName(StrFac,3))>0)
-								TagText+=IR1T_IdentifySFParamName(StrFac,3)+" = "+num2str(SFParam3)+" \r"
+								TagText+=IR1T_IdentifySFParamName(StrFac,3)+" = "+IR2L_FmtValErr(SFParam3,SFParam3Err,useErr)+" \r"
 							endif
 							if(strlen(IR1T_IdentifySFParamName(StrFac,4))>0)
-								TagText+=IR1T_IdentifySFParamName(StrFac,4)+" = "+num2str(SFParam4)+" \r"
+								TagText+=IR1T_IdentifySFParamName(StrFac,4)+" = "+IR2L_FmtValErr(SFParam4,SFParam4Err,useErr)+" \r"
 							endif
 							if(strlen(IR1T_IdentifySFParamName(StrFac,5))>0)
-								TagText+=IR1T_IdentifySFParamName(StrFac,5)+" = "+num2str(SFParam5)+" \r"
+								TagText+=IR1T_IdentifySFParamName(StrFac,5)+" = "+IR2L_FmtValErr(SFParam5,SFParam5Err,useErr)+" \r"
 							endif
 							if(strlen(IR1T_IdentifySFParamName(StrFac,6))>0)
-								TagText+=IR1T_IdentifySFParamName(StrFac,6)+" = "+num2str(SFParam6)+" \r"
+								TagText+=IR1T_IdentifySFParamName(StrFac,6)+" = "+IR2L_FmtValErr(SFParam6,SFParam6Err,useErr)+" \r"
 							endif
 						else
 							//TagText+="Dilute system assumed \r"
@@ -2989,6 +3165,16 @@ Function IR2L_AddRemoveTagsToGraph(AddAlso)
 						NVAR B=$("root:Packages:IR2L_NLSQF:UF_B_pop"+num2str(i))
 						NVAR RgCO=$("root:Packages:IR2L_NLSQF:UF_RgCO_pop"+num2str(i))
 						NVAR Kval=$("root:Packages:IR2L_NLSQF:UF_K_pop"+num2str(i))
+						NVAR GErr=$("root:Packages:IR2L_NLSQF:UF_GError_pop"+num2str(i))
+						NVAR RgVErr=$("root:Packages:IR2L_NLSQF:UF_RgError_pop"+num2str(i))
+						NVAR BVErr=$("root:Packages:IR2L_NLSQF:UF_BError_pop"+num2str(i))
+						NVAR PVErr=$("root:Packages:IR2L_NLSQF:UF_PError_pop"+num2str(i))
+						NVAR SFParam1Err= $("root:Packages:IR2L_NLSQF:StructureParam1Error_pop"+num2str(i))
+						NVAR SFParam2Err= $("root:Packages:IR2L_NLSQF:StructureParam2Error_pop"+num2str(i))
+						NVAR SFParam3Err= $("root:Packages:IR2L_NLSQF:StructureParam3Error_pop"+num2str(i))
+						NVAR SFParam4Err= $("root:Packages:IR2L_NLSQF:StructureParam4Error_pop"+num2str(i))
+						NVAR SFParam5Err= $("root:Packages:IR2L_NLSQF:StructureParam5Error_pop"+num2str(i))
+						NVAR SFParam6Err= $("root:Packages:IR2L_NLSQF:StructureParam6Error_pop"+num2str(i))
 						SVAR StrFac=$("root:Packages:IR2L_NLSQF:StructureFactor_pop"+num2str(i))
 						NVAR SFParam1= $("root:Packages:IR2L_NLSQF:StructureParam1_pop"+num2str(i))
 						NVAR SFParam2= $("root:Packages:IR2L_NLSQF:StructureParam2_pop"+num2str(i))
@@ -2997,29 +3183,29 @@ Function IR2L_AddRemoveTagsToGraph(AddAlso)
 						NVAR SFParam5= $("root:Packages:IR2L_NLSQF:StructureParam5_pop"+num2str(i))
 						NVAR SFParam6= $("root:Packages:IR2L_NLSQF:StructureParam6_pop"+num2str(i))
 						TagName  = "ModelingIITag"+num2str(i)+"set"+num2str(k)
-						LocationPnt = BinarySearch(Qvec, 1.8/Rg )
+						LocationPnt = IR2L_TagLocationPnt(ModelQvec, 1.8/Rg )
 							TagText="\\Z"+IN2G_LkUpDfltVar("TagSize")+"Unified level "+num2str(i)+"P\r"
-							TagText+="G = "+num2str(G)+"  \r"
-							TagText+="Rg = "+num2str(Rg)+"  [A]\r"
-							TagText+="B = "+num2str(B)+"\r"
-							TagText+="P = "+num2str(P)+" \r"
+							TagText+="G = "+IR2L_FmtValErr(G,GErr,useErr)+"  \r"
+							TagText+="Rg = "+IR2L_FmtValErr(Rg,RgVErr,useErr)+"  [A]\r"
+							TagText+="B = "+IR2L_FmtValErr(B,BVErr,useErr)+"\r"
+							TagText+="P = "+IR2L_FmtValErr(P,PVErr,useErr)+" \r"
 							if(!stringmatch(StrFac, "*Dilute system*"))
 								TagText+="Structure Factor : "+StrFac+" \r"
-								TagText+=IR1T_IdentifySFParamName(StrFac,1)+" = "+num2str(SFParam1)+" \r"
+								TagText+=IR1T_IdentifySFParamName(StrFac,1)+" = "+IR2L_FmtValErr(SFParam1,SFParam1Err,useErr)+" \r"
 								if(strlen(IR1T_IdentifySFParamName(StrFac,2))>0)
-									TagText+=IR1T_IdentifySFParamName(StrFac,2)+" = "+num2str(SFParam2)+" \r"
+									TagText+=IR1T_IdentifySFParamName(StrFac,2)+" = "+IR2L_FmtValErr(SFParam2,SFParam2Err,useErr)+" \r"
 								endif
 								if(strlen(IR1T_IdentifySFParamName(StrFac,3))>0)
-									TagText+=IR1T_IdentifySFParamName(StrFac,3)+" = "+num2str(SFParam3)+" \r"
+									TagText+=IR1T_IdentifySFParamName(StrFac,3)+" = "+IR2L_FmtValErr(SFParam3,SFParam3Err,useErr)+" \r"
 								endif
 								if(strlen(IR1T_IdentifySFParamName(StrFac,4))>0)
-									TagText+=IR1T_IdentifySFParamName(StrFac,4)+" = "+num2str(SFParam4)+" \r"
+									TagText+=IR1T_IdentifySFParamName(StrFac,4)+" = "+IR2L_FmtValErr(SFParam4,SFParam4Err,useErr)+" \r"
 								endif
 								if(strlen(IR1T_IdentifySFParamName(StrFac,5))>0)
-									TagText+=IR1T_IdentifySFParamName(StrFac,5)+" = "+num2str(SFParam5)+" \r"
+									TagText+=IR1T_IdentifySFParamName(StrFac,5)+" = "+IR2L_FmtValErr(SFParam5,SFParam5Err,useErr)+" \r"
 								endif
 								if(strlen(IR1T_IdentifySFParamName(StrFac,6))>0)
-									TagText+=IR1T_IdentifySFParamName(StrFac,6)+" = "+num2str(SFParam6)+" \r"
+									TagText+=IR1T_IdentifySFParamName(StrFac,6)+" = "+IR2L_FmtValErr(SFParam6,SFParam6Err,useErr)+" \r"
 								endif
 							else
 								//TagText+="Dilute system assumed \r"
@@ -3038,12 +3224,15 @@ Function IR2L_AddRemoveTagsToGraph(AddAlso)
 						NVAR SurfFrDS=$("root:Packages:IR2L_NLSQF:SurfFrDS_pop"+num2str(i))
 						NVAR SurfFrQcWidth=$("root:Packages:IR2L_NLSQF:SurfFrQcWidth_pop"+num2str(i))
 						NVAR SurfFrQc=$("root:Packages:IR2L_NLSQF:SurfFrQc_pop"+num2str(i))
+						NVAR SurfFrSurfErr=$("root:Packages:IR2L_NLSQF:SurfFrSurfError_pop"+num2str(i))
+						NVAR SurfFrKsiErr=$("root:Packages:IR2L_NLSQF:SurfFrKsiError_pop"+num2str(i))
+						NVAR SurfFrDSErr=$("root:Packages:IR2L_NLSQF:SurfFrDSError_pop"+num2str(i))
 						TagName  = "ModelingIITag"+num2str(i)+"set"+num2str(k)
-						LocationPnt = BinarySearch(Qvec, 1.8/Rg )
+						LocationPnt = IR2L_TagLocationPnt(ModelQvec, 1.8/SurfFrKsi )		//Rg is not defined for this model, use the correlation length
 							TagText="\\Z"+IN2G_LkUpDfltVar("TagSize")+"Surface Fractal "+num2str(i)+"P\r"
-							TagText+="Smooth Surface = "+num2str(SurfFrSurf)+"  \r"
-							TagText+="Corr. Length = "+num2str(SurfFrKsi)+"  [A]\r"
-							TagText+="Fractal Dim.  = "+num2str(SurfFrDS)+"\r"
+							TagText+="Smooth Surface = "+IR2L_FmtValErr(SurfFrSurf,SurfFrSurfErr,useErr)+"  \r"
+							TagText+="Corr. Length = "+IR2L_FmtValErr(SurfFrKsi,SurfFrKsiErr,useErr)+"  [A]\r"
+							TagText+="Fractal Dim.  = "+IR2L_FmtValErr(SurfFrDS,SurfFrDSErr,useErr)+"\r"
 							if(SurfFrQc>0)
 								TagText+="Terminal Qc  = "+num2str(SurfFrQc)+"[1/A]\r"
 								TagText+="assumed width Qc  = "+num2str(100*SurfFrQcWidth)+"%\r"
@@ -3064,13 +3253,17 @@ Function IR2L_AddRemoveTagsToGraph(AddAlso)
 						NVAR MassFrBeta=$("root:Packages:IR2L_NLSQF:MassFrBeta_pop"+num2str(i))
 						NVAR MassFrEta=$("root:Packages:IR2L_NLSQF:MassFrEta_pop"+num2str(i))
 						NVAR MassFrIntgNumPnts=$("root:Packages:IR2L_NLSQF:MassFrIntgNumPnts_pop"+num2str(i))
+						NVAR MassFrPhiErr=$("root:Packages:IR2L_NLSQF:MassFrPhiError_pop"+num2str(i))
+						NVAR MassFrRadiusErr=$("root:Packages:IR2L_NLSQF:MassFrRadiusError_pop"+num2str(i))
+						NVAR MassFrDvErr=$("root:Packages:IR2L_NLSQF:MassFrDvError_pop"+num2str(i))
+						NVAR MassFrKsiErr=$("root:Packages:IR2L_NLSQF:MassFrKsiError_pop"+num2str(i))
 						TagName  = "ModelingIITag"+num2str(i)+"set"+num2str(k)
-						LocationPnt = BinarySearch(Qvec, 1.8/Rg )
+						LocationPnt = IR2L_TagLocationPnt(ModelQvec, 1.8/MassFrKsi )		//Rg is not defined for this model, use the correlation length
 							TagText="\\Z"+IN2G_LkUpDfltVar("TagSize")+"Mass Fractal "+num2str(i)+"P\r"
-							TagText+="Particle volume = "+num2str(MassFrPhi)+"  \r"
-							TagText+="Particle radius = "+num2str(MassFrRadius)+"  [A]\r"
-							TagText+="Corr. Length = "+num2str(MassFrKsi)+"  [A]\r"
-							TagText+="Fractal Dim.  = "+num2str(MassFrDv)+"\r"
+							TagText+="Particle volume = "+IR2L_FmtValErr(MassFrPhi,MassFrPhiErr,useErr)+"  \r"
+							TagText+="Particle radius = "+IR2L_FmtValErr(MassFrRadius,MassFrRadiusErr,useErr)+"  [A]\r"
+							TagText+="Corr. Length = "+IR2L_FmtValErr(MassFrKsi,MassFrKsiErr,useErr)+"  [A]\r"
+							TagText+="Fractal Dim.  = "+IR2L_FmtValErr(MassFrDv,MassFrDvErr,useErr)+"\r"
 							TagText+="Particle AR  = "+num2str(MassFrBeta)+";   Volume filling  = "+num2str(MassFrEta)+"\r"
 							if(LastDataSet>1)
 								TagText =  RemoveEnding(TagText, "\r" )+"set"+num2str(k)
@@ -3091,9 +3284,12 @@ Function IR2L_AddRemoveTagsToGraph(AddAlso)
 						NVAR DiffPeakPar4=$("root:Packages:IR2L_NLSQF:DiffPeakPar4_pop"+num2str(i))
 						NVAR DiffPeakPar5=$("root:Packages:IR2L_NLSQF:DiffPeakPar5_pop"+num2str(i))
 						TagName  = "ModelingIITag"+num2str(i)+"set"+num2str(k)
-						LocationPnt = BinarySearch(Qvec, DiffPeakPar2 )
+						LocationPnt = IR2L_TagLocationPnt(ModelQvec, DiffPeakPar2 )
 							TagText="\\Z"+IN2G_LkUpDfltVar("TagSize")+"Diffraction Peak "+num2str(i)+"P\r"
 							TagText+="Shape  :   "+PeakProfile+"\r"
+						if(useErr)		//fitted peak parameters are not in the tag otherwise
+							TagText+=IR2L_LSQErrTagText(i)
+						endif
 							TagText+="Position (d) = "+num2str(DiffPeakDPos)+"  [A]\r"
 							TagText+="Position (Q) = "+num2str(DiffPeakQPos)+"  [A^-1]\r"
 							TagText+="Integral intensity = "+num2str(DiffPeakIntgInt)+"\r"
@@ -3132,6 +3328,7 @@ Function IR2L_SvNbk_ModelInf()
 
 	setDataFolder root:Packages:IR2L_NLSQF
 	variable k, i
+	variable useErr = IN2G_UseLSQFitErrors()		//report least square fit uncertainties?
 	string ListOfPopulationVariables
 	k=0
 	For(i=1;i<11;i+=1)
@@ -3142,6 +3339,17 @@ Function IR2L_SvNbk_ModelInf()
 //	//write header here... separator and some heading to divide the record.... 
 	IR2L_AppendAnyText("   ",2)	//separate
 	IR2L_AppendAnyText("Model data for "+num2str(k)+" population(s) used to obtain above results"+"\r",1)	
+	if(useErr)
+		NVAR/Z AchievedChisqReduced = root:Packages:IR2L_NLSQF:AchievedChisqReduced
+		IR2L_AppendAnyText("Uncertainties (+/-) are least square standard errors (Igor W_sigma) of the last fit. They are NOT rescaled by reduced Chi-squared,",0)
+		IR2L_AppendAnyText("so they are meaningful only if uncertainties of your data are correct, which requires reduced Chi-squared close to 1.",0)
+		if(NVAR_Exists(AchievedChisqReduced))
+			IR2L_AppendAnyText("Reduced Chi-squared of the last fit \t=\t"+num2str(AchievedChisqReduced),0)
+			IR2L_AppendAnyText("To rescale the uncertainties for mis-scaled data uncertainties multiply them by sqrt(reduced Chi-squared).",0)
+		endif
+		IR2L_AppendAnyText("Derived values (Mean, Mode, Median, FWHM, Rg, peak position/FWHM/integral intensity) have NO propagated uncertainty.",0)
+		IR2L_AppendAnyText("  ",0)
+	endif
 	//IR2L_AppendAnyText("     ",0)	
 	
 	//And now the populations
@@ -3157,7 +3365,8 @@ Function IR2L_SvNbk_ModelInf()
 				ListOfPopulationVariables="Mean;Mode;Median;FWHM;"	
 				SVAR PanelVolumeDesignation=root:Packages:IR2L_NLSQF:PanelVolumeDesignation	
 				NVAR testVar = $("root:Packages:IR2L_NLSQF:Volume"+"_pop"+num2str(i))
-				IR2L_AppendAnyText(PanelVolumeDesignation+"\t=\t"+num2str(testVar),0)
+				NVAR VolumeErr = $("root:Packages:IR2L_NLSQF:VolumeError_pop"+num2str(i))
+				IR2L_AppendAnyText(PanelVolumeDesignation+"\t=\t"+IR2L_FmtValErr(testVar,VolumeErr,useErr),0)
 				for(k=0;k<itemsInList(ListOfPopulationVariables);k+=1)	
 					NVAR testVar = $(StringFromList(k,ListOfPopulationVariables)+"_pop"+num2str(i))
 					IR2L_AppendAnyText(StringFromList(k,ListOfPopulationVariables)+"\t=\t"+num2str(testVar),0)
@@ -3169,33 +3378,43 @@ Function IR2L_SvNbk_ModelInf()
 				if(stringMatch(PopSizeDistShape, "Gauss") )
 					IR2L_AppendAnyText("Distribution Type"+"\t=\t Gauss",0)
 					NVAR GMeanSize =  $("root:Packages:IR2L_NLSQF:GMeanSize_pop"+num2str(i))	
-					IR2L_AppendAnyText("GaussMean"+"\t=\t"+num2str(GMeanSize),0)
+					NVAR GMeanSizeErr =  $("root:Packages:IR2L_NLSQF:GMeanSizeError_pop"+num2str(i))
+					IR2L_AppendAnyText("GaussMean"+"\t=\t"+IR2L_FmtValErr(GMeanSize,GMeanSizeErr,useErr),0)
 					NVAR GWidth =  $("root:Packages:IR2L_NLSQF:GWidth_pop"+num2str(i))	
-					IR2L_AppendAnyText("GaussWidth"+"\t=\t"+num2str(GWidth),0)
+					NVAR GWidthErr =  $("root:Packages:IR2L_NLSQF:GWidthError_pop"+num2str(i))
+					IR2L_AppendAnyText("GaussWidth"+"\t=\t"+IR2L_FmtValErr(GWidth,GWidthErr,useErr),0)
 				elseif(stringMatch(PopSizeDistShape, "LogNormal" ))
 					IR2L_AppendAnyText("DistributionShape"+"\t=\tLogNormal",0)
 					NVAR LNMinSize =  $("root:Packages:IR2L_NLSQF:LNMinSize_pop"+num2str(i))	
-					IR2L_AppendAnyText("LogNormalMin"+"\t=\t"+num2str(LNMinSize),0)
+					NVAR LNMinSizeErr =  $("root:Packages:IR2L_NLSQF:LNMinSizeError_pop"+num2str(i))
+					IR2L_AppendAnyText("LogNormalMin"+"\t=\t"+IR2L_FmtValErr(LNMinSize,LNMinSizeErr,useErr),0)
 					NVAR LNMeanSize =  $("root:Packages:IR2L_NLSQF:LNMeanSize_pop"+num2str(i))	
-					IR2L_AppendAnyText("LogNormalMean"+"\t=\t"+num2str(LNMeanSize),0)
+					NVAR LNMeanSizeErr =  $("root:Packages:IR2L_NLSQF:LNMeanSizeError_pop"+num2str(i))
+					IR2L_AppendAnyText("LogNormalMean"+"\t=\t"+IR2L_FmtValErr(LNMeanSize,LNMeanSizeErr,useErr),0)
 					NVAR LNSdeviation =  $("root:Packages:IR2L_NLSQF:LNSdeviation_pop"+num2str(i))	
-					IR2L_AppendAnyText("LogNormalSdeviation"+"\t=\t"+num2str(LNSdeviation),0)
+					NVAR LNSdeviationErr =  $("root:Packages:IR2L_NLSQF:LNSdeviationError_pop"+num2str(i))
+					IR2L_AppendAnyText("LogNormalSdeviation"+"\t=\t"+IR2L_FmtValErr(LNSdeviation,LNSdeviationErr,useErr),0)
 				elseif(stringMatch(PopSizeDistShape, "Schulz-Zimm" ))
 					IR2L_AppendAnyText("DistributionShape"+"\t=\tSchulz-Zimm",0)
 					NVAR SZMeanSize =  $("root:Packages:IR2L_NLSQF:SZMeanSize_pop"+num2str(i))	
-					IR2L_AppendAnyText("Schulz-Zimm Mean"+"\t=\t"+num2str(SZMeanSize),0)
+					NVAR SZMeanSizeErr =  $("root:Packages:IR2L_NLSQF:SZMeanSizeError_pop"+num2str(i))
+					IR2L_AppendAnyText("Schulz-Zimm Mean"+"\t=\t"+IR2L_FmtValErr(SZMeanSize,SZMeanSizeErr,useErr),0)
 					NVAR SZdeviation =  $("root:Packages:IR2L_NLSQF:SZWidth_pop"+num2str(i))	
-					IR2L_AppendAnyText("Schulz-Zimm Width"+"\t=\t"+num2str(SZdeviation),0)
+					NVAR SZdeviationErr =  $("root:Packages:IR2L_NLSQF:SZWidthError_pop"+num2str(i))
+					IR2L_AppendAnyText("Schulz-Zimm Width"+"\t=\t"+IR2L_FmtValErr(SZdeviation,SZdeviationErr,useErr),0)
 				elseif(stringMatch(PopSizeDistShape, "Ardell" ))
 					IR2L_AppendAnyText("DistributionShape"+"\t=\tArdell",0)
 					NVAR ArdLocation =  $("root:Packages:IR2L_NLSQF:ArdLocation_pop"+num2str(i))	
-					IR2L_AppendAnyText("Ardell Location"+"\t=\t"+num2str(ArdLocation),0)
+					NVAR ArdLocationErr =  $("root:Packages:IR2L_NLSQF:ArdLocationError_pop"+num2str(i))
+					IR2L_AppendAnyText("Ardell Location"+"\t=\t"+IR2L_FmtValErr(ArdLocation,ArdLocationErr,useErr),0)
 					NVAR ArdParameter =  $("root:Packages:IR2L_NLSQF:ArdParameter_pop"+num2str(i))	
-					IR2L_AppendAnyText("Ardell Parameter"+"\t=\t"+num2str(ArdParameter),0)
+					NVAR ArdParameterErr =  $("root:Packages:IR2L_NLSQF:ArdParameterError_pop"+num2str(i))
+					IR2L_AppendAnyText("Ardell Parameter"+"\t=\t"+IR2L_FmtValErr(ArdParameter,ArdParameterErr,useErr),0)
 				else //LSW
 					IR2L_AppendAnyText("DistributionShape"+"\t=\tLSW",0)
 					NVAR LSWLocation =  $("root:Packages:IR2L_NLSQF:LSWLocation_pop"+num2str(i))	
-					IR2L_AppendAnyText("LSWLocation"+"\t=\t"+num2str(LSWLocation),0)				
+					NVAR LSWLocationErr =  $("root:Packages:IR2L_NLSQF:LSWLocationError_pop"+num2str(i))
+					IR2L_AppendAnyText("LSWLocation"+"\t=\t"+IR2L_FmtValErr(LSWLocation,LSWLocationErr,useErr),0)				
 				endif
 					
 				NVAR VaryContrast=root:Packages:IR2L_NLSQF:SameContrastForDataSets
@@ -3225,24 +3444,29 @@ Function IR2L_SvNbk_ModelInf()
 						IR2L_AppendAnyText("FFUserVolumeFormula_pop"+num2str(i)+"\t=\t"+U2FormFac,0)
 					endif
 					NVAR FFParam1= $("root:Packages:IR2L_NLSQF:FormFactor_Param1_pop"+num2str(i))
+					NVAR FFParam1Err= $("root:Packages:IR2L_NLSQF:FormFactor_Param1Error_pop"+num2str(i))
 					if(strlen(IR1T_IdentifyFFParamName(FormFac,1))>0)
-						IR2L_AppendAnyText(IR1T_IdentifyFFParamName(FormFac,1)+"  ("+"FormFactor_Param1)"+"\t=\t"+num2str(FFParam1),0)
+						IR2L_AppendAnyText(IR1T_IdentifyFFParamName(FormFac,1)+"  ("+"FormFactor_Param1)"+"\t=\t"+IR2L_FmtValErr(FFParam1,FFParam1Err,useErr),0)
 					endif
 					NVAR FFParam2= $("root:Packages:IR2L_NLSQF:FormFactor_Param2_pop"+num2str(i))
+					NVAR FFParam2Err= $("root:Packages:IR2L_NLSQF:FormFactor_Param2Error_pop"+num2str(i))
 					if(strlen(IR1T_IdentifyFFParamName(FormFac,2))>0)
-						IR2L_AppendAnyText(IR1T_IdentifyFFParamName(FormFac,2)+"  ("+"FormFactor_Param2)"+"\t=\t"+num2str(FFParam2),0)
+						IR2L_AppendAnyText(IR1T_IdentifyFFParamName(FormFac,2)+"  ("+"FormFactor_Param2)"+"\t=\t"+IR2L_FmtValErr(FFParam2,FFParam2Err,useErr),0)
 					endif
 					NVAR FFParam3= $("root:Packages:IR2L_NLSQF:FormFactor_Param3_pop"+num2str(i))
+					NVAR FFParam3Err= $("root:Packages:IR2L_NLSQF:FormFactor_Param3Error_pop"+num2str(i))
 					if(strlen(IR1T_IdentifyFFParamName(FormFac,3))>0)
-						IR2L_AppendAnyText(IR1T_IdentifyFFParamName(FormFac,3)+"  ("+"FormFactor_Param3)"+"\t=\t"+num2str(FFParam3),0)
+						IR2L_AppendAnyText(IR1T_IdentifyFFParamName(FormFac,3)+"  ("+"FormFactor_Param3)"+"\t=\t"+IR2L_FmtValErr(FFParam3,FFParam3Err,useErr),0)
 					endif
 					NVAR FFParam4= $("root:Packages:IR2L_NLSQF:FormFactor_Param4_pop"+num2str(i))
+					NVAR FFParam4Err= $("root:Packages:IR2L_NLSQF:FormFactor_Param4Error_pop"+num2str(i))
 					if(strlen(IR1T_IdentifyFFParamName(FormFac,4))>0)
-						IR2L_AppendAnyText(IR1T_IdentifyFFParamName(FormFac,4)+"  ("+"FormFactor_Param4)"+"\t=\t"+num2str(FFParam4),0)
+						IR2L_AppendAnyText(IR1T_IdentifyFFParamName(FormFac,4)+"  ("+"FormFactor_Param4)"+"\t=\t"+IR2L_FmtValErr(FFParam4,FFParam4Err,useErr),0)
 					endif
 					NVAR FFParam5= $("root:Packages:IR2L_NLSQF:FormFactor_Param5_pop"+num2str(i))
+					NVAR FFParam5Err= $("root:Packages:IR2L_NLSQF:FormFactor_Param5Error_pop"+num2str(i))
 					if(strlen(IR1T_IdentifyFFParamName(FormFac,5))>0)
-						IR2L_AppendAnyText(IR1T_IdentifyFFParamName(FormFac,5)+"  ("+"FormFactor_Param5)"+"="+num2str(FFParam5),0)
+						IR2L_AppendAnyText(IR1T_IdentifyFFParamName(FormFac,5)+"  ("+"FormFactor_Param5)"+"="+IR2L_FmtValErr(FFParam5,FFParam5Err,useErr),0)
 					endif
 
 					SVAR StrFac=$("root:Packages:IR2L_NLSQF:StructureFactor_pop"+num2str(i))
@@ -3251,28 +3475,34 @@ Function IR2L_SvNbk_ModelInf()
 					IR2L_AppendAnyText("StructureFactor"+"\t=\t"+StrFac,0)
 					if(!stringmatch(StrFac, "*Dilute system*"))
 						NVAR SFParam1= $("root:Packages:IR2L_NLSQF:StructureParam1_pop"+num2str(i))
+						NVAR SFParam1Err= $("root:Packages:IR2L_NLSQF:StructureParam1Error_pop"+num2str(i))
 						if(strlen(IR1T_IdentifySFParamName(StrFac,1))>0)
-							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,1)+" ("+"StructureParam1"+")\t=\t"+num2str(SFParam1),0)
+							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,1)+" ("+"StructureParam1"+")\t=\t"+IR2L_FmtValErr(SFParam1,SFParam1Err,useErr),0)
 						endif
 						NVAR SFParam2= $("root:Packages:IR2L_NLSQF:StructureParam2_pop"+num2str(i))
+						NVAR SFParam2Err= $("root:Packages:IR2L_NLSQF:StructureParam2Error_pop"+num2str(i))
 						if(strlen(IR1T_IdentifySFParamName(StrFac,2))>0)
-							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,2)+" ("+"StructureParam2"+")\t=\t"+num2str(SFParam2),0)
+							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,2)+" ("+"StructureParam2"+")\t=\t"+IR2L_FmtValErr(SFParam2,SFParam2Err,useErr),0)
 						endif
 						NVAR SFParam3= $("root:Packages:IR2L_NLSQF:StructureParam3_pop"+num2str(i))
+						NVAR SFParam3Err= $("root:Packages:IR2L_NLSQF:StructureParam3Error_pop"+num2str(i))
 						if(strlen(IR1T_IdentifySFParamName(StrFac,3))>0)
-							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,3)+" ("+"StructureParam3"+")\t=\t"+num2str(SFParam3),0)
+							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,3)+" ("+"StructureParam3"+")\t=\t"+IR2L_FmtValErr(SFParam3,SFParam3Err,useErr),0)
 						endif
 						NVAR SFParam4= $("root:Packages:IR2L_NLSQF:StructureParam4_pop"+num2str(i))
+						NVAR SFParam4Err= $("root:Packages:IR2L_NLSQF:StructureParam4Error_pop"+num2str(i))
 						if(strlen(IR1T_IdentifySFParamName(StrFac,4))>0)
-							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,4)+" ("+"StructureParam4"+")\t=\t"+num2str(SFParam4),0)
+							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,4)+" ("+"StructureParam4"+")\t=\t"+IR2L_FmtValErr(SFParam4,SFParam4Err,useErr),0)
 						endif
 						NVAR SFParam5= $("root:Packages:IR2L_NLSQF:StructureParam5_pop"+num2str(i))
+						NVAR SFParam5Err= $("root:Packages:IR2L_NLSQF:StructureParam5Error_pop"+num2str(i))
 						if(strlen(IR1T_IdentifySFParamName(StrFac,5))>0)
-							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,5)+" ("+"StructureParam5"+")\t=\t"+num2str(SFParam5),0)
+							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,5)+" ("+"StructureParam5"+")\t=\t"+IR2L_FmtValErr(SFParam5,SFParam5Err,useErr),0)
 						endif
 						NVAR SFParam6= $("root:Packages:IR2L_NLSQF:StructureParam6_pop"+num2str(i))
+						NVAR SFParam6Err= $("root:Packages:IR2L_NLSQF:StructureParam6Error_pop"+num2str(i))
 						if(strlen(IR1T_IdentifySFParamName(StrFac,6))>0)
-							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,6)+" ("+"StructureParam6"+")\t=\t"+num2str(SFParam6),0)
+							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,6)+" ("+"StructureParam6"+")\t=\t"+IR2L_FmtValErr(SFParam6,SFParam6Err,useErr),0)
 						endif
 					endif	
 
@@ -3302,11 +3532,16 @@ Function IR2L_SvNbk_ModelInf()
 					NVAR B=$("root:Packages:IR2L_NLSQF:UF_B_pop"+num2str(i))
 					NVAR RgCO=$("root:Packages:IR2L_NLSQF:UF_RgCO_pop"+num2str(i))
 					NVAR Kval=$("root:Packages:IR2L_NLSQF:UF_K_pop"+num2str(i))
-					IR2L_AppendAnyText("Unified level Rg "+"\t=\t"+num2str(Rg),0)
-					IR2L_AppendAnyText("Unified level G "+"\t=\t"+num2str(G),0)
-					IR2L_AppendAnyText("Unified level B "+"\t=\t"+num2str(B),0)
-					IR2L_AppendAnyText("Unified level P "+"\t=\t"+num2str(P),0)
-					IR2L_AppendAnyText("Unified level RGCo "+"\t=\t"+num2str(RGCO),0)
+					NVAR RgVErr=$("root:Packages:IR2L_NLSQF:UF_RgError_pop"+num2str(i))
+					NVAR GVErr=$("root:Packages:IR2L_NLSQF:UF_GError_pop"+num2str(i))
+					NVAR BVErr=$("root:Packages:IR2L_NLSQF:UF_BError_pop"+num2str(i))
+					NVAR PVErr=$("root:Packages:IR2L_NLSQF:UF_PError_pop"+num2str(i))
+					NVAR RGCOVErr=$("root:Packages:IR2L_NLSQF:UF_RGCOError_pop"+num2str(i))
+					IR2L_AppendAnyText("Unified level Rg "+"\t=\t"+IR2L_FmtValErr(Rg,RgVErr,useErr),0)
+					IR2L_AppendAnyText("Unified level G "+"\t=\t"+IR2L_FmtValErr(G,GVErr,useErr),0)
+					IR2L_AppendAnyText("Unified level B "+"\t=\t"+IR2L_FmtValErr(B,BVErr,useErr),0)
+					IR2L_AppendAnyText("Unified level P "+"\t=\t"+IR2L_FmtValErr(P,PVErr,useErr),0)
+					IR2L_AppendAnyText("Unified level RGCo "+"\t=\t"+IR2L_FmtValErr(RGCO,RGCOVErr,useErr),0)
 					IR2L_AppendAnyText("Unified level K "+"\t=\t"+num2str(Kval),0)
 		
 					SVAR StrFac=$("root:Packages:IR2L_NLSQF:StructureFactor_pop"+num2str(i))
@@ -3315,28 +3550,34 @@ Function IR2L_SvNbk_ModelInf()
 					IR2L_AppendAnyText("StructureFactor"+"\t=\t"+StrFac,0)
 					if(!stringmatch(StrFac, "*Dilute system*"))
 						NVAR SFParam1= $("root:Packages:IR2L_NLSQF:StructureParam1_pop"+num2str(i))
+						NVAR SFParam1Err= $("root:Packages:IR2L_NLSQF:StructureParam1Error_pop"+num2str(i))
 						if(strlen(IR1T_IdentifySFParamName(StrFac,1))>0)
-							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,1)+"\t"+"StructureParam1"+"\t=\t"+num2str(SFParam1),0)
+							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,1)+"\t"+"StructureParam1"+"\t=\t"+IR2L_FmtValErr(SFParam1,SFParam1Err,useErr),0)
 						endif
 						NVAR SFParam2= $("root:Packages:IR2L_NLSQF:StructureParam2_pop"+num2str(i))
+						NVAR SFParam2Err= $("root:Packages:IR2L_NLSQF:StructureParam2Error_pop"+num2str(i))
 						if(strlen(IR1T_IdentifySFParamName(StrFac,2))>0)
-							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,2)+"\t"+"StructureParam2"+"\t=\t"+num2str(SFParam2),0)
+							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,2)+"\t"+"StructureParam2"+"\t=\t"+IR2L_FmtValErr(SFParam2,SFParam2Err,useErr),0)
 						endif
 						NVAR SFParam3= $("root:Packages:IR2L_NLSQF:StructureParam3_pop"+num2str(i))
+						NVAR SFParam3Err= $("root:Packages:IR2L_NLSQF:StructureParam3Error_pop"+num2str(i))
 						if(strlen(IR1T_IdentifySFParamName(StrFac,3))>0)
-							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,3)+"\t"+"StructureParam3"+"\t=\t"+num2str(SFParam3),0)
+							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,3)+"\t"+"StructureParam3"+"\t=\t"+IR2L_FmtValErr(SFParam3,SFParam3Err,useErr),0)
 						endif
 						NVAR SFParam4= $("root:Packages:IR2L_NLSQF:StructureParam4_pop"+num2str(i))
+						NVAR SFParam4Err= $("root:Packages:IR2L_NLSQF:StructureParam4Error_pop"+num2str(i))
 						if(strlen(IR1T_IdentifySFParamName(StrFac,4))>0)
-							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,4)+"\t"+"StructureParam4"+"\t=\t"+num2str(SFParam4),0)
+							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,4)+"\t"+"StructureParam4"+"\t=\t"+IR2L_FmtValErr(SFParam4,SFParam4Err,useErr),0)
 						endif
 						NVAR SFParam5= $("root:Packages:IR2L_NLSQF:StructureParam5_pop"+num2str(i))
+						NVAR SFParam5Err= $("root:Packages:IR2L_NLSQF:StructureParam5Error_pop"+num2str(i))
 						if(strlen(IR1T_IdentifySFParamName(StrFac,5))>0)
-							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,5)+"\t"+"StructureParam5"+"\t=\t"+num2str(SFParam5),0)
+							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,5)+"\t"+"StructureParam5"+"\t=\t"+IR2L_FmtValErr(SFParam5,SFParam5Err,useErr),0)
 						endif
 						NVAR SFParam6= $("root:Packages:IR2L_NLSQF:StructureParam6_pop"+num2str(i))
+						NVAR SFParam6Err= $("root:Packages:IR2L_NLSQF:StructureParam6Error_pop"+num2str(i))
 						if(strlen(IR1T_IdentifySFParamName(StrFac,6))>0)
-							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,6)+"\t"+"StructureParam6"+"\t=\t"+num2str(SFParam6),0)
+							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,6)+"\t"+"StructureParam6"+"\t=\t"+IR2L_FmtValErr(SFParam6,SFParam6Err,useErr),0)
 						endif
 					endif
 
@@ -3366,10 +3607,14 @@ Function IR2L_SvNbk_ModelInf()
 						NVAR MassFrBeta=$("root:Packages:IR2L_NLSQF:MassFrBeta_pop"+num2str(i))
 						NVAR MassFrEta=$("root:Packages:IR2L_NLSQF:MassFrEta_pop"+num2str(i))
 						NVAR MassFrIntgNumPnts=$("root:Packages:IR2L_NLSQF:MassFrIntgNumPnts_pop"+num2str(i))
-					IR2L_AppendAnyText("Mass Fractal Particle volume "+"\t=\t"+num2str(MassFrPhi),0)
-					IR2L_AppendAnyText("Mass Fractal Particle radius [A]"+"\t=\t"+num2str(MassFrRadius),0)
-					IR2L_AppendAnyText("Mass Fractal Fractal dim. "+"\t=\t"+num2str(MassFrDv),0)
-					IR2L_AppendAnyText("Mass Fractal Corr. Length [A]"+"\t=\t"+num2str(MassFrKsi),0)
+						NVAR MassFrPhiErr=$("root:Packages:IR2L_NLSQF:MassFrPhiError_pop"+num2str(i))
+						NVAR MassFrRadiusErr=$("root:Packages:IR2L_NLSQF:MassFrRadiusError_pop"+num2str(i))
+						NVAR MassFrDvErr=$("root:Packages:IR2L_NLSQF:MassFrDvError_pop"+num2str(i))
+						NVAR MassFrKsiErr=$("root:Packages:IR2L_NLSQF:MassFrKsiError_pop"+num2str(i))
+					IR2L_AppendAnyText("Mass Fractal Particle volume "+"\t=\t"+IR2L_FmtValErr(MassFrPhi,MassFrPhiErr,useErr),0)
+					IR2L_AppendAnyText("Mass Fractal Particle radius [A]"+"\t=\t"+IR2L_FmtValErr(MassFrRadius,MassFrRadiusErr,useErr),0)
+					IR2L_AppendAnyText("Mass Fractal Fractal dim. "+"\t=\t"+IR2L_FmtValErr(MassFrDv,MassFrDvErr,useErr),0)
+					IR2L_AppendAnyText("Mass Fractal Corr. Length [A]"+"\t=\t"+IR2L_FmtValErr(MassFrKsi,MassFrKsiErr,useErr),0)
 					IR2L_AppendAnyText("Mass Fractal Part. Asp. Rat. "+"\t=\t"+num2str(MassFrBeta),0)
 					IR2L_AppendAnyText("Mass Fractal Volume filling "+"\t=\t"+num2str(MassFrEta),0)
 		
@@ -3398,9 +3643,12 @@ Function IR2L_SvNbk_ModelInf()
 						NVAR SurfFrDS=$("root:Packages:IR2L_NLSQF:SurfFrDS_pop"+num2str(i))
 						NVAR SurfFrQc=$("root:Packages:IR2L_NLSQF:SurfFrQc_pop"+num2str(i))
 						NVAR SurfFrQcWidth=$("root:Packages:IR2L_NLSQF:SurfFrQcWidth_pop"+num2str(i))
-					IR2L_AppendAnyText("Surf. Fractal Smooth surface "+"\t=\t"+num2str(SurfFrSurf),0)
-					IR2L_AppendAnyText("Surf. Fractal Fractal dim. "+"\t=\t"+num2str(SurfFrDS),0)
-					IR2L_AppendAnyText("Surf. Fractal Corr. Length [A]"+"\t=\t"+num2str(SurfFrKsi),0)
+						NVAR SurfFrSurfErr=$("root:Packages:IR2L_NLSQF:SurfFrSurfError_pop"+num2str(i))
+						NVAR SurfFrKsiErr=$("root:Packages:IR2L_NLSQF:SurfFrKsiError_pop"+num2str(i))
+						NVAR SurfFrDSErr=$("root:Packages:IR2L_NLSQF:SurfFrDSError_pop"+num2str(i))
+					IR2L_AppendAnyText("Surf. Fractal Smooth surface "+"\t=\t"+IR2L_FmtValErr(SurfFrSurf,SurfFrSurfErr,useErr),0)
+					IR2L_AppendAnyText("Surf. Fractal Fractal dim. "+"\t=\t"+IR2L_FmtValErr(SurfFrDS,SurfFrDSErr,useErr),0)
+					IR2L_AppendAnyText("Surf. Fractal Corr. Length [A]"+"\t=\t"+IR2L_FmtValErr(SurfFrKsi,SurfFrKsiErr,useErr),0)
 					IR2L_AppendAnyText("Surf. Fractal End Q [1/A]"+"\t=\t"+num2str(SurfFrQc),0)
 					IR2L_AppendAnyText("Surf. Fractal End Qw [%]"+"\t=\t"+num2str(100*SurfFrQcWidth),0)				
 				elseif(stringmatch(Model,"Diffraction Peak"))
@@ -3432,15 +3680,19 @@ Function IR2L_SvNbk_ModelInf()
 					NVAR DiffPeakPar3=$("root:Packages:IR2L_NLSQF:DiffPeakPar3_pop"+num2str(i))
 					NVAR DiffPeakPar4=$("root:Packages:IR2L_NLSQF:DiffPeakPar4_pop"+num2str(i))
 					NVAR DiffPeakPar5=$("root:Packages:IR2L_NLSQF:DiffPeakPar5_pop"+num2str(i))
+					NVAR DiffPeakPar1Err=$("root:Packages:IR2L_NLSQF:DiffPeakPar1Error_pop"+num2str(i))
+					NVAR DiffPeakPar2Err=$("root:Packages:IR2L_NLSQF:DiffPeakPar2Error_pop"+num2str(i))
+					NVAR DiffPeakPar3Err=$("root:Packages:IR2L_NLSQF:DiffPeakPar3Error_pop"+num2str(i))
+					NVAR DiffPeakPar4Err=$("root:Packages:IR2L_NLSQF:DiffPeakPar4Error_pop"+num2str(i))
 
 					IR2L_AppendAnyText("Peak profile shape "+"\t=\t"+PeakProfile,0)
 					IR2L_AppendAnyText("Peak D position [A] "+"\t=\t"+num2str(DiffPeakDPos),0)
 					IR2L_AppendAnyText("Peak Q position [A^-1] "+"\t=\t"+num2str(DiffPeakQPos),0)
 					IR2L_AppendAnyText("Peak FWHM (Q) "+"\t=\t"+num2str(DiffPeakQFWHM),0)
 					IR2L_AppendAnyText("Peak Integral Intensity "+"\t=\t"+num2str(DiffPeakIntgInt),0)
-					IR2L_AppendAnyText("Prefactor "+"\t=\t"+num2str(DiffPeakPar1),0)
-					IR2L_AppendAnyText("Position "+"\t=\t"+num2str(DiffPeakPar2),0)
-					IR2L_AppendAnyText("Width "+"\t=\t"+num2str(DiffPeakPar3),0)
+					IR2L_AppendAnyText("Prefactor "+"\t=\t"+IR2L_FmtValErr(DiffPeakPar1,DiffPeakPar1Err,useErr),0)
+					IR2L_AppendAnyText("Position "+"\t=\t"+IR2L_FmtValErr(DiffPeakPar2,DiffPeakPar2Err,useErr),0)
+					IR2L_AppendAnyText("Width "+"\t=\t"+IR2L_FmtValErr(DiffPeakPar3,DiffPeakPar3Err,useErr),0)
 					string Par4name=""
 					if(stringmatch(PeakProfile,"Pseudo-Voigt"))
 						Par4name="Eta"
@@ -3448,7 +3700,7 @@ Function IR2L_SvNbk_ModelInf()
 						Par4name="Tail Param"
 					endif
 					if(strlen(Par4name)>0)
-						IR2L_AppendAnyText("Eta "+"\t=\t"+num2str(DiffPeakPar4),0)
+						IR2L_AppendAnyText("Eta "+"\t=\t"+IR2L_FmtValErr(DiffPeakPar4,DiffPeakPar4Err,useErr),0)
 					endif
 				
 				endif

@@ -1,7 +1,7 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version=0.3
+#pragma version=0.4
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratorys
@@ -1233,6 +1233,8 @@ static Function IR3F_FitCSCylinderModel()
 
 	variable i
 	//reset errrors
+	NVAR SASBackgroundErrorReset = root:Packages:Irena:CylinderModels:SASBackgroundError
+	SASBackgroundErrorReset = 0		//this was never reset, a stale value could survive a fit which no longer fits the background
 	UnifiedPar[][4]=0
 	CylPar[][4]=0
 	CSCylPar[][4]=0
@@ -1548,7 +1550,8 @@ static Function IR3F_FitCSCylinderModel()
 			return 0
 		endif
 		//this now records the errors for fitted parameters into the appropriate variables
-		Wave W_sigma=W_sigma
+		Wave/Z W_sigma=W_sigma		//gencurvefit does not create W_sigma, and a stale one must not be reused
+		if(WaveExists(W_sigma))
 		for (i=0;i<numpnts(CoefNames);i+=1)
 			ParamName=StringFromList(0,CoefNames[i],";")
 			if(StringMatch(ParamName, "SASBackground" ))
@@ -1559,6 +1562,7 @@ static Function IR3F_FitCSCylinderModel()
 				TempParam[str2num(StringFromList(1,CoefNames[i],";"))][4]=W_sigma[i]	
 			endif
 		endfor
+		endif
 		//	endif
 		NVAR AchievedChiSquare=root:Packages:Irena:CylinderModels:AchievedChiSquare
 		AchievedChiSquare=V_chisq

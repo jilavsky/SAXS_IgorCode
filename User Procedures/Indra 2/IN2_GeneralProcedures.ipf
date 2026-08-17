@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.34
+#pragma version = 2.35
 #pragma IgorVersion = 9.04
 
 //control constants
@@ -1789,7 +1789,8 @@ structure IrenaPanelDefaults
 	uchar NikaColorTable[20]		//20 characters for legend font name
 	uint32 Igor8UseLongNames		// Use long names in gor 8+.
 	uint32 UseUserNameString		// Use UserSampleName instead of folder names.
-	uint32 reserved[77]			// Reserved for future use
+	uint32 UseLSQFitErrors		// Report least square fit uncertainties? 0 = no (default), 1 = yes
+	uint32 reserved[76]			// Reserved for future use
 	
 endstructure
 //=======================================================================================
@@ -1835,7 +1836,7 @@ Function IN2G_InitConfigMain()
 	//here define the lists of variables and strings needed, separate names by ;...
 	ListOfVariables="LegendSize;TagSize;AxisLabelSize;LegendUseFolderName;LegendUseWaveName;DefaultFontSize;LastUpdateCheck;"
 	ListOfVariables+="SelectedUncertainity;LastUpdateCheckNika;LastUpdateCheckIrena;DoNotRestorePanelSizes;"
-	ListOfVariables+="Igor8UseLongNames;UseUserNameString;"
+	ListOfVariables+="Igor8UseLongNames;UseUserNameString;UseLSQFitErrors;"
 	ListOfStrings="FontType;ListOfKnownFontTypes;DefaultFontType;"
 	variable i
 	//and here we create them
@@ -1936,6 +1937,7 @@ Function IN2G_SaveIrenaGUIPackagePrefs(KillThem)
 	NVAR DoNotRestorePanelSizes = root:Packages:IrenaConfigFolder:DoNotRestorePanelSizes
 	NVAR Igor8UseLongNames=root:Packages:IrenaConfigFolder:Igor8UseLongNames
 	NVAR UseUserNameString=root:Packages:IrenaConfigFolder:UseUserNameString
+	NVAR UseLSQFitErrors=root:Packages:IrenaConfigFolder:UseLSQFitErrors
 	SVAR FontType=root:Packages:IrenaConfigFolder:FontType
 	SVAR/Z ColorTableName = root:Packages:Convert2Dto1D:ColorTableName
 	if(!SVAR_Exists(ColorTableName))
@@ -1961,6 +1963,7 @@ Function IN2G_SaveIrenaGUIPackagePrefs(KillThem)
 	Defs.NikaColorTable	 = 		ColorTableName
 	Defs.Igor8UseLongNames	 = 	Igor8UseLongNames
 	Defs.UseUserNameString	 = 	UseUserNameString
+	Defs.UseLSQFitErrors	 = 	UseLSQFitErrors
 	
 	if(KillThem)
 		SavePackagePreferences /Kill   "IrenaNika" , "IrenaNikaDefaultPanelControls.bin", 0 , Defs		//does not work below 6.10
@@ -2001,6 +2004,7 @@ Function IN2G_ReadIrenaGUIPackagePrefs(ForceRead)
 		NVAR DoNotRestorePanelSizes=root:Packages:IrenaConfigFolder:DoNotRestorePanelSizes
 		NVAR Igor8UseLongNames=root:Packages:IrenaConfigFolder:Igor8UseLongNames
 		NVAR UseUserNameString=root:Packages:IrenaConfigFolder:UseUserNameString
+		NVAR UseLSQFitErrors=root:Packages:IrenaConfigFolder:UseLSQFitErrors
 		variable PanelUp=0
 		DOWindow IN2G_MainConfigPanel  
 		if(V_Flag)
@@ -2070,6 +2074,12 @@ Function IN2G_ReadIrenaGUIPackagePrefs(ForceRead)
 				 else
 				 	UseUserNameString = 0
 				 	print "Set UseUserNameString to 0" 
+				 endif	
+				 //UseLSQFitErrors was added in a reserved slot, older preference files have 0 there.
+				 if(numtype(Defs.UseLSQFitErrors)==0)
+				 	UseLSQFitErrors = Defs.UseLSQFitErrors
+				 else
+				 	UseLSQFitErrors = 0
 				 endif	
 				 
 				//Nika uncertainity
@@ -2176,7 +2186,7 @@ Proc IN2G_MainConfigPanelProc()
 		DoWIndow/F IN2G_MainConfigPanel
 	else
 		PauseUpdate    		// building window...
-		NewPanel /K=1/W=(282,48,707,500) as "Configure Irena/Nika default fonts and names"
+		NewPanel /K=1/W=(282,48,707,560) as "Configure Irena/Nika default fonts and names"
 		DoWindow /C IN2G_MainConfigPanel
 		SetDrawLayer UserBack
 		SetDrawEnv fsize= 14,fstyle= 1,textrgb= (0,0,52224)
@@ -2187,6 +2197,8 @@ Proc IN2G_MainConfigPanelProc()
 		DrawText 30,150,"Graph text elements"
 		SetDrawEnv fsize= 14,fstyle= 3,textrgb= (63500,4369,4369)
 		DrawText 30,310,"Nika specific controls (if you need them)"
+		SetDrawEnv fsize= 14,fstyle= 3,textrgb= (63500,4369,4369)
+		DrawText 30,455,"Irena fitting tools uncertainties"
 	//	SVAR ListOfKnownFontTypes=root:Packages:IrenaConfigFolder:ListOfKnownFontTypes
 	
 		PopupMenu DefaultFontType,pos={35,65},size={113,21},proc=IN2G_PopMenuProc,title="Panel Controls Font"
@@ -2220,9 +2232,9 @@ Proc IN2G_MainConfigPanelProc()
 		PopupMenu FontType,mode=(1+WhichListItem(root:Packages:IrenaConfigFolder:FontType, root:Packages:IrenaConfigFolder:ListOfKnownFontTypes))
 		PopupMenu FontType,popvalue=root:Packages:IrenaConfigFolder:FontType,value= #"root:Packages:IrenaConfigFolder:ListOfKnownFontTypes"
 		//Long names handling
-		CheckBox Igor8UseLongNames,pos={210,340},size={80,16},noproc,title="Use long names (Igor 8+) ?"
+		CheckBox Igor8UseLongNames,pos={210,340},size={80,16},proc=IN2G_ConfigCheckProc,title="Use long names (Igor 8+) ?"
 		CheckBox Igor8UseLongNames,variable= root:Packages:IrenaConfigFolder:Igor8UseLongNames, help={"Check to use long names in igor 8+?"}
-		CheckBox UseUserNameString,pos={210,370},size={80,16},noproc,title="Use UserNameString ?"
+		CheckBox UseUserNameString,pos={210,370},size={80,16},proc=IN2G_ConfigCheckProc,title="Use UserNameString ?"
 		CheckBox UseUserNameString,variable= root:Packages:IrenaConfigFolder:UseUserNameString, help={"Check to use usernameString notfolder for GUI "}
 
 		//Nika
@@ -2234,7 +2246,11 @@ Proc IN2G_MainConfigPanelProc()
 		CheckBox ErrorCalculationsUseStdDev,variable= root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev, help={"Check to use Standard deviation for Error estimates "}
 		CheckBox ErrorCalculationsUseSEM,pos={10,400},size={80,16},proc=IN2G_ConfigErrorsCheckProc,title="Use SEM for Uncertainity?", mode=1
 		CheckBox ErrorCalculationsUseSEM,variable= root:Packages:Convert2Dto1D:ErrorCalculationsUseSEM, help={"Check to use Standard error of mean for Error estimates"}
-		Button OKButton title="OK",pos={290,420},size={120,20}
+		//Least square fitting uncertainties, used by Irena fitting tools
+		CheckBox UseLSQFitErrors,pos={10,470},size={80,16},proc=IN2G_ConfigCheckProc,title="Report least square fit uncertainties ?"
+		CheckBox UseLSQFitErrors,variable= root:Packages:IrenaConfigFolder:UseLSQFitErrors
+		CheckBox UseLSQFitErrors,help={"Report least square fit parameter uncertainties (Igor W_sigma) together with fitted parameters. These are meaningful ONLY if uncertainties of your data are correct. Default is off."}
+		Button OKButton title="OK",pos={290,520},size={120,20}
 		Button OKButton proc=IN2G_KillPrefsButtonProc
 	endif
 
@@ -2320,6 +2336,32 @@ End
 //***********************************************************
 //***********************************************************
 //***********************************************************
+//***********************************************************
+//***********************************************************
+//***********************************************************
+//***********************************************************
+//Checkboxes on the configuration panel which are meant to be remembered must store the preference
+//right away. IN2G_ConfigMain force-reads the preference file every time the panel is opened, so a
+//value which lives only in the global variable is thrown away unless the user happens to close with OK.
+//Used by UseLSQFitErrors, Igor8UseLongNames and UseUserNameString.
+//DoNotRestorePanelSizes deliberately does NOT use this - it is not meant to be remembered.
+Function IN2G_ConfigCheckProc(cba) : CheckBoxControl
+	STRUCT WMCheckboxAction &cba
+
+	switch( cba.eventCode )
+		case 2: // mouse up
+			//control names are the same as the names of the globals in IrenaConfigFolder
+			NVAR/Z ThisSetting = $("root:Packages:IrenaConfigFolder:"+cba.ctrlName)
+			if(NVAR_Exists(ThisSetting))
+				ThisSetting = cba.checked
+			endif
+			IN2G_SaveIrenaGUIPackagePrefs(0)
+			break
+	endswitch
+
+	return 0
+End
+
 //***********************************************************
 //***********************************************************
 Function IN2G_KillPrefsButtonProc(ba) : ButtonControl
@@ -2417,6 +2459,29 @@ end
 //***********************************************************
 //***********************************************************
 //***********************************************************
+//***********************************************************
+//***********************************************************
+
+//***********************************************************
+//***********************************************************
+//This returns 1 when user asked for least square fit uncertainties to be reported, 0 otherwise.
+//Safe to call from any Irena/Nika/Indra tool at any time, it creates the configuration
+//folder and the variable when they are missing (old experiments).
+Function IN2G_UseLSQFitErrors()
+
+	NVAR/Z UseLSQFitErrors = root:Packages:IrenaConfigFolder:UseLSQFitErrors
+	if(!NVAR_Exists(UseLSQFitErrors))
+		IN2G_InitConfigMain()
+		NVAR/Z UseLSQFitErrors = root:Packages:IrenaConfigFolder:UseLSQFitErrors
+		if(!NVAR_Exists(UseLSQFitErrors))
+			return 0
+		endif
+	endif
+	if(numtype(UseLSQFitErrors)!=0)
+		return 0
+	endif
+	return (UseLSQFitErrors!=0)
+end
 //***********************************************************
 //***********************************************************
 

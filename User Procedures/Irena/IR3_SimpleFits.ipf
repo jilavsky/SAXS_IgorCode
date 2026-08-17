@@ -1,6 +1,6 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.18
-constant IR3JversionNumber = 1.16			//Simple Fit panel version number
+#pragma version=1.19
+constant IR3JversionNumber = 1.17			//Simple Fit panel version number
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
@@ -364,6 +364,11 @@ Function IR3J_InitSimpleFits()
 	//parameters for Invariant and 1DCorrelation
 	ListOfVariables+="InvBckgMinQ;InvBckgMaxQ;Invariant;InvQmaxUsed;InvExtrapolateLowQ;InvContrast;InvVolumeFraction;"
 	ListOfVariables+="InvariantIrena;Corr1DZmax;Corr1DWavelength;"
+	//Least square fit uncertainties (Igor W_sigma) for the fitted parameters.
+	//Zeroed before each fit, filled in after a successful fit, 0 means "not available".
+	ListOfVariables+="Guinier_RgError;Guinier_I0Error;PowerLawPrefError;PowerLawExpError;Porod_ConstantError;"
+	ListOfVariables+="Sphere_RadiusError;Sphere_ScalingConstantError;"
+	ListOfVariables+="Spheroid_RadiusError;Spheroid_ScalingConstantError;Spheroid_BetaError;DataBackgroundError;"
 	//InvariantIrena is in 1/cm4
 	 
 //	ListOfVariables+="VOlSD_Rg;VolSD_Volume;VolSD_MeanDiameter;VolSD_MedianDiameter;VOlSD_ModeDiamater;"
@@ -1271,6 +1276,48 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 
+//*****************************************************************************************************
+//*****************************************************************************************************
+//Formats a fitted value, optionally followed by its least square fit uncertainty.
+//Returns the plain value unless the user asked for uncertainties in
+//"Configure Irena/Nika default fonts and names" AND a valid non zero uncertainty exists.
+Function/S IR3J_FmtValErr(val, err, useErr)
+	variable val, err, useErr
+
+	if(useErr && (numtype(err)==0) && (err>0))
+		return num2str(val)+" +/- "+num2str(err)
+	endif
+	return num2str(val)
+End
+
+//*****************************************************************************************************
+//*****************************************************************************************************
+//Zeroes all least square fit uncertainties. Called at the start of every fit so uncertainties
+//from a previous, different fit can never be shown next to the new parameters.
+Function IR3J_SetErrorsToZero()
+
+	DFref oldDf= GetDataFolderDFR()
+
+	SetDataFolder root:Packages:Irena:SimpleFits
+
+	string ListOfVariables = "Guinier_RgError;Guinier_I0Error;PowerLawPrefError;PowerLawExpError;Porod_ConstantError;"
+	ListOfVariables += "Sphere_RadiusError;Sphere_ScalingConstantError;"
+	ListOfVariables += "Spheroid_RadiusError;Spheroid_ScalingConstantError;Spheroid_BetaError;DataBackgroundError;"
+	variable i
+
+	for(i=0;i<itemsInList(ListOfVariables);i+=1)
+		NVAR/Z testVar = $(StringFromList(i,ListOfVariables))
+		if(NVAR_Exists(testVar))
+			testVar = 0
+		endif
+	endfor
+
+	SetDataFolder oldDf
+End
+
+//*****************************************************************************************************
+//*****************************************************************************************************
+
 static Function IR3J_FitGuinier(which)
 	string which			
 	
@@ -1286,7 +1333,11 @@ static Function IR3J_FitGuinier(which)
 	NVAR Guinier_Rg=root:Packages:Irena:SimpleFits:Guinier_Rg
 	NVAR AchievedChiSquare=root:Packages:Irena:SimpleFits:AchievedChiSquare
 	NVAR UseSMRData	=	root:Packages:Irena:SimpleFits:UseSMRData
+	NVAR Guinier_I0Error = root:Packages:Irena:SimpleFits:Guinier_I0Error
+	NVAR Guinier_RgError = root:Packages:Irena:SimpleFits:Guinier_RgError
+	variable useErr = IN2G_UseLSQFitErrors()
 
+	IR3J_SetErrorsToZero()
 	Make/D/N=0/O W_coef, LocalEwave
 	Make/D/T/N=0/O T_Constraints
 	Wave/Z W_sigma
@@ -1346,7 +1397,11 @@ static Function IR3J_FitGuinier(which)
 		SetDataFolder oldDf
 		Abort "Fitting error, check starting parameters and fitting limits"
 	endif
-	Wave W_sigma
+	Wave/Z W_sigma
+	if(WaveExists(W_sigma) && numpnts(W_sigma)>=2)
+		Guinier_I0Error = W_sigma[0]
+		Guinier_RgError = W_sigma[1]
+	endif
 	W_coef =  abs(W_coef)
 	string TagText, TagTextLin
 	AchievedChiSquare = V_chisq/(DataQEndPoint-DataQstartPoint)
@@ -1356,20 +1411,20 @@ static Function IR3J_FitGuinier(which)
 	sprintf AchiCHiStr, "%2.2f",(AchievedChiSquare)
 	strswitch(which)		// string switch
 		case "Sphere":		// execute if case matches expression
-			TagText = "Fited Guinier : I(Q) = I(0)*exp(-q\\S2\\M*Rg\\S2\\M/3)\rI(0) = "+num2str(W_coef[0])+"\tRg = "+num2str(W_coef[1])
+			TagText = "Fited Guinier : I(Q) = I(0)*exp(-q\\S2\\M*Rg\\S2\\M/3)\rI(0) = "+IR3J_FmtValErr(W_coef[0],Guinier_I0Error,useErr)+"\tRg = "+IR3J_FmtValErr(W_coef[1],Guinier_RgError,useErr)
 			TagText+="\rQ\Bmin\MRg = "+QminRg+"\tQ\Bmax\MRg = "+QmaxRg
 			TagText+="\rχ\\S2\\M  = "+AchiCHiStr
-			TagTextLin = "I(0) = "+num2str(W_coef[0])+"\tRg = "+num2str(W_coef[1])
+			TagTextLin = "I(0) = "+IR3J_FmtValErr(W_coef[0],Guinier_I0Error,useErr)+"\tRg = "+IR3J_FmtValErr(W_coef[1],Guinier_RgError,useErr)
 			TagTextLin+="\rQ\Bmin\MRg = "+QminRg+"\tQ\Bmax\MRg = "+QmaxRg
 			TagTextLin +="\rχ\\S2\\M  = "+AchiCHiStr
 			break					// exit from switch
 		case "Rod":	// execute if case matches expression
 //			TagText = "Fitted Guinier  "+"Int*Q = G*exp(-q^2*Rg^2/2))"+" \r G = "+num2str(W_coef[0])+"\r Rc = "+num2str(W_coef[1])
 //			TagText+="\rchi-square = "+num2str(V_chisq)
-			TagText = "Fited Guinier : I(Q)*Q = I(0)*exp(-q\\S2\\M*Rg\\S2\\M/2)\rI(0) = "+num2str(W_coef[0])+";   Rc = "+num2str(W_coef[1])
+			TagText = "Fited Guinier : I(Q)*Q = I(0)*exp(-q\\S2\\M*Rg\\S2\\M/2)\rI(0) = "+IR3J_FmtValErr(W_coef[0],Guinier_I0Error,useErr)+";   Rc = "+IR3J_FmtValErr(W_coef[1],Guinier_RgError,useErr)
 			TagText+="\rQ\Bmin\MRg = "+QminRg+"\tQ\Bmax\MRg = "+QmaxRg
 			TagText+="\rχ\\S2\\M  = "+AchiCHiStr
-			TagTextLin = "I(0) = "+num2str(W_coef[0])+"\t\tRc = "+num2str(W_coef[1])
+			TagTextLin = "I(0) = "+IR3J_FmtValErr(W_coef[0],Guinier_I0Error,useErr)+"\t\tRc = "+IR3J_FmtValErr(W_coef[1],Guinier_RgError,useErr)
 			TagTextLin+="\rQ\Bmin\MRg = "+QminRg+"\tQ\Bmax\MRg = "+QmaxRg
 			TagTextLin +="\rχ\\S2\\M  = "+AchiCHiStr
 			break
@@ -1377,12 +1432,12 @@ static Function IR3J_FitGuinier(which)
 //			TagText = "Fitted Guinier  "+"Int*Q^2 = G*exp(-q^2*Rg^2))"+" \r G = "+num2str(W_coef[0])+"\r Rg = "+num2str(W_coef[1])
 //			TagText+="\r Thickness = "+num2str(W_coef[1]*sqrt(12))
 //			TagText+="\r chi-square = "+num2str(V_chisq)
-			TagText = "Fited Guinier : I(Q)*Q\S2\M = I(0)*exp(-q\\S2\\M*Rg\\S2\\M)\rI(0) = "+num2str(W_coef[0])+"\tRg = "+num2str(W_coef[1])
-			TagText+="\rThickness = "+num2str(W_coef[1]*sqrt(12))
+			TagText = "Fited Guinier : I(Q)*Q\S2\M = I(0)*exp(-q\\S2\\M*Rg\\S2\\M)\rI(0) = "+IR3J_FmtValErr(W_coef[0],Guinier_I0Error,useErr)+"\tRg = "+IR3J_FmtValErr(W_coef[1],Guinier_RgError,useErr)
+			TagText+="\rThickness = "+IR3J_FmtValErr(W_coef[1]*sqrt(12),Guinier_RgError*sqrt(12),useErr)
 			TagText+="\rQ\Bmin\MRg = "+QminRg+"\tQ\Bmax\MRg = "+QmaxRg
 			TagText+="\rχ\\S2\\M  = "+AchiCHiStr
-			TagTextLin = "I(0) = "+num2str(W_coef[0])+"\tRg = "+num2str(W_coef[1])
-			TagTextLin+="\rThickness = "+num2str(W_coef[1]*sqrt(12))
+			TagTextLin = "I(0) = "+IR3J_FmtValErr(W_coef[0],Guinier_I0Error,useErr)+"\tRg = "+IR3J_FmtValErr(W_coef[1],Guinier_RgError,useErr)
+			TagTextLin+="\rThickness = "+IR3J_FmtValErr(W_coef[1]*sqrt(12),Guinier_RgError*sqrt(12),useErr)
 			TagTextLin+="\rQ\Bmin\MRg = "+QminRg+"\tQ\Bmax\MRg = "+QmaxRg
 			TagTextLin +="\rχ\\S2\\M  = "+AchiCHiStr
 			break
@@ -1599,6 +1654,11 @@ static Function IR3J_FitPorod()
 	Wave/Z CursorBWave = CsrWaveRef(B, "IR3J_LogLogDataDisplay")
 	Wave CursorAXWave= CsrXWaveRef(A, "IR3J_LogLogDataDisplay")
 	Wave OriginalDataErrorWave=root:Packages:Irena:SimpleFits:OriginalDataErrorWave
+	NVAR Porod_ConstantError = root:Packages:Irena:SimpleFits:Porod_ConstantError
+	NVAR DataBackgroundError = root:Packages:Irena:SimpleFits:DataBackgroundError
+	variable useErr = IN2G_UseLSQFitErrors()
+
+	IR3J_SetErrorsToZero()
 	Make/D/N=0/O W_coef, LocalEwave
 	Make/D/T/N=0/O T_Constraints
 	Wave/Z W_sigma
@@ -1627,12 +1687,16 @@ static Function IR3J_FitPorod()
 		FuncFit PorodInLogLog W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /C=T_Constraints /W=OriginalDataErrorWave /I=1
  	endif
 	if (V_FitError==0)	// fitting was fine... 
-		Wave W_sigma
+		Wave/Z W_sigma
+		if(WaveExists(W_sigma) && numpnts(W_sigma)>=2)
+			Porod_ConstantError = W_sigma[0]
+			DataBackgroundError = W_sigma[1]
+		endif
 		AchievedChiSquare = V_chisq/(DataQEndPoint-DataQstartPoint)
 		string QminRg, QmaxRg, AchiCHiStr
 		sprintf AchiCHiStr, "%2.2f",(AchievedChiSquare)
 		string TagText
-		TagText = "Fitted Porod  "+"I(Q) = P\BC\M * Q\S-4\M + background"+" \r P\BC\M = "+num2str(W_coef[0])+"\r Background = "+num2str(W_coef[1])
+		TagText = "Fitted Porod  "+"I(Q) = P\BC\M * Q\S-4\M + background"+" \r P\BC\M = "+IR3J_FmtValErr(W_coef[0],Porod_ConstantError,useErr)+"\r Background = "+IR3J_FmtValErr(W_coef[1],DataBackgroundError,useErr)
 		TagText +="\rχ\\S2\\M  = "+AchiCHiStr
 		string TagName= "PorodFit" 
 		Tag/C/W=IR3J_LogLogDataDisplay/N=$(TagName)/L=2/X=-15.00/Y=-15.00  $NameOfWave(CursorAWave), ((DataQstartPoint + DataQEndPoint)/2),TagText	
@@ -1673,6 +1737,12 @@ static Function IR3J_FitPowerLaw()
 	Wave/Z CursorBWave = CsrWaveRef(B, "IR3J_LogLogDataDisplay")
 	Wave CursorAXWave= CsrXWaveRef(A, "IR3J_LogLogDataDisplay")
 	Wave OriginalDataErrorWave=root:Packages:Irena:SimpleFits:OriginalDataErrorWave
+	NVAR PowerLawPrefError = root:Packages:Irena:SimpleFits:PowerLawPrefError
+	NVAR PowerLawExpError = root:Packages:Irena:SimpleFits:PowerLawExpError
+	NVAR DataBackgroundError = root:Packages:Irena:SimpleFits:DataBackgroundError
+	variable useErr = IN2G_UseLSQFitErrors()
+
+	IR3J_SetErrorsToZero()
 	Make/D/N=0/O W_coef, LocalEwave
 	Make/D/T/N=0/O T_Constraints
 	Wave/Z W_sigma
@@ -1706,12 +1776,17 @@ static Function IR3J_FitPowerLaw()
 		FuncFit IR3J_PowerLawInLogLog W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /C=T_Constraints /W=OriginalDataErrorWave /I=1
 	endif
 	if (V_FitError==0)	// fitting was fine... 
-		Wave W_sigma
+		Wave/Z W_sigma
+		if(WaveExists(W_sigma) && numpnts(W_sigma)>=3)
+			PowerLawPrefError = W_sigma[0]
+			PowerLawExpError = W_sigma[1]
+			DataBackgroundError = W_sigma[2]
+		endif
 		AchievedChiSquare = V_chisq/(DataQEndPoint-DataQstartPoint)
 		string QminRg, QmaxRg, AchiCHiStr
 		sprintf AchiCHiStr, "%2.2f",(AchievedChiSquare)
 		string TagText
-		TagText = "Fitted Power Law  "+"I(Q) = P * Q\S-Exp\M + back"+" \r P = "+num2str(W_coef[0])+"\r Exp = "+num2str(W_coef[1])+"\r Back = "+num2str(W_coef[2])
+		TagText = "Fitted Power Law  "+"I(Q) = P * Q\S-Exp\M + back"+" \r P = "+IR3J_FmtValErr(W_coef[0],PowerLawPrefError,useErr)+"\r Exp = "+IR3J_FmtValErr(W_coef[1],PowerLawExpError,useErr)+"\r Back = "+IR3J_FmtValErr(W_coef[2],DataBackgroundError,useErr)
 		TagText +="\rχ\\S2\\M  = "+AchiCHiStr
 		string TagName= "PowerLaw_fit" 
 		Tag/C/W=IR3J_LogLogDataDisplay/N=$(TagName)/L=2/X=-15.00/Y=-15.00  $NameOfWave(CursorAWave), ((DataQstartPoint + DataQEndPoint)/2),TagText	
@@ -1840,6 +1915,12 @@ static Function IR3J_FitSphere()
 	NVAR DataBackground=root:Packages:Irena:SimpleFits:DataBackground
 	NVAR AchievedChiSquare=root:Packages:Irena:SimpleFits:AchievedChiSquare
 	NVAR UseSMRData	=	root:Packages:Irena:SimpleFits:UseSMRData
+	NVAR Sphere_RadiusError = root:Packages:Irena:SimpleFits:Sphere_RadiusError
+	NVAR Sphere_ScalingConstantError = root:Packages:Irena:SimpleFits:Sphere_ScalingConstantError
+	NVAR DataBackgroundError = root:Packages:Irena:SimpleFits:DataBackgroundError
+	variable useErr = IN2G_UseLSQFitErrors()
+
+	IR3J_SetErrorsToZero()
 	Make/D/N=0/O W_coef, LocalEwave
 	Make/D/T/N=0/O T_Constraints
 	Wave/Z W_sigma
@@ -1876,9 +1957,14 @@ static Function IR3J_FitSphere()
 		SetDataFolder oldDf
 		Abort "Fitting error, check starting parameters and fitting limits"
 	endif
-	Wave W_sigma
+	Wave/Z W_sigma
+	if(WaveExists(W_sigma) && numpnts(W_sigma)>=3)
+		Sphere_ScalingConstantError = W_sigma[0]
+		Sphere_RadiusError = W_sigma[1]
+		DataBackgroundError = W_sigma[2]
+	endif
 	string TagText
-	TagText = "Fitted Sphere Form Factor   \r"+"Int=Scale*3/(QR*QR*QR))*(sin(QR)-(QR*cos(QR)))+bck"+" \r Radius [A] = "+num2str(W_coef[1])+" \r Scale = "+num2str(W_coef[0])+"\r Background = "+num2str(W_coef[2])
+	TagText = "Fitted Sphere Form Factor   \r"+"Int=Scale*3/(QR*QR*QR))*(sin(QR)-(QR*cos(QR)))+bck"+" \r Radius [A] = "+IR3J_FmtValErr(W_coef[1],Sphere_RadiusError,useErr)+" \r Scale = "+IR3J_FmtValErr(W_coef[0],Sphere_ScalingConstantError,useErr)+"\r Background = "+IR3J_FmtValErr(W_coef[2],DataBackgroundError,useErr)
 	TagText+="\r chi-square = "+num2str(V_chisq)
 	string TagName= "SphereFit" 
 	Tag/C/W=IR3J_LogLogDataDisplay/N=$(TagName)/L=2/X=-15.00/Y=-15.00  $NameOfWave(CursorAWave), ((DataQstartPoint + DataQEndPoint)/2),TagText	
@@ -1941,6 +2027,13 @@ static Function IR3J_FitSpheroid()
 	NVAR DataBackground=root:Packages:Irena:SimpleFits:DataBackground
 	NVAR AchievedChiSquare=root:Packages:Irena:SimpleFits:AchievedChiSquare
 	NVAR UseSMRData	=	root:Packages:Irena:SimpleFits:UseSMRData
+	NVAR Spheroid_RadiusError = root:Packages:Irena:SimpleFits:Spheroid_RadiusError
+	NVAR Spheroid_ScalingConstantError = root:Packages:Irena:SimpleFits:Spheroid_ScalingConstantError
+	NVAR Spheroid_BetaError = root:Packages:Irena:SimpleFits:Spheroid_BetaError
+	NVAR DataBackgroundError = root:Packages:Irena:SimpleFits:DataBackgroundError
+	variable useErr = IN2G_UseLSQFitErrors()
+
+	IR3J_SetErrorsToZero()
 	Make/D/N=0/O W_coef, LocalEwave
 	Make/D/T/N=0/O T_Constraints
 	Wave/Z W_sigma
@@ -1983,11 +2076,17 @@ static Function IR3J_FitSpheroid()
 		SetDataFolder oldDf
 		Abort "Fitting error, check starting parameters and fitting limits"
 	endif
-	Wave W_sigma
+	Wave/Z W_sigma
+	if(WaveExists(W_sigma) && numpnts(W_sigma)>=4)
+		Spheroid_ScalingConstantError = W_sigma[0]
+		Spheroid_RadiusError = W_sigma[1]
+		Spheroid_BetaError = W_sigma[2]
+		DataBackgroundError = W_sigma[3]
+	endif
 	AchievedChiSquare = V_chisq/(DataQEndPoint-DataQstartPoint)
 	string TagText
-	TagText = "Fitted Spheroid Form Factor   \r"+"Int=Scale*SpheroidFF(Q,R,beta)+bck"+" \r Radius [A] = "+num2str(W_coef[1])+" \r Aspect ratio = "+num2str(W_coef[2])+" \r Scale = "+num2str(W_coef[0])
-	TagText+="\r Background = "+num2str(W_coef[3])
+	TagText = "Fitted Spheroid Form Factor   \r"+"Int=Scale*SpheroidFF(Q,R,beta)+bck"+" \r Radius [A] = "+IR3J_FmtValErr(W_coef[1],Spheroid_RadiusError,useErr)+" \r Aspect ratio = "+IR3J_FmtValErr(W_coef[2],Spheroid_BetaError,useErr)+" \r Scale = "+IR3J_FmtValErr(W_coef[0],Spheroid_ScalingConstantError,useErr)
+	TagText+="\r Background = "+IR3J_FmtValErr(W_coef[3],DataBackgroundError,useErr)
 	TagText+="\r chi-square = "+num2str(V_chisq)
 	string TagName= "SpheroidFit" 
 	Tag/C/W=IR3J_LogLogDataDisplay/N=$(TagName)/L=2/X=-15.00/Y=-15.00  $NameOfWave(CursorAWave), ((DataQstartPoint + DataQEndPoint)/2),TagText	
@@ -2295,6 +2394,19 @@ static Function IR3J_SaveResultsToNotebook()
 	NVAR PowerLawPref = root:Packages:Irena:SimpleFits:PowerLawPref
 	NVAR PowerLawExp = root:Packages:Irena:SimpleFits:PowerLawExp
 	NVAR DataBackground=root:Packages:Irena:SimpleFits:DataBackground
+	//least square fit uncertainties, reported only when the user asked for them
+	NVAR Guinier_I0Error = root:Packages:Irena:SimpleFits:Guinier_I0Error
+	NVAR Guinier_RgError = root:Packages:Irena:SimpleFits:Guinier_RgError
+	NVAR Porod_ConstantError = root:Packages:Irena:SimpleFits:Porod_ConstantError
+	NVAR PowerLawPrefError = root:Packages:Irena:SimpleFits:PowerLawPrefError
+	NVAR PowerLawExpError = root:Packages:Irena:SimpleFits:PowerLawExpError
+	NVAR Sphere_RadiusError = root:Packages:Irena:SimpleFits:Sphere_RadiusError
+	NVAR Sphere_ScalingConstantError = root:Packages:Irena:SimpleFits:Sphere_ScalingConstantError
+	NVAR Spheroid_RadiusError = root:Packages:Irena:SimpleFits:Spheroid_RadiusError
+	NVAR Spheroid_ScalingConstantError = root:Packages:Irena:SimpleFits:Spheroid_ScalingConstantError
+	NVAR Spheroid_BetaError = root:Packages:Irena:SimpleFits:Spheroid_BetaError
+	NVAR DataBackgroundError = root:Packages:Irena:SimpleFits:DataBackgroundError
+	variable useErr = IN2G_UseLSQFitErrors()
 
 	Wave/Z ModelInt = root:Packages:Irena:SimpleFits:ModelLogLogInt
 	Wave/Z ModelQ = root:Packages:Irena:SimpleFits:ModelLogLogQ
@@ -2312,40 +2424,44 @@ static Function IR3J_SaveResultsToNotebook()
 	IR1_AppendAnyText("Qmin = "+num2str(DataQstart),0)
 	IR1_AppendAnyText("Qmax = "+num2str(DataQEnd),0)
 	IR1_AppendAnyText(" ",0)	
+	if(useErr)
+		IR1_AppendAnyText("Uncertainties (+/-) are least square standard errors (Igor W_sigma), NOT rescaled by reduced Chi-squared.",0)
+		IR1_AppendAnyText(" ",0)
+	endif
 	if(stringmatch(SimpleModel,"Guinier"))
-		IR1_AppendAnyText("\tRg                  = "+num2str(Guinier_Rg),0)
-		IR1_AppendAnyText("\tI0                  = "+num2str(Guinier_I0),0)
+		IR1_AppendAnyText("\tRg                  = "+IR3J_FmtValErr(Guinier_Rg,Guinier_RgError,useErr),0)
+		IR1_AppendAnyText("\tI0                  = "+IR3J_FmtValErr(Guinier_I0,Guinier_I0Error,useErr),0)
 		IR1_AppendAnyText("Achieved Normalized chi-square = "+num2str(AchievedChiSquare),0)
 	elseif(stringmatch(SimpleModel,"Guinier Rod"))
-		IR1_AppendAnyText("\tRc                  = "+num2str(Guinier_Rg),0)
-		IR1_AppendAnyText("\tI0                  = "+num2str(Guinier_I0),0)
+		IR1_AppendAnyText("\tRc                  = "+IR3J_FmtValErr(Guinier_Rg,Guinier_RgError,useErr),0)
+		IR1_AppendAnyText("\tI0                  = "+IR3J_FmtValErr(Guinier_I0,Guinier_I0Error,useErr),0)
 		IR1_AppendAnyText("Achieved Normalized chi-square = "+num2str(AchievedChiSquare),0)
 	elseif(stringmatch(SimpleModel,"Guinier Sheet"))
-		IR1_AppendAnyText("\tThickness           = "+num2str(sqrt(12)*Guinier_Rg),0)
-		IR1_AppendAnyText("\tI0                  = "+num2str(Guinier_I0),0)
+		IR1_AppendAnyText("\tThickness           = "+IR3J_FmtValErr(sqrt(12)*Guinier_Rg,sqrt(12)*Guinier_RgError,useErr),0)
+		IR1_AppendAnyText("\tI0                  = "+IR3J_FmtValErr(Guinier_I0,Guinier_I0Error,useErr),0)
 		IR1_AppendAnyText("Achieved Normalized chi-square = "+num2str(AchievedChiSquare),0)
 	elseif(stringmatch(SimpleModel,"Porod"))
-		IR1_AppendAnyText("\tPorod Constant [1/cm 1/A^4] = "+num2str(Porod_Constant),0)
+		IR1_AppendAnyText("\tPorod Constant [1/cm 1/A^4] = "+IR3J_FmtValErr(Porod_Constant,Porod_ConstantError,useErr),0)
 		IR1_AppendAnyText("\tSpecific Surface [cm2/cm3] = "+num2str(Porod_SpecificSurface),0)
 		IR1_AppendAnyText("\tContrast [10^20 cm^-4] = "+num2str(ScatteringContrast),0)
-		IR1_AppendAnyText("\tBackground          = "+num2str(DataBackground),0)
+		IR1_AppendAnyText("\tBackground          = "+IR3J_FmtValErr(DataBackground,DataBackgroundError,useErr),0)
 		IR1_AppendAnyText("Achieved Normalized chi-square = "+num2str(AchievedChiSquare),0)
 	elseif(stringmatch(SimpleModel,"Power Law"))
 		IR1_AppendAnyText("\tInt = Pref * Q^(-Exp) + Background",0)
-		IR1_AppendAnyText("\tPrefactor 				= "+num2str(PowerLawPref),0)
-		IR1_AppendAnyText("\tExponent 				= "+num2str(PowerLawExp),0)
-		IR1_AppendAnyText("\tBackground          = "+num2str(DataBackground),0)
+		IR1_AppendAnyText("\tPrefactor 				= "+IR3J_FmtValErr(PowerLawPref,PowerLawPrefError,useErr),0)
+		IR1_AppendAnyText("\tExponent 				= "+IR3J_FmtValErr(PowerLawExp,PowerLawExpError,useErr),0)
+		IR1_AppendAnyText("\tBackground          = "+IR3J_FmtValErr(DataBackground,DataBackgroundError,useErr),0)
 		IR1_AppendAnyText("Achieved Normalized chi-square = "+num2str(AchievedChiSquare),0)
 	elseif(stringmatch(SimpleModel,"Sphere"))
-		IR1_AppendAnyText("\tSphere Radius [A]   = "+num2str(Sphere_Radius),0)
-		IR1_AppendAnyText("\tScaling constant    = "+num2str(Sphere_ScalingConstant),0)
-		IR1_AppendAnyText("\tBackground = "+num2str(DataBackground),0)
+		IR1_AppendAnyText("\tSphere Radius [A]   = "+IR3J_FmtValErr(Sphere_Radius,Sphere_RadiusError,useErr),0)
+		IR1_AppendAnyText("\tScaling constant    = "+IR3J_FmtValErr(Sphere_ScalingConstant,Sphere_ScalingConstantError,useErr),0)
+		IR1_AppendAnyText("\tBackground = "+IR3J_FmtValErr(DataBackground,DataBackgroundError,useErr),0)
 		IR1_AppendAnyText("Achieved Normalized chi-square = "+num2str(AchievedChiSquare),0)
 	elseif(stringmatch(SimpleModel,"Spheroid"))
-		IR1_AppendAnyText("\tSpheroid Radius [A] = "+num2str(Spheroid_Radius),0)
-		IR1_AppendAnyText("\tScaling constant    = "+num2str(Spheroid_ScalingConstant),0)
-		IR1_AppendAnyText("\tSpheroid Beta       = "+num2str(Spheroid_Beta),0)
-		IR1_AppendAnyText("\tBackground          = "+num2str(DataBackground),0)
+		IR1_AppendAnyText("\tSpheroid Radius [A] = "+IR3J_FmtValErr(Spheroid_Radius,Spheroid_RadiusError,useErr),0)
+		IR1_AppendAnyText("\tScaling constant    = "+IR3J_FmtValErr(Spheroid_ScalingConstant,Spheroid_ScalingConstantError,useErr),0)
+		IR1_AppendAnyText("\tSpheroid Beta       = "+IR3J_FmtValErr(Spheroid_Beta,Spheroid_BetaError,useErr),0)
+		IR1_AppendAnyText("\tBackground          = "+IR3J_FmtValErr(DataBackground,DataBackgroundError,useErr),0)
 		IR1_AppendAnyText("Achieved Normalized chi-square = "+num2str(AchievedChiSquare),0)
 	elseif(stringmatch(SimpleModel,"Invariant"))
 		IR1_AppendAnyText("\tInvariant [(mol e-^2/cm^3)^3] 	= "+num2str(Invariant),0)
