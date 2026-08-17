@@ -1,5 +1,5 @@
 #pragma rtGlobals=3 // Use modern global access method.
-#pragma version=1.37
+#pragma version=1.38
 
 Constant IR2LversionNumber = 1.26
 
@@ -10,6 +10,8 @@ Constant IR2LversionNumber = 1.26
 //*************************************************************************/
 
 
+//1.38 results notebook now reports Chi-squared, reduced Chi-squared, number of points fitted and
+//     number of fitted parameters, and the fitted background with its uncertainty.
 //1.37 added optional reporting of least square fit uncertainties (W_sigma) for all fitted parameters.
 //     Controlled by "Report least square fit uncertainties" in Configure Irena/Nika default fonts and names.
 //1.36 AI cleanup and debug
@@ -2018,6 +2020,8 @@ Function IR2L_Fitting(SkipDialogs)
 
 	IR2L_RecordErrorsAfterFit()
 	variable/G AchievedChisq = V_chisq
+	variable/G NumberOfPointsFitted = numpnts(IntWvForFit)		//N, all used data sets together
+	variable/G NumberOfFittedParams = numpnts(W_coef)			//P
 	variable/G AchievedChisqReduced = V_chisq / max(1, (numpnts(IntWvForFit) - numpnts(W_coef)))
 	//	IR1U_GraphModelData()
 	IR2L_RecordResults("after")

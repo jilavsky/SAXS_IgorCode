@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.57
+#pragma version=1.58
 
 
 constant ChangeFromGaussToSlit=2
@@ -10,6 +10,8 @@ constant ChangeFromGaussToSlit=2
 //*************************************************************************/
 
 
+//1.58 results notebook: added Chi-squared, reduced Chi-squared, N, P and degrees of freedom, number of
+//     points fitted per data set, and the fitted background with its uncertainty.
 //1.57 optional reporting of least square fit uncertainties (W_sigma) in tags and results notebook.
 //     Fixed graph tag attachment point - the point number was looked up in Q_setN but the tags are
 //     attached to IntensityModel_setN which is plotted against the trimmed Qmodel_setN, so every tag
@@ -3339,12 +3341,32 @@ Function IR2L_SvNbk_ModelInf()
 //	//write header here... separator and some heading to divide the record.... 
 	IR2L_AppendAnyText("   ",2)	//separate
 	IR2L_AppendAnyText("Model data for "+num2str(k)+" population(s) used to obtain above results"+"\r",1)	
+	//Fit statistics of the last fit. "Chi-squared" is the raw weighted sum of squares which Igor
+	//returns in V_chisq, "reduced Chi-squared" is that divided by the degrees of freedom. The reduced
+	//value is the one which should be near 1 for a good fit - both are printed so there is no doubt
+	//which quantity is which.
+	NVAR/Z AchievedChisq = root:Packages:IR2L_NLSQF:AchievedChisq
+	NVAR/Z AchievedChisqReduced = root:Packages:IR2L_NLSQF:AchievedChisqReduced
+	NVAR/Z NumberOfPointsFitted = root:Packages:IR2L_NLSQF:NumberOfPointsFitted
+	NVAR/Z NumberOfFittedParams = root:Packages:IR2L_NLSQF:NumberOfFittedParams
+	if(NVAR_Exists(AchievedChisq))
+		IR2L_AppendAnyText("Fit statistics of the last fit",1)
+		if(NVAR_Exists(NumberOfPointsFitted) && NVAR_Exists(NumberOfFittedParams))
+			IR2L_AppendAnyText("Number of points fitted (N, all used data sets together)\t=\t"+num2str(NumberOfPointsFitted),0)
+			IR2L_AppendAnyText("Number of fitted parameters (P)\t=\t"+num2str(NumberOfFittedParams),0)
+			IR2L_AppendAnyText("Degrees of freedom (N-P)\t=\t"+num2str(NumberOfPointsFitted-NumberOfFittedParams),0)
+		endif
+		IR2L_AppendAnyText("Chi-squared = sum over fitted points of ((Intensity-Model)/Uncertainty)^2\t=\t"+num2str(AchievedChisq),0)
+		if(NVAR_Exists(AchievedChisqReduced))
+			IR2L_AppendAnyText("Reduced Chi-squared = Chi-squared/(N-P)\t=\t"+num2str(AchievedChisqReduced),0)
+			IR2L_AppendAnyText("Reduced Chi-squared near 1 means the model describes the data within their uncertainties.",0)
+		endif
+		IR2L_AppendAnyText("  ",0)
+	endif
 	if(useErr)
-		NVAR/Z AchievedChisqReduced = root:Packages:IR2L_NLSQF:AchievedChisqReduced
 		IR2L_AppendAnyText("Uncertainties (+/-) are least square standard errors (Igor W_sigma) of the last fit. They are NOT rescaled by reduced Chi-squared,",0)
 		IR2L_AppendAnyText("so they are meaningful only if uncertainties of your data are correct, which requires reduced Chi-squared close to 1.",0)
 		if(NVAR_Exists(AchievedChisqReduced))
-			IR2L_AppendAnyText("Reduced Chi-squared of the last fit \t=\t"+num2str(AchievedChisqReduced),0)
 			IR2L_AppendAnyText("To rescale the uncertainties for mis-scaled data uncertainties multiply them by sqrt(reduced Chi-squared).",0)
 		endif
 		IR2L_AppendAnyText("Derived values (Mean, Mode, Median, FWHM, Rg, peak position/FWHM/integral intensity) have NO propagated uncertainty.",0)
@@ -3855,11 +3877,41 @@ Function IR2L_SvNbk_DataSetSave(WdtSt)
 		endif
 	endfor
 		
-	ListOfDataVariables="DataScalingFactor;ErrorScalingFactor;Qmin;Qmax;Background;"
+	//Background is handled separately below so its least square uncertainty can be reported
+	ListOfDataVariables="DataScalingFactor;ErrorScalingFactor;Qmin;Qmax;"
 	for(i=0;i<itemsInList(ListOfDataVariables);i+=1)	
 		NVAR testVar = $(StringFromList(i,ListOfDataVariables)+"_set"+num2str(j))
 		IR2L_AppendAnyText(StringFromList(i,ListOfDataVariables)+"_set"+num2str(j)+"\t=\t"+num2str(testVar),0)
 	endfor	
+
+	//Number of points of this data set inside [Qmin,Qmax], which is what the fit actually uses.
+	//Users need this together with Qmin/Qmax to judge Chi-squared and the parameter uncertainties.
+	WAVE/Z QwaveForCount = $("root:Packages:IR2L_NLSQF:Q_set"+num2str(j))
+	NVAR QminForCount = $("root:Packages:IR2L_NLSQF:Qmin_set"+num2str(j))
+	NVAR QmaxForCount = $("root:Packages:IR2L_NLSQF:Qmax_set"+num2str(j))
+	variable QstartPnt, QendPnt
+	if(WaveExists(QwaveForCount) && numpnts(QwaveForCount)>1)
+		QstartPnt = BinarySearch(QwaveForCount, QminForCount)
+		QendPnt = BinarySearch(QwaveForCount, QmaxForCount)
+		if(QstartPnt<0)
+			QstartPnt = 0
+		endif
+		if(QendPnt<0)
+			QendPnt = numpnts(QwaveForCount)-1
+		endif
+		IR2L_AppendAnyText("NumberOfPointsFitted_set"+num2str(j)+"\t=\t"+num2str(QendPnt-QstartPnt+1),0)
+	endif
+
+	//Background, with its least square uncertainty when it was fitted
+	variable useErr = IN2G_UseLSQFitErrors()
+	NVAR BackgroundVal = $("root:Packages:IR2L_NLSQF:Background_set"+num2str(j))
+	NVAR BackgroundFitted = $("root:Packages:IR2L_NLSQF:BackgroundFit_set"+num2str(j))
+	NVAR/Z BackgErrVal = $("root:Packages:IR2L_NLSQF:BackgErr_set"+num2str(j))
+	if(BackgroundFitted && NVAR_Exists(BackgErrVal))
+		IR2L_AppendAnyText("Background_set"+num2str(j)+"\t=\t"+IR2L_FmtValErr(BackgroundVal,BackgErrVal,useErr)+"\t(fitted)",0)
+	else
+		IR2L_AppendAnyText("Background_set"+num2str(j)+"\t=\t"+num2str(BackgroundVal)+"\t(fixed)",0)
+	endif
 	
 	//Slit smeared data?
 	NVAR SlitSmeared = $("root:Packages:IR2L_NLSQF:SlitSmeared_set"+num2str(j))
