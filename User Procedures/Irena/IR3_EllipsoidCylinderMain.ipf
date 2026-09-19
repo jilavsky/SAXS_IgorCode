@@ -1,7 +1,7 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version=0.4
+#pragma version=0.5
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratorys
@@ -1565,8 +1565,19 @@ static Function IR3F_FitCSCylinderModel()
 		endif
 		//	endif
 		NVAR AchievedChiSquare=root:Packages:Irena:CylinderModels:AchievedChiSquare
-		AchievedChiSquare=V_chisq
+		AchievedChiSquare=V_chisq			//raw Chi-squared, sum of ((data-model)/uncertainty)^2
+		Variable/G root:Packages:Irena:CylinderModels:NumberOfPointsFitted		//N
+		NVAR NumPntsFittedRef = root:Packages:Irena:CylinderModels:NumberOfPointsFitted
+		NumPntsFittedRef = numpnts(FitIntensityWave)
+		Variable/G root:Packages:Irena:CylinderModels:NumberOfFittedParams			//P
+		NVAR NumFitParamsRef = root:Packages:Irena:CylinderModels:NumberOfFittedParams
+		NumFitParamsRef = numpnts(CoefNames)
+		Variable/G root:Packages:Irena:CylinderModels:AchievedChisqReduced
+		NVAR ChiSqReducedRef = root:Packages:Irena:CylinderModels:AchievedChisqReduced
+		ChiSqReducedRef = IN2G_ReducedChiSq(V_chisq, numpnts(FitIntensityWave), numpnts(CoefNames))
 		print "Fitting ended with achieved chi-square = "+num2str(V_chisq)+" - note, this may be different than penl set one since that is always for Intensity vs Q" 
+		print "Number of points fitted (N) = "+num2str(NumberOfPointsFitted)+" ; number of fitted parameters (P) = "+num2str(NumberOfFittedParams)
+		print "Reduced chi-square (chi-square/(N-P)) = "+num2str(AchievedChisqReduced)+"  - this is the value which should be near 1 for a good fit"
 		IR3F_AutoRecalculateModelData(1)
 		IR3F_KillWarningPanel()
 	setDataFolder OldDf

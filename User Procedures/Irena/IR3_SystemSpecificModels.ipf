@@ -1,7 +1,7 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version=1.04
+#pragma version=1.05
 
 
 //*************************************************************************\
@@ -1845,7 +1845,16 @@ static Function IR3S_FitSysSpecificModels()
 		endif
 		//	endif
 		NVAR AchievedChiSquare=root:Packages:Irena:SysSpecModels:AchievedChiSquare
-		AchievedChiSquare=V_chisq
+		AchievedChiSquare=V_chisq			//raw Chi-squared, sum of ((data-model)/uncertainty)^2
+		Variable/G root:Packages:Irena:SysSpecModels:NumberOfPointsFitted		//N
+		NVAR NumPntsFittedRef = root:Packages:Irena:SysSpecModels:NumberOfPointsFitted
+		NumPntsFittedRef = numpnts(FitIntensityWave)
+		Variable/G root:Packages:Irena:SysSpecModels:NumberOfFittedParams			//P
+		NVAR NumFitParamsRef = root:Packages:Irena:SysSpecModels:NumberOfFittedParams
+		NumFitParamsRef = numpnts(CoefNames)
+		Variable/G root:Packages:Irena:SysSpecModels:AchievedChisqReduced
+		NVAR ChiSqReducedRef = root:Packages:Irena:SysSpecModels:AchievedChisqReduced
+		ChiSqReducedRef = IN2G_ReducedChiSq(V_chisq, numpnts(FitIntensityWave), numpnts(CoefNames))
 		IR3S_AutoRecalculateModelData(1)
 
 	setDataFolder OldDf

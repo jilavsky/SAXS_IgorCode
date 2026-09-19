@@ -1,5 +1,5 @@
 #pragma rtGlobals=3 // Use modern global access method.
-#pragma version=1.22
+#pragma version=1.23
 Constant IR2DversionNumber = 1.15
 
 //*************************************************************************\
@@ -2418,10 +2418,21 @@ Function IR2D_Fitting()
 			NVAR TempVar = $(ParamName)
 			TempVar = W_Coef[i]
 		endfor
-		print "Achieved chi-square = " + num2str(V_chisq)
+		print "Chi-squared (sum over fitted points of ((data-model)/uncertainty)^2) = " + num2str(V_chisq)
+		print "Number of points fitted (N) = " + num2str(numpnts(IntensityForFit)) + " ; number of fitted parameters (P) = " + num2str(numpnts(W_coef))
+		print "Reduced Chi-squared (Chi-squared/(N-P)) = " + num2str(IN2G_ReducedChiSq(V_chisq, numpnts(IntensityForFit), numpnts(W_coef))) + "   - near 1 means the model fits within the data uncertainties"
 	endif
 
-	variable/G AchievedChisq = V_chisq
+	variable/G AchievedChisq = V_chisq			//raw Chi-squared, sum of ((data-model)/uncertainty)^2
+	Variable/G root:Packages:Irena_SAD:NumberOfPointsFitted		//N
+	NVAR NumPntsFittedRef = root:Packages:Irena_SAD:NumberOfPointsFitted
+	NumPntsFittedRef = numpnts(IntensityForFit)
+	Variable/G root:Packages:Irena_SAD:NumberOfFittedParams			//P
+	NVAR NumFitParamsRef = root:Packages:Irena_SAD:NumberOfFittedParams
+	NumFitParamsRef = numpnts(W_coef)
+	Variable/G root:Packages:Irena_SAD:AchievedChisqReduced
+	NVAR ChiSqReducedRef = root:Packages:Irena_SAD:AchievedChisqReduced
+	ChiSqReducedRef = IN2G_ReducedChiSq(V_chisq, numpnts(IntensityForFit), numpnts(W_coef))
 	IR2D_RecordResults("after")
 	KillWaves/Z T_Constraints, E_wave
 
@@ -2609,7 +2620,19 @@ Function IR2D_RecordResults(CalledFromWere)
 	IR1L_AppendAnyText("Qvector     : " + QWavename)
 	IR1L_AppendAnyText("Error     : " + ErrorWaveName)
 	if(NVAR_Exists(AchievedChiSq))
-		IR1L_AppendAnyText("Achieved chi^2     : " + num2str(AchievedChiSq))
+		IR1L_AppendAnyText("Chi-squared = sum over fitted points of ((Intensity-Model)/Uncertainty)^2 : " + num2str(AchievedChiSq))
+	endif
+	NVAR/Z NumberOfPointsFitted = root:Packages:Irena_SAD:NumberOfPointsFitted
+	NVAR/Z NumberOfFittedParams = root:Packages:Irena_SAD:NumberOfFittedParams
+	NVAR/Z AchievedChisqReduced = root:Packages:Irena_SAD:AchievedChisqReduced
+	if(NVAR_Exists(NumberOfPointsFitted) && NVAR_Exists(NumberOfFittedParams))
+		IR1L_AppendAnyText("Number of points fitted (N) : " + num2str(NumberOfPointsFitted))
+		IR1L_AppendAnyText("Number of fitted parameters (P) : " + num2str(NumberOfFittedParams))
+		IR1L_AppendAnyText("Degrees of freedom (N-P) : " + num2str(NumberOfPointsFitted-NumberOfFittedParams))
+	endif
+	if(NVAR_Exists(AchievedChisqReduced))
+		IR1L_AppendAnyText("Reduced Chi-squared = Chi-squared/(N-P) : " + num2str(AchievedChisqReduced))
+		IR1L_AppendAnyText("Reduced Chi-squared near 1 means the model describes the data within their uncertainties.")
 	endif
 	string ListOfVariables = "Background;RgPrefactor;Rg;PwrLawPref;PwrLawSlope;"
 	for(j = 0; j < ItemsInList(ListOfVariables); j += 1)

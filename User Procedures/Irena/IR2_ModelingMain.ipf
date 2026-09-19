@@ -2022,7 +2022,7 @@ Function IR2L_Fitting(SkipDialogs)
 	variable/G AchievedChisq = V_chisq
 	variable/G NumberOfPointsFitted = numpnts(IntWvForFit)		//N, all used data sets together
 	variable/G NumberOfFittedParams = numpnts(W_coef)			//P
-	variable/G AchievedChisqReduced = V_chisq / max(1, (numpnts(IntWvForFit) - numpnts(W_coef)))
+	variable/G AchievedChisqReduced = IN2G_ReducedChiSq(V_chisq, numpnts(IntWvForFit), numpnts(W_coef))
 	//	IR1U_GraphModelData()
 	IR2L_RecordResults("after")
 	//

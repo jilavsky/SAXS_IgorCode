@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.35
+#pragma version = 2.36
 #pragma IgorVersion = 9.04
 
 //control constants
@@ -2467,6 +2467,25 @@ end
 //This returns 1 when user asked for least square fit uncertainties to be reported, 0 otherwise.
 //Safe to call from any Irena/Nika/Indra tool at any time, it creates the configuration
 //folder and the variable when they are missing (old experiments).
+//***********************************************************
+//***********************************************************
+//Reduced Chi-squared = Chi-squared/(N-P), where N is the number of fitted data points and P the
+//number of fitted (free) parameters. This is the quantity which should be near 1 for a good fit
+//when the uncertainties of the data are correct. Igor's V_chisq is the RAW weighted sum of squares,
+//sum over points of ((data-model)/uncertainty)^2, and is NOT divided by anything.
+//All Irena fitting tools use this one function so the definition cannot drift apart between them.
+Function IN2G_ReducedChiSq(ChiSq, NumPoints, NumParams)
+	variable ChiSq, NumPoints, NumParams
+
+	variable DegreesOfFreedom = NumPoints - NumParams
+	if(!(DegreesOfFreedom>=1))			//also catches NaN and negative values
+		DegreesOfFreedom = 1
+	endif
+	return ChiSq/DegreesOfFreedom
+End
+
+//***********************************************************
+//***********************************************************
 Function IN2G_UseLSQFitErrors()
 
 	NVAR/Z UseLSQFitErrors = root:Packages:IrenaConfigFolder:UseLSQFitErrors

@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.19
+#pragma version=1.20
 constant IR3JversionNumber = 1.17			//Simple Fit panel version number
 
 //*************************************************************************\
@@ -254,8 +254,9 @@ Function IR3J_SimpleFitsPanelFnct()
 	//other stuff...
 	Button FitCurrentDataSet,pos={280,450},size={180,20}, proc=IR3J_ButtonProc,title="Fit Current (one) Dataset", help={"Fit current data set"}
 	Button FitSelectionDataSet,pos={280,480},size={180,20}, proc=IR3J_ButtonProc,title="Fit (All) Selected Data", help={"Fit all data selected in listbox"}
-	SetVariable AchievedChiSquare,pos={270,510},size={220,15}, noproc,title="Achieved chi-square"
+	SetVariable AchievedChiSquare,pos={270,510},size={220,15}, noproc,title="Reduced chi-square (X2/(N-P))"
 	Setvariable AchievedChiSquare, variable=root:Packages:Irena:SimpleFits:AchievedChiSquare, disable=2, limits={0,inf,0}, format="%3.2f"
+	Setvariable AchievedChiSquare, help={"Reduced Chi-squared = Chi-squared/(N-P), N = number of points fitted, P = number of fitted parameters. Near 1 means the model fits within the uncertainties of the data."}
 
 	Checkbox SaveToNotebook, pos={280,537},size={76,14},title="Record to Notebook?", noproc, variable=root:Packages:Irena:SimpleFits:SaveToNotebook, help={"Record results in notebook"}
 	Checkbox SaveToWaves, pos={280,552},size={76,14},title="Record to Waves?", noproc, variable=root:Packages:Irena:SimpleFits:SaveToWaves, help={"Record results in waves, can then create a table"}
@@ -1404,7 +1405,8 @@ static Function IR3J_FitGuinier(which)
 	endif
 	W_coef =  abs(W_coef)
 	string TagText, TagTextLin
-	AchievedChiSquare = V_chisq/(DataQEndPoint-DataQstartPoint)
+	//reduced Chi-squared, Chi-squared/(N-P). Used to divide by (N-1) and ignore the fitted parameters.
+	AchievedChiSquare = IN2G_ReducedChiSq(V_chisq, DataQEndPoint-DataQstartPoint+1, numpnts(W_coef))
 	string QminRg, QmaxRg, AchiCHiStr
 	sprintf QminRg, "%2.2f",(W_coef[1]*QminFit)
 	sprintf QmaxRg, "%2.2f",(W_coef[1]*QmaxFit)
@@ -1692,7 +1694,8 @@ static Function IR3J_FitPorod()
 			Porod_ConstantError = W_sigma[0]
 			DataBackgroundError = W_sigma[1]
 		endif
-		AchievedChiSquare = V_chisq/(DataQEndPoint-DataQstartPoint)
+		//reduced Chi-squared, Chi-squared/(N-P). Used to divide by (N-1) and ignore the fitted parameters.
+		AchievedChiSquare = IN2G_ReducedChiSq(V_chisq, DataQEndPoint-DataQstartPoint+1, numpnts(W_coef))
 		string QminRg, QmaxRg, AchiCHiStr
 		sprintf AchiCHiStr, "%2.2f",(AchievedChiSquare)
 		string TagText
@@ -1782,7 +1785,8 @@ static Function IR3J_FitPowerLaw()
 			PowerLawExpError = W_sigma[1]
 			DataBackgroundError = W_sigma[2]
 		endif
-		AchievedChiSquare = V_chisq/(DataQEndPoint-DataQstartPoint)
+		//reduced Chi-squared, Chi-squared/(N-P). Used to divide by (N-1) and ignore the fitted parameters.
+		AchievedChiSquare = IN2G_ReducedChiSq(V_chisq, DataQEndPoint-DataQstartPoint+1, numpnts(W_coef))
 		string QminRg, QmaxRg, AchiCHiStr
 		sprintf AchiCHiStr, "%2.2f",(AchievedChiSquare)
 		string TagText
@@ -1963,9 +1967,11 @@ static Function IR3J_FitSphere()
 		Sphere_RadiusError = W_sigma[1]
 		DataBackgroundError = W_sigma[2]
 	endif
+	//reduced Chi-squared was never set for this model, the tag printed the raw Chi-squared instead
+	AchievedChiSquare = IN2G_ReducedChiSq(V_chisq, DataQEndPoint-DataQstartPoint+1, numpnts(W_coef))
 	string TagText
 	TagText = "Fitted Sphere Form Factor   \r"+"Int=Scale*3/(QR*QR*QR))*(sin(QR)-(QR*cos(QR)))+bck"+" \r Radius [A] = "+IR3J_FmtValErr(W_coef[1],Sphere_RadiusError,useErr)+" \r Scale = "+IR3J_FmtValErr(W_coef[0],Sphere_ScalingConstantError,useErr)+"\r Background = "+IR3J_FmtValErr(W_coef[2],DataBackgroundError,useErr)
-	TagText+="\r chi-square = "+num2str(V_chisq)
+	TagText+="\r reduced chi-square (X\S2\M/(N-P)) = "+num2str(AchievedChiSquare)
 	string TagName= "SphereFit" 
 	Tag/C/W=IR3J_LogLogDataDisplay/N=$(TagName)/L=2/X=-15.00/Y=-15.00  $NameOfWave(CursorAWave), ((DataQstartPoint + DataQEndPoint)/2),TagText	
 	SphereScalingConst=W_coef[0] 	//PC
@@ -2083,11 +2089,12 @@ static Function IR3J_FitSpheroid()
 		Spheroid_BetaError = W_sigma[2]
 		DataBackgroundError = W_sigma[3]
 	endif
-	AchievedChiSquare = V_chisq/(DataQEndPoint-DataQstartPoint)
+	//reduced Chi-squared, Chi-squared/(N-P). Used to divide by (N-1) and ignore the fitted parameters.
+	AchievedChiSquare = IN2G_ReducedChiSq(V_chisq, DataQEndPoint-DataQstartPoint+1, numpnts(W_coef))
 	string TagText
 	TagText = "Fitted Spheroid Form Factor   \r"+"Int=Scale*SpheroidFF(Q,R,beta)+bck"+" \r Radius [A] = "+IR3J_FmtValErr(W_coef[1],Spheroid_RadiusError,useErr)+" \r Aspect ratio = "+IR3J_FmtValErr(W_coef[2],Spheroid_BetaError,useErr)+" \r Scale = "+IR3J_FmtValErr(W_coef[0],Spheroid_ScalingConstantError,useErr)
 	TagText+="\r Background = "+IR3J_FmtValErr(W_coef[3],DataBackgroundError,useErr)
-	TagText+="\r chi-square = "+num2str(V_chisq)
+	TagText+="\r reduced chi-square (X\S2\M/(N-P)) = "+num2str(AchievedChiSquare)
 	string TagName= "SpheroidFit" 
 	Tag/C/W=IR3J_LogLogDataDisplay/N=$(TagName)/L=2/X=-15.00/Y=-15.00  $NameOfWave(CursorAWave), ((DataQstartPoint + DataQEndPoint)/2),TagText	
 	Spheroid_ScalingConstant	=W_coef[0] 	//scale
@@ -2431,38 +2438,38 @@ static Function IR3J_SaveResultsToNotebook()
 	if(stringmatch(SimpleModel,"Guinier"))
 		IR1_AppendAnyText("\tRg                  = "+IR3J_FmtValErr(Guinier_Rg,Guinier_RgError,useErr),0)
 		IR1_AppendAnyText("\tI0                  = "+IR3J_FmtValErr(Guinier_I0,Guinier_I0Error,useErr),0)
-		IR1_AppendAnyText("Achieved Normalized chi-square = "+num2str(AchievedChiSquare),0)
+		IR1_AppendAnyText("Reduced Chi-squared (Chi-squared/(N-P)) = "+num2str(AchievedChiSquare),0)
 	elseif(stringmatch(SimpleModel,"Guinier Rod"))
 		IR1_AppendAnyText("\tRc                  = "+IR3J_FmtValErr(Guinier_Rg,Guinier_RgError,useErr),0)
 		IR1_AppendAnyText("\tI0                  = "+IR3J_FmtValErr(Guinier_I0,Guinier_I0Error,useErr),0)
-		IR1_AppendAnyText("Achieved Normalized chi-square = "+num2str(AchievedChiSquare),0)
+		IR1_AppendAnyText("Reduced Chi-squared (Chi-squared/(N-P)) = "+num2str(AchievedChiSquare),0)
 	elseif(stringmatch(SimpleModel,"Guinier Sheet"))
 		IR1_AppendAnyText("\tThickness           = "+IR3J_FmtValErr(sqrt(12)*Guinier_Rg,sqrt(12)*Guinier_RgError,useErr),0)
 		IR1_AppendAnyText("\tI0                  = "+IR3J_FmtValErr(Guinier_I0,Guinier_I0Error,useErr),0)
-		IR1_AppendAnyText("Achieved Normalized chi-square = "+num2str(AchievedChiSquare),0)
+		IR1_AppendAnyText("Reduced Chi-squared (Chi-squared/(N-P)) = "+num2str(AchievedChiSquare),0)
 	elseif(stringmatch(SimpleModel,"Porod"))
 		IR1_AppendAnyText("\tPorod Constant [1/cm 1/A^4] = "+IR3J_FmtValErr(Porod_Constant,Porod_ConstantError,useErr),0)
 		IR1_AppendAnyText("\tSpecific Surface [cm2/cm3] = "+num2str(Porod_SpecificSurface),0)
 		IR1_AppendAnyText("\tContrast [10^20 cm^-4] = "+num2str(ScatteringContrast),0)
 		IR1_AppendAnyText("\tBackground          = "+IR3J_FmtValErr(DataBackground,DataBackgroundError,useErr),0)
-		IR1_AppendAnyText("Achieved Normalized chi-square = "+num2str(AchievedChiSquare),0)
+		IR1_AppendAnyText("Reduced Chi-squared (Chi-squared/(N-P)) = "+num2str(AchievedChiSquare),0)
 	elseif(stringmatch(SimpleModel,"Power Law"))
 		IR1_AppendAnyText("\tInt = Pref * Q^(-Exp) + Background",0)
 		IR1_AppendAnyText("\tPrefactor 				= "+IR3J_FmtValErr(PowerLawPref,PowerLawPrefError,useErr),0)
 		IR1_AppendAnyText("\tExponent 				= "+IR3J_FmtValErr(PowerLawExp,PowerLawExpError,useErr),0)
 		IR1_AppendAnyText("\tBackground          = "+IR3J_FmtValErr(DataBackground,DataBackgroundError,useErr),0)
-		IR1_AppendAnyText("Achieved Normalized chi-square = "+num2str(AchievedChiSquare),0)
+		IR1_AppendAnyText("Reduced Chi-squared (Chi-squared/(N-P)) = "+num2str(AchievedChiSquare),0)
 	elseif(stringmatch(SimpleModel,"Sphere"))
 		IR1_AppendAnyText("\tSphere Radius [A]   = "+IR3J_FmtValErr(Sphere_Radius,Sphere_RadiusError,useErr),0)
 		IR1_AppendAnyText("\tScaling constant    = "+IR3J_FmtValErr(Sphere_ScalingConstant,Sphere_ScalingConstantError,useErr),0)
 		IR1_AppendAnyText("\tBackground = "+IR3J_FmtValErr(DataBackground,DataBackgroundError,useErr),0)
-		IR1_AppendAnyText("Achieved Normalized chi-square = "+num2str(AchievedChiSquare),0)
+		IR1_AppendAnyText("Reduced Chi-squared (Chi-squared/(N-P)) = "+num2str(AchievedChiSquare),0)
 	elseif(stringmatch(SimpleModel,"Spheroid"))
 		IR1_AppendAnyText("\tSpheroid Radius [A] = "+IR3J_FmtValErr(Spheroid_Radius,Spheroid_RadiusError,useErr),0)
 		IR1_AppendAnyText("\tScaling constant    = "+IR3J_FmtValErr(Spheroid_ScalingConstant,Spheroid_ScalingConstantError,useErr),0)
 		IR1_AppendAnyText("\tSpheroid Beta       = "+IR3J_FmtValErr(Spheroid_Beta,Spheroid_BetaError,useErr),0)
 		IR1_AppendAnyText("\tBackground          = "+IR3J_FmtValErr(DataBackground,DataBackgroundError,useErr),0)
-		IR1_AppendAnyText("Achieved Normalized chi-square = "+num2str(AchievedChiSquare),0)
+		IR1_AppendAnyText("Reduced Chi-squared (Chi-squared/(N-P)) = "+num2str(AchievedChiSquare),0)
 	elseif(stringmatch(SimpleModel,"Invariant"))
 		IR1_AppendAnyText("\tInvariant [(mol e-^2/cm^3)^3] 	= "+num2str(Invariant),0)
 		IR1_AppendAnyText("\tQmax used for calc.				= "+num2str(InvQmaxUsed),0)

@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals = 3// Use strict wave reference mode and runtime bounds checking
-#pragma version=2.37
+#pragma version=2.38
 
 
 constant IR2UversionNumber=2.23 			//Evaluation panel version number. 
@@ -6635,7 +6635,16 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	
 	IR1A_UpdateMassFractCalc()
 	
-	variable/g AchievedChisq=V_chisq
+	variable/g AchievedChisq=V_chisq			//raw Chi-squared, sum of ((data-model)/uncertainty)^2
+	Variable/G root:Packages:Irena_UnifFit:NumberOfPointsFitted		//N
+	NVAR NumPntsFittedRef = root:Packages:Irena_UnifFit:NumberOfPointsFitted
+	NumPntsFittedRef = numpnts(FitIntensityWave)
+	Variable/G root:Packages:Irena_UnifFit:NumberOfFittedParams			//P
+	NVAR NumFitParamsRef = root:Packages:Irena_UnifFit:NumberOfFittedParams
+	NumFitParamsRef = numpnts(W_coef)
+	Variable/G root:Packages:Irena_UnifFit:AchievedChisqReduced
+	NVAR ChiSqReducedRef = root:Packages:Irena_UnifFit:AchievedChisqReduced
+	ChiSqReducedRef = IN2G_ReducedChiSq(V_chisq, numpnts(FitIntensityWave), numpnts(W_coef))
 
 
 	IR1A_RecordErrorsAfterFit()
@@ -6663,6 +6672,31 @@ end
 //*******************************************************************************************************
 //*******************************************************************************************************
 //*******************************************************************************************************
+//*******************************************************************************************************
+//*******************************************************************************************************
+
+//*******************************************************************************************************
+//*******************************************************************************************************
+//Appends the number of fitted points, the number of fitted parameters and the reduced Chi-squared
+//to the results notebook. Reduced Chi-squared = Chi-squared/(N-P) is the value which should be near 1
+//for a good fit, the raw Chi-squared printed above it scales with the number of points.
+Function IR1A_AppendChiSqDetails()
+
+	NVAR/Z NumberOfPointsFitted = root:Packages:Irena_UnifFit:NumberOfPointsFitted
+	NVAR/Z NumberOfFittedParams = root:Packages:Irena_UnifFit:NumberOfFittedParams
+	NVAR/Z AchievedChisqReduced = root:Packages:Irena_UnifFit:AchievedChisqReduced
+
+	if(NVAR_Exists(NumberOfPointsFitted) && NVAR_Exists(NumberOfFittedParams))
+		IR1L_AppendAnyText("Number of points fitted (N) \t"+num2str(NumberOfPointsFitted))
+		IR1L_AppendAnyText("Number of fitted parameters (P) \t"+num2str(NumberOfFittedParams))
+		IR1L_AppendAnyText("Degrees of freedom (N-P) \t"+num2str(NumberOfPointsFitted-NumberOfFittedParams))
+	endif
+	if(NVAR_Exists(AchievedChisqReduced))
+		IR1L_AppendAnyText("Reduced Chi-squared = Chi-squared/(N-P) \t"+num2str(AchievedChisqReduced))
+		IR1L_AppendAnyText("Reduced Chi-squared near 1 means the model describes the data within their uncertainties.")
+	endif
+end
+
 //*******************************************************************************************************
 //*******************************************************************************************************
 
@@ -7559,7 +7593,8 @@ Function IR1A_RecordResults(CalledFromWere)
 		IR1L_AppendAnyText("Fit has been reached with following parameters")
 		IR1_InsertDateAndTime(nbl)
 		NVAR AchievedChisq
-		IR1L_AppendAnyText("Chi-Squared \t"+ num2str(AchievedChisq))
+		IR1L_AppendAnyText("Chi-squared = sum over fitted points of ((Intensity-Model)/Uncertainty)^2 \t"+ num2str(AchievedChisq))
+		IR1A_AppendChiSqDetails()
 
 		//DoWindow /F IR1_LogLogPlotU
 		if (strlen(csrWave(A,"IR1_LogLogPlotU"))!=0 && strlen(csrWave(B,"IR1_LogLogPlotU"))!=0)		//cursors in the graph
@@ -7679,7 +7714,8 @@ Function IR1A_SaveRecordResults()
 		IR1_InsertDateAndTime(nbl)
 		NVAR/Z AchievedChisq
 		if(NVAR_Exists(AchievedChisq))
-			IR1L_AppendAnyText("Chi-Squared \t"+ num2str(AchievedChisq))
+			IR1L_AppendAnyText("Chi-squared = sum over fitted points of ((Intensity-Model)/Uncertainty)^2 \t"+ num2str(AchievedChisq))
+			IR1A_AppendChiSqDetails()
 		endif
 		//DoWindow /F IR1_LogLogPlotU
 		if (strlen(csrWave(A,"IR1_LogLogPlotU"))!=0 && strlen(csrWave(B,"IR1_LogLogPlotU"))!=0)		//cursors in the graph

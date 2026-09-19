@@ -1,6 +1,6 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use modern global access method.
-#pragma version=1.13 //this is Irena package Guinier-Porod model based on Hammouda's paper
+#pragma version=1.14 //this is Irena package Guinier-Porod model based on Hammouda's paper
 Constant IR3GPversionNumber = 1.08
 
 //*************************************************************************\
@@ -1730,8 +1730,17 @@ Function IR3GP_FitData(skipreset)
 	//
 	//	IR1A_UpdateMassFractCalc()
 	//
-	variable/G AchievedChisq = V_chisq
+	variable/G AchievedChisq = V_chisq			//raw Chi-squared, sum of ((data-model)/uncertainty)^2
+	Variable/G root:Packages:Irena:GuinierPorod:NumberOfPointsFitted		//N
+	NVAR NumPntsFittedRef = root:Packages:Irena:GuinierPorod:NumberOfPointsFitted
+	NumPntsFittedRef = numpnts(FitIntensityWave)
+	Variable/G root:Packages:Irena:GuinierPorod:NumberOfFittedParams			//P
+	NVAR NumFitParamsRef = root:Packages:Irena:GuinierPorod:NumberOfFittedParams
+	NumFitParamsRef = NumParams
+	Variable/G root:Packages:Irena:GuinierPorod:AchievedChisqReduced
 	//	IR1A_RecordErrorsAfterFit()
+	NVAR ChiSqReducedRef = root:Packages:Irena:GuinierPorod:AchievedChisqReduced
+	ChiSqReducedRef = IN2G_ReducedChiSq(V_chisq, numpnts(FitIntensityWave), NumParams)
 	IR3GP_CalculateModelIntensity()
 	//	IR1A_GraphModelData()
 	//	IR1A_RecordResults("after")

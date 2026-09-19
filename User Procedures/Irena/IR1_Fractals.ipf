@@ -1,6 +1,6 @@
 #pragma TextEncoding="UTF-8"
 #pragma rtGlobals=3 // Use strict wave reference mode and runtime bounds checking
-#pragma version=2.14
+#pragma version=2.15
 Constant IRVversionNumber = 2.11
 
 //*************************************************************************\
@@ -2720,7 +2720,16 @@ Function IR1V_ConstructTheFittingCommand()
 		Abort "Fitting error, check starting parameters and fitting limits"
 	endif
 
-	variable/G AchievedChisq = V_chisq
+	variable/G AchievedChisq = V_chisq			//raw Chi-squared, sum of ((data-model)/uncertainty)^2
+	Variable/G root:Packages:FractalsModel:NumberOfPointsFitted		//N
+	NVAR NumPntsFittedRef = root:Packages:FractalsModel:NumberOfPointsFitted
+	NumPntsFittedRef = numpnts(FitIntensityWave)
+	Variable/G root:Packages:FractalsModel:NumberOfFittedParams			//P
+	NVAR NumFitParamsRef = root:Packages:FractalsModel:NumberOfFittedParams
+	NumFitParamsRef = numpnts(W_coef)
+	Variable/G root:Packages:FractalsModel:AchievedChisqReduced
+	NVAR ChiSqReducedRef = root:Packages:FractalsModel:AchievedChisqReduced
+	ChiSqReducedRef = IN2G_ReducedChiSq(V_chisq, numpnts(FitIntensityWave), numpnts(W_coef))
 	IR1V_RecordErrorsAfterFit()
 	IR1V_GraphModelData()
 	//	IR1A_RecordResults("after")

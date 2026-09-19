@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.25
+#pragma version=1.26
 Constant IR2RversionNumber=1.19
 
 //*************************************************************************\
@@ -2675,7 +2675,9 @@ static Function IR2R_SimpleToolFit()
 		Print "Achieved results of optimization"
 		Print "   "
 		Print "Data fitted : "+Dataname
-		Print "ChiSquare : "+num2str(V_chisq)
+		Print "Chi-squared (sum over fitted points of ((data-model)/uncertainty)^2) : "+num2str(V_chisq)
+		Print "Number of points fitted (N) : "+num2str(numpnts(FitIntensityWave))+" ; number of fitted parameters (P) : "+num2str(numpnts(W_coef))
+		Print "Reduced Chi-squared (Chi-squared/(N-P)) : "+num2str(IN2G_ReducedChiSq(V_chisq, numpnts(FitIntensityWave), numpnts(W_coef)))+"   - near 1 means the model fits within the data uncertainties"
 		Print "   "
 		For(i=0;i<numpnts(W_coef);i+=1)
 			NVAR testVal=$(CoefNames[i])
@@ -2693,8 +2695,17 @@ static Function IR2R_SimpleToolFit()
 		Print "________________________________"
 		Print "   "
 	endif
-	variable/g AchievedChisq=V_chisq
+	variable/g AchievedChisq=V_chisq			//raw Chi-squared, sum of ((data-model)/uncertainty)^2
+	Variable/G root:Packages:Refl_SimpleTool:NumberOfPointsFitted		//N
+	NVAR NumPntsFittedRef = root:Packages:Refl_SimpleTool:NumberOfPointsFitted
+	NumPntsFittedRef = numpnts(FitIntensityWave)
+	Variable/G root:Packages:Refl_SimpleTool:NumberOfFittedParams			//P
+	NVAR NumFitParamsRef = root:Packages:Refl_SimpleTool:NumberOfFittedParams
+	NumFitParamsRef = numpnts(W_coef)
+	Variable/G root:Packages:Refl_SimpleTool:AchievedChisqReduced
 	//here we graph the distribution
+	NVAR ChiSqReducedRef = root:Packages:Refl_SimpleTool:AchievedChisqReduced
+	ChiSqReducedRef = IN2G_ReducedChiSq(V_chisq, numpnts(FitIntensityWave), numpnts(W_coef))
 	IR2R_CalculateModelResults()
 	IR2R_CalculateSLDProfile()
 	IR2R_GraphModelResults()
