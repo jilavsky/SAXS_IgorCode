@@ -1,8 +1,8 @@
 #pragma rtFunctionErrors = 1
 #pragma TextEncoding     = "UTF-8"
 #pragma rtGlobals        = 3 // Use modern global access method.
-#pragma version          = 2.03
-#pragma IgorVersion      = 8.04
+#pragma version          = 2.05
+#pragma IgorVersion      = 9.03
 
 //DO NOT renumber Main files every time, these are main release numbers...
 
@@ -12,6 +12,8 @@
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//2.05 Add FX4 data reduction
+//2.04 Add option to use Abeles for desmear data, slower but smoother and with real errors. 
 //2.03 AI code review: convert 4 string-based DF save/restores to DFREF; add SetDataFolder
 //     restore before 2 Aborts in IN3_USAXSScanLoadHdf5File2 (HDF5 import failure, unknown
 //     scan type) — note the GetDataFolder(1) inside the Abort message string is intentional.
@@ -48,8 +50,8 @@
 //1.79 4/2013 JIL, added pin diode transmission
 //1.78, 2/2013, JIL: Added option to calibrate by weight. Needed for USAXS users.
 
-Constant IN3_ReduceDataMainVersionNumber = 2.02 //these two needs to be the same!
-Constant IN3_NewReduceDataMainVersionNum = 2.02 //these two needs to be the same!
+Constant IN3_ReduceDataMainVersionNumber = 2.05 //these two needs to be the same!
+Constant IN3_NewReduceDataMainVersionNum = 2.05 //these two needs to be the same!
 Constant SmoothBlankForUSAXS             = 1
 Constant SmoothSampleForUSAXS            = 1
 Constant Indra_PDIntBackFixScaleVmin     = 1.1
@@ -423,11 +425,23 @@ Function IN3_MainPanelNew()
 	CheckBox DesmearData, pos={20, 365}, size={90, 14}, proc=IN3_MainPanelCheckBox, title="Desmear Data?"
 	CheckBox DesmearData, variable=root:Packages:Indra3:DesmearData, help={"Check, if you  want to desmear data immediately"}
 
+	CheckBox DesmearUseAbeles, pos={220, 365}, size={90, 14}, noproc, title="Use Abeles?"
+	CheckBox DesmearUseAbeles, variable=root:Packages:Indra3:DesmearUseAbeles, help={"Check, if you  want to desmear data using Abeles, not Lake"}
+
+
 	SetVariable BckgStartQ, pos={20, 390}, size={300, 22}, limits={0.01, 0.5, 0.01}, title="Background extrapolation start ="
 	SetVariable BckgStartQ, variable=root:Packages:Indra3:DesmearBckgStart, proc=IN3_ParametersChanged
 	SVAR BackgroundFunction = root:Packages:Indra3:DsmBackgroundFunction
 	PopupMenu BackgroundFnct, pos={20, 420}, size={258, 21}, proc=IN3_InputPopMenuProc, title="background function :   "
 	PopupMenu BackgroundFnct, mode=1, value="PowerLaw w flat;flat;power law;Porod;", popvalue=BackgroundFunction
+
+	SetVariable DesmearAbelAutoSmooth, pos={100, 450}, size={300, 22}, limits={0.5, 5, 0.25}, title="DesmearAbelAutoSmooth ="
+	SetVariable DesmearAbelAutoSmooth, variable=root:Packages:Indra3:DesmearAbelAutoSmooth, noproc
+	SetVariable DesmearAbelSmoothW, pos={100, 475}, size={300, 22}, limits={0.01, 0.2, 0.01}, title="DesmearAbelSmoothW ="
+	SetVariable DesmearAbelSmoothW, variable=root:Packages:Indra3:DesmearAbelSmoothW, noproc
+	SetVariable DesmearAbelNumMC, pos={100, 500}, size={300, 22}, limits={5, 50, 5}, title="DesmearAbelNumMC ="
+	SetVariable DesmearAbelNumMC, variable=root:Packages:Indra3:DesmearAbelNumMC, noproc
+
 
 	SetDataFolder saveDF
 	IN3_TabPanelControl("", 0)
@@ -985,6 +999,7 @@ Function IN3_Initialize()
 	ListOfVariables += "RemoveDropouts;RemoveDropoutsTime;RemoveDropoutsFraction;RemoveDropoutsAvePnts;"
 	ListOfVariables += "FSOverWriteRage1DeadTime;FSOverWriteRage2DeadTime;FSOverWriteRage3DeadTime;FSOverWriteRage4DeadTime;FSOverWriteRage5DeadTime;"
 	ListOfVariables += "FSRage1DeadTime;FSRage2DeadTime;FSRage3DeadTime;FSRage4DeadTime;FSRage5DeadTime;"
+	ListOfVariables += "IsFX4Data;"
 
 	ListOfVariables += "CalibrateToWeight;CalibrateToVolume;CalibrateArbitrary;SampleWeightInBeam;CalculateWeight;BeamExposureArea;SampleDensity;"
 	ListOfVariables += "CalibrateUseSampleFWHM;"
@@ -1000,7 +1015,7 @@ Function IN3_Initialize()
 
 	ListOfVariables += "FindMinQForData;MinQMinFindRatio;"
 
-	ListOfVariables += "DesmearData;DesmearNumberOfInterations;DesmearNumPoints;DesmearBckgStart;"
+	ListOfVariables += "DesmearData;DesmearNumberOfInterations;DesmearNumPoints;DesmearBckgStart;DesmearUseAbeles;"
 
 	ListOfVariables += "SmartSelectBlank;DisplayJPGFile;"
 
@@ -1095,8 +1110,11 @@ Function IN3_Initialize()
 	endif
 	NVAR DesmearBckgStart
 	if(DesmearBckgStart < 0.01)
-		DesmearBckgStart = 0.1
+		DesmearBckgStart = 0.19
 	endif
+	NVAR DesmearUseAbeles
+	DesmearUseAbeles=1
+	
 	SetDataFolder saveDF
 End
 //*****************************************************************************************************************

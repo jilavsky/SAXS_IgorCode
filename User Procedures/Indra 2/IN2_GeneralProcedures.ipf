@@ -4404,12 +4404,13 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
-Function IN2G_RebinLogData(Wx,Wy,NumberOfPoints,MinStep,[Wsdev,Wxsdev, Wxwidth,W1, W2, W3, W4, W5])
+Function IN2G_RebinLogData(Wx,Wy,NumberOfPoints,MinStep,[Wsdev,Wxsdev, Wxwidth,W1, W2, W3, W4, W5,isFX4])
 		Wave Wx, Wy
 		Variable NumberOfPoints, MinStep
 		Wave Wsdev,Wxsdev
 		Wave Wxwidth
 		Wave W1, W2, W3, W4, W5
+		Variable isFX4
 		////IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		variable CalcSdev, CalcWidth, CalcW1, CalcW2, CalcW3, CalcW4, CalcW5, CalcXSdev
 		CalcSdev = ParamIsDefault(Wsdev) ?  0 : 1
@@ -4420,6 +4421,7 @@ Function IN2G_RebinLogData(Wx,Wy,NumberOfPoints,MinStep,[Wsdev,Wxsdev, Wxwidth,W
 		CalcW3 = ParamIsDefault(W3) ?  0 : 1
 		CalcW4 = ParamIsDefault(W4) ?  0 : 1
 		CalcW5 = ParamIsDefault(W5) ?  0 : 1
+		isFX4  = ParamIsDefault(isFX4) ?  0 : isFX4
 		
 		variable OldNumPnts=numpnts(Wx)
 		if(2*NumberOfPoints>OldNumPnts)
@@ -4542,11 +4544,18 @@ Function IN2G_RebinLogData(Wx,Wy,NumberOfPoints,MinStep,[Wsdev,Wxsdev, Wxwidth,W
 				Rebinned_Wv5[i]/=cntPoints
 			endif
 			if(CalcSdev)
-				//Rebinned_Wsdev[i]=sqrt(Rebinned_Wsdev[i])/(cntPoints)	 
-				Rebinned_Wsdev[i]=sqrt(Rebinned_Wsdev[i]/cntPoints)	 
+				if(isFX4) 
+					Rebinned_Wsdev[i]=sqrt(Rebinned_Wsdev[i]/cntPoints)	
+				else //old 
+					Rebinned_Wsdev[i]=sqrt(Rebinned_Wsdev[i])/cntPoints	 
+				endif
 			endif
 			if(CalcXSdev)
-				Rebinned_Wxsdev[i]=sqrt(Rebinned_Wxsdev[i]/cntPoints)	 
+				if(isFX4) 
+					Rebinned_Wxsdev[i]=sqrt(Rebinned_Wxsdev[i])/cntPoints	 
+				else
+					Rebinned_Wxsdev[i]=sqrt(Rebinned_Wxsdev[i]/cntPoints)	
+				endif 
 			endif
 		endfor
 

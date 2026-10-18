@@ -1,7 +1,7 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version=0.5
+#pragma version=0.51
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratorys
@@ -10,8 +10,9 @@
 //*************************************************************************/
 
 //version info:
-//	0.1 initial testing
+//	0.51 bug fix, wrong path
 //  0.3 initial inclusion in Irena
+//	0.1 initial testing
 
 
 // this code models SAS from very long cylinder, core shell cylinder, cylinder with elliptical cross section and core shell cylinder with eliptical cross section
@@ -1575,9 +1576,9 @@ static Function IR3F_FitCSCylinderModel()
 		Variable/G root:Packages:Irena:CylinderModels:AchievedChisqReduced
 		NVAR ChiSqReducedRef = root:Packages:Irena:CylinderModels:AchievedChisqReduced
 		ChiSqReducedRef = IN2G_ReducedChiSq(V_chisq, numpnts(FitIntensityWave), numpnts(CoefNames))
-		print "Fitting ended with achieved chi-square = "+num2str(V_chisq)+" - note, this may be different than penl set one since that is always for Intensity vs Q" 
-		print "Number of points fitted (N) = "+num2str(NumberOfPointsFitted)+" ; number of fitted parameters (P) = "+num2str(NumberOfFittedParams)
-		print "Reduced chi-square (chi-square/(N-P)) = "+num2str(AchievedChisqReduced)+"  - this is the value which should be near 1 for a good fit"
+		print "Fitting ended with achieved chi-square = "+num2str(V_chisq)+" - note, this may be diffserent than penl set one since that is always for Intensity vs Q" 
+		print "Number of points fitted (N) = "+num2str(NumPntsFittedRef)+" ; number of fitted parameters (P) = "+num2str(NumFitParamsRef)
+		print "Reduced chi-square (chi-square/(N-P)) = "+num2str(ChiSqReducedRef)+"  - this is the value which should be near 1 for a good fit"
 		IR3F_AutoRecalculateModelData(1)
 		IR3F_KillWarningPanel()
 	setDataFolder OldDf

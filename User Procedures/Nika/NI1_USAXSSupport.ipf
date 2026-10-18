@@ -1,5 +1,5 @@
 #pragma rtGlobals=3 // Use modern global access method.
-#pragma version=1.58
+#pragma version=1.59
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//1.59 fixes for FX4 use at the beamline
 //1.58 AI cleanup and debug
 //1.57 change _9IDC to _usx for all USAXS code
 //1.56 tweaks for Eiger WAXS detector
@@ -69,7 +70,7 @@
 //1.01 fixed to make work with M_SMR_waves also
 //1.0 initial release
 
-//this is package for support of 15ID-D SAXS and SAXS instruments.
+//this is package for support of 12ID, 9-ID, 15ID-D SAXS and WAXS instruments which are part of USAXS/SAXS/WAXS instrument.
 
 Function NI1_APSConfigureNika()
 
@@ -2306,15 +2307,26 @@ Function NI1_9IDWFindI0(SampleName)
 	endif
 	string OldNOte = note(w2D)
 	variable I000
-	I000 = NumberByKey(NI1_usxFindKeyStr("I0_cts_gated=", OldNote), OldNote, "=", ";") //try gated signal first...
-	if(numtype(I000) != 0)
-		I000 = NumberByKey(NI1_usxFindKeyStr("I0_cts=", OldNote), OldNote, "=", ";")
-	endif
-	variable I0gain = NumberByKey(NI1_usxFindKeyStr("I0_gain=", OldNote), OldNote, "=", ";")
-	I000 = I000 / I0gain
-	if(numtype(I000) != 0)
-		Print "I0 value not found in the wave note of the sample file, setting to 1"
-		I000 = 1
+	variable FX4_SampleTime
+	FX4_SampleTime = NumberByKey(NI1_usxFindKeyStr("FX4_SampleTime=", OldNote), OldNote, "=", ";")	//test, if these are FX4 data... 
+	if(numtype(FX4_SampleTime) == 0)	//FX4 data
+		I000 = NumberByKey(NI1_usxFindKeyStr("I0_cts_gated=", OldNote), OldNote, "=", ";") //the only useful data...
+		// this I0_cts_gated now contains I0_cts_gated = I0_current [pA] · Exp_time_gated [s] / FX4_SampleTime [s]
+		//	FX4_SampleTime = NumberByKey(NI1_usxFindKeyStr("FX4_SampleTime=", OldNote), OldNote, "=", ";")	//test, if these are FX4 data... 
+		//variable Exp_time_gated
+		//Exp_time_gated = NumberByKey(NI1_usxFindKeyStr("Exp_time_gated=", OldNote), OldNote, "=", ";") 
+		//I000 = I000 * Exp_time_gated / FX4_SampleTime
+	else
+		I000 = NumberByKey(NI1_usxFindKeyStr("I0_cts_gated=", OldNote), OldNote, "=", ";") //try gated signal first...
+		if(numtype(I000) != 0)
+			I000 = NumberByKey(NI1_usxFindKeyStr("I0_cts=", OldNote), OldNote, "=", ";")
+		endif
+		variable I0gain = NumberByKey(NI1_usxFindKeyStr("I0_gain=", OldNote), OldNote, "=", ";")
+		I000 = I000 / I0gain
+		if(numtype(I000) != 0)
+			Print "I0 value not found in the wave note of the sample file, setting to 1"
+			I000 = 1
+		endif
 	endif
 	//here we will write also offset value in the field.
 	NVAR useDexela         = root:Packages:Convert2Dto1D:USAXSWAXSDexselector
@@ -2425,15 +2437,26 @@ Function NI1_9IDWFindEFI0(SampleName)
 	endif
 	string OldNOte = note(w2D)
 	variable I000
-	I000 = NumberByKey(NI1_usxFindKeyStr("I0_cts_gated=", OldNote), OldNote, "=", ";") //try gated signal first...
-	if(numtype(I000) != 0)
-		I000 = NumberByKey(NI1_usxFindKeyStr("I0_cts=", OldNote), OldNote, "=", ";")
-	endif
-	variable I0gain = NumberByKey(NI1_usxFindKeyStr("I0_gain=", OldNote), OldNote, "=", ";")
-	I000 = I000 / I0gain
-	if(numtype(I000) != 0)
-		Print "I0 value not found in the wave note of the sample file, setting to 1"
-		I000 = 1
+	variable FX4_SampleTime
+	FX4_SampleTime = NumberByKey(NI1_usxFindKeyStr("FX4_SampleTime=", OldNote), OldNote, "=", ";")	//test, if these are FX4 data... 
+	if(numtype(FX4_SampleTime) == 0)	//FX4 data
+		I000 = NumberByKey(NI1_usxFindKeyStr("I0_cts_gated=", OldNote), OldNote, "=", ";") //the only useful data...
+		// this I0_cts_gated now contains I0_cts_gated = I0_current [pA] · Exp_time_gated [s] / FX4_SampleTime [s]
+		//	FX4_SampleTime = NumberByKey(NI1_usxFindKeyStr("FX4_SampleTime=", OldNote), OldNote, "=", ";")	//test, if these are FX4 data... 
+		//variable Exp_time_gated
+		//Exp_time_gated = NumberByKey(NI1_usxFindKeyStr("Exp_time_gated=", OldNote), OldNote, "=", ";") 
+		//I000 = I000 * Exp_time_gated / FX4_SampleTime
+	else
+		I000 = NumberByKey(NI1_usxFindKeyStr("I0_cts_gated=", OldNote), OldNote, "=", ";") //try gated signal first...
+		if(numtype(I000) != 0)
+			I000 = NumberByKey(NI1_usxFindKeyStr("I0_cts=", OldNote), OldNote, "=", ";")
+		endif
+		variable I0gain = NumberByKey(NI1_usxFindKeyStr("I0_gain=", OldNote), OldNote, "=", ";")
+		I000 = I000 / I0gain
+		if(numtype(I000) != 0)
+			Print "I0 value not found in the wave note of the sample file, setting to 1"
+			I000 = 1
+		endif
 	endif
 	return I000
 End
@@ -2447,12 +2470,24 @@ Function NI1_usxFindI0(SampleName)
 		Abort "Image file not found "
 	endif
 	string   OldNOte = note(w2D)
-	variable I000    = NumberByKey(NI1_usxFindKeyStr("I0_cts_gated=", OldNote), OldNote, "=", ";")
-	variable I0gain  = NumberByKey(NI1_usxFindKeyStr("I0_gain=", OldNote), OldNote, "=", ";")
-	//print SampleName+"   normalized I0 = "+num2str(I000 / I0gain)
-	//print "I0 gain = "+num2str(I0gain)
-	//print "I0 counts uncorrected = "+num2str(I000)
-	I000 = I000 / I0gain
+	variable I000
+	variable FX4_SampleTime
+	FX4_SampleTime = NumberByKey(NI1_usxFindKeyStr("FX4_SampleTime=", OldNote), OldNote, "=", ";")	//test, if these are FX4 data... 
+	if(numtype(FX4_SampleTime) == 0)	//FX4 data
+		I000 = NumberByKey(NI1_usxFindKeyStr("I0_cts_gated=", OldNote), OldNote, "=", ";") //the only useful data...
+		// this I0_cts_gated now contains I0_cts_gated = I0_current [pA] · Exp_time_gated [s] / FX4_SampleTime [s]
+		//	FX4_SampleTime = NumberByKey(NI1_usxFindKeyStr("FX4_SampleTime=", OldNote), OldNote, "=", ";")	//test, if these are FX4 data... 
+		//variable Exp_time_gated
+		//Exp_time_gated = NumberByKey(NI1_usxFindKeyStr("Exp_time_gated=", OldNote), OldNote, "=", ";") 
+		//I000 = I000 * Exp_time_gated / FX4_SampleTime
+	else
+		I000    = NumberByKey(NI1_usxFindKeyStr("I0_cts_gated=", OldNote), OldNote, "=", ";")
+		variable I0gain  = NumberByKey(NI1_usxFindKeyStr("I0_gain=", OldNote), OldNote, "=", ";")
+		//print SampleName+"   normalized I0 = "+num2str(I000 / I0gain)
+		//print "I0 gain = "+num2str(I0gain)
+		//print "I0 counts uncorrected = "+num2str(I000)
+		I000 = I000 / I0gain
+	endif
 	if(numtype(I000) != 0)
 		Print "I0 value not found in the wave note of the sample file, setting to 1"
 		I000 = 1
@@ -2469,12 +2504,24 @@ Function NI1_usxSFindI0(SampleName)
 		Abort "Image file not found "
 	endif
 	string   OldNOte = note(w2D)
-	variable I000    = NumberByKey(NI1_usxFindKeyStr("I0_Sample=", OldNote), OldNote, "=", ";")
-	if(numtype(I000) != 0 || I000 < 1)
-		I000  = NumberByKey(NI1_usxFindKeyStr("BPM_B_Sample=", OldNote), OldNote, "=", ";")
-		I000 += NumberByKey(NI1_usxFindKeyStr("BPM_T_Sample=", OldNote), OldNote, "=", ";")
-		I000 += NumberByKey(NI1_usxFindKeyStr("BPM_L_Sample=", OldNote), OldNote, "=", ";")
-		I000 += NumberByKey(NI1_usxFindKeyStr("BPM_R_Sample=", OldNote), OldNote, "=", ";")
+	variable I000
+	variable FX4_SampleTime
+	FX4_SampleTime = NumberByKey(NI1_usxFindKeyStr("FX4_SampleTime=", OldNote), OldNote, "=", ";")	//test, if these are FX4 data... 
+	if(numtype(FX4_SampleTime) == 0)	//FX4 data
+		I000 = NumberByKey(NI1_usxFindKeyStr("I0_cts_gated=", OldNote), OldNote, "=", ";") //the only useful data...
+		// this I0_cts_gated now contains I0_cts_gated = I0_current [pA] · Exp_time_gated [s] / FX4_SampleTime [s]
+		//	FX4_SampleTime = NumberByKey(NI1_usxFindKeyStr("FX4_SampleTime=", OldNote), OldNote, "=", ";")	//test, if these are FX4 data... 
+		//variable Exp_time_gated
+		//Exp_time_gated = NumberByKey(NI1_usxFindKeyStr("Exp_time_gated=", OldNote), OldNote, "=", ";") 
+		//I000 = I000 * Exp_time_gated / FX4_SampleTime
+	else
+		I000    = NumberByKey(NI1_usxFindKeyStr("I0_Sample=", OldNote), OldNote, "=", ";")
+		if(numtype(I000) != 0 || I000 < 1)
+			I000  = NumberByKey(NI1_usxFindKeyStr("BPM_B_Sample=", OldNote), OldNote, "=", ";")
+			I000 += NumberByKey(NI1_usxFindKeyStr("BPM_T_Sample=", OldNote), OldNote, "=", ";")
+			I000 += NumberByKey(NI1_usxFindKeyStr("BPM_L_Sample=", OldNote), OldNote, "=", ";")
+			I000 += NumberByKey(NI1_usxFindKeyStr("BPM_R_Sample=", OldNote), OldNote, "=", ";")
+		endif
 	endif
 	if(numtype(I000) != 0)
 		Print "I0 value not found in the wave note of the sample file, setting to 1"
@@ -2525,12 +2572,24 @@ Function NI1_usxSFindEfI0(SampleName)
 		Abort "Image file not found "
 	endif
 	string   OldNOte = note(w2D)
-	variable I000    = NumberByKey(NI1_usxFindKeyStr("I0_Sample=", OldNote), OldNote, "=", ";")
-	if(numtype(I000) != 0 || I000 < 1)
-		I000  = NumberByKey(NI1_usxFindKeyStr("BPM_B_Sample=", OldNote), OldNote, "=", ";")
-		I000 += NumberByKey(NI1_usxFindKeyStr("BPM_T_Sample=", OldNote), OldNote, "=", ";")
-		I000 += NumberByKey(NI1_usxFindKeyStr("BPM_L_Sample=", OldNote), OldNote, "=", ";")
-		I000 += NumberByKey(NI1_usxFindKeyStr("BPM_R_Sample=", OldNote), OldNote, "=", ";")
+	variable I000
+	variable FX4_SampleTime
+	FX4_SampleTime = NumberByKey(NI1_usxFindKeyStr("FX4_SampleTime=", OldNote), OldNote, "=", ";")	//test, if these are FX4 data... 
+	if(numtype(FX4_SampleTime) == 0)	//FX4 data
+		I000 = NumberByKey(NI1_usxFindKeyStr("I0_cts_gated=", OldNote), OldNote, "=", ";") //the only useful data...
+		// this I0_cts_gated now contains I0_cts_gated = I0_current [pA] · Exp_time_gated [s] / FX4_SampleTime [s]
+		//	FX4_SampleTime = NumberByKey(NI1_usxFindKeyStr("FX4_SampleTime=", OldNote), OldNote, "=", ";")	//test, if these are FX4 data... 
+		//variable Exp_time_gated
+		//Exp_time_gated = NumberByKey(NI1_usxFindKeyStr("Exp_time_gated=", OldNote), OldNote, "=", ";") 
+		//I000 = I000 * Exp_time_gated / FX4_SampleTime
+	else
+		I000    = NumberByKey(NI1_usxFindKeyStr("I0_Sample=", OldNote), OldNote, "=", ";")
+		if(numtype(I000) != 0 || I000 < 1)
+			I000  = NumberByKey(NI1_usxFindKeyStr("BPM_B_Sample=", OldNote), OldNote, "=", ";")
+			I000 += NumberByKey(NI1_usxFindKeyStr("BPM_T_Sample=", OldNote), OldNote, "=", ";")
+			I000 += NumberByKey(NI1_usxFindKeyStr("BPM_L_Sample=", OldNote), OldNote, "=", ";")
+			I000 += NumberByKey(NI1_usxFindKeyStr("BPM_R_Sample=", OldNote), OldNote, "=", ";")
+		endif
 	endif
 	if(numtype(I000) != 0)
 		Print "I0 value not found in the wave note of the sample file, setting to 1"
@@ -2629,9 +2688,21 @@ Function NI1_usxFindEfI0(SampleName)
 		Abort "Load one Image file first so the tool can read the wave note information"
 	endif
 	string   OldNOte = note(w2D)
-	variable I000    = NumberByKey(NI1_usxFindKeyStr("I0_cts_gated=", OldNote), OldNote, "=", ";")
-	variable I0gain  = NumberByKey(NI1_usxFindKeyStr("I0_gain=", OldNote), OldNote, "=", ";")
-	I000 = I000 / I0gain
+	variable I000
+	variable FX4_SampleTime
+	FX4_SampleTime = NumberByKey(NI1_usxFindKeyStr("FX4_SampleTime=", OldNote), OldNote, "=", ";")	//test, if these are FX4 data... 
+	if(numtype(FX4_SampleTime) == 0)	//FX4 data
+		I000 = NumberByKey(NI1_usxFindKeyStr("I0_cts_gated=", OldNote), OldNote, "=", ";") //the only useful data...
+		// this I0_cts_gated now contains I0_cts_gated = I0_current [pA] · Exp_time_gated [s] / FX4_SampleTime [s]
+		//	FX4_SampleTime = NumberByKey(NI1_usxFindKeyStr("FX4_SampleTime=", OldNote), OldNote, "=", ";")	//test, if these are FX4 data... 
+		//variable Exp_time_gated
+		//Exp_time_gated = NumberByKey(NI1_usxFindKeyStr("Exp_time_gated=", OldNote), OldNote, "=", ";") 
+		//I000 = I000 * Exp_time_gated / FX4_SampleTime
+	else
+		I000    = NumberByKey(NI1_usxFindKeyStr("I0_cts_gated=", OldNote), OldNote, "=", ";")
+		variable I0gain  = NumberByKey(NI1_usxFindKeyStr("I0_gain=", OldNote), OldNote, "=", ";")
+		I000 = I000 / I0gain
+	endif
 	//print SampleName+" EMPTY  normalized I0 = "+num2str(I000)
 	if(numtype(I000) != 0)
 		Print "I0 value not found in the wave note of the empty file, setting to 1"

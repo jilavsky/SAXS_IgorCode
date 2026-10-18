@@ -490,168 +490,89 @@ Function/S IN3_FSConvertToUSAXS(string RawFolderWithData, string origFileName)
 	NVAR   HdfWriterVersion = HdfWriterVersion
 	WAVE/T UserSampleNameWv = :entry:sample:name
 	//wave data to locate
-	WAVE   TimeWv       = :entry:flyScan:mca1
-	WAVE   I0Wv         = :entry:flyScan:mca2
-	WAVE   updWv        = :entry:flyScan:mca3
-	WAVE   Ar_start     = :entry:flyScan:AR_start
-	WAVE   Ar_increment = :entry:flyScan:Ar_increment
-	WAVE   updG1        = :entry:metadata:upd_gain0
-	WAVE   updG2        = :entry:metadata:upd_gain1
-	WAVE   updG3        = :entry:metadata:upd_gain2
-	WAVE   updG4        = :entry:metadata:upd_gain3
-	WAVE   updG5        = :entry:metadata:upd_gain4
-	WAVE   updBkg1      = :entry:metadata:upd_bkg0
-	WAVE   updBkg2      = :entry:metadata:upd_bkg1
-	WAVE   updBkg3      = :entry:metadata:upd_bkg2
-	WAVE   updBkg4      = :entry:metadata:upd_bkg3
-	WAVE   updBkg5      = :entry:metadata:upd_bkg4
-	WAVE/Z updBkgErr1   = :entry:metadata:upd_bkgErr0
-	if(!WaveExists(updBkgErr1))
-		WAVE/Z updBkgErr1 = :entry:metadata:upd_bkg_err0
-	endif
-	WAVE   updBkgErr2 = :entry:metadata:upd_bkgErr1
-	WAVE   updBkgErr3 = :entry:metadata:upd_bkgErr2
-	WAVE   updBkgErr4 = :entry:metadata:upd_bkgErr3
-	WAVE   updBkgErr5 = :entry:metadata:upd_bkgErr4
-	WAVE/Z UPDsize    = :entry:metadata:UPDsize
-	if(!WaveExists(UPDsize))
-		make/O/N=1 :entry:metadata:UPDsize
-		WAVE UPDsize = :entry:metadata:UPDsize
-		UPDsize[0] = 5.5
-	endif
-	WAVE/T SampleNameW      = :entry:sample:name
-	WAVE   SampleThicknessW = :entry:sample:thickness
-	WAVE/Z DCM_energyW      = :entry:instrument:monochromator:energy
-	if(!WaveExists(DCM_energyW))
-		WAVE/Z DCM_energyW = :entry:instrument:monochromator:DCM_energy
-	endif
-	WAVE   SDDW                = :entry:metadata:detector_distance
-	WAVE   SADW                = :entry:metadata:analyzer_distance
-	WAVE/T SpecSourceFilenameW = :entry:metadata:SPEC_data_file
-	//Wave I00GainW =:entry:metadata:I00AmpGain
-	WAVE   I0GainW              = :entry:metadata:I0AmpGain
-	WAVE/T TimeW                = :entry:metadata:timeStamp
-	WAVE/Z USAXSPinT_I0Counts   = :entry:metadata:trans_I0_counts
-	WAVE/Z USAXSPinT_I0Gain     = :entry:metadata:trans_I0_gain
-	WAVE/Z USAXSPinT_AyPosition = :entry:metadata:trans_pin_aypos
-	WAVE/Z USAXSPinT_pinCounts  = :entry:metadata:trans_pin_counts
-	WAVE/Z USAXSPinT_pinGain    = :entry:metadata:trans_pin_gain
-	WAVE/Z USAXSPinT_Time       = :entry:metadata:trans_pin_time
-	WAVE/Z AR_Finish            = :entry:flyScan:AR_Finish
-	WAVE/Z AR_NumPulsePositions = :entry:flyScan:AR_NumPulsePositions
-	WAVE/Z AR_PulseMode         = :entry:flyScan:AR_PulseMode
-	if(!WaveExists(AR_PulseMode))
-		Make/O/N=1 :entry:flyScan:AR_PulseMode
-		WAVE AR_PulseMode = :entry:flyScan:AR_PulseMode
-		AR_PulseMode = 0
-	endif
-	variable is2DScan //2D collimated USAXS?
-	is2DScan = 0
-	WAVE/Z is_2D_USAXS_scan = :entry:flyScan:is_2D_USAXS_scan
-	if(WaveExists(is_2D_USAXS_scan))
-		is2DScan = is_2D_USAXS_scan[0]
-	endif
-	WAVE/Z AR_PulsePositions = :entry:flyScan:AR_PulsePositions
-	WAVE/Z AR_pulses         = :entry:flyScan:AR_pulses
-	WAVE/Z AR_waypoints      = :entry:flyScan:AR_waypoints
-	make/FREE/N=5 TimeRangeAfterUPD, TimeRangeAfterI0
-	if(HdfWriterVersion < 1)
-		WAVE mcsChangePnts = :entry:flyScan:changes_mcsChan
-		WAVE ampGain       = :entry:flyScan:changes_ampGain
-		WAVE ampReqGain    = :entry:flyScan:changes_ampReqGain
-		TimeRangeAfterUPD = {AmplifierRange1BlockTime, AmplifierRange2BlockTime, AmplifierRange3BlockTime, AmplifierRange4BlockTime, AmplifierRange5BlockTime}
-		TimeRangeAfterI0  = {0, 0, 0, 0, 0}
-	elseif(HdfWriterVersion >= 1)
-		WAVE AmplifierUsed       = :entry:flyScan:upd_flyScan_amplifier //1 for DDPCA300, 0 for DLPCA200
-		WAVE DDPCA300_ampGain    = :entry:flyScan:changes_DDPCA300_ampGain
-		WAVE DDPCA300_ampReqGain = :entry:flyScan:changes_DDPCA300_ampReqGain
-		WAVE DDPCA300_mcsChan    = :entry:flyScan:changes_DDPCA300_mcsChan
-		WAVE DLPCA200_ampGain    = :entry:flyScan:changes_DLPCA200_ampGain
-		WAVE DLPCA200_ampReqGain = :entry:flyScan:changes_DLPCA200_ampReqGain
-		WAVE DLPCA200_mcsChan    = :entry:flyScan:changes_DLPCA200_mcsChan
-		WAVE I00_ampGain         = :entry:flyScan:changes_I00_ampGain
-		WAVE I00_ampReqGain      = :entry:flyScan:changes_I00_ampReqGain
-		WAVE I00_mcsChan         = :entry:flyScan:changes_I00_mcsChan
-		WAVE I0_ampGain          = :entry:flyScan:changes_I0_ampGain
-		WAVE I0_ampReqGain       = :entry:flyScan:changes_I0_ampReqGain
-		WAVE I0_mcsChan          = :entry:flyScan:changes_I0_mcsChan
-		WAVE mcaFrequency        = :entry:flyScan:mca_clock_frequency
-		WAVE updMaskR1           = :entry:metadata:upd_amp_change_mask_time0
-		WAVE updMaskR2           = :entry:metadata:upd_amp_change_mask_time1
-		WAVE updMaskR3           = :entry:metadata:upd_amp_change_mask_time2
-		WAVE updMaskR4           = :entry:metadata:upd_amp_change_mask_time3
-		WAVE updMaskR5           = :entry:metadata:upd_amp_change_mask_time4
-		TimeRangeAfterUPD = {updMaskR1[0], updMaskR2[0], updMaskR3[0], updMaskR4[0], updMaskR5[0]}
-		TimeRangeAfterI0  = {0.05, 0.05, 0.05, 0.05, 0.05}
-		//we need to mask at least 50ms for each change...
-		TimeRangeAfterUPD = (TimeRangeAfterUPD[p] > 0.01) ? TimeRangeAfterUPD[p] : 0.01
-		//Ar positions read at 10Hz
-		WAVE changes_AR_PSOpulse = :entry:flyScan:changes_AR_PSOpulse
-		WAVE changes_AR_angle    = :entry:flyScan:changes_AR_angle
-	endif
-	//handle here the Masking times...
-	//	ListOfVariables+="FSOverWriteRage1DeadTime;FSOverWriteRage2DeadTime;FSOverWriteRage3DeadTime;FSOverWriteRage4DeadTime;FSOverWriteRage5DeadTime;"
-	//	ListOfVariables+="FSRage1DeadTime;FSRage2DeadTime;FSRage3DeadTime;FSRage4DeadTime;FSRage5DeadTime;"
-	NVAR FSRage1DeadTime          = root:Packages:Indra3:FSRage1DeadTime
-	NVAR FSRage2DeadTime          = root:Packages:Indra3:FSRage2DeadTime
-	NVAR FSRage3DeadTime          = root:Packages:Indra3:FSRage3DeadTime
-	NVAR FSRage4DeadTime          = root:Packages:Indra3:FSRage4DeadTime
-	NVAR FSRage5DeadTime          = root:Packages:Indra3:FSRage5DeadTime
-	NVAR FSOverWriteRage1DeadTime = root:Packages:Indra3:FSOverWriteRage1DeadTime
-	NVAR FSOverWriteRage2DeadTime = root:Packages:Indra3:FSOverWriteRage2DeadTime
-	NVAR FSOverWriteRage3DeadTime = root:Packages:Indra3:FSOverWriteRage3DeadTime
-	NVAR FSOverWriteRage4DeadTime = root:Packages:Indra3:FSOverWriteRage4DeadTime
-	NVAR FSOverWriteRage5DeadTime = root:Packages:Indra3:FSOverWriteRage5DeadTime
-	//store the old ones...
-	FSRage1DeadTime = TimeRangeAfterUPD[0]
-	FSRage2DeadTime = TimeRangeAfterUPD[1]
-	FSRage3DeadTime = TimeRangeAfterUPD[2]
-	FSRage4DeadTime = TimeRangeAfterUPD[3]
-	FSRage5DeadTime = TimeRangeAfterUPD[4]
-	//overwrite with new ones if not 0
-	TimeRangeAfterUPD[0] = (FSOverWriteRage1DeadTime > 0) ? FSOverWriteRage1DeadTime : TimeRangeAfterUPD[0]
-	TimeRangeAfterUPD[1] = (FSOverWriteRage2DeadTime > 0) ? FSOverWriteRage2DeadTime : TimeRangeAfterUPD[1]
-	TimeRangeAfterUPD[2] = (FSOverWriteRage3DeadTime > 0) ? FSOverWriteRage3DeadTime : TimeRangeAfterUPD[2]
-	TimeRangeAfterUPD[3] = (FSOverWriteRage4DeadTime > 0) ? FSOverWriteRage4DeadTime : TimeRangeAfterUPD[3]
-	TimeRangeAfterUPD[4] = (FSOverWriteRage5DeadTime > 0) ? FSOverWriteRage5DeadTime : TimeRangeAfterUPD[4]
-	//temp fix TODO: fix settings at the beamline and try
-	//STimeRangeAfterUPD*=0.1
-	//here we copy data to new place
-	newDataFolder/O/S root:USAXS
+	Variable/g root:Packages:Indra3:IsFX4Data
+	variable is2DScan
 	string FileName, ListOfExistingFolders
-	//FileName=StringFromList(ItemsInList(RawFolderWithData ,":")-1, RawFolderWithData,  ":")
-	FileName = origFileName
-	//FileName = IN2G_RemoveExtraQuote(FileName,1,1)
-	ListOfExistingFolders = DataFolderDir(1)
-	NVAR OverWriteExistingData = root:Packages:Indra3:OverWriteExistingData
-	if(StringMatch(IN2G_ConvertDataDirToList(ListOfExistingFolders), "*" + IN2G_RemoveExtraQuote(FileName, 1, 1) + ";*") && (OverWriteExistingData == 0))
-		DoAlert/T="Non unique name alert..." 1, "USAXS Folder with " + FileName + " name already found, Overwrite?"
-		if(V_Flag != 1)
-			return ""
-		endif
-	endif
-	newDataFolder/O/S $(FileName)
-	string/G UserSampleName = UserSampleNameWv[0] //stringFromList(0,origFileName,".")
-	//reading Time failed?
-	if(WaveType(TimeWv, 1) != 1)
-		SetDataFolder saveDF
-		Abort "Struk data read failure found in the file for sample :" + UserSampleName + ", these data are unusable, aborting"
-	endif
-	Duplicate/O TimeWv, MeasTime
-	Duplicate/O I0Wv, Monitor
-	Duplicate/O updWv, USAXS_PD
+	string WaveNote
 
-	Duplicate/O MeasTime, PD_range
-	Duplicate/O MeasTime, I0gain
-	variable OscillationsFound
-	NVAR RemoveOscillations = root:Packages:Indra3:RemoveOscillations
-	OscillationsFound = 0
-	//create AR data
-	if(HdfWriterVersion < 1.1) //trajectory using fixed point system.
-		Duplicate/FREE TimeWv, ArValues
-		Redimension/D ArValues
-		ArValues = abs(Ar_increment[0]) * p
-	else
+	NVAR IsFX4Data = root:Packages:Indra3:IsFX4Data
+	
+	Wave/Z fx4_range = :entry:flyScan:fx4_range
+	if(WaveExists(fx4_range))		//new FX4 using data
+		IsFX4Data = 1
+		WAVE   TimeWv       = :entry:flyScan:channel_time
+
+		WAVE   updWv        = :entry:flyScan:upd_current
+		WAVE   updWvSigma   = :entry:flyScan:upd_sigma
+		WAVE   updWvtotal   = :entry:flyScan:upd_total
+
+		WAVE   I0Wv         = :entry:flyScan:I0_current
+		WAVE   I0WvSigma    = :entry:flyScan:I0_sigma
+		WAVE   I0WvTotal    = :entry:flyScan:I0_total
+
+		WAVE/T TimeW                = :entry:metadata:timeStamp
+		WAVE/Z USAXSPinT_I0Counts   = :entry:metadata:trans_I0_counts
+		WAVE/Z USAXSPinT_pinCounts  = :entry:metadata:trans_pin_counts
+		WAVE/Z USAXSPinT_Time       = :entry:metadata:trans_pin_time
+
+		WAVE   Ar_start     = :entry:flyScan:AR_start
+		WAVE   Ar_increment = :entry:flyScan:Ar_increment	
+		WAVE   updBkg1      = :entry:flyScan:upd_bkg0
+		WAVE   updBkg2      = :entry:flyScan:upd_bkg1
+		WAVE   updBkg3      = :entry:flyScan:upd_bkg2
+		WAVE   updBkg4      = :entry:flyScan:upd_bkg3
+		WAVE   updBkg5      = :entry:flyScan:upd_bkg4
+		WAVE   updBkgErr1   = :entry:flyScan:upd_bkgErr0
+		WAVE   updBkgErr2 	  = :entry:flyScan:upd_bkgErr1
+		WAVE   updBkgErr3   = :entry:flyScan:upd_bkgErr2
+		WAVE   updBkgErr4   = :entry:flyScan:upd_bkgErr3
+		WAVE   updBkgErr5   = :entry:flyScan:upd_bkgErr4
+		WAVE   UPDsize      = :entry:metadata:UPDsize
+		WAVE/T SampleNameW      = :entry:sample:name
+		WAVE   SampleThicknessW = :entry:sample:thickness
+		WAVE/Z DCM_energyW      = :entry:instrument:monochromator:energy
+		if(!WaveExists(DCM_energyW))
+			WAVE/Z DCM_energyW = :entry:instrument:monochromator:DCM_energy
+		endif
+		WAVE   SDDW                = :entry:metadata:detector_distance
+		WAVE   SADW                = :entry:metadata:analyzer_distance
+		WAVE/T SpecSourceFilenameW = :entry:metadata:SPEC_data_file
+	
+		WAVE/Z AR_Finish            = :entry:flyScan:AR_Finish
+		WAVE/Z AR_NumPulsePositions = :entry:flyScan:AR_NumPulsePositions
+		WAVE/Z AR_PulseMode         = :entry:flyScan:AR_PulseMode
+		is2DScan = 0
+		WAVE/Z is_2D_USAXS_scan = :entry:flyScan:is_2D_USAXS_scan
+		if(WaveExists(is_2D_USAXS_scan))
+			is2DScan = is_2D_USAXS_scan[0]
+		endif
+		WAVE/Z AR_PulsePositions = :entry:flyScan:AR_PulsePositions
+		WAVE/Z AR_pulses         = :entry:flyScan:AR_pulses
+		WAVE/Z AR_waypoints      = :entry:flyScan:AR_waypoints
+
+		//
+		newDataFolder/O/S root:USAXS
+		FileName = origFileName
+		ListOfExistingFolders = DataFolderDir(1)
+		NVAR OverWriteExistingData = root:Packages:Indra3:OverWriteExistingData
+		if(StringMatch(IN2G_ConvertDataDirToList(ListOfExistingFolders), "*" + IN2G_RemoveExtraQuote(FileName, 1, 1) + ";*") && (OverWriteExistingData == 0))
+			DoAlert/T="Non unique name alert..." 1, "USAXS Folder with " + FileName + " name already found, Overwrite?"
+			if(V_Flag != 1)
+				return ""
+			endif
+		endif
+		newDataFolder/O/S $(FileName)
+		string/G UserSampleName = UserSampleNameWv[0] //stringFromList(0,origFileName,".")
+		Duplicate/O TimeWv, MeasTime
+		Duplicate/O I0Wv, Monitor
+		Duplicate/O updWv, USAXS_PD
+		Duplicate/O I0WvSigma, Monitor_sigma
+		Duplicate/O updWvSigma, USAXS_PD_sigma
+		Duplicate/O I0Wvtotal, Monitor_total
+		Duplicate/O updWvtotal, USAXS_PD_total
+		Duplicate/O MeasTime, PD_range
+		Duplicate/O MeasTime, I0gain
+		//create AR data
 		if(AR_PulseMode[0] == 0) //trajectory using fixed point system.
 			Duplicate/FREE TimeWv, ArValues
 			Redimension/D ArValues
@@ -660,125 +581,373 @@ Function/S IN3_FSConvertToUSAXS(string RawFolderWithData, string origFileName)
 			Duplicate/FREE AR_PulsePositions, ArValues
 			Redimension/D/N=(AR_pulses[0]) ArValues
 			ArValues[1, numpnts(ArValues) - 1] = (ArValues[p] + ArValues[p - 1]) / 2 // shift to have mean AR value for each point and not the end of the AR value, when the system advanced to next point.
-			//DeletePoints 0, 1, ArValues					//seem to be failing sometimes... the system does not report any data for first channel. HLe settings.
-			//ArValues[0] = NaN //the system does not report any data for first channel. HLe settings.
-			//this is likely not needed for Automation1
-			//still happening for Automation 1 also. Sometimes missing 2 points? 
 			if(numpnts(MeasTime) < (numpnts(ArValues) - 2))
-				OscillationsFound = 1
+				Abort "Failed scan"
 			elseif(numpnts(MeasTime) == (numpnts(ArValues) - 1))
 				DeletePoints 0, 1, ArValues
 			elseif(numpnts(MeasTime) == (numpnts(ArValues) - 2))
 				DeletePoints 0, 2, ArValues
 			endif
-		elseif(AR_PulseMode[0] == 2) //this is using trajectory way points, typically 200 points
-			Duplicate/FREE AR_waypoints, ArValues
-			Redimension/D ArValues
-			ArValues[1, numpnts(ArValues) - 1] = (ArValues[p] + ArValues[p - 1]) / 2 // shift to have mean AR value for each point and not the end of the AR value, when the system advanced to next point.
-			DeletePoints 0, 1, ArValues //the system does not report any data for first channel. HLe settings.
-			if(numpnts(MeasTime) != numpnts(ArValues))
-				OscillationsFound = 1
+		endif
+
+		Duplicate/O ArValues, Ar_encoder
+		redimension/D MeasTime, Monitor, USAXS_PD
+		redimension/S PD_range, I0gain
+		//reconstruct PDrange from values...
+		variable i
+		PD_range=5
+		For(i=0;i<numpnts(PD_range);i+=1)
+			if(USAXS_PD[i]>1e6)//100uA
+				PD_range[i]=1
+			elseif(USAXS_PD[i]>12000)//10uA
+				PD_range[i]=2
+			elseif(USAXS_PD[i]>800)//1uA
+				PD_range[i]=3
+			elseif(USAXS_PD[i]>30)	//100nA
+				PD_range[i]=4
 			endif
+		endfor
+		
+		//need to append the wave notes...
+		if(is2DScan)
+			WaveNote = "DATAFILE=" + SpecFileNameWv[0] + ";DATE=" + TimeW[0] + ";COMMENT=" + SampleNameW[0] + ";SpecCommand=" + "sbflyScan  ar 17.8217 17.8206 14.5895 2e-05  26.2812 " + num2str(SDDW[0]) + " -0.1 " + num2str(SADW[0]) + " " + num2str(SampleThicknessW[0]) + " 100 1"
 		else
+			WaveNote = "DATAFILE=" + SpecFileNameWv[0] + ";DATE=" + TimeW[0] + ";COMMENT=" + SampleNameW[0] + ";SpecCommand=" + "flyScan  ar 17.8217 17.8206 14.5895 2e-05  26.2812 " + num2str(SDDW[0]) + " -0.1 " + num2str(SADW[0]) + " " + num2str(SampleThicknessW[0]) + " 100 1"
+		endif
+		WaveNote += ";SpecComment=" + SampleNameW[0] + ";" + "Nexus_attributesStartHere;"
+		note/K/NOCR MeasTime, WaveNote
+		note/K/NOCR Monitor, WaveNote
+		note/K/NOCR USAXS_PD, WaveNote
+		note/K/NOCR PD_range, WaveNote
+		note/K/NOCR Ar_encoder, WaveNote
+	
+		//Needed?
+		IN2G_RemoveNaNsFrom6Waves(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range, I0gain)
+		//let's make some standard strings we need.
+		string/G PathToRawData
+		PathToRawData = RawFolderWithData
+		string/G SpecCommand
+		if(is2DScan)
+			SpecCommand = "sbflyScan  ar 17.8217 17.8206 14.5895 2e-05  26.2812 " + num2str(SDDW[0]) + " -0.1 " + num2str(SADW[0]) + " " + num2str(SampleThicknessW[0]) + " 100 1"
+		else
+			SpecCommand = "flyScan  ar 17.8217 17.8206 14.5895 2e-05  26.2812 " + num2str(SDDW[0]) + " -0.1 " + num2str(SADW[0]) + " " + num2str(SampleThicknessW[0]) + " 100 1"
+		endif
+		string/G SpecComment
+		string/G SpecSourceFileName
+		SpecSourceFileName = SpecSourceFilenameW[0]
+		SpecComment        = SampleNameW[0]
+		string/G UPDParameters
+		UPDParameters  = "Vfc=100000;Gain1=1;Gain2=1;Gain3=1;Gain4=1;Gain5=1"
+		UPDParameters += ";Bkg1=" + num2str(updBkg1[0]) + ";Bkg2=" + num2str(updBkg2[0]) + ";Bkg3=" + num2str(updBkg3[0]) + ";Bkg4=" + num2str(updBkg4[0]) + ";Bkg5=" + num2str(updBkg5[0])
+		UPDParameters += ";Bkg1Err=" + num2str(updBkgErr1[0]) + ";Bkg2Err=" + num2str(updBkgErr2[0]) + ";Bkg3Err=" + num2str(updBkgErr3[0]) + ";Bkg4Err=" + num2str(updBkgErr4[0]) + ";Bkg5Err=" + num2str(updBkgErr5[0])
+		UPDParameters += ";I0AmpDark=;I0AmpGain=1;I00AmpGain=" + ";UPDsize=" + num2str(UPDsize[0]) + ";"
+		string/G MeasurementParameters
+		MeasurementParameters  = "DCM_energy=" + num2str(DCM_energyW[0]) + ";SAD=" + num2str(SADW[0]) + ";SDD=" + num2str(SDDW[0]) + ";thickness=" + num2str(SampleThicknessW[0]) + ";"
+		MeasurementParameters += ";I0AmpDark=;I0AmpGain=1;I00AmpGain=1" + ";" 
+		MeasurementParameters += "Vfc=1;Gain1=1;Gain2=1;Gain3=1;Gain4=1;Gain5=1"
+		MeasurementParameters += ";Bkg1=" + num2str(updBkg1[0]) + ";Bkg2=" + num2str(updBkg2[0]) + ";Bkg3=" + num2str(updBkg3[0]) + ";Bkg4=" + num2str(updBkg4[0]) + ";Bkg5=" + num2str(updBkg5[0])
+		MeasurementParameters += ";Bkg1Err=" + num2str(updBkgErr1[0]) + ";Bkg2Err=" + num2str(updBkgErr2[0]) + ";Bkg3Err=" + num2str(updBkgErr3[0]) + ";Bkg4Err=" + num2str(updBkgErr4[0]) + ";Bkg5Err=" + num2str(updBkgErr5[0])
+		if(WaveExists(USAXSPinT_pinCounts))
+			if(USAXSPinT_pinCounts[0] > 100)
+				MeasurementParameters += ";USAXSPinT_Measure=1;USAXSPinT_Time=" + num2str(USAXSPinT_Time[0]) + ";USAXSPinT_pinCounts=" + num2str(USAXSPinT_pinCounts[0]) + ";"
+				MeasurementParameters += "USAXSPinT_pinGain=1;USAXSPinT_I0Counts=" + num2str(USAXSPinT_I0Counts[0]) + ";USAXSPinT_I0Gain=1;"
+			endif
+		endif
+
+
+
+	//*************
+	else //old pre-FX4 data
+		IsFX4Data = 0
+		WAVE   TimeWv       = :entry:flyScan:mca1
+		WAVE   I0Wv         = :entry:flyScan:mca2
+		WAVE   updWv        = :entry:flyScan:mca3
+
+		WAVE   updG1        = :entry:metadata:upd_gain0
+		WAVE   updG2        = :entry:metadata:upd_gain1
+		WAVE   updG3        = :entry:metadata:upd_gain2
+		WAVE   updG4        = :entry:metadata:upd_gain3
+		WAVE   updG5        = :entry:metadata:upd_gain4
+		WAVE   I0GainW              = :entry:metadata:I0AmpGain
+		WAVE/T TimeW                = :entry:metadata:timeStamp
+		WAVE/Z USAXSPinT_I0Counts   = :entry:metadata:trans_I0_counts
+		WAVE/Z USAXSPinT_I0Gain     = :entry:metadata:trans_I0_gain
+		WAVE/Z USAXSPinT_AyPosition = :entry:metadata:trans_pin_aypos
+		WAVE/Z USAXSPinT_pinCounts  = :entry:metadata:trans_pin_counts
+		WAVE/Z USAXSPinT_pinGain    = :entry:metadata:trans_pin_gain
+		WAVE/Z USAXSPinT_Time       = :entry:metadata:trans_pin_time
+		
+		WAVE   Ar_start     = :entry:flyScan:AR_start
+		WAVE   Ar_increment = :entry:flyScan:Ar_increment	
+		WAVE   updBkg1      = :entry:metadata:upd_bkg0
+		WAVE   updBkg2      = :entry:metadata:upd_bkg1
+		WAVE   updBkg3      = :entry:metadata:upd_bkg2
+		WAVE   updBkg4      = :entry:metadata:upd_bkg3
+		WAVE   updBkg5      = :entry:metadata:upd_bkg4
+		WAVE/Z updBkgErr1   = :entry:metadata:upd_bkgErr0
+		if(!WaveExists(updBkgErr1))
+			WAVE/Z updBkgErr1 = :entry:metadata:upd_bkg_err0
+		endif
+		WAVE   updBkgErr2 = :entry:metadata:upd_bkgErr1
+		WAVE   updBkgErr3 = :entry:metadata:upd_bkgErr2
+		WAVE   updBkgErr4 = :entry:metadata:upd_bkgErr3
+		WAVE   updBkgErr5 = :entry:metadata:upd_bkgErr4
+		WAVE/Z UPDsize    = :entry:metadata:UPDsize
+		if(!WaveExists(UPDsize))
+			make/O/N=1 :entry:metadata:UPDsize
+			WAVE UPDsize = :entry:metadata:UPDsize
+			UPDsize[0] = 5.5
+		endif
+		WAVE/T SampleNameW      = :entry:sample:name
+		WAVE   SampleThicknessW = :entry:sample:thickness
+		WAVE/Z DCM_energyW      = :entry:instrument:monochromator:energy
+		if(!WaveExists(DCM_energyW))
+			WAVE/Z DCM_energyW = :entry:instrument:monochromator:DCM_energy
+		endif
+		WAVE   SDDW                = :entry:metadata:detector_distance
+		WAVE   SADW                = :entry:metadata:analyzer_distance
+		WAVE/T SpecSourceFilenameW = :entry:metadata:SPEC_data_file
+		//Wave I00GainW =:entry:metadata:I00AmpGain
+	
+		WAVE/Z AR_Finish            = :entry:flyScan:AR_Finish
+		WAVE/Z AR_NumPulsePositions = :entry:flyScan:AR_NumPulsePositions
+		WAVE/Z AR_PulseMode         = :entry:flyScan:AR_PulseMode
+		if(!WaveExists(AR_PulseMode))
+			Make/O/N=1 :entry:flyScan:AR_PulseMode
+			WAVE AR_PulseMode = :entry:flyScan:AR_PulseMode
+			AR_PulseMode = 0
+		endif
+		is2DScan = 0
+		WAVE/Z is_2D_USAXS_scan = :entry:flyScan:is_2D_USAXS_scan
+		if(WaveExists(is_2D_USAXS_scan))
+			is2DScan = is_2D_USAXS_scan[0]
+		endif
+		WAVE/Z AR_PulsePositions = :entry:flyScan:AR_PulsePositions
+		WAVE/Z AR_pulses         = :entry:flyScan:AR_pulses
+		WAVE/Z AR_waypoints      = :entry:flyScan:AR_waypoints
+		make/FREE/N=5 TimeRangeAfterUPD, TimeRangeAfterI0
+		if(HdfWriterVersion < 1)
+			WAVE mcsChangePnts = :entry:flyScan:changes_mcsChan
+			WAVE ampGain       = :entry:flyScan:changes_ampGain
+			WAVE ampReqGain    = :entry:flyScan:changes_ampReqGain
+			TimeRangeAfterUPD = {AmplifierRange1BlockTime, AmplifierRange2BlockTime, AmplifierRange3BlockTime, AmplifierRange4BlockTime, AmplifierRange5BlockTime}
+			TimeRangeAfterI0  = {0, 0, 0, 0, 0}
+		elseif(HdfWriterVersion >= 1 && !IsFX4Data)
+			WAVE AmplifierUsed       = :entry:flyScan:upd_flyScan_amplifier //1 for DDPCA300, 0 for DLPCA200
+			WAVE DDPCA300_ampGain    = :entry:flyScan:changes_DDPCA300_ampGain
+			WAVE DDPCA300_ampReqGain = :entry:flyScan:changes_DDPCA300_ampReqGain
+			WAVE DDPCA300_mcsChan    = :entry:flyScan:changes_DDPCA300_mcsChan
+			WAVE DLPCA200_ampGain    = :entry:flyScan:changes_DLPCA200_ampGain
+			WAVE DLPCA200_ampReqGain = :entry:flyScan:changes_DLPCA200_ampReqGain
+			WAVE DLPCA200_mcsChan    = :entry:flyScan:changes_DLPCA200_mcsChan
+			WAVE I00_ampGain         = :entry:flyScan:changes_I00_ampGain
+			WAVE I00_ampReqGain      = :entry:flyScan:changes_I00_ampReqGain
+			WAVE I00_mcsChan         = :entry:flyScan:changes_I00_mcsChan
+			WAVE I0_ampGain          = :entry:flyScan:changes_I0_ampGain
+			WAVE I0_ampReqGain       = :entry:flyScan:changes_I0_ampReqGain
+			WAVE I0_mcsChan          = :entry:flyScan:changes_I0_mcsChan
+			WAVE mcaFrequency        = :entry:flyScan:mca_clock_frequency
+			WAVE updMaskR1           = :entry:metadata:upd_amp_change_mask_time0
+			WAVE updMaskR2           = :entry:metadata:upd_amp_change_mask_time1
+			WAVE updMaskR3           = :entry:metadata:upd_amp_change_mask_time2
+			WAVE updMaskR4           = :entry:metadata:upd_amp_change_mask_time3
+			WAVE updMaskR5           = :entry:metadata:upd_amp_change_mask_time4
+			TimeRangeAfterUPD = {updMaskR1[0], updMaskR2[0], updMaskR3[0], updMaskR4[0], updMaskR5[0]}
+			TimeRangeAfterI0  = {0.05, 0.05, 0.05, 0.05, 0.05}
+			//we need to mask at least 50ms for each change...
+			TimeRangeAfterUPD = (TimeRangeAfterUPD[p] > 0.01) ? TimeRangeAfterUPD[p] : 0.01
+			//Ar positions read at 10Hz
+			WAVE changes_AR_PSOpulse = :entry:flyScan:changes_AR_PSOpulse
+			WAVE changes_AR_angle    = :entry:flyScan:changes_AR_angle
+		endif
+		NVAR FSRage1DeadTime          = root:Packages:Indra3:FSRage1DeadTime
+		NVAR FSRage2DeadTime          = root:Packages:Indra3:FSRage2DeadTime
+		NVAR FSRage3DeadTime          = root:Packages:Indra3:FSRage3DeadTime
+		NVAR FSRage4DeadTime          = root:Packages:Indra3:FSRage4DeadTime
+		NVAR FSRage5DeadTime          = root:Packages:Indra3:FSRage5DeadTime
+		NVAR FSOverWriteRage1DeadTime = root:Packages:Indra3:FSOverWriteRage1DeadTime
+		NVAR FSOverWriteRage2DeadTime = root:Packages:Indra3:FSOverWriteRage2DeadTime
+		NVAR FSOverWriteRage3DeadTime = root:Packages:Indra3:FSOverWriteRage3DeadTime
+		NVAR FSOverWriteRage4DeadTime = root:Packages:Indra3:FSOverWriteRage4DeadTime
+		NVAR FSOverWriteRage5DeadTime = root:Packages:Indra3:FSOverWriteRage5DeadTime
+		//store the old ones...
+		FSRage1DeadTime = TimeRangeAfterUPD[0]
+		FSRage2DeadTime = TimeRangeAfterUPD[1]
+		FSRage3DeadTime = TimeRangeAfterUPD[2]
+		FSRage4DeadTime = TimeRangeAfterUPD[3]
+		FSRage5DeadTime = TimeRangeAfterUPD[4]
+		//overwrite with new ones if not 0
+		TimeRangeAfterUPD[0] = (FSOverWriteRage1DeadTime > 0) ? FSOverWriteRage1DeadTime : TimeRangeAfterUPD[0]
+		TimeRangeAfterUPD[1] = (FSOverWriteRage2DeadTime > 0) ? FSOverWriteRage2DeadTime : TimeRangeAfterUPD[1]
+		TimeRangeAfterUPD[2] = (FSOverWriteRage3DeadTime > 0) ? FSOverWriteRage3DeadTime : TimeRangeAfterUPD[2]
+		TimeRangeAfterUPD[3] = (FSOverWriteRage4DeadTime > 0) ? FSOverWriteRage4DeadTime : TimeRangeAfterUPD[3]
+		TimeRangeAfterUPD[4] = (FSOverWriteRage5DeadTime > 0) ? FSOverWriteRage5DeadTime : TimeRangeAfterUPD[4]
+		//temp fix TODO: fix settings at the beamline and try
+		//STimeRangeAfterUPD*=0.1
+		//here we copy data to new place
+		newDataFolder/O/S root:USAXS
+		//FileName=StringFromList(ItemsInList(RawFolderWithData ,":")-1, RawFolderWithData,  ":")
+		FileName = origFileName
+		//FileName = IN2G_RemoveExtraQuote(FileName,1,1)
+		ListOfExistingFolders = DataFolderDir(1)
+		NVAR OverWriteExistingData = root:Packages:Indra3:OverWriteExistingData
+		if(StringMatch(IN2G_ConvertDataDirToList(ListOfExistingFolders), "*" + IN2G_RemoveExtraQuote(FileName, 1, 1) + ";*") && (OverWriteExistingData == 0))
+			DoAlert/T="Non unique name alert..." 1, "USAXS Folder with " + FileName + " name already found, Overwrite?"
+			if(V_Flag != 1)
+				return ""
+			endif
+		endif
+		newDataFolder/O/S $(FileName)
+		string/G UserSampleName = UserSampleNameWv[0] //stringFromList(0,origFileName,".")
+		//reading Time failed?
+		if(WaveType(TimeWv, 1) != 1)
 			SetDataFolder saveDF
-			Abort "Unknown data collection method"
+			Abort "Struk data read failure found in the file for sample :" + UserSampleName + ", these data are unusable, aborting"
 		endif
-	endif
-	Duplicate/O ArValues, Ar_encoder
-	if(OscillationsFound)
-		//let's figure out, if all worked as expected.
-		Duplicate/O changes_AR_PSOpulse, AR_PSOpulse
-		Duplicate/O changes_AR_angle, AR_angle, DiffARValues
-		//this seems to cause issues, not sure why it was here. Seems to work without it quite OK...
-		//variable EndOFData = BinarySearch(AR_angle, 0.1)
-		//DeletePoints  EndOFData, (numpnts(AR_angle)-EndOFData), AR_angle, AR_PSOpulse, DiffARValues
-		//OK, let's fix the weird PSOpulse errors we see. Not sure where these come from.
-		print "Found that there were likely vibrations during scan, doing fix using PSO channel record"
-		IN3_CleanUpStaleMCAChannel(AR_PSOpulse, AR_angle)
-		if(RemoveOscillations) //remove vibration as usual, default...
-			IN3_LocateAndRemoveOscillations(AR_encoder, AR_PSOpulse, AR_angle)
-		else //remove end points from angles.
-			AR_encoder[numpnts(MeasTime) - 1,] = NaN
+		Duplicate/O TimeWv, MeasTime
+		Duplicate/O I0Wv, Monitor
+		Duplicate/O updWv, USAXS_PD
+	
+		Duplicate/O MeasTime, PD_range
+		Duplicate/O MeasTime, I0gain
+		variable OscillationsFound
+		NVAR RemoveOscillations = root:Packages:Indra3:RemoveOscillations
+		OscillationsFound = 0
+		//create AR data
+		if(HdfWriterVersion < 1.1) //trajectory using fixed point system.
+			Duplicate/FREE TimeWv, ArValues
+			Redimension/D ArValues
+			ArValues = abs(Ar_increment[0]) * p
+		else
+			if(AR_PulseMode[0] == 0) //trajectory using fixed point system.
+				Duplicate/FREE TimeWv, ArValues
+				Redimension/D ArValues
+				ArValues = abs(Ar_increment[0]) * p
+			elseif(AR_PulseMode[0] == 1) // this is using PSO pulse positions, typically 2-8k points, need to also trim extra end as we always save 8k points
+				Duplicate/FREE AR_PulsePositions, ArValues
+				Redimension/D/N=(AR_pulses[0]) ArValues
+				ArValues[1, numpnts(ArValues) - 1] = (ArValues[p] + ArValues[p - 1]) / 2 // shift to have mean AR value for each point and not the end of the AR value, when the system advanced to next point.
+				//DeletePoints 0, 1, ArValues					//seem to be failing sometimes... the system does not report any data for first channel. HLe settings.
+				//ArValues[0] = NaN //the system does not report any data for first channel. HLe settings.
+				//this is likely not needed for Automation1
+				//still happening for Automation 1 also. Sometimes missing 2 points? 
+				if(numpnts(MeasTime) < (numpnts(ArValues) - 2))
+					OscillationsFound = 1
+				elseif(numpnts(MeasTime) == (numpnts(ArValues) - 1))
+					DeletePoints 0, 1, ArValues
+				elseif(numpnts(MeasTime) == (numpnts(ArValues) - 2))
+					DeletePoints 0, 2, ArValues
+				endif
+			elseif(AR_PulseMode[0] == 2) //this is using trajectory way points, typically 200 points
+				Duplicate/FREE AR_waypoints, ArValues
+				Redimension/D ArValues
+				ArValues[1, numpnts(ArValues) - 1] = (ArValues[p] + ArValues[p - 1]) / 2 // shift to have mean AR value for each point and not the end of the AR value, when the system advanced to next point.
+				DeletePoints 0, 1, ArValues //the system does not report any data for first channel. HLe settings.
+				if(numpnts(MeasTime) != numpnts(ArValues))
+					OscillationsFound = 1
+				endif
+			else
+				SetDataFolder saveDF
+				Abort "Unknown data collection method"
+			endif
 		endif
+		Duplicate/O ArValues, Ar_encoder
+		if(OscillationsFound)
+			//let's figure out, if all worked as expected.
+			Duplicate/O changes_AR_PSOpulse, AR_PSOpulse
+			Duplicate/O changes_AR_angle, AR_angle, DiffARValues
+			//this seems to cause issues, not sure why it was here. Seems to work without it quite OK...
+			//variable EndOFData = BinarySearch(AR_angle, 0.1)
+			//DeletePoints  EndOFData, (numpnts(AR_angle)-EndOFData), AR_angle, AR_PSOpulse, DiffARValues
+			//OK, let's fix the weird PSOpulse errors we see. Not sure where these come from.
+			print "Found that there were likely vibrations during scan, doing fix using PSO channel record"
+			IN3_CleanUpStaleMCAChannel(AR_PSOpulse, AR_angle)
+			if(RemoveOscillations) //remove vibration as usual, default...
+				IN3_LocateAndRemoveOscillations(AR_encoder, AR_PSOpulse, AR_angle)
+			else //remove end points from angles.
+				AR_encoder[numpnts(MeasTime) - 1,] = NaN
+			endif
+		endif
+	
+		redimension/D MeasTime, Monitor, USAXS_PD
+		redimension/S PD_range, I0gain
+		//need to append the wave notes...
+		if(is2DScan)
+			WaveNote = "DATAFILE=" + SpecFileNameWv[0] + ";DATE=" + TimeW[0] + ";COMMENT=" + SampleNameW[0] + ";SpecCommand=" + "sbflyScan  ar 17.8217 17.8206 14.5895 2e-05  26.2812 " + num2str(SDDW[0]) + " -0.1 " + num2str(SADW[0]) + " " + num2str(SampleThicknessW[0]) + " 100 1"
+		else
+			WaveNote = "DATAFILE=" + SpecFileNameWv[0] + ";DATE=" + TimeW[0] + ";COMMENT=" + SampleNameW[0] + ";SpecCommand=" + "flyScan  ar 17.8217 17.8206 14.5895 2e-05  26.2812 " + num2str(SDDW[0]) + " -0.1 " + num2str(SADW[0]) + " " + num2str(SampleThicknessW[0]) + " 100 1"
+		endif
+		WaveNote += ";SpecComment=" + SampleNameW[0] + ";" + "Nexus_attributesStartHere;"
+		note/K/NOCR MeasTime, WaveNote
+		note/K/NOCR Monitor, WaveNote
+		note/K/NOCR USAXS_PD, WaveNote
+		note/K/NOCR PD_range, WaveNote
+		note/K/NOCR Ar_encoder, WaveNote
+	
+		//create PD_range using records, not mca channel...
+		if(HdfWriterVersion < 1)
+			MeasTime *= 2e-08 //convert to seconds
+			IN3_FSCreateGainWave(PD_range, ampReqGain, ampGain, mcsChangePnts, TimeRangeAfterUPD, MeasTime)
+			I0gain = I0gainW[0]
+		elseif(HdfWriterVersion >= 1 && HdfWriterVersion < 1.3)
+			//MeasTime /= mcaFrequency[0] //
+			MeasTime /= 1e6 //mcaFrequency contains nonsense..
+			if(AmplifierUsed[0]) //DDPCA300
+				IN3_FSCreateGainWave(PD_range, DDPCA300_ampReqGain, DDPCA300_ampGain, DDPCA300_mcsChan, TimeRangeAfterUPD, MeasTime)
+			else //DLPCA200
+				IN3_FSCreateGainWave(PD_range, DLPCA200_ampReqGain, DLPCA200_ampGain, DLPCA200_mcsChan, TimeRangeAfterUPD, MeasTime)
+			endif
+			IN3_FSCreateGainWave(I0gain, I0_ampReqGain, I0_ampGain, I0_mcsChan, TimeRangeAfterI0, MeasTime)
+			I0gain = 10^(I0gain[p] + 5)
+		elseif(HdfWriterVersion >= 1.3)
+			MeasTime /= mcaFrequency[0] / 10 //convert to seconds, MCA frequncy is 1e7, but now we are using 1e6
+			if(AmplifierUsed[0]) //DDPCA300
+				IN3_FSCreateGainWave(PD_range, DDPCA300_ampReqGain, DDPCA300_ampGain, DDPCA300_mcsChan, TimeRangeAfterUPD, MeasTime)
+			else //DLPCA200
+				IN3_FSCreateGainWave(PD_range, DLPCA200_ampReqGain, DLPCA200_ampGain, DLPCA200_mcsChan, TimeRangeAfterUPD, MeasTime)
+			endif
+			IN3_FSCreateGainWave(I0gain, I0_ampReqGain, I0_ampGain, I0_mcsChan, TimeRangeAfterI0, MeasTime)
+			I0gain = 10^(I0gain[p] + 5)
+		endif
+		if(AR_PulseMode[0] == 0) //only needed for fixed point positions, the others are already manageable number of points.
+			NVAR NumberOfTempPoints = root:Packages:USAXS_FlyScanImport:NumberOfTempPoints
+			IN2G_RebinLogData(Ar_encoder, MeasTime, NumberOfTempPoints, Ar_increment[0], W1 = USAXS_PD, W2 = Monitor, W3 = PD_range, W4 = I0gain)
+		endif
+		//something is failing here...
+		IN2G_RemoveNaNsFrom6Waves(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range, I0gain)
+		//let's make some standard strings we need.
+		string/G PathToRawData
+		PathToRawData = RawFolderWithData
+		string/G SpecCommand
+		if(is2DScan)
+			SpecCommand = "sbflyScan  ar 17.8217 17.8206 14.5895 2e-05  26.2812 " + num2str(SDDW[0]) + " -0.1 " + num2str(SADW[0]) + " " + num2str(SampleThicknessW[0]) + " 100 1"
+		else
+			SpecCommand = "flyScan  ar 17.8217 17.8206 14.5895 2e-05  26.2812 " + num2str(SDDW[0]) + " -0.1 " + num2str(SADW[0]) + " " + num2str(SampleThicknessW[0]) + " 100 1"
+		endif
+		string/G SpecComment
+		string/G SpecSourceFileName
+		SpecSourceFileName = SpecSourceFilenameW[0]
+		SpecComment        = SampleNameW[0]
+		string/G UPDParameters
+		UPDParameters  = "Vfc=100000;Gain1=" + num2str(updG1[0]) + ";Gain2=" + num2str(updG2[0]) + ";Gain3=" + num2str(updG3[0]) + ";Gain4=" + num2str(updG4[0]) + ";Gain5=" + num2str(updG5[0])
+		UPDParameters += ";Bkg1=" + num2str(updBkg1[0]) + ";Bkg2=" + num2str(updBkg2[0]) + ";Bkg3=" + num2str(updBkg3[0]) + ";Bkg4=" + num2str(updBkg4[0]) + ";Bkg5=" + num2str(updBkg5[0])
+		UPDParameters += ";Bkg1Err=" + num2str(updBkgErr1[0]) + ";Bkg2Err=" + num2str(updBkgErr2[0]) + ";Bkg3Err=" + num2str(updBkgErr3[0]) + ";Bkg4Err=" + num2str(updBkgErr4[0]) + ";Bkg5Err=" + num2str(updBkgErr5[0])
+		UPDParameters += ";I0AmpDark=;I0AmpGain=" + num2str(I0GainW[0]) + ";I00AmpGain=" + ";UPDsize=" + num2str(UPDsize[0]) + ";" //+num2str(I00GainW[0])
+		string/G MeasurementParameters
+		MeasurementParameters  = "DCM_energy=" + num2str(DCM_energyW[0]) + ";SAD=" + num2str(SADW[0]) + ";SDD=" + num2str(SDDW[0]) + ";thickness=" + num2str(SampleThicknessW[0]) + ";"
+		MeasurementParameters += ";I0AmpDark=;I0AmpGain=" + num2str(I0GainW[0]) + ";I00AmpGain=" + ";" //+num2str(I00GainW[0])
+		MeasurementParameters += "Vfc=100000;Gain1=" + num2str(updG1[0]) + ";Gain2=" + num2str(updG2[0]) + ";Gain3=" + num2str(updG3[0]) + ";Gain4=" + num2str(updG4[0]) + ";Gain5=" + num2str(updG5[0])
+		MeasurementParameters += ";Bkg1=" + num2str(updBkg1[0]) + ";Bkg2=" + num2str(updBkg2[0]) + ";Bkg3=" + num2str(updBkg3[0]) + ";Bkg4=" + num2str(updBkg4[0]) + ";Bkg5=" + num2str(updBkg5[0])
+		MeasurementParameters += ";Bkg1Err=" + num2str(updBkgErr1[0]) + ";Bkg2Err=" + num2str(updBkgErr2[0]) + ";Bkg3Err=" + num2str(updBkgErr3[0]) + ";Bkg4Err=" + num2str(updBkgErr4[0]) + ";Bkg5Err=" + num2str(updBkgErr5[0])
+		if(WaveExists(USAXSPinT_pinCounts))
+			if(USAXSPinT_pinCounts[0] > 100)
+				MeasurementParameters += ";USAXSPinT_Measure=1;USAXSPinT_AyPosition=" + num2str(USAXSPinT_AyPosition[0]) + ";USAXSPinT_Time=" + num2str(USAXSPinT_Time[0]) + ";USAXSPinT_pinCounts=" + num2str(USAXSPinT_pinCounts[0]) + ";"
+				MeasurementParameters += "USAXSPinT_pinGain=" + num2str(USAXSPinT_pinGain[0]) + ";USAXSPinT_I0Counts=" + num2str(USAXSPinT_I0Counts[0]) + ";USAXSPinT_I0Gain=" + num2str(USAXSPinT_I0Gain[0]) + ";"
+			endif
+		endif
+
 	endif
 
-	redimension/D MeasTime, Monitor, USAXS_PD
-	redimension/S PD_range, I0gain
-	//need to append the wave notes...
-	string WaveNote
-	if(is2DScan)
-		WaveNote = "DATAFILE=" + SpecFileNameWv[0] + ";DATE=" + TimeW[0] + ";COMMENT=" + SampleNameW[0] + ";SpecCommand=" + "sbflyScan  ar 17.8217 17.8206 14.5895 2e-05  26.2812 " + num2str(SDDW[0]) + " -0.1 " + num2str(SADW[0]) + " " + num2str(SampleThicknessW[0]) + " 100 1"
-	else
-		WaveNote = "DATAFILE=" + SpecFileNameWv[0] + ";DATE=" + TimeW[0] + ";COMMENT=" + SampleNameW[0] + ";SpecCommand=" + "flyScan  ar 17.8217 17.8206 14.5895 2e-05  26.2812 " + num2str(SDDW[0]) + " -0.1 " + num2str(SADW[0]) + " " + num2str(SampleThicknessW[0]) + " 100 1"
-	endif
-	WaveNote += ";SpecComment=" + SampleNameW[0] + ";" + "Nexus_attributesStartHere;"
-	note/K/NOCR MeasTime, WaveNote
-	note/K/NOCR Monitor, WaveNote
-	note/K/NOCR USAXS_PD, WaveNote
-	note/K/NOCR PD_range, WaveNote
-	note/K/NOCR Ar_encoder, WaveNote
-
-	//create PD_range using records, not mca channel...
-	if(HdfWriterVersion < 1)
-		MeasTime *= 2e-08 //convert to seconds
-		IN3_FSCreateGainWave(PD_range, ampReqGain, ampGain, mcsChangePnts, TimeRangeAfterUPD, MeasTime)
-		I0gain = I0gainW[0]
-	elseif(HdfWriterVersion >= 1 && HdfWriterVersion < 1.3)
-		//MeasTime /= mcaFrequency[0] //
-		MeasTime /= 1e6 //mcaFrequency contains nonsense..
-		if(AmplifierUsed[0]) //DDPCA300
-			IN3_FSCreateGainWave(PD_range, DDPCA300_ampReqGain, DDPCA300_ampGain, DDPCA300_mcsChan, TimeRangeAfterUPD, MeasTime)
-		else //DLPCA200
-			IN3_FSCreateGainWave(PD_range, DLPCA200_ampReqGain, DLPCA200_ampGain, DLPCA200_mcsChan, TimeRangeAfterUPD, MeasTime)
-		endif
-		IN3_FSCreateGainWave(I0gain, I0_ampReqGain, I0_ampGain, I0_mcsChan, TimeRangeAfterI0, MeasTime)
-		I0gain = 10^(I0gain[p] + 5)
-	elseif(HdfWriterVersion >= 1.3)
-		MeasTime /= mcaFrequency[0] / 10 //convert to seconds, MCA frequncy is 1e7, but now we are using 1e6
-		if(AmplifierUsed[0]) //DDPCA300
-			IN3_FSCreateGainWave(PD_range, DDPCA300_ampReqGain, DDPCA300_ampGain, DDPCA300_mcsChan, TimeRangeAfterUPD, MeasTime)
-		else //DLPCA200
-			IN3_FSCreateGainWave(PD_range, DLPCA200_ampReqGain, DLPCA200_ampGain, DLPCA200_mcsChan, TimeRangeAfterUPD, MeasTime)
-		endif
-		IN3_FSCreateGainWave(I0gain, I0_ampReqGain, I0_ampGain, I0_mcsChan, TimeRangeAfterI0, MeasTime)
-		I0gain = 10^(I0gain[p] + 5)
-	endif
-	if(AR_PulseMode[0] == 0) //only needed for fixed point positions, the others are already manageable number of points.
-		NVAR NumberOfTempPoints = root:Packages:USAXS_FlyScanImport:NumberOfTempPoints
-		IN2G_RebinLogData(Ar_encoder, MeasTime, NumberOfTempPoints, Ar_increment[0], W1 = USAXS_PD, W2 = Monitor, W3 = PD_range, W4 = I0gain)
-	endif
-	//something is failing here...
-	IN2G_RemoveNaNsFrom6Waves(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range, I0gain)
-	//let's make some standard strings we need.
-	string/G PathToRawData
-	PathToRawData = RawFolderWithData
-	string/G SpecCommand
-	if(is2DScan)
-		SpecCommand = "sbflyScan  ar 17.8217 17.8206 14.5895 2e-05  26.2812 " + num2str(SDDW[0]) + " -0.1 " + num2str(SADW[0]) + " " + num2str(SampleThicknessW[0]) + " 100 1"
-	else
-		SpecCommand = "flyScan  ar 17.8217 17.8206 14.5895 2e-05  26.2812 " + num2str(SDDW[0]) + " -0.1 " + num2str(SADW[0]) + " " + num2str(SampleThicknessW[0]) + " 100 1"
-	endif
-	string/G SpecComment
-	string/G SpecSourceFileName
-	SpecSourceFileName = SpecSourceFilenameW[0]
-	SpecComment        = SampleNameW[0]
-	string/G UPDParameters
-	UPDParameters  = "Vfc=100000;Gain1=" + num2str(updG1[0]) + ";Gain2=" + num2str(updG2[0]) + ";Gain3=" + num2str(updG3[0]) + ";Gain4=" + num2str(updG4[0]) + ";Gain5=" + num2str(updG5[0])
-	UPDParameters += ";Bkg1=" + num2str(updBkg1[0]) + ";Bkg2=" + num2str(updBkg2[0]) + ";Bkg3=" + num2str(updBkg3[0]) + ";Bkg4=" + num2str(updBkg4[0]) + ";Bkg5=" + num2str(updBkg5[0])
-	UPDParameters += ";Bkg1Err=" + num2str(updBkgErr1[0]) + ";Bkg2Err=" + num2str(updBkgErr2[0]) + ";Bkg3Err=" + num2str(updBkgErr3[0]) + ";Bkg4Err=" + num2str(updBkgErr4[0]) + ";Bkg5Err=" + num2str(updBkgErr5[0])
-	UPDParameters += ";I0AmpDark=;I0AmpGain=" + num2str(I0GainW[0]) + ";I00AmpGain=" + ";UPDsize=" + num2str(UPDsize[0]) + ";" //+num2str(I00GainW[0])
-	string/G MeasurementParameters
-	MeasurementParameters  = "DCM_energy=" + num2str(DCM_energyW[0]) + ";SAD=" + num2str(SADW[0]) + ";SDD=" + num2str(SDDW[0]) + ";thickness=" + num2str(SampleThicknessW[0]) + ";"
-	MeasurementParameters += ";I0AmpDark=;I0AmpGain=" + num2str(I0GainW[0]) + ";I00AmpGain=" + ";" //+num2str(I00GainW[0])
-	MeasurementParameters += "Vfc=100000;Gain1=" + num2str(updG1[0]) + ";Gain2=" + num2str(updG2[0]) + ";Gain3=" + num2str(updG3[0]) + ";Gain4=" + num2str(updG4[0]) + ";Gain5=" + num2str(updG5[0])
-	MeasurementParameters += ";Bkg1=" + num2str(updBkg1[0]) + ";Bkg2=" + num2str(updBkg2[0]) + ";Bkg3=" + num2str(updBkg3[0]) + ";Bkg4=" + num2str(updBkg4[0]) + ";Bkg5=" + num2str(updBkg5[0])
-	MeasurementParameters += ";Bkg1Err=" + num2str(updBkgErr1[0]) + ";Bkg2Err=" + num2str(updBkgErr2[0]) + ";Bkg3Err=" + num2str(updBkgErr3[0]) + ";Bkg4Err=" + num2str(updBkgErr4[0]) + ";Bkg5Err=" + num2str(updBkgErr5[0])
-	if(WaveExists(USAXSPinT_pinCounts))
-		if(USAXSPinT_pinCounts[0] > 100)
-			MeasurementParameters += ";USAXSPinT_Measure=1;USAXSPinT_AyPosition=" + num2str(USAXSPinT_AyPosition[0]) + ";USAXSPinT_Time=" + num2str(USAXSPinT_Time[0]) + ";USAXSPinT_pinCounts=" + num2str(USAXSPinT_pinCounts[0]) + ";"
-			MeasurementParameters += "USAXSPinT_pinGain=" + num2str(USAXSPinT_pinGain[0]) + ";USAXSPinT_I0Counts=" + num2str(USAXSPinT_I0Counts[0]) + ";USAXSPinT_I0Gain=" + num2str(USAXSPinT_I0Gain[0]) + ";"
-		endif
-	endif
 	//add recording of metatdata
 	string/G NXMetadata, NXSample, NXInstrument, NXUser
 	NXMetadata   = ""
@@ -854,59 +1023,102 @@ Function/S IN3_StepScanConvertToUSAXS(string RawFolderWithData, string origFileN
 	NVAR   HdfWriterVersion = HdfWriterVersion
 	WAVE/T UserSampleNameWv = :entry:title
 	//wave data to locate
-	WAVE   TimeWv = :entry:data:seconds
-	WAVE/Z I0Wv   = :entry:data:I0
-	WAVE/Z updWv  = :entry:data:UPD
-	if(!WaveExists(I0Wv))
-		WAVE I0Wv  = :entry:data:I0_USAXS
-		WAVE updWv = :entry:data:PD_USAXS
-	endif
-	WAVE   I00GainW  = :entry:data:I00_autorange_controls_reqrange
-	WAVE   I0GainW   = :entry:data:I0_autorange_controls_reqrange
-	WAVE   UPDGainWv = :entry:data:upd_autorange_controls_reqrange
-	WAVE   ARWv      = :entry:data:a_stage_r
-	WAVE/Z AYWv      = :entry:data:a_stage_x
-	WAVE/Z DYWv      = :entry:data:d_stage_x
-	if(!WaveExists(AYWv)) //this is old 9ID and before vertical scan
-		WAVE/Z AYWv = :entry:data:a_stage_y
-		WAVE/Z DYWv = :entry:data:d_stage_y
-	endif
-	WAVE/Z MRWv = :entry:data:m_stage_r
-	WAVE/Z SYWv = :entry:data:s_stage_y
-	//TimeWv in BS is in frequency counts. 1e7 counts/second
-	TimeWv /= 1e7
-	//this should fix it to seconds.
+	WAVE/Z   TimeWv = :entry:data:seconds
+	NVAR IsFX4Data = root:Packages:Indra3:IsFX4Data
+	if(WaveExists(TimeWv))		//pre-FX4 setup. 
+		IsFX4Data = 0
+		WAVE/Z I0Wv   = :entry:data:I0
+		WAVE/Z updWv  = :entry:data:UPD
+		if(!WaveExists(I0Wv))
+			WAVE I0Wv  = :entry:data:I0_USAXS
+			WAVE updWv = :entry:data:PD_USAXS
+		endif
+		WAVE   I00GainW  = :entry:data:I00_autorange_controls_reqrange
+		WAVE   I0GainW   = :entry:data:I0_autorange_controls_reqrange
+		WAVE   UPDGainWv = :entry:data:upd_autorange_controls_reqrange
+		WAVE   ARWv      = :entry:data:a_stage_r
+		WAVE/Z AYWv      = :entry:data:a_stage_x
+		WAVE/Z DYWv      = :entry:data:d_stage_x
+		if(!WaveExists(AYWv)) //this is old 9ID and before vertical scan
+			WAVE/Z AYWv = :entry:data:a_stage_y
+			WAVE/Z DYWv = :entry:data:d_stage_y
+		endif
+		WAVE/Z MRWv = :entry:data:m_stage_r
+		WAVE/Z SYWv = :entry:data:s_stage_y
+		//TimeWv in BS is in frequency counts. 1e7 counts/second
+		TimeWv /= 1e7
+		//this should fix it to seconds.
+	
+		WAVE/Z UPDsize = :entry:instrument:bluesky:streams:baseline:terms_USAXS_diode_upd_size:value
+		if(!WaveExists(UPDsize))
+			make/O/N=1 :entry:metadata:UPDsize
+			WAVE UPDsize = :entry:metadata:UPDsize
+			UPDsize[0] = 5.5
+		endif
+		WAVE/T SampleNameW      = :entry:title
+		WAVE/Z SampleThicknessW = :entry:instrument:bluesky:metadata:sample_thickness_mm
+		if(!WaveExists(SampleThicknessW))
+			make/O/N=1 :entry:sample:thickness
+			WAVE SampleThicknessW = :entry:sample:thickness
+			SampleThicknessW[0] = 1
+		endif
+		//diode stufff
+		WAVE/Z updG1      = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain0_gain:value
+		WAVE/Z updG2      = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain1_gain:value
+		WAVE/Z updG3      = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain2_gain:value
+		WAVE/Z updG4      = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain3_gain:value
+		WAVE/Z updG5      = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain4_gain:value
+		WAVE/Z updBkg1    = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain0_background:value
+		WAVE/Z updBkg2    = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain1_background:value
+		WAVE/Z updBkg3    = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain2_background:value
+		WAVE/Z updBkg4    = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain3_background:value
+		WAVE/Z updBkg5    = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain4_background:value
+		WAVE/Z updBkgErr1 = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain0_background_error:value
+		WAVE/Z updBkgErr2 = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain1_background_error:value
+		WAVE/Z updBkgErr3 = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain2_background_error:value
+		WAVE/Z updBkgErr4 = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain3_background_error:value
+		WAVE/Z updBkgErr5 = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain4_background_error:value
 
-	WAVE/Z UPDsize = :entry:instrument:bluesky:streams:baseline:terms_USAXS_diode_upd_size:value
-	if(!WaveExists(UPDsize))
-		make/O/N=1 :entry:metadata:UPDsize
-		WAVE UPDsize = :entry:metadata:UPDsize
-		UPDsize[0] = 5.5
-	endif
-	WAVE/T SampleNameW      = :entry:title
-	WAVE/Z SampleThicknessW = :entry:instrument:bluesky:metadata:sample_thickness_mm
-	if(!WaveExists(SampleThicknessW))
-		make/O/N=1 :entry:sample:thickness
-		WAVE SampleThicknessW = :entry:sample:thickness
-		SampleThicknessW[0] = 1
-	endif
-	//diode stufff
-	WAVE/Z updG1      = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain0_gain:value
-	WAVE/Z updG2      = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain1_gain:value
-	WAVE/Z updG3      = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain2_gain:value
-	WAVE/Z updG4      = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain3_gain:value
-	WAVE/Z updG5      = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain4_gain:value
-	WAVE/Z updBkg1    = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain0_background:value
-	WAVE/Z updBkg2    = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain1_background:value
-	WAVE/Z updBkg3    = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain2_background:value
-	WAVE/Z updBkg4    = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain3_background:value
-	WAVE/Z updBkg5    = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain4_background:value
-	WAVE/Z updBkgErr1 = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain0_background_error:value
-	WAVE/Z updBkgErr2 = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain1_background_error:value
-	WAVE/Z updBkgErr3 = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain2_background_error:value
-	WAVE/Z updBkgErr4 = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain3_background_error:value
-	WAVE/Z updBkgErr5 = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain4_background_error:value
+		Duplicate/O TimeWv, MeasTime
+		Duplicate/O UPDGainWv, PD_range
 
+	else		//FX-4 data
+		IsFX4Data=1
+
+		WAVE I0Wv   = :entry:data:I0
+		WAVE updWv  = :entry:data:UPD
+
+		WAVE   ARWv      = :entry:data:a_stage_r
+		WAVE/Z AYWv      = :entry:data:a_stage_x
+		WAVE/Z DYWv      = :entry:data:d_stage_x
+		WAVE/Z MRWv = :entry:data:m_stage_r
+		WAVE/Z SYWv = :entry:data:s_stage_y
+		//this should fix it to seconds.
+	
+		WAVE/Z UPDsize = :entry:instrument:bluesky:streams:baseline:terms_USAXS_diode_upd_size:value
+		WAVE/T SampleNameW      = :entry:title
+		WAVE/Z SampleThicknessW = :entry:instrument:bluesky:metadata:sample_thickness_mm
+
+		//diode stufff
+		WAVE/Z updG1      = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain0_gain:value
+		WAVE/Z updG2      = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain1_gain:value
+		WAVE/Z updG3      = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain2_gain:value
+		WAVE/Z updG4      = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain3_gain:value
+		WAVE/Z updG5      = :entry:instrument:bluesky:streams:baseline:upd_autorange_controls_ranges_gain4_gain:value
+		WAVE/Z updBkg1    = :entry:instrument:bluesky:streams:baseline:fx4_autorange_ranges_range0_background:value
+		WAVE/Z updBkg2    = :entry:instrument:bluesky:streams:baseline:fx4_autorange_ranges_range1_background:value
+		WAVE/Z updBkg3    = :entry:instrument:bluesky:streams:baseline:fx4_autorange_ranges_range2_background:value
+		WAVE/Z updBkg4    = :entry:instrument:bluesky:streams:baseline:fx4_autorange_ranges_range3_background:value
+		WAVE/Z updBkg5    = :entry:instrument:bluesky:streams:baseline:fx4_autorange_ranges_range4_background:value
+		WAVE/Z updBkgErr1 = :entry:instrument:bluesky:streams:baseline:fx4_autorange_ranges_range0_background_error:value
+		WAVE/Z updBkgErr2 = :entry:instrument:bluesky:streams:baseline:fx4_autorange_ranges_range1_background_error:value
+		WAVE/Z updBkgErr3 = :entry:instrument:bluesky:streams:baseline:fx4_autorange_ranges_range2_background_error:value
+		WAVE/Z updBkgErr4 = :entry:instrument:bluesky:streams:baseline:fx4_autorange_ranges_range3_background_error:value
+		WAVE/Z updBkgErr5 = :entry:instrument:bluesky:streams:baseline:fx4_autorange_ranges_range4_background_error:value
+
+
+	
+	endif
 	WAVE/T TimeW = :entry:start_time
 	//these transmission values
 	WAVE/Z USAXSPinT_I0Counts   = :entry:instrument:bluesky:streams:baseline:terms_USAXS_transmission_I0_counts:value
@@ -928,10 +1140,7 @@ Function/S IN3_StepScanConvertToUSAXS(string RawFolderWithData, string origFileN
 	//new 20ID horizontal scan
 	WAVE AYW = :entry:instrument:bluesky:metadata:ax0
 	WAVE DYW = :entry:instrument:bluesky:metadata:dx0
-	if(!WaveExists(AYW)) //this is old 9ID and before vertical scan
-		WAVE AYW = :entry:instrument:bluesky:metadata:ay0
-		WAVE DYW = :entry:instrument:bluesky:metadata:dy0
-	endif
+
 	WAVE   ExponentW  = :entry:instrument:bluesky:metadata:exponent
 	WAVE   FinishW    = :entry:instrument:bluesky:metadata:finish
 	WAVE   IntervalsW = :entry:instrument:bluesky:metadata:intervals
@@ -969,27 +1178,34 @@ Function/S IN3_StepScanConvertToUSAXS(string RawFolderWithData, string origFileN
 		SpecCommand = "uascan  ar " + num2str(StartW[0]) + " " + num2str(ArCenterW[0]) + " " + num2str(FinishW[0]) + " " + num2str(nimStepW[0]) + "  " + num2str(DYW[0]) + " " + num2str(SDDW[0]) + " -0.1 " + num2str(SADW[0]) + " " + num2str(SampleThicknessW[0]) + " " + num2str(IntervalsW[0]) + " 1"
 	endif
 
-	Duplicate/O TimeWv, MeasTime
 	Duplicate/O I0Wv, Monitor
 	Duplicate/O updWv, USAXS_PD
-	Duplicate/O UPDGainWv, PD_range
-	Duplicate/O I0GainW, I0gain
 	Duplicate/O ARWv, Ar_encoder
 
-	redimension/D MeasTime, Monitor, USAXS_PD
-	redimension/S PD_range, I0gain
-	//I0_gain is real gain, not gain number...
-	I0gain = 10^(I0gain[p] + 5)
-
-	//need to append the wave notes...
-	//PD range is 1 based in old code but 0 based here,
-	PD_range += 1
-	//this should fix it again.
-	//need to fix range changes. We seem to have recordered requests and not real gains. Need to shift them by 1 point...
-	Duplicate/FREE PD_range, PD_rangeTemp
-	PD_range[1, numpnts(PD_range) - 1] = PD_rangeTemp[p - 1]
-	//PD_range[numpnts(PD_range)-1] = PD_range[numpnts(PD_range)-2]
-
+	if(IsFX4Data)
+		redimension/D Monitor, USAXS_PD
+		Duplicate/O Monitor, MeasTime, PD_range, I0gain
+		MeasTime = 1
+		PD_range=1
+		I0gain=1
+	else
+		Duplicate/O I0GainW, I0gain
+		Duplicate/O UPDGainWv, PD_range
+		redimension/D MeasTime, Monitor, USAXS_PD
+		redimension/S PD_range, I0gain
+		//I0_gain is real gain, not gain number...
+		I0gain = 10^(I0gain[p] + 5)
+	
+		//need to append the wave notes...
+		//PD range is 1 based in old code but 0 based here,
+		PD_range += 1
+		//this should fix it again.
+		//need to fix range changes. We seem to have recordered requests and not real gains. Need to shift them by 1 point...
+		Duplicate/FREE PD_range, PD_rangeTemp
+		PD_range[1, numpnts(PD_range) - 1] = PD_rangeTemp[p - 1]
+		//PD_range[numpnts(PD_range)-1] = PD_range[numpnts(PD_range)-2]
+	
+	endif
 	string WaveNote
 	if(is2DScan)
 		WaveNote = "DATAFILE=" + "not available" + ";DATE=" + TimeW[0] + ";COMMENT=" + SampleNameW[0] + ";SpecCommand=" + SpecCommand
@@ -1018,10 +1234,18 @@ Function/S IN3_StepScanConvertToUSAXS(string RawFolderWithData, string origFileN
 	UPDParameters  = "Vfc=100000;Gain1=" + num2str(updG1[0]) + ";Gain2=" + num2str(updG2[0]) + ";Gain3=" + num2str(updG3[0]) + ";Gain4=" + num2str(updG4[0]) + ";Gain5=" + num2str(updG5[0])
 	UPDParameters += ";Bkg1=" + num2str(updBkg1[0]) + ";Bkg2=" + num2str(updBkg2[0]) + ";Bkg3=" + num2str(updBkg3[0]) + ";Bkg4=" + num2str(updBkg4[0]) + ";Bkg5=" + num2str(updBkg5[0])
 	UPDParameters += ";Bkg1Err=" + num2str(updBkgErr1[0]) + ";Bkg2Err=" + num2str(updBkgErr2[0]) + ";Bkg3Err=" + num2str(updBkgErr3[0]) + ";Bkg4Err=" + num2str(updBkgErr4[0]) + ";Bkg5Err=" + num2str(updBkgErr5[0])
-	UPDParameters += ";I0AmpDark=;I0AmpGain=" + num2str(10^(I0gainW[0] + 5)) + ";I00AmpGain=" + num2str(10^(I00gainW[0] + 5)) + ";UPDsize=" + num2str(UPDsize[0]) + ";"
+	if(IsFX4Data)
+		UPDParameters += ";I0AmpDark=;I0AmpGain=1;I00AmpGain=1;UPDsize=" + num2str(UPDsize[0]) + ";"
+	else
+		UPDParameters += ";I0AmpDark=;I0AmpGain=" + num2str(10^(I0gainW[0] + 5)) + ";I00AmpGain=" + num2str(10^(I00gainW[0] + 5)) + ";UPDsize=" + num2str(UPDsize[0]) + ";"
+	endif
 	string/G MeasurementParameters
 	MeasurementParameters  = "DCM_energy=" + num2str(DCM_energyW[0]) + ";SAD=" + num2str(SADW[0]) + ";SDD=" + num2str(SDDW[0]) + ";thickness=" + num2str(SampleThicknessW[0]) + ";"
-	MeasurementParameters += ";I0AmpDark=;I0AmpGain=" + num2str(I0GainW[0]) + ";I00AmpGain=" + num2str(I00GainW[0]) + ";"
+	if(IsFX4Data)
+		MeasurementParameters += ";I0AmpDark=;I0AmpGain=1;I00AmpGain=1;"
+	else
+		MeasurementParameters += ";I0AmpDark=;I0AmpGain=" + num2str(I0GainW[0]) + ";I00AmpGain=" + num2str(I00GainW[0]) + ";"
+	endif
 	MeasurementParameters += "Vfc=100000;Gain1=" + num2str(updG1[0]) + ";Gain2=" + num2str(updG2[0]) + ";Gain3=" + num2str(updG3[0]) + ";Gain4=" + num2str(updG4[0]) + ";Gain5=" + num2str(updG5[0])
 	MeasurementParameters += ";Bkg1=" + num2str(updBkg1[0]) + ";Bkg2=" + num2str(updBkg2[0]) + ";Bkg3=" + num2str(updBkg3[0]) + ";Bkg4=" + num2str(updBkg4[0]) + ";Bkg5=" + num2str(updBkg5[0])
 	MeasurementParameters += ";Bkg1Err=" + num2str(updBkgErr1[0]) + ";Bkg2Err=" + num2str(updBkgErr2[0]) + ";Bkg3Err=" + num2str(updBkgErr3[0]) + ";Bkg4Err=" + num2str(updBkgErr4[0]) + ";Bkg5Err=" + num2str(updBkgErr5[0])

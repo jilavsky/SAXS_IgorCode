@@ -426,11 +426,12 @@ Function IN3_RecalcSubtractSaAndBlank()
 		endif
 		USAXSorSBUSAXS="FlyUSAXS"	
 		NVAR FlyScanRebinToPoints=root:Packages:Indra3:FlyScanRebinToPoints
+		NVAR IsFX4Data = root:Packages:Indra3:IsFX4Data
 		//create width for each bin pixel...
 		Duplicate/O SMR_Qvec, SMR_dQ
 		if(FlyScanRebinToPoints>0)
 			tempMinStep=SMR_Qvec[1]-SMR_Qvec[0]
-			IN2G_RebinLogData(SMR_Qvec,SMR_Int,FlyScanRebinToPoints,tempMinStep,Wsdev=SMR_Error,Wxwidth=SMR_dQ)
+			IN2G_RebinLogData(SMR_Qvec,SMR_Int,FlyScanRebinToPoints,tempMinStep,Wsdev=SMR_Error,Wxwidth=SMR_dQ,isFX4=IsFX4Data)
 		else
 			SMR_dQ[1,numpnts(SMR_dQ)-2] = (SMR_dQ[p+1]-SMR_dQ[p-1])/4
 			SMR_dQ[0]=(SMR_dQ[1]-SMR_dQ[0])/2

@@ -24,7 +24,7 @@
 //		- Destination folder is now driven by the SAXS / WAXS radio buttons :
 //		  root:ImportedData:SAXS: or root:ImportedData:WAXS:. The Indra2 preset is USAXS
 //		  only and keeps root:USAXS:ImportedData:.
-// 1.03 Fix line 712 which seemed to have deleted freshly imported data. I think the data are nto stored where expected.
+// 1.03 Fix line 712 which seemed to have deleted freshly imported data. I think the data are not stored where expected.
 // 1.02 AI checked
 // 1.01  Combined with IR1_ImportData and remove that package from dependencies. 
 // 1.00  Initial combined import panel.

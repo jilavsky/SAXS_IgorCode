@@ -101,6 +101,7 @@ Function IN3_SmoothRData()
 	Wave/Z R_Error = root:Packages:Indra3:R_Error
 	Wave/Z MeasTime = root:Packages:Indra3:MeasTime
 	NVAR SmoothRCurveData = root:Packages:Indra3:SmoothRCurveData
+	NVAR IsFX4Data = root:Packages:Indra3:IsFX4Data
 	variable measTimeTotal=sum(MeasTime)
 	if(SmoothRCurveData)
 		//firs remove NaNs as this is really difficult to deal with...
@@ -112,64 +113,112 @@ Function IN3_SmoothRData()
 		variable EndPoints, QrangeIntg, midPoint, startX, endX
 		Duplicate /Free  Intensity, TempIntLog
 		TempIntLog = log(Intensity)
+		//fix negative intensities...
+		variable MinLogInt=wavemin(TempIntLog)
+		TempIntLog = numtype(TempIntLog)==0 ? TempIntLog : MinLogInt
 		Duplicate/Free TempIntLog, SmoothIntensity
 		variable i
-		For(i=40;i<numpnts(Intensity);i+=1)
-			if(tmpPD_range[i]==1)
-				tmpTime = RwaveSmooth1time
-			elseif(tmpPD_range[i]==2)
-				tmpTime = RwaveSmooth2time
-			elseif(tmpPD_range[i]==3)
-				tmpTime = RwaveSmooth3time
-			elseif(tmpPD_range[i]==4)
-				tmpTime = RwaveSmooth4time
-			else
-				tmpTime = RwaveSmooth5time
-			endif	
-			//correct tmpTime for total data colelction time, these are estimated for 90 seconds  
-			tmpTime*= measTimeTotal/90
-			
-			if(tmpMeasTime[i]>tmpTime)		//no need to smooth
-				SmoothIntensity[i] = TempIntLog[i]
-			else //need to smooth
-				//somehow we need to stay within one range also... 				
-				StartPoints = ceil(tmpTime/tmpMeasTime[i])+1
-				EndPoints = StartPoints
-				if((i-StartPoints)<1)
-					abort "Bad data, cannot fix this. Likely Flyscan parameters were wrong" 
-				endif
-				if(i+EndPoints > numpnts(Intensity)-1)		//do not run out of end of data set
-					EndPoints = numpnts(Intensity)- 1 - i
-				endif
-				//if (i==118)
-				//	debugger
-				//endif
-				if((tmpPD_range[i-StartPoints]!=tmpPD_range[i])||(tmpPD_range[i+EndPoints]!=tmpPD_range[i]))
-					//range change, do not average, use line fitting to get the point... 
-					Duplicate/Free/R=[i-StartPoints,i+EndPoints-1] TempIntLog, tempR
-					 Duplicate/FREE/R=[i-StartPoints,i+EndPoints-1] Qvector, tempQ
-
-					WaveStats /Q tempR
-					if(V_npnts>V_numNans+5)
-						CurveFit/Q line tempR /X=tempQ 
-						Wave W_coef
-						SmoothIntensity[i] = W_coef[0]+W_coef[1]*Qvector[i]
-						R_Error[i]=R_Error[i]/3
-					else
-						SmoothIntensity[i] = TempIntLog[i]
-						R_Error[i]=R_Error[i]		//crude approximation
+		//starting i should be somewhere where we have at least 10^-4 lower intensity
+		variable startpoint
+		startpoint = 100
+		For(i=startpoint;i<numpnts(Intensity);i+=1)
+			if(IsFX4Data)
+				//FX4 has fake ranges set to handle smoothing times correctly... 
+				if(tmpPD_range[i]==1)
+					tmpTime = RwaveSmooth1time
+				elseif(tmpPD_range[i]==2)
+					tmpTime = RwaveSmooth2time
+				elseif(tmpPD_range[i]==3)
+					tmpTime = RwaveSmooth3time
+				elseif(tmpPD_range[i]==4)
+					tmpTime = RwaveSmooth4time
+				else
+					tmpTime = RwaveSmooth5time
+				endif	
+				//correct tmpTime for total data collection time, these are estimated for 90 seconds  
+				tmpTime*= measTimeTotal/90
+				
+				if(tmpMeasTime[i]>tmpTime)		//no need to smooth
+					SmoothIntensity[i] = TempIntLog[i]
+				else //need to smooth
+					//somehow we need to stay within one range also... 				
+					StartPoints = ceil(tmpTime/tmpMeasTime[i])+1
+					EndPoints = StartPoints
+					if((i-StartPoints)<1)
+						abort "Bad data, cannot fix this. Likely Flyscan parameters were wrong" 
 					endif
-				else	//R must be symmetric around the i or the method below will not work right. 
+					if(i+EndPoints > numpnts(Intensity)-1)		//do not run out of end of data set
+						EndPoints = numpnts(Intensity)- 1 - i
+					endif
+					//R must be symmetric around the i or the method below will not work right. 
 					Duplicate/Free/R=[i-StartPoints,i+EndPoints] TempIntLog, tempR
-					 Duplicate/FREE/R=[i-StartPoints,i+EndPoints] Qvector, tempQ
+					Duplicate/FREE/R=[i-StartPoints,i+EndPoints] Qvector, tempQ
 					startX =  tempQ[0] 
 					endX =  tempQ[numpnts(tempQ)-1]
 					SmoothIntensity[i] = areaXY(tempQ, tempR, startX,endX)
 					SmoothIntensity[i] /= (endX - startX)
 					R_Error[i]=R_Error[i]		//crude approximation
-				endif
+				endif	
+					
+			else //old method
+	
+				if(tmpPD_range[i]==1)
+					tmpTime = RwaveSmooth1time
+				elseif(tmpPD_range[i]==2)
+					tmpTime = RwaveSmooth2time
+				elseif(tmpPD_range[i]==3)
+					tmpTime = RwaveSmooth3time
+				elseif(tmpPD_range[i]==4)
+					tmpTime = RwaveSmooth4time
+				else
+					tmpTime = RwaveSmooth5time
+				endif	
+				//correct tmpTime for total data collection time, these are estimated for 90 seconds  
+				tmpTime*= measTimeTotal/90
+				
+				if(tmpMeasTime[i]>tmpTime)		//no need to smooth
+					SmoothIntensity[i] = TempIntLog[i]
+				else //need to smooth
+					//somehow we need to stay within one range also... 				
+					StartPoints = ceil(tmpTime/tmpMeasTime[i])+1
+					EndPoints = StartPoints
+					if((i-StartPoints)<1)
+						abort "Bad data, cannot fix this. Likely Flyscan parameters were wrong" 
+					endif
+					if(i+EndPoints > numpnts(Intensity)-1)		//do not run out of end of data set
+						EndPoints = numpnts(Intensity)- 1 - i
+					endif
+					//if (i==118)
+					//	debugger
+					//endif
+					if((tmpPD_range[i-StartPoints]!=tmpPD_range[i])||(tmpPD_range[i+EndPoints]!=tmpPD_range[i]))
+						//range change, do not average, use line fitting to get the point... 
+						Duplicate/Free/R=[i-StartPoints,i+EndPoints-1] TempIntLog, tempR
+						 Duplicate/FREE/R=[i-StartPoints,i+EndPoints-1] Qvector, tempQ
+	
+						WaveStats /Q tempR
+						if(V_npnts>V_numNans+5)
+							CurveFit/Q line tempR /X=tempQ 
+							Wave W_coef
+							SmoothIntensity[i] = W_coef[0]+W_coef[1]*Qvector[i]
+							R_Error[i]=R_Error[i]/3
+						else
+							SmoothIntensity[i] = TempIntLog[i]
+							R_Error[i]=R_Error[i]		//crude approximation
+						endif
+					else	//R must be symmetric around the i or the method below will not work right. 
+						Duplicate/Free/R=[i-StartPoints,i+EndPoints] TempIntLog, tempR
+						 Duplicate/FREE/R=[i-StartPoints,i+EndPoints] Qvector, tempQ
+						startX =  tempQ[0] 
+						endX =  tempQ[numpnts(tempQ)-1]
+						SmoothIntensity[i] = areaXY(tempQ, tempR, startX,endX)
+						SmoothIntensity[i] /= (endX - startX)
+						R_Error[i]=R_Error[i]		//crude approximation
+					endif
+				endif	
 			endif	
 		endfor
+		
 		Intensity = 10^SmoothIntensity
 	endif
 	SetDataFolder saveDF	
@@ -190,7 +239,7 @@ Function IN3_FitPeakCenterEstimate()
 	variable NumP
 	WaveStats/Q PD_Intensity
 
-	FindLevels/Q PD_Intensity, 0.53*V_max						//finds fitting interval
+	FindLevels/Q PD_Intensity, 0.6*V_max						//finds fitting interval
 	if (V_LevelsFound==2)
 		Wave W_FindLevels
 		//check that we have at least 5 points...
@@ -225,7 +274,8 @@ Function IN3_FitPeakCenterEstimate()
 			Cursor/P/W=RcurvePlotGraph#PeakCenter B, PD_Intensity, PeakCenterFitEndPoint	
 		endif
 	endif
-	IN3_FitGaussTop("")
+	IN3_FitDefaultTop()
+	//IN3_FitGaussTop("")
 	
 	//estimate also sample transmission, if it is sample and not Blank
 	NVAR IsBlank
@@ -312,6 +362,8 @@ Function IN3_CalculateRWaveIntensity(CleanUpRangeCHange)				//Recalculate the R 
 	
 	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
+	NVAR IsFX4Data = root:Packages:Indra3:IsFX4Data
+
 
 	Wave/Z PD_Range							//these waves should be here
 	if(!WaveExists(PD_Range))
@@ -331,79 +383,115 @@ Function IN3_CalculateRWaveIntensity(CleanUpRangeCHange)				//Recalculate the R 
 	Wave/Z PD_Intensity						//these waves may be new
 	Wave/Z PD_Error
 	Redimension/D PD_Intensity				//intensity should be double precision
-	
 	SVAR UPDparameters					//now we need to get the dark currents and gains here
-	Make/O LocalParameters = {{1e5,1e7,1e9,99e9,1e11},{3000,3000,3000,3000,3000}}
 	
-	LocalParameters[0][0]=numberbykey ("Gain1", UPDparameters,"=")
-	LocalParameters[1][0]=numberbykey ("Gain2", UPDparameters,"=")
-	LocalParameters[2][0]=numberbykey ("Gain3", UPDparameters,"=")
-	LocalParameters[3][0]=numberbykey ("Gain4", UPDparameters,"=")
-	LocalParameters[4][0]=numberbykey ("Gain5", UPDparameters,"=")
-	LocalParameters[0][1]=numberbykey ("Bkg1", UPDparameters,"=")
-	LocalParameters[1][1]=numberbykey ("Bkg2", UPDparameters,"=")
-	LocalParameters[2][1]=numberbykey ("Bkg3", UPDparameters,"=")
-	LocalParameters[3][1]=numberbykey ("Bkg4", UPDparameters,"=")
-	LocalParameters[4][1]=numberbykey ("Bkg5", UPDparameters,"=")
-	
-	variable VtoFfactor=numberbykey ("Vfc", UPDparameters,"=")
+	if(IsFX4Data)
+		variable UPDbackground=numberbykey ("Bkg5", UPDparameters,"=")
+		PD_Intensity=(USAXS_PD-UPDbackground)/Monitor
+			
+		Wave Monitor_sigma
+		Wave USAXS_PD_sigma
+		Duplicate/O PD_Intensity,PD_error 	
+			
+		Wave/Z USAXS_PD_total	//exists only for flyscans...
+		if(WaveExists(USAXS_PD_total))
+			Wave Monitor_total
+			Duplicate/Free USAXS_PD_sigma, N_upd, sigma_upd
+			Duplicate/Free Monitor_sigma, N_i0, sigma_i0
+			N_upd = floor(USAXS_PD_total / USAXS_PD)      // clamped to >= 1, else 1
+			N_i0  = floor(Monitor_total  / Monitor)
+			N_upd = (N_upd>1) ? N_upd : 1
+			N_i0 = (N_i0>1) ? N_i0 : 1
 
-	Make/O ErrorParameters={1,1,1,1,1}			//background measured error
-	ErrorParameters[0]=numberbykey ("Bkg1Err", UPDparameters,"=")
-	ErrorParameters[1]=numberbykey ("Bkg2Err", UPDparameters,"=")
-	ErrorParameters[2]=numberbykey ("Bkg3Err", UPDparameters,"=")
-	ErrorParameters[3]=numberbykey ("Bkg4Err", UPDparameters,"=")
-	ErrorParameters[4]=numberbykey ("Bkg5Err", UPDparameters,"=")
-	variable ii
-	For(ii=0;ii<5;ii+=1)
-		if (numtype(ErrorParameters[ii])!=0)		//if the background error does not exist, we will replace it with 0...
-			ErrorParameters[ii]=0
+			sigma_upd = USAXS_PD_sigma / sqrt(N_upd)
+			sigma_i0  = Monitor_sigma  / sqrt(N_i0)
+		else
+			Duplicate/Free USAXS_PD_sigma, sigma_upd
+			Duplicate/Free Monitor_sigma, sigma_i0
 		endif
-	endfor
-	variable I0AmpDark=numberbykey ("I0AmpDark", UPDparameters,"=")
-	variable I0AmpGain=numberbykey ("I0AmpGain", UPDparameters,"=")
-	if(NumType(I0AmpDark)!=0 || I0AmpDark<0)
-		I0AmpDark=0
-	endif 
-	if(NumType(I0AmpGain)!=0 || I0AmpGain<0)		//thsi is compatible with old data. 
-		I0AmpGain=1
-	endif 
-	Wave/Z I0_gain	
-	if(!WaveExists(I0_gain))		//old code, no changes...
-		PD_Intensity=(USAXS_PD - MeasTime*LocalParameters[pd_range-1][1])*(1/(VToFFactor*LocalParameters[pd_range-1][0])) /((Monitor-I0AmpDark*MeasTime)/I0AmpGain)
+		//sigma_upd = sqrt(sigma_upd^2 + updBkgErr^2)     // fold in dark-current error
+		//PD_error = ratio_error(upd_current − updBkg, sigma_upd, I0_current, sigma_i0)
+		PD_error = (abs(USAXS_PD-UPDbackground)/abs(Monitor))*sqrt((sigma_upd/(USAXS_PD-UPDbackground))^2+(sigma_i0/Monitor)^2)
+		
+		//end of FX4
 	else
-		PD_Intensity=(USAXS_PD - MeasTime*LocalParameters[pd_range-1][1])*(1/(VToFFactor*LocalParameters[pd_range-1][0])) /((Monitor-I0AmpDark*MeasTime)/I0_gain)
-	endif
 
-	//need to remove bad points caused by range changes at low qs here... 
-	if(CleanUpRangeCHange)	//to be done ONLY in the beggining step, not later... 
-		PD_Intensity [1,numpnts(pd_range)-2] = ((pd_range[p+1]-pd_range[p])<-0.5 || (pd_range[p]-pd_range[p-1])<-0.5) ? nan : PD_Intensity
-	endif
-	//this will simply set border points to range changes nan and they should get later removed. 
-	//this is not set to remove points ONLY if we cahnge from higher gain to lower gain, not in the other direction
-	//OK, another incarnation of the error calculations...
-	Duplicate/Free PD_Error,  A
-	Duplicate/Free PD_Error, SigmaUSAXSPD, SigmaPDwDC, SigmaRwave, SigmaMonitor, ScaledMonitor
-	SigmaUSAXSPD=sqrt(USAXS_PD*(1+0.0001*USAXS_PD))		//this is our USAXS_PD error estimate, Poisson error + 1% of value
-	SigmaPDwDC=sqrt(SigmaUSAXSPD^2+(MeasTime*ErrorParameters[pd_range-1])^2)		//This should be measured error for background
-	SigmaPDwDC=SigmaPDwDC/(VToFFactor*LocalParameters[pd_range-1][0])
-	A=(USAXS_PD)/(VToFFactor*LocalParameters[pd_range-1][0])				//without dark current subtraction
-	SigmaMonitor= sqrt(Monitor)		//these calculations were done for 10^6 
-	ScaledMonitor = Monitor
-	SigmaRwave=sqrt((A^2*SigmaMonitor^4)+(SigmaPDwDC^2*ScaledMonitor^4)+((A^2+SigmaPDwDC^2)*ScaledMonitor^2*SigmaMonitor^2))
-	SigmaRwave=SigmaRwave/(ScaledMonitor*(ScaledMonitor^2-SigmaMonitor^2))
-	if(!WaveExists(I0_gain))		//old code, no changes...
-		SigmaRwave*=I0AmpGain			//fix for use of I0 gain here, the numbers were too low due to scaling of PD by I0AmpGain
-	else
-		SigmaRwave*=I0_gain
-	endif
-	PD_error=SigmaRwave/5		//2025-04 these values are simply too large on new APS-U USAXS instrument
-	KillWaves/Z LocalParameters , ErrorParameters
+		Make/O LocalParameters = {{1e5,1e7,1e9,99e9,1e11},{3000,3000,3000,3000,3000}}
+		
+		LocalParameters[0][0]=numberbykey ("Gain1", UPDparameters,"=")
+		LocalParameters[1][0]=numberbykey ("Gain2", UPDparameters,"=")
+		LocalParameters[2][0]=numberbykey ("Gain3", UPDparameters,"=")
+		LocalParameters[3][0]=numberbykey ("Gain4", UPDparameters,"=")
+		LocalParameters[4][0]=numberbykey ("Gain5", UPDparameters,"=")
+		LocalParameters[0][1]=numberbykey ("Bkg1", UPDparameters,"=")
+		LocalParameters[1][1]=numberbykey ("Bkg2", UPDparameters,"=")
+		LocalParameters[2][1]=numberbykey ("Bkg3", UPDparameters,"=")
+		LocalParameters[3][1]=numberbykey ("Bkg4", UPDparameters,"=")
+		LocalParameters[4][1]=numberbykey ("Bkg5", UPDparameters,"=")
+		
+		variable VtoFfactor=numberbykey ("Vfc", UPDparameters,"=")
+	
+		Make/O ErrorParameters={1,1,1,1,1}			//background measured error
+		ErrorParameters[0]=numberbykey ("Bkg1Err", UPDparameters,"=")
+		ErrorParameters[1]=numberbykey ("Bkg2Err", UPDparameters,"=")
+		ErrorParameters[2]=numberbykey ("Bkg3Err", UPDparameters,"=")
+		ErrorParameters[3]=numberbykey ("Bkg4Err", UPDparameters,"=")
+		ErrorParameters[4]=numberbykey ("Bkg5Err", UPDparameters,"=")
+		variable ii
+		For(ii=0;ii<5;ii+=1)
+			if (numtype(ErrorParameters[ii])!=0)		//if the background error does not exist, we will replace it with 0...
+				ErrorParameters[ii]=0
+			endif
+		endfor
+		variable I0AmpDark=numberbykey ("I0AmpDark", UPDparameters,"=")
+		variable I0AmpGain=numberbykey ("I0AmpGain", UPDparameters,"=")
+		if(NumType(I0AmpDark)!=0 || I0AmpDark<0)
+			I0AmpDark=0
+		endif 
+		if(NumType(I0AmpGain)!=0 || I0AmpGain<0)		//thsi is compatible with old data. 
+			I0AmpGain=1
+		endif 
+		Wave/Z I0_gain	
+	
+		if(!WaveExists(I0_gain))		//old code, no changes...
+			PD_Intensity=(USAXS_PD - MeasTime*LocalParameters[pd_range-1][1])*(1/(VToFFactor*LocalParameters[pd_range-1][0])) /((Monitor-I0AmpDark*MeasTime)/I0AmpGain)
+		else
+			PD_Intensity=(USAXS_PD - MeasTime*LocalParameters[pd_range-1][1])*(1/(VToFFactor*LocalParameters[pd_range-1][0])) /((Monitor-I0AmpDark*MeasTime)/I0_gain)
+		endif
+		//need to remove bad points caused by range changes at low qs here... 
+		if(CleanUpRangeCHange)	//to be done ONLY in the beggining step, not later... 
+			PD_Intensity [1,numpnts(pd_range)-2] = ((pd_range[p+1]-pd_range[p])<-0.5 || (pd_range[p]-pd_range[p-1])<-0.5) ? nan : PD_Intensity
+		endif
 
-	//fix oversubtraction of PD_Intensity here?
-	IN3_FixNegativeIntensities(PD_Intensity)
-	IN3_FixZeroUncertainties(PD_error)
-	KillWaves/Z R_error,R_Int
+		//this will simply set border points to range changes nan and they should get later removed. 
+		//this is not set to remove points ONLY if we cahnge from higher gain to lower gain, not in the other direction
+		//OK, another incarnation of the error calculations...
+		Duplicate/Free PD_Error,  A
+		Duplicate/Free PD_Error, SigmaUSAXSPD, SigmaPDwDC, SigmaRwave, SigmaMonitor, ScaledMonitor
+		SigmaUSAXSPD=sqrt(USAXS_PD*(1+0.0001*USAXS_PD))		//this is our USAXS_PD error estimate, Poisson error + 1% of value
+		SigmaPDwDC=sqrt(SigmaUSAXSPD^2+(MeasTime*ErrorParameters[pd_range-1])^2)		//This should be measured error for background
+		SigmaPDwDC=SigmaPDwDC/(VToFFactor*LocalParameters[pd_range-1][0])
+		A=(USAXS_PD)/(VToFFactor*LocalParameters[pd_range-1][0])				//without dark current subtraction
+		SigmaMonitor= sqrt(Monitor)		//these calculations were done for 10^6 
+		ScaledMonitor = Monitor
+		SigmaRwave=sqrt((A^2*SigmaMonitor^4)+(SigmaPDwDC^2*ScaledMonitor^4)+((A^2+SigmaPDwDC^2)*ScaledMonitor^2*SigmaMonitor^2))
+		SigmaRwave=SigmaRwave/(ScaledMonitor*(ScaledMonitor^2-SigmaMonitor^2))
+		if(!WaveExists(I0_gain))		//old code, no changes...
+			SigmaRwave*=I0AmpGain			//fix for use of I0 gain here, the numbers were too low due to scaling of PD by I0AmpGain
+		else
+			SigmaRwave*=I0_gain
+		endif
+		PD_error=SigmaRwave/5		//2025-04 these values are simply too large on new APS-U USAXS instrument
+		KillWaves/Z LocalParameters , ErrorParameters
+	
+		//fix oversubtraction of PD_Intensity here?
+		IN3_FixNegativeIntensities(PD_Intensity)
+		IN3_FixZeroUncertainties(PD_error)
+	
+		KillWaves/Z R_error,R_Int
+
+	endif
+	
 	Duplicate/O PD_error, R_error
 	Duplicate/O PD_Intensity, R_Int
 	NVAR SampleTransmissionPeakToPeak=root:Packages:Indra3:SampleTransmissionPeakToPeak
@@ -411,7 +499,7 @@ Function IN3_CalculateRWaveIntensity(CleanUpRangeCHange)				//Recalculate the R 
 		SampleTransmissionPeakToPeak=1
 	endif
 	IN3_RemoveDropouts(Ar_encoder,MeasTime,Monitor,PD_range,USAXS_PD, PD_Intensity,PD_error)
-	
+
 	
 	R_Int = PD_Intensity * SampleTransmissionPeakToPeak
 	R_error = PD_error * SampleTransmissionPeakToPeak

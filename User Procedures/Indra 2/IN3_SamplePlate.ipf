@@ -1,7 +1,7 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version = 1.12
+#pragma version = 1.13
 #pragma IgorVersion=9.03
 
 
@@ -13,6 +13,7 @@
 
 //this is tool to setup Sample Plates for USAXS, survey sample positions, and generate Command files. 
 
+//1.13 added Push to Queue server for sample table. Need to add support for Export control and hook functions. 
 //1.12 AI code review: add SetDataFolder restore to IN3S_MainPanel and IN3S_BeamlineSurveyPanel
 //     (both were permanently changing user's data folder on every call); convert 2 string-based
 //     DF patterns to DFREF; add WAVE/Z to LBSelectionWv (×5), LBSelectionWvG (×3+1),
@@ -254,8 +255,10 @@ Function IN3S_MainPanel()
 		//controls under the table
 		//save export
 		Button PreviewCommandFile,pos={260,595},size={140,20}, proc=IN3S_ButtonProc,title="Preview cmd file", help={"Creates and displays command file with current set of positions"}
+		Button AppendToCommandFile,pos={260,645},size={140,20}, proc=IN3S_ButtonProc,title="Append to cmd file", help={"Appends to command file on desktop"}
+		
 		Button ExportCommandFile,pos={415,595},size={160,20}, proc=IN3S_ButtonProc,title="Export cmd file", help={"Exports usaxs.mac or defaultname.mac cmd file with current set of positions"}
-		Button AppendToCommandFile,pos={415,620},size={160,20}, proc=IN3S_ButtonProc,title="Append to cmd file", help={"Appends to command file on desktop"}
+		Button AddToQueue,pos={415,620},size={160,20}, proc=IN3S_ButtonProc,title="AddToQueue", help={"Pushes the data to Queue GUI"}
 		Button ExportCommandFile2,pos={415,645},size={160,20}, proc=IN3S_ButtonProc,title="Dialog Export cmd file", help={"Dialog - Exports cmd file with current set of positions"}
 
 		Setvariable NumberOfSamples title="\Zr100Samples: ",pos={10,610},size={150,15},frame=0,fstyle=3,fColor=(0,0,65535),valueColor=(0,0,0), labelBack=0, noedit=1
@@ -1248,6 +1251,14 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 				WarningForUser = "Exported usaxs.mac on your desktop"
 				IN3_FTPUSAXSMacFile()
 			endif
+			if(StringMatch(ba.ctrlName, "AddToQueue" ))
+				//here we need to push the data in Queue server
+				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+				WarningForUser = "Exported Scans to Queue server"
+				IN3_PushToQueueServer()
+			endif			
+			
+			
 			if(StringMatch(ba.ctrlName, "ExportCommandFile2" ))
 				//here we need to save that notebook somewhere
 				newName = IN3S_ExportMacroFile(1,0)
@@ -1337,7 +1348,225 @@ Function IN3_FTPUSAXSMacFile()
 end
 //************************************************************************************************************
 //************************************************************************************************************
+Function IN3_PushToQueueServer()
 
+	IN3S_WriteQueueJson()
+
+end
+
+//*****************************************************************************************************************
+FUnction IN3S_WriteQueueJson()
+	//write json for queue server
+	
+	DFrEF OldDf=GetDataFolderDFR()
+	Wave/T listWaveG   =  root:Packages:SamplePlateSetup:LBCommandWv
+	Wave/Z LBSelectionWvG= root:Packages:SamplePlateSetup:LBSelectionWv
+	Wave/T LBTtitleWvG  = root:Packages:SamplePlateSetup:LBTtitleWv
+	NVAR USAXSAllG = root:Packages:SamplePlateSetup:USAXSAll
+	NVAR SAXSAllG = root:Packages:SamplePlateSetup:SAXSAll
+	NVAR WAXSAllG = root:Packages:SamplePlateSetup:WAXSAll
+	NVAR DefaultSampleThickness=root:Packages:SamplePlateSetup:DefaultSampleThickness
+	SVAR UserNameForSampleSet = root:Packages:SamplePlateSetup:UserNameForSampleSet
+	NVAR RunExportHookFunction= root:Packages:SamplePlateSetup:RunExportHookFunction
+
+    string jsonBody = IN3S_WriteListOfCommandsJSON(listWaveG, LBSelectionWvG, 0, 0, "") 
+  	// if(RunExportHookFunction)
+  	//		IN3S_ExportHookFunction(listWaveG, LBSelectionWvG)
+  	// endif
+  	print "IN3S_WriteQueueJson"
+  	print jsonBody
+	//string theurl="http://10.54.122.24:60610/api/queue/item/add"	//this is single item
+	string theurl="http://10.54.122.24:60610/api/queue/item/add/batch"		//this is many items.
+	string HeaderStr
+	HeaderStr = "Content-Type: application/json\rAuthorization: Apikey test"
+    URLRequest/DSTR=(jsonBody) method=post , url=theurl, headers=HeaderStr
+   // Print "Response:"
+   // Print S_serverResponse
+end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+Function/S IN3S_WriteListOfCommandsJSON(listWaveG, LBSelectionWvG, sxOffset, syOffset, TitleModifier)
+	wave/T listWaveG
+	wave/Z LBSelectionWvG
+	variable sxOffset, syOffset
+	string  TitleModifier
+	
+	NVAR DefaultSampleThickness=root:Packages:SamplePlateSetup:DefaultSampleThickness
+	NVAR USAXSAllG = root:Packages:SamplePlateSetup:USAXSAll
+	NVAR SAXSAllG = root:Packages:SamplePlateSetup:SAXSAll
+	NVAR WAXSAllG = root:Packages:SamplePlateSetup:WAXSAll
+	SVAR ExportOrder=root:Packages:SamplePlateSetup:ExportOrder
+	// ExportOrder can be: USAXS-SAXS-WAXS, SAXS-WAXS-USAXS, or USAXS-WAXS-SAXS
+
+	variable i, haveAnySWAXS, thickness, sxMod, syMod, numSAXSWAXS
+	haveAnySWAXS = 0
+	numSAXSWAXS = 0
+
+	string Command, SampleName
+	variable SX, SY 
+	variable HaveUSAXS
+	//this  function will write (potentially modified) output of the command file for given line. This needs to be cutomized for specific need. 
+	SVAR nbl=root:Packages:SamplePlateSetup:NotebookName
+
+//    string jsonBody = "{\"item\":{\"item_type\":\"plan\",\"name\":\""+PlanName
+//    jsonBody += "\",\"args\":["+num2str(sx)+","+num2str(sy)+","+num2str(Thickness)
+//    jsonBody += ",\""+SampleName+"\"],\"kwargs\":{}},"\"user\":\"usaxs\",\"user_group\":\"primary\"}"
+//
+	string OutStr="{\"items\":["
+	
+	strswitch(ExportOrder)
+	
+		case "USAXS-SAXS-WAXS":
+		   For(i=0;i<dimsize(listWaveG,0);i+=1)
+		   		if(USAXSAllG || LBSelectionWvG[i][4]==48)
+					if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
+			   			thickness = str2num(listWaveG[i][3])
+			   			thickness = thickness>0 ? thickness : DefaultSampleThickness
+			   			SX=str2num(listWaveG[i][1])+sxOffset
+			   			SY=str2num(listWaveG[i][2])+syOffset
+						OutStr+="{\"item_type\":\"plan\",\"name\":\"USAXSscan\",\"args\":["+num2str(sx)+","+num2str(sy)+","+num2str(Thickness)+",\""+listWaveG[i][0]+TitleModifier+"\"],\"kwargs\":{}},"
+					endif
+				endif   
+		   endfor
+		   //this is SAXS
+		   For(i=0;i<dimsize(listWaveG,0);i+=1)
+		   		if(SAXSAllG || LBSelectionWvG[i][5]==48)
+					if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
+			   			haveAnySWAXS=1
+			   			numSAXSWAXS+=1
+			   			thickness = str2num(listWaveG[i][3])
+			   			thickness = thickness>0 ? thickness : DefaultSampleThickness
+			   			SX=str2num(listWaveG[i][1])+sxOffset
+			   			SY=str2num(listWaveG[i][2])+syOffset
+						OutStr+="{\"item_type\":\"plan\",\"name\":\"saxsExp\",\"args\":["+num2str(sx)+","+num2str(sy)+","+num2str(Thickness)+",\""+listWaveG[i][0]+TitleModifier+"\"],\"kwargs\":{}},"
+					endif
+				endif   
+		   endfor
+		   //WAXS is next. 
+		   For(i=0;i<dimsize(listWaveG,0);i+=1)
+		   		if(WAXSAllG || LBSelectionWvG[i][6]==48)
+					if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
+			   			haveAnySWAXS=1
+			   			numSAXSWAXS+=1
+			   			thickness = str2num(listWaveG[i][3])
+			   			thickness = thickness>0 ? thickness : DefaultSampleThickness
+			   			SX=str2num(listWaveG[i][1])+sxOffset
+			   			SY=str2num(listWaveG[i][2])+syOffset
+						OutStr+="{\"item_type\":\"plan\",\"name\":\"waxsExp\",\"args\":["+num2str(sx)+","+num2str(sy)+","+num2str(Thickness)+",\""+listWaveG[i][0]+TitleModifier+"\"],\"kwargs\":{}},"
+					endif
+				endif   
+		   endfor
+			break
+		case "USAXS-WAXS-SAXS":
+		   For(i=0;i<dimsize(listWaveG,0);i+=1)
+		   		if(USAXSAllG || LBSelectionWvG[i][4]==48)
+					if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
+			   			thickness = str2num(listWaveG[i][3])
+			   			thickness = thickness>0 ? thickness : DefaultSampleThickness
+			   			SX=str2num(listWaveG[i][1])+sxOffset
+			   			SY=str2num(listWaveG[i][2])+syOffset
+						OutStr+="{\"item_type\":\"plan\",\"name\":\"USAXSscan\",\"args\":["+num2str(sx)+","+num2str(sy)+","+num2str(Thickness)+",\""+listWaveG[i][0]+TitleModifier+"\"],\"kwargs\":{}},"
+					endif
+				endif   
+		   endfor
+		   //WAXS is next. 
+		   For(i=0;i<dimsize(listWaveG,0);i+=1)
+		   		if(WAXSAllG || LBSelectionWvG[i][6]==48)
+					if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
+			   			haveAnySWAXS=1
+			   			numSAXSWAXS+=1
+			   			thickness = str2num(listWaveG[i][3])
+			   			thickness = thickness>0 ? thickness : DefaultSampleThickness
+			   			SX=str2num(listWaveG[i][1])+sxOffset
+			   			SY=str2num(listWaveG[i][2])+syOffset
+						OutStr+="{\"item_type\":\"plan\",\"name\":\"waxsExp\",\"args\":["+num2str(sx)+","+num2str(sy)+","+num2str(Thickness)+",\""+listWaveG[i][0]+TitleModifier+"\"],\"kwargs\":{}},"
+					endif
+				endif   
+		   endfor
+		   //this is SAXS
+		   For(i=0;i<dimsize(listWaveG,0);i+=1)
+		   		if(SAXSAllG || LBSelectionWvG[i][5]==48)
+					if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
+			   			haveAnySWAXS=1
+			   			numSAXSWAXS+=1
+			   			thickness = str2num(listWaveG[i][3])
+			   			thickness = thickness>0 ? thickness : DefaultSampleThickness
+			   			SX=str2num(listWaveG[i][1])+sxOffset
+			   			SY=str2num(listWaveG[i][2])+syOffset
+						OutStr+="{\"item_type\":\"plan\",\"name\":\"saxsExp\",\"args\":["+num2str(sx)+","+num2str(sy)+","+num2str(Thickness)+",\""+listWaveG[i][0]+TitleModifier+"\"],\"kwargs\":{}},"
+					endif
+				endif   
+		   endfor
+		case "SAXS-WAXS-USAXS":
+		   //this is SAXS
+		   For(i=0;i<dimsize(listWaveG,0);i+=1)
+		   		if(SAXSAllG || LBSelectionWvG[i][5]==48)
+					if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
+			   			haveAnySWAXS=1
+			   			numSAXSWAXS+=1
+			   			thickness = str2num(listWaveG[i][3])
+			   			thickness = thickness>0 ? thickness : DefaultSampleThickness
+			   			SX=str2num(listWaveG[i][1])+sxOffset
+			   			SY=str2num(listWaveG[i][2])+syOffset
+						OutStr+="{\"item_type\":\"plan\",\"name\":\"saxsExp\",\"args\":["+num2str(sx)+","+num2str(sy)+","+num2str(Thickness)+",\""+listWaveG[i][0]+TitleModifier+"\"],\"kwargs\":{}},"
+					endif
+				endif   
+		   endfor
+		   //WAXS is next. 
+		   For(i=0;i<dimsize(listWaveG,0);i+=1)
+		   		if(WAXSAllG || LBSelectionWvG[i][6]==48)
+					if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
+			   			haveAnySWAXS=1
+			   			numSAXSWAXS+=1
+			   			thickness = str2num(listWaveG[i][3])
+			   			thickness = thickness>0 ? thickness : DefaultSampleThickness
+			   			SX=str2num(listWaveG[i][1])+sxOffset
+			   			SY=str2num(listWaveG[i][2])+syOffset
+						OutStr+="{\"item_type\":\"plan\",\"name\":\"waxsExp\",\"args\":["+num2str(sx)+","+num2str(sy)+","+num2str(Thickness)+",\""+listWaveG[i][0]+TitleModifier+"\"],\"kwargs\":{}},"
+					endif
+				endif   
+		   endfor
+		   //and USAXS . 
+
+		   For(i=0;i<dimsize(listWaveG,0);i+=1)
+		   		if(USAXSAllG || LBSelectionWvG[i][4]==48)
+					if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
+			   			thickness = str2num(listWaveG[i][3])
+			   			thickness = thickness>0 ? thickness : DefaultSampleThickness
+			   			SX=str2num(listWaveG[i][1])+sxOffset
+			   			SY=str2num(listWaveG[i][2])+syOffset
+						OutStr+="{\"item_type\":\"plan\",\"name\":\"USAXSscan\",\"args\":["+num2str(sx)+","+num2str(sy)+","+num2str(Thickness)+",\""+listWaveG[i][0]+TitleModifier+"\"],\"kwargs\":{}},"
+					endif
+				endif   
+		   endfor
+
+			break
+
+		case "USWAXS":
+		   For(i=0;i<dimsize(listWaveG,0);i+=1)
+		   		if(USAXSAllG || LBSelectionWvG[i][4]==48)
+					if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
+			   			thickness = str2num(listWaveG[i][3])
+			   			thickness = thickness>0 ? thickness : DefaultSampleThickness
+			   			SX=str2num(listWaveG[i][1])+sxOffset
+			   			SY=str2num(listWaveG[i][2])+syOffset
+						OutStr+="{\"item_type\":\"plan\",\"name\":\"USAXSscan\",\"args\":["+num2str(sx)+","+num2str(sy)+","+num2str(Thickness)+",\""+listWaveG[i][0]+TitleModifier+"\"],\"kwargs\":{}},"
+						OutStr+="{\"item_type\":\"plan\",\"name\":\"saxsExp\",\"args\":["+num2str(sx)+","+num2str(sy)+","+num2str(Thickness)+",\""+listWaveG[i][0]+TitleModifier+"\"],\"kwargs\":{}},"
+						OutStr+="{\"item_type\":\"plan\",\"name\":\"waxsExp\",\"args\":["+num2str(sx)+","+num2str(sy)+","+num2str(Thickness)+",\""+listWaveG[i][0]+TitleModifier+"\"],\"kwargs\":{}},"
+					endif
+				endif   
+		   endfor
+			break
+	endswitch
+	OutStr=removeEnding(OutStr,",")
+	OutStr+="],\"user\":\"usaxs\",\"user_group\":\"primary\"}"
+	
+	return OutStr
+end
+
+//*******************************************************************************************************************
+//*******************************************************************************************************************
+//*******************************************************************************************************************
 
 Function IN3S_CheckProc(cba) : CheckBoxControl
 	STRUCT WMCheckboxAction &cba

@@ -645,6 +645,7 @@ static Function IN3_LoadData()
 
 	DFREF saveDF = GetDataFolderDFR()
 	setDataFolder root:Packages:Indra3
+	NVAR IsFX4Data = root:Packages:Indra3:IsFX4Data
 	
 	//First Kill waves which may cause conflict. 
 	KillWIndow/Z RcurvePlotGraph
@@ -680,6 +681,24 @@ static Function IN3_LoadData()
 		Wave/Z OringI0_gain=$(DFloc+"I0_gain")
 		if(WaveExists(OringI0_gain))
 			Duplicate/O OringI0_gain, I0_gain
+		endif
+		if(IsFX4Data)		
+			Wave/Z OrigUSAXS_PD_sigma=$(DFloc+"USAXS_PD_sigma")
+			if(WaveExists(OrigUSAXS_PD_sigma))
+				Duplicate/O OrigUSAXS_PD_sigma, USAXS_PD_sigma
+				Wave OrigMonitor_sigma=$(DFloc+"Monitor_sigma")
+				Duplicate/O OrigMonitor_sigma, Monitor_sigma
+				Wave OrigUSAXS_PD_total=$(DFloc+"USAXS_PD_total")
+				Duplicate/O OrigUSAXS_PD_total, USAXS_PD_total
+				Wave OrigMonitor_total=$(DFloc+"Monitor_total")
+				Duplicate/O OrigMonitor_total, Monitor_total
+			else
+				Duplicate/O OrigUSAXS_PD, USAXS_PD_sigma
+				USAXS_PD_sigma = 0.01*USAXS_PD
+				Duplicate/O OrigMonitor, Monitor_sigma
+				Monitor_sigma = 0.01*OrigMonitor
+			endif
+
 		endif
 
 		SVAR OrigSpecCommand =$(DFloc+"SpecCommand") 
@@ -1544,8 +1563,8 @@ Function IN3_FitModGaussTop(ctrlname, DoNOtChangeLimits) : Buttoncontrol			// ca
 		 	startPointL =  IN3_FindlevelsWithNaNs(tempPDInt, V_max/2, V_maxloc, 0)
 		 	endPointL = IN3_FindlevelsWithNaNs(tempPDInt, V_max/2, V_maxloc, 1)
 		endif
-		PeakCenterFitStartPoint = startPointL
-		PeakCenterFitEndPoint =endPointL		
+		PeakCenterFitStartPoint = ceil(startPointL)
+		PeakCenterFitEndPoint =floor(endPointL)		
 	endif
 //	Cursor/P /W=RcurvePlotGraph#PeakCenter A  PD_Intensity  startPointL 
 //	Cursor/P /W=RcurvePlotGraph#PeakCenter B  PD_Intensity  endPointL 
@@ -1901,6 +1920,8 @@ Function IN3_TabPanelControl(name,tab)
 	NVAR UsePinTransmission=root:Packages:Indra3:UsePinTransmission
 	NVAR UseMSAXSCorrection=root:Packages:Indra3:UseMSAXSCorrection
 	NVAR DesmearData = root:Packages:Indra3:DesmearData
+	NVAR DesmearUseAbeles = root:Packages:Indra3:DesmearUseAbeles
+	
 
 	Button RecoverDefault,win=USAXSDataReduction, disable=(tab!=0 || IsBlank)
 	CheckBox CalibrateToVolume,win=USAXSDataReduction, disable=(tab!=0 || IsBlank)
@@ -1978,8 +1999,13 @@ Function IN3_TabPanelControl(name,tab)
 	Button RecoverDefaultBlnkVals,win=USAXSDataReduction, disable=(tab!=3 || IsBlank)
 
 	CheckBox DesmearData, win=USAXSDataReduction, disable=(tab!=5)
+	CheckBox DesmearUseAbeles, win=USAXSDataReduction, disable=(tab!=5)
 	SetVariable BckgStartQ, win=USAXSDataReduction, disable=(tab!=5 || !DesmearData)
 	PopupMenu BackgroundFnct, win=USAXSDataReduction, disable=(tab!=5 || !DesmearData)
+	SetVariable DesmearAbelAutoSmooth, win=USAXSDataReduction, disable=(tab!=5)
+	SetVariable DesmearAbelSmoothW, win=USAXSDataReduction, disable=(tab!=5)
+	SetVariable DesmearAbelNumMC, win=USAXSDataReduction, disable=(tab!=5)
+	
 
 	CheckBox UseMSAXSCorrection,win=USAXSDataReduction, disable=(tab!=4 || IsBlank)	
 	//UseMSAXSCorrection
@@ -2365,6 +2391,564 @@ end
 //*************************************************************************************************
 
 Function IN3_DesmearData()
+	NVAR DesmearUseAbeles=root:Packages:Indra3:DesmearUseAbeles
+	
+	if(DesmearUseAbeles)
+		IN3_DesmearDataAbel()
+	else
+		IN3_DesmearDataLake()
+	endif
+
+end
+
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
+
+
+//*************************************************************************
+// new_desmearing.ipf  -  EXPERIMENTAL truncated-Abel desmearing for USAXS
+//
+// Version history
+//	0.1  2026-10-03  First sketch for manual testing against Lake (IN3_DesmearData).
+//	0.2  2026-10-05  Monte Carlo realizations run in parallel (MultiThread, one realization per thread);
+//	                 smoothing uses a +/-5 sigma window and is threaded per point in the main thread.
+//
+// Method: Huang et al., "Analytical desmearing of Bonse-Hart USANS data via truncated
+// Abel inversion" (J. Appl. Cryst. preprint), Eq. 15, WITH the finite-slit correction
+// term derived in Planning/new_desmearing.md (the paper's Eq. 15 drops a term that
+// is negligible for USANS but reaches ~5% for USAXS near Q ~ slit length).
+//
+// Smearing model (same as IN3_SmearData):
+//		Ismr(q) = (1/sl) * Integral_0^sl  I( sqrt(q^2 + y^2) ) dy		sl = SlitLength
+//
+// Exact inversion used here (s1 = sqrt(Q^2+sl^2), s2 = sqrt(Q^2+2 sl^2)):
+//		I(Q) = -(2 sl/pi) * Integral_Q^s1 Ismr'(x)/sqrt(x^2-Q^2) dx
+//		       + (2/pi)   * Integral_0^(pi/2) I( sqrt(Q^2 + 2 sl^2/(1+sin u)) ) du
+// The second term needs I only at s >= s1 > Q, so I(Q) is computed by marching from
+// high Q down to low Q. USAXS data extend to Qmax >> sl, so only a tiny extension
+// beyond Qmax (to sqrt(Qmax^2+2 sl^2)) is needed; IN3_ExtendData already provides it.
+//
+// How to use for testing (does NOT change existing code):
+//	1) Load this file together with Indra 2.
+//	2) Either call IN3_DesmearDataAbel() from the command line after the normal
+//	   reduction has produced SMR_Int (it overwrites DSM_* in root:Packages:Indra3), or
+//	   temporarily replace the body of IN3_DesmearData() in IN3_Calculations.ipf with a
+//	   single call to IN3_DesmearDataAbel() so every recalculation uses the new method.
+//	3) Compare with Lake: IN3_Abel_CompareWithLake() keeps both results side by side.
+//
+// Control globals (created with defaults on first use, root:Packages:Indra3:):
+//	DesmearAbelAutoSmooth	1 = pick smoothing width so that reduced chi^2(smoothed vs SMR) ~ 1
+//	DesmearAbelSmoothW		Gaussian width in ln(Q) for local-linear smoothing; 0 = no smoothing
+//	DesmearAbelNumMC		Monte Carlo realizations for uncertainties; <2 = old Lake-style errors
+//*************************************************************************
+
+static Constant kAbelNumU = 64						//quadrature nodes for the u-integral (2nd term)
+static Constant kAbelSmoothMinW = 0.002				//search range for auto smoothing width, in ln(Q)
+static Constant kAbelSmoothMaxW = 0.5
+
+//*************************************************************************
+//*************************************************************************
+// Drop-in replacement for IN3_DesmearData(). Same inputs, same outputs (DSM_Int, DSM_Qvec,
+// DSM_Error, DSM_dQ, DesmNormalizedError, fit_ExtrapIntwave), same graph handling.
+Function IN3_DesmearDataAbel()
+
+	DFREF saveDF = GetDataFolderDFR()
+	SetDataFolder root:Packages:Indra3:
+	NVAR DesmearData = root:Packages:Indra3:DesmearData
+	NVAR IsBlank = root:Packages:Indra3:IsBlank
+	NVAR is2DCollimated = root:Packages:Indra3:is2DCollimated
+	if(IsBlank)
+		SetDataFolder saveDF
+		return 0
+	endif
+	if(!DesmearData || is2DCollimated)		//no desmearing: same graph/wave cleanup as IN3_DesmearData
+		IN3_Abel_NoDesmearCleanup(is2DCollimated)		//(not a call to IN3_DesmearData, so that function may call us)
+		SetDataFolder saveDF
+		return 0
+	endif
+
+	IN3_Abel_InitGlobals()
+	NVAR SlitLength = root:Packages:Indra3:SlitLength
+	NVAR BckgStartQ = root:Packages:Indra3:DesmearBckgStart
+	SVAR BackgroundFunction = root:Packages:Indra3:DsmBackgroundFunction
+	NVAR AutoSmooth = root:Packages:Indra3:DesmearAbelAutoSmooth
+	NVAR SmoothW = root:Packages:Indra3:DesmearAbelSmoothW
+	NVAR NumMC = root:Packages:Indra3:DesmearAbelNumMC
+
+	WAVE/Z SMR_Int = root:Packages:Indra3:SMR_Int
+	if(!WaveExists(SMR_Int))
+		SetDataFolder saveDF
+		return 0
+	endif
+	WAVE SMR_Error = root:Packages:Indra3:SMR_Error
+	WAVE SMR_Qvec = root:Packages:Indra3:SMR_Qvec
+	WAVE SMR_dQ = root:Packages:Indra3:SMR_dQ
+	variable sl = SlitLength
+	variable nOrig = numpnts(SMR_Int)
+	variable startTime = StopMSTimer(-2)
+
+	//1. extend smeared data beyond Qmax with the user-selected function (same as Lake code)
+	Duplicate/FREE/D SMR_Int, extInt
+	Duplicate/FREE/D SMR_Qvec, extQ
+	Duplicate/FREE/D SMR_Error, extErr
+	if(BckgStartQ > SMR_Qvec[nOrig-1]/1.5)
+		BckgStartQ = SMR_Qvec[nOrig-1]/1.5
+	endif
+	IN3_ExtendData(extInt, extQ, extErr, sl, BckgStartQ, BackgroundFunction)	//to sqrt(Qmax^2+(1.5 sl)^2)
+	variable nExt = numpnts(extQ)
+	variable qNeeded = sqrt(SMR_Qvec[nOrig-1]^2 + 2*sl^2)
+	if(extQ[nExt-1] < qNeeded)
+		printf "IN3_DesmearDataAbel: extension reaches only Q=%g, need %g. Edge values will be clamped.\r", extQ[nExt-1], qNeeded
+	endif
+
+	//2. smoothing of the smeared data (the inversion differentiates the data)
+	variable usedW = SmoothW
+	if(AutoSmooth)
+		usedW = IN3_Abel_FindSmoothWidth(extQ, extInt, SMR_Error, nOrig)
+		SmoothW = usedW
+	endif
+	WAVE smInt = IN3_Abel_SmoothLocalLinear(extQ, extInt, usedW, 1)
+	variable chi2 = IN3_Abel_ReducedChi2(smInt, extInt, SMR_Error, nOrig)
+
+	//3. the inversion itself
+	Make/FREE/D/N=(nExt) dsmExt
+	variable numClamped = IN3_Abel_AbelInvert(extQ, smInt, sl, nOrig, dsmExt)
+	if(numClamped > 0)
+		printf "IN3_DesmearDataAbel: %d quadrature nodes beyond extended data were clamped to the last value\r", numClamped
+	endif
+
+	//4. uncertainties
+	Make/FREE/D/N=(nOrig) dsmErr
+	if(NumMC >= 2)
+		IN3_Abel_MonteCarloErrors(extQ, extInt, SMR_Error, sl, nOrig, usedW, NumMC, dsmErr)
+	else
+		Duplicate/FREE/R=[0, nOrig-1] dsmExt, dsmTmp
+		Duplicate/FREE SMR_Qvec, qTmp
+		IN3_GetErrors(SMR_Error, SMR_Int, dsmTmp, dsmErr, qTmp)		//old Lake-style estimate
+	endif
+
+	//5. closure test: re-smear the result and compare with measured SMR data
+	Make/FREE/D/N=(nExt) reSmeared
+	Duplicate/FREE dsmExt, dsmExtForSmear
+	IN3_SmearData(dsmExtForSmear, extQ, sl, reSmeared)
+	Duplicate/O SMR_Int, root:Packages:Indra3:DesmNormalizedError
+	WAVE DesmNormalizedError = root:Packages:Indra3:DesmNormalizedError
+	DesmNormalizedError = (SMR_Int[p] - reSmeared[p])/SMR_Error[p]
+
+	//6. outputs, same names as the Lake code
+	Duplicate/O SMR_Int, root:Packages:Indra3:DSM_Int		//Duplicate (not Make) keeps the wave notes, as Lake code does
+	Duplicate/O SMR_Error, root:Packages:Indra3:DSM_Error
+	WAVE DSM_Int = root:Packages:Indra3:DSM_Int
+	WAVE DSM_Error = root:Packages:Indra3:DSM_Error
+	DSM_Int = dsmExt[p]
+	DSM_Error = abs(dsmErr[p])
+	Duplicate/O SMR_Qvec, root:Packages:Indra3:DSM_Qvec
+	Duplicate/O SMR_dQ, root:Packages:Indra3:DSM_dQ
+	WAVE DSM_Qvec = root:Packages:Indra3:DSM_Qvec
+	string noteStr = "DesmearMethod=TruncatedAbel;SlitLength="+num2str(sl)+";AbelSmoothW="+num2str(usedW)
+	noteStr += ";AbelSmoothChi2="+num2str(chi2)+";AbelNumMC="+num2str(NumMC)+";"
+	Note DSM_Int, noteStr
+	printf "Abel desmearing: %d points, smoothing width %g (chi2=%g), %d MC runs, %g s\r", nOrig, usedW, chi2, NumMC, (StopMSTimer(-2)-startTime)*1e-6
+
+	DoWindow RcurvePlotGraph
+	if(V_Flag)
+		CheckDisplayed/W=RcurvePlotGraph DSM_Int
+		if(V_Flag < 1)
+			AppendToGraph/R/W=RcurvePlotGraph DSM_Int vs DSM_Qvec
+		endif
+		ModifyGraph/W=RcurvePlotGraph mode(DSM_Int)=4, rgb(DSM_Int)=(1,39321,19939)
+		Label/W=RcurvePlotGraph right "\\K(3,52428,1)DSM & \\K(1,16019,65535)SMR \\K(0,0,0)Intensity"
+		DoUpdate/W=RcurvePlotGraph
+		IN3_DisplayDesExtAndError()
+	endif
+	SetDataFolder saveDF
+	return 0
+End
+
+//*************************************************************************
+//*************************************************************************
+// Runs Lake (existing) and Abel on the current SMR data and keeps both for comparison
+// in root:Packages:Indra3:  DSM_Int_Lake, DSM_Error_Lake, DSM_Int_Abel, DSM_Error_Abel.
+Function IN3_Abel_CompareWithLake()
+
+	DFREF saveDF = GetDataFolderDFR()
+	WAVE/Z SMR_Int = root:Packages:Indra3:SMR_Int
+	if(!WaveExists(SMR_Int))
+		Abort "No SMR_Int in root:Packages:Indra3, reduce some data first"
+	endif
+	SetDataFolder root:Packages:Indra3:
+	variable t0 = StopMSTimer(-2)
+	IN3_DesmearData()
+	variable tLake = (StopMSTimer(-2)-t0)*1e-6
+	WAVE dsmIntL = root:Packages:Indra3:DSM_Int
+	WAVE dsmErrL = root:Packages:Indra3:DSM_Error
+	Duplicate/O dsmIntL, root:Packages:Indra3:DSM_Int_Lake
+	Duplicate/O dsmErrL, root:Packages:Indra3:DSM_Error_Lake
+	IN3_DesmearDataAbel()
+	WAVE dsmIntA = root:Packages:Indra3:DSM_Int
+	WAVE dsmErrA = root:Packages:Indra3:DSM_Error
+	WAVE DSM_Qvec = root:Packages:Indra3:DSM_Qvec
+	Duplicate/O dsmIntA, root:Packages:Indra3:DSM_Int_Abel, root:Packages:Indra3:AbelToLakeRatio
+	Duplicate/O dsmErrA, root:Packages:Indra3:DSM_Error_Abel
+	WAVE DSM_Int_Lake, DSM_Error_Lake, DSM_Int_Abel, DSM_Error_Abel, AbelToLakeRatio
+	AbelToLakeRatio = DSM_Int_Abel/DSM_Int_Lake
+	printf "Lake took %g s\r", tLake
+
+	KillWindow/Z IN3_Abel_CompareGraph
+	Display/K=1/N=IN3_Abel_CompareGraph SMR_Int vs DSM_Qvec as "Abel vs Lake desmearing"
+	AppendToGraph DSM_Int_Lake, DSM_Int_Abel vs DSM_Qvec
+	AppendToGraph/R AbelToLakeRatio vs DSM_Qvec
+	ModifyGraph log(left)=1, log(bottom)=1, mode=4, msize=1
+	ModifyGraph rgb(SMR_Int)=(0,0,65535), rgb(DSM_Int_Lake)=(0,0,0), rgb(DSM_Int_Abel)=(65535,0,0), rgb(AbelToLakeRatio)=(0,39321,0)
+	SetAxis right 0.8, 1.2
+	ErrorBars DSM_Int_Abel Y,wave=(DSM_Error_Abel,DSM_Error_Abel)
+	Label left "Intensity"
+	Label right "Abel / Lake"
+	Label bottom "Q [1/A]"
+	Legend/C/N=text0/A=LB
+	SetDataFolder saveDF
+End
+
+//*************************************************************************
+//*************************************************************************
+// Synthetic test: smear a known model with IN3_SmearData, add noise, desmear with Abel,
+// and compare with the model. Results in root:Packages:IN3_AbelTest:.
+//	relNoise   relative noise (e.g. 0.01), 0 for noise-free test
+//	smoothW    smoothing width in ln(Q), 0 = none, <0 = auto (chi^2 ~ 1)
+Function IN3_Abel_SyntheticTest(slitLength, relNoise, smoothW)
+	variable slitLength, relNoise, smoothW
+
+	DFREF saveDF = GetDataFolderDFR()
+	NewDataFolder/O root:Packages
+	NewDataFolder/O root:Packages:Indra3				//IN3_SmearData switches to this folder
+	NewDataFolder/O/S root:Packages:IN3_AbelTest
+	variable nOrig = 400
+	//model: two Beaucage-like levels on top of flat background, typical USAXS shape
+	Make/O/D/N=(nOrig) TestQ, TestTrue, TestSmr, TestSmrNoisy, TestErr
+	TestQ = 1e-4*(0.3/1e-4)^(p/(nOrig-1))
+	TestTrue = IN3_Abel_TestModel(TestQ[p])
+	//extend Q to sqrt(Qmax^2+2 sl^2)*1.02 with same log step, as IN3_ExtendData would
+	variable dl = ln(TestQ[1]/TestQ[0])
+	variable qEnd = 1.02*sqrt(TestQ[nOrig-1]^2 + 2*slitLength^2)
+	variable nAdd = ceil(ln(qEnd/TestQ[nOrig-1])/dl) + 1
+	Make/FREE/D/N=(nOrig+nAdd) extQ, extTrue, extSmr
+	extQ = TestQ[0]*exp(dl*p)
+	extTrue = IN3_Abel_TestModel(extQ[p])
+	IN3_SmearData(extTrue, extQ, slitLength, extSmr)		//smear with the production smearing code
+	TestSmr = extSmr[p]
+	TestErr = relNoise > 0 ? relNoise*TestSmr[p] : 1e-3*TestSmr[p]
+	TestSmrNoisy = TestSmr[p] + (relNoise > 0 ? gnoise(relNoise*TestSmr[p]) : 0)
+	Duplicate/FREE extSmr, extNoisy
+	extNoisy[0, nOrig-1] = TestSmrNoisy[p]
+
+	variable usedW = smoothW
+	if(smoothW < 0)
+		usedW = IN3_Abel_FindSmoothWidth(extQ, extNoisy, TestErr, nOrig)
+	endif
+	WAVE smInt = IN3_Abel_SmoothLocalLinear(extQ, extNoisy, usedW, 1)
+	Make/FREE/D/N=(numpnts(extQ)) dsmExt
+	IN3_Abel_AbelInvert(extQ, smInt, slitLength, nOrig, dsmExt)
+	Make/O/D/N=(nOrig) TestDsm, TestRatio
+	TestDsm = dsmExt[p]
+	TestRatio = TestDsm/TestTrue
+	WaveStats/Q TestRatio
+	printf "Synthetic test: sl=%g noise=%g width=%g : ratio mean=%g  sdev=%g  min=%g  max=%g\r", slitLength, relNoise, usedW, V_avg, V_sdev, V_min, V_max
+
+	KillWindow/Z IN3_Abel_TestGraph
+	Display/K=1/N=IN3_Abel_TestGraph TestTrue, TestSmrNoisy, TestDsm vs TestQ as "Abel synthetic test"
+	AppendToGraph/R TestRatio vs TestQ
+	ModifyGraph log(left)=1, log(bottom)=1, mode(TestSmrNoisy)=2, mode(TestDsm)=4, msize=1
+	ModifyGraph rgb(TestTrue)=(0,0,0), rgb(TestSmrNoisy)=(0,0,65535), rgb(TestDsm)=(65535,0,0), rgb(TestRatio)=(0,39321,0)
+	SetAxis right 0.9, 1.1
+	Label right "Desmeared / true"
+	Legend/C/N=text0/A=LB
+	SetDataFolder saveDF
+End
+
+static Function IN3_Abel_TestModel(qv)
+	variable qv
+	return 1e4/(1+(qv*3000)^2)^2 + 1/(1+(qv*300)^2)^1.5 + 1e-3/(1+(qv*30)^2) + 1e-4
+End
+
+//*************************************************************************
+//*************************************************************************
+// The core: truncated-Abel inversion with the finite-slit correction, marching from high Q.
+//	qe, Ise  : extended Q and (smoothed) smeared intensity, qe increasing, qe > 0
+//	sl       : slit length (half-length, same as Irena SlitLength)
+//	nOrig    : number of measured points; points nOrig..end are the extension
+//	Id       : output, desmeared intensity on qe (pre-sized to numpnts(qe))
+//	returns number of quadrature nodes that fell beyond qe[n-1] and were clamped
+// ThreadSafe: called from the Monte Carlo worker threads.
+ThreadSafe static Function IN3_Abel_AbelInvert(WAVE qe, WAVE Ise, variable sl, variable nOrig, WAVE Id)
+
+	variable n = numpnts(qe)
+	variable i, j, k, qq0, s1, hi, T1, alpha, beta, sNode, a, jj, numClamped = 0
+	Id = NaN
+	Make/FREE/D/N=(n-1) slope = (Ise[p+1]-Ise[p])/(qe[p+1]-qe[p])
+
+	//extension region, qq0 >> sl: first-order expansion, paper Eq. 7: I = Ismr - sl^2/(6Q) dIsmr/dQ
+	variable dIdQ
+	for(i = nOrig; i < n; i += 1)
+		if(i < n-1)
+			dIdQ = (Ise[i+1]-Ise[i-1])/(qe[i+1]-qe[i-1])
+		else
+			dIdQ = slope[n-2]
+		endif
+		Id[i] = Ise[i] - sl^2/(6*qe[i])*dIdQ
+	endfor
+
+	//node positions of the u-integral: s(u) = sqrt(qq0^2 + 2 sl^2/(1+sin u)), u in (0, pi/2)
+	Make/FREE/D/N=(kAbelNumU) sinU = sin((p+0.5)*(pi/2)/kAbelNumU)
+
+	for(i = nOrig-1; i >= 0; i -= 1)
+		qq0 = qe[i]
+		if(qq0 <= 0)
+			continue
+		endif
+		s1 = sqrt(qq0^2 + sl^2)
+		//term 1: Integral_Q^s1 Ismr'(x)/sqrt(x^2-qq0^2) dx with Ismr piecewise linear between points,
+		//        so on each segment it is slope*[acosh(x_hi/qq0) - acosh(x_lo/qq0)] exactly
+		T1 = 0
+		j = i
+		do
+			if(j >= n-1 || qe[j] >= s1)
+				break
+			endif
+			hi = min(qe[j+1], s1)
+			T1 += slope[j]*(IN3_Abel_acosh(hi/qq0) - IN3_Abel_acosh(qe[j]/qq0))
+			j += 1
+		while(1)
+		//term 2: (2/pi) Integral_0^(pi/2) I(s(u)) du = mean of I over the nodes.
+		//        Nodes below qe[i+1] fall in the bracket [qe[i], qe[i+1]] and depend on the unknown
+		//        Id[i] (happens when sl^2/qq0 < point spacing) -> linear in Id[i], solved implicitly.
+		alpha = 0
+		beta = 0
+		for(k = 0; k < kAbelNumU; k += 1)
+			sNode = sqrt(qq0^2 + 2*sl^2/(1+sinU[k]))
+			if(sNode < qe[i+1])
+				a = (qe[i+1]-sNode)/(qe[i+1]-qe[i])
+				alpha += a
+				beta += (1-a)*Id[i+1]
+			else
+				jj = BinarySearch(qe, sNode)				//qe[jj] <= sNode < qe[jj+1]
+				if(jj == -2 || jj >= n-1)			//beyond the extension, clamp
+					beta += Id[n-1]
+					numClamped += 1
+				else
+					beta += Id[jj] + (Id[jj+1]-Id[jj])*(sNode-qe[jj])/(qe[jj+1]-qe[jj])
+				endif
+			endif
+		endfor
+		alpha /= kAbelNumU
+		beta /= kAbelNumU
+		Id[i] = (-2*sl/pi*T1 + beta)/(1-alpha)
+	endfor
+	return numClamped			//caller reports it (keeps this function quiet when run in threads)
+End
+
+//*************************************************************************
+ThreadSafe static Function IN3_Abel_acosh(arg)
+	variable arg
+	return ln(arg + sqrt(max(arg^2-1, 0)))
+End
+
+//*************************************************************************
+//*************************************************************************
+// Gaussian-weighted local-linear regression vs ln(Q). Smooths ln(I) if all I>0, else I itself.
+// Local-linear (not plain Gaussian average) avoids the bias at the ends of the data and on
+// power-law slopes. width is the Gaussian sigma in ln(Q); width<=0 returns an unsmoothed copy.
+// useMT=1 threads the per-point calculation (main thread only); use 0 inside worker threads,
+// nested MultiThread inside a thread is legal but slow (Igor manual, Advanced Topics).
+ThreadSafe static Function/WAVE IN3_Abel_SmoothLocalLinear(WAVE qv, WAVE Iv, variable width, variable useMT)
+
+	Duplicate/FREE/D Iv, out
+	if(width <= 0)
+		return out
+	endif
+	variable n = numpnts(qv)
+	variable useLog = (WaveMin(Iv) > 0)
+	Make/FREE/D/N=(n) lq = ln(qv[p]), wY
+	if(useLog)
+		wY = ln(Iv[p])
+	else
+		wY = Iv[p]
+	endif
+	if(useMT)
+		MultiThread out = IN3_Abel_SmoothPoint(lq, wY, p, width)
+	else
+		out = IN3_Abel_SmoothPoint(lq, wY, p, width)
+	endif
+	if(useLog)
+		out = exp(out[p])
+	endif
+	return out
+End
+
+//*************************************************************************
+// One point of the local-linear smoother. Only points within +/-5 sigma contribute
+// (weights beyond are < 4e-6 of the peak), which makes the smoother ~O(n) instead of O(n^2).
+ThreadSafe static Function IN3_Abel_SmoothPoint(WAVE lq, WAVE wY, variable i, variable width)
+
+	variable n = numpnts(lq)
+	variable lo = BinarySearch(lq, lq[i] - 5*width)
+	variable hi = BinarySearch(lq, lq[i] + 5*width)
+	lo = (lo < 0) ? 0 : lo							//-1: below first point
+	hi = (hi == -2) ? n-1 : min(hi+1, n-1)			//-2: beyond last point
+	lo = min(lo, max(i-1, 0))						//always include the neighbours
+	hi = max(hi, min(i+1, n-1))
+	variable j, dx, g, S0 = 0, S1 = 0, S2 = 0, Ty0 = 0, Ty1 = 0
+	for(j = lo; j <= hi; j += 1)
+		dx = lq[j] - lq[i]
+		g = exp(-0.5*(dx/width)^2)
+		S0 += g
+		S1 += g*dx
+		S2 += g*dx^2
+		Ty0 += g*wY[j]
+		Ty1 += g*dx*wY[j]
+	endfor
+	variable det = S0*S2 - S1^2
+	if(det <= 1e-10*S0^2*width^2)		//window narrower than point spacing: no slope information
+		return Ty0/S0
+	endif
+	return (S2*Ty0 - S1*Ty1)/det
+End
+
+//*************************************************************************
+// reduced chi^2 of smoothed vs measured over the measured points only
+static Function IN3_Abel_ReducedChi2(WAVE smInt, WAVE extInt, WAVE errW, variable nOrig)
+	Make/FREE/D/N=(nOrig) chi = ((smInt[p]-extInt[p])/errW[p])^2
+	return sum(chi)/nOrig
+End
+
+//*************************************************************************
+// Largest smoothing width with reduced chi^2 <= 1 (paper, Sec. 3.2 step 4), bisection in ln(width).
+static Function IN3_Abel_FindSmoothWidth(WAVE extQ, WAVE extInt, WAVE errW, variable nOrig)
+
+	variable lo = ln(kAbelSmoothMinW), hi = ln(kAbelSmoothMaxW), mid, it, chi2
+	WAVE smLo = IN3_Abel_SmoothLocalLinear(extQ, extInt, exp(lo), 1)
+	if(IN3_Abel_ReducedChi2(smLo, extInt, errW, nOrig) > 1)
+		print "IN3_Abel: chi^2>1 even for minimal smoothing (errors underestimated?), using minimal width"
+		return exp(lo)
+	endif
+	WAVE smHi = IN3_Abel_SmoothLocalLinear(extQ, extInt, exp(hi), 1)
+	if(IN3_Abel_ReducedChi2(smHi, extInt, errW, nOrig) <= 1)
+		print "IN3_Abel: chi^2<=1 even for maximal smoothing (errors overestimated?), using maximal width"
+		return exp(hi)
+	endif
+	for(it = 0; it < 12; it += 1)
+		mid = (lo+hi)/2
+		WAVE smMid = IN3_Abel_SmoothLocalLinear(extQ, extInt, exp(mid), 1)
+		chi2 = IN3_Abel_ReducedChi2(smMid, extInt, errW, nOrig)
+		if(chi2 > 1)
+			hi = mid
+		else
+			lo = mid
+		endif
+	endfor
+	return exp(lo)
+End
+
+//*************************************************************************
+// Monte Carlo uncertainty: add gnoise(SMR_Error) to measured points (extension kept fixed),
+// smooth with the same width, invert, standard deviation over realizations.
+// Realizations run in parallel, one per thread (MultiThread over a wave-reference wave, the
+// "Wave Reference MultiThread Example" pattern of the Igor manual). All noise is generated
+// here in the main thread so the threads never touch the random number generator: results do
+// not depend on per-thread RNG seeding and are reproducible after SetRandomSeed.
+static Function IN3_Abel_MonteCarloErrors(WAVE extQ, WAVE extInt, WAVE errW, variable sl, variable nOrig, variable width, variable numMC, WAVE dsmErr)
+
+	variable k
+	Make/FREE/D/N=(nOrig, numMC) noiseMat = gnoise(errW[p])
+	Make/FREE/WAVE/N=(numMC) mcRuns
+	MultiThread mcRuns = IN3_Abel_OneMCRun(extQ, extInt, noiseMat, p, sl, nOrig, width)
+
+	//collect into 2D wave (nOrig x numMC), one column per realization
+	Make/FREE/D/N=(nOrig, numMC) mcAll
+	for(k = 0; k < numMC; k += 1)
+		WAVE oneRun = mcRuns[k]
+		mcAll[][k] = oneRun[p]
+	endfor
+	//two-pass mean and sample standard deviation along each row
+	MatrixOP/FREE mcMean = sumRows(mcAll)/numCols(mcAll)
+	Make/FREE/D/N=(nOrig, numMC) mcDev2 = (mcAll[p][q] - mcMean[p])^2
+	MatrixOP/FREE mcSum2 = sumRows(mcDev2)
+	dsmErr = sqrt(mcSum2[p]/(numMC-1))
+	return 0
+End
+
+//*************************************************************************
+// One Monte Carlo realization; runs in its own thread. Must not modify any input wave.
+ThreadSafe static Function/WAVE IN3_Abel_OneMCRun(WAVE extQ, WAVE extInt, WAVE noiseMat, variable col, variable sl, variable nOrig, variable width)
+
+	Duplicate/FREE/D extInt, noisy
+	noisy[0, nOrig-1] = extInt[p] + noiseMat[p][col]
+	WAVE smK = IN3_Abel_SmoothLocalLinear(extQ, noisy, width, 0)
+	Make/FREE/D/N=(numpnts(extQ)) dsmK
+	IN3_Abel_AbelInvert(extQ, smK, sl, nOrig, dsmK)
+	Redimension/N=(nOrig) dsmK			//own free wave, safe to resize
+	return dsmK
+End
+
+//*************************************************************************
+// copy of the non-desmearing branches of IN3_DesmearData (graph and wave cleanup)
+static Function IN3_Abel_NoDesmearCleanup(variable is2DCollimated)
+
+	DoWindow RcurvePlotGraph
+	variable graphExists = V_Flag
+	if(is2DCollimated)		//2DUSAXS, keep desmeared data, remove slit smeared data if present
+		if(graphExists)
+			WAVE/Z SMR_Int = root:Packages:Indra3:SMR_Int
+			if(WaveExists(SMR_Int))
+				CheckDisplayed/W=RcurvePlotGraph SMR_Int
+				if(V_Flag)
+					RemoveFromGraph/W=RcurvePlotGraph/Z SMR_Int
+					Label/W=RcurvePlotGraph right "\\K(0,0,0)DSM Intensity"
+					DoUpdate/W=RcurvePlotGraph
+				endif
+			endif
+		endif
+		return 0
+	endif
+	WAVE/Z DSM_Int = root:Packages:Indra3:DSM_Int
+	if(graphExists && WaveExists(DSM_Int))
+		CheckDisplayed/W=RcurvePlotGraph DSM_Int
+		if(V_Flag)
+			RemoveFromGraph/W=RcurvePlotGraph/Z DSM_Int, fit_ExtrapIntWave, DesmNormalizedError
+			Label/W=RcurvePlotGraph right "\\K(0,0,0)SMR Intensity"
+			DoUpdate/W=RcurvePlotGraph
+		endif
+	endif
+	WAVE/Z DSM_Error = root:Packages:Indra3:DSM_Error
+	WAVE/Z DSM_Qvec = root:Packages:Indra3:DSM_Qvec
+	WAVE/Z DSM_dQ = root:Packages:Indra3:DSM_dQ
+	WAVE/Z fit_ExtrapIntwave = root:Packages:Indra3:fit_ExtrapIntwave
+	WAVE/Z DesmNormalizedError = root:Packages:Indra3:DesmNormalizedError
+	KillWaves/Z DSM_Int, DSM_Qvec, DSM_Error, DSM_dQ, fit_ExtrapIntwave, DesmNormalizedError
+	return 0
+End
+
+//*************************************************************************
+static Function IN3_Abel_InitGlobals()
+	NVAR/Z autoS = root:Packages:Indra3:DesmearAbelAutoSmooth
+	if(!NVAR_Exists(autoS))
+		Variable/G root:Packages:Indra3:DesmearAbelAutoSmooth = 1
+	endif
+	NVAR/Z smW = root:Packages:Indra3:DesmearAbelSmoothW
+	if(!NVAR_Exists(smW))
+		Variable/G root:Packages:Indra3:DesmearAbelSmoothW = 0.05
+	endif
+	NVAR/Z nMC = root:Packages:Indra3:DesmearAbelNumMC
+	if(!NVAR_Exists(nMC))
+		Variable/G root:Packages:Indra3:DesmearAbelNumMC = 20
+	endif
+End
+
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
+
+Function IN3_DesmearDataLake()
 	
 	DFREF saveDF = GetDataFolderDFR()
 	SetDataFolder root:Packages:Indra3:
