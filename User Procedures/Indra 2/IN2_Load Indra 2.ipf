@@ -2,7 +2,7 @@
 #pragma rtFunctionErrors = 1
 #pragma rtGlobals        = 3    // Use modern global access method.
 #pragma IgorVersion      = 9.05 //requires Igor version 9 or higher
-#pragma version          = 2.05
+#pragma version          = 2.06
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
@@ -10,6 +10,7 @@
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//2.06 October 2026 release, updated #include version requirements to current versions.
 //2.05 force Irena and Nika to be included, add new data reduction at the top 
 //2.04 July 2025, cleanup code.
 //2.03  Add IN4 Python/Igor new tools.
@@ -52,16 +53,16 @@
 
 //this is in Indra2 folder
 #include "IN2_ConversionProcedure", version >= 1.10
-#include "IN2_GeneralProcedures", version >= 2.34
+#include "IN2_GeneralProcedures", version >= 2.36
 #include "IN2_USAXS", version >= 2.06
 #include "IN2_XtalCalculations", version >= 1.1
 #include "IN3_CalcScattering", version >= 1.2
 #include "IN3_Calculations", version >= 1.43
 #include "IN3_FlyScan", version >= 1.11
-#include "IN3_Main", version >= 2.03
+#include "IN3_Main", version >= 2.05
 #include "IN3_Rwave", version >= 1.17
 #include "IN3_SupportFnct", version >= 1.15
-#include "IN3_SamplePlate", version >= 1.12
+#include "IN3_SamplePlate", version >= 1.13
 #include "IN3_BlueSkyReader", version >= 1.09
 
 #include "spec", version >= 2.21
@@ -76,6 +77,6 @@
 #include "IN4_SupportCode"
 #include "IN4_Calculations"
 
-#include "IR2_PanelCntrlProcs", version >= 1.68
+#include "IR2_PanelCntrlProcs", version >= 1.69
 #include "IRNI_NexusSupport", version >= 1.20
 

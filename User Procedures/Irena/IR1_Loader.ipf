@@ -1,6 +1,6 @@
 #pragma rtGlobals=3 // Use strict wave reference mode and runtime bounds checking
 #pragma IgorVersion=9.04 //requires Igor version 8.03 or higher
-#pragma version=2.76
+#pragma version=2.77
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
 
+//2.77  October 2026 release, updated #include version requirements to current versions.
 //2.76  Updated all #include version requirements to current versions after AI code review.
 //			Added HDF5Browser
 //2.75  remove IR1I_Import data, repalce with IR3I_IMportData
@@ -59,41 +60,41 @@
 #include "IR1_Desmearing", version >= 2.14
 #include "IR1_EvaluationGraph", version >= 2.12
 #include "IR1_FormFactors", version >= 2.31
-#include "IR1_Fractals", version >= 2.14
+#include "IR1_Fractals", version >= 2.15
 //#include "IR1_ImportData", version >= 2.43
-#include "IR1_Main", version >= 2.75
+#include "IR1_Main", version >= 2.76
 #include "IR1_PlottingToolI", version >= 2.35
 #include "IR1_PlottingToolI2", version >= 2.25
 #include "IR1_ScattContrast", version >= 2.29
 #include "IR1_Sizes", version >= 2.32
-#include "IR1_UnifiedFitFncts", version >= 2.37
+#include "IR1_UnifiedFitFncts", version >= 2.38
 #include "IR1_UnifiedFitPanel", version >= 2.30
-#include "IR2_AnalyticalModels", version >= 4.19
+#include "IR2_AnalyticalModels", version >= 4.20
 #include "IR2_DataExport", version >= 1.21
 #include "IR2_DataMiner", version >= 1.20
-#include "IR2_ModelingMain", version >= 1.36
-#include "IR2_ModelingSupport", version >= 1.56
+#include "IR2_ModelingMain", version >= 1.38
+#include "IR2_ModelingSupport", version >= 1.58
 #include "IR2_PanelCntrlProcs", version >= 1.69
 #include "IR2_PlotingToolII", version >= 1.11
-#include "IR2_Reflectivity", version >= 1.24
+#include "IR2_Reflectivity", version >= 1.26
 #include "IR2_ScriptingTool", version >= 1.32
-#include "IR2_SmallAngleDiffraction", version >= 1.22
+#include "IR2_SmallAngleDiffraction", version >= 1.23
 #include "IR2_StructureFactors", version >= 1.10
 #include "IR2_PDDF", version >= 1.17
 #include "IR3_3DModels", version >= 1.04
 #include "IR3_3DSupportFunctions", version >= 1.01
-#include "IR3_3DTwoPhaseSolid", version >= 1.03
+#include "IR3_3DTwoPhaseSolid", version >= 1.04
 #include "IR3_AnalyzeResults2", version >= 0.3
 #include "IR3_Anisotropy", version >= 1.01
-#include "IR3_EllipsoidCylinderMain", version >= 0.3
-#include "IR3_EllipsoidCylinderSupport", version >= 0.3
-#include "IR3_GuinierPorodModel", version >= 1.13
+#include "IR3_EllipsoidCylinderMain", version >= 0.51
+#include "IR3_EllipsoidCylinderSupport", version >= 0.4
+#include "IR3_GuinierPorodModel", version >= 1.14
 #include "IR3_MergingData", version >= 1.24
 #include "IR3_MultiDataPlot", version >= 1.07
-#include "IR3_SimpleFits", version >= 1.18
+#include "IR3_SimpleFits", version >= 1.20
 #include "IR3_WAXSDiffraction", version >= 1.17
 //new tools 2026-02
-#include "IR3_ImportData", version >= 1.01
+#include "IR3_ImportData", version >= 1.04
 #include "IR3_HDF5Browser", version>=1.04
 
 
@@ -103,13 +104,13 @@
 
 //development versions
 #include "IR3_DataManipulationIII", version >= 1.05
-#include "IR3_SystemSpecificModels", version >= 1.03
+#include "IR3_SystemSpecificModels", version >= 1.05
 
 //these are in different folders...
 #include "cansasXML_GUI", version >= 1.04
 #include "cansasXML", version >= 1.12
 
-#include "IN2_GeneralProcedures", version >= 2.34
+#include "IN2_GeneralProcedures", version >= 2.36
 
 #include "IRNI_NexusSupport", version >= 1.20
 

@@ -1,7 +1,7 @@
 #pragma rtGlobals=3 // Use modern global access method.
 
 #pragma IgorVersion=9.04 //requires Igor version 8.04 or higher
-#pragma version=1.87
+#pragma version=1.88
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
@@ -10,6 +10,7 @@
 //*************************************************************************/
 
 //This macro loads the Nika 1 set of Igor Pro macros for evaluation of 2D images in small angle scattering
+//1.88		October 2026 release, updated #include version requirements to current versions.
 //1.87		Updated all #include version requirements to current versions after AI code review.
 //1.86		Nika modification for 12IDE USAXS/SAXS/WAXS instrument, Bug release
 //1.86		Beta release, Nika modification for 12IDE USAXS/SAXS/WAXS instrument.
@@ -50,10 +51,10 @@
 #include "NI1_pix2Dsensitivity", version >= 1.08
 #include "NI1_SaveRecallConfig", version >= 1.04
 #include "NI1_SquareMatrix", version >= 1.06
-#include "NI1_USAXSSupport", version >= 1.58
+#include "NI1_USAXSSupport", version >= 1.59
 #include "NI1_WinView", version >= 1.87
 
-#include "IN2_GeneralProcedures", version >= 2.34
+#include "IN2_GeneralProcedures", version >= 2.36
 
 #include "IRNI_NexusSupport", version >= 1.20
 
