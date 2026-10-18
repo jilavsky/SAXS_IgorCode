@@ -5,7 +5,7 @@
 
 //DO NOT renumber Main files every time, these are main release numbers...
 //define manual date and release verison 
-constant CurrentIrenaVersionNumber = 2.76		//change version of Boot Irena1 modeling.ipf to get proper check version. 
+constant CurrentIrenaVersionNumber = 2.77		//change version of Boot Irena1 modeling.ipf to get proper check version. 
 
 //*************************************************************************
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory

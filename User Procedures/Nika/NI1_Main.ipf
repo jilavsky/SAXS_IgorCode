@@ -5,7 +5,7 @@
 
 //DO NOT renumber Main files every time, these are main release numbers...
 
-Constant CurrentNikaVersionNumber        = 1.87
+Constant CurrentNikaVersionNumber        = 1.88
 Constant FixBackgroundOversubScale       = 1.05 //this is used to fix oversubtracted background. Adds FixBackgroundOversubScale*abs(V_min) to all intensity value.
 Constant NikaNumberOfQCirclesDisp        = 15
 Constant NikaLengthOfPathForPanelDisplay = 100

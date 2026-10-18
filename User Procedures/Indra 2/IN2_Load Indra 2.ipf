@@ -11,6 +11,7 @@
 //*************************************************************************/
 
 //2.06 October 2026 release, updated #include version requirements to current versions.
+//			Added version requirements for IN4_MainCode, IN4_SupportCode, IN4_Calculations.
 //2.05 force Irena and Nika to be included, add new data reduction at the top 
 //2.04 July 2025, cleanup code.
 //2.03  Add IN4 Python/Igor new tools.
@@ -73,9 +74,9 @@
 //#include "IN2_PlottingTools", version >= 1.15
 //#include "IN2_NotebookLogging", version >= 1.10
 
-#include "IN4_MainCode"
-#include "IN4_SupportCode"
-#include "IN4_Calculations"
+#include "IN4_MainCode", version >= 0.9
+#include "IN4_SupportCode", version >= 1.02
+#include "IN4_Calculations", version >= 1.1
 
 #include "IR2_PanelCntrlProcs", version >= 1.69
 #include "IRNI_NexusSupport", version >= 1.20

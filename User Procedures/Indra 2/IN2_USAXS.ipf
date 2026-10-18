@@ -3,7 +3,7 @@
 #pragma IgorVersion=9.05   //requires Igor version 9.05 or higher
 #pragma version = 2.06
 
-constant CurrentIndraVersionNumber = 2.05
+constant CurrentIndraVersionNumber = 2.06
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
