@@ -47,3 +47,11 @@ USE in Irena :
 * Parameter 2 is the Kuhn length
 
 **Other parameters are not being used.** 
+
+
+### FLB_Torus_FF
+//	Reference
+//	T. Kawaguchi, "Radii of gyration and scattering functions of a torus and its
+//	derivatives", Journal of Applied Crystallography (2001) 34, 580-584.
+//	DOI: https://doi.org/10.1107/S0021889801009517
+* More description is in teh top of the ipf file. It is complex form factor. Note: this code has not been verified by me, it has been written by Claude for user based on the reference.  
