@@ -1,0 +1,132 @@
+#  ionChamberFlux.db
+#
+#  Incident X-ray flux (photons/s) from an ion chamber read out as a mean current
+#  in pA.  Nitrogen fill, 60 mm active length, 17.5 mm upstream dead length,
+#  0.001 inch Kapton entrance window.
+#
+#  Result is the flux INCIDENT ON THE CHAMBER (the dead length and entrance window
+#  are divided back out), which is the number the Irena "Ion Chamber" panel reports
+#  as "photons before ion chamber".
+#
+#  Provenance
+#  ----------
+#  Ported from the Irena/Indra Igor Pro package, User Procedures/Indra 2/IonChamber3.3.ipf
+#  (original ion chamber code by Jon Tischler, ORNL).  For a single fill gas the work
+#  function cancels out of the Irena expression, leaving
+#
+#      flux = 226566.8 * I[pA] * corrN2 * corrKapton / ( E[keV] * absorbedFraction )
+#
+#      226566.8        = W(N2) / (e * 1000) * 1e-12 = 36.3 / (1.602176462e-19 * 1000) * 1e-12
+#      absorbedFraction= 1 - exp(-F * 6 cm * mu_photoelectric(N2,E))   [Irena polynomial, exact]
+#      corrN2          = exp(F * 1.75 cm * mu_total(N2,E))            [cubic-in-lnE refit]
+#      corrKapton      = exp(0.00254 cm * mu_total(Kapton,E))         [cubic-in-lnE refit]
+#
+#  The two correction terms each need several absorption polynomials in the original
+#  code (N2, and C/H/O/N for Kapton), so their exponents were refit as a single cubic
+#  in ln(E) over 5-30 keV.  Agreement with the Igor calculation:
+#
+#      worst case 5-30 keV (gas factor 0.9 to 1.5) ....... 0.19 %  (at the 5 keV edge)
+#      8-30 keV ......................................... better than 0.01 %
+#
+#  Outside 5-30 keV the correction refits degrade; do not use below 4 or above 32 keV
+#  without new coefficients.
+#
+#  Gas factor F ($(GASF))
+#  ----------------------
+#  F = P[atm] * 273.15 / T[K].  F = 1 reproduces the Igor calculation EXACTLY, because
+#  Irena uses rho(N2) = 0.00125 g/cm3, which is the 0 degC density.  For a chamber at
+#  1 atm and 20 degC the physically correct value is F = 0.93178, which raises the
+#  reported flux by about 7 %.  Leave F = 1 if the EPICS number must agree with the
+#  Igor panel; set it correctly if you want the better physics.  Decide once and
+#  write it down -- this is the largest systematic in the whole calculation.
+#
+#  Macros
+#  ------
+#    P         IOC prefix, e.g. "9idcUSX:"                              (required)
+#    Q         component name                            (default "I0Flux")
+#    ELINK     link to mono energy in keV, e.g. "9idcUSX:mono:keV CP MS" (required)
+#    LLINK     link to mono wavelength in Angstrom            (default: unused)
+#    USELAM    0 = use ELINK, 1 = use LLINK                        (default 0)
+#    ILINK     link to ion chamber current in pA, CP MS            (required)
+#    DARK      dark current in pA, constant                        (default 0)
+#    DARKLINK  link to a dark current PV, overrides DARK      (default: unused)
+#    GASF      gas factor P[atm]*273.15/T[K]                        (default 1)
+#    FSCAN     scan period of the flux record             (default ".5 second")
+#
+#  Example
+#  -------
+#    dbLoadRecords("$(CALC)/db/ionChamberFlux.db",
+#       "P=9idcUSX:,Q=I0Flux,ELINK=9idcUSX:mono:keV CP MS,
+#        ILINK=9idcUSX:I0:current_pA CP MS,GASF=1,FSCAN=.5 second")
+#
+#  Processing
+#  ----------
+#  Energy, AbsFrac, CorrN2 and CorrKap are Passive and are driven by CP input links,
+#  so they update within milliseconds of an energy change.  Flux is periodic and
+#  samples them, which avoids a transient where Flux fires on a new current while the
+#  energy-dependent terms are still stale.  For event-driven operation instead, set
+#  FSCAN=Passive and keep CP on ILINK.
+#
+#  Test vectors (GASF=1, DARK=0) -- compare against the Irena panel with
+#  gas1=Nitrogen frac=1, aln=60, dln1=17.5, Kapton1=0.001, reading the TOP result:
+#
+#     E keV    I pA     AbsFrac       CorrN2    CorrKap     Flux ph/s
+#       8.0    1000  5.010009e-02  1.016064  1.021359  5.866342e+08
+#       9.0   10000  3.450104e-02  1.011131  1.014852  7.487417e+09
+#      12.0    5000  1.364282e-02  1.004697  1.006378  6.996437e+09
+#      16.8   25000  4.525713e-03  1.001910  1.002691  7.484037e+10
+#      21.0   10000  2.164164e-03  1.001163  1.001695  4.999505e+10
+#      24.0   50000  1.390054e-03  1.000908  1.001355  3.403343e+11
+#
+
+record(calcout, "$(P)$(Q):Energy") {
+    field(DESC, "X-ray energy")
+    field(SCAN, "Passive")
+    field(INPA, "$(ELINK)")
+    field(INPB, "$(LLINK=)")
+    field(C,    "$(USELAM=0)")
+    field(CALC, "C&&B>0?12.39842435/B:A")
+    field(EGU,  "keV")
+    field(PREC, "5")
+}
+
+record(calcout, "$(P)$(Q):AbsFrac") {
+    field(DESC, "N2 fraction absorbed in 60mm")
+    field(SCAN, "Passive")
+    field(INPA, "$(P)$(Q):Energy CP MS")
+    field(F,    "$(GASF=1)")
+    field(CALC, "1-EXP(-F*EXP(3.236913+LN(A)*(-2.654+LN(A)*(-0.200445+LN(A)*0.0200765))))")
+    field(PREC, "6")
+}
+
+record(calcout, "$(P)$(Q):CorrN2") {
+    field(DESC, "17.5mm N2 dead length factor")
+    field(SCAN, "Passive")
+    field(INPA, "$(P)$(Q):Energy CP MS")
+    field(F,    "$(GASF=1)")
+    field(CALC, "EXP(F*EXP(-0.384525+LN(A)*(0.967290+LN(A)*(-2.040742+LN(A)*0.340121))))")
+    field(PREC, "6")
+}
+
+record(calcout, "$(P)$(Q):CorrKap") {
+    field(DESC, "0.001in Kapton window factor")
+    field(SCAN, "Passive")
+    field(INPA, "$(P)$(Q):Energy CP MS")
+    field(CALC, "EXP(EXP(0.124906+LN(A)*(0.729615+LN(A)*(-1.983058+LN(A)*0.342089))))")
+    field(PREC, "6")
+}
+
+record(calcout, "$(P)$(Q):Flux") {
+    field(DESC, "I0 incident flux")
+    field(SCAN, "$(FSCAN=.5 second)")
+    field(INPA, "$(ILINK)")
+    field(INPB, "$(P)$(Q):Energy MS")
+    field(INPC, "$(P)$(Q):AbsFrac MS")
+    field(INPD, "$(P)$(Q):CorrN2 MS")
+    field(INPE, "$(P)$(Q):CorrKap MS")
+    field(INPF, "$(DARKLINK=)")
+    field(F,    "$(DARK=0)")
+    field(CALC, "226566.8*(A-F)*D*E/(B*C)")
+    field(EGU,  "ph/s")
+    field(PREC, "4")
+}

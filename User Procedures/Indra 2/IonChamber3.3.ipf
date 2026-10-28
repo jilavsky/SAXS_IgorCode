@@ -1,5 +1,7 @@
+#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 3.3
+#pragma version = 3.4
+#pragma IgorVersion=9.04
 #pragma ModuleName=ionChamber
 
 // Note on usage:	Jon Tischler, ORNL
@@ -19,8 +21,22 @@
 //
 // Apr 30, 2014
 //	changed line terminations CR -> LF
+//
+// Oct 21, 2026		version 3.4		Jan Ilavsky
+//	The APS 12-ID/9-ID counting system now reports the ion chamber signal directly as a
+//	mean current in pA, instead of V-to-F pulses that had to be divided by the Keithley
+//	gain and the V-to-F constant.  Added a second panel, "Ion Chamber (current, pA)",
+//	which takes that current (and an optional dark/background current) as its input.
+//	Physics is unchanged:  counts/cntTime/(VtoF*VperA) IS the ion chamber current in
+//	amperes, so the only substitution is  amps = (I_pA - I_dark_pA)*1e-12.
+//	The gas response (photo-absorption cross sections and work functions) was factored
+//	out of photon() into ionChamberGasResponse() so both input paths share it; photon()
+//	itself is numerically untouched.  The old counts/gain panel is retained unchanged so
+//	results can be cross-checked during the changeover.
 
 Menu "Analysis"
+	"Ion Chamber (current, pA)", BuildIonChamberCurrentPanel()
+	help = {"calculate intensities from the directly measured ion chamber current in pA"}
        "Ion Chamber",BuildIonChamberPanel()
        help = {"calculate intensities using ion chamber data using new panel interface"}
 	"Ion Chamber_old", IonChamberAsk()
@@ -35,6 +51,18 @@ Proc BuildIonChamberPanel()
 	             DoWindow/F IonChamberPanel
 	  endif           	
 end
+
+//	Entry point for the current (pA) based panel.  Same calculation as IonChamberPanel,
+//	but the input is the mean ion chamber current reported by the counting system.
+Function BuildIonChamberCurrentPanel()
+	DoWindow IonChamberCurrentPanel
+	if(V_Flag)
+		DoWindow/F IonChamberCurrentPanel
+	else
+		ionChamberInitPackage()
+		IonChamberCurrentPanelFnct()
+	endif
+End
 
 //	computes flux that would be measured at the detector thru an ion chamber
 //
@@ -176,6 +204,28 @@ Function Io_ionChamber(counts,VperA,energy,idList,Kapton1,aln,dln1)	// calculate
 End
 
 
+//	Same as Io_ionChamber(), but the ion chamber signal is supplied as a directly measured
+//	current (amperes) rather than as V-to-F counts plus a Keithley gain.  The two routines
+//	are equivalent for  amps = counts/cntTime/(VtoF*VperA).
+Function Io_ionChamberCurrent(amps,energy,idList,Kapton1,aln,dln1)	// calculates intensity before an ion chamber
+	Variable amps			// measured ion chamber current (A), i.e. (pA reading)*1e-12
+	Variable energy			// photon energy (KeV) (=9)
+	String idList			// gas mix as "id:frac" pairs, id 1=He, 2=N, 3=Ar, 4=Air, 7=CO2, (1atm air = "4:1")
+	Variable Kapton1		// thickness of kapton window before active region (=0.001)
+	Variable aln				// length of active region of ion chamber (mm) (=60.)
+	Variable dln1			// length of upstream dead region of ion chamber (mm) (=17.5)
+
+	Variable incidentFlux		// result, photons/sec
+	Variable mu					// mu of fill gas mix (1/cm)
+
+	incidentFlux = photonFromCurrent(amps,aln/10,idList,energy)
+	mu = muOfList(idList,energy)							// mu of fill gas (1/cm)
+	incidentFlux *= exp(mu*dln1/10)						// absorption of dead length at front
+	incidentFlux *= exp(absorb(6,energy)*Kapton1*2.54)	// absorption of Kapton
+	return incidentFlux
+End
+
+
 
 Function IonChamber_detector(flux,energy,idList,Kapton1,ionLength,Kapton2,dHe,dAir,dBe,Kapton3,dEff)
 	Variable flux				// incident flux (photons/sec) before ion chamber
@@ -220,12 +270,12 @@ End
 
 
 
-// calculates the number of photons incident from the measured current
-Function photon(counts,cntTime,VtoF,VperA,activeL,idList,energy)
-	Variable counts			// the number of pulses output by the VtoF converter
-	Variable cntTime		// count time in sec
-	Variable VtoF			// pulses/sec/volt output by the V-F converter
-	Variable VperA			// current amplifier gain in volts/amp
+//	Response of the ion chamber fill gas, shared by photon() and photonFromCurrent().
+//	Returns  (1 - exp(-photoSum*activeL)) * work_photo / photoSum   in units of 1/eV,
+//	i.e. (fraction of beam absorbed in the active length) / (effective work function).
+//	This is the "part2" of the original photon() calculation; it was factored out so that
+//	the counts-based and current-based input paths share exactly the same gas physics.
+Static Function ionChamberGasResponse(activeL,idList,energy)
 	Variable activeL			// active length of the ion chamber (cm)
 	String idList			// gas mix as "id:frac" pairs, id 1=He, 2=N, 3=Ar, 4=Air, 7=CO2, (1atm air = "4:1")
 	Variable energy			// enegy  (KeV)
@@ -259,7 +309,6 @@ Function photon(counts,cntTime,VtoF,VperA,activeL,idList,energy)
 
 	Variable E1,E2,E3
 	Variable total
-	Variable part1,part2
 
 	E1 = ln(energy)
 	E2 = E1*E1
@@ -331,10 +380,44 @@ Function photon(counts,cntTime,VtoF,VperA,activeL,idList,energy)
 		i += 1
 	while(1)
 
+	KillWaves/Z aHe, aN aAr1, aAr2, aO
+	return((1 - exp(-photoSum*activeL)) * work_photo / photoSum)
+End
+
+
+// calculates the number of photons incident from the measured current
+Function photon(counts,cntTime,VtoF,VperA,activeL,idList,energy)
+	Variable counts			// the number of pulses output by the VtoF converter
+	Variable cntTime		// count time in sec
+	Variable VtoF			// pulses/sec/volt output by the V-F converter
+	Variable VperA			// current amplifier gain in volts/amp
+	Variable activeL			// active length of the ion chamber (cm)
+	String idList			// gas mix as "id:frac" pairs, id 1=He, 2=N, 3=Ar, 4=Air, 7=CO2, (1atm air = "4:1")
+	Variable energy			// enegy  (KeV)
+
+	Variable part1,part2
+
 //	Parts 1 and 2 calculate the flux in photons/sec
 	part1 = counts/cntTime/(1.602176462e-19*VtoF*VperA*energy*1000.)
-	part2 = (1 - exp(-photoSum*activeL)) * work_photo / photoSum
-	KillWaves/Z aHe, aN aAr1, aAr2, aO
+	part2 = ionChamberGasResponse(activeL,idList,energy)
+	return(part1/part2)
+End
+
+
+//	calculates the number of photons incident from a directly measured ion chamber current.
+//	Equivalent to photon() with  amps = counts/cntTime/(VtoF*VperA);  counts/cntTime/(VtoF*VperA)
+//	IS the ion chamber current in amperes, so part1 is simply I/(e*E) in both routines.
+Function photonFromCurrent(amps,activeL,idList,energy)
+	Variable amps			// measured ion chamber current (A), i.e. (pA reading)*1e-12
+	Variable activeL			// active length of the ion chamber (cm)
+	String idList			// gas mix as "id:frac" pairs, id 1=He, 2=N, 3=Ar, 4=Air, 7=CO2, (1atm air = "4:1")
+	Variable energy			// enegy  (KeV)
+
+	Variable part1,part2
+
+//	Parts 1 and 2 calculate the flux in photons/sec
+	part1 = amps/(1.602176462e-19*energy*1000.)
+	part2 = ionChamberGasResponse(activeL,idList,energy)
 	return(part1/part2)
 End
 
@@ -781,7 +864,20 @@ Function ionChamberInitPackage()
        if(exists("root:Packages:ionChamber:PanelGlobals:gRadioVal")!=2)
 		Variable/G root:Packages:ionChamber:PanelGlobals:gRadioVal=1	// Energy or Wavelengh Panel radio button value (1 for energy)
        endif
-       
+
+	//	globals used only by the current (pA) based panel, IonChamberCurrentPanel.
+	//	Everything else (energy, fill gas, chamber geometry, path after the chamber,
+	//	detector efficiency and the two results) is shared with IonChamberPanel.
+       if(exists("root:Packages:ionChamber:PanelGlobals:gCurrentPA")!=2)
+		Variable/G root:Packages:ionChamber:PanelGlobals:gCurrentPA=1.0e+4	// mean ion chamber current (pA)
+       endif
+       if(exists("root:Packages:ionChamber:PanelGlobals:gDarkPA")!=2)
+		Variable/G root:Packages:ionChamber:PanelGlobals:gDarkPA=0		// dark / background current (pA), subtracted from gCurrentPA
+       endif
+       if(exists("root:Packages:ionChamber:PanelGlobals:gRadioValI")!=2)
+		Variable/G root:Packages:ionChamber:PanelGlobals:gRadioValI=1	// energy(1) or wavelength(2) for the current panel
+       endif
+
 End
 
 
@@ -830,6 +926,49 @@ Static Function xxx1(counts,VperA,energy,Kapton1,Kapton2,aln,dln1,dln2,dHe,dAir,
 //    return flux
 end
 
+
+//	Same as xxx1() above, but driven by the directly measured ion chamber current (pA)
+//	instead of V-to-F counts and a Keithley gain.  Writes gflux and gdetector.
+Static Function ionChamberCalcFromCurrent(currentPA,darkPA,energy,Kapton1,Kapton2,aln,dln1,dln2,dHe,dAir,dBe,dEff,id1,id2,id3,id4,frac1,frac2,frac3,frac4)
+	Variable currentPA		// mean ion chamber current (pA)
+	Variable darkPA			// dark / background current (pA), subtracted from currentPA
+	Variable  energy			// photon energy (KeV) (=9)
+	Variable Kapton1		// thickness of kapton window before active region (=0.001)
+	Variable Kapton2		// thickness of Kapton window on rear of ion chamber
+	Variable aln				// length of active region of ion chamber (mm) (=60.)
+	Variable dln1			// length of upstream dead region of ion chamber (mm) (=17.5)
+	Variable dln2			// length of downstream dead region of ion chamber
+	Variable dHe			// He path after ion chamber (mm)
+	Variable dAir			// air path after ion chamber (mm)
+	Variable dBe				// thickness of all Be windows after the ion chamber (inches)
+	Variable dEff			// detector efficiency at this energy in range of [0,1] (if <0, then inches of Ar at 1atm)
+	Variable id1,id2,id3,id4
+	Variable frac1,frac2,frac3,frac4  // fraction of id1,id2, id3, and id4
+
+	Variable Kapton3=0		// thickness of Kapton in beam path after ion chamber (but not including rear window)
+	Variable netPA			// current attributable to the beam (pA)
+	String idList			// gas mix as "id:frac" pairs, id 1=He, 2=N, 3=Ar, 4=Air, 7=CO2, (1atm air = "4:1")
+
+	NVAR flux=root:Packages:ionChamber:PanelGlobals:gflux
+	NVAR detector=root:Packages:ionChamber:PanelGlobals:gdetector
+
+	netPA = currentPA - darkPA
+	if (!(netPA>0))			// also catches NaN
+		flux = 0
+		detector = 0
+		printf "Ion chamber current (%g pA) is not above the dark current (%g pA), nothing to calculate\r",currentPA,darkPA
+		return 0
+	endif
+
+	idList = ProcessGasMixtureInput(id1,frac1,id2,frac2,id3,frac3,id4,frac4)
+
+	flux = Io_ionChamberCurrent(netPA*1e-12,energy,idList,Kapton1,aln,dln1)	// calculates intensity before an ion chamber
+	detector = IonChamber_detector(flux,energy,idList,Kapton1,dln1+aln+dln2,Kapton2, dHe, dAir,  dBe,  Kapton3,  dEff )
+	printf "%g keV, %g pA net  %g photons before ion chamber --> %g photons in detector\r",energy,netPA,flux,detector
+	return detector
+end
+
+
 Function ButtonProc_CalculatePhotons(ctrlName) : ButtonControl
 	String ctrlName
 	
@@ -870,6 +1009,47 @@ Function ButtonProc_CalculatePhotons(ctrlName) : ButtonControl
 	
       xxx1(counts,VperA,energy1,Kapton1,Kapton2,aln,dln1,dln2,dHe,dAir,dBe,dEff,id1,id2,id3,id4,frac1,frac2,frac3,frac4)
 End
+
+
+//	"calculate" button of the current (pA) based panel.
+Function ButtonProc_CalculatePhotonsI(ctrlName) : ButtonControl
+	String ctrlName
+
+	NVAR currentPA=root:Packages:ionChamber:PanelGlobals:gCurrentPA	// mean ion chamber current (pA)
+	NVAR darkPA=root:Packages:ionChamber:PanelGlobals:gDarkPA		// dark / background current (pA)
+	NVAR  energy=root:Packages:ionChamber:PanelGlobals:genergy // photon energy (KeV) (=9)
+	NVAR Kapton1=root:Packages:ionChamber:PanelGlobals:gKapton1 // thickness of kapton window before active region (=0.001)
+	NVAR Kapton2=root:Packages:ionChamber:PanelGlobals:gKapton2  // thickness of Kapton window on rear of ion chamber
+	NVAR aln=root:Packages:ionChamber:PanelGlobals:galn // length of active region of ion chamber (mm) (=60.)
+	NVAR dln1=root:Packages:ionChamber:PanelGlobals:gdln1 // length of upstream dead region of ion chamber (mm) (=17.5)
+	NVAR dln2=root:Packages:ionChamber:PanelGlobals:gdln2  // length of downstream dead region of ion chamber
+	NVAR dHe=root:Packages:ionChamber:PanelGlobals:gdHe // He path after ion chamber (mm)
+	NVAR dAir=root:Packages:ionChamber:PanelGlobals:gdAir // air path after ion chamber (mm)
+	NVAR dBe=root:Packages:ionChamber:PanelGlobals:gdBe  // thickness of all Be windows after the ion chamber (inches)
+	NVAR dEff=root:Packages:ionChamber:PanelGlobals:gdEff   // detector efficiency at this energy in range of [0,1] (if <0, then inches of Ar at 1atm)
+
+	NVAR id1=root:Packages:ionChamber:PanelGlobals:gID1
+	NVAR id2=root:Packages:ionChamber:PanelGlobals:gID2
+	NVAR id3=root:Packages:ionChamber:PanelGlobals:gID3
+	NVAR id4=root:Packages:ionChamber:PanelGlobals:gID4
+
+	NVAR frac1=root:Packages:ionChamber:PanelGlobals:gfrac1
+	NVAR frac2=root:Packages:ionChamber:PanelGlobals:gfrac2
+	NVAR frac3=root:Packages:ionChamber:PanelGlobals:gfrac3
+	NVAR frac4=root:Packages:ionChamber:PanelGlobals:gfrac4
+
+	Variable energy1   //if wavelength panel radio button is selected instead of energy
+	Variable hc=12.39842435	// KeV-Angstroms
+	ControlInfo/W=IonChamberCurrentPanel check_wavelengthI
+	if (V_Value==1)
+		energy1=hc/energy
+	else
+		energy1=energy    //radio button is set to energy in (keV)
+	endif
+
+	ionChamberCalcFromCurrent(currentPA,darkPA,energy1,Kapton1,Kapton2,aln,dln1,dln2,dHe,dAir,dBe,dEff,id1,id2,id3,id4,frac1,frac2,frac3,frac4)
+End
+
 
 Function SetVarProc_Calculate(ctrlName,varNum,varStr,varName) : SetVariableControl
 	String ctrlName
@@ -1048,6 +1228,168 @@ Window IonChamberPanel() : Panel
 	SetVariable setvar_dEff,pos={242,515},size={77,15},title=" "
 	SetVariable setvar_dEff,limits={-inf,1,0.1},value= root:Packages:ionChamber:PanelGlobals:gdEff
 EndMacro
+
+
+//	Current (pA) based version of IonChamberPanel.  Identical layout and identical physics,
+//	except that the three electronics rows (counts / Keithley gain / V-to-F gain) are replaced
+//	by two rows:  the mean ion chamber current and an optional dark current, both in pA.
+//	One row is freed, so everything below the electronics block sits 28 px higher than in
+//	IonChamberPanel and the panel is 28 px shorter (633 instead of 661).
+//	All controls below the electronics block are bound to the SAME globals as IonChamberPanel,
+//	so chamber geometry, fill gas and detector settings carry over between the two panels.
+Function IonChamberCurrentPanelFnct()
+	PauseUpdate; Silent 1		// building window...
+
+	//	NVARs are needed because this is a Function, not a Macro:  under rtGlobals=1 the
+	//	PopupMenu mode= and CheckBox value= keywords take numeric expressions, which cannot
+	//	reference a global by data folder path.  (SetVariable value= takes a reference, so
+	//	full paths are fine there.)
+	NVAR gid1=root:Packages:ionChamber:PanelGlobals:gID1
+	NVAR gid2=root:Packages:ionChamber:PanelGlobals:gID2
+	NVAR gid3=root:Packages:ionChamber:PanelGlobals:gID3
+	NVAR gid4=root:Packages:ionChamber:PanelGlobals:gID4
+	NVAR gRadioValI=root:Packages:ionChamber:PanelGlobals:gRadioValI
+
+	NewPanel /K=1/W=(550,50,980,683) as "Ion Chamber Panel (current, pA)"
+	DoWindow/C IonChamberCurrentPanel
+
+	DrawText 31,29,"Ion chamber current (pA)"
+	DrawText 31,58,"Dark / background current (pA)"
+	SetDrawEnv fillpat= 0
+	DrawRect 65,107,380,243
+	DrawText 14,285,"Active length of ion chamber"
+	DrawText 10,310,"dead length at front of ion chamber "
+	DrawText 81,336,"before active region"
+	DrawText 10,362,"dead length at rear of ion chamber "
+	DrawText 79,389,"after active region"
+	DrawText 41,418,"path after ion chamber"
+	DrawText 41,448,"path after ion chamber "
+	DrawText 41,477,"after ion chamber "
+	SetDrawEnv fsize= 14,fstyle= 1
+	DrawText 15,584,"photons before ion chamber"
+	SetDrawEnv fsize= 14,fstyle= 1
+	DrawText 15,614,"photons in detector"
+	DrawText 109,125,"Ion Chamber Fill Gas (atmospheres)"
+	SetDrawEnv fsize= 14,fstyle= 1
+	DrawText 7,449,"Air"
+	SetDrawEnv fsize= 14,fstyle= 1
+	DrawText 9,477,"Be"
+	SetDrawEnv fsize= 14,fstyle= 1
+	DrawText 9,419,"He"
+	DrawText 331,391,"(inches)"
+	SetDrawEnv fsize= 14,fstyle= 1
+	DrawText 10,390,"Kapton"
+	SetDrawEnv fsize= 14,fstyle= 1
+	DrawText 10,337,"Kapton"
+	DrawText 331,473,"(inches)"
+	DrawText 331,339,"(inches)"
+	DrawText 332,416,"(mm)"
+	DrawText 333,444,"(mm)"
+	DrawText 331,365,"(mm)"
+	DrawText 331,312,"(mm)"
+	DrawText 332,284,"(mm)"
+	DrawText 9,503,"detector efficiency from 0 to 1"
+	DrawText 9,517,"(Note: type -4 for 2\" dia, 2 atm Ar proportional counter)"
+
+	SetVariable setvar_current title=" ",pos={255,15},size={129,15},format="%e"
+	SetVariable setvar_current,limits={0,Inf,100},value= root:Packages:ionChamber:PanelGlobals:gCurrentPA
+	SetVariable setvar_current,help={"Mean ion chamber current in pA, as reported by the counting system"}
+	SetVariable setvar_dark title=" ",pos={255,39},size={131,15},format="%e"
+	SetVariable setvar_dark,limits={0,Inf,10},value= root:Packages:ionChamber:PanelGlobals:gDarkPA
+	SetVariable setvar_dark,help={"Dark / background current in pA, measured with the beam off. Subtracted from the reading. Leave at 0 if the counter output is already baseline corrected."}
+	SetVariable setvar_energyI title=" ",pos={88,84},size={77,15}
+	SetVariable setvar_energyI,limits={0,Inf,1},value= root:Packages:ionChamber:PanelGlobals:genergy
+	SetVariable setvar_energyI,help={"X-ray energy in keV, or wavelength in Angstroms, as selected to the right"}
+
+	CheckBox check_energyI,pos={200,84},size={83,14},proc=EnergyOrWavelengthCheckProcI,title="energy (keV)",mode=1
+	CheckBox check_energyI,value= gRadioValI==1
+	CheckBox check_energyI,help={"Interpret the value to the left as energy in keV"}
+	CheckBox check_wavelengthI,pos={303,84},size={104,14},proc=EnergyOrWavelengthCheckProcI,title="wavelength (Ang)"
+	CheckBox check_wavelengthI,value= gRadioValI==2,mode=1
+	CheckBox check_wavelengthI,help={"Interpret the value to the left as wavelength in Angstroms"}
+
+	PopupMenu popup_gas1,pos={120,132},size={76,20},proc=PopMenuProc_FillGasID
+	PopupMenu popup_gas1,mode=gid1,value= #"\"Helium;Nitrogen;Argon;Air;Carbon Dioxide\""
+	PopupMenu popup_gas1,help={"First ion chamber fill gas"}
+	PopupMenu popup_gas2,pos={120,158},size={55,20},proc=PopMenuProc_FillGasID
+	PopupMenu popup_gas2,mode=gid2,value= #"\"none;Helium;Nitrogen;Argon;Air;Carbon Dioxide\""
+	PopupMenu popup_gas2,help={"Second ion chamber fill gas, or none"}
+	PopupMenu popup_gas3,pos={120,185},size={55,20},proc=PopMenuProc_FillGasID
+	PopupMenu popup_gas3,mode=gid3,value= #"\"none;Helium;Nitrogen;Argon;Air;Carbon Dioxide\""
+	PopupMenu popup_gas3,help={"Third ion chamber fill gas, or none"}
+	PopupMenu popup_gas4,pos={120,210},size={55,20},proc=PopMenuProc_FillGasID
+	PopupMenu popup_gas4,mode=gid4,value= #"\"none;Helium;Nitrogen;Argon;Air;Carbon Dioxide\""
+	PopupMenu popup_gas4,help={"Fourth ion chamber fill gas, or none"}
+
+	SetVariable setvar_frac1 title=" ",pos={230,133},size={77,15}
+	SetVariable setvar_frac1,limits={0,Inf,1},value= root:Packages:ionChamber:PanelGlobals:gfrac1
+	SetVariable setvar_frac1,help={"Partial pressure of gas 1 in atmospheres"}
+	SetVariable setvar_frac2 title=" ",pos={229,159},size={77,15}
+	SetVariable setvar_frac2,limits={0,Inf,1},value= root:Packages:ionChamber:PanelGlobals:gfrac2
+	SetVariable setvar_frac2,help={"Partial pressure of gas 2 in atmospheres"}
+	SetVariable setvar_frac3 title=" ",pos={231,186},size={77,15}
+	SetVariable setvar_frac3,limits={0,Inf,1},value= root:Packages:ionChamber:PanelGlobals:gfrac3
+	SetVariable setvar_frac3,help={"Partial pressure of gas 3 in atmospheres"}
+	SetVariable setvar_frac4 title=" ",pos={232,213},size={77,15}
+	SetVariable setvar_frac4,limits={0,Inf,1},value= root:Packages:ionChamber:PanelGlobals:gfrac4
+	SetVariable setvar_frac4,help={"Partial pressure of gas 4 in atmospheres"}
+
+	SetVariable setvar_aln title=" ",pos={243,270},size={77,15}
+	SetVariable setvar_aln,value= root:Packages:ionChamber:PanelGlobals:galn
+	SetVariable setvar_aln,help={"Active length of the ion chamber in mm"}
+	SetVariable setvar_dln1 title=" ",pos={243,297},size={77,15}
+	SetVariable setvar_dln1,value= root:Packages:ionChamber:PanelGlobals:gdln1
+	SetVariable setvar_dln1,help={"Dead length at the front of the ion chamber in mm"}
+	SetVariable setvar_Kapton1 title=" ",pos={243,324},size={77,15}
+	SetVariable setvar_Kapton1,value= root:Packages:ionChamber:PanelGlobals:gKapton1
+	SetVariable setvar_Kapton1,help={"Kapton window before the active region, in inches"}
+	SetVariable setvar_dln2 title=" ",pos={243,350},size={77,15}
+	SetVariable setvar_dln2,value= root:Packages:ionChamber:PanelGlobals:gdln2
+	SetVariable setvar_dln2,help={"Dead length at the rear of the ion chamber in mm"}
+	SetVariable setvar_Kapton2 title=" ",pos={243,376},size={77,15}
+	SetVariable setvar_Kapton2,value= root:Packages:ionChamber:PanelGlobals:gKapton2
+	SetVariable setvar_Kapton2,help={"Kapton window on the rear of the ion chamber, in inches"}
+	SetVariable setvar_dHe title=" ",pos={243,402},size={77,15}
+	SetVariable setvar_dHe,value= root:Packages:ionChamber:PanelGlobals:gdHe
+	SetVariable setvar_dHe,help={"Helium path after the ion chamber, in mm"}
+	SetVariable setvar_dAir title=" ",pos={243,428},size={77,15}
+	SetVariable setvar_dAir,value= root:Packages:ionChamber:PanelGlobals:gdAir
+	SetVariable setvar_dAir,help={"Air path after the ion chamber, in mm"}
+	SetVariable setvar_dBe title=" ",pos={243,458},size={77,15}
+	SetVariable setvar_dBe,value= root:Packages:ionChamber:PanelGlobals:gdBe
+	SetVariable setvar_dBe,help={"Total thickness of all Be windows after the ion chamber, in inches"}
+	SetVariable setvar_dEff,pos={242,487},size={77,15},title=" "
+	SetVariable setvar_dEff,limits={-inf,1,0.1},value= root:Packages:ionChamber:PanelGlobals:gdEff
+	SetVariable setvar_dEff,help={"Detector efficiency 0 to 1, or a negative number for inches of Ar at 1 atm in a proportional counter"}
+
+	Button button_calculate,pos={147,534},size={76,21},proc=ButtonProc_CalculatePhotonsI,title="calculate"
+	Button button_calculate,help={"Calculate the flux from the ion chamber current entered above"}
+	SetVariable setvar_PhotonsI0  title=" ",fSize=14,limits={-inf,Inf,0},pos={250,565},size={146,15},value=root:Packages:ionChamber:PanelGlobals:gflux
+	SetVariable setvar_PhotonsI0,help={"Result: photons/sec incident before the ion chamber"}
+	SetVariable setvar_PhotonsDet title=" ",fSize=14,limits={-inf,Inf,0},pos={250,595},size={146,15},value= root:Packages:ionChamber:PanelGlobals:gdetector
+	SetVariable setvar_PhotonsDet,help={"Result: photons/sec that would be measured in the detector"}
+End
+
+
+//	Energy / wavelength radio buttons of the current (pA) based panel.  Separate from
+//	EnergyOrWavelengthCheckProc so the two panels do not share this selection.
+Function EnergyOrWavelengthCheckProcI(name,value)
+	String name
+	Variable value
+
+	NVAR gRadioValI= root:Packages:ionChamber:PanelGlobals:gRadioValI
+
+	strswitch (name)
+		case "check_energyI":
+			gRadioValI= 1
+			break
+		case "check_wavelengthI":
+			gRadioValI= 2
+			break
+	endswitch
+	CheckBox check_energyI,win=IonChamberCurrentPanel,value= gRadioValI==1
+	CheckBox check_wavelengthI,win=IonChamberCurrentPanel,value= gRadioValI==2
+End
 
 
 Function EnergyOrWavelengthCheckProc(name,value)

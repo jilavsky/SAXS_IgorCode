@@ -1,0 +1,16 @@
+# ionChamberFlux.req  --  autosave request file
+# usage:  file "ionChamberFlux.req" P=9idcUSX:,Q=I0Flux
+$(P)$(Q):Energy.CALC
+$(P)$(Q):Energy.INPA
+$(P)$(Q):Energy.INPB
+$(P)$(Q):Energy.C
+$(P)$(Q):AbsFrac.CALC
+$(P)$(Q):AbsFrac.F
+$(P)$(Q):CorrN2.CALC
+$(P)$(Q):CorrN2.F
+$(P)$(Q):CorrKap.CALC
+$(P)$(Q):Flux.CALC
+$(P)$(Q):Flux.INPA
+$(P)$(Q):Flux.INPF
+$(P)$(Q):Flux.F
+$(P)$(Q):Flux.SCAN
