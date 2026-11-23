@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.36
+#pragma version = 2.37
 #pragma IgorVersion = 9.04
 
 //control constants
@@ -34,6 +34,8 @@ strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
+//2.37 IN2G_RebinLogData: optional Wwindow (FX4 smoothing window); with isFX4 the bin error counts only
+//     independent points, RMS/sqrt(max(n/meanWindow,1)) (Matilda 11/2026).
 //2.34 added IN2G_CorMapScore(measuredW, modelW, uncertaintyW) — returns C/log₂(N) similarity score (Franke & Jeffries 2010)
 //2.33	upgrade to IP9, remvoe some older code not needed
 //2.32 fix IP8.x bug
@@ -4404,13 +4406,14 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
-Function IN2G_RebinLogData(Wx,Wy,NumberOfPoints,MinStep,[Wsdev,Wxsdev, Wxwidth,W1, W2, W3, W4, W5,isFX4])
+Function IN2G_RebinLogData(Wx,Wy,NumberOfPoints,MinStep,[Wsdev,Wxsdev, Wxwidth,W1, W2, W3, W4, W5,isFX4,Wwindow])
 		Wave Wx, Wy
 		Variable NumberOfPoints, MinStep
 		Wave Wsdev,Wxsdev
 		Wave Wxwidth
 		Wave W1, W2, W3, W4, W5
 		Variable isFX4
+		Wave Wwindow		//FX4: effective number of raw points behind each input point (smoothing), returned as bin mean
 		////IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		variable CalcSdev, CalcWidth, CalcW1, CalcW2, CalcW3, CalcW4, CalcW5, CalcXSdev
 		CalcSdev = ParamIsDefault(Wsdev) ?  0 : 1
@@ -4422,6 +4425,7 @@ Function IN2G_RebinLogData(Wx,Wy,NumberOfPoints,MinStep,[Wsdev,Wxsdev, Wxwidth,W
 		CalcW4 = ParamIsDefault(W4) ?  0 : 1
 		CalcW5 = ParamIsDefault(W5) ?  0 : 1
 		isFX4  = ParamIsDefault(isFX4) ?  0 : isFX4
+		variable CalcWindow = ParamIsDefault(Wwindow) ?  0 : 1
 		
 		variable OldNumPnts=numpnts(Wx)
 		if(2*NumberOfPoints>OldNumPnts)
@@ -4451,7 +4455,8 @@ Function IN2G_RebinLogData(Wx,Wy,NumberOfPoints,MinStep,[Wsdev,Wxsdev, Wxwidth,W
  		tempNewLogDistBinWidth[1,numpnts(tempNewLogDist)-2] = tempNewLogDist[p+1] - tempNewLogDist[p-1]
  		tempNewLogDistBinWidth[0] = tempNewLogDistBinWidth[1]
  		tempNewLogDistBinWidth[numpnts(tempNewLogDist)-1] = tempNewLogDistBinWidth[numpnts(tempNewLogDist)-2]
-		make/O/D/FREE/N=(NumberOfPoints) Rebinned_WvX, Rebinned_WvY, Rebinned_Wv1, Rebinned_Wv2,Rebinned_Wv3, Rebinned_Wv4, Rebinned_Wv5, Rebinned_Wsdev, Rebinned_Wxsdev
+		make/O/D/FREE/N=(NumberOfPoints) Rebinned_WvX, Rebinned_WvY, Rebinned_Wv1, Rebinned_Wv2,Rebinned_Wv3, Rebinned_Wv4, Rebinned_Wv5, Rebinned_Wsdev, Rebinned_Wxsdev, Rebinned_Window
+		Rebinned_Window=0
 		Rebinned_WvX=0
 		Rebinned_WvY=0
 		Rebinned_Wv1=0	
@@ -4494,6 +4499,9 @@ Function IN2G_RebinLogData(Wx,Wy,NumberOfPoints,MinStep,[Wsdev,Wxsdev, Wxwidth,W
 					if(CalcXSdev)
 						Rebinned_WXsdev[i] += WXsdev[j]^2
 					endif
+					if(CalcWindow)
+						Rebinned_Window[i] += Wwindow[j]
+					endif
 					cntPoints+=1
 					j+=1
 				While(Wx[j-1]<BinHighEdge && j<OldNumPnts)
@@ -4522,6 +4530,9 @@ Function IN2G_RebinLogData(Wx,Wy,NumberOfPoints,MinStep,[Wsdev,Wxsdev, Wxwidth,W
 					if(CalcXSdev)
 						Rebinned_WXsdev[i] += WXsdev[j]^2
 					endif
+					if(CalcWindow)
+						Rebinned_Window[i] += Wwindow[j]
+					endif
 					cntPoints+=1
 					j+=1
 				While((Wx[j-1]>BinHighEdge) && (j<OldNumPnts))
@@ -4543,9 +4554,17 @@ Function IN2G_RebinLogData(Wx,Wy,NumberOfPoints,MinStep,[Wsdev,Wxsdev, Wxwidth,W
 			if(CalcW5)
 				Rebinned_Wv5[i]/=cntPoints
 			endif
+			if(CalcWindow)		//mean smoothing window of the bin
+				Rebinned_Window[i] = max(Rebinned_Window[i]/cntPoints, 1)
+			endif
 			if(CalcSdev)
 				if(isFX4) 
-					Rebinned_Wsdev[i]=sqrt(Rebinned_Wsdev[i]/cntPoints)	
+					Rebinned_Wsdev[i]=sqrt(Rebinned_Wsdev[i]/cntPoints)		//RMS of the inputs = error of ONE point
+					if(CalcWindow)
+						//smoothed neighbours share raw data: the bin mean is worth n/(mean window) independent
+						//points; dividing by sqrt(n) would count the smoothing a second time (Matilda 11/2026)
+						Rebinned_Wsdev[i] /= sqrt(max(cntPoints/Rebinned_Window[i], 1))
+					endif
 				else //old 
 					Rebinned_Wsdev[i]=sqrt(Rebinned_Wsdev[i])/cntPoints	 
 				endif
@@ -4596,6 +4615,10 @@ Function IN2G_RebinLogData(Wx,Wy,NumberOfPoints,MinStep,[Wsdev,Wxsdev, Wxwidth,W
 	if(CalcWidth)
 		Redimension/N=(numpnts(Rebinned_WvX))/D Wxwidth
 		Wxwidth = tempNewLogDistBinWidth
+	endif
+	if(CalcWindow)
+		Redimension/N=(numpnts(Rebinned_WvX))/D Wwindow
+		Wwindow = Rebinned_Window
 	endif
 end		
 //**********************************************************************************************************

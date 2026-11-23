@@ -1,7 +1,7 @@
 #pragma rtFunctionErrors = 1
 #pragma TextEncoding     = "UTF-8"
 #pragma rtGlobals        = 3 // Use modern global access method and strict wave access.
-#pragma version          = 1.11
+#pragma version          = 1.12
 
 #include <Peak AutoFind>
 
@@ -15,6 +15,8 @@ Constant IN3_TrimDoNOTremoveVibrations = 0 //this controls if vibrations are fou
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution.
 //*************************************************************************/
+//1.12 FX4 flyscan: read values_per_read (stored in UPDParameters as ValuesPerRead); NaN removal keeps
+//     USAXS_PD_sigma/total and Monitor_sigma/total aligned with the data waves.
 //1.11 AI code review: add missing SetDataFolder restore in IN3_FlyScanInitializeImport (folder was
 //     permanently changed); add SetDataFolder before 2 Aborts in IN3_FSConvertToUSAXS (data read
 //     failure, unknown data collection method); convert 3 string-based DF patterns to DFREF;
@@ -527,6 +529,12 @@ Function/S IN3_FSConvertToUSAXS(string RawFolderWithData, string origFileName)
 		WAVE   updBkgErr3   = :entry:flyScan:upd_bkgErr2
 		WAVE   updBkgErr4   = :entry:flyScan:upd_bkgErr3
 		WAVE   updBkgErr5   = :entry:flyScan:upd_bkgErr4
+		//raw samples behind each FX4 read, needed for the electronic noise floor (NaN if missing)
+		WAVE/Z valuesPerReadW = :entry:flyScan:values_per_read
+		if(!WaveExists(valuesPerReadW))
+			WAVE/Z valuesPerReadW = :entry:metadata:values_per_read
+		endif
+		variable valuesPerRead = WaveExists(valuesPerReadW) ? valuesPerReadW[0] : NaN
 		WAVE   UPDsize      = :entry:metadata:UPDsize
 		WAVE/T SampleNameW      = :entry:sample:name
 		WAVE   SampleThicknessW = :entry:sample:thickness
@@ -621,8 +629,13 @@ Function/S IN3_FSConvertToUSAXS(string RawFolderWithData, string origFileName)
 		note/K/NOCR PD_range, WaveNote
 		note/K/NOCR Ar_encoder, WaveNote
 	
-		//Needed?
-		IN2G_RemoveNaNsFrom6Waves(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range, I0gain)
+		//remove NaN points from the data waves and keep the sigma/total waves aligned with them
+		//(NaNs in the sigma waves alone are kept, IN3_CalculateRWaveIntensity uses a fallback there)
+		for(i = numpnts(USAXS_PD) - 1; i >= 0; i -= 1)
+			if(numtype(Ar_encoder[i]) == 2 || numtype(MeasTime[i]) == 2 || numtype(Monitor[i]) == 2 || numtype(USAXS_PD[i]) == 2 || numtype(PD_range[i]) == 2 || numtype(I0gain[i]) == 2)
+				DeletePoints i, 1, Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range, I0gain, Monitor_sigma, USAXS_PD_sigma, Monitor_total, USAXS_PD_total
+			endif
+		endfor
 		//let's make some standard strings we need.
 		string/G PathToRawData
 		PathToRawData = RawFolderWithData
@@ -641,6 +654,7 @@ Function/S IN3_FSConvertToUSAXS(string RawFolderWithData, string origFileName)
 		UPDParameters += ";Bkg1=" + num2str(updBkg1[0]) + ";Bkg2=" + num2str(updBkg2[0]) + ";Bkg3=" + num2str(updBkg3[0]) + ";Bkg4=" + num2str(updBkg4[0]) + ";Bkg5=" + num2str(updBkg5[0])
 		UPDParameters += ";Bkg1Err=" + num2str(updBkgErr1[0]) + ";Bkg2Err=" + num2str(updBkgErr2[0]) + ";Bkg3Err=" + num2str(updBkgErr3[0]) + ";Bkg4Err=" + num2str(updBkgErr4[0]) + ";Bkg5Err=" + num2str(updBkgErr5[0])
 		UPDParameters += ";I0AmpDark=;I0AmpGain=1;I00AmpGain=" + ";UPDsize=" + num2str(UPDsize[0]) + ";"
+		UPDParameters += "ValuesPerRead=" + num2str(valuesPerRead) + ";"
 		string/G MeasurementParameters
 		MeasurementParameters  = "DCM_energy=" + num2str(DCM_energyW[0]) + ";SAD=" + num2str(SADW[0]) + ";SDD=" + num2str(SDDW[0]) + ";thickness=" + num2str(SampleThicknessW[0]) + ";"
 		MeasurementParameters += ";I0AmpDark=;I0AmpGain=1;I00AmpGain=1" + ";" 

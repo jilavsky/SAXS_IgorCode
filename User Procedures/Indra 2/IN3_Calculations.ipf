@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
   
-#pragma version=1.43
+#pragma version=1.44
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2026, Argonne National Laboratory
@@ -9,6 +9,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.44 Abel desmearing auto width ported from Matilda (10/2026): robust (median) chi^2, local 40-point
+//     window guard, ceiling 0.25 (was 0.5), non-finite/<=0 SMR_Error replaced by median for weights.
 //1.43 AI code review: convert 20 string-based DF save/restores to DFREF (oldDf/OldDf/fldrSav0
 //     variants); add SetDataFolder restore before Abort in IN3_InputPanelButtonProc (cursor check)
 //     and IN3_FitModGaussTop ("no peak found"); add WAVE/Z to ~25 wave declarations throughout
@@ -2438,14 +2440,16 @@ end
 //	3) Compare with Lake: IN3_Abel_CompareWithLake() keeps both results side by side.
 //
 // Control globals (created with defaults on first use, root:Packages:Indra3:):
-//	DesmearAbelAutoSmooth	1 = pick smoothing width so that reduced chi^2(smoothed vs SMR) ~ 1
+//	DesmearAbelAutoSmooth	1 = largest width with robust chi^2(smoothed vs SMR) <= 1 globally and in every 40-point window
 //	DesmearAbelSmoothW		Gaussian width in ln(Q) for local-linear smoothing; 0 = no smoothing
 //	DesmearAbelNumMC		Monte Carlo realizations for uncertainties; <2 = old Lake-style errors
 //*************************************************************************
 
 static Constant kAbelNumU = 64						//quadrature nodes for the u-integral (2nd term)
 static Constant kAbelSmoothMinW = 0.002				//search range for auto smoothing width, in ln(Q)
-static Constant kAbelSmoothMaxW = 0.5
+static Constant kAbelSmoothMaxW = 0.25				//hard ceiling for auto width, was 0.5 (Matilda 10/2026)
+static Constant kAbelLocalWindow = 40				//points per local chi^2 window, windows overlap by half
+static Constant kAbelChi2_1Median = 0.454936423119573	//median of chi^2 with 1 degree of freedom
 
 //*************************************************************************
 //*************************************************************************
@@ -2484,6 +2488,15 @@ Function IN3_DesmearDataAbel()
 	WAVE SMR_Error = root:Packages:Indra3:SMR_Error
 	WAVE SMR_Qvec = root:Packages:Indra3:SMR_Qvec
 	WAVE SMR_dQ = root:Packages:Indra3:SMR_dQ
+	//error weights for smoothing / chi^2 / MC: non-finite or <=0 replaced by the median
+	//of the good ones (a NaN would make gnoise() poison a whole MC realization)
+	Duplicate/FREE/D SMR_Error, errUse, goodErr
+	goodErr = (numtype(SMR_Error[p]) == 0 && SMR_Error[p] > 0) ? SMR_Error[p] : NaN
+	variable medErr = median(goodErr)
+	if(numtype(medErr) != 0)
+		medErr = 0.01*median(SMR_Int)		//no usable errors at all: 1% of typical intensity
+	endif
+	errUse = (numtype(SMR_Error[p]) == 0 && SMR_Error[p] > 0) ? SMR_Error[p] : medErr
 	variable sl = SlitLength
 	variable nOrig = numpnts(SMR_Int)
 	variable startTime = StopMSTimer(-2)
@@ -2505,11 +2518,11 @@ Function IN3_DesmearDataAbel()
 	//2. smoothing of the smeared data (the inversion differentiates the data)
 	variable usedW = SmoothW
 	if(AutoSmooth)
-		usedW = IN3_Abel_FindSmoothWidth(extQ, extInt, SMR_Error, nOrig)
+		usedW = IN3_Abel_FindSmoothWidth(extQ, extInt, errUse, nOrig)
 		SmoothW = usedW
 	endif
 	WAVE smInt = IN3_Abel_SmoothLocalLinear(extQ, extInt, usedW, 1)
-	variable chi2 = IN3_Abel_ReducedChi2(smInt, extInt, SMR_Error, nOrig)
+	variable chi2 = IN3_Abel_ReducedChi2(smInt, extInt, errUse, nOrig)		//robust (median) chi^2, as Matilda logs
 
 	//3. the inversion itself
 	Make/FREE/D/N=(nExt) dsmExt
@@ -2521,7 +2534,7 @@ Function IN3_DesmearDataAbel()
 	//4. uncertainties
 	Make/FREE/D/N=(nOrig) dsmErr
 	if(NumMC >= 2)
-		IN3_Abel_MonteCarloErrors(extQ, extInt, SMR_Error, sl, nOrig, usedW, NumMC, dsmErr)
+		IN3_Abel_MonteCarloErrors(extQ, extInt, errUse, sl, nOrig, usedW, NumMC, dsmErr)
 	else
 		Duplicate/FREE/R=[0, nOrig-1] dsmExt, dsmTmp
 		Duplicate/FREE SMR_Qvec, qTmp
@@ -2815,37 +2828,97 @@ ThreadSafe static Function IN3_Abel_SmoothPoint(WAVE lq, WAVE wY, variable i, va
 End
 
 //*************************************************************************
-// reduced chi^2 of smoothed vs measured over the measured points only
-static Function IN3_Abel_ReducedChi2(WAVE smInt, WAVE extInt, WAVE errW, variable nOrig)
-	Make/FREE/D/N=(nOrig) chi = ((smInt[p]-extInt[p])/errW[p])^2
-	return sum(chi)/nOrig
+// squared normalized residuals of smoothed vs measured, measured points only
+static Function/WAVE IN3_Abel_ResidSq(WAVE smInt, WAVE extInt, WAVE errW, variable nOrig)
+	Make/FREE/D/N=(nOrig) r2 = ((smInt[p]-extInt[p])/errW[p])^2
+	return r2
 End
 
 //*************************************************************************
-// Largest smoothing width with reduced chi^2 <= 1 (paper, Sec. 3.2 step 4), bisection in ln(width).
+// robust reduced chi^2, median(r^2)/median(chi^2_1). Not the mean: two or three bad
+// points reach chi^2 = 1 on their own and collapse the auto width to no smoothing.
+static Function IN3_Abel_ReducedChi2(WAVE smInt, WAVE extInt, WAVE errW, variable nOrig)
+	WAVE r2 = IN3_Abel_ResidSq(smInt, extInt, errW, nOrig)
+	return median(r2)/kAbelChi2_1Median
+End
+
+//*************************************************************************
+// Worst robust chi^2 over half-overlapping windows of kAbelLocalWindow points, same windows
+// as Matilda: starts 0, 20, 40, ... while start+40 <= n, trailing partial window dropped.
+// Returns it; qAt receives the geometric-centre Q of that window.
+static Function IN3_Abel_WorstWindowChi2(WAVE r2, WAVE qv, variable &qAt)
+	variable n = numpnts(r2)
+	variable nw = min(kAbelLocalWindow, n)
+	variable stepW = max(1, floor(nw/2))
+	variable a, c, worst = -inf
+	for(a = 0; a + nw <= n; a += stepW)
+		c = median(r2, pnt2x(r2, a), pnt2x(r2, a+nw-1))/kAbelChi2_1Median
+		if(c > worst)
+			worst = c
+			qAt = sqrt(qv[a]*qv[a+nw-1])
+		endif
+	endfor
+	return worst
+End
+
+//*************************************************************************
+// Limit for the worst window: 95% quantile of the worst-window robust chi^2 for
+// pure unit noise. Closed-form fit (K = number of windows) to the simulation in
+// Matilda's _abel_local_chi2_limit; within 0.09 of it for 40-4000 points.
+// A limit of 1 per window would not do: on noise alone the worst window is ~1.8.
+static Function IN3_Abel_LocalChi2Limit(variable n)
+	variable nw = min(kAbelLocalWindow, n)
+	variable K = floor((n-nw)/max(1, floor(nw/2))) + 1
+	return 1.742 + 0.2267*ln(K)
+End
+
+//*************************************************************************
+// Does width w pass both tests? localOnlyFail = passes globally, fails locally.
+// worst/qAt = worst window chi^2 and its Q (for the history message).
+static Function IN3_Abel_WidthPasses(WAVE extQ, WAVE extInt, WAVE errW, variable nOrig, variable w, variable limitL, variable &localOnlyFail, variable &worst, variable &qAt)
+	WAVE sm = IN3_Abel_SmoothLocalLinear(extQ, extInt, w, 1)
+	WAVE r2 = IN3_Abel_ResidSq(sm, extInt, errW, nOrig)
+	variable okG = (median(r2)/kAbelChi2_1Median <= 1)
+	worst = IN3_Abel_WorstWindowChi2(r2, extQ, qAt)
+	variable okL = (worst <= limitL)
+	localOnlyFail = (okG && !okL)
+	return (okG && okL)
+End
+
+//*************************************************************************
+// Largest smoothing width that passes the robust global chi^2 <= 1 (paper, Sec. 3.2
+// step 4) AND the local guard: every kAbelLocalWindow-point window below the noise
+// limit. Without the guard a misfit confined to one Q range cannot move the global
+// median (glassy carbon: knee near Q=0.08 over-smoothed at w=0.2-0.4).
+// Bisection in ln(width). Port of Matilda _abel_find_smooth_width (10/2026).
 static Function IN3_Abel_FindSmoothWidth(WAVE extQ, WAVE extInt, WAVE errW, variable nOrig)
 
-	variable lo = ln(kAbelSmoothMinW), hi = ln(kAbelSmoothMaxW), mid, it, chi2
-	WAVE smLo = IN3_Abel_SmoothLocalLinear(extQ, extInt, exp(lo), 1)
-	if(IN3_Abel_ReducedChi2(smLo, extInt, errW, nOrig) > 1)
-		print "IN3_Abel: chi^2>1 even for minimal smoothing (errors underestimated?), using minimal width"
-		return exp(lo)
-	endif
-	WAVE smHi = IN3_Abel_SmoothLocalLinear(extQ, extInt, exp(hi), 1)
-	if(IN3_Abel_ReducedChi2(smHi, extInt, errW, nOrig) <= 1)
+	variable lo = ln(kAbelSmoothMinW), hi = ln(kAbelSmoothMaxW), mid, it
+	variable limitL = IN3_Abel_LocalChi2Limit(nOrig)
+	variable localOnly, worst, qAt, worstAtCap
+	variable rejectedLocal = 0, rejectQ = NaN
+
+	if(IN3_Abel_WidthPasses(extQ, extInt, errW, nOrig, exp(hi), limitL, localOnly, worstAtCap, qAt))
 		print "IN3_Abel: chi^2<=1 even for maximal smoothing (errors overestimated?), using maximal width"
 		return exp(hi)
 	endif
+	if(!IN3_Abel_WidthPasses(extQ, extInt, errW, nOrig, exp(lo), limitL, localOnly, worst, qAt))
+		print "IN3_Abel: chi^2>1 even for minimal smoothing (errors underestimated?), using minimal width"
+		return exp(lo)
+	endif
 	for(it = 0; it < 12; it += 1)
 		mid = (lo+hi)/2
-		WAVE smMid = IN3_Abel_SmoothLocalLinear(extQ, extInt, exp(mid), 1)
-		chi2 = IN3_Abel_ReducedChi2(smMid, extInt, errW, nOrig)
-		if(chi2 > 1)
-			hi = mid
-		else
+		if(IN3_Abel_WidthPasses(extQ, extInt, errW, nOrig, exp(mid), limitL, localOnly, worst, qAt))
 			lo = mid
+		else
+			hi = mid
+			rejectedLocal = localOnly
+			rejectQ = qAt
 		endif
 	endfor
+	if(rejectedLocal)
+		printf "IN3_Abel: auto width limited by the local fit near Q=%g 1/A (window chi2 %.1f at the %g cap, limit %.2f)\r", rejectQ, worstAtCap, kAbelSmoothMaxW, limitL
+	endif
 	return exp(lo)
 End
 

@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
   
-#pragma version =1.15
+#pragma version =1.16
 
 
 //*************************************************************************\
@@ -10,6 +10,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.16 FX4 flyscan (Matilda 11/2026): SMR_Error = sqrt(R_error^2+BL^2)/(Kfactor*MSAXS), no /T*T pair;
+//     SmoothWindow carried to SMR and into rebinning; 0.1% relative error floor added after rebin.
 //1.15 AI code review: convert 9 string-based DF save/restores to DFREF; add SetDataFolder restore
 //     before Abort in IN3_RecalcSubtractSaAndBlank ("bad scan type"); add WAVE/Z to all 14 bare
 //     wave declarations (PD_Intensity/Error/Qvec, R_Int/R_error/R_Qvec, PD_Range, BL_R_* ×3,
@@ -346,7 +348,14 @@ Function IN3_RecalcSubtractSaAndBlank()
 
 	//need fix for PD_range used for coloring... 
 	Duplicate/O PD_Range, PD_RangeModified
-	IN2G_RemoveNaNsFrom4Waves(R_Int,R_error,R_Qvec, PD_RangeModified)
+	//effective number of raw points behind each R point (IN3_SmoothRData), FX4 rebinning needs it
+	NVAR IsFX4Data = root:Packages:Indra3:IsFX4Data
+	Wave/Z SmoothWindowTest = root:Packages:Indra3:SmoothWindow
+	if(!WaveExists(SmoothWindowTest) || numpnts(SmoothWindowTest) != numpnts(R_Int))
+		Make/O/D/N=(numpnts(R_Int)) root:Packages:Indra3:SmoothWindow = 1
+	endif
+	Wave SmoothWindow = root:Packages:Indra3:SmoothWindow
+	IN2G_RemoveNaNsFrom5Waves(R_Int,R_error,R_Qvec, PD_RangeModified, SmoothWindow)
 	IN2G_RemoveNaNsFrom3Waves(BL_R_Int,BL_R_error,BL_R_Qvec)
 
 	if (stringmatch(IsItSBUSAXS,"uascan*"))			//if this is sbuascan, go to other part, otherwise create SMR data
@@ -404,12 +413,21 @@ Function IN3_RecalcSubtractSaAndBlank()
 		Duplicate/O R_error, SMR_Error
 		Duplicate/Free BL_R_error, log_BL_R_error
 		log_BL_R_error=log(abs(BL_R_error))
-		SMR_Error=sqrt((R_error)^2/SampleTransmission^2 + (10^(interp(R_Qvec, BL_R_Qvec, log_BL_R_error)))^2)/Kfactor
-		SMR_Error*=SampleTransmission		//change 2/2014 to fix cases, when samples have really high absorption, but scatter well... 
+		if(IsFX4Data)
+			//FX4 (Matilda 11/2026): same scaling as SMR_Int. R_error is already /SampleTransmissionPeakToPeak
+			//(IN3_CalculateRdata), so no /SampleTransmission ... *SampleTransmission pair (that pair scaled the
+			//blank term by T and left out MSAXSCorrection), and divide by MSAXSCorLocal as SMR_Int is.
+			SMR_Error=sqrt((R_error)^2 + (10^(interp(R_Qvec, BL_R_Qvec, log_BL_R_error)))^2)/(Kfactor*MSAXSCorLocal)
+		else
+			SMR_Error=sqrt((R_error)^2/SampleTransmission^2 + (10^(interp(R_Qvec, BL_R_Qvec, log_BL_R_error)))^2)/Kfactor
+			SMR_Error*=SampleTransmission		//change 2/2014 to fix cases, when samples have really high absorption, but scatter well... 
+		endif
 		Duplicate/O R_Qvec, SMR_Qvec		
+		Duplicate/O SmoothWindow, root:Packages:Indra3:SMR_SmoothWindow
+		Wave SMR_SmoothWindow = root:Packages:Indra3:SMR_SmoothWindow
 		//remove points which are surely not useful
-		DeletePoints EndPointCut, inf, SMR_Int, SMR_Qvec, SMR_Error 
-		DeletePoints 0, StartPointCut, SMR_Int, SMR_Qvec, SMR_Error 
+		DeletePoints EndPointCut, inf, SMR_Int, SMR_Qvec, SMR_Error, SMR_SmoothWindow
+		DeletePoints 0, StartPointCut, SMR_Int, SMR_Qvec, SMR_Error, SMR_SmoothWindow
 		//end append data
 		DoWindow RcurvePlotGraph
 		if(V_Flag)
@@ -426,16 +444,22 @@ Function IN3_RecalcSubtractSaAndBlank()
 		endif
 		USAXSorSBUSAXS="FlyUSAXS"	
 		NVAR FlyScanRebinToPoints=root:Packages:Indra3:FlyScanRebinToPoints
-		NVAR IsFX4Data = root:Packages:Indra3:IsFX4Data
 		//create width for each bin pixel...
 		Duplicate/O SMR_Qvec, SMR_dQ
 		if(FlyScanRebinToPoints>0)
 			tempMinStep=SMR_Qvec[1]-SMR_Qvec[0]
-			IN2G_RebinLogData(SMR_Qvec,SMR_Int,FlyScanRebinToPoints,tempMinStep,Wsdev=SMR_Error,Wxwidth=SMR_dQ,isFX4=IsFX4Data)
+			if(IsFX4Data)		//FX4: bin error counts only independent points, see IN2G_RebinLogData
+				IN2G_RebinLogData(SMR_Qvec,SMR_Int,FlyScanRebinToPoints,tempMinStep,Wsdev=SMR_Error,Wxwidth=SMR_dQ,isFX4=IsFX4Data,Wwindow=SMR_SmoothWindow)
+			else
+				IN2G_RebinLogData(SMR_Qvec,SMR_Int,FlyScanRebinToPoints,tempMinStep,Wsdev=SMR_Error,Wxwidth=SMR_dQ,isFX4=IsFX4Data)
+			endif
 		else
 			SMR_dQ[1,numpnts(SMR_dQ)-2] = (SMR_dQ[p+1]-SMR_dQ[p-1])/4
 			SMR_dQ[0]=(SMR_dQ[1]-SMR_dQ[0])/2
 			SMR_dQ[numpnts(SMR_dQ)-1] = (SMR_dQ[numpnts(SMR_dQ)-1]-SMR_dQ[numpnts(SMR_dQ)-2])/2
+		endif
+		if(IsFX4Data)		//~0.1% of I survives all averaging on strong signal, added once after rebinning
+			SMR_Error = sqrt(SMR_Error^2 + (FX4_RelErrorFloor*SMR_Int)^2)
 		endif
 		SMR_dQ = sqrt((SMR_dQ[p])^2 + (InstrumentQresolution/2)^2)		//convolute with SI220 InstrumentQresolution
 	elseif (stringmatch(IsItSBUSAXS,"sbflySca"))			//if this is sbflyscan, creade DSM data
