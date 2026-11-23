@@ -64,6 +64,10 @@ Constant RwaveSmooth3time                = 0.03		//used in Matilda, was 0.01
 Constant RwaveSmooth4time                = 0.10		//used in Matilda, was 0.03
 Constant RwaveSmooth5time                = 0.40		//used in Matilda, was 0.12
 Constant CalMaxRatioUseSamFWHM           = 1.12
+//FX4 fly scan noise model, measured (Matilda docs/fx4-flyscan-uncertainties.md, 11/2026)
+Constant FX4_ShotChargePC                = 6.5e-4	//pC, shot-like term q_eff*I/t, energy independent 12-28 keV
+Constant FX4_RelErrorFloor               = 1e-3		//relative error added once to SMR_Error after rebinning
+Constant FX4_RelCurrentError             = 0.01		//fallback relative error of a current when sigma is missing/NaN
 
 //************************************************************************************************************
 //************************************************************************************************************

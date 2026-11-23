@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
   
-#pragma version=1.17
+#pragma version=1.18
 
 
 //*************************************************************************\
@@ -10,6 +10,9 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.18 FX4 flyscan noise model (Matilda 11/2026): per-interval error sigma^2/(N*values_per_read) + shot-like
+//     term + dark error; smoothing in linear intensity, error divided by sqrt(n_eff), SmoothWindow kept,
+//     line fit at pseudo-range changes, negative-intensity lift after smoothing.
 //1.17 AI code review: convert 6 string-based DF save/restores to DFREF; add WAVE/Z to
 //     Intensity/Qvector/PD_range/R_Error/MeasTime (absolute paths), PD_Intensity (×2),
 //     USAXS_PD/Monitor/MeasTime/Ar_encoder, and PD_Error (all current-folder waves).
@@ -103,6 +106,9 @@ Function IN3_SmoothRData()
 	NVAR SmoothRCurveData = root:Packages:Indra3:SmoothRCurveData
 	NVAR IsFX4Data = root:Packages:Indra3:IsFX4Data
 	variable measTimeTotal=sum(MeasTime)
+	//effective number of raw points behind each R point (1 = not smoothed), used by FX4 rebinning
+	Make/O/D/N=(numpnts(Intensity)) root:Packages:Indra3:SmoothWindow = 1
+	Wave SmoothWindow = root:Packages:Indra3:SmoothWindow
 	if(SmoothRCurveData)
 		//firs remove NaNs as this is really difficult to deal with...
 		Duplicate/Free PD_range, tmpPD_range
@@ -110,12 +116,24 @@ Function IN3_SmoothRData()
 		//IN2G_RemoveNaNsFrom5Waves(Intensity, Qvector,R_Error,tmpPD_range, tmpMeasTime)
 		//smooth Blank_R using smoothing times for different ranges. 
 		variable tmpTime, StartPoints
-		variable EndPoints, QrangeIntg, midPoint, startX, endX
+		variable EndPoints, QrangeIntg, midPoint, startX, endX, nUsed, nEff
 		Duplicate /Free  Intensity, TempIntLog
-		TempIntLog = log(Intensity)
-		//fix negative intensities...
-		variable MinLogInt=wavemin(TempIntLog)
-		TempIntLog = numtype(TempIntLog)==0 ? TempIntLog : MinLogInt
+		if(IsFX4Data)
+			//FX4: average in linear intensity. Weak FX4 points scatter around zero and ln(I) cannot hold
+			//them; averaging ln(I) of noisy data is biased low (11% at high Q on strong samples, Matilda 11/2026).
+			//TempIntLog holds LINEAR intensity in this case. NaNs replaced by interpolation in Q.
+			WaveStats/Q Intensity
+			if(V_numNaNs + V_numINFs > 0)
+				Extract/FREE Qvector, qGood, numtype(Intensity[p]) == 0
+				Extract/FREE Intensity, intGood, numtype(Intensity[p]) == 0
+				TempIntLog = (numtype(Intensity[p]) == 0) ? Intensity[p] : interp(Qvector[p], qGood, intGood)
+			endif
+		else
+			TempIntLog = log(Intensity)
+			//fix negative intensities...
+			variable MinLogInt=wavemin(TempIntLog)
+			TempIntLog = numtype(TempIntLog)==0 ? TempIntLog : MinLogInt
+		endif
 		Duplicate/Free TempIntLog, SmoothIntensity
 		variable i
 		//starting i should be somewhere where we have at least 10^-4 lower intensity
@@ -150,14 +168,36 @@ Function IN3_SmoothRData()
 					if(i+EndPoints > numpnts(Intensity)-1)		//do not run out of end of data set
 						EndPoints = numpnts(Intensity)- 1 - i
 					endif
-					//R must be symmetric around the i or the method below will not work right. 
-					Duplicate/Free/R=[i-StartPoints,i+EndPoints] TempIntLog, tempR
-					Duplicate/FREE/R=[i-StartPoints,i+EndPoints] Qvector, tempQ
-					startX =  tempQ[0] 
-					endX =  tempQ[numpnts(tempQ)-1]
-					SmoothIntensity[i] = areaXY(tempQ, tempR, startX,endX)
-					SmoothIntensity[i] /= (endX - startX)
-					R_Error[i]=R_Error[i]		//crude approximation
+					//The averaging is propagated into R_Error, and the effective number of points is kept in
+					//SmoothWindow for the rebinning (smoothed neighbours share raw data). Matilda 11/2026.
+					if((tmpPD_range[i-StartPoints]!=tmpPD_range[i])||(tmpPD_range[i+EndPoints]!=tmpPD_range[i]))
+						//pseudo-range change (signal level, set in import), line fit instead of average
+						Duplicate/Free/R=[i-StartPoints,i+EndPoints-1] TempIntLog, tempR
+						Duplicate/FREE/R=[i-StartPoints,i+EndPoints-1] Qvector, tempQ
+						WaveStats/Q tempR
+						nUsed = V_npnts
+						if(nUsed > 5)
+							CurveFit/Q line tempR /X=tempQ 
+							Wave W_coef
+							SmoothIntensity[i] = W_coef[0]+W_coef[1]*Qvector[i]
+							R_Error[i] /= sqrt(nUsed)		//line evaluated near its centre ~ error of the mean
+							SmoothWindow[i] = nUsed
+						else
+							SmoothIntensity[i] = TempIntLog[i]
+						endif
+					else	//R must be symmetric around the i or the method below will not work right. 
+						Duplicate/Free/R=[i-StartPoints,i+EndPoints] TempIntLog, tempR
+						Duplicate/FREE/R=[i-StartPoints,i+EndPoints] Qvector, tempQ
+						startX =  tempQ[0] 
+						endX =  tempQ[numpnts(tempQ)-1]
+						SmoothIntensity[i] = areaXY(tempQ, tempR, startX,endX)
+						SmoothIntensity[i] /= (endX - startX)
+						//trapezoid gives the end points half weight: (sum w)^2/sum w^2 = (n-1)^2/(n-1.5) points
+						nUsed = numpnts(tempR)
+						nEff = (nUsed < 3) ? max(nUsed, 1) : (nUsed-1)^2/(nUsed-1.5)
+						R_Error[i] /= sqrt(nEff)
+						SmoothWindow[i] = nEff
+					endif
 				endif	
 					
 			else //old method
@@ -219,7 +259,14 @@ Function IN3_SmoothRData()
 			endif	
 		endfor
 		
-		Intensity = 10^SmoothIntensity
+		if(IsFX4Data)
+			Intensity = SmoothIntensity
+			//negative-intensity lift AFTER smoothing: then it follows the background level, not a single
+			//noise spike (FX4 raw data are not lifted in IN3_CalculateRWaveIntensity)
+			IN3_FixNegativeIntensities(Intensity)
+		else
+			Intensity = 10^SmoothIntensity
+		endif
 	endif
 	SetDataFolder saveDF	
 end
@@ -387,32 +434,46 @@ Function IN3_CalculateRWaveIntensity(CleanUpRangeCHange)				//Recalculate the R 
 	
 	if(IsFX4Data)
 		variable UPDbackground=numberbykey ("Bkg5", UPDparameters,"=")
+		variable UPDbackgroundErr = numberbykey("Bkg5Err", UPDparameters, "=")
+		UPDbackgroundErr = (numtype(UPDbackgroundErr) == 0) ? UPDbackgroundErr : 0
+		variable valuesPerRead = numberbykey("ValuesPerRead", UPDparameters, "=")
+		valuesPerRead = (numtype(valuesPerRead) == 0 && valuesPerRead >= 1) ? valuesPerRead : 1	//missing: floor not reduced, conservative
 		PD_Intensity=(USAXS_PD-UPDbackground)/Monitor
-			
-		Wave Monitor_sigma
-		Wave USAXS_PD_sigma
-		Duplicate/O PD_Intensity,PD_error 	
-			
-		Wave/Z USAXS_PD_total	//exists only for flyscans...
-		if(WaveExists(USAXS_PD_total))
-			Wave Monitor_total
-			Duplicate/Free USAXS_PD_sigma, N_upd, sigma_upd
-			Duplicate/Free Monitor_sigma, N_i0, sigma_i0
-			N_upd = floor(USAXS_PD_total / USAXS_PD)      // clamped to >= 1, else 1
-			N_i0  = floor(Monitor_total  / Monitor)
-			N_upd = (N_upd>1) ? N_upd : 1
-			N_i0 = (N_i0>1) ? N_i0 : 1
 
-			sigma_upd = USAXS_PD_sigma / sqrt(N_upd)
-			sigma_i0  = Monitor_sigma  / sqrt(N_i0)
-		else
-			Duplicate/Free USAXS_PD_sigma, sigma_upd
-			Duplicate/Free Monitor_sigma, sigma_i0
+		//Error of ONE interval, measured noise model (Matilda docs/fx4-flyscan-uncertainties.md, 11/2026):
+		//	sigma^2 = sigma_rec^2/(N*values_per_read)  +  q_eff*max(I-dark,0)/t
+		//electronic floor + shot-like term, both set by signal level only. IN3_SmoothRData and
+		//IN2G_RebinLogData reduce it for the averaging they do.
+		Wave/Z Monitor_sigma
+		Wave/Z USAXS_PD_sigma
+		Wave/Z USAXS_PD_total	//exists only for flyscans...
+		Wave/Z Monitor_total
+		Redimension/D PD_error
+		Duplicate/FREE PD_Intensity, NetUPD, SigUPD2, SigI02, N_upd, N_i0, ShotUPD, ShotI0
+		NetUPD = USAXS_PD - UPDbackground
+		if(WaveExists(USAXS_PD_sigma) && WaveExists(Monitor_sigma) && WaveExists(USAXS_PD_total) && WaveExists(Monitor_total))
+			N_upd = abs(USAXS_PD_total / USAXS_PD)		//reads per interval, >= 1, else 1
+			N_i0  = abs(Monitor_total  / Monitor)
+			N_upd = (numtype(N_upd) == 0 && N_upd >= 1) ? N_upd : 1
+			N_i0  = (numtype(N_i0) == 0 && N_i0 >= 1) ? N_i0 : 1
+			ShotUPD = FX4_ShotChargePC * max(NetUPD, 0) / MeasTime
+			ShotI0  = FX4_ShotChargePC * max(Monitor, 0) / MeasTime
+			ShotUPD = (numtype(ShotUPD) == 0) ? ShotUPD : 0
+			ShotI0  = (numtype(ShotI0) == 0) ? ShotI0 : 0
+			SigUPD2 = USAXS_PD_sigma^2 / (N_upd * valuesPerRead) + ShotUPD
+			SigI02  = Monitor_sigma^2 / (N_i0 * valuesPerRead) + ShotI0
+			//NaNs in the recorded sigma: flat relative fallback, else they read as perfectly known points
+			SigUPD2 = (numtype(SigUPD2) == 0) ? SigUPD2 : (FX4_RelCurrentError * USAXS_PD)^2
+			SigI02  = (numtype(SigI02) == 0) ? SigI02 : (FX4_RelCurrentError * Monitor)^2
+		else		//no electrometer sigma/total (step scan, old files): flat relative error
+			SigUPD2 = (FX4_RelCurrentError * USAXS_PD)^2
+			SigI02  = (FX4_RelCurrentError * Monitor)^2
 		endif
-		//sigma_upd = sqrt(sigma_upd^2 + updBkgErr^2)     // fold in dark-current error
-		//PD_error = ratio_error(upd_current − updBkg, sigma_upd, I0_current, sigma_i0)
-		PD_error = (abs(USAXS_PD-UPDbackground)/abs(Monitor))*sqrt((sigma_upd/(USAXS_PD-UPDbackground))^2+(sigma_i0/Monitor)^2)
-		
+		SigUPD2 += UPDbackgroundErr^2		//dark current error
+		//ratio R = net/I0 in absolute form; the relative form gives zero error at net = 0
+		PD_error = sqrt(SigUPD2 + (NetUPD / Monitor)^2 * SigI02) / abs(Monitor)
+		PD_error = (numtype(PD_error) == 0) ? PD_error : 0
+
 		//end of FX4
 	else
 
