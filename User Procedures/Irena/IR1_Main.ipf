@@ -1504,8 +1504,8 @@ Function IR2C_CheckIrenaUpdate(CalledFromMenu)
 			IN2G_SaveIrenaGUIPackagePrefs(0)
 			IN2G_GetAndDisplayUpdateMessage()
 	endif
-	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))<8.04)
-			DoAlert /T="Igor update message :"  0, "Igor has been updated to version 8.04 or higher. Please, update your Igor to the latest version."  
+	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))<9.04)
+			DoAlert /T="Igor update message :"  0, "Igor has been updated to version 9.05 or higher. Please, update your Igor to the latest version."  
 			BrowseURL "http://www.wavemetrics.com/support/versions.htm"
 	endif
 	
@@ -1562,11 +1562,11 @@ Function IR2C_CheckVersionButtonProc(ba) : ButtonControl
 			// click code here
 			if(stringmatch(ba.ctrlName,"OpenIrenaWebPage"))
 				//open web page with Irena
-				BrowseURL "https://usaxs.xray.aps.anl.gov/software/irena"
+				BrowseURL "https://usaxs.xray.aps.anl.gov/software-jan-ilavsky"
 			endif
 			if(stringmatch(ba.ctrlName,"OpenIrenaManuscriptWebPage"))
 				//open web page with Irena
-				BrowseURL "http://dx.doi.org/10.1107/S0021889809002222"
+				BrowseURL "https://doi.org/10.1107/S1600576726009647"
 			endif
 			if(stringmatch(ba.ctrlName,"OpenGCManuscriptWebPage"))
 				//doi:10.1007/s11661-009-9950-x
@@ -1601,9 +1601,9 @@ Window CheckForIrenaUpdatePanel() : Panel
 	SetDrawEnv fsize= 14,fstyle= 3,textrgb= (65535,0,0)
 	DrawText 27,110,"Reminder: When publishing data analyzed using Irena package, please cite following manuscripts:"
 	SetDrawEnv textrgb= (0,0,65535)
-	DrawText 27,133,"J. Ilavsky and P. Jemian, Irena: tool suite for modeling and analysis of small- angle scattering "
+	DrawText 27,133,"J. Ilavsky, Irena and pyIrena: 25 years of small-angle scattering analysis for complex materials, now with an AI-ready Python successor "
 	SetDrawEnv textrgb= (0,0,65535)
-	DrawText 27,158,"J. Appl. Cryst. (2009). 42, 347–353"
+	DrawText 27,158,"J. Appl. Cryst. (2026) 59"
 	SetDrawEnv textrgb= (0,0,65535)
 	DrawText 27,205,"Glassy Carbon Absolute Int. Calibration: F. Zhang, J. Ilavsky, G. G. Long, J. P.G. Quintana, "
 	SetDrawEnv textrgb= (0,0,65535)

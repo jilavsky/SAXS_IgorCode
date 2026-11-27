@@ -125,12 +125,12 @@ End
 
 
 Proc LoadUSAXSAndIrena()
-	Execute/P("LoadUSAXSMacros()")
+	Execute/P("LoadUSAXS()")
 	Execute/P("LoadIrenaSASMacros()")
 end
 Proc LoadUSAXSIrenaandNika()
 	Execute/P("LoadNika2DSASMacros()")
-	Execute/P("LoadUSAXSMacros()")
+	Execute/P("LoadUSAXS()")
 	Execute/P("LoadIrenaSASMacros()")
 end
 
